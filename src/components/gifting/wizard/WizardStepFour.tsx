@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, CreditCard, Shield, Lock, Loader2 } from "lucide-react";
 import { GiftSetupData } from "../GiftSetupWizard";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,6 +20,13 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
   const [skipPayment, setSkipPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
+
+  // Only show payment step if auto-gifting is enabled
+  React.useEffect(() => {
+    if (!data.autoGiftingEnabled) {
+      onNext({ hasPaymentMethod: false });
+    }
+  }, [data.autoGiftingEnabled, onNext]);
 
   const handlePaymentSuccess = async () => {
     setPaymentAdded(true);
@@ -64,10 +71,6 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
 
   // Only show payment step if auto-gifting is enabled
   if (!data.autoGiftingEnabled) {
-    // Skip payment step and go directly to next
-    React.useEffect(() => {
-      onNext({ hasPaymentMethod: false });
-    }, []);
     return null;
   }
 

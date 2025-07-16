@@ -83,6 +83,22 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     ...initialData
   });
   
+  // Debug logging
+  React.useEffect(() => {
+    console.log('GiftSetupWizard: initialData changed:', initialData);
+  }, [initialData]);
+  
+  // Update state when initialData changes
+  React.useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      console.log('GiftSetupWizard: Updating giftSetupData with initialData:', initialData);
+      setGiftSetupData(prev => ({
+        ...prev,
+        ...initialData
+      }));
+    }
+  }, [initialData]);
+  
   const stepThreeRef = useRef<{ saveAndBack: () => void }>(null);
 
 

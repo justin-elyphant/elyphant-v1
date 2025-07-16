@@ -76,7 +76,7 @@ const SmartGiftingTab = () => {
         
         const existingRule = existingRules?.[0];
         
-        setGiftSetupInitialData({
+        const newInitialData = {
           recipientName: event.person,
           recipientEmail: event.recipientEmail,
           relationshipType: event.relationshipType,
@@ -96,7 +96,13 @@ const SmartGiftingTab = () => {
           budgetLimit: existingRule?.budget_limit || undefined,
           giftCategories: existingRule?.gift_selection_criteria?.categories || [],
           notificationDays: existingRule?.notification_preferences?.days_before || [7, 3, 1]
-        });
+        };
+        
+        console.log('GiftingHubCard: Setting initial data:', newInitialData);
+        console.log('GiftingHubCard: Full invitation data:', fullInvitation);
+        console.log('GiftingHubCard: Existing rule data:', existingRule);
+        
+        setGiftSetupInitialData(newInitialData);
       } catch (error) {
         console.error('Error fetching existing rule data:', error);
         // Fallback to basic data

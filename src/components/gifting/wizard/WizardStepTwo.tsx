@@ -5,7 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Calendar, Plus, Trash2, Sparkles } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ArrowRight, Calendar as CalendarIcon, Plus, Trash2, Sparkles } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { GiftSetupData } from "../GiftSetupWizard";
 import { calculateHolidayDate, isKnownHoliday } from "@/constants/holidayDates";
 
@@ -125,7 +129,7 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <CalendarIcon className="h-5 w-5" />
             When should we send gifts?
           </CardTitle>
           <CardDescription>
@@ -181,12 +185,41 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                       </div>
                     )}
                   </div>
-                  <Input
-                    type="date"
-                    value={formatDateForInput(event.date)}
-                    onChange={(e) => updateEvent(index, "date", e.target.value)}
-                    className={errors[`date_${index}`] ? "border-destructive" : ""}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !event.date && "text-muted-foreground",
+                          errors[`date_${index}`] && "border-destructive"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {event.date ? (
+                          format(new Date(event.date), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={event.date ? new Date(event.date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            updateEvent(index, "date", date.toISOString());
+                          }
+                        }}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={2100}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <div className="min-h-[1.25rem]">
                     {errors[`date_${index}`] && (
                       <p className="text-sm text-destructive">{errors[`date_${index}`]}</p>

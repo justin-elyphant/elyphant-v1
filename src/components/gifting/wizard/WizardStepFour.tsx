@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, CreditCard, Shield, Lock, Loader2 } from "lucide-react";
+import { CheckCircle, CreditCard, Shield, Lock, Loader2, PlusCircle } from "lucide-react";
 import { GiftSetupData } from "../GiftSetupWizard";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PaymentMethodSelector from "../events/edit-drawer/gift-settings/PaymentMethodSelector";
+import { useNavigate } from "react-router-dom";
 
 interface WizardStepFourProps {
   data: GiftSetupData;
@@ -21,7 +23,40 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
   const [paymentAdded, setPaymentAdded] = useState(false);
   const [skipPayment, setSkipPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | undefined>(data.selectedPaymentMethodId);
+  const [showAddNew, setShowAddNew] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Fetch payment methods on component mount
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: methods, error } = await supabase
+          .from('payment_methods')
+          .select('id, payment_method_id, last_four, card_type, is_default')
+          .eq('user_id', user.id)
+          .order('is_default', { ascending: false });
+          
+        if (error) throw error;
+        
+        setPaymentMethods(methods || []);
+        
+        // If no payment method is selected but we have methods, select the default one
+        if (!selectedPaymentMethodId && methods && methods.length > 0) {
+          const defaultMethod = methods.find(m => m.is_default) || methods[0];
+          setSelectedPaymentMethodId(defaultMethod.id);
+        }
+      } catch (err) {
+        console.error('Error fetching payment methods:', err);
+      }
+    };
+    
+    fetchPaymentMethods();
+  }, [user, selectedPaymentMethodId]);
 
   // Only show payment step if auto-gifting is enabled
   React.useEffect(() => {
@@ -58,9 +93,19 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
 
   const handleContinue = () => {
     onNext({ 
-      hasPaymentMethod: paymentAdded,
-      skipPaymentSetup: skipPayment 
+      hasPaymentMethod: paymentAdded || !!selectedPaymentMethodId,
+      skipPaymentSetup: skipPayment,
+      selectedPaymentMethodId: selectedPaymentMethodId
     });
+  };
+
+  const handlePaymentMethodSelect = (paymentMethodId: string) => {
+    if (paymentMethodId === 'add-new') {
+      setShowAddNew(true);
+    } else {
+      setSelectedPaymentMethodId(paymentMethodId);
+      setShowAddNew(false);
+    }
   };
 
   const handleSkipPayment = () => {
@@ -102,9 +147,36 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
             </div>
           </div>
 
-          {/* Payment Form or Success State */}
-          {!paymentAdded ? (
+          {/* Payment Method Selection */}
+          {!paymentAdded && !showAddNew && paymentMethods.length > 0 ? (
             <div className="space-y-4">
+              <div>
+                <Label className="text-base font-medium">Select Payment Method</Label>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Choose a payment method for auto-gifting to {data.recipientName}
+                </p>
+                <PaymentMethodSelector 
+                  selectedPaymentMethodId={selectedPaymentMethodId}
+                  onSelect={handlePaymentMethodSelect}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-4 border-t">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  We'll only charge your card when you approve a gift purchase. 
+                  You'll receive notifications before each transaction.
+                </p>
+              </div>
+            </div>
+          ) : !paymentAdded && (paymentMethods.length === 0 || showAddNew) ? (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-medium">Add New Payment Method</Label>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Add a payment method to enable auto-gifting
+                </p>
+              </div>
               <div className="p-4 border border-dashed border-muted-foreground/50 rounded-lg">
                 <p className="text-sm text-muted-foreground text-center">
                   Payment method setup will be implemented here with Stripe Elements
@@ -117,6 +189,15 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
                   Demo: Add Payment Method
                 </Button>
               </div>
+              {paymentMethods.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowAddNew(false)}
+                  className="w-full"
+                >
+                  Use Existing Payment Method
+                </Button>
+              )}
 
               <div className="flex items-center gap-2 pt-4 border-t">
                 <Lock className="h-4 w-4 text-muted-foreground" />
@@ -130,7 +211,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
             <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm font-medium text-green-800">Payment Method Added!</p>
+                <p className="text-sm font-medium text-green-800">Payment Method Ready!</p>
                 <p className="text-sm text-green-700">
                   You're all set for auto-gifting. We'll notify you before each purchase.
                 </p>
@@ -176,7 +257,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
 
         <Button 
           onClick={handleContinue}
-          disabled={!paymentAdded || isLoading || isProcessing}
+          disabled={(!paymentAdded && !selectedPaymentMethodId) || isLoading || isProcessing}
           size="lg"
           className="min-w-40"
         >
@@ -188,7 +269,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
           ) : (
             <>
               Continue
-              {paymentAdded && <CheckCircle className="h-4 w-4 ml-2" />}
+              {(paymentAdded || selectedPaymentMethodId) && <CheckCircle className="h-4 w-4 ml-2" />}
             </>
           )}
         </Button>

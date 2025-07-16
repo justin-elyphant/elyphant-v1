@@ -73,7 +73,8 @@ export const pendingGiftsService = {
     dateType: string,
     budgetLimit?: number,
     giftSelectionCriteria?: any,
-    notificationPreferences?: any
+    notificationPreferences?: any,
+    paymentMethodId?: string
   ) {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
@@ -97,6 +98,7 @@ export const pendingGiftsService = {
           email: true,
           push: false
         },
+        payment_method_id: paymentMethodId,
         is_active: true
       })
       .select()

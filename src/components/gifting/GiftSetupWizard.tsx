@@ -40,6 +40,7 @@ export interface GiftSetupData {
   hasPaymentMethod?: boolean;
   skipPaymentSetup?: boolean;
   autoApproveEnabled?: boolean;
+  selectedPaymentMethodId?: string;
 }
 
 interface GiftSetupWizardProps {
@@ -139,7 +140,8 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
               days_before: finalData.notificationDays,
               email: true,
               push: false
-            }
+            },
+            finalData.selectedPaymentMethodId
           );
         }
         

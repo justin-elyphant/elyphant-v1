@@ -214,9 +214,17 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                         }}
                         initialFocus
                         className="p-3 pointer-events-auto"
-                        captionLayout="dropdown-buttons"
+                        captionLayout="dropdown"
                         fromYear={1900}
                         toYear={2100}
+                        classNames={{
+                          caption: "flex justify-center pt-1 relative items-center",
+                          caption_label: "text-sm font-medium",
+                          caption_dropdowns: "flex justify-center gap-1",
+                          dropdown: "min-w-[80px]",
+                          dropdown_month: "min-w-[120px]",
+                          dropdown_year: "min-w-[80px]",
+                        }}
                       />
                     </PopoverContent>
                   </Popover>

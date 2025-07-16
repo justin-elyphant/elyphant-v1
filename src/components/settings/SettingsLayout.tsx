@@ -25,10 +25,15 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 }) => {
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" asChild className="p-0">
-          <Link to="/dashboard" className="flex items-center">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="flex items-center gap-2"
+        >
+          <Link to="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
         </Button>

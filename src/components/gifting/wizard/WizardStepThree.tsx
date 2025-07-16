@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import { format } from "date-fns";
 interface WizardStepThreeProps {
   data: GiftSetupData;
   onNext: (stepData: Partial<GiftSetupData>) => void;
+  onSaveAndBack?: (stepData: Partial<GiftSetupData>) => void;
   isLoading: boolean;
 }
 
@@ -54,7 +55,7 @@ const EVENT_TYPES = [
   { value: "custom", label: "Custom Occasion" }
 ];
 
-export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, isLoading }) => {
+export const WizardStepThree = forwardRef<{ saveAndBack: () => void }, WizardStepThreeProps>(({ data, onNext, onSaveAndBack, isLoading }, ref) => {
   const [formData, setFormData] = useState({
     autoGiftingEnabled: data.autoGiftingEnabled,
     scheduledGiftingEnabled: data.scheduledGiftingEnabled,
@@ -153,6 +154,20 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
     };
     onNext(submitData);
   };
+
+  const handleSaveAndBack = () => {
+    const submitData = {
+      ...formData,
+      occasionMessages,
+      useSameMessageForAll
+    };
+    onSaveAndBack?.(submitData);
+  };
+
+  // Expose saveAndBack method to parent via ref
+  useImperativeHandle(ref, () => ({
+    saveAndBack: handleSaveAndBack
+  }));
 
 
   return (
@@ -447,4 +462,6 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
       </div>
     </div>
   );
-};
+});
+
+WizardStepThree.displayName = "WizardStepThree";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -81,6 +81,8 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     notificationDays: [7, 3, 1],
     ...initialData
   });
+  
+  const stepThreeRef = useRef<{ saveAndBack: () => void }>(null);
 
 
   const handleStepComplete = (stepData: Partial<GiftSetupData>) => {
@@ -167,6 +169,16 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     }
   };
 
+  const handleSaveAndBack = (stepData: Partial<GiftSetupData>) => {
+    // Save current step data
+    setGiftSetupData(prev => ({ ...prev, ...stepData }));
+    
+    // Navigate back
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
   const handleBack = () => {
     if (currentStep > 1) {
       // Navigate back - data is already saved via onNext calls
@@ -218,8 +230,10 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       case 3:
         return (
           <WizardStepThree
+            ref={stepThreeRef}
             data={giftSetupData}
             onNext={handleStepComplete}
+            onSaveAndBack={handleSaveAndBack}
             isLoading={isLoading}
           />
         );
@@ -296,7 +310,9 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
           <div className="flex items-center justify-between pt-4 border-t">
             <Button
               variant="outline"
-              onClick={handleBack}
+              onClick={currentStep === 3 ? () => {
+                stepThreeRef.current?.saveAndBack();
+              } : handleBack}
               disabled={currentStep === 1 || isLoading}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

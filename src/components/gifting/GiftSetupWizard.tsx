@@ -17,7 +17,7 @@ export interface GiftSetupData {
   recipientEmail: string;
   relationshipType: string;
   shippingAddress?: any;
-  recipientBirthYear?: number;
+  recipientBirthDate?: string; // ISO date string for full birthday
   
   // Step 2: When
   giftingEvents: Array<{
@@ -73,7 +73,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
     recipientName: "",
     recipientEmail: "",
     relationshipType: "friend",
-    recipientBirthYear: new Date().getFullYear() - 30,
+    recipientBirthDate: undefined, // Will be set by date picker
     giftingEvents: [],
     autoGiftingEnabled: true,
     scheduledGiftingEnabled: false,
@@ -167,6 +167,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       recipientName: "",
       recipientEmail: "",
       relationshipType: "friend",
+      recipientBirthDate: undefined,
       giftingEvents: [],
       autoGiftingEnabled: true,
       scheduledGiftingEnabled: false,

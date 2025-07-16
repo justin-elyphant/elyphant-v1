@@ -4,9 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, MapPin, User, Mail } from "lucide-react";
+import { ArrowRight, MapPin, User, Mail, Calendar } from "lucide-react";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { GiftSetupData } from "../GiftSetupWizard";
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface WizardStepOneProps {
   data: GiftSetupData;
@@ -27,7 +31,7 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
     recipientName: data.recipientName || "",
     recipientEmail: data.recipientEmail || "",
     relationshipType: data.relationshipType || "friend",
-    recipientBirthYear: data.recipientBirthYear || new Date().getFullYear() - 30,
+    recipientBirthDate: data.recipientBirthDate || undefined,
     shippingAddress: data.shippingAddress || null,
     apartmentUnit: data.shippingAddress?.line2 || ""
   });
@@ -147,18 +151,44 @@ export const WizardStepOne: React.FC<WizardStepOneProps> = ({ data, onNext }) =>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="recipientBirthYear">Birth Year (Optional)</Label>
-              <Input
-                id="recipientBirthYear"
-                type="number"
-                placeholder="e.g., 1990"
-                value={formData.recipientBirthYear}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipientBirthYear: Number(e.target.value) }))}
-                min="1920"
-                max={new Date().getFullYear()}
-              />
+              <Label htmlFor="recipientBirthDate">Birthday (Optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.recipientBirthDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {formData.recipientBirthDate ? (
+                      format(new Date(formData.recipientBirthDate), "PPP")
+                    ) : (
+                      <span>Pick their birthday</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={formData.recipientBirthDate ? new Date(formData.recipientBirthDate) : undefined}
+                    onSelect={(date) => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        recipientBirthDate: date ? date.toISOString().split('T')[0] : undefined 
+                      }));
+                    }}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
               <p className="text-sm text-muted-foreground">
-                Helps us find age-appropriate gifts
+                Helps our AI make more personalized gift recommendations
               </p>
             </div>
           </div>

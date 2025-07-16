@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,9 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, DollarSign, Heart, Bell, Gift, Calendar, Zap } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckCircle, DollarSign, Heart, Bell, Gift, Calendar, Zap, MessageSquare, ChevronDown, ChevronRight, Sparkles, RefreshCw } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { GiftSetupData } from "../GiftSetupWizard";
+import { generateDefaultMessage, getMessageTemplate, replaceMessageVariables } from "@/utils/messageTemplates";
+import { format } from "date-fns";
 
 interface WizardStepThreeProps {
   data: GiftSetupData;
@@ -39,6 +42,18 @@ const NOTIFICATION_OPTIONS = [
   { value: 1, label: "1 day before" }
 ];
 
+const EVENT_TYPES = [
+  { value: "birthday", label: "Birthday" },
+  { value: "anniversary", label: "Anniversary" },
+  { value: "christmas", label: "Christmas" },
+  { value: "valentine", label: "Valentine's Day" },
+  { value: "mothers_day", label: "Mother's Day" },
+  { value: "fathers_day", label: "Father's Day" },
+  { value: "graduation", label: "Graduation" },
+  { value: "promotion", label: "Work Promotion" },
+  { value: "custom", label: "Custom Occasion" }
+];
+
 export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, isLoading }) => {
   const [formData, setFormData] = useState({
     autoGiftingEnabled: data.autoGiftingEnabled,
@@ -48,6 +63,32 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
     giftMessage: data.giftMessage || "",
     notificationDays: data.notificationDays || [7, 3, 1]
   });
+
+  const [occasionMessages, setOccasionMessages] = useState<Record<string, string>>({});
+  const [useSameMessageForAll, setUseSameMessageForAll] = useState(false);
+  const [expandedOccasions, setExpandedOccasions] = useState<Set<string>>(new Set());
+
+  // Initialize occasion messages when component mounts or when occasions change
+  useEffect(() => {
+    if (data.giftingEvents && data.giftingEvents.length > 0) {
+      const initialMessages: Record<string, string> = {};
+      data.giftingEvents.forEach((event, index) => {
+        const eventKey = `${event.dateType}_${index}`;
+        if (!occasionMessages[eventKey]) {
+          initialMessages[eventKey] = generateDefaultMessage(
+            event.dateType,
+            data.recipientName,
+            event.customName
+          );
+        }
+      });
+      
+      // Only update if we have new messages to add
+      if (Object.keys(initialMessages).length > 0) {
+        setOccasionMessages(prev => ({ ...prev, ...initialMessages }));
+      }
+    }
+  }, [data.giftingEvents, data.recipientName]);
 
   const toggleCategory = (category: string) => {
     setFormData(prev => ({
@@ -67,9 +108,52 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
     }));
   };
 
-  const handleSubmit = () => {
-    onNext(formData);
+  const updateOccasionMessage = (eventKey: string, message: string) => {
+    setOccasionMessages(prev => ({
+      ...prev,
+      [eventKey]: message
+    }));
   };
+
+  const generateNewMessage = (eventKey: string, event: any) => {
+    const newMessage = generateDefaultMessage(
+      event.dateType,
+      data.recipientName,
+      event.customName
+    );
+    updateOccasionMessage(eventKey, newMessage);
+  };
+
+  const toggleOccasionExpanded = (eventKey: string) => {
+    setExpandedOccasions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventKey)) {
+        newSet.delete(eventKey);
+      } else {
+        newSet.add(eventKey);
+      }
+      return newSet;
+    });
+  };
+
+  const getOccasionDisplayName = (event: any) => {
+    if (event.dateType === "custom") {
+      return event.customName || "Custom Occasion";
+    }
+    
+    const eventType = EVENT_TYPES.find(t => t.value === event.dateType);
+    return eventType?.label || "Special Occasion";
+  };
+
+  const handleSubmit = () => {
+    const submitData = {
+      ...formData,
+      occasionMessages,
+      useSameMessageForAll
+    };
+    onNext(submitData);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -202,19 +286,101 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="giftMessage">Default gift message (optional)</Label>
-            <Textarea
-              id="giftMessage"
-              placeholder="e.g., Hope this brings a smile to your day! ❤️"
-              value={formData.giftMessage}
-              onChange={(e) => setFormData(prev => ({ ...prev, giftMessage: e.target.value }))}
-              rows={3}
-            />
-            <p className="text-sm text-muted-foreground">
-              This message will be included with your gifts. You can customize it for each occasion.
-            </p>
-          </div>
+          {/* Occasion-specific Gift Messages */}
+          {data.giftingEvents && data.giftingEvents.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Gift Messages</Label>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={useSameMessageForAll}
+                    onCheckedChange={setUseSameMessageForAll}
+                  />
+                  <span className="text-sm text-muted-foreground">Use same message for all</span>
+                </div>
+              </div>
+              
+              {useSameMessageForAll ? (
+                <div className="space-y-2">
+                  <Label htmlFor="universalMessage">Universal gift message</Label>
+                  <Textarea
+                    id="universalMessage"
+                    placeholder="e.g., Hope this brings a smile to your day! ❤️"
+                    value={formData.giftMessage}
+                    onChange={(e) => setFormData(prev => ({ ...prev, giftMessage: e.target.value }))}
+                    rows={3}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This message will be used for all occasions.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {data.giftingEvents.map((event, index) => {
+                    const eventKey = `${event.dateType}_${index}`;
+                    const isExpanded = expandedOccasions.has(eventKey);
+                    const displayName = getOccasionDisplayName(event);
+                    
+                    return (
+                      <Collapsible key={eventKey} open={isExpanded} onOpenChange={() => toggleOccasionExpanded(eventKey)}>
+                        <div className="border rounded-lg">
+                          <CollapsibleTrigger className="w-full p-3 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <MessageSquare className="h-4 w-4 text-primary" />
+                              <div className="text-left">
+                                <div className="font-medium">{displayName}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {format(new Date(event.date), "MMM d, yyyy")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {occasionMessages[eventKey] ? "Customized" : "Default"}
+                              </Badge>
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </div>
+                          </CollapsibleTrigger>
+                          
+                          <CollapsibleContent>
+                            <div className="p-4 border-t space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm font-medium">Message for {displayName}</Label>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => generateNewMessage(eventKey, event)}
+                                  className="text-xs"
+                                >
+                                  <RefreshCw className="h-3 w-3 mr-1" />
+                                  Generate new
+                                </Button>
+                              </div>
+                              
+                              <Textarea
+                                value={occasionMessages[eventKey] || ""}
+                                onChange={(e) => updateOccasionMessage(eventKey, e.target.value)}
+                                placeholder={`Enter a message for ${displayName}...`}
+                                rows={2}
+                                className="text-sm"
+                              />
+                              
+                              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                                <Sparkles className="h-3 w-3 mt-0.5 text-primary" />
+                                <span>
+                                  Use {"{name}"} to include the recipient's name. Messages are automatically personalized for each occasion.
+                                </span>
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

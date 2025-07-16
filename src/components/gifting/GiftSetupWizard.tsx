@@ -32,6 +32,8 @@ export interface GiftSetupData {
   budgetLimit?: number;
   giftCategories: string[];
   giftMessage?: string;
+  occasionMessages?: Record<string, string>;
+  useSameMessageForAll?: boolean;
   notificationDays: number[];
   
   // Step 4: Payment (conditional)

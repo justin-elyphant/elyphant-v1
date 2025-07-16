@@ -54,12 +54,23 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
       if (i === index) {
         const updatedEvent = { ...event, [field]: value };
         
-        // Auto-populate date for known holidays
-        if (field === "dateType" && isKnownHoliday(value)) {
-          const suggestedDate = calculateHolidayDate(value);
-          if (suggestedDate) {
-            updatedEvent.date = suggestedDate;
-            setAutoPopulatedDates(prev => new Set(prev).add(index));
+        // Handle dateType changes
+        if (field === "dateType") {
+          if (isKnownHoliday(value)) {
+            // Auto-populate date for known holidays
+            const suggestedDate = calculateHolidayDate(value);
+            if (suggestedDate) {
+              updatedEvent.date = suggestedDate;
+              setAutoPopulatedDates(prev => new Set(prev).add(index));
+            }
+          } else {
+            // Clear date for non-holidays like birthday, anniversary, etc.
+            updatedEvent.date = "";
+            setAutoPopulatedDates(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(index);
+              return newSet;
+            });
           }
         }
         
@@ -153,13 +164,15 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors[`dateType_${index}`] && (
-                    <p className="text-sm text-destructive">{errors[`dateType_${index}`]}</p>
-                  )}
+                  <div className="min-h-[1.25rem]">
+                    {errors[`dateType_${index}`] && (
+                      <p className="text-sm text-destructive">{errors[`dateType_${index}`]}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-h-[1.25rem]">
                     <Label>Date *</Label>
                     {autoPopulatedDates.has(index) && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -174,9 +187,11 @@ export const WizardStepTwo: React.FC<WizardStepTwoProps> = ({ data, onNext }) =>
                     onChange={(e) => updateEvent(index, "date", e.target.value)}
                     className={errors[`date_${index}`] ? "border-destructive" : ""}
                   />
-                  {errors[`date_${index}`] && (
-                    <p className="text-sm text-destructive">{errors[`date_${index}`]}</p>
-                  )}
+                  <div className="min-h-[1.25rem]">
+                    {errors[`date_${index}`] && (
+                      <p className="text-sm text-destructive">{errors[`date_${index}`]}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 

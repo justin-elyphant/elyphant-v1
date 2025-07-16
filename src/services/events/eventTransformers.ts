@@ -13,16 +13,24 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
     ? dbEvent.date_type.split(' - ')
     : [dbEvent.date_type, 'Unknown Person'];
 
-  // Extract recipient information from user_connections join
+  // Extract recipient information from user_connections join or fallback to extracted name
   const connection = dbEvent.user_connections;
-  const recipientEmail = connection?.pending_recipient_email || connection?.profiles?.email;
+  const recipientEmail = connection?.pending_recipient_email || connection?.profiles?.email || "";
   const recipientName = connection?.pending_recipient_name || 
-    (connection?.profiles ? `${connection.profiles.first_name} ${connection.profiles.last_name}` : personName);
+    (connection?.profiles ? `${connection.profiles.first_name} ${connection.profiles.last_name}`.trim() : personName);
   const relationshipType = connection?.relationship_type || 'friend';
   const avatarUrl = connection?.profiles?.profile_image || "/placeholder.svg";
 
-  // Extract auto-gifting rule information
-  const autoGiftingRule = dbEvent.auto_gifting_rules?.[0]; // Take first rule if multiple
+  // Extract auto-gifting rule information - handle array or single object
+  const autoGiftingRules = Array.isArray(dbEvent.auto_gifting_rules) 
+    ? dbEvent.auto_gifting_rules 
+    : (dbEvent.auto_gifting_rules ? [dbEvent.auto_gifting_rules] : []);
+  
+  // Find the most relevant rule - prioritize by date_type match, then by active status
+  const autoGiftingRule = autoGiftingRules.find(rule => rule.date_type === eventType && rule.is_active) ||
+                          autoGiftingRules.find(rule => rule.is_active) ||
+                          autoGiftingRules[0];
+  
   const autoGiftEnabled = autoGiftingRule?.is_active || false;
   const autoGiftAmount = autoGiftingRule?.budget_limit || 0;
   const giftCategories = autoGiftingRule?.gift_selection_criteria?.categories || [];

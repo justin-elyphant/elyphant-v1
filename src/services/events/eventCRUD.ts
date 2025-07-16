@@ -7,11 +7,14 @@ import { transformDatabaseEventToExtended } from "./eventTransformers";
 export const eventCRUD = {
   // Fetch all events for the current user with complete recipient and auto-gifting data
   async fetchUserEvents(): Promise<ExtendedEventData[]> {
+    const { data: userId } = await supabase.auth.getUser();
+    if (!userId.user?.id) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('user_special_dates')
       .select(`
         *,
-        user_connections (
+        user_connections!left (
           id,
           connected_user_id,
           pending_recipient_name,
@@ -25,16 +28,18 @@ export const eventCRUD = {
             profile_image
           )
         ),
-        auto_gifting_rules (
+        auto_gifting_rules!left (
           id,
           budget_limit,
           is_active,
           gift_preferences,
           notification_preferences,
           gift_selection_criteria,
-          pending_recipient_email
+          pending_recipient_email,
+          date_type
         )
       `)
+      .eq('user_id', userId.user.id)
       .order('date', { ascending: true });
 
     if (error) {
@@ -42,7 +47,65 @@ export const eventCRUD = {
       throw error;
     }
 
-    return (data || []).map(transformDatabaseEventToExtended);
+    // For events that don't have direct connection links, try to find connections by matching names/emails
+    const enrichedEvents = await Promise.all((data || []).map(async (event) => {
+      // If connection is already linked, return as is
+      if (event.user_connections) {
+        return event;
+      }
+
+      // Try to find connection by extracting name from date_type
+      const [eventType, personName] = event.date_type.includes(' - ') 
+        ? event.date_type.split(' - ')
+        : [event.date_type, null];
+
+      if (personName) {
+        const { data: connections } = await supabase
+          .from('user_connections')
+          .select(`
+            id,
+            connected_user_id,
+            pending_recipient_name,
+            pending_recipient_email,
+            relationship_type,
+            status,
+            profiles:connected_user_id (
+              first_name,
+              last_name,
+              email,
+              profile_image
+            )
+          `)
+          .eq('user_id', userId.user.id)
+          .or(`pending_recipient_name.ilike.%${personName}%,profiles.first_name.ilike.%${personName}%,profiles.last_name.ilike.%${personName}%`);
+
+        if (connections && connections.length > 0) {
+          event.user_connections = connections[0];
+        }
+      }
+
+      // Try to find auto_gifting_rules by event type and recipient email
+      if (!event.auto_gifting_rules || event.auto_gifting_rules.length === 0) {
+        const recipientEmail = event.user_connections?.pending_recipient_email || 
+                              event.user_connections?.profiles?.email;
+        
+        if (recipientEmail) {
+          const { data: rules } = await supabase
+            .from('auto_gifting_rules')
+            .select('*')
+            .eq('user_id', userId.user.id)
+            .or(`date_type.eq.${eventType},pending_recipient_email.eq.${recipientEmail}`);
+
+          if (rules && rules.length > 0) {
+            event.auto_gifting_rules = rules;
+          }
+        }
+      }
+
+      return event;
+    }));
+
+    return enrichedEvents.map(transformDatabaseEventToExtended);
   },
 
   // Create a new event (single or recurring series)

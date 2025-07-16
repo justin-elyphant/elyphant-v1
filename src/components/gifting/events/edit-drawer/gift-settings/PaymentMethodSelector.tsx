@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, PlusCircle } from "lucide-react";
 import { 

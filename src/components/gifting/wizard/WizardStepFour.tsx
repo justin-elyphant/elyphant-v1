@@ -16,6 +16,8 @@ interface WizardStepFourProps {
 }
 
 export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, isLoading }) => {
+  console.log("WizardStepFour rendering with data:", data);
+  
   const [paymentAdded, setPaymentAdded] = useState(false);
   const [skipPayment, setSkipPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -24,6 +26,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
   // Only show payment step if auto-gifting is enabled
   React.useEffect(() => {
     if (!data.autoGiftingEnabled) {
+      console.log("Auto-gifting disabled, skipping payment step");
       onNext({ hasPaymentMethod: false });
     }
   }, [data.autoGiftingEnabled, onNext]);

@@ -63,10 +63,14 @@ const SmartGiftingTab = () => {
     
     // Transform data for pending invitations
     if (event.isPendingInvitation) {
+      // Find the full invitation data to get shipping address
+      const fullInvitation = pendingInvitations.find(inv => inv.id === event.id);
+      
       setGiftSetupInitialData({
         recipientName: event.person,
         recipientEmail: event.recipientEmail,
         relationshipType: event.relationshipType,
+        shippingAddress: fullInvitation?.pending_shipping_address || null,
         giftingEvents: [{
           dateType: event.type || 'Birthday',
           date: '',

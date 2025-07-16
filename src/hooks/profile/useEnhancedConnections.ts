@@ -15,6 +15,7 @@ export interface EnhancedConnection {
   // Pending invitation fields
   pending_recipient_name?: string;
   pending_recipient_email?: string;
+  pending_shipping_address?: any;
   // Profile data
   profile_name?: string;
   profile_email?: string;

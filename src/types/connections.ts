@@ -23,6 +23,8 @@ export interface Connection {
   reason?: string;
   connectionDate?: string;
   score?: number; // Add optional score property for suggestions
+  isPending?: boolean; // For pending connections from quick gift wizard
+  recipientEmail?: string; // Email for pending connections
 }
 
 export type ConnectionRequest = {

@@ -1,11 +1,14 @@
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useConnectionSuggestions } from "@/hooks/useConnectionSuggestions";
 import { useMutualConnections } from "@/hooks/useMutualConnections";
 import { Connection, RelationshipType } from "@/types/connections";
+import { pendingGiftsService } from "@/services/pendingGiftsService";
+import { useAuth } from "@/contexts/auth";
 
 export const useConnectionsAdapter = () => {
+  const { user } = useAuth();
   const { 
     connections,
     pendingRequests,
@@ -18,6 +21,9 @@ export const useConnectionsAdapter = () => {
     rejectConnectionRequest,
     removeConnection
   } = useEnhancedConnections();
+
+  const [pendingConnections, setPendingConnections] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
 
   const { suggestions, loading: suggestionsLoading } = useConnectionSuggestions();
   const { calculateMutualFriends } = useMutualConnections();
@@ -73,6 +79,49 @@ export const useConnectionsAdapter = () => {
     conn.type === 'friend' && conn.relationship === 'friend'
   );
 
+  // Fetch pending connections from quick gift wizard
+  useEffect(() => {
+    const fetchPendingConnections = async () => {
+      if (!user) return;
+      
+      setPendingLoading(true);
+      try {
+        const pendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
+        setPendingConnections(pendingData);
+      } catch (error) {
+        console.error('Error fetching pending connections:', error);
+      } finally {
+        setPendingLoading(false);
+      }
+    };
+
+    fetchPendingConnections();
+  }, [user]);
+
+  // Transform pending connections to Connection format
+  const transformedPendingConnections = useMemo(() => {
+    return pendingConnections.map(conn => ({
+      id: conn.id,
+      name: conn.pending_recipient_name || 'Unknown User',
+      username: `@${conn.pending_recipient_email?.split('@')[0] || 'unknown'}`,
+      imageUrl: '/placeholder.svg',
+      mutualFriends: 0,
+      type: 'suggestion' as const,
+      lastActive: 'Invitation Sent',
+      relationship: conn.relationship_type as RelationshipType,
+      dataStatus: {
+        shipping: 'missing' as const,
+        birthday: 'missing' as const,
+        email: 'verified' as const
+      },
+      interests: [],
+      bio: `Pending invitation sent to ${conn.pending_recipient_email}`,
+      connectionDate: conn.created_at,
+      isPending: true,
+      recipientEmail: conn.pending_recipient_email
+    })) as Connection[];
+  }, [pendingConnections]);
+
   // Enhanced search filtering
   const filterConnections = (connectionsList: Connection[], searchTerm: string) => {
     if (!searchTerm.trim()) return connectionsList;
@@ -103,7 +152,8 @@ export const useConnectionsAdapter = () => {
     friends,
     following: transformedFollowing,
     suggestions,
-    loading: loading || suggestionsLoading,
+    pendingConnections: transformedPendingConnections,
+    loading: loading || suggestionsLoading || pendingLoading,
     error,
     sendConnectionRequest,
     acceptConnectionRequest,

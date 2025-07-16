@@ -6,6 +6,7 @@ import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
 import FollowingTabContent from "@/components/connections/FollowingTabContent";
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
+import PendingTabContent from "@/components/connections/PendingTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
 import PrivacyIntegration from "@/components/connections/PrivacyIntegration";
 import MainLayout from "@/components/layout/MainLayout";
@@ -28,6 +29,7 @@ const Connections = () => {
     friends,
     following,
     suggestions,
+    pendingConnections,
     loading,
     error,
     handleRelationshipChange,
@@ -39,6 +41,7 @@ const Connections = () => {
   const filteredFriends = filterConnections(friends, searchTerm);
   const filteredFollowing = filterConnections(following, searchTerm);
   const filteredSuggestions = filterConnections(suggestions, searchTerm);
+  const filteredPendingConnections = filterConnections(pendingConnections, searchTerm);
 
   
   return (
@@ -59,12 +62,15 @@ const Connections = () => {
 
           
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="w-full max-w-md">
+            <TabsList className="w-full max-w-2xl">
               <TabsTrigger value="friends" className="flex-1">
                 Friends ({filteredFriends.length})
               </TabsTrigger>
               <TabsTrigger value="following" className="flex-1">
                 Following ({filteredFollowing.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="flex-1">
+                Pending ({filteredPendingConnections.length})
               </TabsTrigger>
               <TabsTrigger value="suggestions" className="flex-1">
                 Suggestions ({filteredSuggestions.length})
@@ -83,6 +89,13 @@ const Connections = () => {
             <TabsContent value="following" className="mt-6">
               <FollowingTabContent 
                 following={filteredFollowing}
+                searchTerm={searchTerm}
+              />
+            </TabsContent>
+            
+            <TabsContent value="pending" className="mt-6">
+              <PendingTabContent 
+                pendingConnections={filteredPendingConnections}
                 searchTerm={searchTerm}
               />
             </TabsContent>

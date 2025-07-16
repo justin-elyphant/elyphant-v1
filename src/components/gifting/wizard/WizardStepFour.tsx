@@ -21,7 +21,6 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
   console.log("WizardStepFour rendering with data:", data);
   
   const [paymentAdded, setPaymentAdded] = useState(false);
-  const [skipPayment, setSkipPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | undefined>(data.selectedPaymentMethodId);
@@ -94,7 +93,6 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
   const handleContinue = () => {
     onNext({ 
       hasPaymentMethod: paymentAdded || !!selectedPaymentMethodId,
-      skipPaymentSetup: skipPayment,
       selectedPaymentMethodId: selectedPaymentMethodId
     });
   };
@@ -108,14 +106,6 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
     }
   };
 
-  const handleSkipPayment = () => {
-    setSkipPayment(true);
-    toast.info("You can add a payment method later in your settings");
-    onNext({ 
-      hasPaymentMethod: false,
-      skipPaymentSetup: true 
-    });
-  };
 
   // Only show payment step if auto-gifting is enabled
   if (!data.autoGiftingEnabled) {
@@ -131,7 +121,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
             Payment Method Setup
           </CardTitle>
           <CardDescription>
-            To enable auto-gifting, we need a payment method to automatically purchase gifts for {data.recipientName}. 
+            A payment method is required to enable auto-gifting for {data.recipientName}. 
             Your payment information is securely stored and encrypted.
           </CardDescription>
         </CardHeader>
@@ -246,15 +236,7 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={handleSkipPayment}
-          disabled={isLoading || isProcessing}
-        >
-          Skip for Now
-        </Button>
-
+      <div className="flex justify-end">
         <Button 
           onClick={handleContinue}
           disabled={(!paymentAdded && !selectedPaymentMethodId) || isLoading || isProcessing}

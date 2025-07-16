@@ -88,20 +88,28 @@ const StreamlinedMarketplaceWrapper = () => {
 
   return (
     <div className="space-y-6">
-      {/* Connection-Aware Header */}
+      {/* Connection-Aware Header with Hero Image */}
       {!connectionsLoading && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Welcome to the Marketplace
-            </h2>
-            {profile?.profile_type === 'giftor' && (
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                <Sparkles className="h-3 w-3 mr-1" />
-                AI Powered
-              </Badge>
-            )}
-          </div>
+        <div className="relative bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg overflow-hidden">
+          {/* Hero Image Background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-20"
+            style={{
+              backgroundImage: `url('/lovable-uploads/9765a848-d167-4135-b5d0-742e88ad187c.png')`
+            }}
+          />
+          <div className="relative z-10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Welcome to the Marketplace
+              </h2>
+              {profile?.profile_type === 'giftor' && (
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI Powered
+                </Badge>
+              )}
+            </div>
           
           {/* Quick Actions */}
           <Tabs defaultValue="browse" className="w-full">
@@ -191,6 +199,7 @@ const StreamlinedMarketplaceWrapper = () => {
               </div>
             </TabsContent>
           </Tabs>
+          </div>
         </div>
       )}
 

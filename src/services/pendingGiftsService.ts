@@ -252,5 +252,25 @@ export const pendingGiftsService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async updateAutoGiftingSettings(settings: { auto_approve_gifts?: boolean; has_payment_method?: boolean }): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+
+    const { error } = await supabase
+      .from('auto_gifting_settings')
+      .upsert({
+        user_id: user.id,
+        ...settings,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+
+    if (error) {
+      console.error('Error updating auto-gifting settings:', error);
+      throw error;
+    }
   }
 };

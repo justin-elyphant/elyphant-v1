@@ -121,6 +121,14 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
   const handleFinalSubmit = async (finalData: GiftSetupData) => {
     setIsLoading(true);
     try {
+      // Update auto-gifting settings first if auto-gifting is enabled
+      if (finalData.autoGiftingEnabled && finalData.hasPaymentMethod) {
+        await pendingGiftsService.updateAutoGiftingSettings({
+          auto_approve_gifts: finalData.autoApproveEnabled || false,
+          has_payment_method: true
+        });
+      }
+
       // Create pending connection
       const connection = await pendingGiftsService.createPendingConnection(
         finalData.recipientEmail,

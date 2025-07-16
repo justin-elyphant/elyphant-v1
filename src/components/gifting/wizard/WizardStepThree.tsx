@@ -86,9 +86,9 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={`p-4 border rounded-lg cursor-pointer transition-all ${
+            <div className={`p-4 border rounded-lg transition-all ${
               formData.autoGiftingEnabled ? "border-primary bg-primary/5" : "border-border"
-            }`} onClick={() => setFormData(prev => ({ ...prev, autoGiftingEnabled: !prev.autoGiftingEnabled }))}>
+            }`}>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-1">
                   <Zap className="h-5 w-5 text-primary" />
@@ -108,9 +108,9 @@ export const WizardStepThree: React.FC<WizardStepThreeProps> = ({ data, onNext, 
               </div>
             </div>
 
-            <div className={`p-4 border rounded-lg cursor-pointer transition-all ${
+            <div className={`p-4 border rounded-lg transition-all ${
               formData.scheduledGiftingEnabled ? "border-primary bg-primary/5" : "border-border"
-            }`} onClick={() => setFormData(prev => ({ ...prev, scheduledGiftingEnabled: !prev.scheduledGiftingEnabled }))}>
+            }`}>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-1">
                   <Calendar className="h-5 w-5 text-primary" />

@@ -8,7 +8,7 @@ import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrit
 
 const DashboardGrid = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Profile Data Integrity Panel - Top Priority */}
       <ProfileDataIntegrityPanel />
 

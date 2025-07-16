@@ -94,9 +94,9 @@ const SmartGiftingTab = () => {
         </div>
         
         {upcomingEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {upcomingEvents.map((event) => (
-              <div key={event.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800">
+              <div key={event.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 touch-manipulation">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
@@ -130,6 +130,7 @@ const SmartGiftingTab = () => {
                     size="sm" 
                     variant={event.autoGiftEnabled ? "outline" : "default"}
                     onClick={() => handleSetupAutoGift(event)}
+                    className="h-8 sm:h-7 touch-manipulation"
                   >
                     {event.autoGiftEnabled ? "Manage" : "Set Up"}
                   </Button>
@@ -152,12 +153,12 @@ const SmartGiftingTab = () => {
       </div>
 
       {/* Nicole AI Quick Access */}
-      <div className="p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">
+      <div className="p-4 sm:p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">
         {/* Subtle animated background effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-cyan-500/5 animate-pulse"></div>
         
-        <div className="flex items-center justify-between relative z-10">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+          <div className="flex-1">
             <h4 className="font-semibold flex items-center">
               <Bot className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
               <span className="bg-gradient-to-r from-purple-700 to-cyan-700 bg-clip-text text-transparent">
@@ -166,7 +167,7 @@ const SmartGiftingTab = () => {
             </h4>
             <p className="text-sm text-muted-foreground mt-1">Ask Nicole for personalized AI recommendations</p>
           </div>
-          <Button asChild className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white border-0 shadow-md">
+          <Button asChild className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white border-0 shadow-md h-10 sm:h-9 w-full sm:w-auto">
             <Link to="/marketplace?mode=nicole&open=true&greeting=dashboard">
               Ask Nicole
             </Link>
@@ -260,9 +261,9 @@ const MyCollectionsTab = () => {
         {wishlistCount > 0 ? (
           <div className="space-y-4">
             {/* Wishlist Folders */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {wishlists.slice(0, 4).map((wishlist) => (
-                <div key={wishlist.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                <div key={wishlist.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow touch-manipulation">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{wishlist.title}</h4>
                     <Badge variant="outline">{wishlist.items?.length || 0} items</Badge>
@@ -274,7 +275,7 @@ const MyCollectionsTab = () => {
                     {wishlist.category && (
                       <Badge variant="secondary" className="text-xs">{wishlist.category}</Badge>
                     )}
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 touch-manipulation">
                       <Link to={`/wishlist/${wishlist.id}`}>
                         <Eye className="h-4 w-4" />
                       </Link>
@@ -554,17 +555,17 @@ const GiftingHubCard = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="smart-gifting" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="smart-gifting" className="text-xs">
-              <Zap className="h-4 w-4 mr-1" />
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
+            <TabsTrigger value="smart-gifting" className="text-xs sm:text-sm h-10 sm:h-auto">
+              <Zap className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
               Smart Gifting
             </TabsTrigger>
-            <TabsTrigger value="collections" className="text-xs">
-              <Heart className="h-4 w-4 mr-1" />
+            <TabsTrigger value="collections" className="text-xs sm:text-sm h-10 sm:h-auto">
+              <Heart className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
               My Collections
             </TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs">
-              <Package className="h-4 w-4 mr-1" />
+            <TabsTrigger value="activity" className="text-xs sm:text-sm h-10 sm:h-auto">
+              <Package className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
               Gift Activity
             </TabsTrigger>
           </TabsList>

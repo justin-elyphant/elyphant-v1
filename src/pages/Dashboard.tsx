@@ -54,7 +54,7 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="container max-w-6xl mx-auto py-8 px-4">
+      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
         <DashboardGrid />
       </div>
     </MainLayout>

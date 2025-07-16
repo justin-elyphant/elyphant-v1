@@ -126,16 +126,16 @@ const SocialHubCard = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Connection Metrics */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-2 rounded-lg bg-muted/50">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="text-center p-3 sm:p-2 rounded-lg bg-muted/50">
             <div className="text-xl font-bold text-primary">{metrics.totalConnections}</div>
             <div className="text-xs text-muted-foreground">Friends</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50">
+          <div className="text-center p-3 sm:p-2 rounded-lg bg-muted/50">
             <div className="text-xl font-bold text-blue-600">{metrics.followersCount}</div>
             <div className="text-xs text-muted-foreground">Followers</div>
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50 relative">
+          <div className="text-center p-3 sm:p-2 rounded-lg bg-muted/50 relative">
             <div className="text-xl font-bold text-green-600 flex items-center justify-center gap-1">
               +{metrics.weeklyGrowth}
               <TrendingUp className="h-3 w-3" />
@@ -175,18 +175,18 @@ const SocialHubCard = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-6 w-6 p-0"
+                      className="h-8 w-8 sm:h-6 sm:w-6 p-0 touch-manipulation"
                       onClick={() => acceptConnectionRequest(request.id)}
                     >
-                      <CheckCircle className="h-3 w-3 text-green-600" />
+                      <CheckCircle className="h-4 w-4 sm:h-3 sm:w-3 text-green-600" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-6 w-6 p-0"
+                      className="h-8 w-8 sm:h-6 sm:w-6 p-0 touch-manipulation"
                       onClick={() => rejectConnectionRequest(request.id)}
                     >
-                      <X className="h-3 w-3 text-red-600" />
+                      <X className="h-4 w-4 sm:h-3 sm:w-3 text-red-600" />
                     </Button>
                   </div>
                 </div>
@@ -230,17 +230,17 @@ const SocialHubCard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" asChild className="h-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" asChild className="h-10 sm:h-8 touch-manipulation">
             <Link to="/connections?tab=suggestions" className="flex items-center gap-1.5">
-              <UserPlus className="h-3.5 w-3.5" />
-              <span className="text-xs">Find Friends</span>
+              <UserPlus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+              <span className="text-sm sm:text-xs">Find Friends</span>
             </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild className="h-8">
+          <Button variant="outline" size="sm" asChild className="h-10 sm:h-8 touch-manipulation">
             <Link to="/messages" className="flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span className="text-xs">Messages</span>
+              <MessageSquare className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+              <span className="text-sm sm:text-xs">Messages</span>
             </Link>
           </Button>
         </div>

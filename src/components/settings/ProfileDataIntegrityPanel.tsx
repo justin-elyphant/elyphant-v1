@@ -220,11 +220,16 @@ const ProfileDataIntegrityPanel: React.FC = () => {
           {hasIssues && (
             <Button
               onClick={handleCompleteProfile}
-              className="flex items-center gap-2 ml-4"
+              className="flex items-center gap-2 ml-2 sm:ml-4 h-9 sm:h-8"
               size="sm"
               variant={hasCriticalIssues ? "default" : "outline"}
             >
-              {hasCriticalIssues ? "Fix Critical Items" : "Optimize Profile"}
+              <span className="hidden sm:inline">
+                {hasCriticalIssues ? "Fix Critical Items" : "Optimize Profile"}
+              </span>
+              <span className="sm:hidden">
+                {hasCriticalIssues ? "Fix Issues" : "Optimize"}
+              </span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           )}
@@ -276,23 +281,23 @@ const ProfileDataIntegrityPanel: React.FC = () => {
           <Icon className="h-4 w-4" />
           {config.title}
         </h4>
-        <div className="space-y-2 max-h-32 overflow-y-auto">
+        <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
           {slideIssues.map((issue: any, index: number) => {
             const IssueIcon = getIssueIcon(issue.field);
             return (
               <Alert 
                 key={`${type}-${index}`} 
                 variant={type === 'critical' ? 'destructive' : 'default'}
-                className={`cursor-pointer ${config.bgHover} text-sm`} 
+                className={`cursor-pointer ${config.bgHover} text-sm min-h-[44px] touch-manipulation`} 
                 onClick={() => handleSpecificAction(issue)}
               >
                 <IssueIcon className="h-4 w-4" />
                 <AlertDescription className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{issue.issue}</div>
-                    <div className="text-xs opacity-80 mt-1 line-clamp-2">{issue.aiImpact}</div>
+                    <div className="text-xs opacity-80 mt-1 line-clamp-1 sm:line-clamp-2">{issue.aiImpact}</div>
                   </div>
-                  <Badge variant={getSeverityBadgeVariant(issue.severity)} className="ml-2 shrink-0">
+                  <Badge variant={getSeverityBadgeVariant(issue.severity)} className="ml-2 shrink-0 text-xs">
                     {issue.severity}
                   </Badge>
                 </AlertDescription>
@@ -311,12 +316,12 @@ const ProfileDataIntegrityPanel: React.FC = () => {
       completionScore >= 80 ? "border-l-blue-500" :
       completionScore >= 60 ? "border-l-yellow-500" : "border-l-red-500"
     )}>
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <Carousel className="w-full" setApi={setApi}>
           <CarouselContent>
             {slides.map((slide, index) => (
               <CarouselItem key={index}>
-                <div className="h-40 flex flex-col justify-center">
+                <div className="h-32 sm:h-40 flex flex-col justify-center">
                   {renderSlideContent(slide)}
                 </div>
               </CarouselItem>

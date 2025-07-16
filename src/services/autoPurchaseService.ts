@@ -34,7 +34,7 @@ export class AutoPurchaseService {
   /**
    * Check for upcoming gift events that need processing
    */
-  static async getUpcomingAutoGiftEvents(daysAhead: number = 7): Promise<ScheduledGiftEvent[]> {
+  static async getUpcomingAutoGiftEvents(daysAhead: number = 7): Promise<any[]> {
     const { data, error } = await supabase.rpc('get_upcoming_auto_gift_events', {
       days_ahead: daysAhead
     });

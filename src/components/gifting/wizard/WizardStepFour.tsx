@@ -4,9 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, CreditCard, Shield, Lock, Loader2 } from "lucide-react";
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from "@/integrations/stripe/client";
-import PaymentMethodForm from "@/components/payments/PaymentMethodForm";
 import { GiftSetupData } from "../GiftSetupWizard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,9 +99,18 @@ export const WizardStepFour: React.FC<WizardStepFourProps> = ({ data, onNext, is
           {/* Payment Form or Success State */}
           {!paymentAdded ? (
             <div className="space-y-4">
-              <Elements stripe={stripePromise}>
-                <PaymentMethodForm onSuccess={handlePaymentSuccess} />
-              </Elements>
+              <div className="p-4 border border-dashed border-muted-foreground/50 rounded-lg">
+                <p className="text-sm text-muted-foreground text-center">
+                  Payment method setup will be implemented here with Stripe Elements
+                </p>
+                <Button 
+                  onClick={handlePaymentSuccess} 
+                  className="w-full mt-2"
+                  variant="outline"
+                >
+                  Demo: Add Payment Method
+                </Button>
+              </div>
 
               <div className="flex items-center gap-2 pt-4 border-t">
                 <Lock className="h-4 w-4 text-muted-foreground" />

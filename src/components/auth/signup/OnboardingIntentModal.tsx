@@ -2,13 +2,13 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Gift, List } from "lucide-react";
+import { Zap, Search, List } from "lucide-react";
 
 interface OnboardingIntentModalProps {
   open: boolean;
-  onSelect: (userIntent: "giftor" | "giftee") => void;
+  onSelect: (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => void;
   onSkip: () => void; // Interface compatibility, not used here
-  suggestedIntent?: "giftor" | "giftee";
+  suggestedIntent?: "quick-gift" | "browse-shop" | "create-wishlist";
 }
 
 const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
@@ -16,11 +16,11 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   onSelect,
   suggestedIntent,
 }) => {
-  const [selectedIntent, setSelectedIntent] = React.useState<"giftor" | "giftee" | null>(null);
+  const [selectedIntent, setSelectedIntent] = React.useState<"quick-gift" | "browse-shop" | "create-wishlist" | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Enhanced: Handle intent selection with loading states
-  const handleIntentSelect = async (intent: "giftor" | "giftee") => {
+  const handleIntentSelect = async (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
     setSelectedIntent(intent);
     setIsLoading(true);
     
@@ -32,7 +32,7 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   };
 
   // Add highlight style if suggested or selected
-  const getButtonClass = (intent: "giftor" | "giftee") => {
+  const getButtonClass = (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
     let baseClass = "border-2 transition-all duration-200";
     
     if (selectedIntent === intent) {
@@ -51,57 +51,76 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
       <DialogContent className="sm:max-w-md animate-fade-in p-6 max-w-[90vw]">
         <DialogHeader className="mb-2">
           <DialogTitle className="text-xl font-semibold text-center">
-            Welcome! What brings you to Elyphant?
+            Welcome! How would you like to get started?
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-5 mt-4">
+        <div className="flex flex-col gap-4 mt-4">
           <Button
             variant="outline"
-            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("giftor")}`}
-            onClick={() => handleIntentSelect("giftor")}
+            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-purple-50 hover:border-purple-300 ${getButtonClass("quick-gift")}`}
+            onClick={() => handleIntentSelect("quick-gift")}
             disabled={isLoading}
-            data-testid="intent-giftor"
+            data-testid="intent-quick-gift"
           >
-            <Gift className="w-6 h-6 text-purple-600 flex-shrink-0" />
+            <Zap className="w-6 h-6 text-purple-600 flex-shrink-0" />
             <div className="flex flex-col">
               <span className="text-base font-medium text-foreground">
-                I'm here to <span className="font-semibold text-purple-700">give a gift</span>
+                <span className="font-semibold text-purple-700">Quick Gift (Elyphant Picks)</span>
               </span>
               <span className="text-sm text-muted-foreground font-normal mt-0.5">
-                Buy a gift for someone else (no wishlist needed)
+                Tell us about the occasion and recipient, we'll handle the rest
               </span>
             </div>
-            {suggestedIntent === "giftor" && (
+            {suggestedIntent === "quick-gift" && (
               <span className="ml-auto text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded">
                 Suggested
               </span>
             )}
           </Button>
+          
           <Button
             variant="outline"
-            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("giftee")}`}
-            onClick={() => handleIntentSelect("giftee")}
+            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-blue-50 hover:border-blue-300 ${getButtonClass("browse-shop")}`}
+            onClick={() => handleIntentSelect("browse-shop")}
             disabled={isLoading}
-            data-testid="intent-giftee"
+            data-testid="intent-browse-shop"
+          >
+            <Search className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-base font-medium text-foreground">
+                <span className="font-semibold text-blue-700">Browse & Shop with Nicole's Help</span>
+              </span>
+              <span className="text-sm text-muted-foreground font-normal mt-0.5">
+                Explore our curated marketplace with AI assistance
+              </span>
+            </div>
+            {suggestedIntent === "browse-shop" && (
+              <span className="ml-auto text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded">
+                Suggested
+              </span>
+            )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            className={`flex items-center justify-start gap-3 p-4 w-full h-auto text-left hover:bg-indigo-50 hover:border-indigo-300 ${getButtonClass("create-wishlist")}`}
+            onClick={() => handleIntentSelect("create-wishlist")}
+            disabled={isLoading}
+            data-testid="intent-create-wishlist"
           >
             <List className="w-6 h-6 text-indigo-600 flex-shrink-0" />
             <div className="flex flex-col">
               <span className="text-base font-medium text-foreground">
-                I want to <span className="font-semibold text-indigo-700">set up a wishlist</span>
+                <span className="font-semibold text-indigo-700">Create My First Wishlist</span>
               </span>
               <span className="text-sm text-muted-foreground font-normal mt-0.5">
-                Create &amp; share your wishlist for perfect gifting
+                Build and share your wishlist for perfect gifting
               </span>
             </div>
-            {suggestedIntent === "giftee" && (
+            {suggestedIntent === "create-wishlist" && (
               <span className="ml-auto text-xs px-2 py-1 bg-indigo-200 text-indigo-800 rounded">
                 Suggested
               </span>
-            )}
-            {isLoading && selectedIntent === "giftee" && (
-              <div className="ml-auto flex items-center">
-                <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
-              </div>
             )}
           </Button>
         </div>

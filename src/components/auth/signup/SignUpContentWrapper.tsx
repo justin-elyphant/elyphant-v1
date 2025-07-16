@@ -33,7 +33,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   bypassVerification = true
 }) => {
   const [shouldShowModal, setShouldShowModal] = React.useState(false);
-  const [suggestedIntent, setSuggestedIntent] = React.useState<"giftor" | "giftee" | undefined>(undefined);
+  const [suggestedIntent, setSuggestedIntent] = React.useState<"quick-gift" | "browse-shop" | "create-wishlist" | undefined>(undefined);
   const [isCheckingIntent, setIsCheckingIntent] = React.useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -57,7 +57,9 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       
       // Check for existing intent using LocalStorageService
       const nicoleContext = LocalStorageService.getNicoleContext();
-      const validIntent = nicoleContext?.selectedIntent === "giftor" || nicoleContext?.selectedIntent === "giftee";
+      const validIntent = nicoleContext?.selectedIntent === "quick-gift" || 
+                         nicoleContext?.selectedIntent === "browse-shop" || 
+                         nicoleContext?.selectedIntent === "create-wishlist";
       
       console.log("[SignUpContentWrapper] Current intent:", nicoleContext?.selectedIntent, "Valid:", validIntent);
 
@@ -65,12 +67,15 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       if (validIntent) {
         console.log("[SignUpContentWrapper] Valid intent found, navigating immediately");
         setTimeout(() => {
-          if (nicoleContext?.selectedIntent === "giftor") {
+          if (nicoleContext?.selectedIntent === "browse-shop") {
             console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
             navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
+          } else if (nicoleContext?.selectedIntent === "quick-gift") {
+            console.log("[SignUpContentWrapper] Navigating to dashboard for quick gift");
+            navigate("/dashboard", { replace: true });
           } else {
-            console.log("[SignUpContentWrapper] Navigating to streamlined signup for profile completion");
-            navigate("/signup?intent=complete-profile", { replace: true });
+            console.log("[SignUpContentWrapper] Navigating to dashboard for wishlist creation");
+            navigate("/dashboard", { replace: true });
           }
         }, 100);
         return;
@@ -80,14 +85,19 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
       if (!nicoleContext?.selectedIntent) {
         // Check for legacy intent data and migrate
         const ctaIntent = localStorage.getItem("ctaIntent");
-        if (ctaIntent === "giftor" || ctaIntent === "giftee") {
-          console.log("[SignUpContentWrapper] Migrating legacy intent:", ctaIntent);
-          setSuggestedIntent(ctaIntent as "giftor" | "giftee");
-          LocalStorageService.setNicoleContext({ selectedIntent: ctaIntent });
+        if (ctaIntent === "giftor") {
+          console.log("[SignUpContentWrapper] Migrating legacy giftor intent to browse-shop");
+          setSuggestedIntent("browse-shop");
+          LocalStorageService.setNicoleContext({ selectedIntent: "browse-shop" });
+          localStorage.removeItem("ctaIntent");
+        } else if (ctaIntent === "giftee") {
+          console.log("[SignUpContentWrapper] Migrating legacy giftee intent to create-wishlist");
+          setSuggestedIntent("create-wishlist");
+          LocalStorageService.setNicoleContext({ selectedIntent: "create-wishlist" });
           localStorage.removeItem("ctaIntent");
         }
       } else {
-        setSuggestedIntent(nicoleContext.selectedIntent as "giftor" | "giftee");
+        setSuggestedIntent(nicoleContext.selectedIntent as "quick-gift" | "browse-shop" | "create-wishlist");
       }
 
       // IMMEDIATELY show the intent modal without any loading states
@@ -99,7 +109,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
     }
   }, [step, userEmail, navigate]);
 
-  const handleSelectIntent = (userIntent: "giftor" | "giftee") => {
+  const handleSelectIntent = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
     console.log("[SignUpContentWrapper] Intent selected:", userIntent);
     
     // Set the intent and clear modal flags
@@ -120,12 +130,15 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
 
     // Navigate based on intent with small delay
     setTimeout(() => {
-      if (userIntent === "giftor") {
+      if (userIntent === "browse-shop") {
         console.log("[SignUpContentWrapper] Navigating to marketplace with AI mode");
         navigate("/marketplace?mode=nicole&open=true&greeting=personalized", { replace: true });
+      } else if (userIntent === "quick-gift") {
+        console.log("[SignUpContentWrapper] Navigating to dashboard for quick gift");
+        navigate("/dashboard", { replace: true });
       } else {
-        console.log("[SignUpContentWrapper] Navigating to streamlined signup for profile completion");
-        navigate("/signup?intent=complete-profile", { replace: true });
+        console.log("[SignUpContentWrapper] Navigating to dashboard for wishlist creation");
+        navigate("/dashboard", { replace: true });
       }
     }, 100);
   };

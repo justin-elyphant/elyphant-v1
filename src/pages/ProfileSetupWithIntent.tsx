@@ -5,6 +5,8 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import ProfileSetupFlow from "@/components/profile-setup/ProfileSetupFlow";
 import MainLayout from "@/components/layout/MainLayout";
+import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 
 /**
  * Handles the complete profile setup flow including intent selection
@@ -15,6 +17,8 @@ const ProfileSetupWithIntent = () => {
   const { user } = useAuth();
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [showGiftWizard, setShowGiftWizard] = useState(false);
+  const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +44,7 @@ const ProfileSetupWithIntent = () => {
     }
   }, [user, navigate]);
 
-  const handleIntentSelect = (intent: "giftor" | "giftee") => {
+  const handleIntentSelect = (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
     console.log(`User selected intent: ${intent}`);
     
     // Save intent selection
@@ -52,12 +56,33 @@ const ProfileSetupWithIntent = () => {
     // Clear completion state since we're done
     LocalStorageService.clearProfileCompletionState();
     
+    // Close intent modal first
+    setShowIntentModal(false);
+    
     // Route based on intent
-    if (intent === "giftor") {
-      navigate('/marketplace');
-    } else {
-      navigate('/dashboard');
+    if (intent === "quick-gift") {
+      setShowGiftWizard(true);
+    } else if (intent === "browse-shop") {
+      navigate('/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true');
+    } else if (intent === "create-wishlist") {
+      setShowCreateWishlist(true);
     }
+  };
+
+  const handleGiftWizardClose = () => {
+    setShowGiftWizard(false);
+    navigate('/dashboard');
+  };
+
+  const handleCreateWishlistSubmit = async (values: any) => {
+    console.log('Creating wishlist:', values);
+    setShowCreateWishlist(false);
+    navigate('/dashboard');
+  };
+
+  const handleCreateWishlistClose = () => {
+    setShowCreateWishlist(false);
+    navigate('/dashboard');
   };
 
   const handleProfileComplete = () => {
@@ -101,6 +126,17 @@ const ProfileSetupWithIntent = () => {
         open={showIntentModal}
         onSelect={handleIntentSelect}
         onSkip={() => {}} // Not used
+      />
+      
+      <GiftSetupWizard
+        open={showGiftWizard}
+        onOpenChange={setShowGiftWizard}
+      />
+      
+      <CreateWishlistDialog
+        open={showCreateWishlist}
+        onOpenChange={setShowCreateWishlist}
+        onSubmit={handleCreateWishlistSubmit}
       />
     </MainLayout>
   );

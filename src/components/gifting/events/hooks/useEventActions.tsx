@@ -33,9 +33,9 @@ export const useEventActions = () => {
 
   const handleEventClick = (event: ExtendedEventData) => {
     console.log("Event clicked:", event);
-    const { setCurrentEvent, setIsEditDrawerOpen } = useEvents();
+    const { setCurrentEvent } = useEvents();
     setCurrentEvent(event);
-    setIsEditDrawerOpen(true);
+    // For now, just set the current event - detailed view can be added later
   };
 
   return {

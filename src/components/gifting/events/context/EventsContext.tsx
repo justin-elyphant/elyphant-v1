@@ -8,12 +8,8 @@ interface EventsContextType {
   setEvents: (events: ExtendedEventData[]) => void;
   isLoading: boolean;
   error: string | null;
-  editingEvent: ExtendedEventData | null;
-  setEditingEvent: (event: ExtendedEventData | null) => void;
   currentEvent: ExtendedEventData | null;
   setCurrentEvent: (event: ExtendedEventData | null) => void;
-  isEditDrawerOpen: boolean;
-  setIsEditDrawerOpen: (open: boolean) => void;
   isGiftWizardOpen: boolean;
   setIsGiftWizardOpen: (open: boolean) => void;
   editingEventData: any | null;
@@ -33,9 +29,7 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [events, setEvents] = useState<ExtendedEventData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingEvent, setEditingEvent] = useState<ExtendedEventData | null>(null);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
   const [editingEventData, setEditingEventData] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
@@ -96,12 +90,8 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     setEvents,
     isLoading,
     error,
-    editingEvent,
-    setEditingEvent,
     currentEvent,
     setCurrentEvent,
-    isEditDrawerOpen,
-    setIsEditDrawerOpen,
     isGiftWizardOpen,
     setIsGiftWizardOpen,
     editingEventData,

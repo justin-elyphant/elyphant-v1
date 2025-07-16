@@ -534,13 +534,23 @@ const GiftingHubCard = () => {
   return (
     <Card className="border-2 border-gradient-to-r from-purple-200 to-pink-200">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold flex items-center">
-          <Gift className="h-6 w-6 mr-2 text-purple-500" />
-          Gifting Hub
-        </CardTitle>
-        <CardDescription>
-          Your central hub for all things gifting - from auto-gifts to wishlists and orders
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl font-semibold flex items-center">
+              <Gift className="h-6 w-6 mr-2 text-purple-500" />
+              Gifting Hub
+            </CardTitle>
+            <CardDescription>
+              Your central hub for all things gifting - from auto-gifts to wishlists and orders
+            </CardDescription>
+          </div>
+          <Button asChild variant="outline">
+            <Link to="/marketplace">
+              <Search className="h-4 w-4 mr-2" />
+              Go To Marketplace
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="smart-gifting" className="w-full">

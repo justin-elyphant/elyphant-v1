@@ -8,7 +8,6 @@ import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
 import AutoGiftExecutionMonitor from "@/components/gifting/auto-gift/AutoGiftExecutionMonitor";
 import UnifiedGiftTimingDashboard from "@/components/gifting/unified/UnifiedGiftTimingDashboard";
-import BackToDashboard from "@/components/shared/BackToDashboard";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ const Events = () => {
   if (!user) {
     return (
         <div className="container mx-auto py-8 px-4">
-          <BackToDashboard />
           
           <div className="mb-6">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Gift Timing Hub</h1>
@@ -56,7 +54,6 @@ const Events = () => {
   return (
       <EventsProvider>
         <div className="container mx-auto py-8 px-4">
-          <BackToDashboard />
           
           <div className="mb-6">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Gift Timing Hub</h1>

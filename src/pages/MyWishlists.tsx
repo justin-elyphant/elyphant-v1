@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import MyWishlists from "@/components/gifting/MyWishlists";
-import BackToDashboard from "@/components/shared/BackToDashboard";
 
 const MyWishlistsPage = () => {
   const { user } = useAuth();
@@ -58,7 +57,6 @@ const MyWishlistsPage = () => {
   return (
     <SidebarLayout>
       <div className="container mx-auto py-8 px-4">
-        <BackToDashboard />
         <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
         <MyWishlists />
       </div>

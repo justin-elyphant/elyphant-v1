@@ -1,7 +1,6 @@
 
 import React from "react";
 import { useAuth } from "@/contexts/auth";
-import BackToDashboard from "@/components/shared/BackToDashboard";
 import MyWishlists from "@/components/gifting/MyWishlists";
 import { ProductProvider } from "@/contexts/ProductContext";
 
@@ -46,7 +45,6 @@ const Wishlists = () => {
   return (
     <ProductProvider>
       <div className="container mx-auto py-8 px-4">
-        <BackToDashboard />
         <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
         <MyWishlists />
       </div>

@@ -2,8 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Sparkles, Bell, Gift } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sparkles, Bell, Gift } from "lucide-react";
 import AutoGiftApprovalDashboard from "@/components/gifting/auto-execution/AutoGiftApprovalDashboard";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 
@@ -56,12 +55,6 @@ const AutoGiftApprovals = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Gift className="h-8 w-8 text-primary" />

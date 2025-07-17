@@ -3,10 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
+import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
+  const { profile } = useUnifiedProfile();
   const navigate = useNavigate();
   const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
@@ -49,8 +51,21 @@ const Dashboard = () => {
   // At this point, loading/timeouts are resolved. If still no user, let useEffect redirect.
   if (!user && !isLoading && !localLoadingTimeout) return null;
 
+  // Get first name from auth metadata or profile
+  const firstName = user?.user_metadata?.first_name;
+
   return (
     <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+      {/* Welcome Header */}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+          Welcome {firstName ? `${firstName} ` : ''}to Elyphant
+        </h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          Explore your dashboard to connect with friends, schedule gifts, or build your wishlists to share
+        </p>
+      </div>
+      
       <DashboardGrid />
     </div>
   );

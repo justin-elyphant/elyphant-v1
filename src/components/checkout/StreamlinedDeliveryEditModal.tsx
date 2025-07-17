@@ -35,7 +35,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   deliveryGroup,
   onSave,
 }) => {
-  const { getConnectionAddress, refreshConnection } = useConnectionAddresses();
+  const { getConnectionAddress, refreshConnection, loading: connectionsLoading } = useConnectionAddresses();
   
   // Form state
   const [name, setName] = useState('');
@@ -59,12 +59,13 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   console.log('Modal Debug - DeliveryGroup:', deliveryGroup);
   console.log('Modal Debug - ConnectionData:', connectionData);
   console.log('Modal Debug - ConnectionId:', deliveryGroup.connectionId);
+  console.log('Modal Debug - ConnectionsLoading:', connectionsLoading);
 
   useEffect(() => {
-    if (isOpen) {
-      // Initialize form from delivery group and connection data
+    if (isOpen && !connectionsLoading) {
+      // Only initialize when modal is open and connections have finished loading
       const connData = connectionData;
-      console.log('Connection data:', connData, 'Delivery group:', deliveryGroup);
+      console.log('UseEffect - Connection data:', connData, 'Delivery group:', deliveryGroup);
       
       setName(connData?.name || deliveryGroup.connectionName || '');
       setEmail(connData?.email || '');
@@ -87,7 +88,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
           : undefined
       );
     }
-  }, [isOpen, deliveryGroup, connectionData]);
+  }, [isOpen, deliveryGroup, connectionData, connectionsLoading]);
 
   const handleSave = async () => {
     if (addressOverride && !isValidAddress) {

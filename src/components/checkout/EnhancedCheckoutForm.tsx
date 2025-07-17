@@ -11,7 +11,9 @@ import {
   AlertCircle, 
   CheckCircle,
   Truck,
-  Gift
+  Gift,
+  Edit3,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
@@ -21,6 +23,8 @@ import { toast } from 'sonner';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import ModernOrderSummary from './ModernOrderSummary';
 import CheckoutProgressIndicator from './CheckoutProgressIndicator';
+import DeliveryGroupEditModal from './DeliveryGroupEditModal';
+import { DeliveryGroup } from '@/types/recipient';
 
 interface ShippingInfo {
   name: string;
@@ -39,7 +43,7 @@ interface EnhancedCheckoutFormProps {
 const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   onCheckoutComplete
 }) => {
-  const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
+  const { cartItems, deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
   const { connections, loading: connectionsLoading, hasValidAddress, getConnectionAddress } = useConnectionAddresses();
   const { profile } = useProfile();
   const [currentStep, setCurrentStep] = useState<'review' | 'shipping' | 'payment'>('review');
@@ -61,6 +65,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   const [shippingCost, setShippingCost] = useState<number>(0);
   const [shippingMethod, setShippingMethod] = useState<string>('Standard Shipping');
   const [taxAmount, setTaxAmount] = useState<number>(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<DeliveryGroup | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -140,6 +146,31 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     setShippingInfo(prev => ({ ...prev, ...data }));
   };
 
+  const handleEditDeliveryGroup = (group: DeliveryGroup) => {
+    setEditingGroup(group);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveDeliveryGroup = (updatedGroup: DeliveryGroup) => {
+    // Update all items in this delivery group with the new information
+    const itemsInGroup = cartItems.filter(item => 
+      item.recipientAssignment?.deliveryGroupId === updatedGroup.id
+    );
+
+    itemsInGroup.forEach(item => {
+      if (item.recipientAssignment) {
+        updateRecipientAssignment(item.product.id, {
+          giftMessage: updatedGroup.giftMessage,
+          scheduledDeliveryDate: updatedGroup.scheduledDeliveryDate,
+          shippingAddress: updatedGroup.shippingAddress
+        });
+      }
+    });
+
+    toast.success('Delivery group updated successfully');
+    setEditModalOpen(false);
+    setEditingGroup(null);
+  };
 
   const handleProceedToPayment = () => {
     if (!validateAddresses()) {
@@ -228,18 +259,28 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                   const hasAddress = Boolean(group.shippingAddress || connectionAddress);
 
                   return (
-                    <div key={group.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
+                    <div key={group.id} className="border rounded-lg p-6 space-y-4">
+                      {/* Header with recipient info and edit button */}
+                      <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           <User className="h-5 w-5" />
                           <div>
-                            <div className="font-medium">{group.connectionName}</div>
+                            <div className="font-medium text-lg">{group.connectionName}</div>
                             <div className="text-sm text-muted-foreground">
                               {group.items.length} item(s)
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditDeliveryGroup(group)}
+                            className="flex items-center gap-2"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            Edit
+                          </Button>
                           {hasAddress ? (
                             <Badge variant="default" className="flex items-center gap-1">
                               <CheckCircle className="h-3 w-3" />
@@ -254,39 +295,80 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                         </div>
                       </div>
 
+                      {/* Prominent Address Display */}
                       {hasAddress && (
-                        <div className="flex items-start gap-2 mt-2 p-3 bg-muted/30 rounded">
-                          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                          <div className="text-sm">
-                            {group.shippingAddress ? (
-                              <div>
-                                {group.shippingAddress.name}<br />
-                                {group.shippingAddress.address}<br />
-                                {group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}
+                        <div className="bg-background border rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <MapPin className="h-5 w-5 mt-0.5 text-primary" />
+                            <div className="flex-1">
+                              <div className="font-medium mb-1">Delivery Address</div>
+                              <div className="text-sm leading-relaxed">
+                                {group.shippingAddress ? (
+                                  <div>
+                                    <div className="font-medium">{group.shippingAddress.name}</div>
+                                    <div className="text-muted-foreground">
+                                      {group.shippingAddress.address}<br />
+                                      {group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}<br />
+                                      {group.shippingAddress.country}
+                                    </div>
+                                  </div>
+                                ) : connectionAddress ? (
+                                  <div>
+                                    <div className="font-medium">{connectionAddress.name}</div>
+                                    <div className="text-muted-foreground">
+                                      {connectionAddress.address}<br />
+                                      {connectionAddress.city}, {connectionAddress.state} {connectionAddress.zipCode}<br />
+                                      {connectionAddress.country || 'United States'}
+                                    </div>
+                                  </div>
+                                ) : null}
                               </div>
-                            ) : connectionAddress ? (
-                              <div>
-                                {connectionAddress.name}<br />
-                                {connectionAddress.address}<br />
-                                {connectionAddress.city}, {connectionAddress.state} {connectionAddress.zipCode}
-                              </div>
-                            ) : null}
+                            </div>
                           </div>
                         </div>
                       )}
 
+                      {/* Gift Message */}
                       {group.giftMessage && (
-                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                          <div className="text-sm font-medium text-blue-900">Gift Message:</div>
-                          <div className="text-sm text-blue-800 mt-1">{group.giftMessage}</div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Gift className="h-5 w-5 mt-0.5 text-blue-600" />
+                            <div className="flex-1">
+                              <div className="font-medium text-blue-900 mb-1">Gift Message</div>
+                              <div className="text-sm text-blue-800 leading-relaxed">
+                                "{group.giftMessage}"
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
 
+                      {/* Scheduled Delivery */}
+                      {group.scheduledDeliveryDate && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <CalendarIcon className="h-5 w-5 mt-0.5 text-green-600" />
+                            <div className="flex-1">
+                              <div className="font-medium text-green-900 mb-1">Scheduled Delivery</div>
+                              <div className="text-sm text-green-800">
+                                {new Date(group.scheduledDeliveryDate).toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Address needed alert */}
                       {!hasAddress && (
-                        <Alert className="mt-3">
+                        <Alert className="border-destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            This recipient needs a shipping address. Consider requesting their address through the connections center.
+                            This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Edit button.
                           </AlertDescription>
                         </Alert>
                       )}
@@ -331,6 +413,16 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
           />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingGroup && (
+        <DeliveryGroupEditModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          deliveryGroup={editingGroup}
+          onSave={handleSaveDeliveryGroup}
+        />
+      )}
     </div>
   );
 };

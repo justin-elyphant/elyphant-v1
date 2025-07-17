@@ -121,7 +121,28 @@ const SmartGiftingTab = () => {
         });
       }
     } else {
-      setGiftSetupInitialData(null);
+      // Handle regular events (non-pending invitations)
+      console.log('GiftingHubCard: Setting up regular event data:', event);
+      
+      // Transform regular event data for the wizard
+      const regularEventData = {
+        recipientName: event.person,
+        recipientEmail: event.recipientEmail || '',
+        relationshipType: event.relationshipType || 'friend',
+        giftingEvents: [{
+          dateType: event.type || 'Birthday',
+          date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
+          isRecurring: event.isRecurring || false
+        }],
+        autoGiftingEnabled: event.autoGiftEnabled || false,
+        scheduledGiftingEnabled: !(event.autoGiftEnabled || false),
+        budgetLimit: event.autoGiftAmount || 50,
+        giftCategories: event.giftCategories || [],
+        notificationDays: event.notificationDays || [7, 3, 1]
+      };
+      
+      console.log('GiftingHubCard: Regular event initial data:', regularEventData);
+      setGiftSetupInitialData(regularEventData);
     }
     
     setSetupDialogOpen(true);
@@ -336,15 +357,7 @@ const SmartGiftingTab = () => {
         <GiftSetupWizard
           open={setupDialogOpen}
           onOpenChange={setSetupDialogOpen}
-          initialData={{
-            recipientName: selectedEvent.person,
-            relationshipType: selectedEvent.relationshipType,
-            giftingEvents: [{
-              dateType: selectedEvent.type,
-              date: selectedEvent.date,
-              isRecurring: true
-            }]
-          }}
+          initialData={giftSetupInitialData}
         />
       )}
       

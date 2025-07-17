@@ -63,16 +63,21 @@ export const useEventEdit = () => {
   const handleEditEvent = (id: string) => {
     const eventToEdit = events.find(event => event.id === id);
     if (eventToEdit) {
-      console.log('Editing event:', eventToEdit); // Debug log
+      console.log('🔍 Editing event - Full event data:', eventToEdit); // Debug log
+      console.log('🔍 Recipient Email:', eventToEdit.recipientEmail); // Debug log
+      console.log('🔍 Relationship Type:', eventToEdit.relationshipType); // Debug log
       
       // Transform event to gift setup data
       const giftSetupData = transformEventToGiftSetupData(eventToEdit);
+      console.log('🔍 Transformed data for wizard:', giftSetupData); // Debug log
       
       // Set the initial data for the gift wizard
       setGiftWizardInitialData(giftSetupData);
       
       // Open the gift wizard
       setIsGiftWizardOpen(true);
+    } else {
+      console.log('🚫 Event not found with id:', id);
     }
   };
 

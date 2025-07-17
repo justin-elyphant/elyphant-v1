@@ -99,7 +99,7 @@ const StreamlinedMarketplaceWrapper = () => {
             }}
           />
           {/* Overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-black/10" />
           
           <div className="relative z-10 p-8 w-full max-w-4xl text-center">
             <div className="mb-6">

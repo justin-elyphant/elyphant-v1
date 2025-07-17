@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Connection, RelationshipType } from "@/types/connections";
 import { unifiedRecipientService, UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
+import GoogleAddressInput from "./GoogleAddressInput";
 
 interface PendingConnectionEditModalProps {
   connection: Connection;
@@ -36,12 +37,14 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [recipientData, setRecipientData] = useState<UnifiedRecipient | null>(null);
+  const [googleAddressValue, setGoogleAddressValue] = useState('');
   const [formData, setFormData] = useState({
     name: connection.name || '',
     email: connection.recipientEmail || '',
     relationship_type: connection.relationship || 'friend',
     address: {
       street: '',
+      address_line_2: '',
       city: '',
       state: '',
       zipCode: '',
@@ -55,20 +58,25 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
       const loadRecipientData = async () => {
         try {
           const recipient = await unifiedRecipientService.getRecipientById(connection.id);
+          console.log('🔍 Loaded recipient data:', recipient);
+          
           if (recipient) {
             setRecipientData(recipient);
-            setFormData({
+            const newFormData = {
               name: recipient.name || '',
               email: recipient.email || '',
               relationship_type: (recipient.relationship_type as RelationshipType) || 'friend',
               address: {
                 street: recipient.address?.street || '',
+                address_line_2: recipient.address?.address_line_2 || '',
                 city: recipient.address?.city || '',
                 state: recipient.address?.state || '',
                 zipCode: recipient.address?.zipCode || '',
                 country: recipient.address?.country || 'US'
               }
-            });
+            };
+            console.log('🔍 Setting form data:', newFormData);
+            setFormData(newFormData);
           }
         } catch (error) {
           console.error('Error loading recipient data:', error);
@@ -107,6 +115,16 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
       address: {
         ...prev.address,
         [field]: value
+      }
+    }));
+  };
+
+  const handleGoogleAddressSelect = (address: any) => {
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        ...address
       }
     }));
   };
@@ -166,6 +184,14 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               <CardTitle className="text-lg">Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <GoogleAddressInput
+                value={googleAddressValue}
+                onChange={setGoogleAddressValue}
+                onAddressSelect={handleGoogleAddressSelect}
+                label="Search Address"
+                placeholder="Start typing an address..."
+              />
+              
               <div className="space-y-2">
                 <Label htmlFor="street">Street Address</Label>
                 <Input
@@ -173,6 +199,16 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
                   value={formData.address.street}
                   onChange={(e) => handleAddressChange('street', e.target.value)}
                   placeholder="123 Main St"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address_line_2">Apartment, Suite, etc. (Optional)</Label>
+                <Input
+                  id="address_line_2"
+                  value={formData.address.address_line_2}
+                  onChange={(e) => handleAddressChange('address_line_2', e.target.value)}
+                  placeholder="Apt 4B, Suite 200, etc."
                 />
               </div>
 

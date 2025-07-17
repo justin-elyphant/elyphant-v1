@@ -19,6 +19,7 @@ import { useProfile } from '@/contexts/profile/ProfileContext';
 import { toast } from 'sonner';
 import AddressBookSelector from './AddressBookSelector';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
+import EnhancedRecipientSelection from "./EnhancedRecipientSelection";
 
 interface ShippingInfo {
   name: string;
@@ -37,7 +38,7 @@ interface EnhancedCheckoutFormProps {
 const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   onCheckoutComplete
 }) => {
-  const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
+  const { cartItems, deliveryGroups, getUnassignedItems, assignItemsToNewRecipient } = useCart();
   const { connections, loading: connectionsLoading, hasValidAddress, getConnectionAddress } = useConnectionAddresses();
   const { profile } = useProfile();
   const [currentStep, setCurrentStep] = useState<'review' | 'shipping' | 'payment'>('review');
@@ -123,6 +124,12 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
   const handleUpdateShipping = (data: Partial<ShippingInfo>) => {
     setShippingInfo(prev => ({ ...prev, ...data }));
+  };
+
+  const handleRecipientSelect = (recipient: any) => {
+    const unassignedItems = getUnassignedItems();
+    const productIds = unassignedItems.map(item => item.product.product_id);
+    assignItemsToNewRecipient(productIds, recipient);
   };
 
   const handleProceedToPayment = () => {
@@ -290,6 +297,24 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 <CheckoutForm 
                   shippingInfo={shippingInfo}
                   onUpdate={handleUpdateShipping}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recipient Selection for Unassigned Items */}
+          {getUnassignedItems().length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Assign Items to Recipient
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EnhancedRecipientSelection
+                  onRecipientSelect={handleRecipientSelect}
+                  title="Who should receive these items?"
                 />
               </CardContent>
             </Card>

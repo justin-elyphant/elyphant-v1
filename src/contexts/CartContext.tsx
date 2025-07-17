@@ -26,6 +26,7 @@ interface CartContextType {
   updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>) => void;
   getItemsByRecipient: () => Map<string, CartItem[]>;
   getUnassignedItems: () => CartItem[];
+  assignItemsToNewRecipient: (productIds: string[], recipientData: any) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -268,6 +269,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   }, []);
 
+  const assignItemsToNewRecipient = useCallback((productIds: string[], recipientData: any) => {
+    const deliveryGroupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const recipientAssignment: RecipientAssignment = {
+      connectionId: recipientData.id,
+      connectionName: recipientData.name,
+      deliveryGroupId,
+      shippingAddress: recipientData.address
+    };
+
+    setCartItems(prev =>
+      prev.map(item =>
+        productIds.includes(item.product.product_id)
+          ? { ...item, recipientAssignment }
+          : item
+      )
+    );
+    
+    toast.success(`Items assigned to ${recipientData.name}`);
+  }, []);
+
   const contextValue = useMemo(() => ({
     cartItems,
     cartTotal,
@@ -283,6 +305,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateRecipientAssignment,
     getItemsByRecipient,
     getUnassignedItems,
+    assignItemsToNewRecipient,
   }), [
     cartItems,
     cartTotal,
@@ -298,6 +321,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateRecipientAssignment,
     getItemsByRecipient,
     getUnassignedItems,
+    assignItemsToNewRecipient,
   ]);
 
   return (

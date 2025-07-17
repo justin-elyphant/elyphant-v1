@@ -7,6 +7,7 @@ export const formSchema = z.object({
   recipientEmail: z.string().email("Please enter a valid email"),
   recipientPhone: z.string().optional(),
   recipientAddress: z.string().min(1, "Address is required"),
+  recipientAddress2: z.string().optional(),
   recipientCity: z.string().min(1, "City is required"),
   recipientState: z.string().min(1, "State is required"),
   recipientZip: z.string().min(1, "ZIP code is required"),

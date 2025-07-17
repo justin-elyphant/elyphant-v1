@@ -48,6 +48,9 @@ export const pendingGiftsService = {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
 
+    // Extract phone number from shipping address if provided
+    const recipientPhone = shippingAddress?.phone || null;
+
     // Check if a pending connection already exists for this email
     const { data: existingConnection } = await supabase
       .from('user_connections')
@@ -64,6 +67,7 @@ export const pendingGiftsService = {
         .update({
           relationship_type: relationshipType,
           pending_recipient_name: recipientName,
+          pending_recipient_phone: recipientPhone,
           pending_shipping_address: shippingAddress,
           invitation_sent_at: new Date().toISOString()
         })
@@ -85,6 +89,7 @@ export const pendingGiftsService = {
         relationship_type: relationshipType,
         pending_recipient_email: recipientEmail,
         pending_recipient_name: recipientName,
+        pending_recipient_phone: recipientPhone,
         pending_shipping_address: shippingAddress,
         invitation_sent_at: new Date().toISOString()
       })

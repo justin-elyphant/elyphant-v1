@@ -2099,6 +2099,7 @@ export type Database = {
           invitation_token: string | null
           pending_recipient_email: string | null
           pending_recipient_name: string | null
+          pending_recipient_phone: string | null
           pending_shipping_address: Json | null
           relationship_type: string
           status: string
@@ -2117,6 +2118,7 @@ export type Database = {
           invitation_token?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null
+          pending_recipient_phone?: string | null
           pending_shipping_address?: Json | null
           relationship_type: string
           status?: string
@@ -2135,6 +2137,7 @@ export type Database = {
           invitation_token?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null
+          pending_recipient_phone?: string | null
           pending_shipping_address?: Json | null
           relationship_type?: string
           status?: string

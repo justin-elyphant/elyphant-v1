@@ -41,6 +41,20 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({ control }) => {
         )}
       />
 
+      <FormField
+        control={control}
+        name="recipientAddress2"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Address Line 2</FormLabel>
+            <FormControl>
+              <Input placeholder="Apartment, Suite, Unit, etc. (optional)" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={control}

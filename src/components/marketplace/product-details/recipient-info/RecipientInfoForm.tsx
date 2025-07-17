@@ -44,6 +44,7 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
       recipientEmail: "",
       recipientPhone: "",
       recipientAddress: "",
+      recipientAddress2: "",
       recipientCity: "",
       recipientState: "",
       recipientZip: "",

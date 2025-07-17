@@ -184,6 +184,14 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               <CardTitle className="text-lg">Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <GoogleAddressInput
+                value={googleAddressValue}
+                onChange={setGoogleAddressValue}
+                onAddressSelect={handleGoogleAddressSelect}
+                label="Search Address"
+                placeholder="Start typing an address..."
+              />
+              
               <div className="space-y-2">
                 <Label htmlFor="street">Street Address</Label>
                 <Input

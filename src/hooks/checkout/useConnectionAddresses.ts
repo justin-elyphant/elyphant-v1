@@ -5,13 +5,15 @@ import { toast } from 'sonner';
 
 interface ConnectionWithAddress {
   id: string;
-  connected_user_id: string;
+  connected_user_id: string | null;
   name: string;
   relationship_type: string;
+  status: string;
   email?: string;
   shipping_address?: {
     name: string;
     address: string;
+    address2?: string;
     city: string;
     state: string;
     zipCode: string;
@@ -39,7 +41,7 @@ export const useConnectionAddresses = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch connections with their profile data and addresses
+      // Fetch both accepted and pending connections
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
         .select(`
@@ -47,6 +49,9 @@ export const useConnectionAddresses = () => {
           connected_user_id,
           relationship_type,
           status,
+          pending_recipient_name,
+          pending_recipient_email,
+          pending_shipping_address,
           profiles!user_connections_connected_user_id_fkey(
             id,
             name,
@@ -54,7 +59,7 @@ export const useConnectionAddresses = () => {
           )
         `)
         .eq('user_id', user.id)
-        .eq('status', 'accepted');
+        .in('status', ['accepted', 'pending_invitation']);
 
       if (connectionsError) throw connectionsError;
 
@@ -63,52 +68,91 @@ export const useConnectionAddresses = () => {
         return;
       }
 
-      // Fetch addresses for all connected users
-      const connectedUserIds = connectionsData.map(conn => conn.connected_user_id);
-      const { data: addressesData, error: addressesError } = await supabase
-        .from('user_addresses')
-        .select('user_id, name, address, is_default')
-        .in('user_id', connectedUserIds);
+      // Fetch addresses for accepted connections only
+      const acceptedConnections = connectionsData.filter(conn => 
+        conn.status === 'accepted' && conn.connected_user_id
+      );
+      const connectedUserIds = acceptedConnections.map(conn => conn.connected_user_id);
+      
+      let addressesData: any[] = [];
+      if (connectedUserIds.length > 0) {
+        const { data, error: addressesError } = await supabase
+          .from('user_addresses')
+          .select('user_id, name, address, is_default')
+          .in('user_id', connectedUserIds);
 
-      if (addressesError) {
-        console.error('Error fetching addresses:', addressesError);
-        // Continue without addresses instead of failing completely
+        if (addressesError) {
+          console.error('Error fetching addresses:', addressesError);
+        } else {
+          addressesData = data || [];
+        }
       }
 
-      // Combine connection data with address data
+      // Process all connections (both accepted and pending)
       const formattedConnections: ConnectionWithAddress[] = connectionsData.map(conn => {
-        const profile = conn.profiles as any;
-        const userAddress = addressesData?.find(addr => 
-          addr.user_id === conn.connected_user_id && addr.is_default
-        ) || addressesData?.find(addr => addr.user_id === conn.connected_user_id);
+        if (conn.status === 'pending_invitation') {
+          // Handle pending connections using pending_* fields
+          let formattedAddress = null;
+          if (conn.pending_shipping_address) {
+            const addressData = conn.pending_shipping_address as any;
+            formattedAddress = {
+              name: conn.pending_recipient_name || 'Unknown User',
+              address: addressData.address || addressData.street || addressData.address_line1 || '',
+              address2: addressData.address2 || addressData.address_line2 || '',
+              city: addressData.city || '',
+              state: addressData.state || '',
+              zipCode: addressData.zipCode || addressData.zip_code || '',
+              country: addressData.country || 'United States',
+              ...addressData
+            };
+          }
 
-        // Handle the address structure properly - address is stored as JSON in the database
-        let formattedAddress = null;
-        if (userAddress?.address) {
-          const addressData = userAddress.address as any;
-          formattedAddress = {
-            name: userAddress.name || profile?.name || 'Unknown User',
-            address: addressData.street || addressData.address_line1 || addressData.address || '',
-            city: addressData.city || '',
-            state: addressData.state || '',
-            zipCode: addressData.zipCode || addressData.zip_code || '',
-            country: addressData.country || 'United States',
-            // Include additional fields for flexible access
-            ...addressData
+          return {
+            id: conn.id,
+            connected_user_id: null, // No connected user for pending
+            name: conn.pending_recipient_name || 'Unknown User',
+            email: conn.pending_recipient_email,
+            relationship_type: conn.relationship_type,
+            status: conn.status,
+            shipping_address: formattedAddress,
+            has_address: Boolean(conn.pending_shipping_address)
+          };
+        } else {
+          // Handle accepted connections using profiles and user_addresses
+          const profile = conn.profiles as any;
+          const userAddress = addressesData?.find(addr => 
+            addr.user_id === conn.connected_user_id && addr.is_default
+          ) || addressesData?.find(addr => addr.user_id === conn.connected_user_id);
+
+          let formattedAddress = null;
+          if (userAddress?.address) {
+            const addressData = userAddress.address as any;
+            formattedAddress = {
+              name: userAddress.name || profile?.name || 'Unknown User',
+              address: addressData.street || addressData.address_line1 || addressData.address || '',
+              address2: addressData.address2 || addressData.address_line2 || '',
+              city: addressData.city || '',
+              state: addressData.state || '',
+              zipCode: addressData.zipCode || addressData.zip_code || '',
+              country: addressData.country || 'United States',
+              ...addressData
+            };
+          }
+
+          return {
+            id: conn.id,
+            connected_user_id: conn.connected_user_id,
+            name: profile?.name || 'Unknown User',
+            email: profile?.email,
+            relationship_type: conn.relationship_type,
+            status: conn.status,
+            shipping_address: formattedAddress,
+            has_address: Boolean(userAddress)
           };
         }
-
-        return {
-          id: conn.id,
-          connected_user_id: conn.connected_user_id,
-          name: profile?.name || 'Unknown User',
-          email: profile?.email,
-          relationship_type: conn.relationship_type,
-          shipping_address: formattedAddress,
-          has_address: Boolean(userAddress)
-        };
       });
 
+      console.log('Fetched connections:', formattedConnections);
       setConnections(formattedConnections);
     } catch (err) {
       console.error('Error fetching connection addresses:', err);

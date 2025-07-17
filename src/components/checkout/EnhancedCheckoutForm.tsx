@@ -344,7 +344,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                           <RecipientAddressDisplay 
                             address={group.shippingAddress || recipientAddress}
                             showFullAddress={true}
-                            label=""
+                            label="Delivery Address"
                           />
                         </div>
                       )}

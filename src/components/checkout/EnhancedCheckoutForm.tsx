@@ -24,6 +24,7 @@ import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import ModernOrderSummary from './ModernOrderSummary';
 import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 import StreamlinedDeliveryEditModal from './StreamlinedDeliveryEditModal';
+import RecipientAddressDisplay from './RecipientAddressDisplay';
 import { DeliveryGroup } from '@/types/recipient';
 
 interface ShippingInfo {

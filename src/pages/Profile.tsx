@@ -8,7 +8,6 @@ import ProfileInfo from "@/components/user-profile/ProfileInfo";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import LoadingState from "./profile-setup/LoadingState";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Profile as ProfileType } from "@/types/profile";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
@@ -177,14 +176,12 @@ const Profile = () => {
 
   if (!profileData) {
     return (
-      <SidebarLayout>
-        <div className="container max-w-4xl mx-auto py-8 px-4">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-muted-foreground">Profile not found</h1>
-            <p className="text-muted-foreground mt-2">The user you're looking for doesn't exist.</p>
-          </div>
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-muted-foreground">Profile not found</h1>
+          <p className="text-muted-foreground mt-2">The user you're looking for doesn't exist.</p>
         </div>
-      </SidebarLayout>
+      </div>
     );
   }
 
@@ -192,54 +189,52 @@ const Profile = () => {
 
   return (
     <ProfileErrorBoundary>
-      <SidebarLayout>
-        <div className="container max-w-4xl mx-auto py-6 px-4">
-          {isMockProfile && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
-                <strong>Demo Profile:</strong> This is a demonstration profile used for testing messaging features.
-              </p>
-            </div>
-          )}
+      <div className="container max-w-4xl mx-auto py-6 px-4">
+        {isMockProfile && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <strong>Demo Profile:</strong> This is a demonstration profile used for testing messaging features.
+            </p>
+          </div>
+        )}
 
-          {/* Profile Banner */}
-          <ProfileBanner 
-            userData={profileData}
-            isCurrentUser={isCurrentUser}
-            isFollowing={isFollowing}
-            onFollow={handleFollow}
-            onShare={handleShare}
-            userStatus={userStatus}
-          />
+        {/* Profile Banner */}
+        <ProfileBanner 
+          userData={profileData}
+          isCurrentUser={isCurrentUser}
+          isFollowing={isFollowing}
+          onFollow={handleFollow}
+          onShare={handleShare}
+          userStatus={userStatus}
+        />
 
-          {/* Profile Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            {/* Left Sidebar - Profile Info */}
-            <div className="lg:col-span-1">
-              <ProfileInfo profile={profileData} />
-            </div>
-
-            {/* Main Content - Tabs */}
-            <div className="lg:col-span-2">
-              <ProfileTabs 
-                profile={profileData}
-                isOwnProfile={isCurrentUser}
-                onUpdateProfile={updateProfile}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
-            </div>
+        {/* Profile Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Left Sidebar - Profile Info */}
+          <div className="lg:col-span-1">
+            <ProfileInfo profile={profileData} />
           </div>
 
-          {/* Signup CTA for non-authenticated users */}
-          {shouldShowCTA && (
-            <SignupCTA 
-              profileName={profileData.name || 'User'}
-              onDismiss={dismissCTA}
+          {/* Main Content - Tabs */}
+          <div className="lg:col-span-2">
+            <ProfileTabs 
+              profile={profileData}
+              isOwnProfile={isCurrentUser}
+              onUpdateProfile={updateProfile}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
             />
-          )}
+          </div>
         </div>
-      </SidebarLayout>
+
+        {/* Signup CTA for non-authenticated users */}
+        {shouldShowCTA && (
+          <SignupCTA 
+            profileName={profileData.name || 'User'}
+            onDismiss={dismissCTA}
+          />
+        )}
+      </div>
     </ProfileErrorBoundary>
   );
 };

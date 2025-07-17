@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -79,6 +79,7 @@ const accountItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { hasIssues } = useProfileDataIntegrity();
@@ -104,9 +105,9 @@ export function AppSidebar() {
   const handleProfileClick = () => {
     const profileIdentifier = profile?.username || user?.id;
     if (profileIdentifier) {
-      window.location.href = `/profile/${profileIdentifier}`;
+      navigate(`/profile/${profileIdentifier}`);
     } else {
-      window.location.href = "/signup?intent=complete-profile";
+      navigate("/signup?intent=complete-profile");
     }
   };
 

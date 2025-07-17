@@ -2,11 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
-import MainLayout from '@/components/layout/MainLayout';
-import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import Header from '@/components/home/Header';
+import Footer from '@/components/home/Footer';
+import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
 
 const Checkout = () => {
   const { user } = useAuth();
@@ -43,27 +44,32 @@ const Checkout = () => {
   // Redirect if cart is empty
   if (cartItems.length === 0) {
     return (
-      <MainLayout>
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="text-center py-16">
-            <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">
-              Add some items to your cart before checking out
-            </p>
-            <Button onClick={() => navigate("/marketplace")}>
-              Continue Shopping
-            </Button>
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="text-center py-16">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
+              <p className="text-muted-foreground mb-6">
+                Add some items to your cart before checking out
+              </p>
+              <Button onClick={() => navigate("/marketplace")}>
+                Continue Shopping
+              </Button>
+            </div>
           </div>
-        </div>
-      </MainLayout>
+        </main>
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <main className="flex-1 bg-gray-50">
+        {/* Checkout Header */}
         <div className="bg-white border-b">
           <div className="container mx-auto px-4 py-4 max-w-6xl">
             <div className="flex items-center gap-4">
@@ -89,8 +95,9 @@ const Checkout = () => {
         <div className="container mx-auto px-4 py-8">
           <EnhancedCheckoutForm onCheckoutComplete={handleCheckoutComplete} />
         </div>
-      </div>
-    </MainLayout>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

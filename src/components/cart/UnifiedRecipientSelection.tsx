@@ -227,9 +227,9 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] mx-4 flex flex-col">
-        <CardHeader className="flex-shrink-0">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <CardHeader className="flex-shrink-0 border-b">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -241,23 +241,23 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col overflow-hidden p-6">
-          {!showNewRecipientForm ? (
-            <div className="space-y-4 h-full flex flex-col">
-              {/* Search */}
-              <div className="relative flex-shrink-0">
-                <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-                <Input
-                  placeholder="Search recipients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+        <div className="flex-1 overflow-y-auto">
+          <CardContent className="p-6">
+            {!showNewRecipientForm ? (
+              <div className="space-y-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Search recipients..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
 
-              {/* Recipients List */}
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4 pr-2">
+                {/* Recipients List */}
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                   {Object.entries(groupedRecipients).map(([source, sourceRecipients]) => (
                     <div key={source}>
                       <div className="flex items-center gap-2 mb-2">
@@ -324,167 +324,163 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     </div>
                   )}
                 </div>
-              </ScrollArea>
 
-              {/* Add New Recipient Button */}
-              <div className="flex gap-2 pt-4 border-t flex-shrink-0">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowNewRecipientForm(true)}
-                  className="flex-1"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Recipient
-                </Button>
-                <Button variant="ghost" onClick={onClose}>
-                  Cancel
-                </Button>
+                {/* Add New Recipient Button */}
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNewRecipientForm(true)}
+                    className="flex-1"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Recipient
+                  </Button>
+                  <Button variant="ghost" onClick={onClose}>
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            /* New Recipient Form */
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="pr-2">
-                  <form onSubmit={handleNewRecipientSubmit} className="space-y-6">
-                    <div className="flex items-center gap-2 mb-6">
-                      <UserPlus className="h-5 w-5" />
-                      <h3 className="font-medium">Add New Recipient</h3>
-                    </div>
+            ) : (
+              /* New Recipient Form */
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  <h3 className="font-medium">Add New Recipient</h3>
+                </div>
 
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name *</Label>
-                        <Input
-                          id="name"
-                          value={newRecipientForm.name}
-                          onChange={(e) => setNewRecipientForm(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Enter recipient's name"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="relationship">Relationship</Label>
-                        <Select value={newRecipientForm.relationship_type} onValueChange={(value) => setNewRecipientForm(prev => ({ ...prev, relationship_type: value }))}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="friend">Friend</SelectItem>
-                            <SelectItem value="family">Family</SelectItem>
-                            <SelectItem value="colleague">Colleague</SelectItem>
-                            <SelectItem value="partner">Partner</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Email (required) */}
+                <form onSubmit={handleNewRecipientSubmit} className="space-y-6">
+                  {/* Basic Info */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
+                      <Label htmlFor="name">Name *</Label>
                       <Input
-                        id="email"
-                        type="email"
-                        value={newRecipientForm.email}
-                        onChange={(e) => setNewRecipientForm(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="Enter email address"
+                        id="name"
+                        value={newRecipientForm.name}
+                        onChange={(e) => setNewRecipientForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter recipient's name"
                         required
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="relationship">Relationship</Label>
+                      <Select value={newRecipientForm.relationship_type} onValueChange={(value) => setNewRecipientForm(prev => ({ ...prev, relationship_type: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="friend">Friend</SelectItem>
+                          <SelectItem value="family">Family</SelectItem>
+                          <SelectItem value="colleague">Colleague</SelectItem>
+                          <SelectItem value="partner">Partner</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                    {/* Address with Google Places Autocomplete */}
-                    <div className="space-y-4">
-                      <Label>Shipping Address *</Label>
-                      <div className="space-y-3">
-                        <GooglePlacesAutocomplete
-                          value={addressValue}
-                          onChange={setAddressValue}
-                          onAddressSelect={handleAddressSelect}
-                          placeholder="Start typing street address..."
-                          label=""
-                        />
-                        
+                  {/* Email (required) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newRecipientForm.email}
+                      onChange={(e) => setNewRecipientForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Enter email address"
+                      required
+                    />
+                  </div>
+
+                  {/* Address with Google Places Autocomplete */}
+                  <div className="space-y-4">
+                    <Label>Shipping Address *</Label>
+                    <div className="space-y-3">
+                      <GooglePlacesAutocomplete
+                        value={addressValue}
+                        onChange={setAddressValue}
+                        onAddressSelect={handleAddressSelect}
+                        placeholder="Start typing street address..."
+                        label=""
+                      />
+                      
+                      <Input
+                        placeholder="Apartment, suite, etc. (optional)"
+                        value={newRecipientForm.address?.address_line2 || ''}
+                        onChange={(e) => setNewRecipientForm(prev => ({ 
+                          ...prev, 
+                          address: { ...prev.address!, address_line2: e.target.value } 
+                        }))}
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-3">
                         <Input
-                          placeholder="Apartment, suite, etc. (optional)"
-                          value={newRecipientForm.address?.address_line2 || ''}
+                          placeholder="City *"
+                          value={newRecipientForm.address?.city || ''}
                           onChange={(e) => setNewRecipientForm(prev => ({ 
                             ...prev, 
-                            address: { ...prev.address!, address_line2: e.target.value } 
+                            address: { ...prev.address!, city: e.target.value } 
                           }))}
+                          required
                         />
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                          <Input
-                            placeholder="City *"
-                            value={newRecipientForm.address?.city || ''}
-                            onChange={(e) => setNewRecipientForm(prev => ({ 
-                              ...prev, 
-                              address: { ...prev.address!, city: e.target.value } 
-                            }))}
-                            required
-                          />
-                          <Input
-                            placeholder="State *"
-                            value={newRecipientForm.address?.state || ''}
-                            onChange={(e) => setNewRecipientForm(prev => ({ 
-                              ...prev, 
-                              address: { ...prev.address!, state: e.target.value } 
-                            }))}
-                            required
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                          <Input
-                            placeholder="ZIP Code *"
-                            value={newRecipientForm.address?.zipCode || ''}
-                            onChange={(e) => setNewRecipientForm(prev => ({ 
-                              ...prev, 
-                              address: { ...prev.address!, zipCode: e.target.value } 
-                            }))}
-                            required
-                          />
-                          <Input
-                            placeholder="Country *"
-                            value={newRecipientForm.address?.country || 'US'}
-                            onChange={(e) => setNewRecipientForm(prev => ({ 
-                              ...prev, 
-                              address: { ...prev.address!, country: e.target.value } 
-                            }))}
-                            required
-                          />
-                        </div>
+                        <Input
+                          placeholder="State *"
+                          value={newRecipientForm.address?.state || ''}
+                          onChange={(e) => setNewRecipientForm(prev => ({ 
+                            ...prev, 
+                            address: { ...prev.address!, state: e.target.value } 
+                          }))}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          placeholder="ZIP Code *"
+                          value={newRecipientForm.address?.zipCode || ''}
+                          onChange={(e) => setNewRecipientForm(prev => ({ 
+                            ...prev, 
+                            address: { ...prev.address!, zipCode: e.target.value } 
+                          }))}
+                          required
+                        />
+                        <Input
+                          placeholder="Country *"
+                          value={newRecipientForm.address?.country || 'US'}
+                          onChange={(e) => setNewRecipientForm(prev => ({ 
+                            ...prev, 
+                            address: { ...prev.address!, country: e.target.value } 
+                          }))}
+                          required
+                        />
                       </div>
                     </div>
-                  </form>
-                </div>
-              </ScrollArea>
+                  </div>
+                </form>
 
-              {/* Form Actions */}
-              <div className="flex gap-2 pt-4 border-t flex-shrink-0">
-                <Button 
-                  type="submit" 
-                  className="flex-1"
-                  onClick={handleNewRecipientSubmit}
-                >
-                  Send Invitation
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowNewRecipientForm(false);
-                    resetNewRecipientForm();
-                  }}
-                >
-                  Cancel
-                </Button>
+                {/* Form Actions */}
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    onClick={handleNewRecipientSubmit}
+                  >
+                    Send Invitation
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowNewRecipientForm(false);
+                      resetNewRecipientForm();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
+            )}
+          </CardContent>
+        </div>
       </Card>
     </div>
   );

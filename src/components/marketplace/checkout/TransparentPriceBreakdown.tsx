@@ -60,7 +60,7 @@ const TransparentPriceBreakdown = ({
                 <DialogTitle>About Our {breakdown.giftingFeeName}</DialogTitle>
                 <DialogDescription className="pt-4">
                   {breakdown.giftingFeeDescription || 
-                    "This fee helps us maintain our platform and provide you with the best gifting experience."
+                    "This fee supports system enhancements, AI-powered features, and automation that make gifting seamless and delightful."
                   }
                 </DialogDescription>
               </DialogHeader>

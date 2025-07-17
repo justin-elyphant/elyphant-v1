@@ -10,6 +10,10 @@ import { ProfileProvider } from "@/contexts/profile/ProfileContext";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import LegacyRouteHandler from "@/components/navigation/LegacyRouteHandler";
+
+// Layouts
+import MainLayout from "@/components/layout/MainLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Cart from "./pages/Cart";
@@ -54,40 +58,42 @@ const App = () => (
             <CartProvider>
               <LegacyRouteHandler>
                 <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/signup" element={<StreamlinedSignUp />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/auth/oauth-complete" element={<OAuthProfileCompletion />} />
-                <Route path="/profile-setup" element={<ProfileSetupWithIntent />} />
-                <Route path="/wishlists" element={<Wishlists />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* Routes without sidebar */}
+                <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+                <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
+                <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
+                <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
+                <Route path="/signup" element={<MainLayout><StreamlinedSignUp /></MainLayout>} />
+                <Route path="/signin" element={<MainLayout><SignIn /></MainLayout>} />
+                <Route path="/auth/oauth-complete" element={<MainLayout><OAuthProfileCompletion /></MainLayout>} />
+                <Route path="/profile-setup" element={<MainLayout><ProfileSetupWithIntent /></MainLayout>} />
+                <Route path="/vendor-partner" element={<MainLayout><VendorPartner /></MainLayout>} />
+                <Route path="/about" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/payment-success" element={<MainLayout><PaymentSuccess /></MainLayout>} />
+                <Route path="/payment-cancel" element={<MainLayout><PaymentCancel /></MainLayout>} />
+                <Route path="/help" element={<MainLayout><FAQ /></MainLayout>} />
+                <Route path="/contact" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/returns" element={<MainLayout><FAQ /></MainLayout>} />
+                <Route path="/privacy" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/terms" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/careers" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/press" element={<MainLayout><AboutUs /></MainLayout>} />
+                <Route path="/vendor-signup" element={<MainLayout><VendorPartner /></MainLayout>} />
+                <Route path="/vendor-login" element={<MainLayout><VendorPartner /></MainLayout>} />
+                <Route path="/trunkline-login" element={<MainLayout><Trunkline /></MainLayout>} />
+                <Route path="/trunkline" element={<MainLayout><Trunkline /></MainLayout>} />
                 
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/messages/:connectionId" element={<Messages />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/profile/:identifier" element={<Profile />} />
-                <Route path="/vendor-partner" element={<VendorPartner />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/payment-cancel" element={<PaymentCancel />} />
-                <Route path="/help" element={<FAQ />} />
-                <Route path="/contact" element={<AboutUs />} />
-                <Route path="/returns" element={<FAQ />} />
-                <Route path="/privacy" element={<AboutUs />} />
-                <Route path="/terms" element={<AboutUs />} />
-                <Route path="/careers" element={<AboutUs />} />
-                <Route path="/press" element={<AboutUs />} />
-                <Route path="/vendor-signup" element={<VendorPartner />} />
-                <Route path="/vendor-login" element={<VendorPartner />} />
-                <Route path="/trunkline-login" element={<Trunkline />} />
-                <Route path="/trunkline" element={<Trunkline />} />
+                {/* Routes with sidebar */}
+                <Route path="/dashboard" element={<SidebarLayout><Dashboard /></SidebarLayout>} />
+                <Route path="/messages" element={<SidebarLayout><Messages /></SidebarLayout>} />
+                <Route path="/messages/:connectionId" element={<SidebarLayout><Messages /></SidebarLayout>} />
+                <Route path="/connections" element={<SidebarLayout><Connections /></SidebarLayout>} />
+                <Route path="/wishlists" element={<SidebarLayout><Wishlists /></SidebarLayout>} />
+                <Route path="/orders" element={<SidebarLayout><Orders /></SidebarLayout>} />
+                <Route path="/settings" element={<SidebarLayout><Settings /></SidebarLayout>} />
+                <Route path="/payments" element={<SidebarLayout><Payments /></SidebarLayout>} />
+                <Route path="/events" element={<SidebarLayout><Events /></SidebarLayout>} />
+                <Route path="/profile/:identifier" element={<SidebarLayout><Profile /></SidebarLayout>} />
                 </Routes>
                 <SearchOptimizationMonitor />
               </LegacyRouteHandler>

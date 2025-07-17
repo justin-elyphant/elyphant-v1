@@ -7,8 +7,8 @@ import ProfileBanner from "@/components/user-profile/ProfileBanner";
 import ProfileInfo from "@/components/user-profile/ProfileInfo";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import LoadingState from "./profile-setup/LoadingState";
-import Header from "@/components/home/Header";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Profile as ProfileType } from "@/types/profile";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
@@ -177,15 +177,14 @@ const Profile = () => {
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
+      <SidebarLayout>
         <div className="container max-w-4xl mx-auto py-8 px-4">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-muted-foreground">Profile not found</h1>
             <p className="text-muted-foreground mt-2">The user you're looking for doesn't exist.</p>
           </div>
         </div>
-      </div>
+      </SidebarLayout>
     );
   }
 
@@ -193,8 +192,7 @@ const Profile = () => {
 
   return (
     <ProfileErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <Header />
+      <SidebarLayout>
         <div className="container max-w-4xl mx-auto py-6 px-4">
           {isMockProfile && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -241,7 +239,7 @@ const Profile = () => {
             />
           )}
         </div>
-      </div>
+      </SidebarLayout>
     </ProfileErrorBoundary>
   );
 };

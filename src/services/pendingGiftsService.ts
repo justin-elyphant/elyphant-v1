@@ -48,6 +48,34 @@ export const pendingGiftsService = {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
 
+    // Check if a pending connection already exists for this email
+    const { data: existingConnection } = await supabase
+      .from('user_connections')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .eq('pending_recipient_email', recipientEmail)
+      .eq('status', 'pending_invitation')
+      .maybeSingle();
+
+    if (existingConnection) {
+      // Update the existing connection instead of creating a new one
+      const { data, error } = await supabase
+        .from('user_connections')
+        .update({
+          relationship_type: relationshipType,
+          pending_recipient_name: recipientName,
+          pending_shipping_address: shippingAddress,
+          invitation_sent_at: new Date().toISOString()
+        })
+        .eq('id', existingConnection.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    // Create a new connection if none exists
     const { data, error } = await supabase
       .from('user_connections')
       .insert({

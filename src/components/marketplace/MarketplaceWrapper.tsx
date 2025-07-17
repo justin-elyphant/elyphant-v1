@@ -221,7 +221,7 @@ const MarketplaceWrapper = () => {
 
         {/* Enhanced: Events-Aware Header - Show upcoming events for gift opportunities */}
         {user && (
-          <FullWidthSection className="py-4">
+          <FullWidthSection className="py-2">
             <div className="max-w-6xl mx-auto">
               <EventsAwareHeader 
                 isVisible={true}
@@ -233,7 +233,7 @@ const MarketplaceWrapper = () => {
 
         {/* Enhanced: Connection Integration - Show when user is authenticated and no active search */}
         {user && !hasActiveSearch && (
-          <FullWidthSection className="py-4">
+          <FullWidthSection className="py-2">
             <div className="max-w-4xl mx-auto">
               <ConnectionIntegration 
                 onSelectConnection={handleConnectionSelect}

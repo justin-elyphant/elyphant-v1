@@ -87,7 +87,7 @@ const StreamlinedMarketplaceWrapper = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Connection-Aware Header with Hero Image */}
       {!connectionsLoading && (
         <div className="relative rounded-lg overflow-hidden min-h-[400px] flex items-center justify-center">

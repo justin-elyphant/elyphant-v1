@@ -336,9 +336,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                       {hasAddress && (
                         <div className="bg-background border rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">Delivery Address</span>
-                            <Badge variant="default" className="flex items-center gap-1 ml-2">
+                            <Badge variant="default" className="flex items-center gap-1">
                               <CheckCircle className="h-3 w-3" />
                               Address Ready
                             </Badge>
@@ -346,6 +344,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                           <RecipientAddressDisplay 
                             address={group.shippingAddress || recipientAddress}
                             showFullAddress={true}
+                            label=""
                           />
                         </div>
                       )}

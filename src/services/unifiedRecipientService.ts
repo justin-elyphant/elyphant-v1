@@ -278,7 +278,16 @@ export const unifiedRecipientService = {
       updateData.pending_recipient_email = updates.email;
     }
     if (updates.address !== undefined) {
-      updateData.pending_shipping_address = updates.address;
+      // Normalize address data to ensure consistent field names
+      const normalizedAddress = {
+        street: updates.address.street || '',
+        address_line_2: updates.address.address_line_2 || updates.address.address_line2 || '',
+        city: updates.address.city || '',
+        state: updates.address.state || '',
+        zipCode: updates.address.zipCode || '',
+        country: updates.address.country || 'US'
+      };
+      updateData.pending_shipping_address = normalizedAddress;
     }
     if (updates.relationship_type !== undefined) {
       updateData.relationship_type = updates.relationship_type;

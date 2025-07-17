@@ -54,7 +54,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
 
   // Load full recipient data when modal opens
   useEffect(() => {
-    if (open && connection.id) {
+    if (open && connection.id && connection.id.trim() !== '') {
       const loadRecipientData = async () => {
         try {
           const recipient = await unifiedRecipientService.getRecipientById(connection.id);
@@ -68,7 +68,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               relationship_type: (recipient.relationship_type as RelationshipType) || 'friend',
               address: {
                 street: recipient.address?.street || '',
-                address_line_2: recipient.address?.address_line_2 || '',
+                address_line_2: recipient.address?.address_line_2 || recipient.address?.address_line2 || '',
                 city: recipient.address?.city || '',
                 state: recipient.address?.state || '',
                 zipCode: recipient.address?.zipCode || '',

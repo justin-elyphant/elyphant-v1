@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import ModernOrderSummary from './ModernOrderSummary';
 import CheckoutProgressIndicator from './CheckoutProgressIndicator';
-import EnhancedDeliveryEditModal from './EnhancedDeliveryEditModal';
+import StreamlinedDeliveryEditModal from './StreamlinedDeliveryEditModal';
 import { DeliveryGroup } from '@/types/recipient';
 
 interface ShippingInfo {
@@ -461,11 +461,10 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
       {/* Enhanced Edit Modal */}
       {editModalOpen && editingGroup && (
-        <EnhancedDeliveryEditModal
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
+        <StreamlinedDeliveryEditModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
           deliveryGroup={editingGroup}
-          recipient={getRecipientForGroup(editingGroup)}
           onSave={handleSaveDeliveryGroup}
         />
       )}

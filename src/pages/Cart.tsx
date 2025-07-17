@@ -1,17 +1,17 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 
-import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
 import ShippingPreview from "@/components/cart/ShippingPreview";
+import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
+import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 
 const Cart = () => {
@@ -25,9 +25,14 @@ const Cart = () => {
     removeFromCart, 
     clearCart,
     deliveryGroups,
-    getUnassignedItems 
+    getUnassignedItems,
+    assignItemToRecipient,
+    unassignItemFromRecipient,
+    updateRecipientAssignment
   } = useCart();
   const isMobile = useIsMobile();
+  const [showRecipientModal, setShowRecipientModal] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const handleCheckout = () => {
     if (!user) {
@@ -52,6 +57,30 @@ const Cart = () => {
     }
     
     navigate("/checkout");
+  };
+
+  const handleAssignRecipient = (productId: string) => {
+    setSelectedItemId(productId);
+    setShowRecipientModal(true);
+  };
+
+  const handleRecipientSelect = (recipient: UnifiedRecipient) => {
+    if (selectedItemId) {
+      const recipientAssignment = {
+        connectionId: recipient.id,
+        connectionName: recipient.name,
+        deliveryGroupId: crypto.randomUUID(),
+        shippingAddress: recipient.address
+      };
+      
+      assignItemToRecipient(selectedItemId, recipientAssignment);
+      setShowRecipientModal(false);
+      setSelectedItemId(null);
+    }
+  };
+
+  const handleUnassignRecipient = (productId: string) => {
+    unassignItemFromRecipient(productId);
   };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
@@ -109,32 +138,22 @@ const Cart = () => {
               {/* Shipping Address Preview */}
               <ShippingPreview />
               
-              <Tabs defaultValue="items" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="items" className="flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4" />
-                    All Items
-                    {unassignedItems.length > 0 && (
-                      <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                        {unassignedItems.length} unassigned
-                      </span>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="recipients" className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Recipients
-                    {deliveryGroups.length > 0 && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                        {deliveryGroups.length}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="items" className="mt-6">
-                  <div className="space-y-4">
-                    {cartItems.map((item) => (
-                      <div key={item.product.product_id} className="flex gap-4 p-4 border rounded-lg">
+              {/* Cart Items with Item-Level Recipient Assignment */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Cart Items</h2>
+                  {unassignedItems.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-orange-600">
+                      <Users className="h-4 w-4" />
+                      {unassignedItems.length} unassigned items
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.product.product_id} className="p-4 border rounded-lg">
+                      <div className="flex gap-4">
                         <div className="flex-shrink-0">
                           <img 
                             src={item.product.image || "/placeholder.svg"} 
@@ -151,23 +170,6 @@ const Cart = () => {
                           <p className="text-sm text-muted-foreground mb-2">
                             {item.product.vendor && `By ${item.product.vendor}`}
                           </p>
-                          
-                          {/* Recipient Assignment Status */}
-                          {item.recipientAssignment ? (
-                            <div className="flex items-center gap-2 mb-2">
-                              <Gift className="h-4 w-4 text-green-600" />
-                              <span className="text-sm text-green-600">
-                                Assigned to {item.recipientAssignment.connectionName}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="h-4 w-4 text-orange-600" />
-                              <span className="text-sm text-orange-600">
-                                Not assigned to recipient
-                              </span>
-                            </div>
-                          )}
                           
                           <p className="text-lg font-semibold text-green-600">
                             {formatPrice(item.product.price)}
@@ -209,14 +211,92 @@ const Cart = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </TabsContent>
+                      
+                      {/* Recipient Assignment Section */}
+                      <div className="mt-4 pt-4 border-t">
+                        {item.recipientAssignment ? (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-600">
+                                Assigned to {item.recipientAssignment.connectionName}
+                              </span>
+                              {item.recipientAssignment.shippingAddress && (
+                                <span className="text-sm text-muted-foreground">
+                                  • {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAssignRecipient(item.product.product_id)}
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                Change
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUnassignRecipient(item.product.product_id)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-orange-600" />
+                              <span className="text-sm text-orange-600">
+                                Not assigned to recipient
+                              </span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAssignRecipient(item.product.product_id)}
+                              className="flex items-center gap-2"
+                            >
+                              <UserPlus className="h-4 w-4" />
+                              Assign Recipient
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                <TabsContent value="recipients" className="mt-6">
-                  <RecipientAssignmentSection />
-                </TabsContent>
-              </Tabs>
+                {/* Delivery Groups Summary */}
+                {deliveryGroups.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4">Delivery Summary</h3>
+                    <div className="space-y-3">
+                      {deliveryGroups.map((group) => (
+                        <div key={group.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-green-600" />
+                              <span className="font-medium">{group.connectionName}</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {group.items.length} item{group.items.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          {group.shippingAddress && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Order Summary */}
@@ -287,6 +367,19 @@ const Cart = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Recipient Selection Modal */}
+        {showRecipientModal && (
+          <UnifiedRecipientSelection
+            onRecipientSelect={handleRecipientSelect}
+            onClose={() => {
+              setShowRecipientModal(false);
+              setSelectedItemId(null);
+            }}
+            title="Select Recipient"
+            selectedRecipientId={selectedItemId}
+          />
         )}
       </div>
   );

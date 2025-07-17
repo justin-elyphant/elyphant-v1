@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Shield, Truck, Clock, CheckCircle, Info } from 'lucide-react';
+import { ShoppingCart, Shield, Truck, Clock, CheckCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
+import ContextualHelp from '@/components/help/ContextualHelp';
 
 interface ModernOrderSummaryProps {
   shippingCost?: number;
@@ -105,7 +106,34 @@ const ModernOrderSummary: React.FC<ModernOrderSummaryProps> = ({
           <div className="flex justify-between text-sm">
             <span className="flex items-center gap-1">
               {breakdown.giftingFeeName}
-              <Info className="h-3 w-3 text-muted-foreground" />
+              <ContextualHelp
+                id="gifting-fee-checkout"
+                title={`About Our ${breakdown.giftingFeeName}`}
+                content={
+                  <div className="space-y-2">
+                    <p>
+                      {breakdown.giftingFeeDescription || 
+                        "This fee supports system enhancements, AI-powered features, and automation that make gifting seamless and delightful."
+                      }
+                    </p>
+                    <div className="space-y-1">
+                      <p className="font-medium">What's included:</p>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>Platform technology and maintenance</li>
+                        <li>Customer support and gift tracking</li>
+                        <li>Curated shopping experience</li>
+                        <li>Secure payment processing</li>
+                        <li>Gift delivery coordination</li>
+                        <li>AI-powered gift recommendations and search</li>
+                        <li>Automated gifting features and scheduling</li>
+                        <li>Smart wishlist management and sharing</li>
+                      </ul>
+                    </div>
+                  </div>
+                }
+                iconSize={12}
+                className="text-muted-foreground hover:text-foreground"
+              />
             </span>
             <span>${breakdown.giftingFee.toFixed(2)}</span>
           </div>

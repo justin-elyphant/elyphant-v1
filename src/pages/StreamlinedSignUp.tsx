@@ -18,6 +18,8 @@ import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplet
 import MainLayout from '@/components/layout/MainLayout';
 import { ProfileCreationService } from '@/services/profile/profileCreationService';
 import OnboardingIntentModal from '@/components/auth/signup/OnboardingIntentModal';
+import { GiftSetupWizard } from '@/components/gifting/GiftSetupWizard';
+import CreateWishlistDialog from '@/components/gifting/wishlist/CreateWishlistDialog';
 
 interface ProfileData {
   firstName: string;
@@ -60,6 +62,10 @@ const StreamlinedSignUp = () => {
     dateOfBirth: false,
     address: false
   });
+  
+  // Modal states for gift wizard and wishlist creation
+  const [showGiftWizard, setShowGiftWizard] = useState(false);
+  const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
   // Handle OAuth data loading and validation
   useEffect(() => {
@@ -357,13 +363,13 @@ const StreamlinedSignUp = () => {
       setTimeout(() => {
         switch (userIntent) {
           case 'quick-gift':
-            navigate('/marketplace?mode=nicole&open=true&greeting=personalized&source=signup', { replace: true });
+            setShowGiftWizard(true);
             break;
           case 'browse-shop':
             navigate('/marketplace?source=signup', { replace: true });
             break;
           case 'create-wishlist':
-            navigate('/marketplace?mode=wishlist&source=signup', { replace: true });
+            setShowCreateWishlist(true);
             break;
           default:
             navigate('/dashboard', { replace: true });
@@ -378,6 +384,30 @@ const StreamlinedSignUp = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGiftWizardClose = () => {
+    setShowGiftWizard(false);
+    navigate('/dashboard', { replace: true });
+  };
+
+  const handleCreateWishlistSubmit = async (values: any) => {
+    try {
+      // TODO: Implement actual wishlist creation logic
+      console.log("Creating wishlist with values:", values);
+      
+      toast.success("Wishlist created successfully!");
+      setShowCreateWishlist(false);
+      navigate('/wishlists', { replace: true });
+    } catch (error) {
+      console.error("Error creating wishlist:", error);
+      toast.error("Failed to create wishlist. Please try again.");
+    }
+  };
+
+  const handleCreateWishlistClose = () => {
+    setShowCreateWishlist(false);
+    navigate('/dashboard', { replace: true });
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -849,6 +879,22 @@ const StreamlinedSignUp = () => {
           )}
         </div>
       </div>
+
+      {/* Gift Setup Wizard Modal */}
+      <GiftSetupWizard
+        open={showGiftWizard}
+        onOpenChange={(open) => {
+          setShowGiftWizard(open);
+          if (!open) handleGiftWizardClose();
+        }}
+      />
+
+      {/* Create Wishlist Dialog */}
+      <CreateWishlistDialog
+        open={showCreateWishlist}
+        onOpenChange={setShowCreateWishlist}
+        onSubmit={handleCreateWishlistSubmit}
+      />
     </MainLayout>
   );
 };

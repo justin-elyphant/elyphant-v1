@@ -77,6 +77,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     try {
       setRecipientsLoading(true);
       const allRecipients = await unifiedRecipientService.getAllRecipients();
+      console.log('🔍 Fetched recipients from unified service:', allRecipients);
       setRecipients(allRecipients);
     } catch (error) {
       console.error('Error fetching recipients:', error);
@@ -111,7 +112,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   }, [cartItems]);
 
   const getRecipientAddress = (connectionId: string) => {
+    console.log('🔍 Looking for address for connectionId:', connectionId);
+    console.log('🔍 Available recipients:', recipients);
+    
     const recipient = recipients.find(r => r.id === connectionId);
+    console.log('🔍 Found recipient:', recipient);
+    console.log('🔍 Recipient address:', recipient?.address);
+    
     return recipient?.address || null;
   };
 
@@ -277,9 +284,17 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 {deliveryGroups.map((group) => {
+                  console.log('🔍 Processing delivery group:', group);
+                  
                   const validation = deliveryValidation.find(v => v.groupId === group.id);
                   const recipientAddress = getRecipientAddress(group.connectionId);
                   const hasAddress = Boolean(group.shippingAddress || recipientAddress);
+
+                  console.log('🔍 Group address status:', {
+                    hasGroupAddress: Boolean(group.shippingAddress),
+                    hasRecipientAddress: Boolean(recipientAddress),
+                    hasAddress
+                  });
 
                   return (
                     <div key={group.id} className="border rounded-lg p-6 space-y-4">

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import MainLayout from "@/components/layout/MainLayout";
+
 import RecipientAssignmentSection from "@/components/cart/RecipientAssignmentSection";
 import ShippingPreview from "@/components/cart/ShippingPreview";
 import { toast } from "sonner";
@@ -67,8 +67,7 @@ const Cart = () => {
     (shippingAddress.zip_code || shippingAddress.zipCode);
 
   return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -290,7 +289,6 @@ const Cart = () => {
           </div>
         )}
       </div>
-    </MainLayout>
   );
 };
 

@@ -15,6 +15,7 @@ const RecipientAddressDisplay: React.FC<RecipientAddressDisplayProps> = ({
   if (!address) return null;
 
   // Get address fields with fallbacks for different field names
+  const name = address.name || '';
   const street = address.street || address.address_line1 || address.address || '';
   const line2 = address.line2 || address.address_line2 || '';
   const city = address.city || '';
@@ -28,6 +29,7 @@ const RecipientAddressDisplay: React.FC<RecipientAddressDisplayProps> = ({
       <div className="flex-1">
         <div className="font-medium mb-1">{label}</div>
         <div className="text-sm leading-relaxed text-muted-foreground">
+          {name && <div className="font-medium">{name}</div>}
           {showFullAddress ? (
             <>
               {street && <div>{street}</div>}

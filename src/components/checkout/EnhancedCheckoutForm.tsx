@@ -31,6 +31,7 @@ interface ShippingInfo {
   name: string;
   email: string;
   address: string;
+  addressLine2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -53,6 +54,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     name: '',
     email: '',
     address: '',
+    addressLine2: '',
     city: '',
     state: '',
     zipCode: '',

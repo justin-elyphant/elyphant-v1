@@ -12,6 +12,7 @@ interface ShippingInfo {
   name: string;
   email: string;
   address: string;
+  addressLine2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -33,6 +34,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
       onUpdate({
         name: defaultAddress.name,
         address: defaultAddress.address.street,
+        addressLine2: '',
         city: defaultAddress.address.city,
         state: defaultAddress.address.state,
         zipCode: defaultAddress.address.zipCode,
@@ -71,6 +73,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
     "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
   ];
 
+  console.log('Default address:', defaultAddress);
+  
   return (
     <div className="rounded-lg border p-6">
       <h3 className="text-lg font-medium mb-4">Shipping Information</h3>
@@ -108,6 +112,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
             onAddressSelect={handleGooglePlacesSelect}
             label="Street Address"
             placeholder="Start typing your address..."
+          />
+        </div>
+        
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="addressLine2">Apartment, suite, etc. (optional)</Label>
+          <Input
+            id="addressLine2"
+            name="addressLine2"
+            value={shippingInfo.addressLine2 || ''}
+            onChange={handleChange}
+            placeholder="Apt, Suite, Unit, etc."
           />
         </div>
         

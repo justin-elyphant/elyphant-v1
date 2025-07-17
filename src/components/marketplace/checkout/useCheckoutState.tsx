@@ -9,6 +9,7 @@ export interface ShippingInfo {
   name: string;
   email: string;
   address: string;
+  addressLine2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -43,6 +44,7 @@ export const useCheckoutState = () => {
       name: "",
       email: "",
       address: "",
+      addressLine2: "",
       city: "",
       state: "",
       zipCode: "",

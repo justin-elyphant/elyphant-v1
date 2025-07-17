@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Connection, RelationshipType } from "@/types/connections";
-import { unifiedRecipientService } from "@/services/unifiedRecipientService";
+import { unifiedRecipientService, UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 
 interface PendingConnectionEditModalProps {
@@ -35,6 +35,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
   onSuccess
 }) => {
   const [loading, setLoading] = useState(false);
+  const [recipientData, setRecipientData] = useState<UnifiedRecipient | null>(null);
   const [formData, setFormData] = useState({
     name: connection.name || '',
     email: connection.recipientEmail || '',
@@ -47,6 +48,35 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
       country: 'US'
     }
   });
+
+  // Load full recipient data when modal opens
+  useEffect(() => {
+    if (open && connection.id) {
+      const loadRecipientData = async () => {
+        try {
+          const recipient = await unifiedRecipientService.getRecipientById(connection.id);
+          if (recipient) {
+            setRecipientData(recipient);
+            setFormData({
+              name: recipient.name || '',
+              email: recipient.email || '',
+              relationship_type: (recipient.relationship_type as RelationshipType) || 'friend',
+              address: {
+                street: recipient.address?.street || '',
+                city: recipient.address?.city || '',
+                state: recipient.address?.state || '',
+                zipCode: recipient.address?.zipCode || '',
+                country: recipient.address?.country || 'US'
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error loading recipient data:', error);
+        }
+      };
+      loadRecipientData();
+    }
+  }, [open, connection.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

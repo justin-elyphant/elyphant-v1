@@ -78,7 +78,21 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
   
   return (
     <div className="rounded-lg border p-6">
-      <h3 className="text-lg font-medium mb-4">Shipping Information</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-medium">Shipping Information</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize delivery options, add gift notes, or schedule for later
+          </p>
+        </div>
+        <button 
+          type="button"
+          onClick={() => {/* TODO: Add customize modal */}}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <span>Customize</span>
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">

@@ -316,8 +316,11 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                                   <div>
                                     <div className="font-medium">{connectionAddress.name}</div>
                                     <div className="text-muted-foreground">
-                                      {connectionAddress.address}<br />
-                                      {connectionAddress.city}, {connectionAddress.state} {connectionAddress.zipCode}<br />
+                                      {connectionAddress.street || connectionAddress.address_line1 || connectionAddress.address}<br />
+                                      {(connectionAddress.line2 || connectionAddress.address_line2) && (
+                                        <>{connectionAddress.line2 || connectionAddress.address_line2}<br /></>
+                                      )}
+                                      {connectionAddress.city}, {connectionAddress.state} {connectionAddress.zipCode || connectionAddress.zip_code}<br />
                                       {connectionAddress.country || 'United States'}
                                     </div>
                                   </div>

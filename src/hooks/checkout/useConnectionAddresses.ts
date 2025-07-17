@@ -16,6 +16,8 @@ interface ConnectionWithAddress {
     state: string;
     zipCode: string;
     country: string;
+    // Allow additional fields for flexible address handling
+    [key: string]: any;
   };
   has_address: boolean;
 }
@@ -80,13 +82,29 @@ export const useConnectionAddresses = () => {
           addr.user_id === conn.connected_user_id && addr.is_default
         ) || addressesData?.find(addr => addr.user_id === conn.connected_user_id);
 
+        // Handle the address structure properly - address is stored as JSON in the database
+        let formattedAddress = null;
+        if (userAddress?.address) {
+          const addressData = userAddress.address as any;
+          formattedAddress = {
+            name: userAddress.name || profile?.name || 'Unknown User',
+            address: addressData.street || addressData.address_line1 || addressData.address || '',
+            city: addressData.city || '',
+            state: addressData.state || '',
+            zipCode: addressData.zipCode || addressData.zip_code || '',
+            country: addressData.country || 'United States',
+            // Include additional fields for flexible access
+            ...addressData
+          };
+        }
+
         return {
           id: conn.id,
           connected_user_id: conn.connected_user_id,
           name: profile?.name || 'Unknown User',
           email: profile?.email,
           relationship_type: conn.relationship_type,
-          shipping_address: userAddress?.address || null,
+          shipping_address: formattedAddress,
           has_address: Boolean(userAddress)
         };
       });
@@ -137,7 +155,7 @@ export const useConnectionAddresses = () => {
       // Re-fetch the specific connection's address
       const { data: addressData, error } = await supabase
         .from('user_addresses')
-        .select('address, is_default')
+        .select('name, address, is_default')
         .eq('user_id', connection.connected_user_id)
         .order('is_default', { ascending: false })
         .limit(1)
@@ -148,12 +166,28 @@ export const useConnectionAddresses = () => {
         return;
       }
 
+      // Format the address properly
+      let formattedAddress = null;
+      if (addressData?.address) {
+        const addressInfo = addressData.address as any;
+        formattedAddress = {
+          name: addressData.name || connection.name,
+          address: addressInfo.street || addressInfo.address_line1 || addressInfo.address || '',
+          city: addressInfo.city || '',
+          state: addressInfo.state || '',
+          zipCode: addressInfo.zipCode || addressInfo.zip_code || '',
+          country: addressInfo.country || 'United States',
+          // Include additional fields for flexible access
+          ...addressInfo
+        };
+      }
+
       // Update the connection in state
       setConnections(prev => prev.map(conn => 
         conn.id === connectionId
           ? { 
               ...conn, 
-              shipping_address: addressData?.address || null,
+              shipping_address: formattedAddress,
               has_address: Boolean(addressData)
             }
           : conn

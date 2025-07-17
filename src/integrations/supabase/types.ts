@@ -2097,10 +2097,12 @@ export type Database = {
           id: string
           invitation_sent_at: string | null
           invitation_token: string | null
+          pending_recipient_dob: string | null
           pending_recipient_email: string | null
           pending_recipient_name: string | null
           pending_recipient_phone: string | null
           pending_shipping_address: Json | null
+          relationship_context: Json | null
           relationship_type: string
           status: string
           updated_at: string | null
@@ -2116,10 +2118,12 @@ export type Database = {
           id?: string
           invitation_sent_at?: string | null
           invitation_token?: string | null
+          pending_recipient_dob?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null
           pending_recipient_phone?: string | null
           pending_shipping_address?: Json | null
+          relationship_context?: Json | null
           relationship_type: string
           status?: string
           updated_at?: string | null
@@ -2135,10 +2139,12 @@ export type Database = {
           id?: string
           invitation_sent_at?: string | null
           invitation_token?: string | null
+          pending_recipient_dob?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null
           pending_recipient_phone?: string | null
           pending_shipping_address?: Json | null
+          relationship_context?: Json | null
           relationship_type?: string
           status?: string
           updated_at?: string | null

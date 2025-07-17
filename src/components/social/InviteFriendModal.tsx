@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UserPlus, Mail, User, Heart, Send, Phone, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { UserPlus, Mail, User, Heart, Send, Phone, MapPin, ChevronDown, ChevronUp, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Slider } from "@/components/ui/slider";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ interface InviteFriendModalProps {
 const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddressSection, setShowAddressSection] = useState(false);
+  const [showRelationshipSection, setShowRelationshipSection] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -32,7 +34,12 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
     city: "",
     state: "",
     zipCode: "",
-    country: "US"
+    country: "US",
+    birthday: "",
+    closenessLevel: 5,
+    interactionFrequency: "regular",
+    specialConsiderations: "",
+    sharedInterests: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,11 +64,24 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         phone: formData.phone
       } : undefined;
 
+      // Create relationship context object
+      const relationshipContext = {
+        closeness_level: formData.closenessLevel,
+        interaction_frequency: formData.interactionFrequency,
+        gift_giving_history: [],
+        special_considerations: formData.specialConsiderations ? [formData.specialConsiderations] : [],
+        relationship_duration: null,
+        shared_interests: formData.sharedInterests ? formData.sharedInterests.split(',').map(i => i.trim()) : [],
+        gift_preferences: {}
+      };
+
       await pendingGiftsService.createPendingConnection(
         formData.email,
         fullName,
         formData.relationshipType,
-        shippingAddress
+        shippingAddress,
+        formData.birthday || null,
+        relationshipContext
       );
 
       toast.success(`Invitation sent to ${formData.firstName}! They'll be notified to join and build their wishlist.`);
@@ -79,9 +99,15 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         city: "",
         state: "",
         zipCode: "",
-        country: "US"
+        country: "US",
+        birthday: "",
+        closenessLevel: 5,
+        interactionFrequency: "regular",
+        specialConsiderations: "",
+        sharedInterests: ""
       });
       setShowAddressSection(false);
+      setShowRelationshipSection(false);
       onOpenChange(false);
     } catch (error) {
       console.error("Error sending invitation:", error);
@@ -252,6 +278,90 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
                   placeholder="ZIP Code"
                   value={formData.zipCode}
                   onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <div className="space-y-2">
+            <Label htmlFor="birthday" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Birthday (Optional)
+            </Label>
+            <Input
+              id="birthday"
+              type="date"
+              value={formData.birthday}
+              onChange={(e) => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
+            />
+          </div>
+
+          <Collapsible open={showRelationshipSection} onOpenChange={setShowRelationshipSection}>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" className="w-full flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {showRelationshipSection ? "Hide Relationship Details" : "Add Relationship Details (Optional)"}
+                {showRelationshipSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="closenessLevel">
+                  Closeness Level: {formData.closenessLevel}/10
+                </Label>
+                <Slider
+                  id="closenessLevel"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={[formData.closenessLevel]}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, closenessLevel: value[0] }))}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">
+                  How close are you? (1 = acquaintance, 10 = very close)
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="interactionFrequency">How often do you interact?</Label>
+                <Select
+                  value={formData.interactionFrequency}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, interactionFrequency: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="regular">Regular</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="occasionally">Occasionally</SelectItem>
+                    <SelectItem value="rarely">Rarely</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sharedInterests">Shared Interests</Label>
+                <Input
+                  id="sharedInterests"
+                  type="text"
+                  placeholder="e.g., books, cooking, sports, travel"
+                  value={formData.sharedInterests}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sharedInterests: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="specialConsiderations">Special Considerations</Label>
+                <Textarea
+                  id="specialConsiderations"
+                  placeholder="Any special notes about gift preferences, allergies, or considerations..."
+                  value={formData.specialConsiderations}
+                  onChange={(e) => setFormData(prev => ({ ...prev, specialConsiderations: e.target.value }))}
+                  rows={2}
                 />
               </div>
             </CollapsibleContent>

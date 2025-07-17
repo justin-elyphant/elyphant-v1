@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Truck,
   Gift,
-  Edit3,
+  Settings,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -317,15 +317,20 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditDeliveryGroup(group)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                            Edit
-                          </Button>
+                          <div className="flex flex-col items-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditDeliveryGroup(group)}
+                              className="flex items-center gap-2"
+                            >
+                              <Settings className="h-4 w-4" />
+                              Customize
+                            </Button>
+                            <span className="text-xs text-muted-foreground">
+                              Customize delivery options, add gift notes, or schedule delivery
+                            </span>
+                          </div>
                           {hasAddress ? (
                             <Badge variant="default" className="flex items-center gap-1">
                               <CheckCircle className="h-3 w-3" />
@@ -390,7 +395,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                         <Alert className="border-destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Edit button.
+                            This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Customize button.
                           </AlertDescription>
                         </Alert>
                       )}

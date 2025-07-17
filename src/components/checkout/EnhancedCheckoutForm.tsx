@@ -316,42 +316,41 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-col items-end gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditDeliveryGroup(group)}
-                              className="flex items-center gap-2"
-                            >
-                              <Settings className="h-4 w-4" />
-                              Customize
-                            </Button>
-                            <span className="text-xs text-muted-foreground">
-                              Customize delivery options, add gift notes, or schedule delivery
-                            </span>
-                          </div>
-                          {hasAddress ? (
-                            <Badge variant="default" className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" />
-                              Address Ready
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              Address Needed
-                            </Badge>
-                          )}
+                        <div className="flex flex-col items-end gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditDeliveryGroup(group)}
+                            className="flex items-center gap-2"
+                          >
+                            <Settings className="h-4 w-4" />
+                            Customize
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            Customize delivery options, add gift notes, or schedule delivery
+                          </span>
                         </div>
                       </div>
 
                       {/* Prominent Address Display */}
                       {hasAddress && (
                         <div className="bg-background border rounded-lg p-4">
-                          <RecipientAddressDisplay 
-                            address={group.shippingAddress || recipientAddress}
-                            showFullAddress={true}
-                          />
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">Delivery Address</span>
+                                <Badge variant="default" className="flex items-center gap-1 ml-2">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Address Ready
+                                </Badge>
+                              </div>
+                              <RecipientAddressDisplay 
+                                address={group.shippingAddress || recipientAddress}
+                                showFullAddress={true}
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
 
@@ -392,12 +391,22 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
                       {/* Address needed alert */}
                       {!hasAddress && (
-                        <Alert className="border-destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Customize button.
-                          </AlertDescription>
-                        </Alert>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Delivery Address</span>
+                            <Badge variant="destructive" className="flex items-center gap-1 ml-2">
+                              <AlertCircle className="h-3 w-3" />
+                              Address Needed
+                            </Badge>
+                          </div>
+                          <Alert className="border-destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Customize button.
+                            </AlertDescription>
+                          </Alert>
+                        </div>
                       )}
                     </div>
                   );

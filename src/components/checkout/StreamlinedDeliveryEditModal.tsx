@@ -52,14 +52,18 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   const [isValidAddress, setIsValidAddress] = useState(true);
 
   // Get connection data
-  const connectionAddress = deliveryGroup.connectionId 
+  const connectionData = deliveryGroup.connectionId 
     ? getConnectionAddress(deliveryGroup.connectionId)
     : null;
+
+  console.log('Modal Debug - DeliveryGroup:', deliveryGroup);
+  console.log('Modal Debug - ConnectionData:', connectionData);
+  console.log('Modal Debug - ConnectionId:', deliveryGroup.connectionId);
 
   useEffect(() => {
     if (isOpen) {
       // Initialize form from delivery group and connection data
-      const connData = connectionAddress;
+      const connData = connectionData;
       console.log('Connection data:', connData, 'Delivery group:', deliveryGroup);
       
       setName(connData?.name || deliveryGroup.connectionName || '');
@@ -83,7 +87,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
           : undefined
       );
     }
-  }, [isOpen, deliveryGroup, connectionAddress]);
+  }, [isOpen, deliveryGroup, connectionData]);
 
   const handleSave = async () => {
     if (addressOverride && !isValidAddress) {
@@ -104,7 +108,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
       };
 
       // If we have a connection ID and basic info changed, update the connection
-      if (deliveryGroup.connectionId && connectionAddress) {
+      if (deliveryGroup.connectionId && connectionData) {
         // Note: In a full implementation, you might want to update the connection
         // via the useConnectionAddresses hook or a dedicated update function
         console.log('Connection info updated:', { name, email });
@@ -123,7 +127,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
 
   const displayAddress = addressOverride 
     ? overrideAddress 
-    : connectionAddress;
+    : connectionData;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -167,7 +171,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
               <CardTitle>Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {connectionAddress && (
+              {connectionData && (
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="address-override"

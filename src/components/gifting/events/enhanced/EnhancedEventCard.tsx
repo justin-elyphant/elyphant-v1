@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gift, Calendar, Edit, CheckCircle, DollarSign, Bell, Clock } from "lucide-react";
+import { Gift, Calendar, Edit, CheckCircle, DollarSign, Bell, Clock, Archive } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ interface EnhancedEventCardProps {
   onToggleAutoGift: () => void;
   onEdit: () => void;
   onVerifyEvent: () => void;
+  onArchive?: () => void;
   onClick?: () => void;
   isSelected?: boolean;
   onSelectionChange?: (selected: boolean) => void;
@@ -28,6 +29,7 @@ const EnhancedEventCard = ({
   onToggleAutoGift,
   onEdit,
   onVerifyEvent,
+  onArchive,
   onClick,
   isSelected = false,
   onSelectionChange,
@@ -57,8 +59,18 @@ const EnhancedEventCard = ({
       } ${onClick ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
+      <CardHeader className="pb-3 relative">
+        {/* Auto-Gift Status - Upper Right Corner */}
+        {event.autoGiftEnabled && (
+          <div className="absolute top-3 right-3 z-10">
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+              <Gift className="h-3 w-3 mr-1" />
+              Auto-Gift
+            </Badge>
+          </div>
+        )}
+        
+        <div className="flex justify-between items-start pr-20">
           <div className="flex items-center space-x-3 flex-1">
             {showSelection && (
               <Checkbox
@@ -98,20 +110,20 @@ const EnhancedEventCard = ({
           </Badge>
         </div>
 
-        {/* Auto-Gift Status */}
-        <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Gift className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Auto-Gift</span>
+        {/* Auto-Gift Configuration */}
+        {event.autoGiftEnabled && (
+          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Gift className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Auto-Gift Settings</span>
+              </div>
+              <Switch
+                checked={event.autoGiftEnabled || false}
+                onCheckedChange={onToggleAutoGift}
+              />
             </div>
-            <Switch
-              checked={event.autoGiftEnabled || false}
-              onCheckedChange={onToggleAutoGift}
-            />
-          </div>
-          
-          {event.autoGiftEnabled && (
+            
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Budget:</span>
@@ -125,8 +137,24 @@ const EnhancedEventCard = ({
                 <span className="font-medium capitalize">{event.giftSource || 'wishlist'}</span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+        
+        {/* Auto-Gift Toggle for Disabled */}
+        {!event.autoGiftEnabled && (
+          <div className="bg-muted/30 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Gift className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Auto-Gift</span>
+              </div>
+              <Switch
+                checked={false}
+                onCheckedChange={onToggleAutoGift}
+              />
+            </div>
+          </div>
+        )}
         
         {/* Verification Status */}
         {event.needsVerification && !event.isVerified && (
@@ -178,6 +206,19 @@ const EnhancedEventCard = ({
           >
             <Edit className="h-4 w-4" />
           </Button>
+          {onArchive && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="px-3"
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchive();
+              }}
+            >
+              <Archive className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>

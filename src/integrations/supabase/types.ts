@@ -2160,6 +2160,7 @@ export type Database = {
       }
       user_special_dates: {
         Row: {
+          archived_at: string | null
           connection_id: string | null
           created_at: string | null
           date: string
@@ -2178,6 +2179,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          archived_at?: string | null
           connection_id?: string | null
           created_at?: string | null
           date: string
@@ -2196,6 +2198,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          archived_at?: string | null
           connection_id?: string | null
           created_at?: string | null
           date?: string

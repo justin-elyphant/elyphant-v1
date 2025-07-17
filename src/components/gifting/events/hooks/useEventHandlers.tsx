@@ -3,12 +3,21 @@ import { useEventActions } from "./useEventActions";
 import { useAutoGiftToggle } from "./useAutoGiftToggle";
 import { useEventEdit } from "./useEventEdit";
 import { useEventCRUD } from "./useEventCRUD";
+import { useEventArchive } from "./useEventArchive";
 
 export const useEventHandlers = () => {
   const { handleSendGift, handleVerifyEvent, handleEventClick } = useEventActions();
   const { handleToggleAutoGift } = useAutoGiftToggle();
   const { handleEditEvent } = useEventEdit();
   const { handleSaveEvent, handleDeleteEvent, handleCreateEvent } = useEventCRUD();
+  const { 
+    archiveDialogOpen,
+    setArchiveDialogOpen,
+    eventToArchive,
+    handleArchiveEvent,
+    confirmArchive,
+    handleUnarchiveEvent 
+  } = useEventArchive();
 
   return {
     handleSendGift,
@@ -18,6 +27,12 @@ export const useEventHandlers = () => {
     handleSaveEvent,
     handleDeleteEvent,
     handleCreateEvent,
-    handleEventClick
+    handleEventClick,
+    handleArchiveEvent,
+    handleUnarchiveEvent,
+    archiveDialogOpen,
+    setArchiveDialogOpen,
+    eventToArchive,
+    confirmArchive
   };
 };

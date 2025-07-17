@@ -40,6 +40,7 @@ export const eventCRUD = {
         )
       `)
       .eq('user_id', userId.user.id)
+      .is('archived_at', null)
       .order('date', { ascending: true });
 
     if (error) {
@@ -234,5 +235,77 @@ export const eventCRUD = {
         }
         break;
     }
+  },
+
+  // Archive an event
+  async archiveEvent(eventId: string): Promise<void> {
+    const { error } = await supabase
+      .from('user_special_dates')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', eventId);
+
+    if (error) {
+      console.error('Error archiving event:', error);
+      throw error;
+    }
+  },
+
+  // Unarchive an event
+  async unarchiveEvent(eventId: string): Promise<void> {
+    const { error } = await supabase
+      .from('user_special_dates')
+      .update({ archived_at: null })
+      .eq('id', eventId);
+
+    if (error) {
+      console.error('Error unarchiving event:', error);
+      throw error;
+    }
+  },
+
+  // Fetch archived events
+  async fetchArchivedEvents(): Promise<ExtendedEventData[]> {
+    const { data: userId } = await supabase.auth.getUser();
+    if (!userId.user?.id) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('user_special_dates')
+      .select(`
+        *,
+        user_connections!left (
+          id,
+          connected_user_id,
+          pending_recipient_name,
+          pending_recipient_email,
+          relationship_type,
+          status,
+          profiles:connected_user_id (
+            first_name,
+            last_name,
+            email,
+            profile_image
+          )
+        ),
+        auto_gifting_rules!left (
+          id,
+          budget_limit,
+          is_active,
+          gift_preferences,
+          notification_preferences,
+          gift_selection_criteria,
+          pending_recipient_email,
+          date_type
+        )
+      `)
+      .eq('user_id', userId.user.id)
+      .not('archived_at', 'is', null)
+      .order('archived_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching archived events:', error);
+      throw error;
+    }
+
+    return (data || []).map(transformDatabaseEventToExtended);
   }
 };

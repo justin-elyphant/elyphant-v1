@@ -35,7 +35,7 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   deliveryGroup,
   onSave,
 }) => {
-  const { getConnectionAddress, refreshConnection, loading: connectionsLoading } = useConnectionAddresses();
+  const { getConnectionAddress, getConnectionByUserId, refreshConnection, loading: connectionsLoading } = useConnectionAddresses();
   
   // Form state
   const [name, setName] = useState('');
@@ -68,11 +68,13 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
       console.log('UseEffect - Connection data:', connData, 'Delivery group:', deliveryGroup);
       
       setName(connData?.name || deliveryGroup.connectionName || '');
-      setEmail(connData?.email || '');
       
-      // Check if there's an address override
-      const hasOverride = !!deliveryGroup.shippingAddress;
-      setAddressOverride(hasOverride);
+      // Look for email in connection data
+      const emailToUse = connData?.email || '';
+      setEmail(emailToUse);
+      
+      // Always start with address override OFF to show the original shipping address
+      setAddressOverride(false);
       setOverrideAddress(deliveryGroup.shippingAddress || null);
       
       // Initialize gift options

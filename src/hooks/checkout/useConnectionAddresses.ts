@@ -96,7 +96,8 @@ export const useConnectionAddresses = () => {
           if (conn.pending_shipping_address) {
             const addressData = conn.pending_shipping_address as any;
             formattedAddress = {
-              name: conn.pending_recipient_name || 'Unknown User',
+            name: conn.pending_recipient_name || 'Unknown User',
+            email: conn.pending_recipient_email, // Explicitly set email for pending connections
               address: addressData.address || addressData.street || addressData.address_line1 || '',
               address2: addressData.address2 || addressData.address_line2 || '',
               city: addressData.city || '',

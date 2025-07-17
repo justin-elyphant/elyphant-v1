@@ -80,21 +80,21 @@ export const useConnectionsAdapter = () => {
   );
 
   // Fetch pending connections from quick gift wizard
-  useEffect(() => {
-    const fetchPendingConnections = async () => {
-      if (!user) return;
-      
-      setPendingLoading(true);
-      try {
-        const pendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
-        setPendingConnections(pendingData);
-      } catch (error) {
-        console.error('Error fetching pending connections:', error);
-      } finally {
-        setPendingLoading(false);
-      }
-    };
+  const fetchPendingConnections = async () => {
+    if (!user) return;
+    
+    setPendingLoading(true);
+    try {
+      const pendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
+      setPendingConnections(pendingData);
+    } catch (error) {
+      console.error('Error fetching pending connections:', error);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPendingConnections();
   }, [user]);
 
@@ -162,6 +162,7 @@ export const useConnectionsAdapter = () => {
     handleRelationshipChange,
     handleSendVerificationRequest,
     filterConnections,
-    calculateMutualFriends
+    calculateMutualFriends,
+    refreshPendingConnections: fetchPendingConnections
   };
 };

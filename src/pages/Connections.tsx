@@ -24,7 +24,7 @@ const Connections = () => {
     verificationStatus: 'all'
   });
   
-  const { 
+  const {
     friends,
     following,
     suggestions,
@@ -33,7 +33,8 @@ const Connections = () => {
     error,
     handleRelationshipChange,
     handleSendVerificationRequest,
-    filterConnections
+    filterConnections,
+    refreshPendingConnections
   } = useConnectionsAdapter();
 
   // Apply search filtering
@@ -95,7 +96,7 @@ const Connections = () => {
               <PendingTabContent 
                 pendingConnections={filteredPendingConnections} 
                 searchTerm={searchTerm}
-                onRefresh={() => window.location.reload()}
+                onRefresh={refreshPendingConnections}
               />
             </TabsContent>
             

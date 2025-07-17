@@ -124,25 +124,106 @@ const SmartGiftingTab = () => {
       // Handle regular events (non-pending invitations)
       console.log('GiftingHubCard: Setting up regular event data:', event);
       
-      // Transform regular event data for the wizard
-      const regularEventData = {
-        recipientName: event.person,
-        recipientEmail: event.recipientEmail || '',
-        relationshipType: event.relationshipType || 'friend',
-        giftingEvents: [{
-          dateType: event.type || 'Birthday',
-          date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
-          isRecurring: event.isRecurring || false
-        }],
-        autoGiftingEnabled: event.autoGiftEnabled || false,
-        scheduledGiftingEnabled: !(event.autoGiftEnabled || false),
-        budgetLimit: event.autoGiftAmount || 50,
-        giftCategories: event.giftCategories || [],
-        notificationDays: event.notificationDays || [7, 3, 1]
-      };
-      
-      console.log('GiftingHubCard: Regular event initial data:', regularEventData);
-      setGiftSetupInitialData(regularEventData);
+      try {
+        // Fetch existing auto-gifting rules for this recipient (by email or recipient_id)
+        let existingRules = null;
+        if (event.recipientEmail) {
+          const { data: rulesByEmail } = await supabase
+            .from('auto_gifting_rules')
+            .select('*')
+            .eq('pending_recipient_email', event.recipientEmail);
+          existingRules = rulesByEmail;
+        }
+        
+        // If no rules by email, try by recipient_id if available
+        if (!existingRules?.length && event.connectionId) {
+          const { data: rulesByRecipient } = await supabase
+            .from('auto_gifting_rules')
+            .select('*')
+            .eq('recipient_id', event.connectionId);
+          existingRules = rulesByRecipient;
+        }
+        
+        const existingRule = existingRules?.[0];
+        
+        // Fetch connection data for shipping address if connectionId is available
+        let connectionData = null;
+        if (event.connectionId) {
+          const { data: connection } = await supabase
+            .from('user_connections')
+            .select(`
+              id,
+              pending_recipient_name,
+              pending_recipient_email,
+              pending_shipping_address,
+              relationship_type,
+              status,
+              profiles:connected_user_id (
+                first_name,
+                last_name,
+                email,
+                profile_image,
+                shipping_address
+              )
+            `)
+            .eq('id', event.connectionId)
+            .single();
+          connectionData = connection;
+        }
+        
+        // Transform regular event data for the wizard with comprehensive data
+        const regularEventData = {
+          recipientName: event.person,
+          recipientEmail: event.recipientEmail || '',
+          relationshipType: event.relationshipType || 'friend',
+          shippingAddress: connectionData?.pending_shipping_address || 
+                          connectionData?.profiles?.shipping_address || null,
+          giftingEvents: [{
+            dateType: event.type || 'Birthday',
+            date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
+            isRecurring: event.isRecurring || false
+          }],
+          // Use existing rule data if available, otherwise use event data
+          autoGiftingEnabled: existingRule?.is_active ?? (event.autoGiftEnabled || false),
+          scheduledGiftingEnabled: existingRule ? !existingRule.is_active : !(event.autoGiftEnabled || false),
+          budgetLimit: existingRule?.budget_limit ?? (event.autoGiftAmount || 50),
+          giftCategories: existingRule?.gift_selection_criteria?.categories ?? (event.giftCategories || []),
+          notificationDays: existingRule?.notification_preferences?.days_before ?? (event.notificationDays || [7, 3, 1]),
+          
+          // Additional data from existing rules
+          giftPreferences: existingRule?.gift_preferences || {},
+          paymentMethodId: existingRule?.payment_method_id || null,
+          
+          // Connection details
+          connectionId: event.connectionId,
+          connectionStatus: event.connectionStatus
+        };
+        
+        console.log('GiftingHubCard: Regular event comprehensive data:', regularEventData);
+        console.log('GiftingHubCard: Connection data:', connectionData);
+        console.log('GiftingHubCard: Existing rule data:', existingRule);
+        
+        setGiftSetupInitialData(regularEventData);
+      } catch (error) {
+        console.error('Error fetching comprehensive event data:', error);
+        // Fallback to basic data if fetch fails
+        const basicEventData = {
+          recipientName: event.person,
+          recipientEmail: event.recipientEmail || '',
+          relationshipType: event.relationshipType || 'friend',
+          giftingEvents: [{
+            dateType: event.type || 'Birthday',
+            date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
+            isRecurring: event.isRecurring || false
+          }],
+          autoGiftingEnabled: event.autoGiftEnabled || false,
+          scheduledGiftingEnabled: !(event.autoGiftEnabled || false),
+          budgetLimit: event.autoGiftAmount || 50,
+          giftCategories: event.giftCategories || [],
+          notificationDays: event.notificationDays || [7, 3, 1]
+        };
+        setGiftSetupInitialData(basicEventData);
+      }
     }
     
     setSetupDialogOpen(true);

@@ -346,69 +346,6 @@ const SmartGiftingTab = () => {
         )}
       </div>
 
-      {/* Pending Invitations Section */}
-      {!connectionsLoading && pendingInvitations && pendingInvitations.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-500" />
-              Pending Invitations ({pendingInvitations.length})
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {pendingInvitations.map((invitation) => (
-              <div key={invitation.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800 touch-manipulation">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={invitation.profile_image} />
-                      <AvatarFallback>
-                        {invitation.profile_name?.charAt(0)?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-semibold">{invitation.profile_name}</h4>
-                      <p className="text-sm text-muted-foreground">{invitation.profile_email}</p>
-                    </div>
-                  </div>
-                  
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Invited {format(new Date(invitation.created_at), 'MMM d, yyyy')}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {invitation.relationship_type}
-                    </Badge>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => handleSetupAutoGift({
-                        id: invitation.id,
-                        person: invitation.profile_name,
-                        recipientEmail: invitation.profile_email,
-                        relationshipType: invitation.relationship_type,
-                        type: 'Birthday',
-                        isPendingInvitation: true
-                      })}
-                      className="h-8 sm:h-7 touch-manipulation"
-                    >
-                      Schedule A Gift
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Nicole AI Quick Access */}
       <div className="p-4 sm:p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">

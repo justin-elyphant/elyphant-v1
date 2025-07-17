@@ -56,6 +56,11 @@ export const useConnectionSuggestions = () => {
       // Score and rank suggestions
       const scoredSuggestions = await Promise.all(
         (profiles || []).map(async (profile) => {
+          // Skip profiles with invalid IDs
+          if (!profile.id || profile.id.trim() === '') {
+            return null;
+          }
+          
           const mutualFriends = await calculateMutualFriends(profile.id);
           
           // Calculate interest similarity
@@ -99,8 +104,9 @@ export const useConnectionSuggestions = () => {
         })
       );
 
-      // Sort by score and take top 10
+      // Sort by score and take top 10, filter out null entries
       const topSuggestions = scoredSuggestions
+        .filter(suggestion => suggestion !== null)
         .sort((a, b) => (b.score || 0) - (a.score || 0))
         .slice(0, 10);
 

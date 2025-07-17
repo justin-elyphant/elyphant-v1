@@ -71,39 +71,53 @@ const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        if (place.formatted_address) {
+        
+        if (place.formatted_address && onAddressSelect) {
+          // Update the display value first
           onChange(place.formatted_address);
           
-          if (onAddressSelect) {
-            const components = place.address_components;
-            const addressData = {
-              street: '',
-              address_line_2: '',
-              city: '',
-              state: '',
-              zipCode: '',
-              country: 'US'
-            };
+          // Parse address components
+          const components = place.address_components || [];
+          const addressData = {
+            street: '',
+            address_line_2: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: 'US'
+          };
 
-            components.forEach((component: any) => {
-              const types = component.types;
-              if (types.includes('street_number')) {
-                addressData.street = component.long_name + ' ';
-              } else if (types.includes('route')) {
-                addressData.street += component.long_name;
-              } else if (types.includes('locality')) {
-                addressData.city = component.long_name;
-              } else if (types.includes('administrative_area_level_1')) {
-                addressData.state = component.short_name;
-              } else if (types.includes('postal_code')) {
-                addressData.zipCode = component.long_name;
-              } else if (types.includes('country')) {
-                addressData.country = component.short_name;
-              }
-            });
+          let streetNumber = '';
+          let route = '';
 
-            onAddressSelect(addressData);
+          components.forEach((component: any) => {
+            const types = component.types;
+            if (types.includes('street_number')) {
+              streetNumber = component.long_name;
+            } else if (types.includes('route')) {
+              route = component.long_name;
+            } else if (types.includes('locality')) {
+              addressData.city = component.long_name;
+            } else if (types.includes('administrative_area_level_1')) {
+              addressData.state = component.short_name;
+            } else if (types.includes('postal_code')) {
+              addressData.zipCode = component.long_name;
+            } else if (types.includes('country')) {
+              addressData.country = component.short_name;
+            }
+          });
+
+          // Combine street number and route
+          if (streetNumber && route) {
+            addressData.street = `${streetNumber} ${route}`;
+          } else if (route) {
+            addressData.street = route;
+          } else if (streetNumber) {
+            addressData.street = streetNumber;
           }
+
+          console.log('🏠 [GoogleAddressInput] Parsed address:', addressData);
+          onAddressSelect(addressData);
         }
       });
     };

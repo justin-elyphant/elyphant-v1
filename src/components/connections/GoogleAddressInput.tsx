@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getGoogleMapsApiKey } from '@/utils/googleMapsConfig';
 
 interface GoogleAddressInputProps {
   value: string;
@@ -29,20 +30,32 @@ const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const loadGoogleMapsScript = () => {
+    const loadGoogleMapsScript = async () => {
       // Check if Google Maps is already loaded
       if ((window as any).google && (window as any).google.maps) {
         initializeAutocomplete();
         return;
       }
 
-      // Create script element
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeAutocomplete;
-      document.head.appendChild(script);
+      try {
+        // Get the API key from Supabase
+        const apiKey = await getGoogleMapsApiKey();
+        
+        if (!apiKey) {
+          console.error('Failed to get Google Maps API key');
+          return;
+        }
+
+        // Create script element
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = initializeAutocomplete;
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google Maps API:', error);
+      }
     };
 
     const initializeAutocomplete = () => {

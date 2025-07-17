@@ -59,8 +59,11 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   useEffect(() => {
     if (isOpen) {
       // Initialize form from delivery group and connection data
-      setName(connectionAddress?.name || deliveryGroup.connectionName || '');
-      setEmail(connectionAddress?.email || '');
+      const connData = connectionAddress;
+      console.log('Connection data:', connData, 'Delivery group:', deliveryGroup);
+      
+      setName(connData?.name || deliveryGroup.connectionName || '');
+      setEmail(connData?.email || '');
       
       // Check if there's an address override
       const hasOverride = !!deliveryGroup.shippingAddress;

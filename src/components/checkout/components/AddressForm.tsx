@@ -7,6 +7,7 @@ import { AlertCircle } from 'lucide-react';
 interface Address {
   name: string;
   address: string;
+  address2?: string;
   city: string;
   state: string;
   zipCode: string;
@@ -111,6 +112,16 @@ const AddressForm: React.FC<AddressFormProps> = ({
             <AlertCircle className="h-4 w-4" /> {errors.address}
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="address2">Apt, Suite, etc. (Optional)</Label>
+        <Input 
+          id="address2"
+          value={addressData.address2 || ''}
+          onChange={(e) => handleChange('address2', e.target.value)}
+          disabled={disabled}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

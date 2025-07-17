@@ -38,7 +38,7 @@ const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
 
       // Create script element
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBFw0Qby_gJ-VVX3AV4LgGRmyKjCjP6xKE&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = initializeAutocomplete;

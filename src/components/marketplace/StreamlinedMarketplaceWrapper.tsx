@@ -90,7 +90,7 @@ const StreamlinedMarketplaceWrapper = () => {
     <div className="space-y-6">
       {/* Connection-Aware Header with Hero Image */}
       {!connectionsLoading && (
-        <div className="relative rounded-lg overflow-hidden min-h-[400px] flex items-center">
+        <div className="relative rounded-lg overflow-hidden min-h-[400px] flex items-center justify-center">
           {/* Hero Image Background */}
           <div 
             className="absolute inset-0 bg-cover bg-center"
@@ -101,9 +101,9 @@ const StreamlinedMarketplaceWrapper = () => {
           {/* Overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/30" />
           
-          <div className="relative z-10 p-8 w-full">
-            <div className="max-w-2xl">
-              <div className="flex items-center justify-between mb-6">
+          <div className="relative z-10 p-8 w-full max-w-4xl text-center">
+            <div className="mb-6">
+              <div className="flex items-center justify-center gap-4 mb-6">
                 <h2 className="text-4xl font-bold text-white">
                   Welcome to the Marketplace
                 </h2>
@@ -117,14 +117,14 @@ const StreamlinedMarketplaceWrapper = () => {
               
               {/* Quick Actions */}
               <Tabs defaultValue="browse" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-white/20 backdrop-blur-sm">
+            <TabsList className="grid w-full grid-cols-3 bg-white/20 backdrop-blur-sm max-w-lg mx-auto">
               <TabsTrigger value="browse" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">Browse Gifts</TabsTrigger>
               <TabsTrigger value="connections" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">For Friends</TabsTrigger>
               <TabsTrigger value="wishlist" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900">My Wishlist</TabsTrigger>
             </TabsList>
             
             <TabsContent value="browse" className="mt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center gap-4">
                 <p className="text-white/80">
                   Discover best selling gifts and popular items curated just for you
                 </p>
@@ -186,7 +186,7 @@ const StreamlinedMarketplaceWrapper = () => {
             </TabsContent>
             
             <TabsContent value="wishlist" className="mt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-center gap-4">
                 <p className="text-white/80">
                   Create and manage your wishlists for perfect gifting
                 </p>

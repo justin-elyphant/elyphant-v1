@@ -1,21 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Connection } from "@/types/connections";
-import { Mail, Calendar, Clock } from "lucide-react";
+import { Mail, Calendar, Clock, Edit } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import PendingConnectionEditModal from "./PendingConnectionEditModal";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];
   searchTerm: string;
+  onRefresh?: () => void;
 }
 
 const PendingTabContent: React.FC<PendingTabContentProps> = ({ 
   pendingConnections, 
-  searchTerm 
+  searchTerm,
+  onRefresh
 }) => {
+  const [editingConnection, setEditingConnection] = useState<Connection | null>(null);
   if (pendingConnections.length === 0) {
     return (
       <div className="text-center py-12">
@@ -78,10 +82,30 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
               <Badge variant="outline" className="text-xs">
                 {connection.relationship}
               </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingConnection(connection)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </Card>
       ))}
+      
+      {editingConnection && (
+        <PendingConnectionEditModal
+          connection={editingConnection}
+          open={!!editingConnection}
+          onOpenChange={(open) => !open && setEditingConnection(null)}
+          onSuccess={() => {
+            setEditingConnection(null);
+            onRefresh?.();
+          }}
+        />
+      )}
     </div>
   );
 };

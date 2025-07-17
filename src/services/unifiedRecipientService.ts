@@ -250,5 +250,40 @@ export const unifiedRecipientService = {
       recipient.email?.toLowerCase().includes(searchTerm) ||
       recipient.relationship_type?.toLowerCase().includes(searchTerm)
     );
+  },
+
+  // Update pending connection
+  async updatePendingConnection(connectionId: string, updates: {
+    name?: string;
+    email?: string;
+    address?: any;
+    relationship_type?: string;
+  }): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) {
+      updateData.pending_recipient_name = updates.name;
+    }
+    if (updates.email !== undefined) {
+      updateData.pending_recipient_email = updates.email;
+    }
+    if (updates.address !== undefined) {
+      updateData.pending_shipping_address = updates.address;
+    }
+    if (updates.relationship_type !== undefined) {
+      updateData.relationship_type = updates.relationship_type;
+    }
+
+    const { error } = await supabase
+      .from('user_connections')
+      .update(updateData)
+      .eq('id', connectionId)
+      .eq('user_id', user.id)
+      .eq('status', 'pending_invitation');
+
+    if (error) throw error;
   }
 };

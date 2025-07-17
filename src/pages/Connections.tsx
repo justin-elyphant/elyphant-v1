@@ -93,8 +93,9 @@ const Connections = () => {
             
             <TabsContent value="pending" className="mt-6">
               <PendingTabContent 
-                pendingConnections={filteredPendingConnections}
+                pendingConnections={filteredPendingConnections} 
                 searchTerm={searchTerm}
+                onRefresh={() => window.location.reload()}
               />
             </TabsContent>
             

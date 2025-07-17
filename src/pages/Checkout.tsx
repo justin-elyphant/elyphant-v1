@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
-import Header from '@/components/home/Header';
+
 import Footer from '@/components/home/Footer';
 import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
 
@@ -45,7 +45,6 @@ const Checkout = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="text-center py-16">
@@ -67,7 +66,6 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50">
         {/* Checkout Header */}
         <div className="bg-white border-b">

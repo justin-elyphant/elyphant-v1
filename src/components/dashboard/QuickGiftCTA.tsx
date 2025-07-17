@@ -29,7 +29,7 @@ const QuickGiftCTA = () => {
             size="sm"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Pick A Gift For Me
+            Enable Auto-Gifting
           </Button>
         </div>
       </div>

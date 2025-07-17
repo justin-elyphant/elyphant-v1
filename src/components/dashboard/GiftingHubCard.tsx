@@ -169,7 +169,7 @@ const SmartGiftingTab = () => {
             onClick={() => setGiftWizardOpen(true)}
           >
             <Zap className="h-4 w-4 mr-2" />
-            Set Up Gifting
+            Schedule A Gift
           </Button>
         </div>
         
@@ -238,7 +238,7 @@ const SmartGiftingTab = () => {
             </p>
             <Button onClick={() => setGiftWizardOpen(true)}>
               <Zap className="h-4 w-4 mr-2" />
-              Set Up Gifting
+              Schedule A Gift
             </Button>
           </div>
         )}
@@ -298,7 +298,7 @@ const SmartGiftingTab = () => {
                       })}
                       className="h-8 sm:h-7 touch-manipulation"
                     >
-                      Set Up Gifting
+                      Schedule A Gift
                     </Button>
                   </div>
                 </div>

@@ -37,7 +37,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [recipientData, setRecipientData] = useState<UnifiedRecipient | null>(null);
-  const [googleAddressValue, setGoogleAddressValue] = useState('');
+  
   const [formData, setFormData] = useState({
     name: connection.name || '',
     email: connection.recipientEmail || '',
@@ -185,22 +185,12 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <GoogleAddressInput
-                value={googleAddressValue}
-                onChange={setGoogleAddressValue}
+                value={formData.address.street}
+                onChange={(value) => handleAddressChange('street', value)}
                 onAddressSelect={handleGoogleAddressSelect}
-                label="Search Address"
+                label="Street Address"
                 placeholder="Start typing an address..."
               />
-              
-              <div className="space-y-2">
-                <Label htmlFor="street">Street Address</Label>
-                <Input
-                  id="street"
-                  value={formData.address.street}
-                  onChange={(e) => handleAddressChange('street', e.target.value)}
-                  placeholder="123 Main St"
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="address_line_2">Apartment, Suite, etc. (Optional)</Label>

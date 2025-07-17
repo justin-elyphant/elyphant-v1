@@ -167,7 +167,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               onValueChange={(value) => setFormData(prev => ({ ...prev, relationship_type: value as RelationshipType }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select relationship" />
+                <SelectValue>{relationshipOptions.find(opt => opt.value === formData.relationship_type)?.label || 'Select relationship'}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {relationshipOptions.map(option => (
@@ -184,14 +184,6 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               <CardTitle className="text-lg">Shipping Address</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <GoogleAddressInput
-                value={googleAddressValue}
-                onChange={setGoogleAddressValue}
-                onAddressSelect={handleGoogleAddressSelect}
-                label="Search Address"
-                placeholder="Start typing an address..."
-              />
-              
               <div className="space-y-2">
                 <Label htmlFor="street">Street Address</Label>
                 <Input

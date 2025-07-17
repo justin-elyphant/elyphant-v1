@@ -16,8 +16,8 @@ import {
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
 import { useProfile } from '@/contexts/profile/ProfileContext';
+import { unifiedRecipientService, UnifiedRecipient } from '@/services/unifiedRecipientService';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { toast } from 'sonner';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
@@ -44,8 +44,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   onCheckoutComplete
 }) => {
   const { cartItems, deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
-  const { connections, loading: connectionsLoading, hasValidAddress, getConnectionAddress } = useConnectionAddresses();
   const { profile } = useProfile();
+  const [recipients, setRecipients] = useState<UnifiedRecipient[]>([]);
+  const [recipientsLoading, setRecipientsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<'review' | 'shipping' | 'payment'>('review');
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     name: '',
@@ -69,6 +70,23 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   const [editingGroup, setEditingGroup] = useState<DeliveryGroup | null>(null);
 
   useEffect(() => {
+    fetchRecipients();
+  }, []);
+
+  const fetchRecipients = async () => {
+    try {
+      setRecipientsLoading(true);
+      const allRecipients = await unifiedRecipientService.getAllRecipients();
+      setRecipients(allRecipients);
+    } catch (error) {
+      console.error('Error fetching recipients:', error);
+      toast.error('Failed to load recipients');
+    } finally {
+      setRecipientsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (profile) {
       setShippingInfo(prev => ({
         ...prev,
@@ -80,7 +98,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
   useEffect(() => {
     validateDeliveryGroups();
-  }, [deliveryGroups, connections]);
+  }, [deliveryGroups, recipients]);
 
   useEffect(() => {
     // Calculate shipping cost based on addresses and items
@@ -92,12 +110,17 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     setTaxAmount(totalAmount * 0.0825); // 8.25% tax rate
   }, [cartItems]);
 
+  const getRecipientAddress = (connectionId: string) => {
+    const recipient = recipients.find(r => r.id === connectionId);
+    return recipient?.address || null;
+  };
+
   const validateDeliveryGroups = () => {
     const validationResults = deliveryGroups.map(group => {
       if (!group.shippingAddress) {
-        // Try to get address from connection
-        const connectionAddress = getConnectionAddress(group.connectionId);
-        if (!connectionAddress) {
+        // Try to get address from recipient
+        const recipientAddress = getRecipientAddress(group.connectionId);
+        if (!recipientAddress) {
           return {
             groupId: group.id,
             isValid: false,
@@ -188,7 +211,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         items: cartItems,
         deliveryGroups: deliveryGroups.map(group => ({
           ...group,
-          shippingAddress: group.shippingAddress || getConnectionAddress(group.connectionId)
+          shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
         })),
         unassignedItemsShipping: getUnassignedItems().length > 0 ? shippingInfo : null,
         totalAmount: getTotalAmount(),
@@ -202,7 +225,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     }
   };
 
-  if (connectionsLoading) {
+  if (recipientsLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-muted-foreground">Loading checkout...</div>
@@ -255,8 +278,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               <CardContent className="space-y-4">
                 {deliveryGroups.map((group) => {
                   const validation = deliveryValidation.find(v => v.groupId === group.id);
-                  const connectionAddress = getConnectionAddress(group.connectionId);
-                  const hasAddress = Boolean(group.shippingAddress || connectionAddress);
+                  const recipientAddress = getRecipientAddress(group.connectionId);
+                  const hasAddress = Boolean(group.shippingAddress || recipientAddress);
 
                   return (
                     <div key={group.id} className="border rounded-lg p-6 space-y-4">
@@ -312,16 +335,16 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                                       {group.shippingAddress.country}
                                     </div>
                                   </div>
-                                ) : connectionAddress ? (
+                                ) : recipientAddress ? (
                                   <div>
-                                    <div className="font-medium">{connectionAddress.name}</div>
+                                    <div className="font-medium">{recipientAddress.name || 'No Name'}</div>
                                     <div className="text-muted-foreground">
-                                      {connectionAddress.street || connectionAddress.address_line1 || connectionAddress.address}<br />
-                                      {(connectionAddress.line2 || connectionAddress.address_line2) && (
-                                        <>{connectionAddress.line2 || connectionAddress.address_line2}<br /></>
+                                      {recipientAddress.street || recipientAddress.address_line1 || recipientAddress.address}<br />
+                                      {(recipientAddress.line2 || recipientAddress.address_line2) && (
+                                        <>{recipientAddress.line2 || recipientAddress.address_line2}<br /></>
                                       )}
-                                      {connectionAddress.city}, {connectionAddress.state} {connectionAddress.zipCode || connectionAddress.zip_code}<br />
-                                      {connectionAddress.country || 'United States'}
+                                      {recipientAddress.city}, {recipientAddress.state} {recipientAddress.zipCode || recipientAddress.zip_code}<br />
+                                      {recipientAddress.country || 'United States'}
                                     </div>
                                   </div>
                                 ) : null}

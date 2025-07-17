@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { toast } from "sonner";
 
@@ -194,13 +195,21 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="address">Street Address</Label>
-                <Input
-                  id="address"
-                  type="text"
-                  placeholder="Enter street address"
+                <GooglePlacesAutocomplete
+                  label="Street Address"
+                  placeholder="Start typing an address..."
                   value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                  onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
+                  onAddressSelect={(address) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      address: address.street,
+                      city: address.city,
+                      state: address.state,
+                      zipCode: address.zipCode,
+                      country: address.country
+                    }));
+                  }}
                 />
               </div>
               <div className="space-y-2">

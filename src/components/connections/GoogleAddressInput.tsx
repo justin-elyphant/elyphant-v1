@@ -1,7 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getGoogleMapsApiKey } from '@/utils/googleMapsConfig';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Loader2, MapPin } from 'lucide-react';
+import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
+import { StandardizedAddress } from '@/services/googlePlacesService';
 
 interface GoogleAddressInputProps {
   value: string;
@@ -27,115 +31,154 @@ const GoogleAddressInput: React.FC<GoogleAddressInputProps> = ({
   label = "Search Address",
   required = false
 }) => {
+  const [open, setOpen] = React.useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const loadGoogleMapsScript = async () => {
-      // Check if Google Maps is already loaded
-      if ((window as any).google && (window as any).google.maps) {
-        initializeAutocomplete();
-        return;
-      }
-
-      try {
-        // Get the API key from Supabase
-        const apiKey = await getGoogleMapsApiKey();
+  const {
+    query,
+    setQuery,
+    predictions,
+    isLoading,
+    selectPrediction
+  } = useGooglePlacesAutocomplete({
+    onAddressSelect: (address: StandardizedAddress) => {
+      if (onAddressSelect) {
+        // Convert StandardizedAddress to the expected format
+        const convertedAddress = {
+          street: address.street || '',
+          address_line_2: '', // StandardizedAddress doesn't have address_line_2
+          city: address.city || '',
+          state: address.state || '',
+          zipCode: address.zipCode || '',
+          country: address.country || 'US'
+        };
         
-        if (!apiKey) {
-          console.error('Failed to get Google Maps API key');
-          return;
-        }
-
-        // Create script element
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = initializeAutocomplete;
-        document.head.appendChild(script);
-      } catch (error) {
-        console.error('Error loading Google Maps API:', error);
-      }
-    };
-
-    const initializeAutocomplete = () => {
-      if (!inputRef.current) return;
-
-      const autocomplete = new (window as any).google.maps.places.Autocomplete(
-        inputRef.current,
-        {
-          types: ['address'],
-          componentRestrictions: { country: 'us' }
-        }
-      );
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
+        console.log('🏠 [GoogleAddressInput] Converting address:', {
+          from: address,
+          to: convertedAddress
+        });
         
-        if (place.formatted_address && onAddressSelect) {
-          // Update the display value first
-          onChange(place.formatted_address);
-          
-          // Parse address components
-          const components = place.address_components || [];
-          const addressData = {
-            street: '',
-            address_line_2: '',
-            city: '',
-            state: '',
-            zipCode: '',
-            country: 'US'
-          };
-
-          let streetNumber = '';
-          let route = '';
-
-          components.forEach((component: any) => {
-            const types = component.types;
-            if (types.includes('street_number')) {
-              streetNumber = component.long_name;
-            } else if (types.includes('route')) {
-              route = component.long_name;
-            } else if (types.includes('locality')) {
-              addressData.city = component.long_name;
-            } else if (types.includes('administrative_area_level_1')) {
-              addressData.state = component.short_name;
-            } else if (types.includes('postal_code')) {
-              addressData.zipCode = component.long_name;
-            } else if (types.includes('country')) {
-              addressData.country = component.short_name;
-            }
-          });
-
-          // Combine street number and route
-          if (streetNumber && route) {
-            addressData.street = `${streetNumber} ${route}`;
-          } else if (route) {
-            addressData.street = route;
-          } else if (streetNumber) {
-            addressData.street = streetNumber;
-          }
-
-          console.log('🏠 [GoogleAddressInput] Parsed address:', addressData);
-          onAddressSelect(addressData);
+        onAddressSelect(convertedAddress);
+      }
+      setOpen(false);
+      // Restore focus after selecting a prediction
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const length = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(length, length);
         }
-      });
-    };
+      }, 50);
+    }
+  });
 
-    loadGoogleMapsScript();
-  }, [onChange, onAddressSelect]);
+  // Sync external value with internal query only when external value changes
+  React.useEffect(() => {
+    setQuery(value);
+  }, [value, setQuery]);
+
+  // Auto-open popover when predictions arrive
+  React.useEffect(() => {
+    if (predictions.length > 0 && !isLoading && query.length >= 3) {
+      setOpen(true);
+    } else if (query.length < 3) {
+      setOpen(false);
+    }
+  }, [predictions.length, isLoading, query.length]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setQuery(newValue);
+    onChange(newValue);
+    
+    // Close popover if input is too short
+    if (newValue.length < 3) {
+      setOpen(false);
+    }
+  };
+
+  const handlePredictionSelect = async (prediction: any) => {
+    await selectPrediction(prediction);
+  };
+
+  const handleInputClick = () => {
+    if (query && query.length >= 3 && predictions.length > 0 && !isLoading) {
+      setOpen(true);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (query.length >= 3 && predictions.length > 0 && !isLoading) {
+      setOpen(true);
+    }
+  };
+
+  const handlePopoverOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setOpen(false);
+    }
+  };
 
   return (
     <div className="space-y-2">
       <Label htmlFor="google-address">{label}</Label>
-      <Input
-        ref={inputRef}
-        id="google-address"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-      />
+      <Popover 
+        open={open && predictions.length > 0} 
+        onOpenChange={handlePopoverOpenChange}
+        modal={false}
+      >
+        <PopoverTrigger asChild>
+          <div className="relative">
+            <Input
+              id="google-address"
+              ref={inputRef}
+              value={query}
+              onChange={handleInputChange}
+              onClick={handleInputClick}
+              onFocus={handleInputFocus}
+              placeholder={placeholder}
+              required={required}
+              className="w-full"
+              autoComplete="off"
+            />
+            {isLoading && (
+              <div className="absolute right-3 top-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent 
+          className="p-0 w-[var(--radix-popover-trigger-width)]" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command>
+            <CommandList>
+              <CommandEmpty>No addresses found.</CommandEmpty>
+              <CommandGroup heading="Suggested addresses">
+                {predictions.map((prediction, index) => (
+                  <CommandItem
+                    key={prediction.place_id}
+                    value={prediction.description}
+                    onSelect={() => handlePredictionSelect(prediction)}
+                    className="flex items-start gap-2 cursor-pointer"
+                  >
+                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{prediction.structured_formatting.main_text}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {prediction.structured_formatting.secondary_text}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

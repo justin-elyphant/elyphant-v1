@@ -262,6 +262,13 @@ export const unifiedRecipientService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Validate connectionId
+    if (!connectionId || connectionId.trim() === '') {
+      throw new Error('Invalid connection ID');
+    }
+
+    console.log('🔍 Updating pending connection:', { connectionId, userId: user.id, updates });
+
     const updateData: any = {};
     
     if (updates.name !== undefined) {
@@ -277,6 +284,8 @@ export const unifiedRecipientService = {
       updateData.relationship_type = updates.relationship_type;
     }
 
+    console.log('🔍 Update data:', updateData);
+
     const { error } = await supabase
       .from('user_connections')
       .update(updateData)
@@ -284,6 +293,11 @@ export const unifiedRecipientService = {
       .eq('user_id', user.id)
       .eq('status', 'pending_invitation');
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error updating pending connection:', error);
+      throw error;
+    }
+
+    console.log('✅ Successfully updated pending connection');
   }
 };

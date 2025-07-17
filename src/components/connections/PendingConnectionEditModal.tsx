@@ -91,6 +91,16 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
     setLoading(true);
 
     try {
+      // Validate connection ID
+      if (!connection.id || connection.id.trim() === '') {
+        throw new Error('Invalid connection ID');
+      }
+
+      console.log('🔍 Submitting form with data:', {
+        connectionId: connection.id,
+        formData
+      });
+
       await unifiedRecipientService.updatePendingConnection(connection.id, {
         name: formData.name,
         email: formData.email,
@@ -102,8 +112,8 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating connection:', error);
-      toast.error('Failed to update connection');
+      console.error('❌ Error updating connection:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update connection');
     } finally {
       setLoading(false);
     }

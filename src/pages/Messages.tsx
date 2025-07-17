@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import EnhancedChatInterface from "@/components/messaging/EnhancedChatInterface";
 import MessageThread from "@/components/messaging/MessageThread";
 import StreamlinedMessageSystem from "@/components/messaging/StreamlinedMessageSystem";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import StandardBackButton from "@/components/shared/StandardBackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -188,29 +187,24 @@ const Messages = () => {
   // Show streamlined interface if no specific conversation selected
   if (!connectionId) {
     return (
-      <SidebarLayout>
         <div className="container max-w-4xl mx-auto py-8 px-4">
           <StandardBackButton to="/dashboard" text="Back to Dashboard" />
           <StreamlinedMessageSystem />
         </div>
-      </SidebarLayout>
     );
   }
 
   if (loading || groupsLoading) {
     return (
-      <SidebarLayout>
         <div className="container max-w-7xl mx-auto py-8 px-4">
           <div className="flex items-center justify-center h-64">
             <p className="text-muted-foreground">Loading conversations...</p>
           </div>
         </div>
-      </SidebarLayout>
     );
   }
 
   return (
-    <SidebarLayout>
       <div className="container max-w-7xl mx-auto py-8 px-4">
         <StandardBackButton 
           to="/dashboard" 
@@ -368,7 +362,6 @@ const Messages = () => {
           connections={friends.filter(f => f.type === 'friend')}
         />
       </div>
-    </SidebarLayout>
   );
 };
 

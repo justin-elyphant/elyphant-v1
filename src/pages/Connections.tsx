@@ -9,7 +9,6 @@ import SuggestionsTabContent from "@/components/connections/SuggestionsTabConten
 import PendingTabContent from "@/components/connections/PendingTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
 import PrivacyIntegration from "@/components/connections/PrivacyIntegration";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useState } from "react";
 import { RelationshipType } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
@@ -45,8 +44,7 @@ const Connections = () => {
 
   
   return (
-    <SidebarLayout>
-      <ConnectionsErrorBoundary>
+    <ConnectionsErrorBoundary>
         <div className="container max-w-4xl mx-auto py-8 px-4">
           <ConnectionsHeader 
             searchTerm={searchTerm} 
@@ -106,7 +104,6 @@ const Connections = () => {
           </Tabs>
         </div>
       </ConnectionsErrorBoundary>
-    </SidebarLayout>
   );
 };
 

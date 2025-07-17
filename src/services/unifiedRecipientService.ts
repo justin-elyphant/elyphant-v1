@@ -5,9 +5,17 @@ export interface UnifiedRecipient {
   id: string;
   name: string;
   email?: string;
+  phone?: string;
+  birthday?: string | null;
   address?: any;
   source: 'connection' | 'pending' | 'address_book';
   relationship_type?: string;
+  relationship_context?: {
+    closeness_level?: number;
+    interaction_frequency?: string;
+    shared_interests?: string[];
+    special_considerations?: string;
+  };
   status?: string;
   avatar_url?: string;
   created_at?: string;
@@ -85,9 +93,12 @@ export const unifiedRecipientService = {
             id: conn.id,
             name: conn.pending_recipient_name || 'Unknown',
             email: conn.pending_recipient_email,
+            phone: conn.pending_recipient_phone,
+            birthday: conn.pending_recipient_dob,
             address: conn.pending_shipping_address,
             source: 'pending',
             relationship_type: conn.relationship_type,
+            relationship_context: conn.relationship_context,
             status: conn.status,
             created_at: conn.created_at
           });
@@ -110,9 +121,12 @@ export const unifiedRecipientService = {
             id: recipient.id,
             name: recipient.name,
             email: recipient.preferences?.email,
+            phone: recipient.preferences?.phone,
+            birthday: recipient.preferences?.birthday,
             address: recipient.preferences?.shipping_address,
             source: 'address_book',
             relationship_type: recipient.relationship,
+            relationship_context: recipient.preferences?.relationship_context,
             created_at: recipient.created_at
           });
         });

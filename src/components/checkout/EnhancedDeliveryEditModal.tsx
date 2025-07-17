@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { User, MapPin, Gift, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, MapPin, Gift, AlertCircle } from 'lucide-react';
 import { DeliveryGroup } from '@/types/recipient';
 import { UnifiedRecipient, unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { toast } from 'sonner';
@@ -78,32 +78,43 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [recipientData, setRecipientData] = useState<any>(null);
 
   // Initialize form data when modal opens
   useEffect(() => {
     if (open && deliveryGroup) {
+      loadRecipientData();
+    }
+  }, [open, deliveryGroup, recipient]);
+
+  const loadRecipientData = async () => {
+    try {
+      // Get full recipient data including birthday and relationship context
+      const fullRecipient = await unifiedRecipientService.getRecipientById(deliveryGroup.connectionId);
+      setRecipientData(fullRecipient);
+      
       const initialData: EditFormData = {
         // Basic Info - from recipient if available, otherwise empty
-        name: recipient?.name || deliveryGroup.connectionName || '',
-        email: recipient?.email || '',
-        phone: '', // TODO: Add phone to recipient data
-        birthday: null, // TODO: Add birthday to recipient data
+        name: fullRecipient?.name || deliveryGroup.connectionName || '',
+        email: fullRecipient?.email || '',
+        phone: fullRecipient?.phone || '',
+        birthday: fullRecipient?.birthday || null,
         
-        // Relationship Context
-        relationshipType: recipient?.relationship_type || 'friend',
-        closenessLevel: 5,
-        interactionFrequency: 'regular',
-        sharedInterests: [],
-        specialConsiderations: '',
+        // Relationship Context - load from recipient data
+        relationshipType: fullRecipient?.relationship_type || 'friend',
+        closenessLevel: fullRecipient?.relationship_context?.closeness_level || 5,
+        interactionFrequency: fullRecipient?.relationship_context?.interaction_frequency || 'regular',
+        sharedInterests: fullRecipient?.relationship_context?.shared_interests || [],
+        specialConsiderations: fullRecipient?.relationship_context?.special_considerations || '',
         
         // Address
-        shippingAddress: deliveryGroup.shippingAddress || (recipient?.address ? {
-          name: recipient.address.name || recipient.name || '',
-          address: recipient.address.street || recipient.address.address_line1 || recipient.address.address || '',
-          city: recipient.address.city || '',
-          state: recipient.address.state || '',
-          zipCode: recipient.address.zipCode || recipient.address.zip_code || '',
-          country: recipient.address.country || 'United States'
+        shippingAddress: deliveryGroup.shippingAddress || (fullRecipient?.address ? {
+          name: fullRecipient.address.name || fullRecipient.name || '',
+          address: fullRecipient.address.street || fullRecipient.address.address_line1 || fullRecipient.address.address || '',
+          city: fullRecipient.address.city || '',
+          state: fullRecipient.address.state || '',
+          zipCode: fullRecipient.address.zipCode || fullRecipient.address.zip_code || '',
+          country: fullRecipient.address.country || 'United States'
         } : null),
         
         // Gift Options
@@ -116,8 +127,11 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
       
       setFormData(initialData);
       setValidationErrors([]);
+    } catch (error) {
+      console.error('Error loading recipient data:', error);
+      toast.error('Failed to load recipient data');
     }
-  }, [open, deliveryGroup, recipient]);
+  };
 
   const getRecipientType = () => {
     if (!recipient) return 'unknown';
@@ -215,8 +229,8 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Edit Delivery for {deliveryGroup.connectionName}
@@ -230,7 +244,7 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
 
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4 flex-shrink-0">
             <div className="flex items-start gap-2">
               <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <div>
@@ -245,8 +259,8 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
             <TabsTrigger value="recipient" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Recipient Info
@@ -261,36 +275,42 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto mt-4">
-            <TabsContent value="recipient" className="space-y-4 m-0">
-              <RecipientInfoTab
-                formData={formData}
-                setFormData={setFormData}
-                permissions={permissions}
-                recipientType={recipientType}
-              />
+          <div className="flex-1 overflow-hidden mt-4">
+            <TabsContent value="recipient" className="h-full m-0">
+              <div className="h-full overflow-y-auto pr-2">
+                <RecipientInfoTab
+                  formData={formData}
+                  setFormData={setFormData}
+                  permissions={permissions}
+                  recipientType={recipientType}
+                />
+              </div>
             </TabsContent>
 
-            <TabsContent value="address" className="space-y-4 m-0">
-              <DeliveryAddressTab
-                formData={formData}
-                setFormData={setFormData}
-                recipient={recipient}
-                permissions={permissions}
-              />
+            <TabsContent value="address" className="h-full m-0">
+              <div className="h-full overflow-y-auto pr-2">
+                <DeliveryAddressTab
+                  formData={formData}
+                  setFormData={setFormData}
+                  recipient={recipient}
+                  permissions={permissions}
+                />
+              </div>
             </TabsContent>
 
-            <TabsContent value="gift" className="space-y-4 m-0">
-              <GiftOptionsTab
-                formData={formData}
-                setFormData={setFormData}
-                permissions={permissions}
-              />
+            <TabsContent value="gift" className="h-full m-0">
+              <div className="h-full overflow-y-auto pr-2">
+                <GiftOptionsTab
+                  formData={formData}
+                  setFormData={setFormData}
+                  permissions={permissions}
+                />
+              </div>
             </TabsContent>
           </div>
         </Tabs>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}

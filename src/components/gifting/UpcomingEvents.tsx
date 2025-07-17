@@ -13,14 +13,14 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
   const { 
     isGiftWizardOpen,
     setIsGiftWizardOpen,
-    editingEventData,
-    setEditingEventData,
+    giftWizardInitialData,
+    setGiftWizardInitialData,
     refreshEvents
   } = useEvents();
 
   const handleGiftWizardClose = () => {
     setIsGiftWizardOpen(false);
-    setEditingEventData(null);
+    setGiftWizardInitialData(null);
   };
 
   const handleGiftWizardComplete = async () => {
@@ -35,7 +35,7 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
       <GiftSetupWizard
         open={isGiftWizardOpen}
         onOpenChange={handleGiftWizardClose}
-        initialData={editingEventData}
+        initialData={giftWizardInitialData}
       />
     </div>
   );

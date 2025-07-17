@@ -7,10 +7,10 @@ export const useEventEdit = () => {
     events, 
     setCurrentEvent, 
     setIsGiftWizardOpen,
-    setEditingEventData 
+    setGiftWizardInitialData 
   } = useEvents();
 
-  const transformEventToGiftSetupData = (event: any): Partial<GiftSetupData> => {
+  const transformEventToGiftSetupData = (event: any): any => {
     console.log('Transforming event for edit:', event); // Debug log
     
     // Extract date string properly
@@ -23,21 +23,37 @@ export const useEventEdit = () => {
       dateString = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split('T')[0] : '';
     }
 
-    const giftSetupData: Partial<GiftSetupData> = {
+    const giftSetupData = {
+      // Recipient information
       recipientName: event.person || "",
       recipientEmail: event.recipientEmail || "",
       relationshipType: event.relationshipType || "friend",
+      
+      // Event details
       giftingEvents: [{
         dateType: event.type || "birthday",
         date: dateString,
         isRecurring: event.isRecurring || false,
         customName: event.type || "birthday"
       }],
+      
+      // Auto-gifting settings
       autoGiftingEnabled: event.autoGiftEnabled || false,
       scheduledGiftingEnabled: !(event.autoGiftEnabled || false),
       budgetLimit: event.autoGiftAmount || 50,
+      
+      // Gift preferences
       giftCategories: event.giftCategories || [],
-      notificationDays: event.notificationDays || [7, 3, 1]
+      
+      // Notification settings  
+      notificationDays: event.notificationDays || [7, 3, 1],
+      
+      // Connection details if available
+      connectionId: event.connectionId,
+      connectionStatus: event.connectionStatus,
+      
+      // Shipping address if available (for pending invitations that became events)
+      shippingAddress: event.shippingAddress || null
     };
 
     console.log('Transformed gift setup data:', giftSetupData); // Debug log
@@ -47,11 +63,13 @@ export const useEventEdit = () => {
   const handleEditEvent = (id: string) => {
     const eventToEdit = events.find(event => event.id === id);
     if (eventToEdit) {
+      console.log('Editing event:', eventToEdit); // Debug log
+      
       // Transform event to gift setup data
       const giftSetupData = transformEventToGiftSetupData(eventToEdit);
       
-      // Set the editing data
-      setEditingEventData(giftSetupData);
+      // Set the initial data for the gift wizard
+      setGiftWizardInitialData(giftSetupData);
       
       // Open the gift wizard
       setIsGiftWizardOpen(true);

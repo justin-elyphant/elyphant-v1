@@ -12,8 +12,6 @@ interface EventsContextType {
   setCurrentEvent: (event: ExtendedEventData | null) => void;
   isGiftWizardOpen: boolean;
   setIsGiftWizardOpen: (open: boolean) => void;
-  editingEventData: any | null;
-  setEditingEventData: (data: any | null) => void;
   giftWizardInitialData: any | null;
   setGiftWizardInitialData: (data: any | null) => void;
   openGiftWizardForEvent: (event: ExtendedEventData) => void;
@@ -34,7 +32,6 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
-  const [editingEventData, setEditingEventData] = useState<any | null>(null);
   const [giftWizardInitialData, setGiftWizardInitialData] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
   const [selectedEventType, setSelectedEventType] = useState<string>("all");
@@ -112,8 +109,6 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentEvent,
     isGiftWizardOpen,
     setIsGiftWizardOpen,
-    editingEventData,
-    setEditingEventData,
     giftWizardInitialData,
     setGiftWizardInitialData,
     openGiftWizardForEvent,

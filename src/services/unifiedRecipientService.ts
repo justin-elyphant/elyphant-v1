@@ -199,7 +199,11 @@ export const unifiedRecipientService = {
     if (deleteError) throw deleteError;
   },
 
-  async updateAddressBookRecipient(id: string, updates: Partial<AddressBookRecipient>): Promise<void> {
+  async updateAddressBookRecipient(id: string, updates: Partial<AddressBookRecipient> & {
+    phone?: string;
+    birthday?: string | null;
+    relationship_context?: any;
+  }): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -210,8 +214,11 @@ export const unifiedRecipientService = {
         relationship: updates.relationship_type,
         preferences: {
           email: updates.email,
+          phone: updates.phone,
+          birthday: updates.birthday,
           shipping_address: updates.address,
-          notes: updates.notes
+          notes: updates.notes,
+          relationship_context: updates.relationship_context
         },
         updated_at: new Date().toISOString()
       })
@@ -252,12 +259,49 @@ export const unifiedRecipientService = {
     );
   },
 
+  // Comprehensive update for any recipient type
+  async updateRecipient(id: string, updates: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    birthday?: string | null;
+    address?: any;
+    relationship_type?: string;
+    relationship_context?: any;
+    gift_preferences?: any;
+  }): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Find the recipient to determine its type
+    const recipient = await this.getRecipientById(id);
+    if (!recipient) throw new Error('Recipient not found');
+
+    switch (recipient.source) {
+      case 'pending':
+        await this.updatePendingConnection(id, updates);
+        break;
+      case 'address_book':
+        await this.updateAddressBookRecipient(id, updates);
+        break;
+      case 'connection':
+        // Connected users can only have address overrides and gift preferences updated
+        console.warn('Connected user data cannot be directly updated');
+        break;
+      default:
+        throw new Error('Unknown recipient type');
+    }
+  },
+
   // Update pending connection
   async updatePendingConnection(connectionId: string, updates: {
     name?: string;
     email?: string;
+    phone?: string;
+    birthday?: string | null;
     address?: any;
     relationship_type?: string;
+    relationship_context?: any;
   }): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
@@ -277,10 +321,16 @@ export const unifiedRecipientService = {
     if (updates.email !== undefined) {
       updateData.pending_recipient_email = updates.email;
     }
+    if (updates.phone !== undefined) {
+      updateData.pending_recipient_phone = updates.phone;
+    }
+    if (updates.birthday !== undefined) {
+      updateData.pending_recipient_dob = updates.birthday;
+    }
     if (updates.address !== undefined) {
       // Normalize address data to ensure consistent field names
       const normalizedAddress = {
-        street: updates.address.street || '',
+        street: updates.address.street || updates.address.address || '',
         address_line_2: updates.address.address_line_2 || updates.address.address_line2 || '',
         city: updates.address.city || '',
         state: updates.address.state || '',
@@ -291,6 +341,9 @@ export const unifiedRecipientService = {
     }
     if (updates.relationship_type !== undefined) {
       updateData.relationship_type = updates.relationship_type;
+    }
+    if (updates.relationship_context !== undefined) {
+      updateData.relationship_context = updates.relationship_context;
     }
 
     console.log('🔍 Update data:', updateData);

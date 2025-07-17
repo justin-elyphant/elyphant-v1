@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import ModernOrderSummary from './ModernOrderSummary';
 import CheckoutProgressIndicator from './CheckoutProgressIndicator';
-import DeliveryGroupEditModal from './DeliveryGroupEditModal';
+import EnhancedDeliveryEditModal from './EnhancedDeliveryEditModal';
 import { DeliveryGroup } from '@/types/recipient';
 
 interface ShippingInfo {
@@ -179,6 +179,10 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   const handleEditDeliveryGroup = (group: DeliveryGroup) => {
     setEditingGroup(group);
     setEditModalOpen(true);
+  };
+
+  const getRecipientForGroup = (group: DeliveryGroup) => {
+    return recipients.find(r => r.id === group.connectionId) || null;
   };
 
   const handleSaveDeliveryGroup = (updatedGroup: DeliveryGroup) => {
@@ -455,12 +459,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         </div>
       </div>
 
-      {/* Edit Modal */}
-      {editingGroup && (
-        <DeliveryGroupEditModal
+      {/* Enhanced Edit Modal */}
+      {editModalOpen && editingGroup && (
+        <EnhancedDeliveryEditModal
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
           deliveryGroup={editingGroup}
+          recipient={getRecipientForGroup(editingGroup)}
           onSave={handleSaveDeliveryGroup}
         />
       )}

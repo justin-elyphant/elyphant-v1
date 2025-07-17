@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { StandardizedAddress } from "@/services/googlePlacesService";
 import { standardizedToForm } from "@/utils/addressStandardization";
+import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 
 interface ShippingInfo {
   name: string;
@@ -23,6 +24,23 @@ interface CheckoutFormProps {
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) => {
+  const { defaultAddress, loading } = useDefaultAddress();
+  const addressWasAutoFilled = React.useRef(false);
+
+  // Auto-fill the form with default address when it loads
+  useEffect(() => {
+    if (defaultAddress && !addressWasAutoFilled.current && !shippingInfo.address) {
+      onUpdate({
+        name: defaultAddress.name,
+        address: defaultAddress.address.street,
+        city: defaultAddress.address.city,
+        state: defaultAddress.address.state,
+        zipCode: defaultAddress.address.zipCode,
+        country: defaultAddress.address.country
+      });
+      addressWasAutoFilled.current = true;
+    }
+  }, [defaultAddress, shippingInfo.address, onUpdate]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
       [e.target.name]: e.target.value

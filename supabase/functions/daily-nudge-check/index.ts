@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get all pending connections that might need nudges
     const { data: pendingConnections, error: fetchError } = await supabase
-      .from('pending_gifts')
+      .from('pending_gift_invitations')
       .select('*')
       .eq('status', 'pending_invitation');
 

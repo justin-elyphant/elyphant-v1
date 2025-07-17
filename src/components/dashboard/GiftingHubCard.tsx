@@ -33,6 +33,7 @@ const SmartGiftingTab = () => {
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [giftSetupInitialData, setGiftSetupInitialData] = useState<any>(null);
+  const [giftWizardOpen, setGiftWizardOpen] = useState(false);
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -165,10 +166,7 @@ const SmartGiftingTab = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => {
-              setSelectedEvent({ id: 'new', type: 'general' });
-              setSetupDialogOpen(true);
-            }}
+            onClick={() => setGiftWizardOpen(true)}
           >
             <Zap className="h-4 w-4 mr-2" />
             Set Up Gifting
@@ -238,10 +236,7 @@ const SmartGiftingTab = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Add special occasions to set up automated gifting
             </p>
-            <Button onClick={() => {
-              setSelectedEvent({ id: 'new', type: 'general' });
-              setSetupDialogOpen(true);
-            }}>
+            <Button onClick={() => setGiftWizardOpen(true)}>
               <Zap className="h-4 w-4 mr-2" />
               Set Up Gifting
             </Button>
@@ -347,6 +342,13 @@ const SmartGiftingTab = () => {
           onSave={handleSaveAutoGiftSettings}
         />
       )}
+      
+      {/* Main Gift Setup Wizard - for general setup */}
+      <GiftSetupWizard 
+        open={giftWizardOpen}
+        onOpenChange={setGiftWizardOpen}
+        initialData={null}
+      />
       
     </div>
   );

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { User, MapPin, Gift, AlertCircle } from 'lucide-react';
 import { DeliveryGroup } from '@/types/recipient';
 import { UnifiedRecipient, unifiedRecipientService } from '@/services/unifiedRecipientService';
@@ -229,102 +230,102 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Edit Delivery for {deliveryGroup.connectionName}
-            <Badge variant="outline" className="ml-2">
-              {recipientType === 'connection' ? 'Connected' : 
-               recipientType === 'pending' ? 'Pending' : 
-               recipientType === 'address_book' ? 'Address Book' : 'Unknown'}
-            </Badge>
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] p-0">
+        <div className="flex flex-col h-full">
+          <DialogHeader className="flex-shrink-0 p-6 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Edit Delivery for {deliveryGroup.connectionName}
+              <Badge variant="outline" className="ml-2">
+                {recipientType === 'connection' ? 'Connected' : 
+                 recipientType === 'pending' ? 'Pending' : 
+                 recipientType === 'address_book' ? 'Address Book' : 'Unknown'}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
 
-        {/* Validation Errors */}
-        {validationErrors.length > 0 && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4 flex-shrink-0">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-              <div>
-                <div className="font-medium text-destructive mb-1">Please fix these errors:</div>
-                <ul className="text-sm text-destructive space-y-1">
-                  {validationErrors.map((error, index) => (
-                    <li key={index}>• {error}</li>
-                  ))}
-                </ul>
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-6 pt-4">
+                {/* Validation Errors */}
+                {validationErrors.length > 0 && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                      <div>
+                        <div className="font-medium text-destructive mb-1">Please fix these errors:</div>
+                        <ul className="text-sm text-destructive space-y-1">
+                          {validationErrors.map((error, index) => (
+                            <li key={index}>• {error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="recipient" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Recipient Info
+                    </TabsTrigger>
+                    <TabsTrigger value="address" className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Delivery Address
+                    </TabsTrigger>
+                    <TabsTrigger value="gift" className="flex items-center gap-2">
+                      <Gift className="h-4 w-4" />
+                      Gift Options
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="recipient" className="mt-0">
+                    <RecipientInfoTab
+                      formData={formData}
+                      setFormData={setFormData}
+                      permissions={permissions}
+                      recipientType={recipientType}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="address" className="mt-0">
+                    <DeliveryAddressTab
+                      formData={formData}
+                      setFormData={setFormData}
+                      recipient={recipient}
+                      permissions={permissions}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="gift" className="mt-0">
+                    <GiftOptionsTab
+                      formData={formData}
+                      setFormData={setFormData}
+                      permissions={permissions}
+                    />
+                  </TabsContent>
+                </Tabs>
               </div>
-            </div>
+            </ScrollArea>
           </div>
-        )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-            <TabsTrigger value="recipient" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Recipient Info
-            </TabsTrigger>
-            <TabsTrigger value="address" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Delivery Address
-            </TabsTrigger>
-            <TabsTrigger value="gift" className="flex items-center gap-2">
-              <Gift className="h-4 w-4" />
-              Gift Options
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="flex-1 overflow-hidden mt-4">
-            <TabsContent value="recipient" className="h-full m-0">
-              <div className="h-full overflow-y-auto pr-2">
-                <RecipientInfoTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  permissions={permissions}
-                  recipientType={recipientType}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="address" className="h-full m-0">
-              <div className="h-full overflow-y-auto pr-2">
-                <DeliveryAddressTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  recipient={recipient}
-                  permissions={permissions}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="gift" className="h-full m-0">
-              <div className="h-full overflow-y-auto pr-2">
-                <GiftOptionsTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  permissions={permissions}
-                />
-              </div>
-            </TabsContent>
-          </div>
-        </Tabs>
-
-        <DialogFooter className="flex-shrink-0">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave}
-            disabled={isLoading || validationErrors.length > 0}
-          >
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="flex-shrink-0 p-6 pt-0">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={isLoading || validationErrors.length > 0}
+            >
+              {isLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

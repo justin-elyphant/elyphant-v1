@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,16 +32,18 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
     if (defaultAddress && !addressWasAutoFilled.current && !shippingInfo.address) {
       onUpdate({
         name: defaultAddress.name,
+        email: shippingInfo.email,
         address: defaultAddress.address.street,
-        addressLine2: '',
+        addressLine2: defaultAddress.address.address_line2 || '',
         city: defaultAddress.address.city,
-        state: defaultAddress.address.state,
+        state: defaultAddress.address.state || 'California',
         zipCode: defaultAddress.address.zipCode,
         country: defaultAddress.address.country
       });
       addressWasAutoFilled.current = true;
     }
   }, [defaultAddress, shippingInfo.address, onUpdate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
       [e.target.name]: e.target.value

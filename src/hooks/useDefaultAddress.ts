@@ -8,6 +8,7 @@ export interface DefaultAddress {
   name: string;
   address: {
     street: string;
+    address_line2?: string;
     city: string;
     state: string;
     zipCode: string;
@@ -61,6 +62,7 @@ export const useDefaultAddress = () => {
             name: anyAddress.name,
             address: {
               street: anyAddress.address.street || anyAddress.address.address_line1 || anyAddress.address.address || '',
+              address_line2: anyAddress.address.address_line2 || '',
               city: anyAddress.address.city || '',
               state: anyAddress.address.state || '',
               zipCode: anyAddress.address.zipCode || anyAddress.address.zip_code || '',
@@ -74,17 +76,18 @@ export const useDefaultAddress = () => {
       }
 
       if (defaultData) {
-        setDefaultAddress({
-          id: defaultData.id,
-          name: defaultData.name,
-          address: {
-            street: defaultData.address.street || defaultData.address.address_line1 || defaultData.address.address || '',
-            city: defaultData.address.city || '',
-            state: defaultData.address.state || '',
-            zipCode: defaultData.address.zipCode || defaultData.address.zip_code || '',
-            country: defaultData.address.country || 'United States'
-          }
-        });
+          setDefaultAddress({
+            id: defaultData.id,
+            name: defaultData.name,
+            address: {
+              street: defaultData.address.street || defaultData.address.address_line1 || defaultData.address.address || '',
+              address_line2: defaultData.address.address_line2 || '',
+              city: defaultData.address.city || '',
+              state: defaultData.address.state || '',
+              zipCode: defaultData.address.zipCode || defaultData.address.zip_code || '',
+              country: defaultData.address.country || 'United States'
+            }
+          });
       } else {
         setDefaultAddress(null);
       }

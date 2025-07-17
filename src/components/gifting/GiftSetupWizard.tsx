@@ -10,6 +10,7 @@ import { WizardStepFour } from "./wizard/WizardStepFour";
 import { WizardConfirmation } from "./wizard/WizardConfirmation";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { eventsService } from "@/services/eventsService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface GiftSetupData {
@@ -138,17 +139,37 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
         finalData.shippingAddress
       );
 
-      // Create events and auto-gifting rules
+      // Create or update events and auto-gifting rules
       for (const event of finalData.giftingEvents) {
-        // Create the actual event using eventsService
-        const createdEvent = await eventsService.createEvent({
-          connection_id: connection.id,
-          date_type: event.dateType,
-          date: event.date,
-          is_recurring: event.isRecurring,
-          recurring_type: event.isRecurring ? 'yearly' : null,
-          visibility: 'private'
-        });
+        // Check if this event already exists for this user and date type
+        const { data: existingEvents } = await supabase
+          .from('user_special_dates')
+          .select('id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('date_type', event.dateType);
+
+        let createdEvent;
+        if (existingEvents && existingEvents.length > 0) {
+          // Update existing event
+          createdEvent = await eventsService.updateEvent({
+            id: existingEvents[0].id,
+            connection_id: connection.id,
+            date: event.date,
+            is_recurring: event.isRecurring,
+            recurring_type: event.isRecurring ? 'yearly' : null,
+            visibility: 'private'
+          });
+        } else {
+          // Create the actual event using eventsService
+          createdEvent = await eventsService.createEvent({
+            connection_id: connection.id,
+            date_type: event.dateType,
+            date: event.date,
+            is_recurring: event.isRecurring,
+            recurring_type: event.isRecurring ? 'yearly' : null,
+            visibility: 'private'
+          });
+        }
 
         // Create auto-gift rule if enabled, linking it to the created event
         if (finalData.autoGiftingEnabled) {

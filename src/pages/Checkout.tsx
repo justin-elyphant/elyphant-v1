@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
-
+import Header from '@/components/home/Header';
 import Footer from '@/components/home/Footer';
 import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
 
@@ -45,6 +45,7 @@ const Checkout = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <Header />
         <main className="flex-1">
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="text-center py-16">
@@ -66,29 +67,8 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <Header />
       <main className="flex-1 bg-gray-50">
-        {/* Checkout Header */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-4 max-w-6xl">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/cart')}
-                className="touch-target-44"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold">Secure Checkout</h1>
-                <p className="text-sm text-muted-foreground">
-                  Complete your order securely
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Checkout Form */}
         <div className="container mx-auto px-4 py-8">
           <EnhancedCheckoutForm onCheckoutComplete={handleCheckoutComplete} />

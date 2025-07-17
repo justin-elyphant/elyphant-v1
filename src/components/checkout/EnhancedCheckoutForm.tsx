@@ -16,10 +16,13 @@ import {
 import { useCart } from '@/contexts/CartContext';
 import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
 import { useProfile } from '@/contexts/profile/ProfileContext';
+import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { toast } from 'sonner';
 import AddressBookSelector from './AddressBookSelector';
 import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import EnhancedRecipientSelection from "./EnhancedRecipientSelection";
+import ModernOrderSummary from './ModernOrderSummary';
+import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 
 interface ShippingInfo {
   name: string;
@@ -57,6 +60,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     isValid: boolean;
     error?: string;
   }[]>([]);
+  const [shippingCost, setShippingCost] = useState<number>(0);
+  const [shippingMethod, setShippingMethod] = useState<string>('Standard Shipping');
+  const [taxAmount, setTaxAmount] = useState<number>(0);
 
   useEffect(() => {
     if (profile) {
@@ -71,6 +77,16 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   useEffect(() => {
     validateDeliveryGroups();
   }, [deliveryGroups, connections]);
+
+  useEffect(() => {
+    // Calculate shipping cost based on addresses and items
+    const baseShipping = 9.99;
+    const freeShippingThreshold = 75;
+    const totalAmount = getTotalAmount();
+    
+    setShippingCost(totalAmount >= freeShippingThreshold ? 0 : baseShipping);
+    setTaxAmount(totalAmount * 0.0825); // 8.25% tax rate
+  }, [cartItems]);
 
   const validateDeliveryGroups = () => {
     const validationResults = deliveryGroups.map(group => {
@@ -171,7 +187,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Package className="h-8 w-8 text-primary" />
         <div>
@@ -181,6 +198,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Progress Indicator */}
+      <CheckoutProgressIndicator currentStep={currentStep} />
 
       {/* Address Validation Errors */}
       {addressValidationErrors.length > 0 && (
@@ -196,9 +216,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         </Alert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-8 lg:grid-cols-12">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-8 space-y-6">
           {/* Delivery Groups */}
           {deliveryGroups.length > 0 && (
             <Card>
@@ -339,52 +359,17 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         </div>
 
         {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>${getTotalAmount().toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>Calculated at checkout</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-medium">
-                  <span>Total</span>
-                  <span>${getTotalAmount().toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Button 
-                  onClick={handleProceedToPayment}
-                  className="w-full"
-                  disabled={addressValidationErrors.length > 0}
-                >
-                  Proceed to Payment
-                </Button>
-                {currentStep === 'payment' && (
-                  <Button 
-                    onClick={handleProcessOrder}
-                    className="w-full"
-                    variant="default"
-                  >
-                    Complete Order
-                  </Button>
-                )}
-              </div>
-
-              <div className="text-xs text-muted-foreground">
-                By placing this order, you agree to our Terms of Service and Privacy Policy.
-              </div>
-            </CardContent>
-          </Card>
+        <div className="lg:col-span-4">
+          <ModernOrderSummary
+            shippingCost={shippingCost}
+            taxAmount={taxAmount}
+            shippingMethod={shippingMethod}
+            estimatedDelivery="3-5 business days"
+            currentStep={currentStep}
+            isValid={addressValidationErrors.length === 0}
+            onProceedToPayment={handleProceedToPayment}
+            onCompleteOrder={handleProcessOrder}
+          />
         </div>
       </div>
     </div>

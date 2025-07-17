@@ -1,16 +1,7 @@
 
 import React, { useState } from "react";
-import { Info } from "lucide-react";
 import { usePricingSettings } from "@/hooks/usePricingSettings";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import ContextualHelp from "@/components/help/ContextualHelp";
 
 interface TransparentPriceBreakdownProps {
   basePrice: number;
@@ -24,7 +15,6 @@ const TransparentPriceBreakdown = ({
   className = "" 
 }: TransparentPriceBreakdownProps) => {
   const { calculatePriceBreakdown } = usePricingSettings();
-  const [showFeeInfo, setShowFeeInfo] = useState(false);
   
   const breakdown = calculatePriceBreakdown(basePrice, shippingCost);
 
@@ -45,40 +35,34 @@ const TransparentPriceBreakdown = ({
       <div className="flex justify-between text-sm">
         <span className="flex items-center gap-1">
           {breakdown.giftingFeeName}
-          <Dialog open={showFeeInfo} onOpenChange={setShowFeeInfo}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-4 w-4 p-0 hover:bg-transparent"
-              >
-                <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>About Our {breakdown.giftingFeeName}</DialogTitle>
-                <DialogDescription className="pt-4">
+          <ContextualHelp
+            id="gifting-fee"
+            title={`About Our ${breakdown.giftingFeeName}`}
+            content={
+              <div className="space-y-2">
+                <p>
                   {breakdown.giftingFeeDescription || 
                     "This fee supports system enhancements, AI-powered features, and automation that make gifting seamless and delightful."
                   }
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 text-sm">
-                <p><strong>What's included:</strong></p>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Platform technology and maintenance</li>
-                  <li>Customer support and gift tracking</li>
-                  <li>Curated shopping experience</li>
-                  <li>Secure payment processing</li>
-                  <li>Gift delivery coordination</li>
-                  <li>AI-powered gift recommendations and search</li>
-                  <li>Automated gifting features and scheduling</li>
-                  <li>Smart wishlist management and sharing</li>
-                </ul>
+                </p>
+                <div className="space-y-1">
+                  <p className="font-medium">What's included:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                    <li>Platform technology and maintenance</li>
+                    <li>Customer support and gift tracking</li>
+                    <li>Curated shopping experience</li>
+                    <li>Secure payment processing</li>
+                    <li>Gift delivery coordination</li>
+                    <li>AI-powered gift recommendations and search</li>
+                    <li>Automated gifting features and scheduling</li>
+                    <li>Smart wishlist management and sharing</li>
+                  </ul>
+                </div>
               </div>
-            </DialogContent>
-          </Dialog>
+            }
+            iconSize={12}
+            className="text-muted-foreground hover:text-foreground"
+          />
         </span>
         <span>${breakdown.giftingFee.toFixed(2)}</span>
       </div>

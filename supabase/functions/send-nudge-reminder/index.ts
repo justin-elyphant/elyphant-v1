@@ -94,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
     const currentNudgeCount = nudgeData && nudgeData.length > 0 ? nudgeData[0].total_nudges : 0;
 
     // Create signup link for the recipient
-    const signupLink = `https://dmkxtkvlispxeqfzlczr.supabase.co/auth/v1/verify?token=signup&type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/streamlined-signup')}`;
+    const signupLink = `https://dmkxtkvlispxeqfzlczr.supabase.co/auth/v1/verify?token=signup&type=signup&redirect_to=${encodeURIComponent('https://dmkxtkvlispxeqfzlczr.supabase.co/streamlined-signup')}`;
 
     // Send email nudge
     let emailSent = false;

@@ -566,6 +566,57 @@ export type Database = {
         }
         Relationships: []
       }
+      connection_nudges: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          custom_message: string | null
+          delivery_status: string
+          id: string
+          last_nudge_sent_at: string
+          next_nudge_scheduled_at: string | null
+          nudge_count: number
+          nudge_method: string
+          nudge_type: string
+          recipient_email: string
+          recipient_phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          custom_message?: string | null
+          delivery_status?: string
+          id?: string
+          last_nudge_sent_at?: string
+          next_nudge_scheduled_at?: string | null
+          nudge_count?: number
+          nudge_method?: string
+          nudge_type?: string
+          recipient_email: string
+          recipient_phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          custom_message?: string | null
+          delivery_status?: string
+          id?: string
+          last_nudge_sent_at?: string
+          next_nudge_scheduled_at?: string | null
+          nudge_count?: number
+          nudge_method?: string
+          nudge_type?: string
+          recipient_email?: string
+          recipient_phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contributions: {
         Row: {
           amount: number
@@ -2343,6 +2394,10 @@ export type Database = {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
       }
+      can_send_nudge: {
+        Args: { p_user_id: string; p_recipient_email: string }
+        Returns: boolean
+      }
       can_user_follow: {
         Args: { follower_id: string; target_id: string }
         Returns: boolean
@@ -2362,6 +2417,15 @@ export type Database = {
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_nudge_summary: {
+        Args: { p_user_id: string; p_recipient_email: string }
+        Returns: {
+          total_nudges: number
+          last_nudge_sent: string
+          can_nudge: boolean
+          days_until_next_nudge: number
+        }[]
       }
       get_upcoming_auto_gift_events: {
         Args: { days_ahead?: number }

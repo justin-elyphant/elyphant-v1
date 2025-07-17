@@ -14,6 +14,9 @@ interface EventsContextType {
   setIsGiftWizardOpen: (open: boolean) => void;
   editingEventData: any | null;
   setEditingEventData: (data: any | null) => void;
+  giftWizardInitialData: any | null;
+  setGiftWizardInitialData: (data: any | null) => void;
+  openGiftWizardForEvent: (event: ExtendedEventData) => void;
   refreshEvents: () => Promise<void>;
   updateEvent: (eventId: string, updates: any) => Promise<void>;
   deleteEvent: (eventId: string, options: any) => Promise<void>;
@@ -32,8 +35,23 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
   const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
   const [editingEventData, setEditingEventData] = useState<any | null>(null);
+  const [giftWizardInitialData, setGiftWizardInitialData] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
   const [selectedEventType, setSelectedEventType] = useState<string>("all");
+
+  const openGiftWizardForEvent = (event: ExtendedEventData) => {
+    const initialData = {
+      recipientName: event.person,
+      relationshipType: event.relationshipType || 'Friend',
+      giftingEvents: [{
+        dateType: event.type,
+        date: event.date,
+        isRecurring: true
+      }]
+    };
+    setGiftWizardInitialData(initialData);
+    setIsGiftWizardOpen(true);
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -96,6 +114,9 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     setIsGiftWizardOpen,
     editingEventData,
     setEditingEventData,
+    giftWizardInitialData,
+    setGiftWizardInitialData,
+    openGiftWizardForEvent,
     refreshEvents,
     updateEvent,
     deleteEvent,

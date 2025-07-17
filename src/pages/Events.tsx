@@ -18,25 +18,12 @@ import { UserPlus } from "lucide-react";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 
 const Events = () => {
-  const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
-  // Check for action=add parameter on page load
-  useEffect(() => {
-    const action = searchParams.get("action");
-    if (action === "add") {
-      setIsGiftWizardOpen(true);
-      // Clear the action parameter after opening the dialog
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete("action");
-      setSearchParams(newSearchParams);
-    }
-  }, [searchParams, setSearchParams]);
-
   const handleAddEvent = () => {
     console.log("Set up gifting button clicked"); // Debug log
-    setIsGiftWizardOpen(true);
+    // This will be handled inside EventsContent which has access to context
   };
 
   // Show sign-in prompt if not authenticated
@@ -83,13 +70,6 @@ const Events = () => {
           </div>
           
           <EventsContent onAddEvent={handleAddEvent} />
-          <GiftSetupWizard 
-            open={isGiftWizardOpen} 
-            onOpenChange={(open) => {
-              console.log("Gift wizard open state changed:", open); // Debug log
-              setIsGiftWizardOpen(open);
-            }}
-          />
         </div>
       </EventsProvider>
     </MainLayout>
@@ -97,8 +77,25 @@ const Events = () => {
 };
 
 const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
-  const { events } = useEvents();
-  const [searchParams] = useSearchParams();
+  const { events, isGiftWizardOpen, setIsGiftWizardOpen, giftWizardInitialData, setGiftWizardInitialData } = useEvents();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Check for action=add parameter on page load
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (action === "add") {
+      setIsGiftWizardOpen(true);
+      // Clear the action parameter after opening the dialog
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("action");
+      setSearchParams(newSearchParams);
+    }
+  }, [searchParams, setSearchParams, setIsGiftWizardOpen]);
+
+  const handleAddEventWithContext = () => {
+    console.log("Set up gifting button clicked"); // Debug log
+    setIsGiftWizardOpen(true);
+  };
   
   // Get default tab from URL parameter
   const defaultTab = searchParams.get("tab") || "overview";
@@ -122,43 +119,56 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
   }, [events]);
 
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
-      <div className="flex items-center justify-between">
-        <TabsList className="h-10">
-          <TabsTrigger value="overview" className="text-sm">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="upcoming" className="text-sm">
-            Upcoming Events ({upcomingEvents.length})
-          </TabsTrigger>
-          <TabsTrigger value="past" className="text-sm">
-            Past Events ({pastEvents.length})
-          </TabsTrigger>
-          <TabsTrigger value="automated" className="text-sm">Automation Rules</TabsTrigger>
-          <TabsTrigger value="monitoring" className="text-sm">Activity Log</TabsTrigger>
-        </TabsList>
-      </div>
-        
-      <TabsContent value="overview" className="mt-6">
-        <UnifiedGiftTimingDashboard />
-      </TabsContent>
-        
-      <TabsContent value="upcoming" className="mt-6">
-        <UpcomingEvents onAddEvent={onAddEvent} />
-      </TabsContent>
-        
-      <TabsContent value="past" className="mt-6">
-        <PastEventsContainer pastEvents={pastEvents} />
-      </TabsContent>
-        
-      <TabsContent value="automated" className="mt-6">
-        <AutomatedGiftingTabContent />
-      </TabsContent>
-        
-      <TabsContent value="monitoring" className="mt-6">
-        <AutoGiftExecutionMonitor />
-      </TabsContent>
-    </Tabs>
+    <>
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <div className="flex items-center justify-between">
+          <TabsList className="h-10">
+            <TabsTrigger value="overview" className="text-sm">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="upcoming" className="text-sm">
+              Upcoming Events ({upcomingEvents.length})
+            </TabsTrigger>
+            <TabsTrigger value="past" className="text-sm">
+              Past Events ({pastEvents.length})
+            </TabsTrigger>
+            <TabsTrigger value="automated" className="text-sm">Automation Rules</TabsTrigger>
+            <TabsTrigger value="monitoring" className="text-sm">Activity Log</TabsTrigger>
+          </TabsList>
+        </div>
+          
+        <TabsContent value="overview" className="mt-6">
+          <UnifiedGiftTimingDashboard />
+        </TabsContent>
+          
+        <TabsContent value="upcoming" className="mt-6">
+          <UpcomingEvents onAddEvent={handleAddEventWithContext} />
+        </TabsContent>
+          
+        <TabsContent value="past" className="mt-6">
+          <PastEventsContainer pastEvents={pastEvents} />
+        </TabsContent>
+          
+        <TabsContent value="automated" className="mt-6">
+          <AutomatedGiftingTabContent />
+        </TabsContent>
+          
+        <TabsContent value="monitoring" className="mt-6">
+          <AutoGiftExecutionMonitor />
+        </TabsContent>
+      </Tabs>
+      
+      <GiftSetupWizard 
+        open={isGiftWizardOpen} 
+        onOpenChange={(open) => {
+          setIsGiftWizardOpen(open);
+          if (!open) {
+            setGiftWizardInitialData(null);
+          }
+        }}
+        initialData={giftWizardInitialData}
+      />
+    </>
   );
 };
 

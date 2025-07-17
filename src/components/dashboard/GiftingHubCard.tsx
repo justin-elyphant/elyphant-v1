@@ -17,7 +17,7 @@ import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
-import AutoGiftSetupDialog from "@/components/gifting/events/setup-dialog/AutoGiftSetupDialog";
+
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -331,15 +331,20 @@ const SmartGiftingTab = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog - only for regular events */}
+      {/* Gift Setup Wizard - for regular events */}
       {selectedEvent && !selectedEvent.isPendingInvitation && (
-        <AutoGiftSetupDialog
+        <GiftSetupWizard
           open={setupDialogOpen}
           onOpenChange={setSetupDialogOpen}
-          eventId={selectedEvent.id}
-          eventType={selectedEvent.type}
-          recipientId={selectedEvent.recipientId}
-          onSave={handleSaveAutoGiftSettings}
+          initialData={{
+            recipientName: selectedEvent.person,
+            relationshipType: selectedEvent.relationshipType,
+            giftingEvents: [{
+              dateType: selectedEvent.type,
+              date: selectedEvent.date,
+              isRecurring: true
+            }]
+          }}
         />
       )}
       

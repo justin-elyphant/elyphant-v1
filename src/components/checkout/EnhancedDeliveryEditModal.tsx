@@ -29,8 +29,6 @@ export interface EditFormData {
   // Basic Info
   name: string;
   email: string;
-  phone: string;
-  birthday: string | null;
   
   // Address
   shippingAddress: {
@@ -58,8 +56,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
   const [formData, setFormData] = useState<EditFormData>({
     name: '',
     email: '',
-    phone: '',
-    birthday: null,
     shippingAddress: null,
     giftMessage: '',
     scheduledDeliveryDate: '',
@@ -67,7 +63,7 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [birthdayDate, setBirthdayDate] = useState<Date | undefined>();
+  // Removed birthday state
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [addressOverride, setAddressOverride] = useState(false);
 
@@ -87,8 +83,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
         // Basic Info
         name: fullRecipient?.name || deliveryGroup.connectionName || '',
         email: fullRecipient?.email || '',
-        phone: fullRecipient?.phone || '',
-        birthday: fullRecipient?.birthday || null,
         
         // Address
         shippingAddress: deliveryGroup.shippingAddress || (fullRecipient?.address ? {
@@ -107,7 +101,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
       };
       
       setFormData(initialData);
-      setBirthdayDate(initialData.birthday ? new Date(initialData.birthday) : undefined);
       setScheduledDate(initialData.scheduledDeliveryDate ? new Date(initialData.scheduledDeliveryDate) : undefined);
       setAddressOverride(!!deliveryGroup.shippingAddress);
       setValidationErrors([]);
@@ -175,8 +168,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
         await unifiedRecipientService.updateRecipient(recipient.id, {
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
-          birthday: formData.birthday,
           address: formData.shippingAddress
         });
       }
@@ -199,14 +190,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleBirthdaySelect = (date: Date | undefined) => {
-    setBirthdayDate(date);
-    setFormData({
-      ...formData,
-      birthday: date ? date.toISOString() : null
-    });
   };
 
   const handleScheduledDateSelect = (date: Date | undefined) => {
@@ -331,46 +314,6 @@ const EnhancedDeliveryEditModal: React.FC<EnhancedDeliveryEditModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          disabled={!permissions.canEditBasicInfo}
-                          className={!permissions.canEditBasicInfo ? 'bg-muted' : ''}
-                        />
-                      </div>
-                      <div>
-                        <Label>Birthday</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !birthdayDate && "text-muted-foreground",
-                                !permissions.canEditBasicInfo && "bg-muted"
-                              )}
-                              disabled={!permissions.canEditBasicInfo}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {birthdayDate ? format(birthdayDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={birthdayDate}
-                              onSelect={handleBirthdaySelect}
-                              initialFocus
-                              className="pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
 

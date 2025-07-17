@@ -165,7 +165,10 @@ const SmartGiftingTab = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setSetupDialogOpen(true)}
+            onClick={() => {
+              setSelectedEvent({ id: 'new', type: 'general' });
+              setSetupDialogOpen(true);
+            }}
           >
             <Zap className="h-4 w-4 mr-2" />
             Set Up Gifting
@@ -235,7 +238,10 @@ const SmartGiftingTab = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Add special occasions to set up automated gifting
             </p>
-            <Button onClick={() => setSetupDialogOpen(true)}>
+            <Button onClick={() => {
+              setSelectedEvent({ id: 'new', type: 'general' });
+              setSetupDialogOpen(true);
+            }}>
               <Zap className="h-4 w-4 mr-2" />
               Set Up Gifting
             </Button>

@@ -338,7 +338,7 @@ const Cart = () => {
                   
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span className="text-green-600">Free</span>
+                    <span>Calculated at checkout</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax</span>

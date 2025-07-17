@@ -167,7 +167,7 @@ const PendingConnectionEditModal: React.FC<PendingConnectionEditModalProps> = ({
               onValueChange={(value) => setFormData(prev => ({ ...prev, relationship_type: value as RelationshipType }))}
             >
               <SelectTrigger>
-                <SelectValue>{relationshipOptions.find(opt => opt.value === formData.relationship_type)?.label || 'Select relationship'}</SelectValue>
+                <SelectValue placeholder="Select relationship" />
               </SelectTrigger>
               <SelectContent>
                 {relationshipOptions.map(option => (

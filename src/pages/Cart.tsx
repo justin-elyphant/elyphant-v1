@@ -9,8 +9,9 @@ import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift, UserPlus } fr
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 
-import ShippingPreview from "@/components/cart/ShippingPreview";
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
+import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
+import MultiDestinationSummary from "@/components/cart/MultiDestinationSummary";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 
@@ -73,7 +74,18 @@ const Cart = () => {
         shippingAddress: recipient.address
       };
       
-      assignItemToRecipient(selectedItemId, recipientAssignment);
+      if (selectedItemId === 'bulk') {
+        // Assign all unassigned items to this recipient
+        unassignedItems.forEach(item => {
+          assignItemToRecipient(item.product.product_id, recipientAssignment);
+        });
+        toast.success(`Assigned ${unassignedItems.length} items to ${recipient.name}`);
+      } else {
+        // Assign single item
+        assignItemToRecipient(selectedItemId, recipientAssignment);
+        toast.success(`Assigned item to ${recipient.name}`);
+      }
+      
       setShowRecipientModal(false);
       setSelectedItemId(null);
     }
@@ -81,6 +93,35 @@ const Cart = () => {
 
   const handleUnassignRecipient = (productId: string) => {
     unassignItemFromRecipient(productId);
+  };
+
+  const handleAssignAllToRecipients = () => {
+    // Open recipient selection for bulk assignment
+    setSelectedItemId('bulk');
+    setShowRecipientModal(true);
+  };
+
+  const handleAssignAllToMe = () => {
+    // Assign all unassigned items to user's address
+    unassignedItems.forEach(item => {
+      const recipientAssignment = {
+        connectionId: 'self',
+        connectionName: profile?.name || 'You',
+        deliveryGroupId: 'self',
+        shippingAddress: {
+          name: profile?.name || '',
+          address: (profile?.shipping_address?.address_line1 || profile?.shipping_address?.street || ''),
+          city: profile?.shipping_address?.city || '',
+          state: profile?.shipping_address?.state || '',
+          zipCode: (profile?.shipping_address?.zip_code || profile?.shipping_address?.zipCode || ''),
+          country: profile?.shipping_address?.country || 'US'
+        }
+      };
+      
+      assignItemToRecipient(item.product.product_id, recipientAssignment);
+    });
+    
+    toast.success(`Assigned ${unassignedItems.length} items to your address`);
   };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
@@ -135,19 +176,23 @@ const Cart = () => {
           <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
             {/* Cart Content */}
             <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
-              {/* Shipping Address Preview */}
-              <ShippingPreview />
+              {/* Multi-Destination Summary */}
+              <MultiDestinationSummary 
+                deliveryGroups={deliveryGroups} 
+                unassignedItems={unassignedItems} 
+              />
+              
+              {/* Unassigned Items Section */}
+              <UnassignedItemsSection 
+                unassignedItems={unassignedItems}
+                onAssignAll={handleAssignAllToRecipients}
+                onAssignToMe={handleAssignAllToMe}
+              />
               
               {/* Cart Items with Item-Level Recipient Assignment */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Cart Items</h2>
-                  {unassignedItems.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-orange-600">
-                      <Users className="h-4 w-4" />
-                      {unassignedItems.length} unassigned items
-                    </div>
-                  )}
+                  <h2 className="text-lg font-semibold">All Items</h2>
                 </div>
                 
                 <div className="space-y-4">
@@ -270,32 +315,6 @@ const Cart = () => {
                   ))}
                 </div>
 
-                {/* Delivery Groups Summary */}
-                {deliveryGroups.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4">Delivery Summary</h3>
-                    <div className="space-y-3">
-                      {deliveryGroups.map((group) => (
-                        <div key={group.id} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-green-600" />
-                              <span className="font-medium">{group.connectionName}</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                              {group.items.length} item{group.items.length > 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          {group.shippingAddress && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 

@@ -39,10 +39,17 @@ export const useConnectionSuggestions = () => {
       const userInterests = currentUserProfile?.interests || [];
 
       // Get all profiles excluding connected users
-      const { data: profiles, error } = await supabase
+      const connectedUserIdsArray = Array.from(connectedUserIds);
+      let profilesQuery = supabase
         .from('profiles')
-        .select('id, name, username, profile_image, bio, interests')
-        .not('id', 'in', `(${Array.from(connectedUserIds).join(',')})`);
+        .select('id, name, username, profile_image, bio, interests');
+      
+      // Only add the filter if there are connected users to exclude
+      if (connectedUserIdsArray.length > 0) {
+        profilesQuery = profilesQuery.not('id', 'in', `(${connectedUserIdsArray.join(',')})`);
+      }
+      
+      const { data: profiles, error } = await profilesQuery;
 
       if (error) throw error;
 

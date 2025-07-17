@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import MainLayout from "@/components/layout/MainLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import MyWishlists from "@/components/gifting/MyWishlists";
 import BackToDashboard from "@/components/shared/BackToDashboard";
 
@@ -56,13 +56,13 @@ const MyWishlistsPage = () => {
   const pageTitle = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
 
   return (
-    <MainLayout>
+    <SidebarLayout>
       <div className="container mx-auto py-8 px-4">
         <BackToDashboard />
         <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
         <MyWishlists />
       </div>
-    </MainLayout>
+    </SidebarLayout>
   );
 };
 

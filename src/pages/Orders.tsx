@@ -4,7 +4,7 @@ import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import MainLayout from "@/components/layout/MainLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 interface Order {
   id: string;
@@ -55,7 +55,7 @@ const Orders = () => {
   };
 
   return (
-    <MainLayout>
+    <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <OrdersHeader 
           refreshOrders={refreshOrders} 
@@ -67,7 +67,7 @@ const Orders = () => {
           error={error}
         />
       </div>
-    </MainLayout>
+    </SidebarLayout>
   );
 };
 

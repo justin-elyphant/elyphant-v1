@@ -5,7 +5,7 @@ import PaymentMethodManager from "@/components/payments/PaymentMethodManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const Payments = () => {
   const { user, isLoading } = useAuth();
@@ -13,11 +13,11 @@ const Payments = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <SidebarLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-pulse">Loading...</div>
         </div>
-      </MainLayout>
+      </SidebarLayout>
     );
   }
 
@@ -26,7 +26,7 @@ const Payments = () => {
   }
 
   return (
-    <MainLayout>
+    <SidebarLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -67,7 +67,7 @@ const Payments = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </SidebarLayout>
   );
 };
 

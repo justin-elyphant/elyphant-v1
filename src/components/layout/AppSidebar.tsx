@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
   SidebarFooter,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth";
@@ -115,6 +116,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      {/* Sidebar Trigger */}
+      <div className="p-2">
+        <SidebarTrigger className="h-8 w-8" />
+      </div>
+      
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup>

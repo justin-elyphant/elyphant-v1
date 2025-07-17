@@ -9,7 +9,8 @@ import {
   ShoppingBag, 
   CreditCard, 
   User, 
-  LogOut 
+  LogOut,
+  Store
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +36,11 @@ const mainNavigationItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Marketplace",
+    url: "/marketplace",
+    icon: Store,
   },
   {
     title: "Messages",

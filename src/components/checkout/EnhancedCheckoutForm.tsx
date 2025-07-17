@@ -340,36 +340,10 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                       {/* Prominent Address Display */}
                       {hasAddress && (
                         <div className="bg-background border rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 mt-0.5 text-primary" />
-                            <div className="flex-1">
-                              <div className="font-medium mb-1">Delivery Address</div>
-                              <div className="text-sm leading-relaxed">
-                                {group.shippingAddress ? (
-                                  <div>
-                                    <div className="font-medium">{group.shippingAddress.name}</div>
-                                    <div className="text-muted-foreground">
-                                      {group.shippingAddress.address}<br />
-                                      {group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}<br />
-                                      {group.shippingAddress.country}
-                                    </div>
-                                  </div>
-                                ) : recipientAddress ? (
-                                  <div>
-                                    <div className="font-medium">{recipientAddress.name || 'No Name'}</div>
-                                    <div className="text-muted-foreground">
-                                      {recipientAddress.street || recipientAddress.address_line1 || recipientAddress.address}<br />
-                                      {(recipientAddress.line2 || recipientAddress.address_line2) && (
-                                        <>{recipientAddress.line2 || recipientAddress.address_line2}<br /></>
-                                      )}
-                                      {recipientAddress.city}, {recipientAddress.state} {recipientAddress.zipCode || recipientAddress.zip_code}<br />
-                                      {recipientAddress.country || 'United States'}
-                                    </div>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
+                          <RecipientAddressDisplay 
+                            address={group.shippingAddress || recipientAddress}
+                            showFullAddress={true}
+                          />
                         </div>
                       )}
 

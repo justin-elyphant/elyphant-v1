@@ -64,7 +64,7 @@ export const useDefaultAddress = () => {
               street: anyAddress.address.street || anyAddress.address.address_line1 || anyAddress.address.address || '',
               address_line2: anyAddress.address.address_line2 || '',
               city: anyAddress.address.city || '',
-              state: anyAddress.address.state || '',
+              state: anyAddress.address.state === 'CA' ? 'California' : (anyAddress.address.state || ''),
               zipCode: anyAddress.address.zipCode || anyAddress.address.zip_code || '',
               country: anyAddress.address.country || 'United States'
             }
@@ -83,7 +83,7 @@ export const useDefaultAddress = () => {
               street: defaultData.address.street || defaultData.address.address_line1 || defaultData.address.address || '',
               address_line2: defaultData.address.address_line2 || '',
               city: defaultData.address.city || '',
-              state: defaultData.address.state || '',
+              state: defaultData.address.state === 'CA' ? 'California' : (defaultData.address.state || ''),
               zipCode: defaultData.address.zipCode || defaultData.address.zip_code || '',
               country: defaultData.address.country || 'United States'
             }

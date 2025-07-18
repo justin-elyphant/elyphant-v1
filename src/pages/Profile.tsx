@@ -8,6 +8,7 @@ import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
 import MainLayout from "@/components/layout/MainLayout";
 import PublicProfileLayout from "@/components/layout/PublicProfileLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import UserProfileView from "@/components/user-profile/UserProfileView";
 import PublicProfileView from "@/components/user-profile/PublicProfileView";
 import SignupCTA from "@/components/user-profile/SignupCTA";
@@ -107,23 +108,23 @@ const Profile = () => {
     );
   }
 
-  // For authenticated users viewing their own profile - use MainLayout
+  // For authenticated users viewing their own profile - use SidebarLayout
   if (isOwnProfile) {
     console.log("Rendering own profile view");
     if (ownProfileLoading) {
       return (
-        <MainLayout>
+        <SidebarLayout>
           <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
             <div>Loading your profile...</div>
           </div>
-        </MainLayout>
+        </SidebarLayout>
       );
     }
 
     return (
-      <MainLayout>
+      <SidebarLayout>
         <UserProfileView profile={ownProfile} />
-      </MainLayout>
+      </SidebarLayout>
     );
   }
 

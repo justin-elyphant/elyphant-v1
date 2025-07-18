@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import ProfileBanner from "./ProfileBanner";
 import ProfileTabs from "./ProfileTabs";
@@ -34,7 +35,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
         wishlistCount={profile.wishlist_count}
         canFollow={profile.can_follow}
         canMessage={profile.can_message}
-        isAnonymousUser={false} // This would be determined by auth state
+        isAnonymousUser={true} // Set to true since this is a public view
       />
       
       <div className="container mx-auto px-4 py-6">

@@ -7,6 +7,7 @@ import { publicProfileService } from "@/services/publicProfileService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
 import MainLayout from "@/components/layout/MainLayout";
+import PublicProfileLayout from "@/components/layout/PublicProfileLayout";
 import UserProfileView from "@/components/user-profile/UserProfileView";
 import PublicProfileView from "@/components/user-profile/PublicProfileView";
 import SignupCTA from "@/components/user-profile/SignupCTA";
@@ -98,15 +99,15 @@ const Profile = () => {
   if (authLoading) {
     console.log("Showing auth loading state");
     return (
-      <MainLayout>
-        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+      <PublicProfileLayout>
+        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
           <div>Loading...</div>
         </div>
-      </MainLayout>
+      </PublicProfileLayout>
     );
   }
 
-  // For authenticated users viewing their own profile
+  // For authenticated users viewing their own profile - use MainLayout
   if (isOwnProfile) {
     console.log("Rendering own profile view");
     if (ownProfileLoading) {
@@ -126,34 +127,34 @@ const Profile = () => {
     );
   }
 
-  // For public profile views
+  // For public profile views - use PublicProfileLayout for microsite experience
   if (shouldLoadPublicProfile) {
     console.log("Rendering public profile view");
     if (isLoadingPublic) {
       return (
-        <MainLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+        <PublicProfileLayout>
+          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
             <div>Loading profile...</div>
           </div>
-        </MainLayout>
+        </PublicProfileLayout>
       );
     }
 
     if (profileNotFound || !publicProfile) {
       return (
-        <MainLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+        <PublicProfileLayout>
+          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h1>
               <p className="text-gray-600">The profile you're looking for doesn't exist or isn't public.</p>
             </div>
           </div>
-        </MainLayout>
+        </PublicProfileLayout>
       );
     }
 
     return (
-      <MainLayout>
+      <PublicProfileLayout>
         <PublicProfileView profile={publicProfile} />
         {shouldShowCTA && (
           <SignupCTA 
@@ -161,21 +162,21 @@ const Profile = () => {
             onDismiss={dismissCTA} 
           />
         )}
-      </MainLayout>
+      </PublicProfileLayout>
     );
   }
 
   // Fallback - should not reach here
   console.log("Fallback case reached - redirecting to not found");
   return (
-    <MainLayout>
-      <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+    <PublicProfileLayout>
+      <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h1>
           <p className="text-gray-600">Invalid profile identifier.</p>
         </div>
       </div>
-    </MainLayout>
+    </PublicProfileLayout>
   );
 };
 

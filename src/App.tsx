@@ -76,7 +76,7 @@ const App = () => {
                       <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
                       <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
                       <Route path="/signup" element={<MainLayout><StreamlinedSignUp /></MainLayout>} />
-                      <Route path="/signin" element={<MainLayout><SignIn /></MainLayout>} />
+                      <Route path="/signin" element={<SignIn />} />
                       <Route path="/auth/oauth-complete" element={<MainLayout><OAuthProfileCompletion /></MainLayout>} />
                       <Route path="/profile-setup" element={<MainLayout><ProfileSetupWithIntent /></MainLayout>} />
                       <Route path="/vendor-partner" element={<MainLayout><VendorPartner /></MainLayout>} />

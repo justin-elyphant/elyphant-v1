@@ -40,9 +40,10 @@ const PaymentSection = ({
 }: PaymentSectionProps) => {
   const [clientSecret, setClientSecret] = useState<string>('');
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   useEffect(() => {
-    if (paymentMethod === 'card' && totalAmount > 0) {
+    if (paymentMethod === 'card' && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
       createPaymentIntent();
     }
   }, [paymentMethod, totalAmount]);
@@ -137,8 +138,8 @@ const PaymentSection = ({
                     amount={totalAmount}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
-                    isProcessing={isProcessing}
-                    onProcessingChange={() => {}}
+                    isProcessing={paymentProcessing}
+                    onProcessingChange={setPaymentProcessing}
                   />
                 </Elements>
               ) : (

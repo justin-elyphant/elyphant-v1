@@ -24,14 +24,16 @@ const StripePaymentForm = ({
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!stripe || !elements || isSubmitting || isProcessing) {
       return;
     }
 
+    setIsSubmitting(true);
     onProcessingChange(true);
     setError(null);
 
@@ -40,8 +42,11 @@ const StripePaymentForm = ({
     if (!cardElement) {
       setError('Payment form not loaded properly');
       onProcessingChange(false);
+      setIsSubmitting(false);
       return;
     }
+
+    // Card validation will happen during confirmCardPayment
 
     try {
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
@@ -49,12 +54,20 @@ const StripePaymentForm = ({
         {
           payment_method: {
             card: cardElement,
+            billing_details: {
+              // Optional: add billing details if needed
+            },
           },
         }
       );
 
       if (confirmError) {
-        throw new Error(confirmError.message);
+        // Handle specific error types
+        if (confirmError.type === 'card_error') {
+          throw new Error(confirmError.message || 'Your card was declined');
+        } else {
+          throw new Error(confirmError.message || 'Payment failed');
+        }
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
@@ -65,11 +78,13 @@ const StripePaymentForm = ({
       }
     } catch (err: any) {
       console.error('Payment error:', err);
-      setError(err.message || 'Payment failed. Please try again.');
-      onError(err.message || 'Payment failed');
-      toast.error(err.message || 'Payment failed');
+      const errorMessage = err.message || 'Payment failed. Please try again.';
+      setError(errorMessage);
+      onError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       onProcessingChange(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -111,10 +126,10 @@ const StripePaymentForm = ({
         </div>
         <Button 
           type="submit" 
-          disabled={!stripe || isProcessing}
+          disabled={!stripe || isProcessing || isSubmitting}
           className="min-w-[120px]"
         >
-          {isProcessing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+          {(isProcessing || isSubmitting) ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
         </Button>
       </div>
     </form>

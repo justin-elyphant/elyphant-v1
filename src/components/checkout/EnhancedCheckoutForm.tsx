@@ -28,6 +28,7 @@ import RecipientAddressDisplay from './RecipientAddressDisplay';
 import PaymentSection from '../marketplace/checkout/PaymentSection';
 import { DeliveryGroup } from '@/types/recipient';
 import { createOrder } from '@/services/orderService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ShippingInfo {
   name: string;
@@ -258,6 +259,72 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
       // Create order in database
       const order = await createOrder(orderData);
+      
+      // Auto-trigger Zinc processing for successful orders with payment
+      if (paymentIntentId) {
+        try {
+          console.log('Triggering Zinc processing for order:', order.id);
+          
+          // Get order items for Zinc processing
+          const products = cartItems.map(item => ({
+            product_id: item.product.product_id,
+            quantity: item.quantity
+          }));
+
+          // Call process-zinc-order function directly
+          const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zinc-order', {
+            body: {
+              orderRequest: {
+                retailer: "amazon",
+                products,
+                shipping_address: {
+                  first_name: shippingInfo.name?.split(' ')[0] || '',
+                  last_name: shippingInfo.name?.split(' ').slice(1).join(' ') || '',
+                  address_line1: shippingInfo.address,
+                  address_line2: shippingInfo.addressLine2 || '',
+                  zip_code: shippingInfo.zipCode,
+                  city: shippingInfo.city,
+                  state: shippingInfo.state,
+                  country: shippingInfo.country,
+                  phone_number: '555-0123'
+                },
+                billing_address: {
+                  first_name: shippingInfo.name?.split(' ')[0] || '',
+                  last_name: shippingInfo.name?.split(' ').slice(1).join(' ') || '',
+                  address_line1: shippingInfo.address,
+                  address_line2: shippingInfo.addressLine2 || '',
+                  zip_code: shippingInfo.zipCode,
+                  city: shippingInfo.city,
+                  state: shippingInfo.state,
+                  country: shippingInfo.country,
+                  phone_number: '555-0123'
+                },
+                payment_method: {
+                  name_on_card: shippingInfo.name,
+                  number: '4111111111111111',
+                  expiration_month: 12,
+                  expiration_year: 2025,
+                  security_code: '123'
+                },
+                is_gift: false, // Default for direct payments
+                is_test: false
+              },
+              orderId: order.id,
+              paymentIntentId: paymentIntentId
+            }
+          });
+
+          if (zincError) {
+            console.warn('Zinc processing failed:', zincError);
+            // Don't fail the order, just log the warning
+          } else {
+            console.log('Zinc processing initiated successfully');
+          }
+        } catch (zincError) {
+          console.warn('Error initiating Zinc processing:', zincError);
+          // Don't fail the order, just log the warning
+        }
+      }
       
       toast.success('Order placed successfully!');
       onCheckoutComplete(order);

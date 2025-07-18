@@ -30,7 +30,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id)
 
     if (session.payment_status === 'paid') {
-      // Update order status in database
+      // Update order status in database - match by session_id, then update payment_intent_id
       const { data: order, error: updateError } = await supabase
         .from('orders')
         .update({
@@ -39,7 +39,7 @@ serve(async (req) => {
           stripe_payment_intent_id: session.payment_intent,
           updated_at: new Date().toISOString()
         })
-        .eq('stripe_payment_intent_id', session.payment_intent)
+        .eq('stripe_session_id', session_id)
         .select('id, order_number, shipping_info, gift_message, is_gift, scheduled_delivery_date, is_surprise_gift')
         .single()
 

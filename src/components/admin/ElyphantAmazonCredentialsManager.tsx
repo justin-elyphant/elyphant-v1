@@ -76,8 +76,13 @@ const ElyphantAmazonCredentialsManager = () => {
   };
 
   const handleSave = async () => {
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
+    if (!email) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    if (!hasCredentials && !password) {
+      toast.error("Please enter a password for new credentials");
       return;
     }
 
@@ -211,7 +216,7 @@ const ElyphantAmazonCredentialsManager = () => {
           onDeactivate={handleDeactivate}
           isSaving={isSaving}
           hasCredentials={hasCredentials}
-          canSave={!!(email && password)}
+          canSave={hasCredentials ? !!email : !!(email && password)}
         />
 
         <AdminNotice />

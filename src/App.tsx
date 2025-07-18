@@ -93,7 +93,7 @@ const App = () => {
                       <Route path="/vendor-signup" element={<MainLayout><VendorPartner /></MainLayout>} />
                       <Route path="/vendor-login" element={<MainLayout><VendorPartner /></MainLayout>} />
                       <Route path="/trunkline-login" element={<MainLayout><Trunkline /></MainLayout>} />
-                      <Route path="/trunkline" element={<MainLayout><Trunkline /></MainLayout>} />
+                      <Route path="/trunkline/*" element={<MainLayout><Trunkline /></MainLayout>} />
                       
                       {/* Profile route - handles its own layout logic */}
                       <Route path="/profile/:identifier" element={<Profile />} />

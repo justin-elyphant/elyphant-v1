@@ -32,13 +32,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const loading = isFetching || isUpdating;
   const error = fetchError || updateError;
 
-  // Load profile data - simplified and consolidated
+  // Load profile data - simplified and with safe dependency handling
   useEffect(() => {
     let isActive = true; // Prevent state updates if component unmounts
     
     const loadProfile = async () => {
       try {
         console.log("🔄 Loading profile data...");
+        
+        // Only fetch if we have the fetchProfile function available
+        if (typeof fetchProfile !== 'function') {
+          console.warn("fetchProfile is not available yet");
+          return;
+        }
+        
         const profileData = await fetchProfile();
         
         // Only update state if component is still mounted
@@ -57,28 +64,29 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           // Clear any pending flags after successful load
           localStorage.removeItem("newSignUp");
           localStorage.removeItem("profileSetupLoading");
-        } else if (isActive && !profileData) {
+        } else if (isActive && profileData === null) {
           console.warn("⚠️ No profile data returned from fetchProfile");
+          // Don't set profile to null if we already have data
+          setLastFetchTime(Date.now());
         }
       } catch (error) {
         console.error("❌ Error loading profile:", error);
         if (isActive) {
-          // Don't clear existing profile on error
+          // Don't clear existing profile on error, just update timestamp
           setLastFetchTime(Date.now());
         }
       }
     };
     
-    // Only load if we have a fetchProfile function
-    if (typeof fetchProfile === 'function') {
-      loadProfile();
-    }
+    // Add a small delay to ensure auth context is initialized
+    const timeoutId = setTimeout(loadProfile, 100);
     
     // Cleanup function
     return () => {
       isActive = false;
+      clearTimeout(timeoutId);
     };
-  }, [fetchProfile]);
+  }, []); // Remove fetchProfile from dependencies to prevent circular re-renders
 
   // Wrapper for updating the profile that also updates local state with validation
   const handleUpdateProfile = async (data: Partial<Profile>) => {

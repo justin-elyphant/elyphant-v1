@@ -36,11 +36,17 @@ const Profile = () => {
   ));
 
   console.log("Profile page - isOwnProfile:", isOwnProfile);
+  console.log("Profile page - ownProfile:", ownProfile);
+  console.log("Profile page - publicProfile:", publicProfile);
 
   // Determine which profile data to use
   const profileData = isOwnProfile ? ownProfile : publicProfile;
   const loading = isOwnProfile ? ownProfileLoading : publicProfileLoading;
   const error = isOwnProfile ? ownProfileError : (publicProfileError ? { message: publicProfileError } : null);
+
+  console.log("Profile page - profileData:", profileData);
+  console.log("Profile page - loading:", loading);
+  console.log("Profile page - error:", error);
 
   // Get follow state and counts for the profile being viewed
   const {
@@ -127,7 +133,7 @@ const Profile = () => {
     }
   };
 
-  if (loading || followLoading || (isOwnProfile && wishlistLoading)) {
+  if (loading || (followLoading && !profileData) || (isOwnProfile && wishlistLoading)) {
     return (
       <div className="min-h-screen bg-background">
         {/* Banner Skeleton */}

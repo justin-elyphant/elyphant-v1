@@ -21,6 +21,8 @@ export interface ProfileBannerProps {
   canFollow?: boolean;
   canMessage?: boolean;
   isAnonymousUser?: boolean;
+  // Connection status for privacy controls
+  isConnected?: boolean;
 }
 
 const ProfileBanner: React.FC<ProfileBannerProps> = ({
@@ -34,8 +36,29 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   wishlistCount = 0,
   canFollow = true,
   canMessage = true,
-  isAnonymousUser = false
+  isAnonymousUser = false,
+  isConnected = false
 }) => {
+  // Privacy logic for email display
+  const shouldShowEmail = () => {
+    // Always show for current user
+    if (isCurrentUser) return true;
+    
+    // Hide email if user doesn't have email data
+    if (!userData?.email) return false;
+    
+    // Check data sharing settings for email
+    const emailSetting = userData?.data_sharing_settings?.email;
+    
+    // If set to private, never show
+    if (emailSetting === 'private') return false;
+    
+    // If set to friends only, show only to connected users
+    if (emailSetting === 'friends') return isConnected;
+    
+    // If set to public or no setting, show to authenticated users only (not anonymous)
+    return !isAnonymousUser;
+  };
   const handleMessageClick = () => {
     if (isAnonymousUser) {
       // Redirect to signup with intent
@@ -196,7 +219,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                     <span>{userData.location}</span>
                   </div>
                 )}
-                {userData?.email && !isCurrentUser && (
+                {shouldShowEmail() && (
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4" />
                     <span>{userData.email}</span>

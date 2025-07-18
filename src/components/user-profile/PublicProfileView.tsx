@@ -36,6 +36,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
         canFollow={profile.can_follow}
         canMessage={profile.can_message}
         isAnonymousUser={true} // Set to true since this is a public view
+        isConnected={false} // Anonymous users are never connected
       />
       
       <div className="container mx-auto px-4 py-6">

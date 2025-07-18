@@ -2,7 +2,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
 import { DeliveryGroup } from "@/types/recipient";
-import { createZincOrderRequest } from "@/components/marketplace/zinc/services/orderProcessingService";
 
 export interface CreateOrderData {
   cartItems: CartItem[];
@@ -38,6 +37,7 @@ export interface Order {
   payment_status: string;
   created_at: string;
   updated_at: string;
+  delivery_groups?: any[];
   order_items: OrderItem[];
 }
 
@@ -123,15 +123,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     throw new Error('Failed to create order items');
   }
 
-  // Auto-trigger Zinc order processing for paid orders
-  if (orderData.paymentIntentId) {
-    try {
-      await processZincOrder(order, orderData);
-    } catch (zincError) {
-      console.warn('Zinc processing failed, but order was created successfully:', zincError);
-      // Don't throw here - order creation succeeded, Zinc failure shouldn't break the flow
-    }
-  }
+  // Note: Zinc processing will be triggered after payment confirmation
+  // in the verify-checkout-session edge function
 
   return {
     ...order,
@@ -172,59 +165,6 @@ export const getUserOrders = async (): Promise<Order[]> => {
   }
 
   return orders || [];
-};
-
-/**
- * Process Zinc order using the Enhanced Zinc API System
- * Preserves all existing marketplace logic and Elyphant Amazon Business credentials
- */
-const processZincOrder = async (order: any, orderData: CreateOrderData) => {
-  console.log(`Auto-triggering Zinc order processing for order ${order.id}`);
-
-  // Create products array from cart items
-  const products = orderData.cartItems.map(item => ({
-    product_id: item.product.product_id,
-    quantity: item.quantity
-  }));
-
-  // Create Zinc order request using existing Enhanced Zinc API System
-  const zincOrderRequest = createZincOrderRequest(
-    products,
-    orderData.shippingInfo,
-    orderData.shippingInfo, // billing address same as shipping
-    {}, // payment method handled by Elyphant's credentials
-    orderData.giftOptions,
-    "amazon", // retailer
-    false, // is_test - false for live orders
-    undefined // shipping method
-  );
-
-  // Call the enhanced process-zinc-order edge function
-  const { data, error } = await supabase.functions.invoke('process-zinc-order', {
-    body: {
-      orderRequest: zincOrderRequest,
-      orderId: order.id,
-      paymentIntentId: orderData.paymentIntentId
-    }
-  });
-
-  if (error) {
-    console.error('Error calling process-zinc-order edge function:', error);
-    throw error;
-  }
-
-  if (!data.success) {
-    console.error('Zinc order processing failed:', data.error);
-    throw new Error(data.error || 'Zinc order processing failed');
-  }
-
-  console.log('Zinc order processing initiated successfully:', {
-    orderId: order.id,
-    zincOrderId: data.zincOrderId,
-    zincStatus: data.zincStatus
-  });
-
-  return data;
 };
 
 export const updateOrderStatus = async (orderId: string, status: string, updates: any = {}) => {

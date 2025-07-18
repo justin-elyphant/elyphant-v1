@@ -102,9 +102,6 @@ export const subscribeToMessages = (
   connectionId: string, 
   onNewMessage: (message: Message) => void
 ) => {
-  const { data: user } = supabase.auth.getUser();
-  if (!user) return () => {};
-
   const channel = supabase
     .channel('messages_channel')
     .on(
@@ -125,6 +122,7 @@ export const subscribeToMessages = (
     supabase.removeChannel(channel);
   };
 };
+
 
 export const addMessageReaction = async (
   messageId: string, 

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/contexts/profile";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 import { User, MessageSquare, UserPlus, Settings, Gift, Calendar, Heart } from "lucide-react";
 import { toast } from "sonner";
@@ -120,11 +120,11 @@ const Profile = () => {
                 <div className="flex gap-2 mt-4 md:mt-0">
                   <Badge variant="secondary">
                     <Gift className="h-3 w-3 mr-1" />
-                    {targetProfile.wishlists?.length || 0} Wishlists
+                    0 Wishlists
                   </Badge>
                   <Badge variant="secondary">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {targetProfile.important_dates?.length || 0} Events
+                    0 Events
                   </Badge>
                 </div>
               </div>
@@ -155,7 +155,7 @@ const Profile = () => {
                     {targetProfile.important_dates.slice(0, 3).map((date, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm">
                         <Heart className="h-3 w-3 text-red-500" />
-                        <span>{date.name}</span>
+                        <span>{date.title}</span>
                         <span className="text-muted-foreground">
                           {new Date(date.date).toLocaleDateString()}
                         </span>

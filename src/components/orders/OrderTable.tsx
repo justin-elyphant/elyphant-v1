@@ -105,20 +105,19 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
               <TableCell><OrderStatusBadge status={order.status} /></TableCell>
               <TableCell>${order.total_amount.toFixed(2)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <a href={`/order/${order.id}`} className="text-blue-500 hover:underline">
+                <div className="flex justify-end gap-3 items-center">
+                  <a href={`/order/${order.id}`} className="text-blue-500 hover:underline text-sm">
                     View Details
                   </a>
                   {canCancelOrder(order.status) && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
+                    <button
                       onClick={() => setCancellingOrderId(order.id)}
                       disabled={isProcessing}
+                      className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1 disabled:opacity-50"
                     >
-                      <X className="h-3 w-3 mr-1" />
+                      <X className="h-3 w-3" />
                       Cancel
-                    </Button>
+                    </button>
                   )}
                 </div>
               </TableCell>

@@ -52,8 +52,8 @@ export const useProfileData = (
       
       // Set default values if mapping fails
       const defaultValues: SettingsFormValues = {
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
+        first_name: (profile as any).first_name || profile.name?.split(' ')[0] || "",
+        last_name: (profile as any).last_name || profile.name?.split(' ').slice(1).join(' ') || "",
         name: profile.name || "",
         email: profile.email || "",
         username: profile.username || "",

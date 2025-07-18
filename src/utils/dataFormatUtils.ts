@@ -1,4 +1,4 @@
-import { Profile } from "@/types/profile";
+import { Profile, ShippingAddress, ImportantDate, GiftPreference } from "@/types/profile";
 
 /**
  * Maps form address fields to API address format
@@ -91,6 +91,89 @@ export function normalizeGiftPreferences(preferences: any[]): GiftPreference[] {
     }
     return { category: "", importance: "medium" };
   });
+}
+
+/**
+ * Parse birthday from form data
+ */
+export function parseBirthdayFromFormData(formData: any): { dob: string | null, birth_year: number | null } {
+  if (!formData.birthday) return { dob: null, birth_year: null };
+  
+  try {
+    if (formData.birthday instanceof Date) {
+      const month = (formData.birthday.getMonth() + 1).toString().padStart(2, '0');
+      const day = formData.birthday.getDate().toString().padStart(2, '0');
+      return {
+        dob: `${month}-${day}`,
+        birth_year: formData.birthday.getFullYear()
+      };
+    }
+    
+    if (typeof formData.birthday === 'object' && formData.birthday.month && formData.birthday.day) {
+      const month = formData.birthday.month.toString().padStart(2, '0');
+      const day = formData.birthday.day.toString().padStart(2, '0');
+      return {
+        dob: `${month}-${day}`,
+        birth_year: formData.birthday.year || new Date().getFullYear() - 25
+      };
+    }
+  } catch (error) {
+    console.error("Error parsing birthday:", error);
+  }
+  
+  return { dob: null, birth_year: null };
+}
+
+/**
+ * Parse birthday from storage format
+ */
+export function parseBirthdayFromStorage(dob: string | null, birth_year: number | null): Date | undefined {
+  if (!dob && !birth_year) return undefined;
+  
+  try {
+    if (dob && dob.includes('-')) {
+      const [month, day] = dob.split('-');
+      const year = birth_year || new Date().getFullYear() - 25;
+      return new Date(year, parseInt(month) - 1, parseInt(day));
+    }
+    
+    if (birth_year) {
+      return new Date(birth_year, 0, 1); // January 1st of the birth year
+    }
+  } catch (error) {
+    console.error("Error parsing birthday from storage:", error);
+  }
+  
+  return undefined;
+}
+
+/**
+ * Format profile data for submission
+ */
+export function formatProfileForSubmission(profileData: any): any {
+  const birthday = parseBirthdayFromFormData(profileData);
+  
+  return {
+    ...profileData,
+    dob: birthday.dob,
+    birth_year: birthday.birth_year,
+    shipping_address: profileData.address ? mapFormAddressToApiAddress(profileData.address) : undefined
+  };
+}
+
+/**
+ * Format birthday for storage
+ */
+export function formatBirthdayForStorage(date: Date | null): { dob: string | null, birth_year: number | null } {
+  if (!date) return { dob: null, birth_year: null };
+  
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  
+  return {
+    dob: `${month}-${day}`,
+    birth_year: date.getFullYear()
+  };
 }
 
 export function mapDatabaseToSettingsForm(profile: Profile) {

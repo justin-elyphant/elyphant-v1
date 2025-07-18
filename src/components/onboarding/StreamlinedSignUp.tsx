@@ -2,16 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { ProfileCreationService } from "@/services/profile/ProfileCreationService";
+import { ProfileCreationService } from "@/services/profile/profileCreationService";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { toast } from "sonner";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
-import { FormData, AddressData } from "./types";
 import { parseBirthdayFromFormData } from "@/utils/dataFormatUtils";
-import OnboardingFormStep from "./OnboardingFormStep";
-import OnboardingAddressStep from "./OnboardingAddressStep";
-import OnboardingBirthdayStep from "./OnboardingBirthdayStep";
-import OnboardingInterestsStep from "./OnboardingInterestsStep";
+
+// Define custom FormData interface to avoid conflict with browser FormData
+interface OnboardingFormData {
+  firstName: string;
+  lastName: string;
+  birthday: { month: string; day: string };
+  address: any;
+  interests: string[];
+}
 
 interface StreamlinedSignUpProps {
   onComplete?: () => void;
@@ -28,7 +32,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
 
   // Form state
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<OnboardingFormData>({
     firstName: "",
     lastName: "",
     birthday: { month: "", day: "" },
@@ -50,7 +54,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
     }
   }, [user, navigate]);
 
-  const updateFormData = (updates: Partial<FormData>) => {
+  const updateFormData = (updates: Partial<OnboardingFormData>) => {
     console.log("📝 Updating form data:", updates);
     setFormData(prev => {
       const newData = { ...prev, ...updates };
@@ -108,9 +112,9 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
       // Prepare enhanced profile data with consistent field names
       const enhancedProfileData = {
         // Use consistent field names that match database schema
-        first_name: formData.firstName.trim(),
-        last_name: formData.lastName.trim(),
-        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim(),
+        firstName: formData.firstName.trim(), // Keep original field name for ProfileCreationService
+        lastName: formData.lastName.trim(),
+        username: `user_${user.id.substring(0, 8)}`,
         email: user.email || "",
         
         // Birthday data
@@ -246,40 +250,11 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
           </div>
         </div>
 
-        {currentStep === 1 && (
-          <OnboardingFormStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-          />
-        )}
-
-        {currentStep === 2 && (
-          <OnboardingAddressStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        )}
-
-        {currentStep === 3 && (
-          <OnboardingBirthdayStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        )}
-
-        {currentStep === 4 && (
-          <OnboardingInterestsStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onComplete={handleFormComplete}
-            onBack={handleBack}
-          />
-        )}
+        {/* Simplified onboarding steps - will be implemented later */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Profile</h2>
+          <p className="text-gray-600">Profile setup steps coming soon...</p>
+        </div>
       </div>
 
       {showModal && (

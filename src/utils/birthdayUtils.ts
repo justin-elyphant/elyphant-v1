@@ -4,10 +4,10 @@ import { parseBirthdayFromStorage } from "./dataFormatUtils";
 /**
  * Formats birthday for display on profile pages
  */
-export const formatBirthdayForDisplay = (dob: string | null): string | null => {
+export const formatBirthdayForDisplay = (dob: string | null, birth_year?: number | null): string | null => {
   if (!dob) return null;
   
-  const birthday = parseBirthdayFromStorage(dob);
+  const birthday = parseBirthdayFromStorage(dob, birth_year);
   if (!birthday) return null;
   
   const months = [
@@ -15,8 +15,8 @@ export const formatBirthdayForDisplay = (dob: string | null): string | null => {
     "July", "August", "September", "October", "November", "December"
   ];
   
-  const monthName = months[birthday.month - 1];
-  return `${monthName} ${birthday.day}`;
+  const monthName = months[birthday.getMonth()];
+  return `${monthName} ${birthday.getDate()}`;
 };
 
 /**

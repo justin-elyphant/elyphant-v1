@@ -46,7 +46,7 @@ export const useGeneralSettingsForm = () => {
   // Use our custom hooks
   const { user, isSaving, onSubmit } = useFormSubmission();
   const { hasUnsavedChanges, setInitialFormValues, clearUnsavedChanges } = useUnsavedChanges(form);
-  const { profile, loading, loadProfileData, refetchProfile } = useProfileData(form, setInitialFormValues);
+  const { profile, loading, loadProfileData, refetchProfile, dataLoadError } = useProfileData(form, setInitialFormValues);
   const { newInterest, setNewInterest, handleAddInterest, handleRemoveInterest, isAutoSaving: isAutoSavingInterests } = useAutoSaveInterests(form);
   const { newImportantDate, setNewImportantDate, handleAddImportantDate, handleRemoveImportantDate, isAutoSaving: isAutoSavingDates } = useAutoSaveImportantDates(form);
 
@@ -76,6 +76,7 @@ export const useGeneralSettingsForm = () => {
     hasUnsavedChanges,
     setInitialFormValues,
     isAutoSavingInterests,
-    isAutoSavingDates
+    isAutoSavingDates,
+    dataLoadError
   };
 };

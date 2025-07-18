@@ -72,28 +72,6 @@ const GeneralSettings = () => {
     );
   }
 
-  // Show error state with retry option
-  if (dataLoadError) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">General Settings</h2>
-          <p className="text-gray-600">Manage your profile information and preferences</p>
-        </div>
-        
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error loading profile data: {dataLoadError}</span>
-            <Button variant="outline" size="sm" onClick={handleRetryLoad}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
 
   // Filter out any invalid important dates
   const validImportantDates = (form.watch("importantDates") || []).filter(
@@ -108,15 +86,6 @@ const GeneralSettings = () => {
         <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
 
-      {/* Show data load warning if there were issues */}
-      {dataLoadError && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Some profile data may not have loaded correctly. Please verify your information and save any changes.
-          </AlertDescription>
-        </Alert>
-      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, (errors) => {

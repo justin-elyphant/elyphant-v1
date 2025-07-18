@@ -64,7 +64,10 @@ export const useProfileData = () => {
             email: profile.email || user.email || "",
             bio: profile.bio || "",
             profile_image: profile.profile_image,
-            birthday: parseBirthdayFromStorage(profile.dob),
+            birthday: (() => {
+              const date = parseBirthdayFromStorage(profile.dob, profile.birth_year);
+              return date ? { month: date.getMonth() + 1, day: date.getDate() } : null;
+            })(),
             address: {
               street: profile.shipping_address?.street || profile.shipping_address?.address_line1 || "",
               city: profile.shipping_address?.city || "",

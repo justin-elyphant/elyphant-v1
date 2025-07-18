@@ -1,41 +1,35 @@
-
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/auth";
 
 interface UseSignupCTAProps {
   profileName: string;
-  isSharedProfile?: boolean;
+  isSharedProfile: boolean;
 }
 
-export const useSignupCTA = ({ profileName, isSharedProfile = false }: UseSignupCTAProps) => {
-  const { user } = useAuth();
+export const useSignupCTA = ({ profileName, isSharedProfile }: UseSignupCTAProps) => {
   const [shouldShowCTA, setShouldShowCTA] = useState(false);
 
   useEffect(() => {
-    // Don't show CTA if user is authenticated
-    if (user) {
-      setShouldShowCTA(false);
-      return;
-    }
-
-    // Only show on shared profiles
     if (!isSharedProfile) {
       setShouldShowCTA(false);
       return;
     }
 
-    // Check if we've already shown this CTA in this session
-    const hasShownCTA = sessionStorage.getItem('elyphant-signup-cta-shown');
-    if (hasShownCTA) {
-      setShouldShowCTA(false);
-      return;
-    }
+    // Check if user has already dismissed CTA for this session
+    const dismissedCTA = sessionStorage.getItem(`dismissedCTA_${profileName}`);
+    
+    if (!dismissedCTA) {
+      // Show CTA after a short delay to let the page load
+      const timer = setTimeout(() => {
+        setShouldShowCTA(true);
+      }, 2000);
 
-    setShouldShowCTA(true);
-  }, [user, isSharedProfile]);
+      return () => clearTimeout(timer);
+    }
+  }, [isSharedProfile, profileName]);
 
   const dismissCTA = () => {
     setShouldShowCTA(false);
+    sessionStorage.setItem(`dismissedCTA_${profileName}`, 'true');
   };
 
   return {

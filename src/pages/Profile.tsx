@@ -28,12 +28,12 @@ const Profile = () => {
   console.log("Profile page - current user:", user?.id);
 
   // Determine if this is the current user's own profile
-  const isOwnProfile = user && ownProfile && (
+  const isOwnProfile = Boolean(user && ownProfile && (
     user.id === ownProfile.id ||
     user.email === ownProfile.email ||
     identifier === ownProfile.username ||
     identifier === user.id
-  );
+  ));
 
   console.log("Profile page - isOwnProfile:", isOwnProfile);
 
@@ -63,7 +63,13 @@ const Profile = () => {
   // Fetch public profile if not viewing own profile
   useEffect(() => {
     const fetchPublicProfile = async () => {
-      if (!identifier || isOwnProfile) return;
+      if (!identifier) return;
+      
+      // If user is authenticated and this might be their own profile, wait for own profile to load
+      if (user && ownProfileLoading) return;
+      
+      // Skip if this is definitely the user's own profile
+      if (isOwnProfile) return;
       
       setPublicProfileLoading(true);
       setPublicProfileError(null);
@@ -87,7 +93,7 @@ const Profile = () => {
     };
 
     fetchPublicProfile();
-  }, [identifier, isOwnProfile]);
+  }, [identifier, isOwnProfile, user, ownProfileLoading]);
 
   // Fetch follow status when profile loads (only for other users' profiles)
   useEffect(() => {

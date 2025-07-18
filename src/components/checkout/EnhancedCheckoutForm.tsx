@@ -43,9 +43,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     getShippingCost
   } = useCheckoutState();
 
-  // Pre-fill shipping information from profile
+  // Pre-fill shipping information from profile (only once)
   useEffect(() => {
-    if (profile && user) {
+    if (profile && user && !checkoutData.shippingInfo.name) {
       console.log("Pre-filling checkout form with profile data:", profile);
       
       const shippingUpdate: Partial<ShippingInfo> = {
@@ -70,7 +70,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
       handleUpdateShippingInfo(shippingUpdate);
     }
-  }, [profile, user, handleUpdateShippingInfo]);
+  }, [profile, user]);
 
   const handlePlaceOrder = async () => {
     if (!canPlaceOrder()) {

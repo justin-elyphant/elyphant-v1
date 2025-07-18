@@ -72,7 +72,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     }
     
     // Navigate to messaging with this user
-    window.location.href = `/messaging/${userData.id}`;
+    window.location.href = `/messages/${userData.id}`;
   };
 
   const handleFollowClick = () => {

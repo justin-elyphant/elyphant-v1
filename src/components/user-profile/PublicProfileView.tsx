@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import ProfileBanner from "./ProfileBanner";
 import ProfileTabs from "./ProfileTabs";
+import { toast } from "sonner";
 import type { PublicProfileData } from "@/services/publicProfileService";
 
 interface PublicProfileViewProps {
@@ -14,7 +15,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
   const handleShare = () => {
     const profileUrl = window.location.origin + `/profile/${profile.username || profile.id}`;
     navigator.clipboard.writeText(profileUrl);
-    // Could add a toast notification here
+    toast.success("Profile link copied to clipboard!");
   };
 
   const handleFollow = () => {

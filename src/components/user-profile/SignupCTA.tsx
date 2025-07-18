@@ -19,7 +19,7 @@ const SignupCTA: React.FC<SignupCTAProps> = ({ profileName, onDismiss }) => {
       targetProfile: profileName,
       redirectUrl: window.location.href
     }));
-    navigate('/auth');
+    navigate('/signin');
   };
 
   return (

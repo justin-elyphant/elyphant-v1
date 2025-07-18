@@ -25,7 +25,7 @@ const mockProducts: ZincProduct[] = [
     image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
     rating: 4.5,
     review_count: 1250,
-    availability: "in_stock"
+    retailer: "amazon"
   },
   {
     product_id: "2", 
@@ -34,7 +34,7 @@ const mockProducts: ZincProduct[] = [
     image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
     rating: 4.3,
     review_count: 856,
-    availability: "in_stock"
+    retailer: "amazon"
   }
 ];
 

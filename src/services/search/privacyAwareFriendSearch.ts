@@ -196,6 +196,7 @@ export const getConnectionPermissions = async (
       return {
         canSendRequest: true,
         canViewProfile: privacySettings.profile_visibility === 'public',
+        canMessage: true,
         restrictionReason: null
       };
     }
@@ -204,6 +205,7 @@ export const getConnectionPermissions = async (
       return {
         canSendRequest: false,
         canViewProfile: privacySettings.profile_visibility === 'public',
+        canMessage: false,
         restrictionReason: "Must be logged in to send friend requests"
       };
     }
@@ -212,6 +214,7 @@ export const getConnectionPermissions = async (
       return {
         canSendRequest: false,
         canViewProfile: privacySettings.profile_visibility === 'public',
+        canMessage: false,
         restrictionReason: "This user is not accepting friend requests"
       };
     }
@@ -223,6 +226,7 @@ export const getConnectionPermissions = async (
       return {
         canSendRequest: !isAlreadyConnected,
         canViewProfile: isAlreadyConnected || privacySettings.profile_visibility === 'public',
+        canMessage: isAlreadyConnected,
         restrictionReason: isAlreadyConnected ? "Already connected" : "Only accepts requests from friends"
       };
     }
@@ -230,6 +234,7 @@ export const getConnectionPermissions = async (
     return {
       canSendRequest: true,
       canViewProfile: true,
+      canMessage: true,
       restrictionReason: null
     };
 
@@ -239,6 +244,7 @@ export const getConnectionPermissions = async (
     return {
       canSendRequest: false,
       canViewProfile: false,
+      canMessage: false,
       restrictionReason: "Unable to verify permissions"
     };
   }

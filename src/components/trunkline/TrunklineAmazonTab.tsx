@@ -1,9 +1,25 @@
 
-import React from "react";
+import React, { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ElyphantAmazonCredentialsManager from "@/components/admin/ElyphantAmazonCredentialsManager";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Shield, ExternalLink } from "lucide-react";
+import { Info, Shield } from "lucide-react";
+import { createLazyComponent } from "@/utils/lazyLoading";
+
+// Lazy load the heavy credentials manager
+const ElyphantAmazonCredentialsManager = createLazyComponent(
+  () => import("@/components/admin/ElyphantAmazonCredentialsManager"),
+  false // Don't preload to improve initial page load
+);
+
+const LoadingCredentialsManager = () => (
+  <div className="space-y-4">
+    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+    <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+    <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+    <div className="h-8 bg-gray-200 rounded animate-pulse w-1/2"></div>
+  </div>
+);
 
 const TrunklineAmazonTab = () => {
   return (
@@ -36,7 +52,9 @@ const TrunklineAmazonTab = () => {
             </AlertDescription>
           </Alert>
           
-          <ElyphantAmazonCredentialsManager />
+          <Suspense fallback={<LoadingCredentialsManager />}>
+            <ElyphantAmazonCredentialsManager />
+          </Suspense>
         </CardContent>
       </Card>
       

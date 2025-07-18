@@ -8,6 +8,7 @@ import CredentialsForm from "./amazon-credentials/CredentialsForm";
 import CredentialsStatus from "./amazon-credentials/CredentialsStatus";
 import CredentialsActions from "./amazon-credentials/CredentialsActions";
 import AdminNotice from "./amazon-credentials/AdminNotice";
+import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
 
 interface ElyphantCredentials {
   email: string;
@@ -30,28 +31,38 @@ const ElyphantAmazonCredentialsManager = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [credentials, setCredentials] = useState<ElyphantCredentials | null>(null);
   const [hasCredentials, setHasCredentials] = useState(false);
+  const { trackAsyncOperation } = usePerformanceMonitor();
 
   useEffect(() => {
-    loadCredentials();
+    // Delay loading credentials slightly to improve initial page render
+    const timer = setTimeout(() => {
+      loadCredentials();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const loadCredentials = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
-        body: { action: 'get' }
+      const credentials = await trackAsyncOperation('load-amazon-credentials', async () => {
+        const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+          body: { action: 'get' }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data.success && data.credentials) {
-        setCredentials(data.credentials);
-        setEmail(data.credentials.email);
-        setCredentialName(data.credentials.credential_name || 'Primary Amazon Business Account');
-        setNotes(data.credentials.notes || '');
-        setVerificationCode(data.credentials.verification_code || '');
+      if (credentials.success && credentials.credentials) {
+        setCredentials(credentials.credentials);
+        setEmail(credentials.credentials.email);
+        setCredentialName(credentials.credentials.credential_name || 'Primary Amazon Business Account');
+        setNotes(credentials.credentials.notes || '');
+        setVerificationCode(credentials.credentials.verification_code || '');
         setHasCredentials(true);
       } else {
         setHasCredentials(false);
@@ -72,22 +83,26 @@ const ElyphantAmazonCredentialsManager = () => {
 
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
-        body: {
-          action: 'save',
-          email: email,
-          password: password,
-          credential_name: credentialName,
-          notes: notes,
-          verification_code: verificationCode
+      const result = await trackAsyncOperation('save-amazon-credentials', async () => {
+        const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+          body: {
+            action: 'save',
+            email: email,
+            password: password,
+            credential_name: credentialName,
+            notes: notes,
+            verification_code: verificationCode
+          }
+        });
+
+        if (error) {
+          throw error;
         }
+
+        return data;
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data.success) {
+      if (result.success) {
         toast.success("Elyphant Amazon Business credentials saved successfully");
         await loadCredentials();
         setPassword('');
@@ -105,15 +120,19 @@ const ElyphantAmazonCredentialsManager = () => {
   const handleDeactivate = async () => {
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
-        body: { action: 'delete' }
+      const result = await trackAsyncOperation('deactivate-amazon-credentials', async () => {
+        const { data, error } = await supabase.functions.invoke('manage-amazon-credentials', {
+          body: { action: 'delete' }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data.success) {
+      if (result.success) {
         toast.success("Elyphant Amazon Business credentials deactivated successfully");
         setCredentials(null);
         setHasCredentials(false);
@@ -143,7 +162,12 @@ const ElyphantAmazonCredentialsManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-muted-foreground">Loading credentials...</div>
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+          </div>
         </CardContent>
       </Card>
     );

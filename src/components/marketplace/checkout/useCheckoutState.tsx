@@ -19,7 +19,9 @@ export interface ShippingInfo {
 
 export interface GiftOptions {
   isGift: boolean;
+  recipientName: string;
   giftMessage: string;
+  giftWrapping: boolean;
   scheduledDeliveryDate?: string;
   isSurpriseGift: boolean;
 }
@@ -56,7 +58,9 @@ export const useCheckoutState = () => {
     paymentMethod: "card",
     giftOptions: {
       isGift: false,
+      recipientName: "",
       giftMessage: "",
+      giftWrapping: false,
       isSurpriseGift: false
     },
     shippingOptions: [],

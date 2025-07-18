@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
 import ShippingOptionsForm from '@/components/marketplace/checkout/ShippingOptionsForm';
-import PaymentMethodForm from '@/components/marketplace/checkout/PaymentMethodForm';
+import PaymentMethodForm from '@/components/payments/PaymentMethodForm';
 import GiftOptionsForm from '@/components/marketplace/checkout/GiftOptionsForm';
 import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
 import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
@@ -26,6 +26,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { cartItems, cartTotal } = useCart();
   const navigate = useNavigate();
   const {
     activeTab,
@@ -170,7 +171,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 <CardContent>
                   <GiftOptionsForm
                     giftOptions={checkoutData.giftOptions}
-                    onChange={handleGiftOptionsChange}
+                    onUpdate={handleGiftOptionsChange}
                   />
                 </CardContent>
               </Card>
@@ -182,10 +183,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                   <CardTitle>Payment Method</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PaymentMethodForm
-                    selectedMethod={checkoutData.paymentMethod}
-                    onSelect={handlePaymentMethodChange}
-                  />
+                  <PaymentMethodForm />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -213,8 +211,11 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
         <div className="lg:col-span-1">
           <OrderSummary 
+            cartItems={cartItems}
+            cartTotal={cartTotal}
             shippingCost={getShippingCost()}
             selectedShippingOption={checkoutData.selectedShippingOption}
+            giftOptions={checkoutData.giftOptions}
           />
         </div>
       </div>

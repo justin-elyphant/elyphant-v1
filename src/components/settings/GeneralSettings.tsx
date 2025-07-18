@@ -5,8 +5,9 @@ import { useAuth } from "@/contexts/auth";
 import { useGeneralSettingsForm } from "@/hooks/settings/useGeneralSettingsForm";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import DataSharingSection from "./DataSharingSection";
@@ -34,8 +35,13 @@ const GeneralSettings = () => {
     handleRemoveImportantDate,
     hasUnsavedChanges,
     isAutoSavingInterests,
-    isAutoSavingDates
+    isAutoSavingDates,
+    refetchProfile,
+    dataLoadError
   } = useGeneralSettingsForm();
+
+  console.log("🔄 GeneralSettings rendered");
+  console.log("📊 Form state:", { loading, isSaving, hasUnsavedChanges, dataLoadError });
 
   // Handle navigation from data integrity panel
   useEffect(() => {
@@ -46,10 +52,45 @@ const GeneralSettings = () => {
     }
   }, [location.state]);
 
+  const handleRetryLoad = async () => {
+    console.log("🔄 Retrying profile data load...");
+    try {
+      await refetchProfile();
+    } catch (error) {
+      console.error("❌ Error retrying profile load:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading your settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (dataLoadError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">General Settings</h2>
+          <p className="text-gray-600">Manage your profile information and preferences</p>
+        </div>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Error loading profile data: {dataLoadError}</span>
+            <Button variant="outline" size="sm" onClick={handleRetryLoad}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -67,6 +108,15 @@ const GeneralSettings = () => {
         <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
 
+      {/* Show data load warning if there were issues */}
+      {dataLoadError && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Some profile data may not have loaded correctly. Please verify your information and save any changes.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, (errors) => {

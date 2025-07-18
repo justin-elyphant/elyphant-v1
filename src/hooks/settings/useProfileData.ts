@@ -1,112 +1,103 @@
 
-import { useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
+import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { SettingsFormValues } from "./settingsFormSchema";
 import { mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
-import { useProfileCacheManager } from "@/hooks/profile/useProfileCacheManager";
+import { SettingsFormValues } from "./settingsFormSchema";
 
-export const useProfileData = (form: UseFormReturn<SettingsFormValues>, setInitialFormValues?: (values: SettingsFormValues) => void) => {
+export const useProfileData = (
+  form: UseFormReturn<SettingsFormValues>,
+  setInitialFormValues: (values: SettingsFormValues) => void
+) => {
+  const { user } = useAuth();
   const { profile, loading, refetchProfile } = useProfile();
-  const { handleOnboardingComplete } = useProfileCacheManager();
-  const hasLoadedRef = useRef(false);
-  const lastProfileUpdateRef = useRef<string | null>(null);
+  const [dataLoadError, setDataLoadError] = useState<string | null>(null);
 
-  // Load profile data when available
+  console.log("🔄 useProfileData hook initialized");
+  console.log("👤 User:", user?.id);
+  console.log("📊 Profile loading:", loading);
+  console.log("📊 Profile data:", profile);
+
   const loadProfileData = () => {
-    if (profile && !loading) {
-      console.log("🔄 Loading profile data into settings form:", profile);
-      
-      // Check for data integrity issues first
-      if (!profile.name || profile.name.trim() === '') {
-        console.warn("⚠️ Profile name is missing or empty:", profile.name);
-      }
-      
-      if (!profile.email || profile.email.trim() === '') {
-        console.warn("⚠️ Profile email is missing or empty:", profile.email);
-      }
+    if (!profile || loading) {
+      console.log("⏳ Profile not ready for loading");
+      return;
+    }
+
+    console.log("🔄 Loading profile data into form");
+    console.log("📊 Raw profile data:", JSON.stringify(profile, null, 2));
+
+    try {
+      setDataLoadError(null);
       
       // Use the improved mapping function
       const mappedData = mapDatabaseToSettingsForm(profile);
       
-      if (mappedData) {
-        // Ensure profile_image is included
-        if (profile.profile_image !== undefined) {
-          mappedData.profile_image = profile.profile_image;
-        }
-        
-        console.log("✅ Mapped data for settings form:", {
-          name: mappedData.name,
-          email: mappedData.email,
-          username: profile.username,
-          profile_image: mappedData.profile_image,
-          dob: profile.dob,
-          shipping_address: profile.shipping_address
-        });
-        
-        form.reset(mappedData);
-        hasLoadedRef.current = true;
-        
-        // Set initial values for unsaved changes tracking
-        if (setInitialFormValues) {
-          setInitialFormValues(mappedData);
-        }
-      } else {
-        console.error("❌ Failed to map profile data to settings form");
+      if (!mappedData) {
+        throw new Error("Failed to map profile data to form format");
       }
+
+      console.log("✅ Successfully mapped profile data:", mappedData);
+
+      // Reset form with mapped data
+      form.reset(mappedData);
+      setInitialFormValues(mappedData);
+
+      console.log("✅ Form reset with profile data completed");
+
+    } catch (error: any) {
+      console.error("❌ Error loading profile data:", error);
+      setDataLoadError(error.message || "Failed to load profile data");
+      
+      // Set default values if mapping fails
+      const defaultValues: SettingsFormValues = {
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        name: profile.name || "",
+        email: profile.email || "",
+        username: profile.username || "",
+        bio: profile.bio || "",
+        profile_image: profile.profile_image || null,
+        date_of_birth: undefined,
+        address: {
+          street: "",
+          line2: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: ""
+        },
+        interests: [],
+        importantDates: [],
+        data_sharing_settings: {
+          dob: "private",
+          shipping_address: "private",
+          gift_preferences: "friends",
+          email: "private"
+        }
+      };
+
+      form.reset(defaultValues);
+      setInitialFormValues(defaultValues);
     }
   };
 
-  // Load profile data when component mounts or profile changes
+  // Load profile data when available
   useEffect(() => {
-    // Only load if we have profile data and haven't loaded yet, or if profile has actually changed
-    const profileUpdateTime = profile?.updated_at;
+    console.log("🔄 useProfileData effect triggered", { profile: !!profile, loading });
     
-    if (profile && !loading && (!hasLoadedRef.current || profileUpdateTime !== lastProfileUpdateRef.current)) {
+    if (profile && !loading) {
       loadProfileData();
-      lastProfileUpdateRef.current = profileUpdateTime;
     }
   }, [profile, loading]);
 
-  // Check for onboarding completion flag and force refresh (only once)
-  useEffect(() => {
-    const checkOnboardingCompletion = async () => {
-      const onboardingComplete = localStorage.getItem("onboardingComplete");
-      
-      // Force refresh if onboarding was just completed
-      if (onboardingComplete === "true") {
-        console.log("🎯 Onboarding completed flag detected - starting data sync");
-        
-        // Clear the flag immediately to prevent repeat triggers
-        localStorage.removeItem("onboardingComplete");
-        
-        // Reset loading state to ensure fresh data load
-        hasLoadedRef.current = false;
-        lastProfileUpdateRef.current = null;
-        
-        // Use the cache manager to handle complete refresh
-        await handleOnboardingComplete();
-        
-        console.log("✅ Onboarding data sync complete");
-      }
-    };
-
-    checkOnboardingCompletion();
-  }, []); // No dependencies to prevent infinite loop
-
-  // Additional effect to handle immediate profile loading when it becomes available
-  useEffect(() => {
-    if (profile && !hasLoadedRef.current) {
-      console.log("🚀 Profile became available, loading immediately");
-      loadProfileData();
-    }
-  }, [profile]);
-
-
   return {
+    user,
     profile,
     loading,
     loadProfileData,
-    refetchProfile
+    refetchProfile,
+    dataLoadError
   };
 };

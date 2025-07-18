@@ -12,8 +12,9 @@ export function useProfileFetch() {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchProfile = useCallback(async (): Promise<Profile | null> => {
-    if (!user) {
-      console.log("No authenticated user found");
+    if (!user?.id) {
+      console.log("useProfileFetch: No authenticated user found");
+      setLoading(false);
       return null;
     }
 
@@ -21,7 +22,7 @@ export function useProfileFetch() {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching profile for user:", user.id);
+      console.log("useProfileFetch: Fetching profile for user:", user.id);
       
       // Add cache-busting parameter to ensure fresh data
       const timestamp = Date.now();

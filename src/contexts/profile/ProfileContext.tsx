@@ -6,6 +6,7 @@ import { ProfileDataValidator } from './ProfileDataValidator';
 import { Profile } from "@/types/supabase";
 import { toast } from 'sonner';
 import { unifiedDataService } from '@/services/unified/UnifiedDataService';
+import { useAuth } from '@/contexts/auth';
 
 interface ProfileContextType {
   profile: Profile | null;
@@ -23,6 +24,7 @@ interface ProfileContextType {
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const { fetchProfile, loading: isFetching, error: fetchError } = useProfileFetch();
   const { updateProfile, isUpdating, updateError } = useProfileUpdate();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -32,61 +34,70 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const loading = isFetching || isUpdating;
   const error = fetchError || updateError;
 
-  // Load profile data - simplified and with safe dependency handling
+  // Load profile data - properly depend on user and fetchProfile
   useEffect(() => {
-    let isActive = true; // Prevent state updates if component unmounts
+    let isActive = true;
     
     const loadProfile = async () => {
+      // Only proceed if we have a user
+      if (!user?.id) {
+        console.log("ProfileContext: No user available, skipping profile fetch");
+        if (isActive) {
+          setProfile(null);
+        }
+        return;
+      }
+
       try {
-        console.log("🔄 Loading profile data...");
+        console.log("ProfileContext: Loading profile data for user:", user.id);
         
-        // Only fetch if we have the fetchProfile function available
         if (typeof fetchProfile !== 'function') {
-          console.warn("fetchProfile is not available yet");
+          console.warn("ProfileContext: fetchProfile is not available yet");
           return;
         }
         
         const profileData = await fetchProfile();
         
-        // Only update state if component is still mounted
         if (isActive && profileData) {
-          console.log("✅ Profile loaded from backend:", {
+          console.log("ProfileContext: Profile loaded successfully:", {
             id: profileData.id,
             name: profileData.name,
             email: profileData.email,
-            username: profileData.username,
-            profile_image: profileData.profile_image,
-            onboarding_completed: profileData.onboarding_completed
+            username: profileData.username
           });
           setProfile(profileData);
           setLastFetchTime(Date.now());
           
-          // Clear any pending flags after successful load
           localStorage.removeItem("newSignUp");
           localStorage.removeItem("profileSetupLoading");
         } else if (isActive && profileData === null) {
-          console.warn("⚠️ No profile data returned from fetchProfile");
-          // Don't set profile to null if we already have data
+          console.warn("ProfileContext: No profile data returned");
           setLastFetchTime(Date.now());
         }
       } catch (error) {
-        console.error("❌ Error loading profile:", error);
+        console.error("ProfileContext: Error loading profile:", error);
         if (isActive) {
-          // Don't clear existing profile on error, just update timestamp
           setLastFetchTime(Date.now());
         }
       }
     };
-    
-    // Add a small delay to ensure auth context is initialized
-    const timeoutId = setTimeout(loadProfile, 100);
-    
-    // Cleanup function
+
+    // Only load if we have a user, add small delay for auth initialization
+    if (user?.id) {
+      const timeoutId = setTimeout(loadProfile, 100);
+      return () => {
+        isActive = false;
+        clearTimeout(timeoutId);
+      };
+    } else {
+      // Clear profile if no user
+      setProfile(null);
+    }
+
     return () => {
       isActive = false;
-      clearTimeout(timeoutId);
     };
-  }, []); // Remove fetchProfile from dependencies to prevent circular re-renders
+  }, [user?.id, fetchProfile]);
 
   // Wrapper for updating the profile that also updates local state with validation
   const handleUpdateProfile = async (data: Partial<Profile>) => {

@@ -1,4 +1,3 @@
-
 import { ProfileCreationData } from "@/services/profile/profileCreationService";
 
 /**
@@ -25,35 +24,20 @@ export function mapOAuthToProfileCreationData(user: any, additionalData: any = {
                   "";
 
   const profileData: ProfileCreationData = {
-    first_name: firstName,
-    last_name: lastName,
-    name: additionalData.name || `${firstName} ${lastName}`.trim() || metadata.full_name || metadata.name || "",
+    firstName: firstName,
+    lastName: lastName,
     email: user.email || "",
     username: additionalData.username || `user_${user.id.substring(0, 8)}`,
-    bio: additionalData.bio || "",
-    profile_image: additionalData.profile_image || 
+    photo: additionalData.profile_image || 
                   metadata.avatar_url || 
                   metadata.picture || 
                   metadata.profile_image_url || 
                   null,
     
     // Default values for optional fields
-    birthday: additionalData.birthday || null,
-    address: additionalData.address || {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "US"
-    },
+    address: typeof additionalData.address === 'string' ? additionalData.address : "",
     interests: additionalData.interests || [],
-    importantDates: additionalData.importantDates || [],
-    data_sharing_settings: additionalData.data_sharing_settings || {
-      dob: "friends",
-      shipping_address: "private",
-      gift_preferences: "public",
-      email: "private"
-    }
+    gift_preferences: additionalData.gift_preferences || []
   };
 
   console.log("✅ Mapped ProfileCreationData:", profileData);
@@ -68,29 +52,14 @@ export function mapGenericToProfileCreationData(data: any, user: any): ProfileCr
   console.log("📊 Generic data:", data);
 
   return {
-    first_name: data.first_name || data.name?.split(' ')[0] || "",
-    last_name: data.last_name || data.name?.split(' ').slice(1).join(' ') || "",
-    name: data.name || `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+    firstName: data.firstName || data.name?.split(' ')[0] || "",
+    lastName: data.lastName || data.name?.split(' ').slice(1).join(' ') || "",
     email: data.email || user?.email || "",
     username: data.username || `user_${user?.id?.substring(0, 8) || "unknown"}`,
-    bio: data.bio || "",
-    profile_image: data.profile_image || null,
-    birthday: data.birthday || null,
-    address: data.address || {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "US"
-    },
+    photo: data.photo || null,
+    address: typeof data.address === 'string' ? data.address : "",
     interests: data.interests || [],
-    importantDates: data.importantDates || [],
-    data_sharing_settings: data.data_sharing_settings || {
-      dob: "friends",
-      shipping_address: "private",
-      gift_preferences: "public",
-      email: "private"
-    }
+    gift_preferences: data.gift_preferences || []
   };
 }
 
@@ -100,11 +69,11 @@ export function mapGenericToProfileCreationData(data: any, user: any): ProfileCr
 export function validateProfileCreationData(data: ProfileCreationData): string[] {
   const errors: string[] = [];
 
-  if (!data.first_name?.trim()) {
+  if (!data.firstName?.trim()) {
     errors.push("First name is required");
   }
 
-  if (!data.last_name?.trim()) {
+  if (!data.lastName?.trim()) {
     errors.push("Last name is required");
   }
 

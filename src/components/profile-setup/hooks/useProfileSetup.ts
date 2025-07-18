@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
-import { profileCreationService, ProfileCreationData } from "@/services/profile/profileCreationService";
+import { ProfileCreationService, ProfileCreationData } from "@/services/profile/profileCreationService";
 import { toast } from "sonner";
 import { ProfileData } from "./types";
 
@@ -12,7 +12,7 @@ interface UseProfileSetupProps {
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
   const { user } = useAuth();
   const [activeStep, setActiveStep] = useState('basic-info');
-  const [profileData, setProfileData] = useState<ProfileData>({});
+  const [profileData, setProfileData] = useState<ProfileData>({} as ProfileData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,44 +106,28 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
       // Convert ProfileData to ProfileCreationData format
       const profileCreationData: ProfileCreationData = {
         // Extract first and last name from full name
-        first_name: profileData.name?.split(' ')[0] || "",
-        last_name: profileData.name?.split(' ').slice(1).join(' ') || "",
-        name: profileData.name || "",
+        firstName: profileData.name?.split(' ')[0] || "",
+        lastName: profileData.name?.split(' ').slice(1).join(' ') || "",
         email: profileData.email || user.email || "",
         username: profileData.username || `user_${user.id.substring(0, 8)}`,
-        bio: profileData.bio || "",
-        profile_image: profileData.profile_image || null,
+        photo: profileData.profile_image || null,
         
         // Convert birthday format if provided
-        birthday: profileData.birthday ? {
-          month: profileData.birthday.month,
-          day: profileData.birthday.day
-        } : null,
+        birthYear: profileData.birthday ? new Date().getFullYear() - 25 : undefined,
+        dateOfBirth: profileData.birthday ? new Date(2000, profileData.birthday.month - 1, profileData.birthday.day) : undefined,
         
         // Address
-        address: profileData.address || {
-          street: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: "US"
-        },
+        address: typeof profileData.address === 'string' ? profileData.address : "",
         
         // Other fields
         interests: profileData.interests || [],
-        importantDates: profileData.importantDates || [],
-        data_sharing_settings: profileData.data_sharing_settings || {
-          dob: "friends",
-          shipping_address: "private",
-          gift_preferences: "public",
-          email: "private"
-        }
+        gift_preferences: []
       };
 
       console.log("📋 Converted profile creation data:", JSON.stringify(profileCreationData, null, 2));
 
       // Use enhanced profile creation service
-      const result = await profileCreationService.createEnhancedProfileWithFormats(profileCreationData);
+      const result = await ProfileCreationService.createEnhancedProfile(user.id, profileCreationData);
 
       if (result.success) {
         console.log("✅ Profile setup completion successful!");

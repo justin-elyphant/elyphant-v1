@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { profileCreationService } from "@/services/profile/profileCreationService";
+import { ProfileCreationService, ProfileCreationData } from "@/services/profile/profileCreationService";
 import { mapOAuthToProfileCreationData, validateProfileCreationData } from "@/utils/profileCreationDataMapper";
 
 const OAuthProfileCompletion = () => {
@@ -100,7 +100,7 @@ const OAuthProfileCompletion = () => {
       console.log("📋 Complete profile data prepared:", JSON.stringify(profileData, null, 2));
 
       // Use enhanced profile creation service
-      const result = await profileCreationService.createEnhancedProfileWithFormats(profileData);
+      const result = await ProfileCreationService.createEnhancedProfile(user.id, profileData);
 
       if (result.success) {
         console.log("✅ OAuth profile completion successful!");

@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ProfileCreationData {
+export interface ProfileCreationData {
   firstName: string;
   lastName: string;
   email: string;

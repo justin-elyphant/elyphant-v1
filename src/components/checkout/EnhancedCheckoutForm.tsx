@@ -57,14 +57,19 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
       if (profile.shipping_address) {
         const address = profile.shipping_address;
         console.log("Found shipping address in profile:", address);
+        console.log("State value:", address.state);
+        console.log("Country value:", address.country);
         
         shippingUpdate.address = address.address_line1 || address.street || "";
         shippingUpdate.addressLine2 = address.address_line2 || "";
         shippingUpdate.city = address.city || "";
-        shippingUpdate.state = address.state || "";
+        // Ensure state is the full state name, not abbreviation
+        shippingUpdate.state = address.state === "CA" ? "California" : address.state || "";
         shippingUpdate.zipCode = address.zip_code || address.zipCode || "";
-        shippingUpdate.country = address.country || "United States";
+        // Ensure country is the full country name
+        shippingUpdate.country = address.country === "US" ? "United States" : (address.country || "United States");
         
+        console.log("Shipping update object:", shippingUpdate);
         toast.success("Shipping information pre-filled from your profile");
       }
 

@@ -95,6 +95,9 @@ const App = () => {
                       <Route path="/trunkline-login" element={<MainLayout><Trunkline /></MainLayout>} />
                       <Route path="/trunkline" element={<MainLayout><Trunkline /></MainLayout>} />
                       
+                      {/* Profile route - handles its own layout logic */}
+                      <Route path="/profile/:identifier" element={<Profile />} />
+                      
                       {/* Routes with sidebar */}
                       <Route path="/dashboard" element={<SidebarLayout><Dashboard /></SidebarLayout>} />
                       <Route path="/messages" element={<SidebarLayout><Messages /></SidebarLayout>} />
@@ -105,7 +108,6 @@ const App = () => {
                       <Route path="/settings" element={<SidebarLayout><Settings /></SidebarLayout>} />
                       <Route path="/payments" element={<SidebarLayout><Payments /></SidebarLayout>} />
                       <Route path="/events" element={<SidebarLayout><Events /></SidebarLayout>} />
-                      <Route path="/profile/:identifier" element={<SidebarLayout><Profile /></SidebarLayout>} />
                     </Routes>
                     <SearchOptimizationMonitor />
                   </LegacyRouteHandler>

@@ -3,8 +3,9 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Share2, Calendar, MapPin, Mail } from "lucide-react";
+import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock } from "lucide-react";
 import FollowButton from "./FollowButton";
+import { Link } from "react-router-dom";
 
 export interface ProfileBannerProps {
   userData: any;
@@ -12,10 +13,14 @@ export interface ProfileBannerProps {
   isFollowing: boolean;
   onFollow: () => void;
   onShare: () => void;
-  // New props for real data
+  // Real data props
   followerCount?: number;
   followingCount?: number;
   wishlistCount?: number;
+  // New props for public profile handling
+  canFollow?: boolean;
+  canMessage?: boolean;
+  isAnonymousUser?: boolean;
 }
 
 const ProfileBanner: React.FC<ProfileBannerProps> = ({
@@ -26,11 +31,120 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   onShare,
   followerCount = 0,
   followingCount = 0,
-  wishlistCount = 0
+  wishlistCount = 0,
+  canFollow = true,
+  canMessage = true,
+  isAnonymousUser = false
 }) => {
   const handleMessageClick = () => {
+    if (isAnonymousUser) {
+      // Redirect to signup with intent
+      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
+        type: 'message',
+        targetUserId: userData.id,
+        targetName: userData.name
+      }));
+      window.location.href = '/signup';
+      return;
+    }
+    
     // Navigate to messaging with this user
     window.location.href = `/messaging/${userData.id}`;
+  };
+
+  const handleFollowClick = () => {
+    if (isAnonymousUser) {
+      // Redirect to signup with intent to follow
+      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
+        type: 'follow',
+        targetUserId: userData.id,
+        targetName: userData.name
+      }));
+      window.location.href = '/signup';
+      return;
+    }
+    
+    onFollow();
+  };
+
+  const renderActionButtons = () => {
+    if (isCurrentUser) {
+      return (
+        <Button
+          onClick={onShare}
+          variant="outline"
+          className="bg-white/10 border-white text-white hover:bg-white/20"
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          Share
+        </Button>
+      );
+    }
+
+    if (isAnonymousUser) {
+      return (
+        <div className="flex space-x-3">
+          {canFollow && (
+            <Button
+              onClick={handleFollowClick}
+              className="bg-white text-gray-900 hover:bg-gray-100"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Follow
+            </Button>
+          )}
+          {canMessage && (
+            <Button
+              onClick={handleMessageClick}
+              variant="outline"
+              className="bg-white/10 border-white text-white hover:bg-white/20"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Message
+            </Button>
+          )}
+          <Button
+            onClick={onShare}
+            variant="outline"
+            className="bg-white/10 border-white text-white hover:bg-white/20"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
+      );
+    }
+
+    // Authenticated user viewing someone else's profile
+    return (
+      <div className="flex space-x-3">
+        {canFollow && (
+          <FollowButton
+            targetUserId={userData?.id}
+            variant="default"
+            className="bg-white text-gray-900 hover:bg-gray-100"
+          />
+        )}
+        {canMessage && (
+          <Button
+            onClick={handleMessageClick}
+            variant="outline"
+            className="bg-white/10 border-white text-white hover:bg-white/20"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Message
+          </Button>
+        )}
+        <Button
+          onClick={onShare}
+          variant="outline"
+          className="bg-white/10 border-white text-white hover:bg-white/20"
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          Share
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -50,7 +164,21 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
 
             {/* Profile Info */}
             <div className="text-white space-y-3">
-              <h1 className="text-4xl font-bold">{userData?.name || 'User'}</h1>
+              <div className="flex items-center space-x-3">
+                <h1 className="text-4xl font-bold">{userData?.name || 'User'}</h1>
+                {!isCurrentUser && !canFollow && (
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Private
+                  </Badge>
+                )}
+                {isAnonymousUser && (
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    Public Profile
+                  </Badge>
+                )}
+              </div>
+              
               {userData?.username && (
                 <p className="text-xl opacity-90">@{userData.username}</p>
               )}
@@ -81,36 +209,32 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Sign up prompt for anonymous users */}
+              {isAnonymousUser && (
+                <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                  <p className="text-sm font-medium">Want to connect with {userData.name}?</p>
+                  <Link 
+                    to="/signup" 
+                    className="text-sm underline hover:no-underline"
+                    onClick={() => {
+                      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
+                        type: 'view_profile',
+                        targetUserId: userData.id,
+                        targetName: userData.name
+                      }));
+                    }}
+                  >
+                    Sign up to follow and message
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex space-x-3">
-            {!isCurrentUser && (
-              <>
-                <FollowButton
-                  targetUserId={userData?.id}
-                  variant="default"
-                  className="bg-white text-gray-900 hover:bg-gray-100"
-                />
-                <Button
-                  onClick={handleMessageClick}
-                  variant="outline"
-                  className="bg-white/10 border-white text-white hover:bg-white/20"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
-              </>
-            )}
-            <Button
-              onClick={onShare}
-              variant="outline"
-              className="bg-white/10 border-white text-white hover:bg-white/20"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+            {renderActionButtons()}
           </div>
         </div>
       </div>

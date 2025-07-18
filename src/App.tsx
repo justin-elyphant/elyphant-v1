@@ -41,6 +41,7 @@ import Payments from "./pages/Payments";
 
 import FAQ from "./pages/FAQ";
 import SearchOptimizationMonitor from "./components/debug/SearchOptimizationMonitor";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 // Create QueryClient outside of component to avoid recreation on renders
 const queryClient = new QueryClient({
@@ -57,62 +58,70 @@ LocalStorageService.initialize();
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <AuthProvider>
-            <ProfileProvider>
-              <CartProvider>
-                <LegacyRouteHandler>
-                  <Routes>
-                    {/* Routes without sidebar */}
-                    <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-                    <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
-                    <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
-                    <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
-                    <Route path="/signup" element={<MainLayout><StreamlinedSignUp /></MainLayout>} />
-                    <Route path="/signin" element={<MainLayout><SignIn /></MainLayout>} />
-                    <Route path="/auth/oauth-complete" element={<MainLayout><OAuthProfileCompletion /></MainLayout>} />
-                    <Route path="/profile-setup" element={<MainLayout><ProfileSetupWithIntent /></MainLayout>} />
-                    <Route path="/vendor-partner" element={<MainLayout><VendorPartner /></MainLayout>} />
-                    <Route path="/about" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/payment-success" element={<MainLayout><PaymentSuccess /></MainLayout>} />
-                    <Route path="/payment-cancel" element={<MainLayout><PaymentCancel /></MainLayout>} />
-                    <Route path="/help" element={<MainLayout><FAQ /></MainLayout>} />
-                    <Route path="/contact" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/returns" element={<MainLayout><FAQ /></MainLayout>} />
-                    <Route path="/privacy" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/terms" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/careers" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/press" element={<MainLayout><AboutUs /></MainLayout>} />
-                    <Route path="/vendor-signup" element={<MainLayout><VendorPartner /></MainLayout>} />
-                    <Route path="/vendor-login" element={<MainLayout><VendorPartner /></MainLayout>} />
-                    <Route path="/trunkline-login" element={<MainLayout><Trunkline /></MainLayout>} />
-                    <Route path="/trunkline" element={<MainLayout><Trunkline /></MainLayout>} />
-                    
-                    {/* Routes with sidebar */}
-                    <Route path="/dashboard" element={<SidebarLayout><Dashboard /></SidebarLayout>} />
-                    <Route path="/messages" element={<SidebarLayout><Messages /></SidebarLayout>} />
-                    <Route path="/messages/:connectionId" element={<SidebarLayout><Messages /></SidebarLayout>} />
-                    <Route path="/connections" element={<SidebarLayout><Connections /></SidebarLayout>} />
-                    <Route path="/wishlists" element={<SidebarLayout><Wishlists /></SidebarLayout>} />
-                    <Route path="/orders" element={<SidebarLayout><Orders /></SidebarLayout>} />
-                    <Route path="/settings" element={<SidebarLayout><Settings /></SidebarLayout>} />
-                    <Route path="/payments" element={<SidebarLayout><Payments /></SidebarLayout>} />
-                    <Route path="/events" element={<SidebarLayout><Events /></SidebarLayout>} />
-                    <Route path="/profile/:identifier" element={<SidebarLayout><Profile /></SidebarLayout>} />
-                  </Routes>
-                  <SearchOptimizationMonitor />
-                </LegacyRouteHandler>
-              </CartProvider>
-            </ProfileProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <ErrorBoundary>
+              <AuthProvider>
+                <ErrorBoundary>
+                  <ProfileProvider>
+                    <ErrorBoundary>
+                      <CartProvider>
+                        <LegacyRouteHandler>
+                          <Routes>
+                            {/* Routes without sidebar */}
+                            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+                            <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
+                            <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
+                            <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
+                            <Route path="/signup" element={<MainLayout><StreamlinedSignUp /></MainLayout>} />
+                            <Route path="/signin" element={<MainLayout><SignIn /></MainLayout>} />
+                            <Route path="/auth/oauth-complete" element={<MainLayout><OAuthProfileCompletion /></MainLayout>} />
+                            <Route path="/profile-setup" element={<MainLayout><ProfileSetupWithIntent /></MainLayout>} />
+                            <Route path="/vendor-partner" element={<MainLayout><VendorPartner /></MainLayout>} />
+                            <Route path="/about" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/payment-success" element={<MainLayout><PaymentSuccess /></MainLayout>} />
+                            <Route path="/payment-cancel" element={<MainLayout><PaymentCancel /></MainLayout>} />
+                            <Route path="/help" element={<MainLayout><FAQ /></MainLayout>} />
+                            <Route path="/contact" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/returns" element={<MainLayout><FAQ /></MainLayout>} />
+                            <Route path="/privacy" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/terms" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/careers" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/press" element={<MainLayout><AboutUs /></MainLayout>} />
+                            <Route path="/vendor-signup" element={<MainLayout><VendorPartner /></MainLayout>} />
+                            <Route path="/vendor-login" element={<MainLayout><VendorPartner /></MainLayout>} />
+                            <Route path="/trunkline-login" element={<MainLayout><Trunkline /></MainLayout>} />
+                            <Route path="/trunkline" element={<MainLayout><Trunkline /></MainLayout>} />
+                            
+                            {/* Routes with sidebar */}
+                            <Route path="/dashboard" element={<SidebarLayout><Dashboard /></SidebarLayout>} />
+                            <Route path="/messages" element={<SidebarLayout><Messages /></SidebarLayout>} />
+                            <Route path="/messages/:connectionId" element={<SidebarLayout><Messages /></SidebarLayout>} />
+                            <Route path="/connections" element={<SidebarLayout><Connections /></SidebarLayout>} />
+                            <Route path="/wishlists" element={<SidebarLayout><Wishlists /></SidebarLayout>} />
+                            <Route path="/orders" element={<SidebarLayout><Orders /></SidebarLayout>} />
+                            <Route path="/settings" element={<SidebarLayout><Settings /></SidebarLayout>} />
+                            <Route path="/payments" element={<SidebarLayout><Payments /></SidebarLayout>} />
+                            <Route path="/events" element={<SidebarLayout><Events /></SidebarLayout>} />
+                            <Route path="/profile/:identifier" element={<SidebarLayout><Profile /></SidebarLayout>} />
+                          </Routes>
+                          <SearchOptimizationMonitor />
+                        </LegacyRouteHandler>
+                      </CartProvider>
+                    </ErrorBoundary>
+                  </ProfileProvider>
+                </ErrorBoundary>
+              </AuthProvider>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -316,9 +316,7 @@ const StreamlinedSignUp = () => {
         photo: profileData.photo,
         dateOfBirth: profileData.dateOfBirth,
         birthYear: profileData.dateOfBirth?.getFullYear(),
-        address: profileData.address,
-        addressLine2: profileData.addressLine2,
-        profileType: profileType
+        address: profileData.address
       });
 
       if (!result.success) {

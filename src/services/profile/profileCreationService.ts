@@ -186,6 +186,49 @@ export class ProfileCreationService {
   }
 
   /**
+   * Verify that a profile exists for the given user
+   */
+  static async verifyProfileExists(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      return !error && !!data;
+    } catch (error) {
+      console.error("❌ Profile verification failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Create profile with timeout for error handling
+   */
+  static async createProfileWithTimeout(
+    userId: string,
+    profileData: ProfileCreationData,
+    timeoutMs: number = 30000
+  ): Promise<ProfileCreationResult> {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Profile creation timeout'));
+      }, timeoutMs);
+
+      this.createEnhancedProfile(userId, profileData)
+        .then(result => {
+          clearTimeout(timeoutId);
+          resolve(result);
+        })
+        .catch(error => {
+          clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
+  }
+
+  /**
    * Update existing profile with new data
    */
   static async updateProfile(

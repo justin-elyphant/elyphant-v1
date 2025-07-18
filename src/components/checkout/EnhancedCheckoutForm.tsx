@@ -25,7 +25,9 @@ import ModernOrderSummary from './ModernOrderSummary';
 import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 import StreamlinedDeliveryEditModal from './StreamlinedDeliveryEditModal';
 import RecipientAddressDisplay from './RecipientAddressDisplay';
+import PaymentSection from '../marketplace/checkout/PaymentSection';
 import { DeliveryGroup } from '@/types/recipient';
+import { createOrder } from '@/services/orderService';
 
 interface ShippingInfo {
   name: string;
@@ -71,6 +73,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<DeliveryGroup | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('card');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     fetchRecipients();
@@ -218,24 +222,50 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     setCurrentStep('payment');
   };
 
-  const handleProcessOrder = async () => {
+  const handlePlaceOrder = async (paymentIntentId?: string) => {
     try {
+      setIsProcessingPayment(true);
+      
       // Prepare order data with all delivery information
+      const subtotal = getTotalAmount();
       const orderData = {
-        items: cartItems,
+        cartItems: cartItems,
+        subtotal: subtotal,
+        totalAmount: subtotal + shippingCost + taxAmount,
+        shippingCost: shippingCost,
+        taxAmount: taxAmount,
+        shippingInfo: getUnassignedItems().length > 0 ? shippingInfo : {
+          name: profile?.name || '',
+          email: profile?.email || '',
+          address: '',
+          addressLine2: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'United States'
+        },
+        giftOptions: {
+          isGift: deliveryGroups.length > 0,
+          giftMessage: '',
+          isSurpriseGift: false
+        },
+        paymentIntentId: paymentIntentId,
         deliveryGroups: deliveryGroups.map(group => ({
           ...group,
           shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
-        })),
-        unassignedItemsShipping: getUnassignedItems().length > 0 ? shippingInfo : null,
-        totalAmount: getTotalAmount(),
-        totalItems: getTotalItems()
+        }))
       };
 
-      onCheckoutComplete(orderData);
+      // Create order in database
+      const order = await createOrder(orderData);
+      
+      toast.success('Order placed successfully!');
+      onCheckoutComplete(order);
     } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to process order');
+      console.error('Order creation error:', error);
+      toast.error('Failed to process order. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -430,18 +460,37 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
         </div>
 
-        {/* Order Summary */}
+        {/* Sidebar - Order Summary or Payment */}
         <div className="lg:col-span-4">
-          <ModernOrderSummary
-            shippingCost={shippingCost}
-            taxAmount={taxAmount}
-            shippingMethod={shippingMethod}
-            estimatedDelivery="3-5 business days"
-            currentStep={currentStep}
-            isValid={addressValidationErrors.length === 0}
-            onProceedToPayment={handleProceedToPayment}
-            onCompleteOrder={handleProcessOrder}
-          />
+          {currentStep === 'payment' ? (
+            <PaymentSection
+              paymentMethod={paymentMethod}
+              onPaymentMethodChange={setPaymentMethod}
+              onPlaceOrder={handlePlaceOrder}
+              isProcessing={isProcessingPayment}
+              canPlaceOrder={addressValidationErrors.length === 0}
+              onPrevious={() => setCurrentStep('review')}
+              totalAmount={getTotalAmount() + shippingCost + taxAmount}
+              cartItems={cartItems}
+              shippingInfo={getUnassignedItems().length > 0 ? shippingInfo : null}
+              giftOptions={{
+                deliveryGroups: deliveryGroups.map(group => ({
+                  ...group,
+                  shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
+                }))
+              }}
+            />
+          ) : (
+            <ModernOrderSummary
+              shippingCost={shippingCost}
+              taxAmount={taxAmount}
+              shippingMethod={shippingMethod}
+              estimatedDelivery="3-5 business days"
+              currentStep={currentStep}
+              isValid={addressValidationErrors.length === 0}
+              onProceedToPayment={handleProceedToPayment}
+            />
+          )}
         </div>
       </div>
 

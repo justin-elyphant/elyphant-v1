@@ -562,23 +562,58 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         {/* Full Width Payment Section */}
         {currentStep === 'payment' && (
           <div className="lg:col-span-1">
-            <PaymentSection
-              paymentMethod={paymentMethod}
-              onPaymentMethodChange={setPaymentMethod}
-              onPlaceOrder={handlePlaceOrder}
-              isProcessing={isProcessingPayment}
-              canPlaceOrder={addressValidationErrors.length === 0}
-              onPrevious={() => setCurrentStep('review')}
-              totalAmount={getTotalAmount() + shippingCost + taxAmount}
-              cartItems={cartItems}
-              shippingInfo={getUnassignedItems().length > 0 ? shippingInfo : null}
-              giftOptions={{
-                deliveryGroups: deliveryGroups.map(group => ({
-                  ...group,
-                  shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
-                }))
-              }}
-            />
+            {/* Simple Payment Form for now */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Complete Your Order</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="text-sm text-muted-foreground mb-2">Order Total</div>
+                  <div className="text-2xl font-bold">${(getTotalAmount() + shippingCost + taxAmount).toFixed(2)}</div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Button 
+                    onClick={() => handlePlaceOrder('demo_payment_intent')}
+                    className="w-full"
+                    disabled={isProcessingPayment}
+                    size="lg"
+                  >
+                    {isProcessingPayment ? 'Processing...' : 'Place Order'}
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setCurrentStep('review')}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Back to Review
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Original PaymentSection as fallback */}
+            <div className="mt-6">
+              <PaymentSection
+                paymentMethod={paymentMethod}
+                onPaymentMethodChange={setPaymentMethod}
+                onPlaceOrder={handlePlaceOrder}
+                isProcessing={isProcessingPayment}
+                canPlaceOrder={addressValidationErrors.length === 0}
+                onPrevious={() => setCurrentStep('review')}
+                totalAmount={getTotalAmount() + shippingCost + taxAmount}
+                cartItems={cartItems}
+                shippingInfo={getUnassignedItems().length > 0 ? shippingInfo : null}
+                giftOptions={{
+                  deliveryGroups: deliveryGroups.map(group => ({
+                    ...group,
+                    shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
+                  }))
+                }}
+              />
+            </div>
           </div>
         )}
       </div>

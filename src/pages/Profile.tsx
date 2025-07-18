@@ -28,11 +28,14 @@ const Profile = () => {
   console.log("Profile page - current user:", user?.id);
 
   // Determine if this is the current user's own profile
-  const isOwnProfile = Boolean(user && ownProfile && (
-    user.id === ownProfile.id ||
-    user.email === ownProfile.email ||
-    identifier === ownProfile.username ||
-    identifier === user.id
+  const isOwnProfile = Boolean(user && (
+    (ownProfile && (
+      user.id === ownProfile.id ||
+      user.email === ownProfile.email ||
+      identifier === ownProfile.username ||
+      identifier === user.id
+    )) || 
+    (identifier === user.id) // Direct UUID match
   ));
 
   console.log("Profile page - isOwnProfile:", isOwnProfile);

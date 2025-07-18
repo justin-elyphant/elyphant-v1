@@ -15,6 +15,7 @@ const PublicProfileLayout: React.FC<PublicProfileLayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Full header with navigation and search functionality */}
       <Header />
       <main className={cn("flex-1", className)}>
         {children}

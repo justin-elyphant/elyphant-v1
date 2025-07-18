@@ -1,247 +1,142 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Clock, Send, Inbox, Gift } from "lucide-react";
 import { Connection } from "@/types/connections";
-import { Mail, Calendar, Clock, Edit, Send } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import PendingConnectionEditModal from "./PendingConnectionEditModal";
-import NudgeModal from "./NudgeModal";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import IncomingConnectionRequests from "./IncomingConnectionRequests";
+import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];
   searchTerm: string;
-  onRefresh?: () => void;
+  onRefresh: () => void;
 }
 
 const PendingTabContent: React.FC<PendingTabContentProps> = ({ 
   pendingConnections, 
-  searchTerm,
-  onRefresh
+  searchTerm, 
+  onRefresh 
 }) => {
-  const { user } = useAuth();
-  const [editingConnection, setEditingConnection] = useState<Connection | null>(null);
-  const [nudgingConnection, setNudgingConnection] = useState<Connection | null>(null);
-  const [nudgeStates, setNudgeStates] = useState<Record<string, {
-    totalNudges: number;
-    lastNudgeSent: Date | null;
-    canNudge: boolean;
-    daysUntilNextNudge: number;
-  }>>({});
+  const [activeTab, setActiveTab] = useState("incoming");
 
-  // Fetch nudge states for all connections
-  useEffect(() => {
-    const fetchNudgeStates = async () => {
-      if (!user || pendingConnections.length === 0) return;
-
-      const states: typeof nudgeStates = {};
-      for (const connection of pendingConnections) {
-        if (connection.recipientEmail) {
-          try {
-            const { data } = await supabase.rpc('get_nudge_summary', {
-              p_user_id: user.id,
-              p_recipient_email: connection.recipientEmail
-            });
-            
-            if (data && data.length > 0) {
-              const summary = data[0];
-              states[connection.id] = {
-                totalNudges: summary.total_nudges,
-                lastNudgeSent: summary.last_nudge_sent ? new Date(summary.last_nudge_sent) : null,
-                canNudge: summary.can_nudge,
-                daysUntilNextNudge: summary.days_until_next_nudge
-              };
-            } else {
-              states[connection.id] = {
-                totalNudges: 0,
-                lastNudgeSent: null,
-                canNudge: true,
-                daysUntilNextNudge: 0
-              };
-            }
-          } catch (error) {
-            console.error('Error fetching nudge state:', error);
-            states[connection.id] = {
-              totalNudges: 0,
-              lastNudgeSent: null,
-              canNudge: true,
-              daysUntilNextNudge: 0
-            };
-          }
-        }
-      }
-      setNudgeStates(states);
-    };
-
-    fetchNudgeStates();
-  }, [user, pendingConnections]);
-
-  const handleNudgeSuccess = () => {
-    // Refresh nudge states after sending a nudge
-    if (nudgingConnection) {
-      const refreshNudgeState = async () => {
-        if (!user || !nudgingConnection.recipientEmail) return;
-
-        try {
-          const { data } = await supabase.rpc('get_nudge_summary', {
-            p_user_id: user.id,
-            p_recipient_email: nudgingConnection.recipientEmail
-          });
-          
-          if (data && data.length > 0) {
-            const summary = data[0];
-            setNudgeStates(prev => ({
-              ...prev,
-              [nudgingConnection.id]: {
-                totalNudges: summary.total_nudges,
-                lastNudgeSent: summary.last_nudge_sent ? new Date(summary.last_nudge_sent) : null,
-                canNudge: summary.can_nudge,
-                daysUntilNextNudge: summary.days_until_next_nudge
-              }
-            }));
-          }
-        } catch (error) {
-          console.error('Error refreshing nudge state:', error);
-        }
-      };
-
-      refreshNudgeState();
-    }
-    onRefresh?.();
-  };
-  if (pendingConnections.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium mb-2">No pending connections</h3>
-        <p className="text-muted-foreground mb-4">
-          {searchTerm 
-            ? `No results for "${searchTerm}"`
-            : "You haven't sent any gift invitations yet"}
-        </p>
-        <Button>
-          Send Your First Gift
-        </Button>
-      </div>
-    );
-  }
+  // Filter gift-based pending connections
+  const giftBasedPending = pendingConnections.filter(conn => 
+    conn.isPending && conn.recipientEmail
+  );
 
   return (
-    <div className="grid grid-cols-1 gap-4">
-      {pendingConnections.map(connection => (
-        <Card key={connection.id} className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={connection.imageUrl} alt={connection.name} />
-                <AvatarFallback>
-                  {connection.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-medium text-base">{connection.name}</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-                  <Mail className="h-3 w-3" />
-                  <span>{connection.recipientEmail}</span>
-                </div>
-                
-                <p className="text-sm text-muted-foreground">
-                  {connection.bio}
-                </p>
-                
-                {connection.connectionDate && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      Sent {formatDistanceToNow(new Date(connection.connectionDate), { addSuffix: true })}
-                    </span>
-                  </div>
-                )}
-              </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Pending Connections</h2>
+          <p className="text-muted-foreground">
+            Manage your connection requests and gift invitations
+          </p>
+        </div>
+        <Button onClick={onRefresh} variant="outline" size="sm">
+          Refresh
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="incoming" className="flex items-center gap-2">
+            <Inbox className="h-4 w-4" />
+            Incoming
+          </TabsTrigger>
+          <TabsTrigger value="outgoing" className="flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            Sent
+          </TabsTrigger>
+          <TabsTrigger value="gifts" className="flex items-center gap-2">
+            <Gift className="h-4 w-4" />
+            Gift Invitations
+            {giftBasedPending.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {giftBasedPending.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="incoming" className="mt-6">
+          <IncomingConnectionRequests searchTerm={searchTerm} />
+        </TabsContent>
+
+        <TabsContent value="outgoing" className="mt-6">
+          <OutgoingConnectionRequests searchTerm={searchTerm} />
+        </TabsContent>
+
+        <TabsContent value="gifts" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Gift-Based Invitations</h3>
+              <Badge variant="secondary">{giftBasedPending.length}</Badge>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {connection.relationship}
-              </Badge>
-              
-              {/* Show nudge information */}
-              {nudgeStates[connection.id] && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {nudgeStates[connection.id].totalNudges > 0 && (
-                    <span>
-                      {nudgeStates[connection.id].totalNudges}/3 nudges
-                    </span>
-                  )}
-                  {nudgeStates[connection.id].lastNudgeSent && (
-                    <span className="text-xs">
-                      (Last: {formatDistanceToNow(nudgeStates[connection.id].lastNudgeSent!, { addSuffix: true })})
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {/* Nudge button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setNudgingConnection(connection)}
-                className="h-8 w-8 p-0"
-                disabled={!nudgeStates[connection.id]?.canNudge}
-                title={
-                  nudgeStates[connection.id]?.canNudge 
-                    ? "Send reminder" 
-                    : nudgeStates[connection.id]?.daysUntilNextNudge > 0
-                      ? `Can send reminder in ${nudgeStates[connection.id]?.daysUntilNextNudge} days`
-                      : "Maximum nudges reached"
-                }
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingConnection(connection)}
-                className="h-8 w-8 p-0"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            </div>
+            {giftBasedPending.length === 0 ? (
+              <div className="text-center py-8">
+                <Gift className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No gift invitations</h3>
+                <p className="text-gray-500">
+                  {searchTerm ? `No invitations match "${searchTerm}"` : "You don't have any pending gift invitations"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {giftBasedPending.map((connection) => (
+                  <Card key={connection.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={connection.imageUrl} />
+                            <AvatarFallback>
+                              {connection.name?.substring(0, 2).toUpperCase() || 'UN'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-medium">{connection.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {connection.username}
+                            </p>
+                            {connection.recipientEmail && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Invited: {connection.recipientEmail}
+                              </p>
+                            )}
+                            {connection.bio && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {connection.bio}
+                              </p>
+                            )}
+                            {connection.connectionDate && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Sent {new Date(connection.connectionDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline" className="text-blue-600 border-blue-300">
+                            <Gift className="h-3 w-3 mr-1" />
+                            Gift Invitation
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-        </Card>
-      ))}
-      
-      {editingConnection && (
-        <PendingConnectionEditModal
-          connection={editingConnection}
-          open={!!editingConnection}
-          onOpenChange={(open) => !open && setEditingConnection(null)}
-          onSuccess={() => {
-            setEditingConnection(null);
-            onRefresh?.();
-          }}
-        />
-      )}
-      
-      {nudgingConnection && (
-        <NudgeModal
-          connection={nudgingConnection}
-          open={!!nudgingConnection}
-          onOpenChange={(open) => !open && setNudgingConnection(null)}
-          onSuccess={handleNudgeSuccess}
-        />
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

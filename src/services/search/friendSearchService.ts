@@ -9,6 +9,8 @@ export interface FriendSearchResult {
   profile_image?: string;
   bio?: string;
   connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
+  mutualConnections?: number;
+  lastActive?: string;
 }
 
 export const searchFriends = async (query: string, currentUserId?: string): Promise<FriendSearchResult[]> => {
@@ -69,7 +71,9 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
             email: profile.email || '',
             profile_image: profile.profile_image,
             bio: profile.bio,
-            connectionStatus
+            connectionStatus,
+            mutualConnections: 0, // TODO: Calculate mutual connections
+            lastActive: 'Recently' // TODO: Get actual last active time
           };
         });
     }
@@ -84,7 +88,9 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
         email: profile.email || '',
         profile_image: profile.profile_image,
         bio: profile.bio,
-        connectionStatus: 'none' as const
+        connectionStatus: 'none' as const,
+        mutualConnections: 0,
+        lastActive: 'Recently'
       }));
 
   } catch (error) {
@@ -110,5 +116,24 @@ export const sendConnectionRequest = async (targetUserId: string, relationshipTy
   } catch (error) {
     console.error('Error sending connection request:', error);
     return { success: false, error };
+  }
+};
+
+export const checkConnectionStatus = async (currentUserId: string, targetUserId: string): Promise<FriendSearchResult['connectionStatus']> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_connections')
+      .select('status')
+      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    
+    if (!data) return 'none';
+    
+    return data.status === 'accepted' ? 'connected' : 'pending';
+  } catch (error) {
+    console.error('Error checking connection status:', error);
+    return 'none';
   }
 };

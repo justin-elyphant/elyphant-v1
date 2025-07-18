@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, UserPlus, Check, Clock } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { checkConnectionStatus } from "@/services/search/friendSearchService";
 import { useAuth } from "@/contexts/auth";
 
 interface FriendResultCardProps {
@@ -18,6 +19,30 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
   onViewProfile
 }) => {
   const { user } = useAuth();
+  const [connectionStatus, setConnectionStatus] = useState(friend.connectionStatus);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Check connection status on mount and when friend changes
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (user && friend.id) {
+        const status = await checkConnectionStatus(user.id, friend.id);
+        setConnectionStatus(status);
+      }
+    };
+
+    checkStatus();
+  }, [user, friend.id]);
+
+  const handleSendRequest = async () => {
+    setIsLoading(true);
+    try {
+      await onSendRequest(friend.id, friend.name);
+      setConnectionStatus('pending');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getConnectionButton = () => {
     if (!user) {
@@ -28,7 +53,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
       );
     }
 
-    switch (friend.connectionStatus) {
+    switch (connectionStatus) {
       case 'connected':
         return (
           <Button size="sm" variant="outline" disabled>
@@ -48,10 +73,11 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onSendRequest(friend.id, friend.name)}
+            onClick={handleSendRequest}
+            disabled={isLoading}
           >
             <UserPlus className="h-4 w-4 mr-1" />
-            Connect
+            {isLoading ? 'Sending...' : 'Connect'}
           </Button>
         );
     }
@@ -75,6 +101,14 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
         </div>
         {friend.bio && (
           <p className="text-xs text-gray-600 truncate">{friend.bio}</p>
+        )}
+        {friend.mutualConnections && friend.mutualConnections > 0 && (
+          <p className="text-xs text-blue-600">
+            {friend.mutualConnections} mutual connection{friend.mutualConnections !== 1 ? 's' : ''}
+          </p>
+        )}
+        {friend.lastActive && (
+          <p className="text-xs text-gray-500">{friend.lastActive}</p>
         )}
       </div>
       

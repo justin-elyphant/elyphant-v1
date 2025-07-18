@@ -440,462 +440,296 @@ const StreamlinedSignUp = () => {
   // Show loading state while checking session
   if (!sessionChecked) {
     return (
-      <MainLayout>
-        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading...</span>
-          </div>
+      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading...</span>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   if (user && step !== 'intent' && step !== 'oauth-complete' && step !== 'profile') return null;
 
   return (
-    <MainLayout>
-      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <div className="w-full max-w-md">
-          {/* Redirect context */}
-          {searchParams.get('redirect') && (
-            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <p className="text-sm text-purple-800">
-                Create an account to access this feature
-              </p>
-            </div>
-          )}
+    <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+      <div className="w-full max-w-md">
+        {/* Redirect context */}
+        {searchParams.get('redirect') && (
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-800">
+              Create an account to access this feature
+            </p>
+          </div>
+        )}
 
-          {/* Step 1: Sign Up */}
-          {step === 'signup' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl text-center">Join Elyphant</CardTitle>
-                <p className="text-center text-muted-foreground">
-                  Create your account to get started
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={profileData.firstName}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={profileData.lastName}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                
+        {/* Step 1: Sign Up */}
+        {step === 'signup' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Join Elyphant</CardTitle>
+              <p className="text-center text-muted-foreground">
+                Create your account to get started
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                    id="firstName"
+                    type="text"
+                    value={profileData.firstName}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={profileData.password}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={profileData.lastName}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                    required
+                  />
                 </div>
-
-                <Button 
-                  onClick={handleSignUp}
-                  disabled={loading || !profileData.email || !profileData.password || !profileData.firstName}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creating Account...
-                    </div>
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-                
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <Button variant="link" className="p-0" onClick={() => navigate('/signin')}>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={profileData.password}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              
+              <Button onClick={handleSignUp} disabled={loading} className="w-full">
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/signin')}>
                     Sign in
                   </Button>
                 </p>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Step 2: Profile Setup */}
-          {(step === 'profile' || step === 'oauth-complete') && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl text-center">
-                  {step === 'oauth-complete' ? 'Complete Your Profile' : 'Set Up Your Profile'}
-                </CardTitle>
-                <p className="text-center text-muted-foreground">
-                  {step === 'oauth-complete' 
-                    ? 'Please complete all required fields to continue' 
-                    : 'All fields are required to personalize your experience'
-                  }
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Profile Photo - Now Required */}
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src={profileData.photo} />
-                      <AvatarFallback className="bg-purple-100 text-purple-800 text-xl font-semibold">
-                        {userInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
-                      <Upload className="h-4 w-4" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                    {profileData.photo && (
-                      <button
-                        onClick={handleRemoveImage}
-                        className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Profile photo
-                    </p>
-                    <p className="text-xs text-muted-foreground">Optional</p>
-                  </div>
+        {/* Step 2: Profile Setup */}
+        {step === 'profile' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Complete Your Profile</CardTitle>
+              <p className="text-center text-muted-foreground">
+                Tell us a bit more about yourself
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Photo */}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={profileData.photo} />
+                    <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
+                  </Avatar>
+                  {profileData.photo && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
-
-                {/* First & Last Name Fields */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className={cn(
-                      "font-medium",
-                      mandatoryValidation.firstName ? "text-green-600" : "text-red-600"
-                    )}>
-                      First Name *
-                    </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={profileData.firstName}
-                      onChange={(e) => {
-                        setProfileData(prev => ({ ...prev, firstName: e.target.value }));
-                        setMandatoryValidation(prev => ({ ...prev, firstName: e.target.value.trim().length > 0 }));
-                      }}
-                      className={cn(
-                        mandatoryValidation.firstName ? "border-green-300" : "border-red-300"
-                      )}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className={cn(
-                      "font-medium",
-                      mandatoryValidation.lastName ? "text-green-600" : "text-red-600"
-                    )}>
-                      Last Name *
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={profileData.lastName}
-                      onChange={(e) => {
-                        setProfileData(prev => ({ ...prev, lastName: e.target.value }));
-                        setMandatoryValidation(prev => ({ ...prev, lastName: e.target.value.trim().length > 0 }));
-                      }}
-                      className={cn(
-                        mandatoryValidation.lastName ? "border-green-300" : "border-red-300"
-                      )}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Email Field */}
-                {step !== 'oauth-complete' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className={cn(
-                      "font-medium",
-                      mandatoryValidation.email ? "text-green-600" : "text-red-600"
-                    )}>
-                      Email *
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => {
-                        setProfileData(prev => ({ ...prev, email: e.target.value }));
-                        setMandatoryValidation(prev => ({ ...prev, email: e.target.value.trim().length > 0 }));
-                      }}
-                      className={cn(
-                        mandatoryValidation.email ? "border-green-300" : "border-red-300"
-                      )}
-                      required
-                    />
-                  </div>
-                )}
-
-                {/* Username Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="username" className={cn(
-                    "font-medium",
-                    mandatoryValidation.username ? "text-green-600" : "text-red-600"
-                  )}>
-                    Username * (minimum 3 characters)
+                <div>
+                  <input
+                    type="file"
+                    id="photo-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Label htmlFor="photo-upload" className="cursor-pointer">
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <span>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Photo
+                      </span>
+                    </Button>
                   </Label>
+                </div>
+              </div>
+
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="profileFirstName">First Name *</Label>
                   <Input
-                    id="username"
-                    placeholder="Choose a username"
-                    value={profileData.username}
-                    onChange={(e) => {
-                      setProfileData(prev => ({ ...prev, username: e.target.value }));
-                      setMandatoryValidation(prev => ({ ...prev, username: e.target.value.trim().length >= 3 }));
-                    }}
-                    className={cn(
-                      mandatoryValidation.username ? "border-green-300" : "border-red-300"
-                    )}
+                    id="profileFirstName"
+                    type="text"
+                    value={profileData.firstName}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                    className={!mandatoryValidation.firstName ? 'border-red-500' : ''}
                     required
                   />
                 </div>
-
-                {/* Date of Birth - Now Required */}
                 <div className="space-y-2">
-                  <Label className={cn(
-                    "font-medium",
-                    mandatoryValidation.dateOfBirth ? "text-green-600" : "text-red-600"
-                  )}>
-                    Date of Birth *
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !profileData.dateOfBirth && "text-muted-foreground",
-                          mandatoryValidation.dateOfBirth ? "border-green-300" : "border-red-300"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {profileData.dateOfBirth ? (
-                          format(profileData.dateOfBirth, "PPP")
-                        ) : (
-                          <span>Pick your date of birth</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={profileData.dateOfBirth}
-                        onSelect={(date) => {
-                          setProfileData(prev => ({ 
-                            ...prev, 
-                            dateOfBirth: date
-                          }));
-                          setMandatoryValidation(prev => ({ 
-                            ...prev, 
-                            dateOfBirth: !!date
-                          }));
-                        }}
-                        fromYear={1900}
-                        toYear={new Date().getFullYear()}
-                        captionLayout="dropdown"
-                        initialFocus
-                        className="pointer-events-auto p-4"
-                        classNames={{
-                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                          month: "space-y-4 w-full",
-                          caption: "flex justify-center pt-1 relative items-center mb-4",
-                          caption_label: "text-sm font-medium hidden", // Hide when using dropdowns
-                          caption_dropdowns: "flex items-center justify-center gap-2 w-full",
-                          dropdown: "h-8 text-sm bg-background border border-input rounded-md px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                          dropdown_month: "min-w-[120px]",
-                          dropdown_year: "min-w-[80px]",
-                          nav: "space-x-1 flex items-center absolute top-0 w-full justify-between",
-                          nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-sm hover:bg-accent hover:text-accent-foreground",
-                          nav_button_previous: "left-0",
-                          nav_button_next: "right-0",
-                          table: "w-full border-collapse space-y-1 mt-2",
-                          head_row: "flex w-full",
-                          head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem] flex-1 flex items-center justify-center",
-                          row: "flex w-full mt-1",
-                          cell: "h-8 w-8 text-center text-sm p-0 relative flex-1 flex items-center justify-center [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                          day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-accent hover:text-accent-foreground",
-                          day_range_end: "day-range-end",
-                          day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                          day_today: "bg-accent text-accent-foreground font-medium",
-                          day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-                          day_disabled: "text-muted-foreground opacity-50",
-                          day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                          day_hidden: "invisible",
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-
-                <div className="space-y-2">
-                  <Label className={cn(
-                    "font-medium",
-                    mandatoryValidation.address ? "text-green-600" : "text-red-600"
-                  )}>
-                    Shipping Address *
-                  </Label>
-                  <GooglePlacesAutocomplete
-                    value={profileData.address}
-                    onChange={(value) => {
-                      setProfileData(prev => ({ ...prev, address: value }));
-                      setMandatoryValidation(prev => ({ 
-                        ...prev, 
-                        address: value.trim().length > 0
-                      }));
-                    }}
-                    onAddressSelect={(address) => {
-                      setProfileData(prev => ({ ...prev, address: address.formatted_address }));
-                      setMandatoryValidation(prev => ({ 
-                        ...prev, 
-                        address: true
-                      }));
-                    }}
-                    placeholder="Enter your address"
-                    className={cn(
-                      mandatoryValidation.address ? "border-green-300" : "border-red-300"
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="addressLine2" className="font-medium text-muted-foreground">
-                    Apartment, Suite, Unit (optional)
-                  </Label>
+                  <Label htmlFor="profileLastName">Last Name *</Label>
                   <Input
-                    id="addressLine2"
-                    value={profileData.addressLine2}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, addressLine2: e.target.value }))}
-                    placeholder="Apt, Suite, Unit, Building, Floor, etc."
-                    className="w-full"
+                    id="profileLastName"
+                    type="text"
+                    value={profileData.lastName}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                    className={!mandatoryValidation.lastName ? 'border-red-500' : ''}
+                    required
                   />
                 </div>
+              </div>
 
-                {/* Validation Summary */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm font-medium mb-2">Required Fields:</p>
-                  <div className="space-y-1 text-xs">
-                    {Object.entries(mandatoryValidation).map(([field, isValid]) => (
-                      <div key={field} className="flex items-center gap-2">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          isValid ? "bg-green-500" : "bg-red-500"
-                        )} />
-                        <span className={isValid ? "text-green-700" : "text-red-700"}>
-                          {field === 'firstName' && 'First Name'}
-                          {field === 'lastName' && 'Last Name'}
-                          {field === 'email' && 'Email'}
-                          {field === 'username' && 'Username'}
-                          {field === 'dateOfBirth' && 'Date of Birth'}
-                          {field === 'address' && 'Shipping Address'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="profileEmail">Email *</Label>
+                <Input
+                  id="profileEmail"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                  className={!mandatoryValidation.email ? 'border-red-500' : ''}
+                  required
+                />
+              </div>
 
-                <Button 
-                  onClick={handleProfileSetup}
-                  disabled={!Object.values(mandatoryValidation).every(Boolean) || loading}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Setting up profile...
-                    </div>
-                  ) : Object.values(mandatoryValidation).every(Boolean) 
-                    ? 'Continue to Intent Selection' 
-                    : 'Complete All Required Fields'}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="username">Username *</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={profileData.username}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Choose a unique username"
+                  className={!mandatoryValidation.username ? 'border-red-500' : ''}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Minimum 3 characters</p>
+              </div>
 
-          {/* Step 3: Intent Discovery - Using new OnboardingIntentModal */}
-          {step === 'intent' && (
-            <OnboardingIntentModal
-              open={true}
-              onSelect={handleIntentSelection}
-              onSkip={() => {
-                console.log("User skipped intent selection");
-                navigate('/dashboard', { replace: true });
-              }}
-            />
-          )}
-        </div>
+              {/* Date of Birth */}
+              <div className="space-y-2">
+                <Label>Date of Birth *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !profileData.dateOfBirth && "text-muted-foreground",
+                        !mandatoryValidation.dateOfBirth && "border-red-500"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {profileData.dateOfBirth ? format(profileData.dateOfBirth, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={profileData.dateOfBirth}
+                      onSelect={(date) => setProfileData(prev => ({ ...prev, dateOfBirth: date }))}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-2">
+                <Label>Address *</Label>
+                <GooglePlacesAutocomplete
+                  value={profileData.address}
+                  onChange={(value) => setProfileData(prev => ({ ...prev, address: value }))}
+                  onAddressSelect={(address) => setProfileData(prev => ({ ...prev, address: address.formatted_address }))}
+                  placeholder="Enter your address"
+                  className={!mandatoryValidation.address ? 'border-red-500' : ''}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="addressLine2">Address Line 2 (Optional)</Label>
+                <Input
+                  id="addressLine2"
+                  type="text"
+                  value={profileData.addressLine2}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, addressLine2: e.target.value }))}
+                  placeholder="Apartment, suite, etc."
+                />
+              </div>
+
+              <Button onClick={handleProfileSetup} className="w-full">
+                Continue
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Intent Selection */}
+        {step === 'intent' && (
+          <OnboardingIntentModal
+            open={true}
+            onSelect={handleIntentSelection}
+            onSkip={() => navigate('/dashboard')}
+          />
+        )}
       </div>
 
-      {/* Gift Setup Wizard Modal */}
+      {/* Gift Wizard Modal */}
       <GiftSetupWizard
         open={showGiftWizard}
-        onOpenChange={(open) => {
-          setShowGiftWizard(open);
-          if (!open) handleGiftWizardClose();
-        }}
+        onOpenChange={setShowGiftWizard}
       />
 
-      {/* Create Wishlist Dialog */}
+      {/* Create Wishlist Modal */}
       <CreateWishlistDialog
         open={showCreateWishlist}
         onOpenChange={setShowCreateWishlist}
         onSubmit={handleCreateWishlistSubmit}
       />
-    </MainLayout>
+    </div>
   );
 };
 

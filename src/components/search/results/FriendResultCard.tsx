@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, UserPlus, Check, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { User, UserPlus, Check, Clock, Lock, Users, Globe } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
-import { checkConnectionStatus } from "@/services/search/friendSearchService";
+import { checkConnectionStatus, getConnectionPermissions } from "@/services/search/privacyAwareFriendSearch";
 import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 
 interface FriendResultCardProps {
   friend: FriendSearchResult;
@@ -20,21 +22,36 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
 }) => {
   const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState(friend.connectionStatus);
+  const [permissions, setPermissions] = useState({
+    canSendRequest: true,
+    canViewProfile: true,
+    canMessage: true,
+    restrictionReason: undefined as string | undefined
+  });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check connection status on mount and when friend changes
+  // Check connection status and permissions on mount
   useEffect(() => {
-    const checkStatus = async () => {
+    const checkPermissions = async () => {
       if (user && friend.id) {
-        const status = await checkConnectionStatus(user.id, friend.id);
+        const [status, perms] = await Promise.all([
+          checkConnectionStatus(user.id, friend.id),
+          getConnectionPermissions(friend.id, user.id)
+        ]);
         setConnectionStatus(status);
+        setPermissions(perms);
       }
     };
 
-    checkStatus();
+    checkPermissions();
   }, [user, friend.id]);
 
   const handleSendRequest = async () => {
+    if (!permissions.canSendRequest) {
+      toast.error(permissions.restrictionReason || "Cannot send connection request");
+      return;
+    }
+
     setIsLoading(true);
     try {
       await onSendRequest(friend.id, friend.name);
@@ -44,11 +61,46 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     }
   };
 
+  const getPrivacyIcon = () => {
+    switch (friend.privacyLevel) {
+      case 'public':
+        return <Globe className="h-3 w-3 text-green-500" />;
+      case 'limited':
+        return <Users className="h-3 w-3 text-blue-500" />;
+      case 'private':
+        return <Lock className="h-3 w-3 text-gray-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getPrivacyLabel = () => {
+    switch (friend.privacyLevel) {
+      case 'public':
+        return 'Public Profile';
+      case 'limited':
+        return 'Limited Profile';
+      case 'private':
+        return 'Private Profile';
+      default:
+        return '';
+    }
+  };
+
   const getConnectionButton = () => {
     if (!user) {
       return (
         <Button size="sm" variant="outline" disabled>
           Sign in to connect
+        </Button>
+      );
+    }
+
+    if (!permissions.canSendRequest) {
+      return (
+        <Button size="sm" variant="outline" disabled title={permissions.restrictionReason}>
+          <Lock className="h-4 w-4 mr-1" />
+          Restricted
         </Button>
       );
     }
@@ -83,6 +135,9 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     }
   };
 
+  const shouldShowEmail = user && friend.email && !friend.isPrivacyRestricted;
+  const shouldShowBio = friend.bio && (friend.privacyLevel === 'public' || connectionStatus === 'connected');
+
   return (
     <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
       <Avatar className="h-10 w-10">
@@ -98,23 +153,41 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
           {friend.username && (
             <span className="text-xs text-gray-500">@{friend.username}</span>
           )}
+          {friend.privacyLevel && (
+            <div className="flex items-center gap-1" title={getPrivacyLabel()}>
+              {getPrivacyIcon()}
+            </div>
+          )}
         </div>
-        {friend.bio && (
+        
+        {shouldShowEmail && (
+          <p className="text-xs text-gray-500 truncate">{friend.email}</p>
+        )}
+        
+        {shouldShowBio && (
           <p className="text-xs text-gray-600 truncate">{friend.bio}</p>
         )}
+        
         {friend.mutualConnections && friend.mutualConnections > 0 && (
           <p className="text-xs text-blue-600">
             {friend.mutualConnections} mutual connection{friend.mutualConnections !== 1 ? 's' : ''}
           </p>
         )}
-        {friend.lastActive && (
+        
+        {friend.lastActive && connectionStatus === 'connected' && (
           <p className="text-xs text-gray-500">{friend.lastActive}</p>
+        )}
+        
+        {friend.isPrivacyRestricted && connectionStatus === 'none' && (
+          <Badge variant="secondary" className="text-xs">
+            Limited visibility
+          </Badge>
         )}
       </div>
       
       <div className="flex gap-2">
         {getConnectionButton()}
-        {onViewProfile && (
+        {onViewProfile && permissions.canViewProfile && (
           <Button
             size="sm"
             variant="ghost"

@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { searchFriends, sendConnectionRequest, FriendSearchResult } from "@/services/search/friendSearchService";
+import { getConnectionPermissions } from "@/services/search/privacyAwareFriendSearch";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
@@ -35,6 +36,14 @@ export const useFriendSearch = () => {
     }
 
     try {
+      // Check connection permissions first
+      const permissions = await getConnectionPermissions(targetUserId, user.id);
+      
+      if (!permissions.canSendRequest) {
+        toast.error(permissions.restrictionReason || "Cannot send connection request");
+        return false;
+      }
+
       const result = await sendConnectionRequest(targetUserId, 'friend');
       
       if (result.success) {

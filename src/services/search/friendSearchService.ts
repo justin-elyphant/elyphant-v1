@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
 
 export interface FriendSearchResult {
   id: string;
@@ -11,6 +12,8 @@ export interface FriendSearchResult {
   connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
   mutualConnections?: number;
   lastActive?: string;
+  privacyLevel?: 'public' | 'limited' | 'private';
+  isPrivacyRestricted?: boolean;
 }
 
 export const searchFriends = async (query: string, currentUserId?: string): Promise<FriendSearchResult[]> => {
@@ -19,79 +22,26 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
   try {
     console.log(`Searching for friends with query: "${query}"`);
     
-    // Search by name, username, or email with corrected Supabase syntax
-    const searchTerm = `%${query.toLowerCase()}%`;
+    // Use privacy-aware search
+    const privacyResults = await searchFriendsWithPrivacy(query, currentUserId);
     
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('id, name, username, email, profile_image, bio')
-      .or(`name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`)
-      .limit(10);
+    // Convert FilteredProfile to FriendSearchResult for backward compatibility
+    const results: FriendSearchResult[] = privacyResults.map(profile => ({
+      id: profile.id,
+      name: profile.name,
+      username: profile.username,
+      email: profile.email || '', // Default to empty string for backward compatibility
+      profile_image: profile.profile_image,
+      bio: profile.bio,
+      connectionStatus: profile.connectionStatus,
+      mutualConnections: profile.mutualConnections,
+      lastActive: profile.lastActive,
+      privacyLevel: profile.privacyLevel,
+      isPrivacyRestricted: profile.isPrivacyRestricted
+    }));
 
-    if (error) {
-      console.error('Error searching friends:', error);
-      return [];
-    }
-
-    console.log(`Found ${profiles?.length || 0} profile matches for query: "${query}"`);
-    console.log('Profiles found:', profiles);
-
-    if (!profiles || profiles.length === 0) return [];
-
-    // If user is authenticated, check connection status
-    if (currentUserId) {
-      const profileIds = profiles.map(p => p.id);
-      
-      const { data: connections } = await supabase
-        .from('user_connections')
-        .select('connected_user_id, user_id, status')
-        .or(`user_id.eq.${currentUserId},connected_user_id.eq.${currentUserId}`)
-        .in('connected_user_id', profileIds.concat([currentUserId]))
-        .in('user_id', profileIds.concat([currentUserId]));
-
-      console.log('Connection data:', connections);
-
-      return profiles
-        .filter(profile => profile.id !== currentUserId) // Exclude current user
-        .map(profile => {
-          const connection = connections?.find(conn => 
-            (conn.user_id === currentUserId && conn.connected_user_id === profile.id) ||
-            (conn.connected_user_id === currentUserId && conn.user_id === profile.id)
-          );
-
-          let connectionStatus: FriendSearchResult['connectionStatus'] = 'none';
-          if (connection) {
-            connectionStatus = connection.status === 'accepted' ? 'connected' : 'pending';
-          }
-
-          return {
-            id: profile.id,
-            name: profile.name || 'Unknown User',
-            username: profile.username || '',
-            email: profile.email || '',
-            profile_image: profile.profile_image,
-            bio: profile.bio,
-            connectionStatus,
-            mutualConnections: 0, // TODO: Calculate mutual connections
-            lastActive: 'Recently' // TODO: Get actual last active time
-          };
-        });
-    }
-
-    // For non-authenticated users, return basic info (excluding current user)
-    return profiles
-      .filter(profile => profile.id !== currentUserId)
-      .map(profile => ({
-        id: profile.id,
-        name: profile.name || 'Unknown User',
-        username: profile.username || '',
-        email: profile.email || '',
-        profile_image: profile.profile_image,
-        bio: profile.bio,
-        connectionStatus: 'none' as const,
-        mutualConnections: 0,
-        lastActive: 'Recently'
-      }));
+    console.log(`Found ${results.length} friend results for query: "${query}"`);
+    return results;
 
   } catch (error) {
     console.error('Error in friend search:', error);

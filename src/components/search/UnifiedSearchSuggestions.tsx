@@ -1,6 +1,6 @@
 
 import React from "react";
-import { User, Package, Building2 } from "lucide-react";
+import { User, Package, Building2, Globe, Users, Lock } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 import FriendResultCard from "./results/FriendResultCard";
@@ -41,7 +41,8 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
         <div className="border-b border-gray-100">
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
             <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Friends</span>
+            <span className="text-sm font-medium text-gray-700">People</span>
+            <span className="text-xs text-gray-500">({friends.length})</span>
           </div>
           <div className="py-1">
             {friends.map((friend) => (
@@ -62,6 +63,7 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
             <Package className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">Products</span>
+            <span className="text-xs text-gray-500">({products.length})</span>
           </div>
           <div className="py-1">
             {products.slice(0, 5).map((product) => (
@@ -99,6 +101,7 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
             <Building2 className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">Brands</span>
+            <span className="text-xs text-gray-500">({brands.length})</span>
           </div>
           <div className="py-1">
             {brands.map((brand, idx) => (

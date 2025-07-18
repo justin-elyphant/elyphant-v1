@@ -40,7 +40,7 @@ const Profile = () => {
   // Determine which profile data to use
   const profileData = isOwnProfile ? ownProfile : publicProfile;
   const loading = isOwnProfile ? ownProfileLoading : publicProfileLoading;
-  const error = isOwnProfile ? ownProfileError : { message: publicProfileError };
+  const error = isOwnProfile ? ownProfileError : (publicProfileError ? { message: publicProfileError } : null);
 
   // Get follow state and counts for the profile being viewed
   const {

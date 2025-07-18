@@ -23,7 +23,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <ProfileBanner
         userData={profile}
         isCurrentUser={false}
@@ -47,7 +47,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
           isPublicView={true}
         />
       </div>
-    </div>
+    </>
   );
 };
 

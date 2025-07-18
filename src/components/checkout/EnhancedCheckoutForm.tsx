@@ -1,45 +1,21 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  MapPin, 
-  User, 
-  Package, 
-  AlertCircle, 
-  CheckCircle,
-  Truck,
-  Gift,
-  Settings,
-  Calendar as CalendarIcon
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
-import { unifiedRecipientService, UnifiedRecipient } from '@/services/unifiedRecipientService';
-import { usePricingSettings } from '@/hooks/usePricingSettings';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Package, CreditCard, Truck, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-import CheckoutForm from '../marketplace/checkout/CheckoutForm';
-import ModernOrderSummary from './ModernOrderSummary';
-import CheckoutProgressIndicator from './CheckoutProgressIndicator';
-import StreamlinedDeliveryEditModal from './StreamlinedDeliveryEditModal';
-import RecipientAddressDisplay from './RecipientAddressDisplay';
-import PaymentSection from '../marketplace/checkout/PaymentSection';
-import { DeliveryGroup } from '@/types/recipient';
-import { createOrder } from '@/services/orderService';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ShippingInfo {
-  name: string;
-  email: string;
-  address: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
+import { Separator } from '@/components/ui/separator';
+import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
+import ShippingOptionsForm from '@/components/marketplace/checkout/ShippingOptionsForm';
+import PaymentMethodForm from '@/components/marketplace/checkout/PaymentMethodForm';
+import GiftOptionsForm from '@/components/marketplace/checkout/GiftOptionsForm';
+import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
+import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
 
 interface EnhancedCheckoutFormProps {
   onCheckoutComplete: (orderData: any) => void;
@@ -48,585 +24,200 @@ interface EnhancedCheckoutFormProps {
 const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   onCheckoutComplete
 }) => {
-  const { cartItems, deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
+  const { user } = useAuth();
   const { profile } = useProfile();
-  const [recipients, setRecipients] = useState<UnifiedRecipient[]>([]);
-  const [recipientsLoading, setRecipientsLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState<'review' | 'shipping' | 'payment'>('review');
-  const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    name: '',
-    email: '',
-    address: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'United States'
-  });
-  const [addressValidationErrors, setAddressValidationErrors] = useState<string[]>([]);
-  const [deliveryValidation, setDeliveryValidation] = useState<{
-    groupId: string;
-    isValid: boolean;
-    error?: string;
-  }[]>([]);
-  const [shippingCost, setShippingCost] = useState<number>(0);
-  const [shippingMethod, setShippingMethod] = useState<string>('Standard Shipping');
-  const [taxAmount, setTaxAmount] = useState<number>(0);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<DeliveryGroup | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>('card');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const navigate = useNavigate();
+  const {
+    activeTab,
+    isProcessing,
+    isLoadingShipping,
+    checkoutData,
+    setIsProcessing,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handleShippingMethodChange,
+    handlePaymentMethodChange,
+    handleGiftOptionsChange,
+    canPlaceOrder,
+    getShippingCost
+  } = useCheckoutState();
 
+  // Pre-fill shipping information from profile
   useEffect(() => {
-    fetchRecipients();
-  }, []);
-
-  const fetchRecipients = async () => {
-    try {
-      setRecipientsLoading(true);
-      const allRecipients = await unifiedRecipientService.getAllRecipients();
-      console.log('🔍 Fetched recipients from unified service:', allRecipients);
-      setRecipients(allRecipients);
-    } catch (error) {
-      console.error('Error fetching recipients:', error);
-      toast.error('Failed to load recipients');
-    } finally {
-      setRecipientsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (profile) {
-      setShippingInfo(prev => ({
-        ...prev,
-        name: profile.name || '',
-        email: profile.email || ''
-      }));
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    validateDeliveryGroups();
-  }, [deliveryGroups, recipients]);
-
-  useEffect(() => {
-    // Calculate shipping cost based on addresses and items
-    const baseShipping = 6.99;
-    const freeShippingThreshold = 75;
-    const totalAmount = getTotalAmount();
-    
-    setShippingCost(totalAmount >= freeShippingThreshold ? 0 : baseShipping);
-    setTaxAmount(totalAmount * 0.0825); // 8.25% tax rate
-  }, [cartItems]);
-
-  const getRecipientAddress = (connectionId: string) => {
-    console.log('🔍 Looking for address for connectionId:', connectionId);
-    console.log('🔍 Available recipients:', recipients);
-    
-    const recipient = recipients.find(r => r.id === connectionId);
-    console.log('🔍 Found recipient:', recipient);
-    console.log('🔍 Recipient address:', recipient?.address);
-    
-    return recipient?.address || null;
-  };
-
-  const validateDeliveryGroups = () => {
-    const validationResults = deliveryGroups.map(group => {
-      if (!group.shippingAddress) {
-        // Try to get address from recipient
-        const recipientAddress = getRecipientAddress(group.connectionId);
-        if (!recipientAddress) {
-          return {
-            groupId: group.id,
-            isValid: false,
-            error: `No shipping address available for ${group.connectionName}`
-          };
-        }
-      }
-
-      return {
-        groupId: group.id,
-        isValid: true
+    if (profile && user) {
+      console.log("Pre-filling checkout form with profile data:", profile);
+      
+      const shippingUpdate: Partial<ShippingInfo> = {
+        name: profile.name || user.user_metadata?.name || "",
+        email: profile.email || user.email || ""
       };
-    });
 
-    setDeliveryValidation(validationResults);
-  };
-
-  const validateAddresses = () => {
-    const errors: string[] = [];
-    const unassignedItems = getUnassignedItems();
-
-    console.log('🔍 Address validation check:', {
-      unassignedItemsCount: unassignedItems.length,
-      hasShippingAddress: Boolean(shippingInfo.address),
-      deliveryGroupsCount: deliveryGroups.length,
-      deliveryValidation
-    });
-
-    // Check unassigned items need shipping address
-    if (unassignedItems.length > 0 && !shippingInfo.address) {
-      errors.push('Please provide a shipping address for your items');
-    }
-
-    // Check delivery groups have valid addresses
-    const invalidGroups = deliveryValidation.filter(v => !v.isValid);
-    if (invalidGroups.length > 0) {
-      errors.push('Some recipients need shipping addresses. Please request addresses or update recipient assignments.');
-    }
-
-    console.log('🔍 Address validation result:', { errors, isValid: errors.length === 0 });
-    setAddressValidationErrors(errors);
-    return errors.length === 0;
-  };
-
-  const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getTotalAmount = () => {
-    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-  };
-
-  const handleUpdateShipping = (data: Partial<ShippingInfo>) => {
-    setShippingInfo(prev => ({ ...prev, ...data }));
-  };
-
-  const handleEditDeliveryGroup = (group: DeliveryGroup) => {
-    setEditingGroup(group);
-    setEditModalOpen(true);
-  };
-
-  const getRecipientForGroup = (group: DeliveryGroup) => {
-    return recipients.find(r => r.id === group.connectionId) || null;
-  };
-
-  const handleSaveDeliveryGroup = (updatedGroup: DeliveryGroup) => {
-    // Update all items in this delivery group with the new information
-    const itemsInGroup = cartItems.filter(item => 
-      item.recipientAssignment?.deliveryGroupId === updatedGroup.id
-    );
-
-    itemsInGroup.forEach(item => {
-      if (item.recipientAssignment) {
-        updateRecipientAssignment(item.product.id, {
-          giftMessage: updatedGroup.giftMessage,
-          scheduledDeliveryDate: updatedGroup.scheduledDeliveryDate,
-          shippingAddress: updatedGroup.shippingAddress
-        });
+      // Pre-fill shipping address from profile if available
+      if (profile.shipping_address) {
+        const address = profile.shipping_address;
+        console.log("Found shipping address in profile:", address);
+        
+        shippingUpdate.address = address.address_line1 || address.street || "";
+        shippingUpdate.addressLine2 = address.address_line2 || "";
+        shippingUpdate.city = address.city || "";
+        shippingUpdate.state = address.state || "";
+        shippingUpdate.zipCode = address.zip_code || address.zipCode || "";
+        shippingUpdate.country = address.country || "United States";
+        
+        toast.success("Shipping information pre-filled from your profile");
       }
-    });
 
-    toast.success('Delivery group updated successfully');
-    setEditModalOpen(false);
-    setEditingGroup(null);
-  };
+      handleUpdateShippingInfo(shippingUpdate);
+    }
+  }, [profile, user, handleUpdateShippingInfo]);
 
-  const handleProceedToPayment = () => {
-    if (!validateAddresses()) {
-      toast.error('Please resolve address issues before proceeding');
+  const handlePlaceOrder = async () => {
+    if (!canPlaceOrder()) {
+      toast.error("Please complete all required fields");
       return;
     }
 
-    setCurrentStep('payment');
-  };
-
-  const handlePlaceOrder = async (paymentIntentId?: string) => {
+    setIsProcessing(true);
+    
     try {
-      setIsProcessingPayment(true);
-      
-      // Prepare order data with all delivery information
-      const subtotal = getTotalAmount();
       const orderData = {
-        cartItems: cartItems,
-        subtotal: subtotal,
-        totalAmount: subtotal + shippingCost + taxAmount,
-        shippingCost: shippingCost,
-        taxAmount: taxAmount,
-        shippingInfo: getUnassignedItems().length > 0 ? shippingInfo : {
-          name: profile?.name || '',
-          email: profile?.email || '',
-          address: '',
-          addressLine2: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: 'United States'
-        },
-        giftOptions: {
-          isGift: deliveryGroups.length > 0,
-          giftMessage: '',
-          isSurpriseGift: false
-        },
-        paymentIntentId: paymentIntentId,
-        deliveryGroups: deliveryGroups.map(group => ({
-          ...group,
-          shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
-        }))
+        ...checkoutData,
+        shippingCost: getShippingCost(),
+        total: getShippingCost() // This would include item costs in a real implementation
       };
 
-      // Create order in database
-      const order = await createOrder(orderData);
-      
-      // Auto-trigger Zinc processing for successful orders with payment
-      if (paymentIntentId) {
-        try {
-          console.log('Triggering Zinc processing for order:', order.id);
-          
-          // Get order items for Zinc processing
-          const products = cartItems.map(item => ({
-            product_id: item.product.product_id,
-            quantity: item.quantity
-          }));
-
-          // Call process-zinc-order function directly
-          const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zinc-order', {
-            body: {
-              orderRequest: {
-                retailer: "amazon",
-                products,
-                shipping_address: {
-                  first_name: shippingInfo.name?.split(' ')[0] || '',
-                  last_name: shippingInfo.name?.split(' ').slice(1).join(' ') || '',
-                  address_line1: shippingInfo.address,
-                  address_line2: shippingInfo.addressLine2 || '',
-                  zip_code: shippingInfo.zipCode,
-                  city: shippingInfo.city,
-                  state: shippingInfo.state,
-                  country: shippingInfo.country,
-                  phone_number: '555-0123'
-                },
-                billing_address: {
-                  first_name: shippingInfo.name?.split(' ')[0] || '',
-                  last_name: shippingInfo.name?.split(' ').slice(1).join(' ') || '',
-                  address_line1: shippingInfo.address,
-                  address_line2: shippingInfo.addressLine2 || '',
-                  zip_code: shippingInfo.zipCode,
-                  city: shippingInfo.city,
-                  state: shippingInfo.state,
-                  country: shippingInfo.country,
-                  phone_number: '555-0123'
-                },
-                payment_method: {
-                  name_on_card: shippingInfo.name,
-                  number: '4111111111111111',
-                  expiration_month: 12,
-                  expiration_year: 2025,
-                  security_code: '123'
-                },
-                is_gift: false, // Default for direct payments
-                is_test: false
-              },
-              orderId: order.id,
-              paymentIntentId: paymentIntentId
-            }
-          });
-
-          if (zincError) {
-            console.warn('Zinc processing failed:', zincError);
-            // Don't fail the order, just log the warning
-          } else {
-            console.log('Zinc processing initiated successfully');
-          }
-        } catch (zincError) {
-          console.warn('Error initiating Zinc processing:', zincError);
-          // Don't fail the order, just log the warning
-        }
-      }
-      
-      toast.success('Order placed successfully!');
-      onCheckoutComplete(order);
+      await onCheckoutComplete(orderData);
     } catch (error) {
-      console.error('Order creation error:', error);
-      toast.error('Failed to process order. Please try again.');
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order. Please try again.");
     } finally {
-      setIsProcessingPayment(false);
+      setIsProcessing(false);
     }
   };
 
-  if (recipientsLoading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-muted-foreground">Loading checkout...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Debug Info */}
-      <div className="bg-yellow-100 border border-yellow-400 rounded p-4 text-sm">
-        <strong>Debug Info:</strong> currentStep = "{currentStep}" | 
-        addressErrors = {addressValidationErrors.length} | 
-        cartItems = {cartItems.length} | 
-        deliveryGroups = {deliveryGroups.length} | 
-        unassignedItems = {getUnassignedItems().length}
-      </div>
-
-      {/* Header */}
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex items-center gap-4 mb-6">
-        <Package className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">Checkout</h1>
-          <p className="text-muted-foreground">
-            {getTotalItems()} items • ${getTotalAmount().toFixed(2)}
-          </p>
-        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate("/cart")}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Cart
+        </Button>
+        <h1 className="text-2xl font-bold">Checkout</h1>
       </div>
 
-      {/* Progress Indicator */}
-      <CheckoutProgressIndicator currentStep={currentStep} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="shipping" className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Shipping
+              </TabsTrigger>
+              <TabsTrigger value="shipping-options" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Delivery
+              </TabsTrigger>
+              <TabsTrigger value="gifts" className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Gifts
+              </TabsTrigger>
+              <TabsTrigger value="payment" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Payment
+              </TabsTrigger>
+            </TabsList>
 
-      {/* Address Validation Errors */}
-      {addressValidationErrors.length > 0 && (
-        <Alert className="border-destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <div className="space-y-1">
-              {addressValidationErrors.map((error, index) => (
-                <div key={index}>{error}</div>
-              ))}
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
+            <TabsContent value="shipping" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shipping Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CheckoutForm 
+                    shippingInfo={checkoutData.shippingInfo} 
+                    onUpdate={handleUpdateShippingInfo} 
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      <div className={`grid gap-8 ${currentStep === 'payment' ? 'lg:grid-cols-1' : 'lg:grid-cols-12'}`}>
-        {/* Main Content */}
-        <div className={`${currentStep === 'payment' ? 'lg:col-span-1' : 'lg:col-span-8'} space-y-6`}>
-          {/* Delivery Groups */}
-          {deliveryGroups.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  Gift Deliveries ({deliveryGroups.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {deliveryGroups.map((group) => {
-                  console.log('🔍 Processing delivery group:', group);
-                  
-                  const validation = deliveryValidation.find(v => v.groupId === group.id);
-                  const recipientAddress = getRecipientAddress(group.connectionId);
-                  const hasAddress = Boolean(group.shippingAddress || recipientAddress);
+            <TabsContent value="shipping-options" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shipping Options</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ShippingOptionsForm
+                    selectedMethod={checkoutData.shippingMethod}
+                    onSelect={handleShippingMethodChange}
+                    shippingOptions={checkoutData.shippingOptions}
+                    isLoading={isLoadingShipping}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  console.log('🔍 Group address status:', {
-                    hasGroupAddress: Boolean(group.shippingAddress),
-                    hasRecipientAddress: Boolean(recipientAddress),
-                    hasAddress
-                  });
+            <TabsContent value="gifts" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gift Options</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <GiftOptionsForm
+                    giftOptions={checkoutData.giftOptions}
+                    onChange={handleGiftOptionsChange}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  return (
-                    <div key={group.id} className="border rounded-lg p-6 space-y-4">
-                      {/* Header with recipient info and edit button */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <User className="h-5 w-5" />
-                          <div>
-                            <div className="font-medium text-lg">{group.connectionName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {group.items.length} item(s)
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditDeliveryGroup(group)}
-                            className="flex items-center gap-2"
-                          >
-                            <Settings className="h-4 w-4" />
-                            Customize
-                          </Button>
-                          <span className="text-xs text-muted-foreground">
-                            Customize delivery options, add gift notes, or schedule delivery
-                          </span>
-                        </div>
-                      </div>
+            <TabsContent value="payment" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Method</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentMethodForm
+                    selectedMethod={checkoutData.paymentMethod}
+                    onSelect={handlePaymentMethodChange}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-                      {/* Prominent Address Display */}
-                      {hasAddress && (
-                        <div className="bg-background border rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="default" className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" />
-                              Address Ready
-                            </Badge>
-                          </div>
-                          <RecipientAddressDisplay 
-                            address={group.shippingAddress || recipientAddress}
-                            showFullAddress={true}
-                            label="Delivery Address"
-                          />
-                        </div>
-                      )}
-
-                      {/* Gift Message */}
-                      {group.giftMessage && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <Gift className="h-5 w-5 mt-0.5 text-blue-600" />
-                            <div className="flex-1">
-                              <div className="font-medium text-blue-900 mb-1">Gift Message</div>
-                              <div className="text-sm text-blue-800 leading-relaxed">
-                                "{group.giftMessage}"
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Scheduled Delivery */}
-                      {group.scheduledDeliveryDate && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <CalendarIcon className="h-5 w-5 mt-0.5 text-green-600" />
-                            <div className="flex-1">
-                              <div className="font-medium text-green-900 mb-1">Scheduled Delivery</div>
-                              <div className="text-sm text-green-800">
-                                {new Date(group.scheduledDeliveryDate).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Address needed alert */}
-                      {!hasAddress && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">Delivery Address</span>
-                            <Badge variant="destructive" className="flex items-center gap-1 ml-2">
-                              <AlertCircle className="h-3 w-3" />
-                              Address Needed
-                            </Badge>
-                          </div>
-                          <Alert className="border-destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                              This recipient needs a shipping address. Consider requesting their address through the connections center or add it manually using the Customize button.
-                            </AlertDescription>
-                          </Alert>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Unassigned Items Shipping */}
-          {getUnassignedItems().length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Your Items ({getUnassignedItems().length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CheckoutForm 
-                  shippingInfo={shippingInfo}
-                  onUpdate={handleUpdateShipping}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-        </div>
-
-        {/* Sidebar - Order Summary */}
-        {currentStep !== 'payment' && (
-          <div className="lg:col-span-4">
-            <ModernOrderSummary
-              shippingCost={shippingCost}
-              taxAmount={taxAmount}
-              shippingMethod={shippingMethod}
-              estimatedDelivery="3-5 business days"
-              currentStep={currentStep}
-              isValid={addressValidationErrors.length === 0}
-              onProceedToPayment={handleProceedToPayment}
-            />
-          </div>
-        )}
-
-        {/* Full Width Payment Section */}
-        {currentStep === 'payment' && (
-          <div className="lg:col-span-1">
-            {/* Simple Payment Form for now */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Complete Your Order</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-2">Order Total</div>
-                  <div className="text-2xl font-bold">${(getTotalAmount() + shippingCost + taxAmount).toFixed(2)}</div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Button 
-                    onClick={() => handlePlaceOrder('demo_payment_intent')}
-                    className="w-full"
-                    disabled={isProcessingPayment}
-                    size="lg"
-                  >
-                    {isProcessingPayment ? 'Processing...' : 'Place Order'}
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setCurrentStep('review')}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Back to Review
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="mt-6 flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/cart")}
+            >
+              Back to Cart
+            </Button>
             
-            {/* Original PaymentSection as fallback */}
-            <div className="mt-6">
-              <PaymentSection
-                paymentMethod={paymentMethod}
-                onPaymentMethodChange={setPaymentMethod}
-                onPlaceOrder={handlePlaceOrder}
-                isProcessing={isProcessingPayment}
-                canPlaceOrder={addressValidationErrors.length === 0}
-                onPrevious={() => setCurrentStep('review')}
-                totalAmount={getTotalAmount() + shippingCost + taxAmount}
-                cartItems={cartItems}
-                shippingInfo={getUnassignedItems().length > 0 ? shippingInfo : null}
-                giftOptions={{
-                  deliveryGroups: deliveryGroups.map(group => ({
-                    ...group,
-                    shippingAddress: group.shippingAddress || getRecipientAddress(group.connectionId)
-                  }))
-                }}
-              />
-            </div>
+            {activeTab === "payment" && (
+              <Button 
+                onClick={handlePlaceOrder}
+                disabled={!canPlaceOrder() || isProcessing}
+                className="min-w-[120px]"
+              >
+                {isProcessing ? "Processing..." : "Place Order"}
+              </Button>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Enhanced Edit Modal */}
-      {editModalOpen && editingGroup && (
-        <StreamlinedDeliveryEditModal
-          isOpen={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          deliveryGroup={editingGroup}
-          onSave={handleSaveDeliveryGroup}
-        />
-      )}
+        <div className="lg:col-span-1">
+          <OrderSummary 
+            shippingCost={getShippingCost()}
+            selectedShippingOption={checkoutData.selectedShippingOption}
+          />
+        </div>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { getShippingQuote, ShippingOption } from "@/components/marketplace/zinc/services/shippingQuoteService";
 
 export interface ShippingInfo {
@@ -35,6 +36,7 @@ export interface CheckoutData {
 export const useCheckoutState = () => {
   const { cartItems } = useCart();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("shipping");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -66,19 +68,40 @@ export const useCheckoutState = () => {
     if (cartItems.length === 0) {
       navigate("/cart");
     }
-    
-    // Pre-fill with user data if available
-    if (user) {
-      setCheckoutData(prev => ({
-        ...prev,
-        shippingInfo: {
+  }, [cartItems.length, navigate]);
+
+  // Pre-fill with user data when available
+  useEffect(() => {
+    if (user && profile) {
+      console.log("Pre-filling checkout state with user/profile data:", { user: user.id, profile });
+      
+      setCheckoutData(prev => {
+        const updatedShippingInfo = {
           ...prev.shippingInfo,
-          name: user.user_metadata?.name || "",
-          email: user.email || ""
+          name: profile.name || user.user_metadata?.name || prev.shippingInfo.name,
+          email: profile.email || user.email || prev.shippingInfo.email
+        };
+
+        // Pre-fill shipping address if available in profile
+        if (profile.shipping_address) {
+          const address = profile.shipping_address;
+          console.log("Found shipping address in profile, pre-filling:", address);
+          
+          updatedShippingInfo.address = address.address_line1 || address.street || prev.shippingInfo.address;
+          updatedShippingInfo.addressLine2 = address.address_line2 || prev.shippingInfo.addressLine2;
+          updatedShippingInfo.city = address.city || prev.shippingInfo.city;
+          updatedShippingInfo.state = address.state || prev.shippingInfo.state;
+          updatedShippingInfo.zipCode = address.zip_code || address.zipCode || prev.shippingInfo.zipCode;
+          updatedShippingInfo.country = address.country || prev.shippingInfo.country;
         }
-      }));
+
+        return {
+          ...prev,
+          shippingInfo: updatedShippingInfo
+        };
+      });
     }
-  }, [cartItems.length, navigate, user]);
+  }, [user, profile]);
 
   // Fetch shipping quotes when shipping info is complete
   useEffect(() => {

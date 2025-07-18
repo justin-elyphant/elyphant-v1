@@ -116,11 +116,8 @@ export const searchFriendsWithPrivacy = async (
       try {
         console.log(`🔄 Processing profile: ${profile.name} (${profile.username})`);
         
-        // Skip the current user's own profile
-        if (currentUserId && profile.id === currentUserId) {
-          console.log(`⏭️ Skipping current user's own profile: ${profile.username}`);
-          continue;
-        }
+        // Allow users to find their own profile in search results
+        // (removed auto-exclusion to enable self-discovery)
 
         // Get privacy settings with guaranteed fallback to defaults
         const privacySettings = await getPrivacySettings(profile.id);

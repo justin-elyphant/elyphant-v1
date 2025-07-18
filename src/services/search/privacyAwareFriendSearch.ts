@@ -95,6 +95,17 @@ export const searchFriendsWithPrivacy = async (
     );
 
     console.log(`🔍 Executing database search with term: "${searchTerm}"`);
+    
+    // Debug: Let's see what's actually in the database
+    const { data: allProfiles, error: debugError } = await supabase
+      .from('profiles')
+      .select('id, name, username, email')
+      .limit(5);
+    
+    if (allProfiles) {
+      console.log('🗃️ Sample profiles in database:', allProfiles);
+    }
+    
     const { data: profiles, error } = await searchQuery;
 
     if (error) {

@@ -26,18 +26,21 @@ export const publicProfileService = {
       console.log("🔍 Fetching public profile for identifier:", identifier);
       
       // Try to fetch profile by username first, then by ID
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .single();
-      
-      // Check if identifier looks like a UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       
+      let query;
       if (uuidRegex.test(identifier)) {
-        query = query.eq('id', identifier);
+        query = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', identifier)
+          .single();
       } else {
-        query = query.eq('username', identifier);
+        query = supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', identifier)
+          .single();
       }
       
       const { data: profile, error } = await query;

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Gift, Settings, Eye, EyeOff } from "lucide-react";
-import EditProfileForm from "./EditProfileForm";
+
 
 interface ProfileTabsProps {
   profile: any;
@@ -212,12 +212,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   <CardTitle>Profile Settings</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {onUpdateProfile && (
-                    <EditProfileForm
-                      profile={profile}
-                      onUpdateProfile={onUpdateProfile}
-                    />
-                  )}
+                  <p className="text-muted-foreground">Profile settings will be available soon.</p>
                 </CardContent>
               </Card>
             </TabsContent>

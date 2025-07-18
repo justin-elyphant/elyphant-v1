@@ -62,45 +62,37 @@ const ModernPaymentForm = ({
     }
 
     try {
-      const paymentMethodData: any = {
-        card: cardElement,
-        billing_details: {
-          email: user?.email,
+      // Create payment method first if user wants to save it
+      let paymentMethodToSave = null;
+      if (savePaymentMethod && user) {
+        const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+          billing_details: {
+            email: user.email,
+          },
+        });
+
+        if (pmError) {
+          throw new Error(pmError.message || 'Failed to create payment method');
+        }
+        paymentMethodToSave = paymentMethod;
+      }
+
+      // Process the payment
+      const confirmPaymentData: any = {
+        payment_method: paymentMethodToSave || {
+          card: cardElement,
+          billing_details: {
+            email: user?.email,
+          },
         },
       };
 
-      // Process the payment
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
-        {
-          payment_method: paymentMethodData,
-        }
+        confirmPaymentData
       );
-
-      // If user wants to save payment method and payment succeeded
-      if (savePaymentMethod && user && paymentIntent?.payment_method) {
-        try {
-          const paymentMethod = paymentIntent.payment_method as any;
-          const { error: dbError } = await supabase
-            .from('payment_methods')
-            .insert({
-              user_id: user.id,
-              stripe_payment_method_id: paymentMethod.id,
-              card_type: paymentMethod.card?.brand || 'unknown',
-              last_four: paymentMethod.card?.last4 || '0000',
-              exp_month: paymentMethod.card?.exp_month || 1,
-              exp_year: paymentMethod.card?.exp_year || 2030,
-            });
-
-          if (dbError) {
-            console.error('Error saving payment method:', dbError);
-          } else {
-            toast.success('Payment method saved for future use');
-          }
-        } catch (dbError) {
-          console.error('Database error:', dbError);
-        }
-      }
 
       if (confirmError) {
         if (confirmError.type === 'card_error') {
@@ -111,7 +103,33 @@ const ModernPaymentForm = ({
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        toast.success('Payment successful!');
+        // If user wants to save payment method and we created one
+        if (savePaymentMethod && user && paymentMethodToSave) {
+          try {
+            const { error: dbError } = await supabase
+              .from('payment_methods')
+              .insert({
+                user_id: user.id,
+                stripe_payment_method_id: paymentMethodToSave.id,
+                card_type: paymentMethodToSave.card?.brand || 'unknown',
+                last_four: paymentMethodToSave.card?.last4 || '0000',
+                exp_month: paymentMethodToSave.card?.exp_month || 1,
+                exp_year: paymentMethodToSave.card?.exp_year || 2030,
+              });
+
+            if (dbError) {
+              console.error('Error saving payment method:', dbError);
+            } else {
+              toast.success('Payment successful and card saved for future use!');
+            }
+          } catch (dbError) {
+            console.error('Database error:', dbError);
+            toast.success('Payment successful! (Card could not be saved)');
+          }
+        } else {
+          toast.success('Payment successful!');
+        }
+        
         onSuccess(paymentIntent.id);
       } else {
         throw new Error('Payment was not completed successfully');

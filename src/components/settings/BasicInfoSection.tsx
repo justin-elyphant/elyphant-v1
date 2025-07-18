@@ -3,12 +3,7 @@ import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { MonthYearPicker } from "@/components/ui/month-year-picker";
 import ProfileImageUpload from "@/components/settings/ProfileImageUpload";
 import { User } from "@supabase/supabase-js";
 import { useFormContext } from "react-hook-form";
@@ -82,44 +77,19 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ user }) => {
           />
         </div>
 
-        {/* Date of Birth Field */}
+        {/* Date of Birth Field with Month/Year Picker */}
         <FormField
           name="date_of_birth"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Date of Birth *</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick your date of birth</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <MonthYearPicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select your birth date"
+                />
+              </FormControl>
               <FormDescription>
                 Used for age-appropriate gift recommendations and user matching.
               </FormDescription>

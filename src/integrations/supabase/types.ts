@@ -673,6 +673,7 @@ export type Database = {
           last_verified_at: string | null
           notes: string | null
           updated_at: string | null
+          verification_code: string | null
         }
         Insert: {
           created_at?: string | null
@@ -685,6 +686,7 @@ export type Database = {
           last_verified_at?: string | null
           notes?: string | null
           updated_at?: string | null
+          verification_code?: string | null
         }
         Update: {
           created_at?: string | null
@@ -697,6 +699,7 @@ export type Database = {
           last_verified_at?: string | null
           notes?: string | null
           updated_at?: string | null
+          verification_code?: string | null
         }
         Relationships: []
       }

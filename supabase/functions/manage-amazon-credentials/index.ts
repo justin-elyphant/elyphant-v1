@@ -21,7 +21,7 @@ serve(async (req) => {
     // This endpoint is now admin-only - no user authentication required
     // Only the service role can access elyphant_amazon_credentials
     
-    const { action, email, password, credential_name, notes } = await req.json()
+    const { action, email, password, credential_name, notes, verification_code } = await req.json()
 
     if (action === 'save') {
       // Simple encryption (in production, use proper encryption with Supabase secrets)
@@ -35,6 +35,7 @@ serve(async (req) => {
           encrypted_password: encryptedPassword,
           credential_name: credential_name || 'Primary Amazon Business Account',
           notes: notes || 'Main Elyphant Amazon Business account for order fulfillment',
+          verification_code: verification_code || null,
           is_active: true,
           is_verified: false // Will be verified on first successful order
         })
@@ -55,7 +56,7 @@ serve(async (req) => {
       // Get the active Elyphant credentials (should only be one record)
       const { data, error } = await supabase
         .from('elyphant_amazon_credentials')
-        .select('email, is_verified, last_verified_at, created_at, credential_name, notes')
+        .select('email, is_verified, last_verified_at, created_at, credential_name, notes, verification_code')
         .eq('is_active', true)
         .single()
 

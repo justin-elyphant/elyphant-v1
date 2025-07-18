@@ -16,6 +16,7 @@ interface ElyphantCredentials {
   created_at?: string;
   credential_name?: string;
   notes?: string;
+  verification_code?: string;
 }
 
 const ElyphantAmazonCredentialsManager = () => {
@@ -23,6 +24,7 @@ const ElyphantAmazonCredentialsManager = () => {
   const [password, setPassword] = useState('');
   const [credentialName, setCredentialName] = useState('Primary Amazon Business Account');
   const [notes, setNotes] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +51,7 @@ const ElyphantAmazonCredentialsManager = () => {
         setEmail(data.credentials.email);
         setCredentialName(data.credentials.credential_name || 'Primary Amazon Business Account');
         setNotes(data.credentials.notes || '');
+        setVerificationCode(data.credentials.verification_code || '');
         setHasCredentials(true);
       } else {
         setHasCredentials(false);
@@ -75,7 +78,8 @@ const ElyphantAmazonCredentialsManager = () => {
           email: email,
           password: password,
           credential_name: credentialName,
-          notes: notes
+          notes: notes,
+          verification_code: verificationCode
         }
       });
 
@@ -117,6 +121,7 @@ const ElyphantAmazonCredentialsManager = () => {
         setPassword('');
         setCredentialName('Primary Amazon Business Account');
         setNotes('');
+        setVerificationCode('');
       } else {
         throw new Error('Failed to deactivate credentials');
       }
@@ -170,6 +175,8 @@ const ElyphantAmazonCredentialsManager = () => {
           setCredentialName={setCredentialName}
           notes={notes}
           setNotes={setNotes}
+          verificationCode={verificationCode}
+          setVerificationCode={setVerificationCode}
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           isSaving={isSaving}

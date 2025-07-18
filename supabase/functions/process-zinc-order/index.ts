@@ -54,7 +54,7 @@ serve(async (req) => {
     // Get Elyphant's centralized Amazon Business credentials
     const { data: credentials, error: credError } = await supabase
       .from('elyphant_amazon_credentials')
-      .select('email, encrypted_password, is_verified')
+      .select('email, encrypted_password, verification_code, is_verified')
       .eq('is_active', true)
       .single()
 
@@ -81,7 +81,8 @@ serve(async (req) => {
       ...orderRequest,
       retailer_credentials: {
         email: credentials.email,
-        password: decryptedPassword
+        password: decryptedPassword,
+        ...(credentials.verification_code && { verification_code: credentials.verification_code })
       }
     }
 

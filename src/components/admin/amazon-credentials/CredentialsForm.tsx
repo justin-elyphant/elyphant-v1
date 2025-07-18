@@ -15,6 +15,8 @@ interface CredentialsFormProps {
   setCredentialName: (name: string) => void;
   notes: string;
   setNotes: (notes: string) => void;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
   showPassword: boolean;
   setShowPassword: (show: boolean) => void;
   isSaving: boolean;
@@ -29,6 +31,8 @@ const CredentialsForm = ({
   setCredentialName,
   notes,
   setNotes,
+  verificationCode,
+  setVerificationCode,
   showPassword,
   setShowPassword,
   isSaving
@@ -81,6 +85,22 @@ const CredentialsForm = ({
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="verification-code">Amazon Verification Code (Optional)</Label>
+        <Input
+          id="verification-code"
+          type="text"
+          value={verificationCode}
+          onChange={(e) => setVerificationCode(e.target.value)}
+          placeholder="Enter verification code if Amazon requires email verification"
+          disabled={isSaving}
+        />
+        <p className="text-sm text-muted-foreground mt-1">
+          Enter the verification code from Amazon if your account is locked for verification. 
+          This will be automatically included in all orders.
+        </p>
       </div>
 
       <div>

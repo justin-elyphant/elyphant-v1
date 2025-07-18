@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { User, UserPlus, Check, Clock, Lock, Users, Globe } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
-import { checkConnectionStatus, getConnectionPermissions } from "@/services/search/privacyAwareFriendSearch";
+import { getConnectionPermissions } from "@/services/search/privacyAwareFriendSearch";
+import { checkConnectionStatus } from "@/services/search/friendSearchService";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 

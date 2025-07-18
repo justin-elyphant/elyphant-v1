@@ -121,8 +121,8 @@ export const searchFriendsWithPrivacy = async (
       if (!privacySettings) continue;
 
       // Check if profile should be visible based on privacy settings
-      const canViewProfile = await canViewProfile(profile.id, currentUserId, privacySettings);
-      if (!canViewProfile) continue;
+      const canView = await canViewProfile(profile.id, currentUserId, privacySettings);
+      if (!canView) continue;
 
       // Get connection status if user is authenticated
       let connectionStatus: FriendSearchResult['connectionStatus'] = 'none';
@@ -242,7 +242,7 @@ export const getConnectionPermissions = async (
   canSendRequest: boolean;
   canViewProfile: boolean;
   canMessage: boolean;
-  restrictionReason?: string;
+  restrictionReason: string | undefined;
 }> => {
   if (!currentUserId) {
     return {
@@ -280,7 +280,7 @@ export const getConnectionPermissions = async (
 
     // Check connection permissions
     const canSendRequest = await canContactUser(targetUserId, currentUserId);
-    const canViewProfile = await canViewProfile(targetUserId, currentUserId, privacySettings);
+    const canView = await canViewProfile(targetUserId, currentUserId, privacySettings);
     const canMessage = privacySettings.allow_message_requests && canSendRequest;
 
     let restrictionReason: string | undefined;
@@ -294,7 +294,7 @@ export const getConnectionPermissions = async (
 
     return {
       canSendRequest,
-      canViewProfile,
+      canViewProfile: canView,
       canMessage,
       restrictionReason
     };

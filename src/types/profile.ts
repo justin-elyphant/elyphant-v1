@@ -227,18 +227,18 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     lastName = formData.name?.split(' ').slice(1).join(' ') || 'Name';
   }
   
-  // Convert birthday to MM-DD format
+  // Convert date_of_birth to MM-DD format
   let dobString = null;
-  if (formData.birthday) {
-    if (typeof formData.birthday === 'object' && formData.birthday.month && formData.birthday.day) {
+  if (formData.date_of_birth) {
+    if (typeof formData.date_of_birth === 'object' && formData.date_of_birth.month && formData.date_of_birth.day) {
       // Handle { month, day } format
-      const month = formData.birthday.month.toString().padStart(2, '0');
-      const day = formData.birthday.day.toString().padStart(2, '0');
+      const month = formData.date_of_birth.month.toString().padStart(2, '0');
+      const day = formData.date_of_birth.day.toString().padStart(2, '0');
       dobString = `${month}-${day}`;
-    } else if (formData.birthday instanceof Date) {
+    } else if (formData.date_of_birth instanceof Date) {
       // Handle Date object
-      const month = (formData.birthday.getMonth() + 1).toString().padStart(2, '0');
-      const day = formData.birthday.getDate().toString().padStart(2, '0');
+      const month = (formData.date_of_birth.getMonth() + 1).toString().padStart(2, '0');
+      const day = formData.date_of_birth.getDate().toString().padStart(2, '0');
       dobString = `${month}-${day}`;
     }
   }

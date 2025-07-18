@@ -8,9 +8,11 @@ import { CreditCard, Smartphone } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
-import StripePaymentForm from "./StripePaymentForm";
+import ModernPaymentForm from "../../checkout/ModernPaymentForm";
+import SavedPaymentMethodsSection from "../../checkout/SavedPaymentMethodsSection";
 import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
 interface PaymentSectionProps {
@@ -38,9 +40,12 @@ const PaymentSection = ({
   shippingInfo,
   giftOptions
 }: PaymentSectionProps) => {
+  const { user } = useAuth();
   const [clientSecret, setClientSecret] = useState<string>('');
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [selectedSavedMethod, setSelectedSavedMethod] = useState<any>(null);
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
 
   useEffect(() => {
     if (paymentMethod === 'card' && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
@@ -82,11 +87,22 @@ const PaymentSection = ({
     toast.error(`Payment failed: ${error}`);
   };
 
+  const handleSelectPaymentMethod = (method: any) => {
+    setSelectedSavedMethod(method);
+    setShowNewCardForm(!method);
+  };
+
+  const handleAddNewMethod = () => {
+    setSelectedSavedMethod(null);
+    setShowNewCardForm(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Payment Method Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
+          <CardTitle>Payment Options</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
@@ -94,7 +110,7 @@ const PaymentSection = ({
               <RadioGroupItem value="express" id="express" />
               <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer">
                 <Smartphone className="h-4 w-4" />
-                Express Checkout (Stripe)
+                Express Checkout (Apple Pay, Google Pay)
               </Label>
             </div>
             
@@ -113,27 +129,42 @@ const PaymentSection = ({
               </Label>
             </div>
           </RadioGroup>
+        </CardContent>
+      </Card>
 
-          {paymentMethod === 'express' && (
-            <div className="mt-4">
-              <ExpressCheckoutButton
-                cartItems={cartItems}
-                totalAmount={totalAmount}
-                shippingInfo={shippingInfo}
-                giftOptions={giftOptions}
-                onProcessing={() => {}}
-                onSuccess={() => {}}
-              />
-            </div>
+      {/* Express Checkout */}
+      {paymentMethod === 'express' && (
+        <ExpressCheckoutButton
+          cartItems={cartItems}
+          totalAmount={totalAmount}
+          shippingInfo={shippingInfo}
+          giftOptions={giftOptions}
+          onProcessing={() => {}}
+          onSuccess={() => {}}
+        />
+      )}
+
+      {/* Card Payment */}
+      {paymentMethod === 'card' && (
+        <div className="space-y-6">
+          {user && (
+            <SavedPaymentMethodsSection
+              onSelectPaymentMethod={handleSelectPaymentMethod}
+              onAddNewMethod={handleAddNewMethod}
+              selectedMethodId={selectedSavedMethod?.id}
+            />
           )}
-
-          {paymentMethod === 'card' && (
-            <div className="mt-4">
+          
+          {(showNewCardForm || !user) && (
+            <div>
               {isCreatingPaymentIntent ? (
-                <div className="text-center py-4">Creating payment form...</div>
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4" />
+                  <p>Setting up secure payment form...</p>
+                </div>
               ) : clientSecret ? (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
-                  <StripePaymentForm
+                  <ModernPaymentForm
                     clientSecret={clientSecret}
                     amount={totalAmount}
                     onSuccess={handlePaymentSuccess}
@@ -143,43 +174,56 @@ const PaymentSection = ({
                   />
                 </Elements>
               ) : (
-                <div className="text-center py-4 text-red-600">
-                  Failed to initialize payment form
-                </div>
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <p className="text-destructive">Failed to initialize payment form</p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setClientSecret('')}
+                      className="mt-4"
+                    >
+                      Try Again
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
             </div>
           )}
+        </div>
+      )}
 
-          {paymentMethod === 'demo' && (
-            <div className="mt-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Demo Mode:</strong> This will create a test order without processing payment.
-                </p>
-              </div>
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={onPrevious}>
-                  Back to Schedule
-                </Button>
-                <Button 
-                  onClick={() => onPlaceOrder()}
-                  disabled={!canPlaceOrder || isProcessing}
-                >
-                  {isProcessing ? "Processing..." : "Place Demo Order"}
-                </Button>
-              </div>
+      {/* Demo Mode */}
+      {paymentMethod === 'demo' && (
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Demo Mode:</strong> This will create a test order without processing payment.
+              </p>
             </div>
-          )}
-
-          {paymentMethod !== 'demo' && paymentMethod !== 'express' && (
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-between">
               <Button variant="outline" onClick={onPrevious}>
                 Back to Schedule
               </Button>
+              <Button 
+                onClick={() => onPlaceOrder()}
+                disabled={!canPlaceOrder || isProcessing}
+              >
+                {isProcessing ? "Processing..." : "Place Demo Order"}
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Navigation */}
+      {paymentMethod !== 'demo' && paymentMethod !== 'express' && !showNewCardForm && (
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={onPrevious}>
+            Back to Schedule
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

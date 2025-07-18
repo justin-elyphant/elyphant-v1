@@ -307,9 +307,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         </Alert>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-12">
+      <div className={`grid gap-8 ${currentStep === 'payment' ? 'lg:grid-cols-1' : 'lg:grid-cols-12'}`}>
         {/* Main Content */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className={`${currentStep === 'payment' ? 'lg:col-span-1' : 'lg:col-span-8'} space-y-6`}>
           {/* Delivery Groups */}
           {deliveryGroups.length > 0 && (
             <Card>
@@ -460,9 +460,24 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
         </div>
 
-        {/* Sidebar - Order Summary or Payment */}
-        <div className="lg:col-span-4">
-          {currentStep === 'payment' ? (
+        {/* Sidebar - Order Summary */}
+        {currentStep !== 'payment' && (
+          <div className="lg:col-span-4">
+            <ModernOrderSummary
+              shippingCost={shippingCost}
+              taxAmount={taxAmount}
+              shippingMethod={shippingMethod}
+              estimatedDelivery="3-5 business days"
+              currentStep={currentStep}
+              isValid={addressValidationErrors.length === 0}
+              onProceedToPayment={handleProceedToPayment}
+            />
+          </div>
+        )}
+
+        {/* Full Width Payment Section */}
+        {currentStep === 'payment' && (
+          <div className="lg:col-span-1">
             <PaymentSection
               paymentMethod={paymentMethod}
               onPaymentMethodChange={setPaymentMethod}
@@ -480,18 +495,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 }))
               }}
             />
-          ) : (
-            <ModernOrderSummary
-              shippingCost={shippingCost}
-              taxAmount={taxAmount}
-              shippingMethod={shippingMethod}
-              estimatedDelivery="3-5 business days"
-              currentStep={currentStep}
-              isValid={addressValidationErrors.length === 0}
-              onProceedToPayment={handleProceedToPayment}
-            />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Enhanced Edit Modal */}

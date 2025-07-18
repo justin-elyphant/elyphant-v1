@@ -7,6 +7,7 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { toast } from "sonner";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { parseBirthdayFromFormData } from "@/utils/dataFormatUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define custom FormData interface to avoid conflict with browser FormData
 interface OnboardingFormData {
@@ -111,13 +112,13 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
 
       // Prepare enhanced profile data with consistent field names
       const enhancedProfileData = {
-        // Use consistent field names that match database schema
-        firstName: formData.firstName.trim(), // Keep original field name for ProfileCreationService
+        // Use consistent field names that match ProfileCreationService interface
+        firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         username: `user_${user.id.substring(0, 8)}`,
         email: user.email || "",
         
-        // Birthday data
+        // Birthday data in new format
         dob: parsedBirthday.dob,
         birth_year: parsedBirthday.birth_year,
         
@@ -169,20 +170,49 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
         source: 'streamlined_signup'
       });
 
-      // Refresh profile context to get latest data
+      // Enhanced verification with comprehensive logging
+      console.log("🔍 Verifying profile data was saved...");
+      
+      // First, refresh the profile context
       console.log("🔄 Refreshing profile context...");
       await refetchProfile();
+      
+      // Then verify directly from database
+      const { data: savedProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      // Verify data was saved correctly
-      console.log("🔍 Verifying profile data was saved...");
-      setTimeout(async () => {
-        try {
-          await refetchProfile();
-          console.log("✅ Profile refresh completed");
-        } catch (error) {
-          console.error("❌ Error refreshing profile:", error);
-        }
-      }, 1000);
+      if (verifyError) {
+        console.error("❌ Profile verification failed:", verifyError);
+        throw new Error("Profile verification failed");
+      }
+
+      console.log("✅ Profile successfully verified from database:", savedProfile);
+      
+      // Check if critical fields are present
+      if (!savedProfile.first_name || !savedProfile.last_name || !savedProfile.email) {
+        console.error("❌ Critical profile fields missing:", { 
+          first_name: savedProfile.first_name, 
+          last_name: savedProfile.last_name, 
+          email: savedProfile.email 
+        });
+        throw new Error("Critical profile data missing after save");
+      }
+
+      // Verify new fields were saved correctly
+      console.log("🔍 Verifying new data fields:", {
+        dob: savedProfile.dob,
+        birth_year: savedProfile.birth_year,
+        shipping_address: savedProfile.shipping_address,
+        interests: savedProfile.interests,
+        gift_preferences: savedProfile.gift_preferences,
+        profile_type: savedProfile.profile_type,
+        onboarding_completed: savedProfile.onboarding_completed
+      });
+
+      console.log("✅ All critical profile fields verified");
 
       toast.success("Profile created successfully!");
       

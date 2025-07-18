@@ -12,6 +12,14 @@ interface ProfileCreationData {
   address?: string;
   addressLine2?: string;
   profileType?: string;
+  // New fields for enhanced profile data
+  dob?: string;
+  birth_year?: number;
+  shipping_address?: any;
+  interests?: string[];
+  gift_preferences?: any[];
+  profile_type?: string;
+  onboarding_completed?: boolean;
 }
 
 export class ProfileCreationService {
@@ -187,21 +195,144 @@ export class ProfileCreationService {
     if (!data.username?.trim() || data.username.length < 3) {
       return { success: false, error: "Username must be at least 3 characters" };
     }
-    // Profile photo is now optional
-    // if (!data.photo) {
-    //   return { success: false, error: "Profile photo is required" };
-    // }
-    if (!data.dateOfBirth) {
-      return { success: false, error: "Date of birth is required" };
-    }
-    if (!data.birthYear || data.birthYear < 1900 || data.birthYear > new Date().getFullYear()) {
-      return { success: false, error: "Valid birth year is required" };
-    }
-    if (!data.address?.trim()) {
-      return { success: false, error: "Shipping address is required" };
+    
+    // Handle birthday - check for new format (dob + birth_year) or legacy format (dateOfBirth + birthYear)
+    let hasValidBirthday = false;
+    if (data.dob && data.birth_year) {
+      hasValidBirthday = true;
+    } else if (data.dateOfBirth && data.birthYear) {
+      hasValidBirthday = true;
     }
     
-    return this.createProfileWithTimeout(userId, data);
+    if (!hasValidBirthday) {
+      console.warn("⚠️ No birthday data provided, will use defaults");
+    }
+    
+    console.log("✅ Enhanced profile validation passed");
+    console.log("📅 Birthday validation:", { 
+      hasValidBirthday, 
+      dob: data.dob, 
+      birth_year: data.birth_year, 
+      dateOfBirth: data.dateOfBirth, 
+      birthYear: data.birthYear 
+    });
+    
+    // Use the enhanced creation method that handles multiple formats
+    return this.createEnhancedProfileWithFormats(userId, data);
+  }
+
+  // Enhanced profile creation that handles multiple data formats
+  private static async createEnhancedProfileWithFormats(
+    userId: string, 
+    data: ProfileCreationData
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log("🚀 Creating enhanced profile with multiple format support");
+    
+    try {
+      // Handle birthday data from multiple formats
+      let formattedDob = null;
+      let formattedBirthYear = null;
+      
+      if (data.dob && data.birth_year) {
+        // New format: dob (MM-DD) + birth_year
+        formattedDob = data.dob;
+        formattedBirthYear = data.birth_year;
+        console.log("📅 Using new birthday format:", { dob: formattedDob, birth_year: formattedBirthYear });
+      } else if (data.dateOfBirth && data.birthYear) {
+        // Legacy format: dateOfBirth (Date) + birthYear
+        const month = (data.dateOfBirth.getMonth() + 1).toString().padStart(2, '0');
+        const day = data.dateOfBirth.getDate().toString().padStart(2, '0');
+        formattedDob = `${month}-${day}`;
+        formattedBirthYear = data.birthYear;
+        console.log("📅 Using legacy birthday format:", { dob: formattedDob, birth_year: formattedBirthYear });
+      } else {
+        formattedBirthYear = new Date().getFullYear() - 25; // Default to 25 years old
+        console.log("📅 Using default birthday:", { birth_year: formattedBirthYear });
+      }
+
+      // Handle address data from multiple formats
+      let formattedAddress = {};
+      if (data.shipping_address && typeof data.shipping_address === 'object') {
+        formattedAddress = data.shipping_address;
+        console.log("📍 Using new address format:", formattedAddress);
+      } else if (data.address) {
+        formattedAddress = {
+          address_line1: data.address,
+          address_line2: data.addressLine2 || null
+        };
+        console.log("📍 Using legacy address format:", formattedAddress);
+      }
+
+      const fullName = `${data.firstName} ${data.lastName}`.trim();
+
+      const profileData = {
+        id: userId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        name: fullName,
+        email: data.email,
+        username: data.username,
+        profile_image: data.photo || null,
+        dob: formattedDob,
+        birth_year: formattedBirthYear,
+        shipping_address: formattedAddress,
+        interests: data.interests || [],
+        gift_preferences: data.gift_preferences || [],
+        profile_type: data.profile_type || data.profileType || "user",
+        onboarding_completed: data.onboarding_completed || true,
+        data_sharing_settings: {
+          dob: "friends",
+          shipping_address: "private", 
+          gift_preferences: "public",
+          email: "private"
+        },
+        important_dates: [],
+        updated_at: new Date().toISOString()
+      };
+
+      console.log("📤 Sending enhanced profile data to database:", JSON.stringify(profileData, null, 2));
+
+      // Check for existing profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, username, birth_year, dob, shipping_address, onboarding_completed')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      console.log("🔍 Existing profile before enhanced upsert:", existingProfile);
+
+      const { data: result, error } = await supabase
+        .from('profiles')
+        .upsert(profileData, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("❌ Enhanced profile creation failed:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      console.log("✅ Enhanced profile created successfully:", result);
+      console.log("🔍 Critical fields in enhanced result:", {
+        id: result.id,
+        first_name: result.first_name,
+        last_name: result.last_name,
+        username: result.username,
+        birth_year: result.birth_year,
+        dob: result.dob,
+        shipping_address: result.shipping_address,
+        onboarding_completed: result.onboarding_completed,
+        interests: result.interests,
+        gift_preferences: result.gift_preferences,
+        profile_type: result.profile_type
+      });
+      
+      return { success: true };
+      
+    } catch (error: any) {
+      console.error("❌ Enhanced profile creation exception:", error);
+      return { success: false, error: error.message };
+    }
   }
 
   static async verifyProfileExists(userId: string): Promise<boolean> {

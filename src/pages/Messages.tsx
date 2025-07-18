@@ -1,361 +1,183 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
-import { useAuth } from "@/contexts/AuthContext";
-import EnhancedChatInterface from "@/components/messaging/EnhancedChatInterface";
-import MessageThread from "@/components/messaging/MessageThread";
-import StreamlinedMessageSystem from "@/components/messaging/StreamlinedMessageSystem";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, Search, Plus, Users } from "lucide-react";
-import { useUserPresence } from "@/hooks/useUserPresence";
-import CreateGroupModal from "@/components/messaging/CreateGroupModal";
-import { getUserGroupChats } from "@/services/groupChatService";
-import { useQuery } from "@tanstack/react-query";
-
-// Mock conversation data for demo purposes - this will be enhanced with real message data
-const mockConversations = [
-  {
-    lastMessage: "Thanks for the gift recommendation! I'll definitely check it out.",
-    lastMessageTime: '2024-01-15T10:30:00Z',
-    unreadCount: 2
-  },
-  {
-    lastMessage: "Hey! How was your weekend?",
-    lastMessageTime: '2024-01-15T09:15:00Z',
-    unreadCount: 0
-  },
-  {
-    lastMessage: "Perfect! I added that item to my wishlist.",
-    lastMessageTime: '2024-01-14T16:45:00Z',
-    unreadCount: 1
-  },
-  {
-    lastMessage: "Looking forward to catching up soon!",
-    lastMessageTime: '2024-01-14T14:20:00Z',
-    unreadCount: 0
-  },
-  {
-    lastMessage: "Thanks for thinking of me! ❤️",
-    lastMessageTime: '2024-01-13T11:10:00Z',
-    unreadCount: 0
-  },
-  {
-    lastMessage: "That gift idea is perfect for mom's birthday!",
-    lastMessageTime: '2024-01-12T15:22:00Z',
-    unreadCount: 3
-  }
-];
+import { useAuth } from "@/contexts/auth";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import MessageThread from "@/components/messaging/MessageThread";
+import ChatWindow from "@/components/messaging/ChatWindow";
+import { fetchMessages, Message } from "@/utils/messageService";
+import { Link } from "react-router-dom";
 
 const Messages = () => {
-  const { connectionId } = useParams<{ connectionId: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    connections, 
-    friends, 
-    following, 
-    loading 
-  } = useConnectionsAdapter();
-  
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(connectionId || null);
+  const { connections } = useConnectionsAdapter();
+  const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [conversationType, setConversationType] = useState<'all' | 'direct' | 'groups'>('all');
+  const [messages, setMessages] = useState<{ [key: string]: Message[] }>({});
+  const [loading, setLoading] = useState(true);
 
-  // Get group chats for current user
-  const { data: groupChats = [], isLoading: groupsLoading } = useQuery({
-    queryKey: ['group-chats', user?.id],
-    queryFn: () => user ? getUserGroupChats() : [],
-    enabled: !!user
-  });
-
-  // Create message threads from real connection data
-  const allConnections = [...friends, ...following].filter(conn => 
-    conn.type === 'friend' || conn.type === 'following'
+  // Get accepted connections only
+  const acceptedConnections = connections.filter(conn => 
+    conn.type === 'friend' && !conn.isPending
   );
 
-  // Direct message threads
-  const directMessageThreads = allConnections.length > 0
-    ? allConnections.map((connection, index) => {
-        // Use mock data for message content until we implement real messaging
-        const mockData = mockConversations[index % mockConversations.length];
+  const filteredConnections = acceptedConnections.filter(conn =>
+    conn.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conn.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!user || acceptedConnections.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const messagePromises = acceptedConnections.map(async (conn) => {
+          const connMessages = await fetchMessages(conn.id);
+          return { connectionId: conn.id, messages: connMessages };
+        });
+
+        const results = await Promise.all(messagePromises);
+        const messagesMap: { [key: string]: Message[] } = {};
         
-        return {
-          threadId: connection.id,
-          connectionName: connection.name,
-          connectionImage: connection.imageUrl,
-          connectionUsername: connection.username,
-          lastMessage: mockData.lastMessage,
-          lastMessageTime: mockData.lastMessageTime,
-          unreadCount: mockData.unreadCount,
-          relationshipType: connection.relationship,
-          status: connection.type === 'friend' ? 'accepted' : 'following',
-          mutualFriends: connection.mutualFriends,
-          type: 'direct' as const
-        };
-      })
-    : // Fallback to mock data for demo if no real connections
-      mockConversations.map((mock, index) => ({
-        threadId: `mock-${index + 1}`,
-        connectionName: `Demo User ${index + 1}`,
-        connectionImage: '/placeholder.svg',
-        connectionUsername: `@demo${index + 1}`,
-        lastMessage: mock.lastMessage,
-        lastMessageTime: mock.lastMessageTime,
-        unreadCount: mock.unreadCount,
-        relationshipType: 'friend' as const,
-        status: 'accepted' as const,
-        mutualFriends: Math.floor(Math.random() * 5),
-        type: 'direct' as const
-      }));
+        results.forEach(({ connectionId, messages: connMessages }) => {
+          messagesMap[connectionId] = connMessages;
+        });
 
-  // Group chat threads
-  const groupThreads = groupChats.map(group => ({
-    threadId: group.id,
-    connectionName: group.name,
-    connectionImage: group.avatar_url,
-    connectionUsername: `${group.member_count || 0} members`,
-    lastMessage: 'Group conversation',
-    lastMessageTime: group.updated_at,
-    unreadCount: 0,
-    relationshipType: 'group' as const,
-    status: 'active' as const,
-    mutualFriends: 0,
-    type: 'group' as const,
-    memberCount: group.member_count || 0
-  }));
+        setMessages(messagesMap);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Combine all threads
-  const allThreads = [...directMessageThreads, ...groupThreads];
-  
-  // Filter based on conversation type
-  const messageThreads = allThreads.filter(thread => {
-    if (conversationType === 'direct') return thread.type === 'direct';
-    if (conversationType === 'groups') return thread.type === 'group';
-    return true; // 'all'
-  });
+    loadMessages();
+  }, [user, acceptedConnections.length]);
 
-  const filteredThreads = messageThreads.filter(thread =>
-    thread.connectionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    thread.connectionUsername.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Check URL params for create group action
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'create-group') {
-      setShowCreateGroup(true);
-      // Clean up URL
-      window.history.replaceState({}, '', '/messages');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (connectionId) {
-      setSelectedConnection(connectionId);
-    } else if (filteredThreads.length > 0 && !selectedConnection) {
-      setSelectedConnection(filteredThreads[0].threadId);
-      navigate(`/messages/${filteredThreads[0].threadId}`);
-    }
-  }, [connectionId, filteredThreads, navigate, selectedConnection]);
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/sign-in");
-    }
-  }, [user, navigate]);
-
-  if (!user) {
-    return null;
-  }
-
-  // Initialize presence tracking
-  useUserPresence();
-
-  const handleSelectConnection = (id: string) => {
-    setSelectedConnection(id);
-    navigate(`/messages/${id}`);
+  const getLastMessage = (connectionId: string) => {
+    const connMessages = messages[connectionId] || [];
+    return connMessages.length > 0 ? connMessages[connMessages.length - 1] : null;
   };
 
-  const selectedConnectionData = messageThreads.find(t => t.threadId === selectedConnection);
+  const getUnreadCount = (connectionId: string) => {
+    const connMessages = messages[connectionId] || [];
+    return connMessages.filter(msg => !msg.is_read && msg.recipient_id === user?.id).length;
+  };
 
-  // Show streamlined interface if no specific conversation selected
-  if (!connectionId) {
-    return (
-        <div className="container max-w-4xl mx-auto py-8 px-4">
-          <StreamlinedMessageSystem />
-        </div>
-    );
-  }
+  const selectedConnectionData = acceptedConnections.find(conn => conn.id === selectedConnection);
 
-  if (loading || groupsLoading) {
+  if (loading) {
     return (
-        <div className="container max-w-7xl mx-auto py-8 px-4">
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading conversations...</p>
+      <div className="container mx-auto p-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+            <p className="text-muted-foreground">Loading messages...</p>
           </div>
         </div>
+      </div>
     );
   }
 
   return (
-      <div className="container max-w-7xl mx-auto py-8 px-4">
-        
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Messages</h1>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCreateGroup(true)}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              New Group
-            </Button>
-            <Button onClick={() => navigate('/connections')}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Message
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
-          {/* Enhanced Threads Sidebar */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Conversations</CardTitle>
-              <CardDescription>Recent chats with your connections</CardDescription>
-              
-              {/* Conversation type filter */}
-              <div className="flex gap-1 mb-3">
-                <Button
-                  variant={conversationType === 'all' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setConversationType('all')}
-                >
-                  All ({allThreads.length})
-                </Button>
-                <Button
-                  variant={conversationType === 'direct' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setConversationType('direct')}
-                >
-                  Direct ({directMessageThreads.length})
-                </Button>
-                <Button
-                  variant={conversationType === 'groups' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setConversationType('groups')}
-                >
-                  Groups ({groupThreads.length})
-                </Button>
-              </div>
-              
+    <div className="container mx-auto p-4 h-screen flex flex-col">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
+        {/* Connections List */}
+        <div className="md:col-span-1">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Messages
+              </CardTitle>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-10"
                 />
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2 p-4 pt-0">
-                  {filteredThreads.length > 0 ? (
-                    filteredThreads.map((thread) => (
-                      <div key={thread.threadId} className="relative">
-                        <MessageThread
-                          threadId={thread.threadId}
-                          connectionName={thread.connectionName}
-                          connectionImage={thread.connectionImage}
-                          connectionUsername={thread.connectionUsername}
-                          lastMessage={thread.lastMessage}
-                          lastMessageTime={thread.lastMessageTime}
-                          unreadCount={thread.unreadCount}
-                          isActive={selectedConnection === thread.threadId}
-                          mutualFriends={thread.mutualFriends}
-                          onClick={() => handleSelectConnection(thread.threadId)}
-                        />
-                        {thread.type === 'group' && thread.memberCount && (
-                          <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                            {thread.memberCount}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {searchTerm ? "No conversations found" : "No connections yet"}
-                      </p>
-                      {!searchTerm && (
-                        <Button 
-                          variant="link" 
-                          onClick={() => navigate('/connections')}
-                          className="mt-2"
-                        >
-                          Find connections
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-          
-          {/* Enhanced Chat Area */}
-          <Card className="lg:col-span-3">
-            <CardContent className="p-0 h-full">
-              {selectedConnection && selectedConnectionData ? (
-                selectedConnectionData.type === 'group' ? (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Group chat interface coming soon...</p>
-                  </div>
-                ) : (
-                  <EnhancedChatInterface 
-                    connectionId={selectedConnection}
-                    connectionName={selectedConnectionData.connectionName}
-                    connectionImage={selectedConnectionData.connectionImage}
-                    relationshipType={selectedConnectionData.relationshipType}
-                  />
-                )
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium mb-2">No conversation selected</h3>
-                  <p className="text-muted-foreground mb-4 max-w-md">
-                    Select a conversation from the sidebar to start chatting, or create a new message to connect with friends and family.
+            <CardContent className="flex-1 overflow-y-auto p-0">
+              {acceptedConnections.length === 0 ? (
+                <div className="text-center py-8 px-4">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-medium mb-2">No connections yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Connect with friends to start messaging
                   </p>
-                  {filteredThreads.length === 0 && (
-                    <Button onClick={() => navigate('/connections')}>
-                      Find connections
-                    </Button>
-                  )}
+                  <Button asChild>
+                    <Link to="/connections">Find Friends</Link>
+                  </Button>
+                </div>
+              ) : filteredConnections.length === 0 ? (
+                <div className="text-center py-8 px-4">
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No conversations found</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredConnections.map((connection) => {
+                    const lastMessage = getLastMessage(connection.id);
+                    return (
+                      <MessageThread
+                        key={connection.id}
+                        threadId={connection.id}
+                        connectionName={connection.name}
+                        connectionImage={connection.imageUrl}
+                        connectionUsername={connection.username}
+                        lastMessage={lastMessage?.content || "No messages yet"}
+                        lastMessageTime={lastMessage?.created_at || new Date().toISOString()}
+                        unreadCount={getUnreadCount(connection.id)}
+                        isActive={selectedConnection === connection.id}
+                        mutualFriends={connection.mutualFriends}
+                        onClick={() => setSelectedConnection(connection.id)}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
-        
-        {/* Create Group Modal */}
-        <CreateGroupModal
-          isOpen={showCreateGroup}
-          onClose={() => setShowCreateGroup(false)}
-          onGroupCreated={(groupId) => {
-            setShowCreateGroup(false);
-            navigate(`/messages/${groupId}`);
-          }}
-          connections={friends.filter(f => f.type === 'friend')}
-        />
+
+        {/* Chat Window */}
+        <div className="md:col-span-2">
+          {selectedConnection && selectedConnectionData ? (
+            <ChatWindow
+              connectionId={selectedConnection}
+              connectionName={selectedConnectionData.name}
+              connectionImage={selectedConnectionData.imageUrl}
+              messages={messages[selectedConnection] || []}
+              onMessagesUpdate={(newMessages) => {
+                setMessages(prev => ({
+                  ...prev,
+                  [selectedConnection]: newMessages
+                }));
+              }}
+            />
+          ) : (
+            <Card className="h-full flex items-center justify-center">
+              <CardContent className="text-center">
+                <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                <p className="text-muted-foreground">
+                  Choose a connection from the list to start messaging
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
+    </div>
   );
 };
 

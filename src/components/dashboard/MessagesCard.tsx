@@ -1,30 +1,76 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import { fetchMessages, Message } from "@/utils/messageService";
 
 const MessagesCard = () => {
-  // TODO: Replace with real messages data when implemented
-  const recentMessages = [
-    {
-      id: '1',
-      sender: 'Sarah Johnson',
-      avatar: null,
-      message: 'Thanks for the birthday gift suggestion!',
-      time: '2h ago',
-      unread: true
-    },
-    {
-      id: '2', 
-      sender: 'Mike Chen',
-      avatar: null,
-      message: 'Hey, I updated my wishlist',
-      time: '1d ago',
-      unread: false
-    }
-  ];
+  const { user } = useAuth();
+  const { connections } = useConnectionsAdapter();
+  const [recentMessages, setRecentMessages] = useState<Array<{
+    id: string;
+    sender: string;
+    avatar: string | null;
+    message: string;
+    time: string;
+    unread: boolean;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  const acceptedConnections = connections.filter(conn => 
+    conn.type === 'friend' && !conn.isPending
+  );
+
+  useEffect(() => {
+    const loadRecentMessages = async () => {
+      if (!user || acceptedConnections.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const messagePromises = acceptedConnections.slice(0, 3).map(async (conn) => {
+          const connMessages = await fetchMessages(conn.id);
+          const lastMessage = connMessages.length > 0 ? connMessages[connMessages.length - 1] : null;
+          
+          if (lastMessage) {
+            return {
+              id: lastMessage.id,
+              sender: conn.name,
+              avatar: conn.imageUrl,
+              message: lastMessage.content,
+              time: new Date(lastMessage.created_at).toLocaleTimeString(),
+              unread: !lastMessage.is_read && lastMessage.recipient_id === user.id
+            };
+          }
+          return null;
+        });
+
+        const results = await Promise.all(messagePromises);
+        const validMessages = results.filter(Boolean) as Array<{
+          id: string;
+          sender: string;
+          avatar: string | null;
+          message: string;
+          time: string;
+          unread: boolean;
+        }>;
+
+        setRecentMessages(validMessages);
+      } catch (error) {
+        console.error('Error loading recent messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecentMessages();
+  }, [user, acceptedConnections.length]);
 
   const unreadCount = recentMessages.filter(msg => msg.unread).length;
 
@@ -56,12 +102,17 @@ const MessagesCard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {recentMessages.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-6">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50 animate-pulse" />
+              <p className="text-sm text-muted-foreground">Loading messages...</p>
+            </div>
+          ) : recentMessages.length > 0 ? (
             <div className="space-y-3">
               {recentMessages.map((message) => (
                 <div key={message.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={message.avatar} />
+                    <AvatarImage src={message.avatar || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
                       {message.sender.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>

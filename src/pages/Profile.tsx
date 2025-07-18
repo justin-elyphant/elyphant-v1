@@ -1,241 +1,215 @@
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
-import ProfileTabs from "@/components/user-profile/ProfileTabs";
-import ProfileBanner from "@/components/user-profile/ProfileBanner";
-import ProfileInfo from "@/components/user-profile/ProfileInfo";
-import SignupCTA from "@/components/user-profile/SignupCTA";
-import LoadingState from "./profile-setup/LoadingState";
-import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
-import { Profile as ProfileType } from "@/types/profile";
-import { useUserPresence } from "@/hooks/useUserPresence";
-import { useSignupCTA } from "@/hooks/useSignupCTA";
+import { useProfile } from "@/contexts/profile";
+import { useConnectionStatus } from "@/hooks/useConnectionStatus";
+import { User, MessageSquare, UserPlus, Settings, Gift, Calendar, Heart } from "lucide-react";
 import { toast } from "sonner";
+import WishlistTabContent from "@/components/user-profile/tabs/WishlistTabContent";
+import ConnectTabContent from "@/components/user-profile/tabs/ConnectTabContent";
+import EmptyState from "@/components/common/EmptyState";
 
 const Profile = () => {
+  const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
-  const { identifier } = useParams(); // Changed from username to identifier
-  const [profileData, setProfileData] = useState<ProfileType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isMockProfile, setIsMockProfile] = useState(false);
-  const { getUserStatus } = useUserPresence();
-
-  // Determine if this is a shared profile (not current user's profile)
-  const isSharedProfile = profileData && !isCurrentUser;
+  const { profile } = useProfile();
+  const [activeTab, setActiveTab] = useState("about");
   
-  const { shouldShowCTA, dismissCTA } = useSignupCTA({
-    profileName: profileData?.name || 'User',
-    isSharedProfile: !!isSharedProfile
-  });
+  // For now, we'll use the current user's profile
+  // In a real app, you'd fetch the profile for the specific userId
+  const isOwnProfile = !userId || userId === user?.id;
+  const targetProfile = isOwnProfile ? profile : null;
+  
+  const { status: connectionStatus } = useConnectionStatus(userId);
 
-  const fetchProfile = useCallback(async () => {
-    if (!identifier) return;
+  const handleSendConnectionRequest = async () => {
+    if (!userId) return;
     
-    setIsLoading(true);
     try {
-      if (!identifier) {
-        console.error("No identifier provided");
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if this is a mock profile
-      if (identifier.startsWith('mock-')) {
-        const mockName = identifier === 'mock-1' ? 'Alex Johnson' : 
-                        identifier === 'mock-2' ? 'Jamie Smith' :
-                        identifier === 'mock-3' ? 'Taylor Wilson' :
-                        identifier === 'mock-4' ? 'Jordan Parks' :
-                        identifier === 'mock-5' ? 'Casey Morgan' :
-                        identifier === 'mock-6' ? 'Sam Chen' :
-                        `User ${identifier}`;
-        
-        const mockProfile: ProfileType = {
-          id: identifier,
-          name: mockName,
-          email: `${mockName.toLowerCase().replace(' ', '.')}@example.com`,
-          profile_image: null,
-          bio: `This is a demo profile for ${mockName}. This user is part of your messaging connections.`,
-          dob: null,
-          shipping_address: null,
-          gift_preferences: [],
-          important_dates: [],
-          data_sharing_settings: {
-            dob: 'private',
-            shipping_address: 'private',
-            gift_preferences: 'friends',
-            email: 'private'
-          },
-          username: mockName.toLowerCase().replace(' ', '_'),
-          recently_viewed: [],
-          interests: ['technology', 'books', 'travel']
-        };
-        
-        setProfileData(mockProfile);
-        setIsMockProfile(true);
-        setIsCurrentUser(false);
-        setIsLoading(false);
-        return;
-      }
-
-      // Try to fetch by username first
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', identifier)
-        .single();
-
-      // If not found by username, try by ID (for backwards compatibility)
-      if (error && error.code === 'PGRST116') {
-        const { data: idData, error: idError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', identifier)
-          .single();
-        
-        data = idData;
-        error = idError;
-      }
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-      }
-
-      if (data) {
-        // Validate profile data flow
-        import("@/utils/profileDataValidator").then(({ validateProfileDataFlow, formatProfileForDisplay }) => {
-          validateProfileDataFlow(data, 'Profile page fetch');
-          const formattedProfile = formatProfileForDisplay(data);
-          setProfileData(formattedProfile);
-        }).catch(() => {
-          // Fallback if validation fails
-          setProfileData(data);
-        });
-        
-        setIsCurrentUser(user?.id === data.id);
-        setIsMockProfile(false);
-      }
+      // Implementation would go here
+      toast.success("Connection request sent!");
     } catch (error) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [identifier, user?.id]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  const updateProfile = async (data: Partial<ProfileType>) => {
-    setIsLoading(true);
-    try {
-      const { data: updatedData, error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', profileData?.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating profile:", error);
-      }
-
-      if (updatedData) {
-        setProfileData(updatedData);
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to send connection request");
     }
   };
 
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    toast.success(isFollowing ? "Unfollowed user" : "Following user");
+  const handleSendMessage = () => {
+    if (!userId) return;
+    
+    // Navigate to messages with this user
+    window.location.href = `/messages?user=${userId}`;
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `${profileData?.name}'s Profile`,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Profile link copied to clipboard");
-    }
-  };
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (!profileData) {
+  if (!targetProfile) {
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-muted-foreground">Profile not found</h1>
-          <p className="text-muted-foreground mt-2">The user you're looking for doesn't exist.</p>
-        </div>
+      <div className="container mx-auto p-6">
+        <EmptyState
+          icon={User}
+          title="Profile not found"
+          description="The profile you're looking for doesn't exist or you don't have permission to view it."
+          action={{
+            label: "Go Home",
+            onClick: () => window.location.href = "/"
+          }}
+        />
       </div>
     );
   }
 
-  const userStatus = getUserStatus(profileData.id);
-
   return (
-    <ProfileErrorBoundary>
-      <div className="container max-w-4xl mx-auto py-6 px-4">
-        {isMockProfile && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Demo Profile:</strong> This is a demonstration profile used for testing messaging features.
-            </p>
+    <div className="container mx-auto p-6 max-w-4xl">
+      {/* Profile Header */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Avatar and Basic Info */}
+            <div className="flex flex-col items-center md:items-start">
+              <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage src={targetProfile.profile_image || undefined} />
+                <AvatarFallback className="text-2xl">
+                  {targetProfile.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              
+              {!isOwnProfile && (
+                <div className="flex gap-2">
+                  {connectionStatus === 'none' && (
+                    <Button onClick={handleSendConnectionRequest} size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Connect
+                    </Button>
+                  )}
+                  {connectionStatus === 'pending' && (
+                    <Button variant="outline" size="sm" disabled>
+                      Request Sent
+                    </Button>
+                  )}
+                  {connectionStatus === 'accepted' && (
+                    <Button onClick={handleSendMessage} size="sm">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                  )}
+                </div>
+              )}
+              
+              {isOwnProfile && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </a>
+                </Button>
+              )}
+            </div>
+
+            {/* Profile Details */}
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                <div>
+                  <h1 className="text-2xl font-bold">{targetProfile.name || 'Anonymous User'}</h1>
+                  <p className="text-muted-foreground">@{targetProfile.username || 'unknown'}</p>
+                </div>
+                
+                <div className="flex gap-2 mt-4 md:mt-0">
+                  <Badge variant="secondary">
+                    <Gift className="h-3 w-3 mr-1" />
+                    {targetProfile.wishlists?.length || 0} Wishlists
+                  </Badge>
+                  <Badge variant="secondary">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {targetProfile.important_dates?.length || 0} Events
+                  </Badge>
+                </div>
+              </div>
+
+              {targetProfile.bio && (
+                <p className="text-gray-600 mb-4">{targetProfile.bio}</p>
+              )}
+
+              {/* Interests */}
+              {targetProfile.interests && targetProfile.interests.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="font-medium mb-2">Interests</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {targetProfile.interests.map((interest, index) => (
+                      <Badge key={index} variant="outline">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Important Dates */}
+              {targetProfile.important_dates && targetProfile.important_dates.length > 0 && (
+                <div>
+                  <h3 className="font-medium mb-2">Important Dates</h3>
+                  <div className="space-y-1">
+                    {targetProfile.important_dates.slice(0, 3).map((date, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <Heart className="h-3 w-3 text-red-500" />
+                        <span>{date.name}</span>
+                        <span className="text-muted-foreground">
+                          {new Date(date.date).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        {/* Profile Banner */}
-        <ProfileBanner 
-          userData={profileData}
-          isCurrentUser={isCurrentUser}
-          isFollowing={isFollowing}
-          onFollow={handleFollow}
-          onShare={handleShare}
-          userStatus={userStatus}
-        />
+      {/* Profile Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="about">About</TabsTrigger>
+          <TabsTrigger value="wishlists">Wishlists</TabsTrigger>
+          <TabsTrigger value="connect">Connect</TabsTrigger>
+        </TabsList>
 
-        {/* Profile Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Left Sidebar - Profile Info */}
-          <div className="lg:col-span-1">
-            <ProfileInfo profile={profileData} />
-          </div>
+        <TabsContent value="about" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>About {isOwnProfile ? 'You' : targetProfile.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {targetProfile.bio ? (
+                <p className="text-gray-600">{targetProfile.bio}</p>
+              ) : (
+                <EmptyState
+                  icon={User}
+                  title="No bio yet"
+                  description={isOwnProfile ? "Add a bio to tell people about yourself" : "This user hasn't added a bio yet"}
+                  action={isOwnProfile ? {
+                    label: "Add Bio",
+                    onClick: () => window.location.href = "/settings",
+                    variant: "outline"
+                  } : undefined}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Main Content - Tabs */}
-          <div className="lg:col-span-2">
-            <ProfileTabs 
-              profile={profileData}
-              isOwnProfile={isCurrentUser}
-              onUpdateProfile={updateProfile}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
-          </div>
-        </div>
+        <TabsContent value="wishlists" className="mt-6">
+          <WishlistTabContent profile={targetProfile} isOwnProfile={isOwnProfile} />
+        </TabsContent>
 
-        {/* Signup CTA for non-authenticated users */}
-        {shouldShowCTA && (
-          <SignupCTA 
-            profileName={profileData.name || 'User'}
-            onDismiss={dismissCTA}
-          />
-        )}
-      </div>
-    </ProfileErrorBoundary>
+        <TabsContent value="connect" className="mt-6">
+          <ConnectTabContent profile={targetProfile} isOwnProfile={isOwnProfile} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

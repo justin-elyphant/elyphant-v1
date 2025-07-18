@@ -1,10 +1,8 @@
-import { useProfileSteps } from "./useProfileSteps";
-import { useProfileData } from "./useProfileData";
-import { useProfileValidation } from "./useProfileValidation";
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useProfileSubmit } from "@/hooks/profile/useProfileSubmit";
+import { useState, useCallback } from "react";
+import { useAuth } from "@/contexts/auth";
+import { profileCreationService, ProfileCreationData } from "@/services/profile/profileCreationService";
 import { toast } from "sonner";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { ProfileData } from "./types";
 
 interface UseProfileSetupProps {
   onComplete: (nextStepsOption?: string) => void;
@@ -12,136 +10,176 @@ interface UseProfileSetupProps {
 }
 
 export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) => {
-  const { activeStep, steps, handleNext, handleBack } = useProfileSteps();
-  const { profileData, updateProfileData, isLoading: isDataLoading } = useProfileData();
-  const currentStepIndex = steps.findIndex(step => step.id === activeStep);
-  const { isCurrentStepValid } = useProfileValidation(currentStepIndex, profileData);
-  const { isSubmitting, submitProfile, submitError } = useProfileSubmit({
-    onSuccess: (data) => {
-      console.log("Profile setup completed successfully:", data);
-    },
-    onComplete: (nextStepsOption?: string) => onComplete(nextStepsOption)
-  });
-  
-  const [isCompleting, setIsCompleting] = useState(false);
+  const { user } = useAuth();
+  const [activeStep, setActiveStep] = useState('basic-info');
+  const [profileData, setProfileData] = useState<ProfileData>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasCompletedRef = useRef(false);
-  const maxCompletionTime = 10000; // Increased timeout
 
-  const isLoading = isSubmitting || isCompleting || isDataLoading;
+  console.log("🔄 useProfileSetup hook initialized");
+  console.log("👤 User:", user?.id);
 
-  // Ensure data_sharing_settings has all required fields including email
-  useEffect(() => {
-    if (profileData && (!profileData.data_sharing_settings || 
-        Object.keys(profileData.data_sharing_settings).length === 0 ||
-        !profileData.data_sharing_settings.email)) {
-      
-      const defaultSettings = getDefaultDataSharingSettings();
-      
-      updateProfileData('data_sharing_settings', {
-        ...defaultSettings,
-        ...(profileData.data_sharing_settings || {})
-      });
-      
-      console.log("Profile setup: Initialized complete data sharing settings:", defaultSettings);
-    }
-  }, [profileData, updateProfileData]);
+  const steps = [
+    { id: 'basic-info', title: 'Basic Information', description: 'Tell us about yourself' },
+    { id: 'address', title: 'Address', description: 'Where should we send gifts?' },
+    { id: 'interests', title: 'Interests', description: 'What do you love?' },
+    { id: 'important-dates', title: 'Important Dates', description: 'Special occasions to remember' },
+    { id: 'privacy', title: 'Privacy Settings', description: 'Control your data sharing' },
+    { id: 'next-steps', title: 'Next Steps', description: 'Choose how to get started' }
+  ];
 
-  // Clear all loading flags when component mounts
-  useEffect(() => {
-    localStorage.removeItem("profileSetupLoading");
-    setError(null);
-    console.log("useProfileSetup: Initialized and cleared loading flags");
-    
-    return () => {
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-        completionTimeoutRef.current = null;
-      }
-      localStorage.removeItem("profileSetupLoading");
-    };
+  const updateProfileData = useCallback((key: string, value: any) => {
+    console.log(`📝 Profile data updated: ${key}`, value);
+    setProfileData(prev => ({
+      ...prev,
+      [key]: value
+    }));
   }, []);
 
-  // Enhanced completion handler
-  const handleComplete = useCallback(async () => {
-    if (hasCompletedRef.current || isCompleting) {
-      console.log("Completion already in progress, ignoring duplicate request");
+  const isCurrentStepValid = useCallback(() => {
+    console.log(`🔍 Validating step: ${activeStep}`);
+    console.log("📊 Current profile data:", profileData);
+
+    switch (activeStep) {
+      case 'basic-info':
+        const hasName = profileData.name?.trim();
+        const hasEmail = profileData.email?.trim();
+        console.log(`✓ Basic info validation: name=${!!hasName}, email=${!!hasEmail}`);
+        return hasName && hasEmail;
+      case 'address':
+        // Address is optional for setup flow
+        return true;
+      case 'interests':
+        // Interests are optional
+        return true;
+      case 'important-dates':
+        // Important dates are optional
+        return true;
+      case 'privacy':
+        // Privacy settings have defaults
+        return true;
+      case 'next-steps':
+        // Next steps selection is optional
+        return true;
+      default:
+        return true;
+    }
+  }, [activeStep, profileData]);
+
+  const handleNext = useCallback(() => {
+    if (!isCurrentStepValid()) {
+      console.log("❌ Step validation failed, cannot proceed");
       return;
     }
 
-    console.log("Completing profile setup with data:", profileData);
-    
-    hasCompletedRef.current = true;
-    setIsCompleting(true);
-    setError(null);
-    
-    localStorage.setItem("profileSetupLoading", "true");
-    
-    try {
-      // Submit the profile with comprehensive error handling
-      await submitProfile(profileData);
-      
-      // Clear flags and complete
-      localStorage.removeItem("newSignUp");
-      localStorage.removeItem("profileSetupLoading");
-      localStorage.setItem("onboardingComplete", "true");
-      
-      setIsCompleting(false);
-      
-      toast.success("Profile setup complete!");
-      
-      // Pass the next steps option to the completion handler
-      const nextStepsOption = profileData?.next_steps_option;
-      console.log("Profile setup complete, next steps option:", nextStepsOption);
-      
-      // Small delay to ensure state updates
-      setTimeout(() => {
-        onComplete(nextStepsOption);
-      }, 100);
-      
-    } catch (error: any) {
-      console.error("Error in handleComplete:", error);
-      setError(error.message || "Failed to complete profile setup");
-      
-      // Still proceed with completion to avoid blocking user
-      localStorage.removeItem("profileSetupLoading");
-      localStorage.setItem("onboardingComplete", "true");
-      setIsCompleting(false);
-      
-      toast.error("Profile setup completed with some errors");
-      
-      // Delay to ensure any partial database write completes
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const nextStepsOption = profileData?.next_steps_option;
-      setTimeout(() => {
-        onComplete(nextStepsOption);
-      }, 100);
+    const currentIndex = steps.findIndex(step => step.id === activeStep);
+    if (currentIndex < steps.length - 1) {
+      const nextStep = steps[currentIndex + 1].id;
+      console.log(`➡️ Moving to next step: ${nextStep}`);
+      setActiveStep(nextStep);
     }
-  }, [profileData, submitProfile, onComplete, isCompleting]);
+  }, [activeStep, isCurrentStepValid, steps]);
 
-  // Handle skip action
+  const handleBack = useCallback(() => {
+    const currentIndex = steps.findIndex(step => step.id === activeStep);
+    if (currentIndex > 0) {
+      const prevStep = steps[currentIndex - 1].id;
+      console.log(`⬅️ Moving to previous step: ${prevStep}`);
+      setActiveStep(prevStep);
+    }
+  }, [activeStep, steps]);
+
+  const handleComplete = useCallback(async () => {
+    if (!user) {
+      console.error("❌ No user available for profile setup completion");
+      setError("Authentication error. Please try signing in again.");
+      return;
+    }
+
+    console.log("🚀 Starting profile setup completion...");
+    console.log("📊 Final profile data:", JSON.stringify(profileData, null, 2));
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Convert ProfileData to ProfileCreationData format
+      const profileCreationData: ProfileCreationData = {
+        // Extract first and last name from full name
+        first_name: profileData.name?.split(' ')[0] || "",
+        last_name: profileData.name?.split(' ').slice(1).join(' ') || "",
+        name: profileData.name || "",
+        email: profileData.email || user.email || "",
+        username: profileData.username || `user_${user.id.substring(0, 8)}`,
+        bio: profileData.bio || "",
+        profile_image: profileData.profile_image || null,
+        
+        // Convert birthday format if provided
+        birthday: profileData.birthday ? {
+          month: profileData.birthday.month,
+          day: profileData.birthday.day
+        } : null,
+        
+        // Address
+        address: profileData.address || {
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "US"
+        },
+        
+        // Other fields
+        interests: profileData.interests || [],
+        importantDates: profileData.importantDates || [],
+        data_sharing_settings: profileData.data_sharing_settings || {
+          dob: "friends",
+          shipping_address: "private",
+          gift_preferences: "public",
+          email: "private"
+        }
+      };
+
+      console.log("📋 Converted profile creation data:", JSON.stringify(profileCreationData, null, 2));
+
+      // Use enhanced profile creation service
+      const result = await profileCreationService.createEnhancedProfileWithFormats(profileCreationData);
+
+      if (result.success) {
+        console.log("✅ Profile setup completion successful!");
+        toast.success("Profile setup completed successfully!");
+        onComplete(profileData.next_steps_option);
+      } else {
+        console.error("❌ Profile setup completion failed:", result.error);
+        setError(result.error || "Failed to complete profile setup. Please try again.");
+        toast.error(result.error || "Failed to complete profile setup. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("❌ Unexpected error during profile setup completion:", error);
+      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, profileData, onComplete]);
+
   const handleSkip = useCallback(() => {
-    console.log("Skipping profile setup");
-    localStorage.removeItem("profileSetupLoading");
-    localStorage.removeItem("newSignUp");
+    console.log("⏭️ Skipping profile setup");
     if (onSkip) {
       onSkip();
+    } else {
+      onComplete();
     }
-  }, [onSkip]);
+  }, [onComplete, onSkip]);
 
   return {
     activeStep,
     steps,
     handleNext,
     handleBack,
-    
     profileData,
     updateProfileData,
-    
-    isCurrentStepValid,
-    
+    isCurrentStepValid: isCurrentStepValid(),
     isLoading,
     error,
     handleComplete,

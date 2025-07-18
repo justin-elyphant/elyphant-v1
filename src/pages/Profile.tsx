@@ -61,7 +61,7 @@ const Profile = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Profile Not Found</h1>
           <p className="text-muted-foreground">
-            {error.includes('not found') 
+            {error.message?.includes('not found') 
               ? "The profile you're looking for doesn't exist."
               : "There was an error loading the profile."
             }
@@ -86,9 +86,11 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       {/* Profile Banner with gradient background */}
       <ProfileBanner 
-        profile={profile}
-        isOwnProfile={isOwnProfile || false}
-        onUpdateProfile={updateProfile}
+        userData={profile}
+        isCurrentUser={isOwnProfile || false}
+        isFollowing={false}
+        onFollow={() => {}}
+        onShare={() => {}}
       />
       
       {/* Profile Tabs Content */}

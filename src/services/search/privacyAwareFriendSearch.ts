@@ -61,12 +61,15 @@ const getPrivacySettings = async (userId: string): Promise<PrivacySettings> => {
 };
 
 export const searchFriendsWithPrivacy = async (
-  query: string, 
+  query: string,
   currentUserId?: string
 ): Promise<FilteredProfile[]> => {
-  console.log(`Privacy-aware friend search: "${query}" by user: ${currentUserId || 'unauthenticated'}`);
+  console.log(`🔍 Privacy-aware friend search: "${query}" by user: ${currentUserId || 'unauthenticated'}`);
   
-  if (!query || query.length < 2) return [];
+  if (!query || query.length < 2) {
+    console.log('❌ Query too short, returning empty results');
+    return [];
+  }
 
   try {
     // Build the search query
@@ -82,37 +85,42 @@ export const searchFriendsWithPrivacy = async (
       `name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`
     );
 
+    console.log(`🔍 Executing database search with term: "${searchTerm}"`);
     const { data: profiles, error } = await searchQuery;
 
     if (error) {
-      console.error('Database search error:', error);
+      console.error('❌ Database search error:', error);
       return [];
     }
 
     if (!profiles || profiles.length === 0) {
-      console.log('No profiles found in database search');
+      console.log('❌ No profiles found in database search');
       return [];
     }
 
-    console.log(`Found ${profiles.length} profiles from database search`);
+    console.log(`✅ Found ${profiles.length} profiles from database search:`, profiles.map(p => ({ name: p.name, username: p.username })));
 
     // Process each profile with privacy filtering
     const processedProfiles: FilteredProfile[] = [];
 
     for (const profile of profiles) {
       try {
+        console.log(`🔄 Processing profile: ${profile.name} (${profile.username})`);
+        
         // Skip the current user's own profile
         if (currentUserId && profile.id === currentUserId) {
+          console.log(`⏭️ Skipping current user's own profile: ${profile.username}`);
           continue;
         }
 
         // Get privacy settings with guaranteed fallback to defaults
         const privacySettings = await getPrivacySettings(profile.id);
+        console.log(`🔒 Privacy settings for ${profile.username}:`, privacySettings);
         
         // For unauthenticated users, only show public profiles
         if (!currentUserId) {
           if (privacySettings.profile_visibility === 'public') {
-            console.log(`Including public profile for unauthenticated user: ${profile.username}`);
+            console.log(`✅ Including public profile for unauthenticated user: ${profile.username}`);
             
             processedProfiles.push({
               id: profile.id,
@@ -126,7 +134,7 @@ export const searchFriendsWithPrivacy = async (
               isPrivacyRestricted: false
             });
           } else {
-            console.log(`Excluding non-public profile for unauthenticated user: ${profile.username}`);
+            console.log(`❌ Excluding non-public profile for unauthenticated user: ${profile.username} (visibility: ${privacySettings.profile_visibility})`);
           }
           continue;
         }

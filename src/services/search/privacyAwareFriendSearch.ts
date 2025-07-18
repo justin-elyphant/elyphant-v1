@@ -32,8 +32,6 @@ const getDefaultPrivacySettings = (): PrivacySettings => ({
 
 const getPrivacySettings = async (userId: string): Promise<PrivacySettings> => {
   try {
-    console.log(`Getting privacy settings for user: ${userId}`);
-    
     const { data, error } = await supabase
       .from('privacy_settings')
       .select('allow_follows_from, profile_visibility, show_follower_count, show_following_count')
@@ -47,11 +45,9 @@ const getPrivacySettings = async (userId: string): Promise<PrivacySettings> => {
     }
 
     if (!data) {
-      console.log(`No privacy settings found for ${userId}, using defaults (public)`);
       return getDefaultPrivacySettings();
     }
 
-    console.log(`Privacy settings for ${userId}:`, data);
     return data as PrivacySettings;
   } catch (error) {
     console.error(`Exception getting privacy settings for ${userId}:`, error);
@@ -74,7 +70,6 @@ export const searchFriendsWithPrivacy = async (
   try {
     // Clean the search query - remove @ symbol and extra spaces
     const cleanQuery = query.replace(/^@/, '').trim().toLowerCase();
-    console.log(`🧹 Cleaned search query: "${cleanQuery}"`);
     
     if (cleanQuery.length < 2) {
       console.log('❌ Cleaned query too short, returning empty results');
@@ -107,21 +102,16 @@ export const searchFriendsWithPrivacy = async (
       return [];
     }
 
-    console.log(`✅ Found ${profiles.length} profiles from database search:`, profiles.map(p => ({ name: p.name, username: p.username })));
-
     // Process each profile with privacy filtering
     const processedProfiles: FilteredProfile[] = [];
 
     for (const profile of profiles) {
       try {
-        console.log(`🔄 Processing profile: ${profile.name} (${profile.username})`);
-        
         // Allow users to find their own profile in search results
         // (removed auto-exclusion to enable self-discovery)
 
         // Get privacy settings with guaranteed fallback to defaults
         const privacySettings = await getPrivacySettings(profile.id);
-        console.log(`🔒 Privacy settings for ${profile.username}:`, privacySettings);
         
         // For unauthenticated users, only show public profiles
         if (!currentUserId) {

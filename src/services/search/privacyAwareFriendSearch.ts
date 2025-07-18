@@ -72,6 +72,15 @@ export const searchFriendsWithPrivacy = async (
   }
 
   try {
+    // Clean the search query - remove @ symbol and extra spaces
+    const cleanQuery = query.replace(/^@/, '').trim().toLowerCase();
+    console.log(`🧹 Cleaned search query: "${cleanQuery}"`);
+    
+    if (cleanQuery.length < 2) {
+      console.log('❌ Cleaned query too short, returning empty results');
+      return [];
+    }
+
     // Build the search query
     let searchQuery = supabase
       .from('profiles')
@@ -79,8 +88,8 @@ export const searchFriendsWithPrivacy = async (
       .order('created_at', { ascending: false })
       .limit(20);
 
-    // Apply search filters
-    const searchTerm = `%${query.toLowerCase()}%`;
+    // Apply search filters with cleaned query
+    const searchTerm = `%${cleanQuery}%`;
     searchQuery = searchQuery.or(
       `name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`
     );

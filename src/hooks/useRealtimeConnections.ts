@@ -19,7 +19,7 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           event: '*',
           schema: 'public',
           table: 'user_connections',
-          filter: `user_id=eq.${user.id},connected_user_id=eq.${user.id}`
+          filter: `user_id=eq.${user.id}`
         },
         (payload) => {
           console.log('Connection change detected:', payload);
@@ -41,6 +41,36 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
             }
           } else if (payload.eventType === 'DELETE') {
             toast.info("Connection removed");
+          }
+          
+          // Trigger refresh of connections data
+          onConnectionChange();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_connections',
+          filter: `connected_user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Connection change detected (as recipient):', payload);
+          
+          // Show toast notifications for connection events
+          if (payload.eventType === 'INSERT') {
+            const newConnection = payload.new;
+            if (newConnection.status === 'pending') {
+              toast.info("New connection request received!");
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedConnection = payload.new;
+            if (updatedConnection.status === 'accepted') {
+              toast.success("Connection accepted!");
+            } else if (updatedConnection.status === 'rejected') {
+              toast.info("Connection request declined");
+            }
           }
           
           // Trigger refresh of connections data

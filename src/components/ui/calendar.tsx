@@ -5,8 +5,73 @@ import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+interface CustomCaptionProps {
+  displayMonth: Date;
+  goToMonth: (month: Date) => void;
+}
+
+function CustomCaption({ displayMonth, goToMonth }: CustomCaptionProps) {
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const currentYear = displayMonth.getFullYear();
+  const currentMonth = displayMonth.getMonth();
+
+  // Generate year options (current year ± 100 years)
+  const years = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i);
+
+  const handleMonthChange = (monthIndex: string) => {
+    const newDate = new Date(currentYear, parseInt(monthIndex), 1);
+    goToMonth(newDate);
+  };
+
+  const handleYearChange = (year: string) => {
+    const newDate = new Date(parseInt(year), currentMonth, 1);
+    goToMonth(newDate);
+  };
+
+  return (
+    <div className="flex justify-center pt-1 relative items-center space-x-2">
+      <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
+        <SelectTrigger className="w-[120px] h-8 text-sm font-medium border-none bg-transparent hover:bg-muted/50">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-background border border-border shadow-lg">
+          {months.map((month, index) => (
+            <SelectItem key={index} value={index.toString()}>
+              {month}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+        <SelectTrigger className="w-[80px] h-8 text-sm font-medium border-none bg-transparent hover:bg-muted/50">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="z-50 bg-background border border-border shadow-lg max-h-[200px]">
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 function Calendar({
   className,
@@ -55,6 +120,7 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: CustomCaption,
       }}
       {...props}
     />

@@ -18,14 +18,17 @@ export const formSchema = z.object({
   first_name: z.string().min(1, { message: "First name is required" }),
   last_name: z.string().min(1, { message: "Last name is required" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  username: z.string().optional(),
+  username: z.string().min(3, { message: "Username must be at least 3 characters long" }),
   
   // Profile image is optional and can be null
   profile_image: z.string().nullable().optional(),
   
-  // Complete date of birth (optional in settings)
-  date_of_birth: z.date().optional().refine((date) => {
-    if (!date) return true;
+  // Complete date of birth (mandatory in settings for consistency)
+  date_of_birth: z.date({
+    required_error: "Date of birth is required",
+    invalid_type_error: "Please select a valid date"
+  }).refine((date) => {
+    if (!date) return false;
     const now = new Date();
     const age = now.getFullYear() - date.getFullYear();
     return age >= 13 && age <= 120;
@@ -39,12 +42,12 @@ export const formSchema = z.object({
   // Optional fields
   bio: z.string().optional(),
   address: z.object({
-    street: z.string().optional(),
+    street: z.string().min(1, "Street address is required"),
     line2: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
-    country: z.string().optional(),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    zipCode: z.string().min(4, "Valid postal/zip code is required"),
+    country: z.string().min(1, "Country is required"),
   }),
   interests: z.array(z.string()),
   importantDates: z.array(z.object({

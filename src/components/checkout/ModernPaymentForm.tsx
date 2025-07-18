@@ -81,7 +81,7 @@ const ModernPaymentForm = ({
 
       // Process the payment
       const confirmPaymentData: any = {
-        payment_method: paymentMethodToSave || {
+        payment_method: paymentMethodToSave ? paymentMethodToSave.id : {
           card: cardElement,
           billing_details: {
             email: user?.email,

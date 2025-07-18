@@ -106,7 +106,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
   useEffect(() => {
     // Calculate shipping cost based on addresses and items
-    const baseShipping = 9.99;
+    const baseShipping = 6.99;
     const freeShippingThreshold = 75;
     const totalAmount = getTotalAmount();
     

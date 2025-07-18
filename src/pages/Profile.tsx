@@ -39,7 +39,7 @@ const Profile = () => {
   } = useDirectFollow(profile?.id);
 
   // Get wishlist data
-  const { wishlists, isLoading: wishlistLoading } = useWishlist();
+  const { wishlists, loading: wishlistLoading } = useWishlist();
 
   // Fetch follow status when profile loads
   useEffect(() => {

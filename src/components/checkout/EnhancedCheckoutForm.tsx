@@ -157,6 +157,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     const errors: string[] = [];
     const unassignedItems = getUnassignedItems();
 
+    console.log('🔍 Address validation check:', {
+      unassignedItemsCount: unassignedItems.length,
+      hasShippingAddress: Boolean(shippingInfo.address),
+      deliveryGroupsCount: deliveryGroups.length,
+      deliveryValidation
+    });
+
     // Check unassigned items need shipping address
     if (unassignedItems.length > 0 && !shippingInfo.address) {
       errors.push('Please provide a shipping address for your items');
@@ -168,6 +175,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
       errors.push('Some recipients need shipping addresses. Please request addresses or update recipient assignments.');
     }
 
+    console.log('🔍 Address validation result:', { errors, isValid: errors.length === 0 });
     setAddressValidationErrors(errors);
     return errors.length === 0;
   };

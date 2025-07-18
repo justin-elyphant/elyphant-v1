@@ -168,13 +168,25 @@ const ModernOrderSummary: React.FC<ModernOrderSummaryProps> = ({
         {/* Action Buttons */}
         <div className="space-y-2">
           {currentStep === 'review' && onProceedToPayment && (
-            <Button 
-              onClick={onProceedToPayment}
-              className="w-full"
-              disabled={!isValid}
-            >
-              Proceed to Payment
-            </Button>
+            <>
+              <Button 
+                onClick={onProceedToPayment}
+                className="w-full"
+                disabled={!isValid}
+              >
+                Proceed to Payment
+              </Button>
+              {!isValid && (
+                <Button 
+                  onClick={onProceedToPayment}
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                >
+                  Proceed Anyway (Debug)
+                </Button>
+              )}
+            </>
           )}
           
           {currentStep === 'payment' && onCompleteOrder && (

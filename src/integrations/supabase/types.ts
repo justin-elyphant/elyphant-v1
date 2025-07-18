@@ -2403,6 +2403,10 @@ export type Database = {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
       }
+      can_cancel_order: {
+        Args: { order_id: string }
+        Returns: boolean
+      }
       can_send_nudge: {
         Args: { p_user_id: string; p_recipient_email: string }
         Returns: boolean
@@ -2411,9 +2415,17 @@ export type Database = {
         Args: { follower_id: string; target_id: string }
         Returns: boolean
       }
+      cancel_order: {
+        Args: { order_id: string; cancellation_reason?: string }
+        Returns: Json
+      }
       check_message_rate_limit: {
         Args: { sender_uuid: string }
         Returns: boolean
+      }
+      cleanup_failed_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       delete_user_account: {
         Args: { target_user_id: string }

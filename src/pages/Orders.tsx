@@ -63,6 +63,7 @@ const Orders = () => {
         orders={orders} 
         isLoading={isLoading} 
         error={error}
+        onOrderUpdated={refreshOrders}
       />
     </div>
   );

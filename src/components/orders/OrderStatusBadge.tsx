@@ -17,6 +17,7 @@ const OrderStatusBadge = ({ status }: OrderStatusBadgeProps) => {
       case "processing":
         return "outline";
       case "cancelled":
+      case "failed":
         return "destructive";
       default:
         return "outline";
@@ -32,6 +33,7 @@ const OrderStatusBadge = ({ status }: OrderStatusBadgeProps) => {
       case "processing":
         return <Clock className="h-3 w-3 mr-1" />;
       case "cancelled":
+      case "failed":
         return <Clock className="h-3 w-3 mr-1" />;
       default:
         return <Package className="h-3 w-3 mr-1" />;

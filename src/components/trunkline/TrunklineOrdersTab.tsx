@@ -44,6 +44,7 @@ const TrunklineOrdersTab = () => {
         orders={orders}
         loading={loading}
         onOrderClick={handleOrderClick}
+        onOrderUpdated={refetch}
       />
     </div>
   );

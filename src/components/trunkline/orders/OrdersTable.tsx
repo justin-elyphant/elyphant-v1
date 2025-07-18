@@ -1,18 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle, X } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
+import { useOrderActions } from "@/hooks/useOrderActions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface OrdersTableProps {
   orders: ReturnType<typeof useOrders>['orders'];
   loading: boolean;
   onOrderClick?: (orderId: string) => void;
+  onOrderUpdated?: () => void;
 }
 
-export default function OrdersTable({ orders, loading, onOrderClick }: OrdersTableProps) {
+export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpdated }: OrdersTableProps) {
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const { cancelOrder, isProcessing } = useOrderActions();
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -46,6 +60,19 @@ export default function OrdersTable({ orders, loading, onOrderClick }: OrdersTab
         </div>
       </Badge>
     );
+  };
+
+  const canCancelOrder = (order: any) => {
+    return ['pending', 'processing', 'failed'].includes(order.status.toLowerCase()) &&
+           !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    const success = await cancelOrder(orderId, 'User cancelled via Trunkline order management');
+    if (success) {
+      setCancellingOrderId(null);
+      onOrderUpdated?.();
+    }
   };
 
   if (loading) {
@@ -179,6 +206,17 @@ export default function OrdersTable({ orders, loading, onOrderClick }: OrdersTab
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
+                      {canCancelOrder(order) && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setCancellingOrderId(order.id)}
+                          disabled={isProcessing}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      )}
                       {order.stripe_payment_intent_id && (
                         <Button
                           size="sm"
@@ -197,6 +235,37 @@ export default function OrdersTable({ orders, loading, onOrderClick }: OrdersTab
           </Table>
         </div>
       </CardContent>
+      
+      <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Cancel Order
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+              {cancellingOrderId && orders.find(o => o.id === cancellingOrderId)?.status === 'processing' && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                  <strong>Note:</strong> This order is currently being processed. Cancellation may take some time to complete.
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isProcessing}>
+              Keep Order
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => cancellingOrderId && handleCancelOrder(cancellingOrderId)}
+              disabled={isProcessing}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isProcessing ? 'Cancelling...' : 'Cancel Order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

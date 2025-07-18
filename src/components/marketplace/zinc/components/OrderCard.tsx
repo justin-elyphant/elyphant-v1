@@ -1,9 +1,20 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Calendar, DollarSign } from "lucide-react";
+import { Package, Calendar, DollarSign, X, AlertTriangle } from "lucide-react";
+import { useOrderActions } from "@/hooks/useOrderActions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Order {
   id: string;
@@ -17,9 +28,12 @@ interface Order {
 interface OrderCardProps {
   order: Order;
   onProcessOrder: (orderId: string) => void;
+  onOrderUpdated?: () => void;
 }
 
-const OrderCard = ({ order, onProcessOrder }: OrderCardProps) => {
+const OrderCard = ({ order, onProcessOrder, onOrderUpdated }: OrderCardProps) => {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const { cancelOrder, isProcessing } = useOrderActions();
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -32,8 +46,22 @@ const OrderCard = ({ order, onProcessOrder }: OrderCardProps) => {
         return 'bg-emerald-100 text-emerald-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const canCancelOrder = (status: string) => {
+    return ['pending', 'processing', 'failed'].includes(status.toLowerCase());
+  };
+
+  const handleCancelOrder = async () => {
+    const success = await cancelOrder(order.id, 'User cancelled via order management');
+    if (success) {
+      setShowCancelDialog(false);
+      onOrderUpdated?.();
     }
   };
 
@@ -77,7 +105,7 @@ const OrderCard = ({ order, onProcessOrder }: OrderCardProps) => {
           </div>
         </div>
         
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end gap-2 pt-2">
           {order.status === 'pending' && (
             <Button 
               onClick={() => onProcessOrder(order.id)}
@@ -86,7 +114,49 @@ const OrderCard = ({ order, onProcessOrder }: OrderCardProps) => {
               Process Order
             </Button>
           )}
+          {canCancelOrder(order.status) && (
+            <Button 
+              onClick={() => setShowCancelDialog(true)}
+              size="sm"
+              variant="destructive"
+              disabled={isProcessing}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Cancel Order
+            </Button>
+          )}
         </div>
+        
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Cancel Order
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to cancel order #{order.id.slice(-8)}? This action cannot be undone.
+                {order.status === 'processing' && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                    <strong>Note:</strong> This order is currently being processed. Cancellation may take some time to complete.
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isProcessing}>
+                Keep Order
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleCancelOrder}
+                disabled={isProcessing}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isProcessing ? 'Cancelling...' : 'Cancel Order'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

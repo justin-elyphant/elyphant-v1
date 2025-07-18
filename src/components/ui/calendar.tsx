@@ -15,51 +15,51 @@ import {
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-interface CustomCaptionProps {
-  displayMonth: Date;
-  goToMonth: (month: Date) => void;
-}
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  ...props
+}: CalendarProps) {
+  const [month, setMonth] = React.useState<Date>(new Date());
 
-function CustomCaption({ displayMonth, goToMonth }: CustomCaptionProps) {
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const currentYear = displayMonth.getFullYear();
-  const currentMonth = displayMonth.getMonth();
-
   // Generate year options (current year ± 100 years)
+  const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i);
 
   const handleMonthChange = (monthIndex: string) => {
-    const newDate = new Date(currentYear, parseInt(monthIndex), 1);
-    goToMonth(newDate);
+    const newDate = new Date(month.getFullYear(), parseInt(monthIndex), 1);
+    setMonth(newDate);
   };
 
   const handleYearChange = (year: string) => {
-    const newDate = new Date(parseInt(year), currentMonth, 1);
-    goToMonth(newDate);
+    const newDate = new Date(parseInt(year), month.getMonth(), 1);
+    setMonth(newDate);
   };
 
-  return (
+  const CustomCaption = () => (
     <div className="flex justify-center pt-1 relative items-center space-x-2">
-      <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
+      <Select value={month.getMonth().toString()} onValueChange={handleMonthChange}>
         <SelectTrigger className="w-[120px] h-8 text-sm font-medium border-none bg-transparent hover:bg-muted/50">
-          <SelectValue />
+          <SelectValue placeholder={months[month.getMonth()]} />
         </SelectTrigger>
         <SelectContent className="z-50 bg-background border border-border shadow-lg">
-          {months.map((month, index) => (
+          {months.map((monthName, index) => (
             <SelectItem key={index} value={index.toString()}>
-              {month}
+              {monthName}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+      <Select value={month.getFullYear().toString()} onValueChange={handleYearChange}>
         <SelectTrigger className="w-[80px] h-8 text-sm font-medium border-none bg-transparent hover:bg-muted/50">
-          <SelectValue />
+          <SelectValue placeholder={month.getFullYear().toString()} />
         </SelectTrigger>
         <SelectContent className="z-50 bg-background border border-border shadow-lg max-h-[200px]">
           {years.map((year) => (
@@ -71,16 +71,11 @@ function CustomCaption({ displayMonth, goToMonth }: CustomCaptionProps) {
       </Select>
     </div>
   );
-}
 
-function Calendar({
-  className,
-  classNames,
-  showOutsideDays = true,
-  ...props
-}: CalendarProps) {
   return (
     <DayPicker
+      month={month}
+      onMonthChange={setMonth}
       showOutsideDays={showOutsideDays}
       className={cn("p-3 pointer-events-auto", className)}
       classNames={{

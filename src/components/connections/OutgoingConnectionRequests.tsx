@@ -58,13 +58,13 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full" />
+                  <div className="w-12 h-12 bg-muted rounded-full" />
                   <div className="space-y-2">
-                    <div className="w-32 h-4 bg-gray-200 rounded" />
-                    <div className="w-24 h-3 bg-gray-200 rounded" />
+                    <div className="w-32 h-4 bg-muted rounded" />
+                    <div className="w-24 h-3 bg-muted rounded" />
                   </div>
                 </div>
-                <div className="w-20 h-8 bg-gray-200 rounded" />
+                <div className="w-20 h-8 bg-muted rounded" />
               </div>
             </CardContent>
           </Card>
@@ -76,9 +76,9 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
   if (filteredRequests.length === 0) {
     return (
       <div className="text-center py-8">
-        <Send className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No outgoing requests</h3>
-        <p className="text-gray-500">
+        <Send className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">No outgoing requests</h3>
+        <p className="text-muted-foreground">
           {searchTerm ? `No requests match "${searchTerm}"` : "You haven't sent any connection requests yet"}
         </p>
       </div>
@@ -113,14 +113,14 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
                       {request.recipient_profile.bio}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Sent {new Date(request.created_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                <Badge variant="outline" className="text-muted-foreground border-muted">
                   <Clock className="h-3 w-3 mr-1" />
                   Pending
                 </Badge>

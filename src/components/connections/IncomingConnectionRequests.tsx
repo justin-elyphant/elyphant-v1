@@ -91,15 +91,15 @@ const IncomingConnectionRequests: React.FC<IncomingConnectionRequestsProps> = ({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full" />
+                  <div className="w-12 h-12 bg-muted rounded-full" />
                   <div className="space-y-2">
-                    <div className="w-32 h-4 bg-gray-200 rounded" />
-                    <div className="w-24 h-3 bg-gray-200 rounded" />
+                    <div className="w-32 h-4 bg-muted rounded" />
+                    <div className="w-24 h-3 bg-muted rounded" />
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <div className="w-20 h-8 bg-gray-200 rounded" />
-                  <div className="w-20 h-8 bg-gray-200 rounded" />
+                  <div className="w-20 h-8 bg-muted rounded" />
+                  <div className="w-20 h-8 bg-muted rounded" />
                 </div>
               </div>
             </CardContent>
@@ -112,9 +112,9 @@ const IncomingConnectionRequests: React.FC<IncomingConnectionRequestsProps> = ({
   if (filteredRequests.length === 0) {
     return (
       <div className="text-center py-8">
-        <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No incoming requests</h3>
-        <p className="text-gray-500">
+        <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">No incoming requests</h3>
+        <p className="text-muted-foreground">
           {searchTerm ? `No requests match "${searchTerm}"` : "You don't have any pending connection requests"}
         </p>
       </div>
@@ -149,7 +149,7 @@ const IncomingConnectionRequests: React.FC<IncomingConnectionRequestsProps> = ({
                       {request.requester_profile.bio}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Sent {new Date(request.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -160,17 +160,15 @@ const IncomingConnectionRequests: React.FC<IncomingConnectionRequestsProps> = ({
                   size="sm"
                   onClick={() => handleAcceptRequest(request.id)}
                   disabled={processingRequests.has(request.id)}
-                  className="bg-green-600 hover:bg-green-700"
                 >
                   <Check className="h-4 w-4 mr-1" />
                   Accept
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="destructive"
                   onClick={() => handleRejectRequest(request.id)}
                   disabled={processingRequests.has(request.id)}
-                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Decline

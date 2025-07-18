@@ -1,11 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import ProfileBanner from "@/components/user-profile/ProfileBanner";
 import ProfileTabs from "@/components/user-profile/ProfileTabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDirectFollow } from "@/hooks/useDirectFollow";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 const Profile = () => {
   const { identifier } = useParams<{ identifier: string }>();
@@ -27,7 +29,51 @@ const Profile = () => {
 
   console.log("Profile page - isOwnProfile:", isOwnProfile);
 
-  if (loading) {
+  // Get follow state and counts for the profile being viewed
+  const {
+    followState,
+    loading: followLoading,
+    checkFollowStatus,
+    followUser,
+    unfollowUser
+  } = useDirectFollow(profile?.id);
+
+  // Get wishlist data
+  const { wishlists, isLoading: wishlistLoading } = useWishlist();
+
+  // Fetch follow status when profile loads
+  useEffect(() => {
+    if (profile?.id && !isOwnProfile) {
+      checkFollowStatus();
+    }
+  }, [profile?.id, isOwnProfile, checkFollowStatus]);
+
+  // Calculate real counts
+  const followerCount = followState.followerCount || 0;
+  const followingCount = followState.followingCount || 0;
+  const wishlistCount = isOwnProfile ? wishlists.length : 0; // For now, only show own wishlists
+
+  const handleFollow = () => {
+    if (followState.isFollowing) {
+      unfollowUser();
+    } else {
+      followUser();
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: `${profile?.name}'s Profile`,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      // Could add a toast here
+    }
+  };
+
+  if (loading || followLoading || wishlistLoading) {
     return (
       <div className="min-h-screen bg-background">
         {/* Banner Skeleton */}
@@ -84,13 +130,16 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Profile Banner with gradient background */}
+      {/* Profile Banner with real data */}
       <ProfileBanner 
         userData={profile}
         isCurrentUser={isOwnProfile || false}
-        isFollowing={false}
-        onFollow={() => {}}
-        onShare={() => {}}
+        isFollowing={followState.isFollowing}
+        onFollow={handleFollow}
+        onShare={handleShare}
+        followerCount={followerCount}
+        followingCount={followingCount}
+        wishlistCount={wishlistCount}
       />
       
       {/* Profile Tabs Content */}

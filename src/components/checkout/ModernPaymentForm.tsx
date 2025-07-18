@@ -149,14 +149,14 @@ const ModernPaymentForm = ({
   const cardElementOptions = {
     style: {
       base: {
-        fontSize: '18px',
+        fontSize: '16px',
         color: 'hsl(var(--foreground))',
         fontFamily: 'system-ui, sans-serif',
         fontSmoothing: 'antialiased',
         '::placeholder': {
           color: 'hsl(var(--muted-foreground))',
         },
-        padding: '16px',
+        padding: '12px 0',
         backgroundColor: 'transparent',
       },
       invalid: {
@@ -186,90 +186,74 @@ const ModernPaymentForm = ({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-3">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
           <div className="flex items-center gap-2">
             {typeof getCardIcon(cardBrand) === 'string' ? (
-              <span className="text-xl">{getCardIcon(cardBrand)}</span>
+              <span className="text-lg">{getCardIcon(cardBrand)}</span>
             ) : (
               getCardIcon(cardBrand)
             )}
             Payment Details
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Shield className="h-3 w-3" />
-              Secure
-            </Badge>
-          </div>
+          <Badge variant="secondary" className="flex items-center gap-1 px-2 py-1">
+            <Shield className="h-3 w-3" />
+            Secure
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="space-y-4 pt-0">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Card Input Section */}
-          <div className="space-y-4">
-            <div className="border-2 border-border rounded-lg p-6 bg-card transition-all duration-200 hover:border-primary/50 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-              <label className="block text-sm font-medium text-foreground mb-3">
+          <div className="space-y-3">
+            <div className="border border-border rounded-lg p-3 bg-card transition-all duration-200 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+              <label className="block text-xs font-medium text-muted-foreground mb-2">
                 Card Information
               </label>
               <CardElement 
                 options={cardElementOptions} 
                 onChange={handleCardChange}
-                className="min-h-[50px]"
+                className="min-h-[40px]"
               />
             </div>
 
             {/* Save Payment Method Option */}
             {user && (
-              <div className="flex items-center space-x-3 p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-start space-x-2 p-3 border rounded-lg bg-muted/30">
                 <Checkbox
                   id="save-payment"
                   checked={savePaymentMethod}
                   onCheckedChange={(checked) => setSavePaymentMethod(checked as boolean)}
+                  className="mt-0.5"
                 />
-                <div className="flex-1">
-                  <label 
-                    htmlFor="save-payment" 
-                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                  >
-                    <Lock className="h-4 w-4" />
-                    Save payment method for future purchases
-                  </label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Securely save this card for faster checkout next time
-                  </p>
-                </div>
+                <label 
+                  htmlFor="save-payment" 
+                  className="text-sm cursor-pointer flex items-center gap-2 leading-tight"
+                >
+                  <Lock className="h-3 w-3" />
+                  Save for future purchases
+                </label>
               </div>
             )}
           </div>
 
           {/* Error Display */}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="py-2">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
 
-          <Separator />
-
-          {/* Order Summary */}
-          <div className="space-y-4">
+          {/* Order Summary & Security - Combined */}
+          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>${amount.toFixed(2)}</span>
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-semibold">${amount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-center text-lg font-semibold">
-              <span>Total</span>
-              <span>${amount.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Security Info */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" />
-              <span>Your payment information is encrypted and secure</span>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1 border-t">
+              <Shield className="h-3 w-3" />
+              <span>Encrypted & secure payment</span>
             </div>
           </div>
 
@@ -277,18 +261,17 @@ const ModernPaymentForm = ({
           <Button 
             type="submit" 
             disabled={!stripe || isProcessing || isSubmitting}
-            className="w-full h-12 text-lg font-semibold"
-            size="lg"
+            className="w-full h-10"
           >
             {(isProcessing || isSubmitting) ? (
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent" />
-                Processing Payment...
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                Processing...
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                Complete Payment ${amount.toFixed(2)}
+                <CheckCircle className="h-4 w-4" />
+                Pay ${amount.toFixed(2)}
               </div>
             )}
           </Button>

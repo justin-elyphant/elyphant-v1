@@ -101,30 +101,30 @@ const PaymentSection = ({
     <div className="space-y-6">
       {/* Payment Method Selection */}
       <Card>
-        <CardHeader>
-          <CardTitle>Payment Options</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Payment Options</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 pt-0">
           <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
-            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+            <div className="flex items-center space-x-2 p-2 border rounded-lg">
               <RadioGroupItem value="express" id="express" />
-              <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 <Smartphone className="h-4 w-4" />
                 Express Checkout (Apple Pay, Google Pay)
               </Label>
             </div>
             
-            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+            <div className="flex items-center space-x-2 p-2 border rounded-lg">
               <RadioGroupItem value="card" id="card" />
-              <Label htmlFor="card" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="card" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 <CreditCard className="h-4 w-4" />
                 Credit/Debit Card
               </Label>
             </div>
             
-            <div className="flex items-center space-x-2 p-3 border rounded-lg">
+            <div className="flex items-center space-x-2 p-2 border rounded-lg">
               <RadioGroupItem value="demo" id="demo" />
-              <Label htmlFor="demo" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="demo" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 Demo Mode (Testing)
               </Label>
             </div>
@@ -146,7 +146,7 @@ const PaymentSection = ({
 
       {/* Card Payment */}
       {paymentMethod === 'card' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {user && (
             <SavedPaymentMethodsSection
               onSelectPaymentMethod={handleSelectPaymentMethod}
@@ -158,9 +158,9 @@ const PaymentSection = ({
           {(showNewCardForm || !user) && (
             <div>
               {isCreatingPaymentIntent ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4" />
-                  <p>Setting up secure payment form...</p>
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mx-auto mb-3" />
+                  <p className="text-sm">Setting up secure payment form...</p>
                 </div>
               ) : clientSecret ? (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -175,12 +175,13 @@ const PaymentSection = ({
                 </Elements>
               ) : (
                 <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-destructive">Failed to initialize payment form</p>
+                  <CardContent className="text-center py-6">
+                    <p className="text-destructive text-sm">Failed to initialize payment form</p>
                     <Button 
                       variant="outline" 
                       onClick={() => setClientSecret('')}
-                      className="mt-4"
+                      className="mt-3 h-9"
+                      size="sm"
                     >
                       Try Again
                     </Button>
@@ -195,19 +196,20 @@ const PaymentSection = ({
       {/* Demo Mode */}
       {paymentMethod === 'demo' && (
         <Card>
-          <CardContent className="space-y-4 pt-6">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <CardContent className="space-y-3 pt-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800">
                 <strong>Demo Mode:</strong> This will create a test order without processing payment.
               </p>
             </div>
             <div className="flex justify-between">
-              <Button variant="outline" onClick={onPrevious}>
+              <Button variant="outline" onClick={onPrevious} className="h-9">
                 Back to Schedule
               </Button>
               <Button 
                 onClick={() => onPlaceOrder()}
                 disabled={!canPlaceOrder || isProcessing}
+                className="h-9"
               >
                 {isProcessing ? "Processing..." : "Place Demo Order"}
               </Button>
@@ -219,7 +221,7 @@ const PaymentSection = ({
       {/* Navigation */}
       {paymentMethod !== 'demo' && paymentMethod !== 'express' && !showNewCardForm && (
         <div className="flex justify-between">
-          <Button variant="outline" onClick={onPrevious}>
+          <Button variant="outline" onClick={onPrevious} className="h-9">
             Back to Schedule
           </Button>
         </div>

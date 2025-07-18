@@ -110,13 +110,13 @@ const SavedPaymentMethodsSection = ({
   if (paymentMethods.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Payment Method</CardTitle>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No saved payment methods</p>
-          <Button onClick={onAddNewMethod} className="flex items-center gap-2">
+        <CardContent className="text-center py-6 pt-0">
+          <CreditCard className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground mb-3">No saved payment methods</p>
+          <Button onClick={onAddNewMethod} className="flex items-center gap-2 h-9">
             <Plus className="h-4 w-4" />
             Add Payment Method
           </Button>
@@ -127,16 +127,16 @@ const SavedPaymentMethodsSection = ({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
           <span>Choose Payment Method</span>
-          <Badge variant="secondary" className="flex items-center gap-1">
+          <Badge variant="secondary" className="flex items-center gap-1 px-2 py-1">
             <Shield className="h-3 w-3" />
             Secure
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 pt-0">
         <RadioGroup 
           value={selectedMethodId || 'new'} 
           onValueChange={(value) => {
@@ -150,30 +150,28 @@ const SavedPaymentMethodsSection = ({
         >
           {/* Saved Payment Methods */}
           {paymentMethods.map((method) => (
-            <div key={method.id} className="border rounded-lg p-4">
-              <div className="flex items-center space-x-3">
+            <div key={method.id} className="border rounded-lg p-3">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value={method.id} id={method.id} />
                 <Label 
                   htmlFor={method.id} 
                   className="flex-1 cursor-pointer flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {typeof getCardIcon(method.card_type) === 'string' ? (
-                      <span className="text-xl">{getCardIcon(method.card_type)}</span>
+                      <span className="text-lg">{getCardIcon(method.card_type)}</span>
                     ) : (
                       getCardIcon(method.card_type)
                     )}
                     <div>
-                      <div className="font-medium">
+                      <div className="font-medium text-sm">
                         {formatCardType(method.card_type)} •••• {method.last_four}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs text-muted-foreground">
                         Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
+                        {method.is_default && <span className="ml-2 text-primary">• Default</span>}
                       </div>
                     </div>
-                    {method.is_default && (
-                      <Badge variant="secondary" className="ml-2">Default</Badge>
-                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -182,9 +180,9 @@ const SavedPaymentMethodsSection = ({
                       e.preventDefault();
                       handleDeleteMethod(method.id);
                     }}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </Label>
               </div>
@@ -192,21 +190,19 @@ const SavedPaymentMethodsSection = ({
           ))}
 
           {/* Add New Payment Method Option */}
-          <div className="border-2 border-dashed rounded-lg p-4">
-            <div className="flex items-center space-x-3">
+          <div className="border border-dashed rounded-lg p-3">
+            <div className="flex items-center space-x-2">
               <RadioGroupItem value="new" id="new" />
               <Label 
                 htmlFor="new" 
-                className="flex-1 cursor-pointer flex items-center gap-3"
+                className="flex-1 cursor-pointer flex items-center gap-2"
               >
-                <div className="border-2 border-dashed border-muted-foreground rounded-lg p-2">
-                  <Plus className="h-5 w-5 text-muted-foreground" />
+                <div className="border border-dashed border-muted-foreground rounded p-1">
+                  <Plus className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <div className="font-medium">Add new payment method</div>
-                  <div className="text-sm text-muted-foreground">
-                    Credit or debit card
-                  </div>
+                  <div className="font-medium text-sm">Add new payment method</div>
+                  <div className="text-xs text-muted-foreground">Credit or debit card</div>
                 </div>
               </Label>
             </div>

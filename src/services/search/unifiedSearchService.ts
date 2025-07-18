@@ -1,110 +1,116 @@
 
-import { searchFriends, FriendSearchResult } from "./friendSearchService";
-import { searchProducts } from "@/components/marketplace/zinc/services/productSearchService";
+import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 
-export interface UnifiedSearchResult {
-  friends: FriendSearchResult[];
+export interface UnifiedSearchResults {
+  friends: FilteredProfile[];
   products: ZincProduct[];
   brands: string[];
-  query: string;
   total: number;
 }
 
-export interface SearchOptions {
+export interface UnifiedSearchOptions {
   maxResults?: number;
+  currentUserId?: string;
   includeFriends?: boolean;
   includeProducts?: boolean;
   includeBrands?: boolean;
-  currentUserId?: string;
 }
 
-const POPULAR_BRANDS = [
-  'Nike', 'Apple', 'Samsung', 'Sony', 'Microsoft', 'Google', 'Amazon',
-  'Adidas', 'Puma', 'Under Armour', 'Levi\'s', 'Coach', 'Louis Vuitton',
-  'Gucci', 'Rolex', 'Canon', 'Nikon', 'Dell', 'HP', 'Lenovo'
+const mockProducts: ZincProduct[] = [
+  {
+    product_id: "1",
+    title: "Wireless Bluetooth Headphones",
+    price: 79.99,
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+    rating: 4.5,
+    review_count: 1250,
+    availability: "in_stock"
+  },
+  {
+    product_id: "2", 
+    title: "Smart Fitness Watch",
+    price: 199.99,
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+    rating: 4.3,
+    review_count: 856,
+    availability: "in_stock"
+  }
 ];
 
-export const searchBrands = (query: string, maxResults: number = 5): string[] => {
-  if (!query || query.length < 2) return [];
-  
-  const queryLower = query.toLowerCase();
-  return POPULAR_BRANDS
-    .filter(brand => brand.toLowerCase().includes(queryLower))
-    .slice(0, maxResults);
-};
+const mockBrands = [
+  "Apple", "Nike", "Samsung", "Lululemon", "Stanley", "Made In", "Lego", "Sony"
+];
 
 export const unifiedSearch = async (
   query: string,
-  options: SearchOptions = {}
-): Promise<UnifiedSearchResult> => {
+  options: UnifiedSearchOptions = {}
+): Promise<UnifiedSearchResults> => {
   const {
     maxResults = 10,
+    currentUserId,
     includeFriends = true,
     includeProducts = true,
-    includeBrands = true,
-    currentUserId
+    includeBrands = true
   } = options;
 
-  console.log(`Unified search for: "${query}" with userId: ${currentUserId}`);
+  console.log(`Unified Search: "${query}" with options:`, {
+    currentUserId: currentUserId || 'unauthenticated',
+    maxResults,
+    includeFriends,
+    includeProducts,
+    includeBrands
+  });
 
-  const result: UnifiedSearchResult = {
+  const results: UnifiedSearchResults = {
     friends: [],
     products: [],
     brands: [],
-    query,
     total: 0
   };
 
-  // Run searches in parallel
-  const searchPromises: Promise<any>[] = [];
+  try {
+    // Search for friends with improved privacy handling
+    if (includeFriends && query.length >= 2) {
+      console.log('Unified Search: Starting friend search...');
+      const friendResults = await searchFriendsWithPrivacy(query, currentUserId);
+      results.friends = friendResults.slice(0, Math.floor(maxResults / 3));
+      console.log(`Unified Search: Found ${friendResults.length} friends, using ${results.friends.length}`);
+    }
 
-  if (includeFriends) {
-    console.log(`Starting friend search for: "${query}"`);
-    searchPromises.push(
-      searchFriends(query, currentUserId).then(friends => {
-        console.log(`Friend search completed. Found ${friends.length} friends:`, friends);
-        result.friends = friends.slice(0, Math.min(maxResults, 5));
-      }).catch(error => {
-        console.error('Friend search failed:', error);
-        result.friends = [];
-      })
-    );
+    // Search for products (mock data for now)
+    if (includeProducts && query.length >= 2) {
+      console.log('Unified Search: Starting product search...');
+      const productResults = mockProducts.filter(product =>
+        product.title.toLowerCase().includes(query.toLowerCase())
+      );
+      results.products = productResults.slice(0, Math.floor(maxResults / 3));
+      console.log(`Unified Search: Found ${productResults.length} products, using ${results.products.length}`);
+    }
+
+    // Search for brands (mock data for now)
+    if (includeBrands && query.length >= 2) {
+      console.log('Unified Search: Starting brand search...');
+      const brandResults = mockBrands.filter(brand =>
+        brand.toLowerCase().includes(query.toLowerCase())
+      );
+      results.brands = brandResults.slice(0, Math.floor(maxResults / 3));
+      console.log(`Unified Search: Found ${brandResults.length} brands, using ${results.brands.length}`);
+    }
+
+    results.total = results.friends.length + results.products.length + results.brands.length;
+    
+    console.log(`Unified Search Results Summary:`, {
+      friends: results.friends.length,
+      products: results.products.length,
+      brands: results.brands.length,
+      total: results.total
+    });
+
+    return results;
+
+  } catch (error) {
+    console.error('Unified search error:', error);
+    return results;
   }
-
-  if (includeProducts) {
-    console.log(`Starting product search for: "${query}"`);
-    searchPromises.push(
-      searchProducts(query, maxResults.toString()).then(products => {
-        console.log(`Product search completed. Found ${products.length} products`);
-        result.products = products.slice(0, maxResults);
-      }).catch(error => {
-        console.error('Product search failed:', error);
-        result.products = [];
-      })
-    );
-  }
-
-  if (includeBrands) {
-    searchPromises.push(
-      Promise.resolve().then(() => {
-        result.brands = searchBrands(query, 3);
-        console.log(`Brand search completed. Found ${result.brands.length} brands:`, result.brands);
-      })
-    );
-  }
-
-  await Promise.all(searchPromises);
-
-  result.total = result.friends.length + result.products.length + result.brands.length;
-
-  console.log('Final unified search results:', {
-    query,
-    friends: result.friends.length,
-    products: result.products.length,
-    brands: result.brands.length,
-    total: result.total
-  });
-
-  return result;
 };

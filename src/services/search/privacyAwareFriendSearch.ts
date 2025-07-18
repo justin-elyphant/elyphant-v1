@@ -1,86 +1,62 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { FriendSearchResult } from "./friendSearchService";
-
-export interface PrivacySettings {
-  profile_visibility: 'public' | 'followers_only' | 'private';
-  allow_follows_from: 'everyone' | 'friends_only' | 'nobody';
-  show_follower_count: boolean;
-  show_following_count: boolean;
-  allow_message_requests: boolean;
-}
+import { checkConnectionStatus } from "./friendSearchService";
 
 export interface FilteredProfile {
   id: string;
   name: string;
   username: string;
-  email?: string; // Only shown based on privacy settings
+  email?: string;
   profile_image?: string;
   bio?: string;
-  connectionStatus: FriendSearchResult['connectionStatus'];
+  connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
   mutualConnections?: number;
   lastActive?: string;
-  isPrivacyRestricted?: boolean;
   privacyLevel?: 'public' | 'limited' | 'private';
+  isPrivacyRestricted?: boolean;
 }
 
-export const getPrivacySettings = async (userId: string): Promise<PrivacySettings | null> => {
+interface PrivacySettings {
+  allow_follows_from: 'everyone' | 'friends_only' | 'nobody';
+  profile_visibility: 'public' | 'followers_only' | 'private';
+  show_follower_count: boolean;
+  show_following_count: boolean;
+}
+
+const getDefaultPrivacySettings = (): PrivacySettings => ({
+  allow_follows_from: 'everyone',
+  profile_visibility: 'public',
+  show_follower_count: true,
+  show_following_count: true
+});
+
+const getPrivacySettings = async (userId: string): Promise<PrivacySettings> => {
   try {
+    console.log(`Getting privacy settings for user: ${userId}`);
+    
     const { data, error } = await supabase
       .from('privacy_settings')
-      .select('*')
+      .select('allow_follows_from, profile_visibility, show_follower_count, show_following_count')
       .eq('user_id', userId)
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching privacy settings:', error);
-      return null;
+      console.warn(`Error fetching privacy settings for ${userId}:`, error);
+      // Return default settings on error
+      return getDefaultPrivacySettings();
     }
 
-    // Return default settings if none found
-    return data || {
-      profile_visibility: 'public',
-      allow_follows_from: 'everyone',
-      show_follower_count: true,
-      show_following_count: true,
-      allow_message_requests: true
-    };
-  } catch (error) {
-    console.error('Error in getPrivacySettings:', error);
-    return null;
-  }
-};
-
-export const canContactUser = async (targetUserId: string, currentUserId?: string): Promise<boolean> => {
-  if (!currentUserId) return false;
-  
-  try {
-    // Check if users are blocked
-    const { data: blockedData } = await supabase
-      .rpc('is_user_blocked', { user1_id: currentUserId, user2_id: targetUserId });
-    
-    if (blockedData) return false;
-
-    // Get target user's privacy settings
-    const privacySettings = await getPrivacySettings(targetUserId);
-    if (!privacySettings) return false;
-
-    // Check follow permissions
-    switch (privacySettings.allow_follows_from) {
-      case 'nobody':
-        return false;
-      case 'friends_only':
-        // Check if already connected
-        const { data: connectionData } = await supabase
-          .rpc('are_users_connected', { user_id_1: currentUserId, user_id_2: targetUserId });
-        return connectionData || false;
-      case 'everyone':
-      default:
-        return true;
+    if (!data) {
+      console.log(`No privacy settings found for ${userId}, using defaults (public)`);
+      return getDefaultPrivacySettings();
     }
+
+    console.log(`Privacy settings for ${userId}:`, data);
+    return data as PrivacySettings;
   } catch (error) {
-    console.error('Error checking contact permissions:', error);
-    return false;
+    console.error(`Exception getting privacy settings for ${userId}:`, error);
+    // Always return default settings on any error
+    return getDefaultPrivacySettings();
   }
 };
 
@@ -88,224 +64,182 @@ export const searchFriendsWithPrivacy = async (
   query: string, 
   currentUserId?: string
 ): Promise<FilteredProfile[]> => {
-  if (!query || query.length < 2) return [];
+  console.log(`Privacy-aware friend search: "${query}" by user: ${currentUserId || 'unauthenticated'}`);
   
+  if (!query || query.length < 2) return [];
+
   try {
-    console.log(`Privacy-aware search for: "${query}"`);
-    
-    // Search profiles with basic info
-    const searchTerm = `%${query.toLowerCase()}%`;
-    
-    const { data: profiles, error } = await supabase
+    // Build the search query
+    let searchQuery = supabase
       .from('profiles')
-      .select('id, name, username, email, profile_image, bio')
-      .or(`name.ilike.${searchTerm},username.ilike.${searchTerm}`)
+      .select('id, name, username, email, profile_image, bio, created_at')
+      .order('created_at', { ascending: false })
       .limit(20);
 
+    // Apply search filters
+    const searchTerm = `%${query.toLowerCase()}%`;
+    searchQuery = searchQuery.or(
+      `name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`
+    );
+
+    const { data: profiles, error } = await searchQuery;
+
     if (error) {
-      console.error('Error in privacy-aware search:', error);
+      console.error('Database search error:', error);
       return [];
     }
 
-    if (!profiles || profiles.length === 0) return [];
-
-    // Filter profiles based on privacy settings
-    const filteredResults: FilteredProfile[] = [];
-
-    for (const profile of profiles) {
-      // Skip current user
-      if (profile.id === currentUserId) continue;
-
-      // Get privacy settings for this profile
-      const privacySettings = await getPrivacySettings(profile.id);
-      if (!privacySettings) continue;
-
-      // Check if profile should be visible based on privacy settings
-      const canView = await canViewProfile(profile.id, currentUserId, privacySettings);
-      if (!canView) continue;
-
-      // Get connection status if user is authenticated
-      let connectionStatus: FriendSearchResult['connectionStatus'] = 'none';
-      if (currentUserId) {
-        const { data: connections } = await supabase
-          .from('user_connections')
-          .select('status')
-          .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${profile.id}),and(user_id.eq.${profile.id},connected_user_id.eq.${currentUserId})`)
-          .single();
-
-        if (connections) {
-          connectionStatus = connections.status === 'accepted' ? 'connected' : 'pending';
-        }
-      }
-
-      // Filter information based on privacy level and authentication
-      const filteredProfile = await filterProfileInfo(
-        profile, 
-        privacySettings, 
-        currentUserId, 
-        connectionStatus
-      );
-
-      filteredResults.push(filteredProfile);
+    if (!profiles || profiles.length === 0) {
+      console.log('No profiles found in database search');
+      return [];
     }
 
-    console.log(`Privacy-aware search returned ${filteredResults.length} results`);
-    return filteredResults;
+    console.log(`Found ${profiles.length} profiles from database search`);
+
+    // Process each profile with privacy filtering
+    const processedProfiles: FilteredProfile[] = [];
+
+    for (const profile of profiles) {
+      try {
+        // Skip the current user's own profile
+        if (currentUserId && profile.id === currentUserId) {
+          continue;
+        }
+
+        // Get privacy settings with guaranteed fallback to defaults
+        const privacySettings = await getPrivacySettings(profile.id);
+        
+        // For unauthenticated users, only show public profiles
+        if (!currentUserId) {
+          if (privacySettings.profile_visibility === 'public') {
+            console.log(`Including public profile for unauthenticated user: ${profile.username}`);
+            
+            processedProfiles.push({
+              id: profile.id,
+              name: profile.name || 'Unknown User',
+              username: profile.username || 'unknown',
+              email: profile.email,
+              profile_image: profile.profile_image,
+              bio: profile.bio,
+              connectionStatus: 'none',
+              privacyLevel: 'public',
+              isPrivacyRestricted: false
+            });
+          } else {
+            console.log(`Excluding non-public profile for unauthenticated user: ${profile.username}`);
+          }
+          continue;
+        }
+
+        // For authenticated users, apply full privacy logic
+        let canView = false;
+        let privacyLevel: 'public' | 'limited' | 'private' = 'private';
+
+        if (privacySettings.profile_visibility === 'public') {
+          canView = true;
+          privacyLevel = 'public';
+        } else if (privacySettings.profile_visibility === 'followers_only') {
+          // Check if they're connected
+          const connectionStatus = await checkConnectionStatus(currentUserId, profile.id);
+          canView = connectionStatus === 'connected';
+          privacyLevel = 'limited';
+        } else {
+          // Private profile
+          canView = false;
+          privacyLevel = 'private';
+        }
+
+        if (canView) {
+          const connectionStatus = await checkConnectionStatus(currentUserId, profile.id);
+          
+          console.log(`Including profile for authenticated user: ${profile.username}`);
+          
+          processedProfiles.push({
+            id: profile.id,
+            name: profile.name || 'Unknown User',
+            username: profile.username || 'unknown',
+            email: profile.email,
+            profile_image: profile.profile_image,
+            bio: profile.bio,
+            connectionStatus,
+            privacyLevel,
+            isPrivacyRestricted: privacyLevel !== 'public'
+          });
+        } else {
+          console.log(`Excluding private profile: ${profile.username}`);
+        }
+
+      } catch (profileError) {
+        console.error(`Error processing profile ${profile.id}:`, profileError);
+        // Continue processing other profiles
+      }
+    }
+
+    console.log(`Privacy filtering result: ${processedProfiles.length} profiles accessible`);
+    return processedProfiles;
 
   } catch (error) {
-    console.error('Error in searchFriendsWithPrivacy:', error);
+    console.error('Privacy-aware friend search error:', error);
     return [];
   }
 };
 
-const canViewProfile = async (
-  targetUserId: string, 
-  currentUserId: string | undefined, 
-  privacySettings: PrivacySettings
-): Promise<boolean> => {
-  // Public profiles are always visible
-  if (privacySettings.profile_visibility === 'public') return true;
-
-  // Private profiles require authentication
-  if (!currentUserId) return false;
-
-  // Check if users are blocked
-  const { data: blockedData } = await supabase
-    .rpc('is_user_blocked', { user1_id: currentUserId, user2_id: targetUserId });
-  
-  if (blockedData) return false;
-
-  // For followers_only and private, check connection status
-  if (privacySettings.profile_visibility === 'followers_only' || 
-      privacySettings.profile_visibility === 'private') {
-    const { data: connectionData } = await supabase
-      .rpc('are_users_connected', { user_id_1: currentUserId, user_id_2: targetUserId });
-    
-    return connectionData || false;
-  }
-
-  return true;
-};
-
-const filterProfileInfo = async (
-  profile: any,
-  privacySettings: PrivacySettings,
-  currentUserId: string | undefined,
-  connectionStatus: FriendSearchResult['connectionStatus']
-): Promise<FilteredProfile> => {
-  const isAuthenticated = !!currentUserId;
-  const isConnected = connectionStatus === 'connected';
-  const isPublicProfile = privacySettings.profile_visibility === 'public';
-
-  // Determine privacy level for UI display
-  let privacyLevel: 'public' | 'limited' | 'private' = 'public';
-  if (privacySettings.profile_visibility === 'private') {
-    privacyLevel = 'private';
-  } else if (privacySettings.profile_visibility === 'followers_only') {
-    privacyLevel = 'limited';
-  }
-
-  // Base profile info always shown
-  const filteredProfile: FilteredProfile = {
-    id: profile.id,
-    name: profile.name || 'Unknown User',
-    username: profile.username || '',
-    profile_image: profile.profile_image,
-    connectionStatus,
-    privacyLevel,
-    isPrivacyRestricted: !isPublicProfile
-  };
-
-  // Email visibility rules
-  if (isAuthenticated && (isPublicProfile || isConnected)) {
-    filteredProfile.email = profile.email;
-  }
-
-  // Bio visibility rules
-  if (isPublicProfile || (isAuthenticated && isConnected)) {
-    filteredProfile.bio = profile.bio;
-  }
-
-  // Additional info for connected users
-  if (isAuthenticated && isConnected) {
-    filteredProfile.mutualConnections = 0; // TODO: Calculate mutual connections
-    filteredProfile.lastActive = 'Recently'; // TODO: Get actual last active time
-  }
-
-  return filteredProfile;
-};
-
 export const getConnectionPermissions = async (
-  targetUserId: string, 
-  currentUserId?: string
-): Promise<{
-  canSendRequest: boolean;
-  canViewProfile: boolean;
-  canMessage: boolean;
-  restrictionReason: string | undefined;
-}> => {
-  if (!currentUserId) {
-    return {
-      canSendRequest: false,
-      canViewProfile: false,
-      canMessage: false,
-      restrictionReason: 'Authentication required'
-    };
-  }
-
+  targetUserId: string,
+  requestingUserId?: string
+) => {
   try {
-    // Check if blocked
-    const { data: blockedData } = await supabase
-      .rpc('is_user_blocked', { user1_id: currentUserId, user2_id: targetUserId });
-    
-    if (blockedData) {
-      return {
-        canSendRequest: false,
-        canViewProfile: false,
-        canMessage: false,
-        restrictionReason: 'User is blocked'
-      };
-    }
-
-    // Get privacy settings
     const privacySettings = await getPrivacySettings(targetUserId);
-    if (!privacySettings) {
+    
+    // Default permissions for public profiles
+    if (privacySettings.allow_follows_from === 'everyone') {
       return {
-        canSendRequest: false,
-        canViewProfile: false,
-        canMessage: false,
-        restrictionReason: 'Privacy settings unavailable'
+        canSendRequest: true,
+        canViewProfile: privacySettings.profile_visibility === 'public',
+        restrictionReason: null
       };
     }
 
-    // Check connection permissions
-    const canSendRequest = await canContactUser(targetUserId, currentUserId);
-    const canView = await canViewProfile(targetUserId, currentUserId, privacySettings);
-    const canMessage = privacySettings.allow_message_requests && canSendRequest;
+    if (!requestingUserId) {
+      return {
+        canSendRequest: false,
+        canViewProfile: privacySettings.profile_visibility === 'public',
+        restrictionReason: "Must be logged in to send friend requests"
+      };
+    }
 
-    let restrictionReason: string | undefined;
-    if (!canSendRequest) {
-      if (privacySettings.allow_follows_from === 'nobody') {
-        restrictionReason = 'User does not accept connection requests';
-      } else if (privacySettings.allow_follows_from === 'friends_only') {
-        restrictionReason = 'User only accepts requests from friends';
-      }
+    if (privacySettings.allow_follows_from === 'nobody') {
+      return {
+        canSendRequest: false,
+        canViewProfile: privacySettings.profile_visibility === 'public',
+        restrictionReason: "This user is not accepting friend requests"
+      };
+    }
+
+    if (privacySettings.allow_follows_from === 'friends_only') {
+      const connectionStatus = await checkConnectionStatus(requestingUserId, targetUserId);
+      const isAlreadyConnected = connectionStatus === 'connected';
+      
+      return {
+        canSendRequest: !isAlreadyConnected,
+        canViewProfile: isAlreadyConnected || privacySettings.profile_visibility === 'public',
+        restrictionReason: isAlreadyConnected ? "Already connected" : "Only accepts requests from friends"
+      };
     }
 
     return {
-      canSendRequest,
-      canViewProfile: canView,
-      canMessage,
-      restrictionReason
+      canSendRequest: true,
+      canViewProfile: true,
+      restrictionReason: null
     };
 
   } catch (error) {
-    console.error('Error getting connection permissions:', error);
+    console.error('Error checking connection permissions:', error);
+    // Default to restrictive permissions on error
     return {
       canSendRequest: false,
       canViewProfile: false,
-      canMessage: false,
-      restrictionReason: 'Error checking permissions'
+      restrictionReason: "Unable to verify permissions"
     };
   }
 };

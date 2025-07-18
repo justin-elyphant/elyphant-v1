@@ -354,6 +354,15 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Debug Info */}
+      <div className="bg-yellow-100 border border-yellow-400 rounded p-4 text-sm">
+        <strong>Debug Info:</strong> currentStep = "{currentStep}" | 
+        addressErrors = {addressValidationErrors.length} | 
+        cartItems = {cartItems.length} | 
+        deliveryGroups = {deliveryGroups.length} | 
+        unassignedItems = {getUnassignedItems().length}
+      </div>
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Package className="h-8 w-8 text-primary" />

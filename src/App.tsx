@@ -8,6 +8,7 @@ import TestZincOrder from "./pages/TestZincOrder";
 import { AuthProvider } from "@/contexts/auth/AuthProvider";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProfileProvider } from "@/contexts/profile/ProfileContext";
+import { ProductProvider } from "@/contexts/ProductContext";
 
 const queryClient = new QueryClient();
 
@@ -16,17 +17,19 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <ProfileProvider>
-          <CartProvider>
-            <Toaster />
-            <BrowserRouter>
-              <Routes>
-                {navItems.map(({ to, page }) => (
-                  <Route key={to} path={to} element={page} />
-                ))}
-                <Route path="/test-zinc-order" element={<TestZincOrder />} />
-              </Routes>
-            </BrowserRouter>
-          </CartProvider>
+          <ProductProvider>
+            <CartProvider>
+              <Toaster />
+              <BrowserRouter>
+                <Routes>
+                  {navItems.map(({ to, page }) => (
+                    <Route key={to} path={to} element={page} />
+                  ))}
+                  <Route path="/test-zinc-order" element={<TestZincOrder />} />
+                </Routes>
+              </BrowserRouter>
+            </CartProvider>
+          </ProductProvider>
         </ProfileProvider>
       </AuthProvider>
     </TooltipProvider>

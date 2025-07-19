@@ -52,11 +52,14 @@ serve(async (req) => {
     console.log(`Processing Zinc order for user ${user.id}, order ${orderId}`)
 
     // Get Elyphant's centralized Amazon Business credentials
-    const { data: credentials, error: credError } = await supabase
+    const { data: credentialsArray, error: credError } = await supabase
       .from('elyphant_amazon_credentials')
       .select('email, encrypted_password, verification_code, is_verified')
       .eq('is_active', true)
-      .single()
+      .order('updated_at', { ascending: false })
+      .limit(1)
+
+    const credentials = credentialsArray && credentialsArray.length > 0 ? credentialsArray[0] : null;
 
     if (credError || !credentials) {
       console.log('No Elyphant Amazon Business credentials found')

@@ -12,6 +12,14 @@ serve(async (req) => {
 
   try {
     const { amount, currency = 'usd', metadata = {} } = await req.json()
+    
+    // Enhanced logging for payment intent creation
+    console.log('🔵 Creating payment intent:', {
+      amount: amount,
+      currency: currency,
+      metadata: metadata,
+      timestamp: new Date().toISOString()
+    })
 
     const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
@@ -24,7 +32,18 @@ serve(async (req) => {
       automatic_payment_methods: {
         enabled: true,
       },
-      metadata: metadata
+      metadata: {
+        ...metadata,
+        created_source: 'create-payment-intent-function',
+        created_at: new Date().toISOString()
+      }
+    })
+
+    console.log('✅ Payment intent created successfully:', {
+      id: paymentIntent.id,
+      amount: paymentIntent.amount,
+      status: paymentIntent.status,
+      client_secret: paymentIntent.client_secret ? 'present' : 'missing'
     })
 
     return new Response(
@@ -38,7 +57,11 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error creating payment intent:', error)
+    console.error('❌ Error creating payment intent:', {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    })
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

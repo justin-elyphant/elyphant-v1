@@ -136,9 +136,24 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         toast.error('Order placed but fulfillment may be delayed');
       }
 
+      // Send order confirmation email
+      try {
+        await supabase.functions.invoke('send-order-confirmation', {
+          body: {
+            order_id: order.id,
+            user_email: user?.email || 'guest@example.com',
+            payment_method_used: paymentIntentId === 'saved_payment_method' ? 'saved_payment_method' : 'card'
+          }
+        });
+        console.log('📧 Order confirmation email sent for order:', order.id);
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail the order flow if email fails
+      }
+
       // Clear cart and redirect
       clearCart();
-      toast.success('Payment successful! Your order has been placed.');
+      toast.success('Payment successful! Your order has been placed. Check your email for confirmation.');
       navigate('/orders');
       
       onCheckoutComplete(order);

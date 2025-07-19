@@ -48,6 +48,12 @@ verify_jwt = false
 [functions.nicole-chat] 
 verify_jwt = false
 
+[functions.cancel-payment-intent]
+verify_jwt = true
+
+[functions.send-order-confirmation]
+verify_jwt = false
+
 [auth]
 enabled = true
 port = 54329

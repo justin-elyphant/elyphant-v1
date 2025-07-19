@@ -46,6 +46,8 @@ const PaymentSection = ({
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<any>(null);
   const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [pendingPaymentIntentId, setPendingPaymentIntentId] = useState<string>('');
+  const [actualPaymentMethod, setActualPaymentMethod] = useState<string>('');
 
   useEffect(() => {
     if (paymentMethod === 'card' && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
@@ -71,6 +73,13 @@ const PaymentSection = ({
       }
 
       setClientSecret(data.client_secret);
+      setPendingPaymentIntentId(data.payment_intent_id);
+      
+      console.log('🔵 Payment intent created for card form:', {
+        payment_intent_id: data.payment_intent_id,
+        amount: totalAmount,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Error creating payment intent:', error);
       toast.error('Failed to initialize payment. Please try again.');
@@ -79,7 +88,40 @@ const PaymentSection = ({
     }
   };
 
-  const handlePaymentSuccess = (paymentIntentId: string) => {
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    // Determine actual payment method used
+    let actualMethod = '';
+    if (paymentIntentId === 'saved_payment_method') {
+      actualMethod = 'saved_payment_method';
+      console.log('💳 Using saved payment method - cancelling unused payment intent');
+      
+      // Cancel the unused payment intent if it exists
+      if (pendingPaymentIntentId) {
+        try {
+          await supabase.functions.invoke('cancel-payment-intent', {
+            body: {
+              payment_intent_id: pendingPaymentIntentId,
+              reason: 'user_selected_saved_payment_method'
+            }
+          });
+        } catch (error) {
+          console.error('Failed to cancel unused payment intent:', error);
+        }
+      }
+    } else {
+      actualMethod = 'new_card';
+      console.log('💳 Using new card payment method');
+    }
+    
+    setActualPaymentMethod(actualMethod);
+    
+    console.log('✅ Payment method confirmed:', {
+      payment_intent_id: paymentIntentId,
+      actual_method: actualMethod,
+      total_amount: totalAmount,
+      timestamp: new Date().toISOString()
+    });
+    
     onPlaceOrder(paymentIntentId);
   };
 
@@ -106,31 +148,65 @@ const PaymentSection = ({
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
-            <div className="flex items-center space-x-2 p-2 border rounded-lg">
+            <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
+              paymentMethod === 'express' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
+            }`}>
               <RadioGroupItem value="express" id="express" />
               <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 <Smartphone className="h-4 w-4" />
                 Express Checkout (Apple Pay, Google Pay)
               </Label>
+              {paymentMethod === 'express' && (
+                <CheckCircle className="h-4 w-4 text-primary" />
+              )}
             </div>
             
-            <div className="flex items-center space-x-2 p-2 border rounded-lg">
+            <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
+              paymentMethod === 'card' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
+            }`}>
               <RadioGroupItem value="card" id="card" />
               <Label htmlFor="card" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 <CreditCard className="h-4 w-4" />
                 Credit/Debit Card
               </Label>
+              {paymentMethod === 'card' && (
+                <CheckCircle className="h-4 w-4 text-primary" />
+              )}
             </div>
             
-            <div className="flex items-center space-x-2 p-2 border rounded-lg">
+            <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
+              paymentMethod === 'demo' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
+            }`}>
               <RadioGroupItem value="demo" id="demo" />
               <Label htmlFor="demo" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
                 Demo Mode (Testing)
               </Label>
+              {paymentMethod === 'demo' && (
+                <CheckCircle className="h-4 w-4 text-primary" />
+              )}
             </div>
           </RadioGroup>
         </CardContent>
       </Card>
+
+      {/* Payment Method Status Indicator */}
+      {actualPaymentMethod && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Payment method confirmed: {
+                  actualPaymentMethod === 'saved_payment_method' ? 'Saved Payment Method' :
+                  actualPaymentMethod === 'new_card' ? 'New Credit Card' :
+                  actualPaymentMethod === 'demo' ? 'Demo Mode' :
+                  actualPaymentMethod
+                }
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Express Checkout */}
       {paymentMethod === 'express' && (
@@ -246,13 +322,17 @@ const PaymentSection = ({
               <Button variant="outline" onClick={onPrevious} className="h-9">
                 Back to Schedule
               </Button>
-              <Button 
-                onClick={() => onPlaceOrder()}
-                disabled={!canPlaceOrder || isProcessing}
-                className="h-9"
-              >
-                {isProcessing ? "Processing..." : "Place Demo Order"}
-              </Button>
+                <Button 
+                  onClick={() => {
+                    setActualPaymentMethod('demo');
+                    console.log('🎯 Using demo payment method');
+                    onPlaceOrder();
+                  }}
+                  disabled={!canPlaceOrder || isProcessing}
+                  className="h-9"
+                >
+                  {isProcessing ? "Processing..." : "Place Demo Order"}
+                </Button>
             </div>
           </CardContent>
         </Card>

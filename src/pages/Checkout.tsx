@@ -4,33 +4,17 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
-import { toast } from 'sonner';
 import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
 
 const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { cartItems, clearCart } = useCart();
+  const { cartItems } = useCart();
 
   const handleCheckoutComplete = async (orderData: any) => {
-    try {
-      // In a real app, this would process the payment and create the order
-      console.log('Processing order:', orderData);
-      
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Clear cart after successful order
-      clearCart();
-      
-      toast.success('Order placed successfully!');
-      
-      // Navigate to order confirmation or success page
-      navigate('/orders', { replace: true });
-    } catch (error) {
-      console.error('Order processing failed:', error);
-      toast.error('Failed to process order. Please try again.');
-    }
+    // This function is no longer used since we redirect to Stripe directly
+    // But keeping it for compatibility with the EnhancedCheckoutForm interface
+    console.log('Checkout complete callback (not used):', orderData);
   };
 
   // Redirect if not authenticated

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Truck, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
 import PaymentForm from '@/components/marketplace/checkout/PaymentForm';
 import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
@@ -45,22 +46,41 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     setIsProcessing(true);
     
     try {
-      const orderData = {
-        items: cartItems,
-        shipping: checkoutData.shippingInfo,
-        payment: { method: checkoutData.paymentMethod },
-        totals: {
-          subtotal: cartTotal,
-          shipping: getShippingCost(),
-          tax: cartTotal * 0.0825,
-          total: cartTotal + getShippingCost() + (cartTotal * 0.0825)
+      const totalAmount = cartTotal + getShippingCost() + (cartTotal * 0.0825);
+      
+      // Create Stripe checkout session with actual cart data
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          cartItems,
+          totalAmount,
+          shippingInfo: checkoutData.shippingInfo,
+          giftOptions: {
+            isGift: false,
+            recipientName: "",
+            giftMessage: "",
+            giftWrapping: false,
+            isSurpriseGift: false
+          },
+          metadata: {
+            checkout_type: 'marketplace'
+          }
         }
-      };
+      });
 
-      await onCheckoutComplete(orderData);
+      if (error) {
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        console.log("Redirecting to Stripe checkout:", data.url);
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received from Stripe');
+      }
     } catch (error) {
-      console.error("Order processing failed:", error);
-      toast.error("Failed to process order. Please try again.");
+      console.error("Stripe checkout session creation failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create checkout session. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -168,7 +188,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                     disabled={!canPlaceOrder() || isProcessing}
                     className="min-w-32"
                   >
-                    {isProcessing ? "Processing..." : "Place Order"}
+                    {isProcessing ? "Creating checkout..." : "Place Order"}
                   </Button>
                 )}
               </div>

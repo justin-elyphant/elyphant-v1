@@ -107,54 +107,6 @@ export const useCheckoutState = () => {
     }
   }, [user, profile]);
 
-  // Fetch shipping quotes when shipping info is complete
-  useEffect(() => {
-    const fetchShippingQuotes = async () => {
-      const { name, address, city, state, zipCode } = checkoutData.shippingInfo;
-      
-      if (name && address && city && state && zipCode && cartItems.length > 0) {
-        setIsLoadingShipping(true);
-        
-        try {
-          const quoteRequest = {
-            retailer: "amazon",
-            products: cartItems.map(item => ({
-              product_id: item.product.product_id,
-              quantity: item.quantity
-            })),
-            shipping_address: {
-              first_name: name.split(' ')[0] || '',
-              last_name: name.split(' ').slice(1).join(' ') || '',
-              address_line1: address,
-              zip_code: zipCode,
-              city: city,
-              state: state,
-              country: checkoutData.shippingInfo.country
-            }
-          };
-
-          const shippingQuote = await getShippingQuote(quoteRequest);
-          
-          if (shippingQuote) {
-            setCheckoutData(prev => ({
-              ...prev,
-              shippingOptions: shippingQuote.shipping_options,
-              selectedShippingOption: shippingQuote.shipping_options.find(opt => 
-                opt.id.includes('prime') || opt.price === 0
-              ) || shippingQuote.shipping_options[0]
-            }));
-          }
-        } catch (error) {
-          console.error("Failed to fetch shipping quotes:", error);
-        } finally {
-          setIsLoadingShipping(false);
-        }
-      }
-    };
-
-    fetchShippingQuotes();
-  }, [checkoutData.shippingInfo, cartItems]);
-
   const handleTabChange = (value: string) => {
     console.log("Changing tab to:", value);
     setActiveTab(value);
@@ -199,11 +151,12 @@ export const useCheckoutState = () => {
   };
   
   const canPlaceOrder = () => {
-    return activeTab === "payment" && checkoutData.selectedShippingOption !== null;
+    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+    return activeTab === "payment" && name && email && address && city && state && zipCode;
   };
 
   const getShippingCost = () => {
-    return checkoutData.selectedShippingOption?.price || 0;
+    return 6.99; // Flat shipping rate
   };
 
   return {

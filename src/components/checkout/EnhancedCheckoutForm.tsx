@@ -119,14 +119,10 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="shipping" className="flex items-center gap-2">
                 <Truck className="h-4 w-4" />
                 Shipping
-              </TabsTrigger>
-              <TabsTrigger value="shipping-options" className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Delivery
               </TabsTrigger>
               <TabsTrigger value="gifts" className="flex items-center gap-2">
                 <Gift className="h-4 w-4" />
@@ -152,21 +148,6 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               </Card>
             </TabsContent>
 
-            <TabsContent value="shipping-options" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shipping Options</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ShippingOptionsForm
-                    selectedMethod={checkoutData.shippingMethod}
-                    onSelect={handleShippingMethodChange}
-                    shippingOptions={checkoutData.shippingOptions}
-                    isLoading={isLoadingShipping}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="gifts" className="mt-6">
               <Card>
@@ -205,7 +186,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
             {activeTab !== "payment" && (
               <Button 
                 onClick={() => {
-                  const tabs = ["shipping", "shipping-options", "gifts", "payment"];
+                  const tabs = ["shipping", "gifts", "payment"];
                   const currentIndex = tabs.indexOf(activeTab);
                   if (currentIndex < tabs.length - 1) {
                     handleTabChange(tabs[currentIndex + 1]);

@@ -16,6 +16,15 @@ export interface ShippingInfo {
   country: string;
 }
 
+export interface GiftOptions {
+  isGift: boolean;
+  recipientName: string;
+  giftMessage: string;
+  giftWrapping: boolean;
+  isSurpriseGift: boolean;
+  scheduledDeliveryDate?: string;
+}
+
 export interface CheckoutData {
   shippingInfo: ShippingInfo;
   shippingMethod: string;

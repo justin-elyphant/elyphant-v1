@@ -11,6 +11,7 @@ import Wishlists from "./pages/Wishlists";
 import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
+import Cart from "./pages/Cart";
 
 export interface NavItem {
   to: string;
@@ -26,6 +27,7 @@ export const navItems: NavItem[] = [
   { to: "/orders", page: <Orders /> },
   { to: "/settings", page: <Settings /> },
   { to: "/payments", page: <Payments /> },
+  { to: "/cart", page: <Cart /> },
   { to: "/profile/:identifier", page: <Profile /> },
   { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

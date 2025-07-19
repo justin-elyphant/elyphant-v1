@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { CreditCard, Smartphone } from 'lucide-react';
+import { useAuth } from '@/contexts/auth';
+import SavedPaymentMethodsSection from '@/components/checkout/SavedPaymentMethodsSection';
+
+interface PaymentMethod {
+  id: string;
+  stripe_payment_method_id: string;
+  card_type: string;
+  last_four: string;
+  exp_month: number;
+  exp_year: number;
+  is_default: boolean;
+}
 
 interface PaymentFormProps {
   paymentMethod: string;
@@ -13,6 +25,20 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   paymentMethod,
   onMethodChange
 }) => {
+  const { user } = useAuth();
+  const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+
+  const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
+    setSelectedSavedMethod(method);
+    setShowNewCardForm(!method);
+  };
+
+  const handleAddNewMethod = () => {
+    setSelectedSavedMethod(null);
+    setShowNewCardForm(true);
+  };
+
   return (
     <div className="space-y-6">
       <RadioGroup value={paymentMethod} onValueChange={onMethodChange}>
@@ -23,7 +49,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               <CreditCard className="h-5 w-5" />
               <div>
                 <div className="font-medium">Credit Card</div>
-                <div className="text-sm text-muted-foreground">Pay with your credit or debit card</div>
+                <div className="text-sm text-muted-foreground">
+                  {user ? "Use saved card or add new" : "Pay with your credit or debit card"}
+                </div>
               </div>
             </Label>
           </div>
@@ -41,11 +69,29 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         </div>
       </RadioGroup>
 
-      {paymentMethod === "card" && (
+      {paymentMethod === "card" && user && (
+        <SavedPaymentMethodsSection
+          onSelectPaymentMethod={handleSelectPaymentMethod}
+          onAddNewMethod={handleAddNewMethod}
+          selectedMethodId={selectedSavedMethod?.id}
+        />
+      )}
+
+      {paymentMethod === "card" && !user && (
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">
               Credit card details will be collected securely during checkout.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {paymentMethod === "card" && user && showNewCardForm && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">
+              You'll be able to add a new credit card during checkout.
             </div>
           </CardContent>
         </Card>

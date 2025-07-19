@@ -1,5 +1,5 @@
 
-project_id = "zcmtrbqplzfshzhpkrge"
+project_id = "dmkxtkvlispxeqfzlczr"
 
 [api]
 enabled = true
@@ -8,44 +8,54 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+[graphql]
+enabled = true
+
 [db]
 port = 54322
 shadow_port = 54320
 major_version = 15
 
-[db.pooler]
-enabled = false
-port = 54329
-pool_mode = "transaction"
-default_pool_size = 20
-max_client_conn = 100
-
 [realtime]
 enabled = true
-port = 54323
-tenant_id = "realtime-dev"
+ip_version = "ipv6"
 
 [studio]
 enabled = true
-port = 54324
+port = 54323
 api_url = "http://127.0.0.1:54321"
-openai_api_key = "env(OPENAI_API_KEY)"
 
 [inbucket]
 enabled = true
-port = 54325
-smtp_port = 54326
-pop3_port = 54327
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
 
 [storage]
 enabled = true
-port = 54328
 file_size_limit = "50MiB"
 
-[functions.zinc-search]
+[auth]
+enabled = true
+additional_redirect_urls = ["https://dmkxtkvlispxeqfzlczr.supabase.co"]
+site_url = "http://localhost:3000"
+jwt_expiry = 3600
+enable_signup = true
+enable_confirmations = false
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "http://localhost:54321/auth/v1/callback"
+
+[functions.get-products]
 verify_jwt = false
 
-[functions.nicole-chat] 
+[functions.get-product-detail]
+verify_jwt = false
+
+[functions.test-zinc-api-key]
 verify_jwt = false
 
 [functions.cancel-payment-intent]
@@ -54,59 +64,23 @@ verify_jwt = false
 [functions.send-order-confirmation]
 verify_jwt = false
 
-[auth]
-enabled = true
-port = 54329
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://localhost:3000"]
-jwt_expiry = 3600
-refresh_token_rotation_enabled = true
-security_update_password_require_reauthentication = true
-enable_signup = true
-enable_anonymous_sign_ins = false
-minimum_password_length = 6
-password_requirements = "letters_digits"
+[functions.process-zinc-order]
+verify_jwt = false
 
-[auth.email]
-enable_signup = true
-double_confirm_changes = true
-enable_confirmations = false
-template_tags_allowed = ["confirmation_url", "email", "new_email", "new_email_address", "redirect_to", "site_url", "token", "token_hash", "type"]
+[functions.check-zinc-order-status]
+verify_jwt = false
 
-[auth.email.template.invite]
-subject = "You have been invited"
-content_path = "./supabase/templates/invite.html"
+[functions.create-payment-intent]
+verify_jwt = false
 
-[auth.email.template.confirmation]
-subject = "Confirm your signup"
-content_path = "./supabase/templates/confirmation.html"
+[functions.verify-checkout-session]
+verify_jwt = false
 
-[auth.email.template.recovery]
-subject = "Reset your password"
-content_path = "./supabase/templates/recovery.html"
+[functions.order-cleanup]
+verify_jwt = false
 
-[auth.email.template.magic_link]
-subject = "Your magic link"
-content_path = "./supabase/templates/magic_link.html"
-
-[auth.email.template.email_change]
-subject = "Confirm your new email"
-content_path = "./supabase/templates/email_change.html"
-
-[auth.sms]
-enable_signup = true
-enable_confirmations = false
-template = "Your code is {{ .Code }} ."
-
-[auth.sms.template]
-content = "Your code is {{ .Code }} ."
+[functions.create-group-gift-contribution]
+verify_jwt = false
 
 [edge_runtime]
-enabled = true
-port = 54330
-
-[analytics]
-enabled = false
-port = 54327
-vector_port = 54328
-backend = "postgres"
+policy = "per_worker"

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
+import OrderStatusRefresh from "@/components/orders/OrderStatusRefresh";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -12,6 +13,8 @@ interface Order {
   total_amount: number;
   status: string;
   user_id: string;
+  zinc_order_id?: string;
+  zinc_status?: string;
 }
 
 const Orders = () => {
@@ -54,13 +57,34 @@ const Orders = () => {
     await fetchOrders();
   };
 
+  // Get Zinc order IDs for status refresh
+  const zincOrderIds = orders
+    .filter(order => order.zinc_order_id && order.status === 'processing')
+    .map(order => order.zinc_order_id!)
+    .filter(Boolean);
+
   return (
     <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <OrdersHeader 
-          refreshOrders={refreshOrders} 
-          isRefreshing={isRefreshing}
-        />
+        <div className="flex items-center justify-between mb-6">
+          <OrdersHeader 
+            refreshOrders={refreshOrders} 
+            isRefreshing={isRefreshing}
+          />
+          
+          {zincOrderIds.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {zincOrderIds.length} processing order(s)
+              </span>
+              <OrderStatusRefresh
+                orderIds={zincOrderIds}
+                onRefreshComplete={refreshOrders}
+              />
+            </div>
+          )}
+        </div>
+        
         <OrderTable 
           orders={orders} 
           isLoading={isLoading} 

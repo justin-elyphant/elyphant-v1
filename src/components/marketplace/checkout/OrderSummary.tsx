@@ -74,7 +74,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Shipping</span>
-            <span className="text-muted-foreground">Calculated at checkout</span>
+            <span>${shippingCost.toFixed(2)}</span>
           </div>
         </div>
         

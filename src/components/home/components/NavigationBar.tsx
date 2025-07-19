@@ -1,20 +1,28 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
-import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
-import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
+
+// Lazy load heavy components to improve performance on auth pages
+const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhancedSearchBar"));
+const OptimizedShoppingCartButton = React.lazy(() => import("@/components/marketplace/components/OptimizedShoppingCartButton"));
 
 const NavigationBar = () => {
   const { user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Don't load heavy components on auth pages for better performance
+  const isAuthPage = ['/signin', '/signup', '/reset-password'].includes(location.pathname);
+  const shouldShowSearch = !isAuthPage;
+  const shouldShowCart = !isAuthPage;
 
   const marketplaceItems: NavDropdownItem[] = [
     { label: "All Products", href: "/marketplace" },
@@ -42,19 +50,31 @@ const NavigationBar = () => {
           </div>
 
           {/* Desktop Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <AIEnhancedSearchBar />
-          </div>
+          {shouldShowSearch && (
+            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+              <React.Suspense fallback={<div className="h-10 bg-muted rounded animate-pulse flex-1" />}>
+                <AIEnhancedSearchBar />
+              </React.Suspense>
+            </div>
+          )}
 
           {/* Desktop Auth & Cart */}
           <div className="hidden md:flex items-center space-x-4">
-            <OptimizedShoppingCartButton />
+            {shouldShowCart && (
+              <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
+                <OptimizedShoppingCartButton />
+              </React.Suspense>
+            )}
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
           {/* Mobile Right Side - Only Cart and Menu */}
           <div className="md:hidden flex items-center space-x-3">
-            <OptimizedShoppingCartButton />
+            {shouldShowCart && (
+              <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
+                <OptimizedShoppingCartButton />
+              </React.Suspense>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -71,9 +91,13 @@ const NavigationBar = () => {
         </div>
 
         {/* Mobile Search Bar - Below header */}
-        <div className="md:hidden pb-3 pt-2">
-          <AIEnhancedSearchBar mobile />
-        </div>
+        {shouldShowSearch && (
+          <div className="md:hidden pb-3 pt-2">
+            <React.Suspense fallback={<div className="h-10 bg-muted rounded animate-pulse mx-4" />}>
+              <AIEnhancedSearchBar mobile />
+            </React.Suspense>
+          </div>
+        )}
       </div>
 
       {/* Clean Mobile Menu */}

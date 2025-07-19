@@ -60,7 +60,7 @@ export const useCheckoutState = () => {
     }
   }, [cartItems.length, navigate]);
 
-  // Pre-fill with user data when available
+  // Pre-fill with user data when available (only for empty fields)
   useEffect(() => {
     if (user && profile) {
       console.log("Pre-filling checkout state with user/profile data:", { user: user.id, profile });
@@ -68,21 +68,23 @@ export const useCheckoutState = () => {
       setCheckoutData(prev => {
         const updatedShippingInfo = {
           ...prev.shippingInfo,
-          name: profile.name || user.user_metadata?.name || prev.shippingInfo.name,
-          email: profile.email || user.email || prev.shippingInfo.email
+          // Only pre-fill if current value is empty
+          name: prev.shippingInfo.name || profile.name || user.user_metadata?.name || "",
+          email: prev.shippingInfo.email || profile.email || user.email || ""
         };
 
-        // Pre-fill shipping address if available in profile
+        // Pre-fill shipping address if available in profile and fields are empty
         if (profile.shipping_address) {
           const address = profile.shipping_address;
-          console.log("Found shipping address in profile, pre-filling:", address);
+          console.log("Found shipping address in profile, pre-filling empty fields:", address);
           
-          updatedShippingInfo.address = address.address_line1 || address.street || prev.shippingInfo.address;
-          updatedShippingInfo.addressLine2 = address.address_line2 || prev.shippingInfo.addressLine2;
-          updatedShippingInfo.city = address.city || prev.shippingInfo.city;
-          updatedShippingInfo.state = address.state || prev.shippingInfo.state;
-          updatedShippingInfo.zipCode = address.zip_code || address.zipCode || prev.shippingInfo.zipCode;
-          updatedShippingInfo.country = address.country || prev.shippingInfo.country;
+          // Only pre-fill empty fields to preserve user input
+          updatedShippingInfo.address = prev.shippingInfo.address || address.address_line1 || address.street || "";
+          updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || address.address_line2 || "";
+          updatedShippingInfo.city = prev.shippingInfo.city || address.city || "";
+          updatedShippingInfo.state = prev.shippingInfo.state || address.state || "";
+          updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || address.zip_code || address.zipCode || "";
+          updatedShippingInfo.country = prev.shippingInfo.country || address.country || "United States";
         }
 
         return {

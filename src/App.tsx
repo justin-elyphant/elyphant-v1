@@ -12,28 +12,32 @@ import { ProductProvider } from "@/contexts/ProductContext";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <ProfileProvider>
-          <ProductProvider>
-            <CartProvider>
-              <Toaster />
-              <BrowserRouter>
-                <Routes>
-                  {navItems.map(({ to, page }) => (
-                    <Route key={to} path={to} element={page} />
-                  ))}
-                  <Route path="/test-zinc-order" element={<TestZincOrder />} />
-                </Routes>
-              </BrowserRouter>
-            </CartProvider>
-          </ProductProvider>
-        </ProfileProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("App component rendering with providers");
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <ProfileProvider>
+            <ProductProvider>
+              <CartProvider>
+                <Toaster />
+                <BrowserRouter>
+                  <Routes>
+                    {navItems.map(({ to, page }) => (
+                      <Route key={to} path={to} element={page} />
+                    ))}
+                    <Route path="/test-zinc-order" element={<TestZincOrder />} />
+                  </Routes>
+                </BrowserRouter>
+              </CartProvider>
+            </ProductProvider>
+          </ProfileProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import TestZincOrder from "./pages/TestZincOrder";
+import AdminAmazonCredentials from "./pages/AdminAmazonCredentials";
 
 export interface NavItem {
   to: string;
@@ -7,6 +8,5 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  // Add your page routes here as needed
-  // Example: { to: "/", page: <HomePage /> },
+  { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

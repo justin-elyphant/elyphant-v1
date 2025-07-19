@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -13,16 +14,9 @@ const Checkout = () => {
   const { cartItems } = useCart();
 
   const handleCheckoutComplete = async (orderData: any) => {
-    // This function is no longer used since we redirect to Stripe directly
-    // But keeping it for compatibility with the EnhancedCheckoutForm interface
-    console.log('Checkout complete callback (not used):', orderData);
+    console.log('Checkout complete:', orderData);
+    // Additional completion logic can go here
   };
-
-  // Redirect if not authenticated
-  if (!user) {
-    navigate('/signin');
-    return null;
-  }
 
   // Redirect if cart is empty
   if (cartItems.length === 0) {
@@ -46,7 +40,7 @@ const Checkout = () => {
 
   return (
     <SidebarLayout>
-      <div className="bg-gray-50">
+      <div className="bg-gray-50 min-h-screen">
         <div className="container mx-auto px-4 py-8">
           <EnhancedCheckoutForm onCheckoutComplete={handleCheckoutComplete} />
         </div>

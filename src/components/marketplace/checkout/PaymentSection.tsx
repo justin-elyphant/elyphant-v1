@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Smartphone } from "lucide-react";
+import { CreditCard, Smartphone, CheckCircle, ArrowLeft } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
@@ -155,6 +155,46 @@ const PaymentSection = ({
             />
           )}
           
+          {/* Complete Payment Button for Saved Payment Methods */}
+          {selectedSavedMethod && !showNewCardForm && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="space-y-4">
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Total</span>
+                      <span className="font-semibold">${totalAmount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between gap-3">
+                    <Button variant="outline" onClick={onPrevious} className="h-10">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={() => handlePaymentSuccess('saved_payment_method')}
+                      disabled={!canPlaceOrder || isProcessing}
+                      className="flex-1 h-10"
+                    >
+                      {isProcessing ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                          Processing...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Complete Payment ${totalAmount.toFixed(2)}
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {(showNewCardForm || !user) && (
             <div>
               {isCreatingPaymentIntent ? (
@@ -218,11 +258,12 @@ const PaymentSection = ({
         </Card>
       )}
 
-      {/* Navigation */}
-      {paymentMethod !== 'demo' && paymentMethod !== 'express' && !showNewCardForm && (
+      {/* Navigation - Only show if no saved payment method selected */}
+      {paymentMethod !== 'demo' && paymentMethod !== 'express' && !showNewCardForm && !selectedSavedMethod && (
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrevious} className="h-9">
-            Back to Schedule
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
         </div>
       )}

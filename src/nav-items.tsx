@@ -9,6 +9,7 @@ import Connections from "./pages/Connections";
 import Profile from "./pages/Profile";
 import Wishlists from "./pages/Wishlists";
 import Orders from "./pages/Orders";
+import Settings from "./pages/Settings";
 
 export interface NavItem {
   to: string;
@@ -22,6 +23,7 @@ export const navItems: NavItem[] = [
   { to: "/connections", page: <Connections /> },
   { to: "/wishlists", page: <Wishlists /> },
   { to: "/orders", page: <Orders /> },
+  { to: "/settings", page: <Settings /> },
   { to: "/profile/:identifier", page: <Profile /> },
   { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

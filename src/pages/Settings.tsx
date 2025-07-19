@@ -10,6 +10,7 @@ import NotificationSettings from "@/components/settings/NotificationSettings";
 import PrivacySecuritySettings from "@/components/settings/PrivacySecuritySettings";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 
 type SettingsTab = "general" | "notifications" | "privacy";
@@ -96,13 +97,15 @@ const Settings = () => {
   };
 
   return (
-    <SettingsLayout
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
-    >
-      {renderTabContent()}
-    </SettingsLayout>
+    <SidebarLayout>
+      <SettingsLayout
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
+      >
+        {renderTabContent()}
+      </SettingsLayout>
+    </SidebarLayout>
   );
 };
 

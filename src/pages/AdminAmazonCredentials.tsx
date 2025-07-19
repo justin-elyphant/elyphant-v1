@@ -77,8 +77,10 @@ const AdminAmazonCredentials = () => {
       if (error) throw error;
 
       toast.success('Amazon credentials saved successfully!');
-      await loadCredentials(); // Reload to get updated data
-      setFormData(prev => ({ ...prev, password: '' })); // Clear password field
+      // Clear password field immediately
+      setFormData(prev => ({ ...prev, password: '' })); 
+      // Reload to get updated data
+      await loadCredentials(); 
     } catch (error) {
       console.error('Error saving credentials:', error);
       toast.error('Failed to save Amazon credentials');
@@ -245,11 +247,15 @@ const AdminAmazonCredentials = () => {
             <Button onClick={saveCredentials} disabled={loading}>
               {loading ? 'Saving...' : 'Save Credentials'}
             </Button>
-            <Button onClick={testCredentials} variant="outline" disabled={loading || !credentials}>
+            <Button 
+              onClick={testCredentials} 
+              variant="outline" 
+              disabled={loading || !credentials}
+            >
               {loading ? 'Testing...' : 'Test Credentials'}
             </Button>
             <Button onClick={loadCredentials} variant="secondary" disabled={loading}>
-              Refresh
+              {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
         </CardContent>

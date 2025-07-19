@@ -93,7 +93,8 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
       // Get payment method details from Stripe
       if (!stripe) return;
       
-      const { paymentMethod } = await stripe.retrievePaymentMethod(paymentMethodId);
+      // Payment method details are already available from the paymentIntent
+      const paymentMethod = paymentMethodId;
       if (!paymentMethod?.card) return;
 
       const { error } = await supabase

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
@@ -65,6 +66,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   const hasMultipleRecipients = orderData.deliveryGroups && orderData.deliveryGroups.length > 0;
 
+  console.log('Creating order with data:', orderData);
+
   // Create the order with proper schema alignment
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -90,8 +93,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   if (orderError) {
     console.error('Error creating order:', orderError);
-    throw new Error('Failed to create order');
+    throw new Error('Failed to create order: ' + orderError.message);
   }
+
+  console.log('Order created successfully:', order.id);
 
   // Create order items with recipient assignments
   const orderItems = orderData.cartItems.map(item => {
@@ -120,11 +125,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   if (itemsError) {
     console.error('Error creating order items:', itemsError);
-    throw new Error('Failed to create order items');
+    throw new Error('Failed to create order items: ' + itemsError.message);
   }
 
-  // Note: Zinc processing will be triggered after payment confirmation
-  // in the verify-checkout-session edge function
+  console.log('Order items created successfully:', createdItems.length);
 
   return {
     ...order,
@@ -133,6 +137,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 };
 
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
+  console.log('Fetching order by ID:', orderId);
+  
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select(`
@@ -147,6 +153,7 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
     return null;
   }
 
+  console.log('Order fetched successfully:', order.order_number);
   return order;
 };
 
@@ -168,6 +175,8 @@ export const getUserOrders = async (): Promise<Order[]> => {
 };
 
 export const updateOrderStatus = async (orderId: string, status: string, updates: any = {}) => {
+  console.log('Updating order status:', orderId, status, updates);
+  
   const { error } = await supabase
     .from('orders')
     .update({
@@ -179,6 +188,8 @@ export const updateOrderStatus = async (orderId: string, status: string, updates
 
   if (error) {
     console.error('Error updating order status:', error);
-    throw new Error('Failed to update order status');
+    throw new Error('Failed to update order status: ' + error.message);
   }
+
+  console.log('Order status updated successfully');
 };

@@ -1,339 +1,313 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, CreditCard, Truck, Gift, ShoppingBag } from 'lucide-react';
-import { toast } from 'sonner';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
-import CheckoutShippingForm from './CheckoutShippingForm';
-import CheckoutOrderSummary from './CheckoutOrderSummary';
-import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
-import ModernPaymentForm from '@/components/payments/ModernPaymentForm';
-import { useCheckoutState } from '../marketplace/checkout/useCheckoutState';
 import { createOrder } from '@/services/orderService';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { ShoppingCart, CreditCard, User, MapPin, Gift } from 'lucide-react';
+import { toast } from 'sonner';
+import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
+import ShippingForm from '@/components/marketplace/checkout/ShippingForm';
+import GiftOptionsForm from '@/components/marketplace/checkout/GiftOptionsForm';
+import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
+import StripePaymentForm from '@/components/marketplace/checkout/StripePaymentForm';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-  'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z'
-);
-
-interface PaymentMethod {
-  id: string;
-  stripe_payment_method_id: string;
-  card_type: string;
-  last_four: string;
-  exp_month: number;
-  exp_year: number;
-  is_default: boolean;
-}
+const stripePromise = loadStripe('pk_test_51QRGzTFQzKSe5Zq8pQYEOLJXzq3hWdoLMEH8H4KdoQyj4k0xTCX8nHK6hRHNj8tHEyYxJkZVTwF6Y0iHGQk2VkG200XtLLQEMq');
 
 interface EnhancedCheckoutFormProps {
-  onCheckoutComplete: (orderData: any) => void;
+  onCheckoutComplete?: (orderData: any) => void;
 }
 
-const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({ onCheckoutComplete }) => {
+const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps) => {
   const { user } = useAuth();
-  const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
+  const { cartItems, clearCart } = useCart();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [orderId, setOrderId] = useState<string>('');
+
   const {
-    activeTab,
-    isProcessing,
-    checkoutData,
-    setIsProcessing,
-    handleTabChange,
-    handleUpdateShippingInfo,
-    getShippingCost
+    shippingInfo,
+    setShippingInfo,
+    giftOptions,
+    setGiftOptions,
+    subtotal,
+    shippingCost,
+    taxAmount,
+    totalAmount
   } = useCheckoutState();
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [showNewCardForm, setShowNewCardForm] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
-
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shippingCost = getShippingCost();
-  const taxAmount = subtotal * 0.08; // 8% tax
-  const totalAmount = subtotal + shippingCost + taxAmount;
-
-  // Create payment intent when we reach the payment tab
-  useEffect(() => {
-    if (activeTab === 'payment' && !clientSecret && totalAmount > 0) {
-      createPaymentIntent();
+  const createOrderRecord = async () => {
+    if (!user) {
+      toast.error('Please log in to complete your order');
+      return null;
     }
-  }, [activeTab, totalAmount, clientSecret]);
 
-  const createPaymentIntent = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(totalAmount * 100), // Convert to cents
-          currency: 'usd',
-          metadata: {
-            cart_items: JSON.stringify(cartItems.map(item => ({
-              product_id: item.product.product_id,
-              quantity: item.quantity,
-              price: item.product.price
-            })))
-          }
-        }
-      });
+      setIsProcessing(true);
+      console.log('Creating order record...');
 
-      if (error) throw error;
-
-      setClientSecret(data.client_secret);
-      setPaymentIntentId(data.payment_intent_id);
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    }
-  };
-
-  const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
-    setSelectedPaymentMethod(method);
-    setShowNewCardForm(!method);
-  };
-
-  const handleAddNewMethod = () => {
-    setSelectedPaymentMethod(null);
-    setShowNewCardForm(true);
-  };
-
-  const processOrderWithSavedCard = async () => {
-    if (!selectedPaymentMethod || !paymentIntentId) return;
-
-    setIsProcessing(true);
-    try {
-      // Confirm payment with saved payment method
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe not loaded');
-
-      const { error } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: selectedPaymentMethod.stripe_payment_method_id
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Create order in database
-      await createOrderRecord(paymentIntentId);
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error(error instanceof Error ? error.message : 'Payment failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleNewCardPaymentSuccess = async (paymentIntentId: string, saveCard: boolean) => {
-    try {
-      await createOrderRecord(paymentIntentId);
-    } catch (error) {
-      console.error('Order creation error:', error);
-      toast.error('Payment successful but order creation failed. Please contact support.');
-    }
-  };
-
-  const createOrderRecord = async (paymentIntentId: string) => {
-    try {
       const orderData = {
         cartItems,
         subtotal,
         shippingCost,
         taxAmount,
         totalAmount,
-        shippingInfo: checkoutData.shippingInfo,
-        giftOptions: {
-          isGift: false,
-          recipientName: '',
-          giftMessage: '',
-          giftWrapping: false,
-          isSurpriseGift: false
-        },
-        paymentIntentId
+        shippingInfo,
+        giftOptions
       };
 
       const order = await createOrder(orderData);
-      
-      // Clear cart and redirect to success
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate(`/order-confirmation/${order.id}`);
-      onCheckoutComplete(order);
-      
+      console.log('Order created:', order.id);
+      setOrderId(order.id);
+
+      return order;
     } catch (error) {
       console.error('Error creating order:', error);
-      throw error;
+      toast.error('Failed to create order');
+      return null;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const canProceedToPayment = () => {
-    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return name && email && address && city && state && zipCode;
+  const createPaymentIntent = async (order: any) => {
+    try {
+      console.log('Creating payment intent for order:', order.id);
+      
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: Math.round(totalAmount * 100), // Convert to cents
+          currency: 'usd',
+          orderId: order.id,
+          customerEmail: user?.email
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log('Payment intent created:', data.clientSecret);
+      setClientSecret(data.clientSecret);
+      setCurrentStep(3); // Move to payment step
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      toast.error('Failed to create payment intent');
+    }
   };
 
-  const canPlaceOrder = () => {
-    return selectedPaymentMethod || showNewCardForm;
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    try {
+      console.log('Payment successful, processing order:', orderId);
+      toast.loading('Processing your order...', { id: 'processing-order' });
+
+      // Update order with payment information
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          stripe_payment_intent_id: paymentIntentId,
+          payment_status: 'succeeded',
+          status: 'processing',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        console.error('Error updating order:', updateError);
+        throw new Error('Failed to update order status');
+      }
+
+      // Trigger Zinc order processing
+      console.log('Triggering Zinc order processing...');
+      const { data: zincData, error: zincError } = await supabase.functions.invoke('process-zinc-order', {
+        body: {
+          orderId: orderId,
+          isTestMode: true // Set to false for production
+        }
+      });
+
+      if (zincError) {
+        console.error('Zinc processing error:', zincError);
+        // Don't fail the order completely - payment succeeded
+        toast.warning('Payment successful but order processing delayed. We\'ll update you shortly.', { 
+          id: 'processing-order',
+          duration: 8000
+        });
+      } else if (zincData?.success) {
+        console.log('Zinc order processed successfully:', zincData.zincOrderId);
+        toast.success('Order placed successfully!', { id: 'processing-order' });
+      } else {
+        console.warn('Zinc processing returned unexpected result:', zincData);
+        toast.warning('Payment successful. Order processing in progress.', { 
+          id: 'processing-order',
+          duration: 6000
+        });
+      }
+
+      // Clear cart and navigate to confirmation
+      clearCart();
+      navigate(`/order-confirmation/${orderId}`);
+      
+      if (onCheckoutComplete) {
+        onCheckoutComplete({ orderId, paymentIntentId });
+      }
+
+    } catch (error) {
+      console.error('Error processing payment success:', error);
+      toast.error('Payment succeeded but there was an issue processing your order. Please contact support.', {
+        id: 'processing-order',
+        duration: 10000
+      });
+      
+      // Still navigate to confirmation since payment succeeded
+      navigate(`/order-confirmation/${orderId}`);
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+    toast.error(`Payment failed: ${error}`);
+  };
+
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zipCode) {
+        toast.error('Please fill in all shipping information');
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      const order = await createOrderRecord();
+      if (order) {
+        await createPaymentIntent(order);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Shipping Information</h2>
+            </div>
+            <ShippingForm 
+              shippingInfo={shippingInfo} 
+              onChange={setShippingInfo} 
+            />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Gift className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Gift Options</h2>
+            </div>
+            <GiftOptionsForm 
+              giftOptions={giftOptions} 
+              onChange={setGiftOptions} 
+            />
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Payment</h2>
+            </div>
+            {clientSecret && (
+              <Elements stripe={stripePromise}>
+                <StripePaymentForm
+                  clientSecret={clientSecret}
+                  amount={totalAmount}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                  isProcessing={isProcessing}
+                  onProcessingChange={setIsProcessing}
+                />
+              </Elements>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/cart')}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Cart
-        </Button>
-        <h1 className="text-2xl font-bold">Checkout</h1>
+    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 mb-6">
+          <ShoppingCart className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Checkout</h1>
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          {[1, 2, 3].map((step) => (
+            <div key={step} className="flex items-center">
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                ${currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
+              `}>
+                {step}
+              </div>
+              {step < 3 && (
+                <div className={`w-16 h-0.5 ${currentStep > step ? 'bg-primary' : 'bg-muted'}`} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            {renderStep()}
+            
+            <div className="flex justify-between mt-6">
+              {currentStep > 1 && currentStep < 3 && (
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
+              )}
+              {currentStep < 3 && (
+                <Button 
+                  onClick={handleNext} 
+                  disabled={isProcessing}
+                  className="ml-auto"
+                >
+                  {isProcessing ? 'Processing...' : 'Next'}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shipping" className="flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                Shipping
-              </TabsTrigger>
-              <TabsTrigger 
-                value="payment" 
-                disabled={!canProceedToPayment()}
-                className="flex items-center gap-2"
-              >
-                <CreditCard className="h-4 w-4" />
-                Payment
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="shipping" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
-                    Shipping Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CheckoutShippingForm 
-                    shippingInfo={checkoutData.shippingInfo}
-                    onUpdateShippingInfo={handleUpdateShippingInfo}
-                  />
-                  <div className="mt-6">
-                    <Button 
-                      onClick={() => handleTabChange('payment')}
-                      disabled={!canProceedToPayment()}
-                      className="w-full"
-                    >
-                      Continue to Payment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="payment" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment Method
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {user && (
-                    <SavedPaymentMethodsSection
-                      onSelectPaymentMethod={handleSelectPaymentMethod}
-                      onAddNewMethod={handleAddNewMethod}
-                      selectedMethodId={selectedPaymentMethod?.id}
-                    />
-                  )}
-
-                  {selectedPaymentMethod && (
-                    <div className="space-y-4">
-                      <div className="p-4 border rounded-lg bg-accent/5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <CreditCard className="h-5 w-5" />
-                            <div>
-                              <div className="font-medium">
-                                {selectedPaymentMethod.card_type} ending in {selectedPaymentMethod.last_four}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                Expires {selectedPaymentMethod.exp_month}/{selectedPaymentMethod.exp_year}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center pt-4 border-t">
-                        <div className="text-lg font-semibold">
-                          Total: ${totalAmount.toFixed(2)}
-                        </div>
-                        <Button 
-                          onClick={processOrderWithSavedCard}
-                          disabled={isProcessing}
-                          className="min-w-[140px]"
-                        >
-                          {isProcessing ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {showNewCardForm && clientSecret && (
-                    <Elements stripe={stripePromise}>
-                      <ModernPaymentForm
-                        clientSecret={clientSecret}
-                        amount={totalAmount}
-                        onSuccess={handleNewCardPaymentSuccess}
-                        allowSaveCard={!!user}
-                        buttonText={`Pay $${totalAmount.toFixed(2)}`}
-                      />
-                    </Elements>
-                  )}
-
-                  {!user && !showNewCardForm && (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">
-                        Sign in to use saved payment methods or continue as guest
-                      </p>
-                      <Button 
-                        onClick={handleAddNewMethod}
-                        variant="outline"
-                      >
-                        Continue as Guest
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        <div className="lg:col-span-1">
-          <div className="sticky top-4">
-            <CheckoutOrderSummary 
-              items={cartItems}
-              subtotal={subtotal}
-              shippingCost={shippingCost}
-              taxAmount={taxAmount}
-              totalAmount={totalAmount}
-            />
-          </div>
-        </div>
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <OrderSummary 
+          items={cartItems}
+          subtotal={subtotal}
+          shippingCost={shippingCost}
+          taxAmount={taxAmount}
+          totalAmount={totalAmount}
+        />
       </div>
     </div>
   );

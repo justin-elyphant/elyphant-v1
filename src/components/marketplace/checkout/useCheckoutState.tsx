@@ -65,6 +65,66 @@ export const useCheckoutState = () => {
     if (user && profile) {
       console.log("Pre-filling checkout state with user/profile data:", { user: user.id, profile });
       
+      // State abbreviation to full name mapping
+      const stateMapping: Record<string, string> = {
+        'CA': 'California',
+        'NY': 'New York',
+        'TX': 'Texas',
+        'FL': 'Florida',
+        'AL': 'Alabama',
+        'AK': 'Alaska',
+        'AZ': 'Arizona',
+        'AR': 'Arkansas',
+        'CO': 'Colorado',
+        'CT': 'Connecticut',
+        'DE': 'Delaware',
+        'GA': 'Georgia',
+        'HI': 'Hawaii',
+        'ID': 'Idaho',
+        'IL': 'Illinois',
+        'IN': 'Indiana',
+        'IA': 'Iowa',
+        'KS': 'Kansas',
+        'KY': 'Kentucky',
+        'LA': 'Louisiana',
+        'ME': 'Maine',
+        'MD': 'Maryland',
+        'MA': 'Massachusetts',
+        'MI': 'Michigan',
+        'MN': 'Minnesota',
+        'MS': 'Mississippi',
+        'MO': 'Missouri',
+        'MT': 'Montana',
+        'NE': 'Nebraska',
+        'NV': 'Nevada',
+        'NH': 'New Hampshire',
+        'NJ': 'New Jersey',
+        'NM': 'New Mexico',
+        'NC': 'North Carolina',
+        'ND': 'North Dakota',
+        'OH': 'Ohio',
+        'OK': 'Oklahoma',
+        'OR': 'Oregon',
+        'PA': 'Pennsylvania',
+        'RI': 'Rhode Island',
+        'SC': 'South Carolina',
+        'SD': 'South Dakota',
+        'TN': 'Tennessee',
+        'UT': 'Utah',
+        'VT': 'Vermont',
+        'VA': 'Virginia',
+        'WA': 'Washington',
+        'WV': 'West Virginia',
+        'WI': 'Wisconsin',
+        'WY': 'Wyoming'
+      };
+
+      // Country abbreviation to full name mapping
+      const countryMapping: Record<string, string> = {
+        'US': 'United States',
+        'USA': 'United States',
+      };
+      
       setCheckoutData(prev => {
         const updatedShippingInfo = {
           ...prev.shippingInfo,
@@ -82,9 +142,16 @@ export const useCheckoutState = () => {
           updatedShippingInfo.address = prev.shippingInfo.address || address.address_line1 || address.street || "";
           updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || address.address_line2 || "";
           updatedShippingInfo.city = prev.shippingInfo.city || address.city || "";
-          updatedShippingInfo.state = prev.shippingInfo.state || address.state || "";
+          
+          // Map state abbreviation to full name
+          const mappedState = address.state ? (stateMapping[address.state] || address.state) : "";
+          updatedShippingInfo.state = prev.shippingInfo.state || mappedState;
+          
           updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || address.zip_code || address.zipCode || "";
-          updatedShippingInfo.country = prev.shippingInfo.country || address.country || "United States";
+          
+          // Map country abbreviation to full name
+          const mappedCountry = address.country ? (countryMapping[address.country] || address.country) : "United States";
+          updatedShippingInfo.country = prev.shippingInfo.country || mappedCountry;
         }
 
         return {

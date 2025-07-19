@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { getShippingQuote, ShippingOption } from "@/components/marketplace/zinc/services/shippingQuoteService";
 
 export interface ShippingInfo {
   name: string;
@@ -17,22 +16,10 @@ export interface ShippingInfo {
   country: string;
 }
 
-export interface GiftOptions {
-  isGift: boolean;
-  recipientName: string;
-  giftMessage: string;
-  giftWrapping: boolean;
-  scheduledDeliveryDate?: string;
-  isSurpriseGift: boolean;
-}
-
 export interface CheckoutData {
   shippingInfo: ShippingInfo;
   shippingMethod: string;
   paymentMethod: string;
-  giftOptions: GiftOptions;
-  shippingOptions: ShippingOption[];
-  selectedShippingOption: ShippingOption | null;
 }
 
 export const useCheckoutState = () => {
@@ -42,7 +29,6 @@ export const useCheckoutState = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("shipping");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     shippingInfo: {
       name: "",
@@ -55,16 +41,7 @@ export const useCheckoutState = () => {
       country: "United States"
     },
     shippingMethod: "standard",
-    paymentMethod: "card",
-    giftOptions: {
-      isGift: false,
-      recipientName: "",
-      giftMessage: "",
-      giftWrapping: false,
-      isSurpriseGift: false
-    },
-    shippingOptions: [],
-    selectedShippingOption: null
+    paymentMethod: "card"
   });
 
   // Redirect if cart is empty
@@ -122,31 +99,10 @@ export const useCheckoutState = () => {
     }));
   };
 
-  const handleShippingMethodChange = (optionId: string) => {
-    const selectedOption = checkoutData.shippingOptions.find(opt => opt.id === optionId);
-    if (selectedOption) {
-      setCheckoutData(prev => ({
-        ...prev,
-        shippingMethod: optionId,
-        selectedShippingOption: selectedOption
-      }));
-    }
-  };
-
   const handlePaymentMethodChange = (method: string) => {
     setCheckoutData(prev => ({
       ...prev,
       paymentMethod: method
-    }));
-  };
-
-  const handleGiftOptionsChange = (options: Partial<GiftOptions>) => {
-    setCheckoutData(prev => ({
-      ...prev,
-      giftOptions: {
-        ...prev.giftOptions,
-        ...options
-      }
     }));
   };
   
@@ -162,14 +118,11 @@ export const useCheckoutState = () => {
   return {
     activeTab,
     isProcessing,
-    isLoadingShipping,
     checkoutData,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
-    handleShippingMethodChange,
     handlePaymentMethodChange,
-    handleGiftOptionsChange,
     canPlaceOrder,
     getShippingCost
   };

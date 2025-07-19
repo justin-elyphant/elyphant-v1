@@ -1,21 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Package, CreditCard, Truck, Gift } from 'lucide-react';
+import { Truck, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import { Separator } from '@/components/ui/separator';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
-import ShippingOptionsForm from '@/components/marketplace/checkout/ShippingOptionsForm';
-import PaymentMethodForm from '@/components/payments/PaymentMethodForm';
-import GiftOptionsForm from '@/components/marketplace/checkout/GiftOptionsForm';
+import PaymentForm from '@/components/marketplace/checkout/PaymentForm';
 import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
-import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
+import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 
 interface EnhancedCheckoutFormProps {
   onCheckoutComplete: (orderData: any) => void;
@@ -24,58 +18,23 @@ interface EnhancedCheckoutFormProps {
 const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   onCheckoutComplete
 }) => {
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const { cartItems, cartTotal } = useCart();
-  const navigate = useNavigate();
   const {
     activeTab,
     isProcessing,
-    isLoadingShipping,
     checkoutData,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
-    handleShippingMethodChange,
     handlePaymentMethodChange,
-    handleGiftOptionsChange,
     canPlaceOrder,
     getShippingCost
   } = useCheckoutState();
 
-  // Pre-fill shipping information from profile (only once)
-  useEffect(() => {
-    if (profile && user && !checkoutData.shippingInfo.name) {
-      console.log("Pre-filling checkout form with profile data:", profile);
-      
-      const shippingUpdate: Partial<ShippingInfo> = {
-        name: profile.name || user.user_metadata?.name || "",
-        email: profile.email || user.email || ""
-      };
-
-      // Pre-fill shipping address from profile if available
-      if (profile.shipping_address) {
-        const address = profile.shipping_address;
-        console.log("Found shipping address in profile:", address);
-        console.log("State value:", address.state);
-        console.log("Country value:", address.country);
-        
-        shippingUpdate.address = address.address_line1 || address.street || "";
-        shippingUpdate.addressLine2 = address.address_line2 || "";
-        shippingUpdate.city = address.city || "";
-        // Ensure state is the full state name, not abbreviation
-        shippingUpdate.state = address.state === "CA" ? "California" : address.state || "";
-        shippingUpdate.zipCode = address.zip_code || address.zipCode || "";
-        // Ensure country is the full country name
-        shippingUpdate.country = address.country === "US" ? "United States" : (address.country || "United States");
-        
-        console.log("Shipping update object:", shippingUpdate);
-        toast.success("Shipping information pre-filled from your profile");
-      }
-
-      handleUpdateShippingInfo(shippingUpdate);
-    }
-  }, [profile, user]);
+  const handleShippingMethodChange = (method: string) => {
+    // Since we're using flat rate shipping, this is simplified
+    console.log("Shipping method selected:", method);
+  };
 
   const handlePlaceOrder = async () => {
     if (!canPlaceOrder()) {
@@ -87,46 +46,50 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
     
     try {
       const orderData = {
-        ...checkoutData,
-        shippingCost: getShippingCost(),
-        total: getShippingCost() // This would include item costs in a real implementation
+        items: cartItems,
+        shipping: checkoutData.shippingInfo,
+        payment: { method: checkoutData.paymentMethod },
+        totals: {
+          subtotal: cartTotal,
+          shipping: getShippingCost(),
+          tax: cartTotal * 0.0825,
+          total: cartTotal + getShippingCost() + (cartTotal * 0.0825)
+        }
       };
 
       await onCheckoutComplete(orderData);
     } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error("Failed to place order. Please try again.");
+      console.error("Order processing failed:", error);
+      toast.error("Failed to process order. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const canProceedToNext = () => {
+    if (activeTab === "shipping") {
+      const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+      return name && email && address && city && state && zipCode;
+    }
+    return true;
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => navigate("/cart")}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Cart
-        </Button>
-        <h1 className="text-2xl font-bold">Checkout</h1>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
+        <p className="text-muted-foreground mt-2">
+          Complete your order below
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="shipping" className="flex items-center gap-2">
                 <Truck className="h-4 w-4" />
                 Shipping
-              </TabsTrigger>
-              <TabsTrigger value="gifts" className="flex items-center gap-2">
-                <Gift className="h-4 w-4" />
-                Gifts
               </TabsTrigger>
               <TabsTrigger value="payment" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
@@ -148,74 +111,75 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               </Card>
             </TabsContent>
 
-
-            <TabsContent value="gifts" className="mt-6">
+            <TabsContent value="payment" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gift Options</CardTitle>
+                  <CardTitle>Payment Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <GiftOptionsForm
-                    giftOptions={checkoutData.giftOptions}
-                    onUpdate={handleGiftOptionsChange}
+                  <PaymentForm
+                    paymentMethod={checkoutData.paymentMethod}
+                    onMethodChange={handlePaymentMethodChange}
                   />
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="payment" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PaymentMethodForm />
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <div className="flex justify-between mt-6">
+              <div>
+                {activeTab === "payment" && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleTabChange("shipping")}
+                  >
+                    Back to Shipping
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                {activeTab !== "payment" && (
+                  <Button 
+                    onClick={() => {
+                      const tabs = ["shipping", "payment"];
+                      const currentIndex = tabs.indexOf(activeTab);
+                      if (currentIndex < tabs.length - 1) {
+                        handleTabChange(tabs[currentIndex + 1]);
+                      }
+                    }}
+                    disabled={!canProceedToNext()}
+                  >
+                    Continue to Payment
+                  </Button>
+                )}
+                
+                {activeTab === "payment" && (
+                  <Button 
+                    onClick={handlePlaceOrder}
+                    disabled={!canPlaceOrder() || isProcessing}
+                    className="min-w-32"
+                  >
+                    {isProcessing ? "Processing..." : "Place Order"}
+                  </Button>
+                )}
+              </div>
+            </div>
           </Tabs>
-
-          <div className="mt-6 flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/cart")}
-            >
-              Back to Cart
-            </Button>
-            
-            {activeTab !== "payment" && (
-              <Button 
-                onClick={() => {
-                  const tabs = ["shipping", "gifts", "payment"];
-                  const currentIndex = tabs.indexOf(activeTab);
-                  if (currentIndex < tabs.length - 1) {
-                    handleTabChange(tabs[currentIndex + 1]);
-                  }
-                }}
-              >
-                Continue
-              </Button>
-            )}
-            
-            {activeTab === "payment" && (
-              <Button 
-                onClick={handlePlaceOrder}
-                disabled={!canPlaceOrder() || isProcessing}
-                className="min-w-[120px]"
-              >
-                {isProcessing ? "Processing..." : "Place Order"}
-              </Button>
-            )}
-          </div>
         </div>
 
         <div className="lg:col-span-1">
-          <OrderSummary 
+          <OrderSummary
             cartItems={cartItems}
             cartTotal={cartTotal}
             shippingCost={getShippingCost()}
-            selectedShippingOption={checkoutData.selectedShippingOption}
-            giftOptions={checkoutData.giftOptions}
+            selectedShippingOption={null}
+            giftOptions={{
+              isGift: false,
+              recipientName: "",
+              giftMessage: "",
+              giftWrapping: false,
+              isSurpriseGift: false
+            }}
           />
         </div>
       </div>

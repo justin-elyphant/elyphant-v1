@@ -71,21 +71,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <Separator />
         
         {/* Shipping Method Display */}
-        {selectedShippingOption && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <span>Shipping Method</span>
-            </div>
-            <div className="flex justify-between text-sm pl-6">
-              <span className="text-muted-foreground">{selectedShippingOption.name}</span>
-              <span>{selectedShippingOption.price === 0 ? "FREE" : `$${selectedShippingOption.price.toFixed(2)}`}</span>
-            </div>
-            <p className="text-xs text-muted-foreground pl-6">
-              {selectedShippingOption.delivery_time}
-            </p>
-            <Separator />
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Shipping</span>
+            <span className="text-muted-foreground">Calculated at checkout</span>
           </div>
-        )}
+        </div>
+        
+        <Separator />
         
         {/* Gift Options Display */}
         {giftOptions.isGift && (

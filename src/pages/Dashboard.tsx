@@ -5,6 +5,7 @@ import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -55,19 +56,21 @@ const Dashboard = () => {
   const firstName = user?.user_metadata?.first_name;
 
   return (
-    <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
-      {/* Welcome Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-          Welcome {firstName ? `${firstName} ` : ''}to Elyphant
-        </h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
-          Explore your dashboard to connect with friends, schedule gifts, or build your wishlists to share
-        </p>
+    <SidebarLayout>
+      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+        {/* Welcome Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Welcome {firstName ? `${firstName} ` : ''}to Elyphant
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Explore your dashboard to connect with friends, schedule gifts, or build your wishlists to share
+          </p>
+        </div>
+        
+        <DashboardGrid />
       </div>
-      
-      <DashboardGrid />
-    </div>
+    </SidebarLayout>
   );
 };
 

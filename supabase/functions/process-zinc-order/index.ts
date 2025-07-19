@@ -94,6 +94,9 @@ serve(async (req) => {
       throw new Error('Zinc API key not configured')
     }
 
+    console.log('Sending request to Zinc API...')
+    console.log('Order data:', JSON.stringify(enhancedOrderRequest, null, 2))
+    
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {
@@ -102,6 +105,8 @@ serve(async (req) => {
       },
       body: JSON.stringify(enhancedOrderRequest),
     })
+    
+    console.log('Zinc API response status:', zincResponse.status, zincResponse.statusText)
 
     let zincResult = null
     let zincError = null

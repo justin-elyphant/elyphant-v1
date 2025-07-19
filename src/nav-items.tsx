@@ -1,5 +1,6 @@
+
 import { ReactElement } from "react";
-import Index from "./pages/Index";
+import Home from "./pages/Home";
 import TestZincOrder from "./pages/TestZincOrder";
 import AdminAmazonCredentials from "./pages/AdminAmazonCredentials";
 
@@ -9,6 +10,6 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { to: "/", page: <Index /> },
+  { to: "/", page: <Home /> },
   { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

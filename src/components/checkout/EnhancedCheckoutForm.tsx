@@ -202,6 +202,20 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               Back to Cart
             </Button>
             
+            {activeTab !== "payment" && (
+              <Button 
+                onClick={() => {
+                  const tabs = ["shipping", "shipping-options", "gifts", "payment"];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  if (currentIndex < tabs.length - 1) {
+                    handleTabChange(tabs[currentIndex + 1]);
+                  }
+                }}
+              >
+                Continue
+              </Button>
+            )}
+            
             {activeTab === "payment" && (
               <Button 
                 onClick={handlePlaceOrder}

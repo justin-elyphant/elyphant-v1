@@ -53,22 +53,26 @@ serve(async (req) => {
     }
 
     if (action === 'get') {
-      // Get the active Elyphant credentials (should only be one record)
+      // Get the active Elyphant credentials (get the most recent one if multiple exist)
       const { data, error } = await supabase
         .from('elyphant_amazon_credentials')
         .select('email, is_verified, last_verified_at, created_at, credential_name, notes, verification_code')
         .eq('is_active', true)
-        .single()
+        .order('updated_at', { ascending: false })
+        .limit(1)
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        throw error
+      if (error) {
+        console.error('Error fetching credentials:', error);
+        throw error;
       }
+
+      const credentials = data && data.length > 0 ? data[0] : null;
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          credentials: data,
-          hasCredentials: !!data 
+          credentials: credentials,
+          hasCredentials: !!credentials 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )

@@ -77,6 +77,15 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <Button 
+            variant="outline" 
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2"
+          >
+            ← Back to Cart
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
         <p className="text-muted-foreground mt-2">
           Complete your order below

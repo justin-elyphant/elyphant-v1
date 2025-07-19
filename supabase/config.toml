@@ -49,7 +49,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.cancel-payment-intent]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-order-confirmation]
 verify_jwt = false

@@ -1,197 +1,118 @@
-
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Mail, Home, Gift, Calendar } from "lucide-react";
-import { getOrderById, Order } from "@/services/orderService";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { getOrderById } from "@/services/orderService";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Loader2 } from "lucide-react";
 import Header from "@/components/home/Header";
-import { Skeleton } from "@/components/ui/skeleton";
+import Footer from "@/components/home/Footer";
+import type { Order } from "@/services/orderService";
 
 const OrderConfirmation = () => {
-  const { orderId } = useParams();
+  const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) return;
-      
+      if (!orderId) {
+        toast.error('Invalid order ID');
+        navigate('/marketplace');
+        return;
+      }
+
       try {
         const orderData = await getOrderById(orderId);
+        if (!orderData) {
+          toast.error('Order not found');
+          navigate('/orders');
+          return;
+        }
         setOrder(orderData);
       } catch (error) {
-        console.error("Error fetching order:", error);
-        toast.error("Failed to load order details");
+        console.error('Error fetching order:', error);
+        toast.error('Failed to load order details');
+        navigate('/orders');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, navigate]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="container mx-auto py-8 px-4 max-w-2xl">
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-32 w-full" />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto" />
+            <h2 className="text-xl font-semibold">Loading order details...</h2>
+            <p className="text-muted-foreground">Please wait while we fetch your order information.</p>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="container mx-auto py-8 px-4 text-center">
-          <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
-          <p className="text-muted-foreground mb-8">
-            We couldn't find the order you're looking for.
-          </p>
-          <Button onClick={() => navigate("/marketplace")}>
-            Continue Shopping
-          </Button>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h2 className="text-xl font-semibold">Order not found</h2>
+            <p className="text-muted-foreground">The order you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate('/orders')}>View All Orders</Button>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="space-y-4">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <h1 className="text-2xl font-bold text-green-600">Order Confirmed!</h1>
+            <p className="text-muted-foreground">
+              Thank you for your purchase. Your order has been confirmed and will be processed shortly.
+            </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-green-800">
+                Order Number: {order.order_number}
+              </p>
+              <p className="text-sm text-green-700 mt-1">
+                Total: ${order.total_amount.toFixed(2)} {order.currency.toUpperCase()}
+              </p>
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-          <p className="text-muted-foreground">
-            Thank you for your order. We'll send you updates as your order progresses.
-          </p>
+          
+          <div className="space-y-3">
+            <Button 
+              onClick={() => navigate('/orders')} 
+              className="w-full"
+            >
+              View My Orders
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/marketplace')} 
+              className="w-full"
+            >
+              Continue Shopping
+            </Button>
+          </div>
         </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Order Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Order Number</p>
-                <p className="font-medium">{order.order_number}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Order Date</p>
-                <p className="font-medium">
-                  {new Date(order.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Total Amount</p>
-                <p className="font-medium">${order.total_amount.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Status</p>
-                <p className="font-medium capitalize">{order.status}</p>
-              </div>
-            </div>
-
-            {/* Gift Information */}
-            {order.is_gift && (
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2 flex items-center gap-2">
-                  <Gift className="h-4 w-4 text-green-600" />
-                  Gift Options
-                </h4>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>This order is marked as a gift</p>
-                  {order.gift_message && (
-                    <p>Gift message: "{order.gift_message}"</p>
-                  )}
-                  {order.scheduled_delivery_date && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3" />
-                      <span>Scheduled delivery: {new Date(order.scheduled_delivery_date).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {order.is_surprise_gift && (
-                    <p className="text-orange-600">Surprise gift - no confirmation emails sent to buyer</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Items Ordered:</h4>
-              <div className="space-y-2">
-                {order.order_items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{item.product_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Qty: {item.quantity} × ${item.unit_price.toFixed(2)}
-                      </p>
-                    </div>
-                    <p className="font-medium">${item.total_price.toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Shipping Address:</h4>
-              <div className="text-sm text-muted-foreground">
-                <p>{order.shipping_info.name}</p>
-                <p>{order.shipping_info.address}</p>
-                <p>
-                  {order.shipping_info.city}, {order.shipping_info.state} {order.shipping_info.zipCode}
-                </p>
-                <p>{order.shipping_info.country}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button className="flex-1" onClick={() => navigate("/orders")}>
-            <Package className="h-4 w-4 mr-2" />
-            View All Orders
-          </Button>
-          <Button variant="outline" className="flex-1" onClick={() => navigate("/marketplace")}>
-            <Home className="h-4 w-4 mr-2" />
-            Continue Shopping
-          </Button>
-        </div>
-
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-center">
-              <Mail className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="font-medium">Email Confirmation Sent</p>
-                <p className="text-sm text-muted-foreground">
-                  We've sent order details to {order.shipping_info.email}
-                  {order.is_surprise_gift && " (gift recipient will not receive notifications)"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };

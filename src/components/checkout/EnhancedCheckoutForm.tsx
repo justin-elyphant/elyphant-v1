@@ -99,17 +99,22 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents
           currency: 'usd',
-          orderId: order.id,
-          customerEmail: user?.email
+          metadata: {
+            orderId: order.id,
+            userId: user?.id,
+            customerEmail: user?.email,
+            orderNumber: order.order_number
+          }
         }
       });
 
       if (error) {
+        console.error('Payment intent creation error:', error);
         throw new Error(error.message);
       }
 
-      console.log('Payment intent created:', data.clientSecret);
-      setClientSecret(data.clientSecret);
+      console.log('Payment intent created:', data.client_secret);
+      setClientSecret(data.client_secret);
       setCurrentStep(3); // Move to payment step
     } catch (error) {
       console.error('Error creating payment intent:', error);

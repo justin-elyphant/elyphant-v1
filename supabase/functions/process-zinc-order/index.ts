@@ -42,19 +42,44 @@ serve(async (req) => {
 
     console.log(`Processing Zinc order for user ${order.user_id}, order ${orderId}`);
 
-    // Get Elyphant Amazon credentials
-    const { data: credentials, error: credError } = await supabaseClient
+    // Get Elyphant Amazon credentials (try active first, then any available)
+    let { data: credentials, error: credError } = await supabaseClient
       .from('elyphant_amazon_credentials')
       .select('*')
       .eq('is_active', true)
       .single();
 
+    // If no active credentials, get any available credentials
+    if (credError && credError.code === 'PGRST116') {
+      const { data: fallbackCreds, error: fallbackError } = await supabaseClient
+        .from('elyphant_amazon_credentials')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      credentials = fallbackCreds;
+      credError = fallbackError;
+    }
+
     if (credError || !credentials) {
-      throw new Error('Amazon credentials not configured');
+      console.error('Amazon credentials error:', credError);
+      throw new Error(`Amazon credentials not configured: ${credError?.message}`);
+    }
+
+    console.log(`Using Amazon credentials: ${credentials.email} (verified: ${credentials.is_verified})`);
+    
+    if (!credentials.is_verified && !isTestMode) {
+      console.warn('Amazon credentials not verified, but proceeding with order');
     }
 
     // Prepare Zinc order data
     const shippingAddress = order.shipping_info;
+    
+    // Parse name field into first and last name
+    const nameParts = (shippingAddress.name || "").split(" ");
+    const firstName = nameParts[0] || "Customer";
+    const lastName = nameParts.slice(1).join(" ") || "Name";
+    
     const orderData = {
       retailer: "amazon",
       products: order.order_items.map((item: any) => ({
@@ -62,21 +87,21 @@ serve(async (req) => {
         quantity: item.quantity
       })),
       shipping_address: {
-        first_name: shippingAddress.firstName,
-        last_name: shippingAddress.lastName,
-        address_line1: shippingAddress.address,
-        address_line2: shippingAddress.apartment || "",
-        zip_code: shippingAddress.zipCode,
+        first_name: firstName,
+        last_name: lastName,
+        address_line1: shippingAddress.address || shippingAddress.address_line1,
+        address_line2: shippingAddress.addressLine2 || shippingAddress.address_line2 || "",
+        zip_code: shippingAddress.zipCode || shippingAddress.zip_code,
         city: shippingAddress.city,
         state: shippingAddress.state,
         country: "US"
       },
       billing_address: {
-        first_name: shippingAddress.firstName,
-        last_name: shippingAddress.lastName,
-        address_line1: shippingAddress.address,
-        address_line2: shippingAddress.apartment || "",
-        zip_code: shippingAddress.zipCode,
+        first_name: firstName,
+        last_name: lastName,
+        address_line1: shippingAddress.address || shippingAddress.address_line1,
+        address_line2: shippingAddress.addressLine2 || shippingAddress.address_line2 || "",
+        zip_code: shippingAddress.zipCode || shippingAddress.zip_code,
         city: shippingAddress.city,
         state: shippingAddress.state,
         country: "US"

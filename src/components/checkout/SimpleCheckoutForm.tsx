@@ -46,6 +46,8 @@ const SimpleCheckoutForm: React.FC = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [useNewCard, setUseNewCard] = useState(false);
+  const [savePaymentMethod, setSavePaymentMethod] = useState(true);
+  const [paymentMethodsRefreshKey, setPaymentMethodsRefreshKey] = useState(0);
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     name: '',
@@ -189,7 +191,7 @@ const SimpleCheckoutForm: React.FC = () => {
     }
   };
 
-  const handlePaymentSuccess = async (paymentIntentId: string) => {
+  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
       // Update order status
       const { error } = await supabase
@@ -202,6 +204,25 @@ const SimpleCheckoutForm: React.FC = () => {
         .eq('stripe_payment_intent_id', paymentIntentId);
 
       if (error) throw error;
+
+      // Save payment method if user chose to and we have a new payment method
+      if (savePaymentMethod && paymentMethodId && useNewCard) {
+        try {
+          await supabase.functions.invoke('save-payment-method', {
+            body: {
+              paymentMethodId,
+            makeDefault: !selectedPaymentMethod // Make it default if no other method was selected
+          }
+        });
+        toast.success('Payment method saved for future use');
+        // Refresh payment methods list
+        setPaymentMethodsRefreshKey(prev => prev + 1);
+      } catch (saveError) {
+        console.error('Error saving payment method:', saveError);
+        // Don't fail the whole flow if saving payment method fails
+        toast.error('Payment succeeded but failed to save payment method');
+      }
+      }
 
       // Clear cart
       clearCart();
@@ -244,6 +265,7 @@ const SimpleCheckoutForm: React.FC = () => {
             onError={handlePaymentError}
             isProcessing={isProcessing}
             onProcessingChange={setIsProcessing}
+            savePaymentMethod={savePaymentMethod && useNewCard}
           />
         </Elements>
       </div>
@@ -316,11 +338,31 @@ const SimpleCheckoutForm: React.FC = () => {
           </CardHeader>
           <CardContent>
             {user && (
-              <SavedPaymentMethodsSection
-                onSelectPaymentMethod={handleSelectPaymentMethod}
-                onAddNewMethod={handleAddNewMethod}
-                selectedMethodId={selectedPaymentMethod?.id}
-              />
+              <>
+                <SavedPaymentMethodsSection
+                  onSelectPaymentMethod={handleSelectPaymentMethod}
+                  onAddNewMethod={handleAddNewMethod}
+                  selectedMethodId={selectedPaymentMethod?.id}
+                  refreshKey={paymentMethodsRefreshKey}
+                />
+                
+                {useNewCard && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="save-payment-method"
+                        checked={savePaymentMethod}
+                        onChange={(e) => setSavePaymentMethod(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor="save-payment-method" className="text-sm text-gray-600">
+                        Save this payment method for future purchases
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             
             {!user && (

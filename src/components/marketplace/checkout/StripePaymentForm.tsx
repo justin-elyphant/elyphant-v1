@@ -7,10 +7,11 @@ import { toast } from "sonner";
 interface StripePaymentFormProps {
   clientSecret: string;
   amount: number;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (paymentIntentId: string, paymentMethodId?: string) => void;
   onError: (error: string) => void;
   isProcessing: boolean;
   onProcessingChange: (processing: boolean) => void;
+  savePaymentMethod?: boolean;
 }
 
 const StripePaymentForm = ({
@@ -19,7 +20,8 @@ const StripePaymentForm = ({
   onSuccess,
   onError,
   isProcessing,
-  onProcessingChange
+  onProcessingChange,
+  savePaymentMethod = false
 }: StripePaymentFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -58,6 +60,7 @@ const StripePaymentForm = ({
               // Optional: add billing details if needed
             },
           },
+          setup_future_usage: savePaymentMethod ? 'off_session' : undefined,
         }
       );
 
@@ -72,7 +75,9 @@ const StripePaymentForm = ({
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Payment successful!');
-        onSuccess(paymentIntent.id);
+        // Pass both payment intent ID and payment method ID if available
+        const paymentMethodId = paymentIntent.payment_method as string;
+        onSuccess(paymentIntent.id, paymentMethodId);
       } else {
         throw new Error('Payment was not completed successfully');
       }

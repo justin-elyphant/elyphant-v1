@@ -23,12 +23,14 @@ interface SavedPaymentMethodsSectionProps {
   onSelectPaymentMethod: (method: PaymentMethod | null) => void;
   onAddNewMethod: () => void;
   selectedMethodId?: string;
+  refreshKey?: number; // Add this to trigger refresh from parent
 }
 
 const SavedPaymentMethodsSection: React.FC<SavedPaymentMethodsSectionProps> = ({
   onSelectPaymentMethod,
   onAddNewMethod,
-  selectedMethodId
+  selectedMethodId,
+  refreshKey
 }) => {
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -64,7 +66,7 @@ const SavedPaymentMethodsSection: React.FC<SavedPaymentMethodsSectionProps> = ({
 
   useEffect(() => {
     fetchPaymentMethods();
-  }, [user]);
+  }, [user, refreshKey]); // Add refreshKey to dependencies
 
   useEffect(() => {
     if (selectedMethodId) {

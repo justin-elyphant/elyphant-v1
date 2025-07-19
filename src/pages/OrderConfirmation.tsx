@@ -265,7 +265,7 @@ const OrderConfirmation = () => {
                   <div className="text-sm">
                     <p>{order.shipping_info.name}</p>
                     <p>{order.shipping_info.address}</p>
-                    {order.shipping_info.apartment && <p>{order.shipping_info.apartment}</p>}
+                    {order.shipping_info.addressLine2 && <p>{order.shipping_info.addressLine2}</p>}
                     <p>{order.shipping_info.city}, {order.shipping_info.state} {order.shipping_info.zipCode}</p>
                   </div>
                 </div>

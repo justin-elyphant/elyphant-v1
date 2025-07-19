@@ -11,10 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, CreditCard, User, MapPin, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
-import ShippingForm from '@/components/marketplace/checkout/ShippingForm';
+import CheckoutShippingForm from '@/components/checkout/CheckoutShippingForm';
 import GiftOptionsForm from '@/components/marketplace/checkout/GiftOptionsForm';
-import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
-import StripePaymentForm from '@/components/marketplace/checkout/StripePaymentForm';
+import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
+import ModernPaymentForm from '@/components/payments/ModernPaymentForm';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
@@ -34,15 +34,28 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
   const [orderId, setOrderId] = useState<string>('');
 
   const {
-    shippingInfo,
-    setShippingInfo,
-    giftOptions,
-    setGiftOptions,
-    subtotal,
-    shippingCost,
-    taxAmount,
-    totalAmount
+    checkoutData,
+    handleUpdateShippingInfo,
+    getShippingCost
   } = useCheckoutState();
+  
+  const [giftOptions, setGiftOptions] = useState({
+    isGift: false,
+    recipientName: '',
+    giftMessage: '',
+    giftWrapping: false,
+    isSurpriseGift: false
+  });
+
+  const handleGiftOptionsUpdate = (data: any) => {
+    setGiftOptions(prev => ({ ...prev, ...data }));
+  };
+
+  // Calculate pricing
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const shippingCost = getShippingCost();
+  const taxAmount = subtotal * 0.08; // 8% tax
+  const totalAmount = subtotal + shippingCost + taxAmount;
 
   const createOrderRecord = async () => {
     if (!user) {
@@ -60,7 +73,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
         shippingCost,
         taxAmount,
         totalAmount,
-        shippingInfo,
+        shippingInfo: checkoutData.shippingInfo,
         giftOptions
       };
 
@@ -179,7 +192,8 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zipCode) {
+      const { name, address, city, state, zipCode } = checkoutData.shippingInfo;
+      if (!name || !address || !city || !state || !zipCode) {
         toast.error('Please fill in all shipping information');
         return;
       }
@@ -207,9 +221,9 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
               <MapPin className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Shipping Information</h2>
             </div>
-            <ShippingForm 
-              shippingInfo={shippingInfo} 
-              onChange={setShippingInfo} 
+            <CheckoutShippingForm 
+              shippingInfo={checkoutData.shippingInfo} 
+              onUpdateShippingInfo={handleUpdateShippingInfo} 
             />
           </div>
         );
@@ -222,7 +236,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
             </div>
             <GiftOptionsForm 
               giftOptions={giftOptions} 
-              onChange={setGiftOptions} 
+              onUpdate={handleGiftOptionsUpdate} 
             />
           </div>
         );
@@ -235,13 +249,10 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
             </div>
             {clientSecret && (
               <Elements stripe={stripePromise}>
-                <StripePaymentForm
+                <ModernPaymentForm
                   clientSecret={clientSecret}
                   amount={totalAmount}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                  isProcessing={isProcessing}
-                  onProcessingChange={setIsProcessing}
+                  onSuccess={(paymentIntentId) => handlePaymentSuccess(paymentIntentId)}
                 />
               </Elements>
             )}
@@ -301,7 +312,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
       </div>
 
       <div className="lg:sticky lg:top-6 lg:self-start">
-        <OrderSummary 
+        <CheckoutOrderSummary 
           items={cartItems}
           subtotal={subtotal}
           shippingCost={shippingCost}

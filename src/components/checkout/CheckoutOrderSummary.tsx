@@ -8,6 +8,7 @@ interface CheckoutOrderSummaryProps {
   items: CartItem[];
   subtotal: number;
   shippingCost: number;
+  giftingFee: number;
   taxAmount: number;
   totalAmount: number;
 }
@@ -16,6 +17,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   items,
   subtotal,
   shippingCost,
+  giftingFee,
   taxAmount,
   totalAmount
 }) => {
@@ -64,6 +66,12 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
             <span>Shipping</span>
             <span>${shippingCost.toFixed(2)}</span>
           </div>
+          {giftingFee > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Gifting Fee</span>
+              <span>${giftingFee.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span>Tax</span>
             <span>${taxAmount.toFixed(2)}</span>

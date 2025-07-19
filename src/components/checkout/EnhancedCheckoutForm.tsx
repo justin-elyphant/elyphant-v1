@@ -54,8 +54,9 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
   // Calculate pricing
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
+  const giftingFee = 2.99; // Add gifting fee
   const taxAmount = subtotal * 0.08; // 8% tax
-  const totalAmount = subtotal + shippingCost + taxAmount;
+  const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
 
   const createOrderRecord = async () => {
     if (!user) {
@@ -71,6 +72,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
         cartItems,
         subtotal,
         shippingCost,
+        giftingFee,
         taxAmount,
         totalAmount,
         shippingInfo: checkoutData.shippingInfo,
@@ -321,6 +323,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
           items={cartItems}
           subtotal={subtotal}
           shippingCost={shippingCost}
+          giftingFee={giftingFee}
           taxAmount={taxAmount}
           totalAmount={totalAmount}
         />

@@ -80,8 +80,9 @@ const SimpleCheckoutForm: React.FC = () => {
   }, [user, profile]);
 
   const shippingCost = 6.99;
+  const giftingFee = 2.99; // Add gifting fee
   const taxAmount = cartTotal * 0.0825; // 8.25% tax
-  const totalAmount = cartTotal + shippingCost + taxAmount;
+  const totalAmount = cartTotal + shippingCost + giftingFee + taxAmount;
 
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedPaymentMethod(method);
@@ -392,6 +393,7 @@ const SimpleCheckoutForm: React.FC = () => {
           items={cartItems}
           subtotal={cartTotal}
           shippingCost={shippingCost}
+          giftingFee={giftingFee}
           taxAmount={taxAmount}
           totalAmount={totalAmount}
         />

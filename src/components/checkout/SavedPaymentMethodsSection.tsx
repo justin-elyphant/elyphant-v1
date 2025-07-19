@@ -1,12 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Trash2, Shield } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
+import { CreditCard, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PaymentMethod {
@@ -22,43 +22,71 @@ interface PaymentMethod {
 interface SavedPaymentMethodsSectionProps {
   onSelectPaymentMethod: (method: PaymentMethod | null) => void;
   onAddNewMethod: () => void;
-  selectedMethodId?: string | null;
+  selectedMethodId?: string;
 }
 
-const SavedPaymentMethodsSection = ({
+const SavedPaymentMethodsSection: React.FC<SavedPaymentMethodsSectionProps> = ({
   onSelectPaymentMethod,
   onAddNewMethod,
   selectedMethodId
-}: SavedPaymentMethodsSectionProps) => {
+}) => {
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      fetchPaymentMethods();
-    }
-  }, [user]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedValue, setSelectedValue] = useState<string>('');
 
   const fetchPaymentMethods = async () => {
+    if (!user) return;
+
     try {
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false });
 
       if (error) throw error;
       setPaymentMethods(data || []);
+
+      // Auto-select default payment method
+      const defaultMethod = data?.find(method => method.is_default);
+      if (defaultMethod && !selectedMethodId) {
+        setSelectedValue(defaultMethod.id);
+        onSelectPaymentMethod(defaultMethod);
+      }
     } catch (error) {
       console.error('Error fetching payment methods:', error);
-      toast.error('Failed to load saved payment methods');
+      toast.error('Failed to load payment methods');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteMethod = async (methodId: string) => {
+  useEffect(() => {
+    fetchPaymentMethods();
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedMethodId) {
+      setSelectedValue(selectedMethodId);
+    }
+  }, [selectedMethodId]);
+
+  const handleSelectionChange = (value: string) => {
+    setSelectedValue(value);
+    
+    if (value === 'new-card') {
+      onSelectPaymentMethod(null);
+      onAddNewMethod();
+    } else {
+      const method = paymentMethods.find(m => m.id === value);
+      onSelectPaymentMethod(method || null);
+    }
+  };
+
+  const handleRemoveMethod = async (methodId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
     try {
       const { error } = await supabase
         .from('payment_methods')
@@ -66,150 +94,92 @@ const SavedPaymentMethodsSection = ({
         .eq('id', methodId);
 
       if (error) throw error;
-
-      setPaymentMethods(prev => prev.filter(method => method.id !== methodId));
-      toast.success('Payment method removed');
       
-      // If this was the selected method, clear selection
-      if (selectedMethodId === methodId) {
+      toast.success('Payment method removed');
+      fetchPaymentMethods();
+      
+      // If the removed method was selected, clear selection
+      if (selectedValue === methodId) {
+        setSelectedValue('');
         onSelectPaymentMethod(null);
       }
     } catch (error) {
-      console.error('Error deleting payment method:', error);
+      console.error('Error removing payment method:', error);
       toast.error('Failed to remove payment method');
     }
   };
 
-  const getCardIcon = (cardType: string) => {
-    switch (cardType.toLowerCase()) {
-      case 'visa':
-        return '💳';
-      case 'mastercard':
-        return '💳';
-      case 'amex':
-        return '💳';
-      case 'discover':
-        return '💳';
-      default:
-        return <CreditCard className="h-5 w-5" />;
-    }
-  };
-
-  const formatCardType = (cardType: string) => {
-    return cardType.charAt(0).toUpperCase() + cardType.slice(1);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+      <div className="py-4 text-center text-muted-foreground">
+        Loading payment methods...
       </div>
     );
   }
 
-  if (paymentMethods.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Payment Method</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-6 pt-0">
-          <CreditCard className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-3">No saved payment methods</p>
-          <Button onClick={onAddNewMethod} className="flex items-center gap-2 h-9">
-            <Plus className="h-4 w-4" />
-            Add Payment Method
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-base">
-          <span>Choose Payment Method</span>
-          <Badge variant="secondary" className="flex items-center gap-1 px-2 py-1">
-            <Shield className="h-3 w-3" />
-            Secure
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-0">
-        <RadioGroup 
-          value={selectedMethodId || 'new'} 
-          onValueChange={(value) => {
-            if (value === 'new') {
-              onSelectPaymentMethod(null);
-            } else {
-              const method = paymentMethods.find(m => m.id === value);
-              onSelectPaymentMethod(method || null);
-            }
-          }}
-        >
-          {/* Saved Payment Methods */}
-          {paymentMethods.map((method) => (
-            <div key={method.id} className="border rounded-lg p-3">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={method.id} id={method.id} />
-                <Label 
-                  htmlFor={method.id} 
-                  className="flex-1 cursor-pointer flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    {typeof getCardIcon(method.card_type) === 'string' ? (
-                      <span className="text-lg">{getCardIcon(method.card_type)}</span>
-                    ) : (
-                      getCardIcon(method.card_type)
+    <div className="space-y-4">
+      <RadioGroup value={selectedValue} onValueChange={handleSelectionChange}>
+        {paymentMethods.map((method) => (
+          <div key={method.id} className="relative">
+            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+              <RadioGroupItem value={method.id} id={method.id} />
+              <Label htmlFor={method.id} className="flex items-center gap-3 cursor-pointer flex-1">
+                <CreditCard className="h-5 w-5" />
+                <div className="flex-1">
+                  <div className="font-medium flex items-center gap-2">
+                    {method.card_type} ending in {method.last_four}
+                    {method.is_default && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                        Default
+                      </span>
                     )}
-                    <div>
-                      <div className="font-medium text-sm">
-                        {formatCardType(method.card_type)} •••• {method.last_four}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
-                        {method.is_default && <span className="ml-2 text-primary">• Default</span>}
-                      </div>
-                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDeleteMethod(method.id);
-                    }}
-                    className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </Label>
-              </div>
-            </div>
-          ))}
-
-          {/* Add New Payment Method Option */}
-          <div className="border border-dashed rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="new" id="new" />
-              <Label 
-                htmlFor="new" 
-                className="flex-1 cursor-pointer flex items-center gap-2"
-              >
-                <div className="border border-dashed border-muted-foreground rounded p-1">
-                  <Plus className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Add new payment method</div>
-                  <div className="text-xs text-muted-foreground">Credit or debit card</div>
+                  <div className="text-sm text-muted-foreground">
+                    Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
+                  </div>
                 </div>
               </Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => handleRemoveMethod(method.id, e)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </RadioGroup>
-      </CardContent>
-    </Card>
+        ))}
+
+        {/* Add new card option */}
+        <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors border-dashed">
+          <RadioGroupItem value="new-card" id="new-card" />
+          <Label htmlFor="new-card" className="flex items-center gap-3 cursor-pointer flex-1">
+            <Plus className="h-5 w-5" />
+            <div>
+              <div className="font-medium">Add new payment method</div>
+              <div className="text-sm text-muted-foreground">
+                Use a different card for this purchase
+              </div>
+            </div>
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {paymentMethods.length === 0 && (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">No saved payment methods</p>
+            <Button onClick={onAddNewMethod} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Payment Method
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

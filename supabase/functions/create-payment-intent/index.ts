@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -13,7 +14,6 @@ serve(async (req) => {
   try {
     const { amount, currency = 'usd', metadata = {} } = await req.json()
     
-    // Enhanced logging for payment intent creation
     console.log('🔵 Creating payment intent:', {
       amount: amount,
       currency: currency,
@@ -26,30 +26,47 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     )
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Check if we should use an existing payment method
+    const useExistingPaymentMethod = metadata.useExistingPaymentMethod;
+    const paymentMethodId = metadata.paymentMethodId;
+
+    let paymentIntentData: any = {
       amount: Math.round(amount),
       currency: currency,
-      automatic_payment_methods: {
-        enabled: true,
-      },
       metadata: {
         ...metadata,
         created_source: 'create-payment-intent-function',
         created_at: new Date().toISOString()
       }
-    })
+    };
+
+    if (useExistingPaymentMethod && paymentMethodId) {
+      // Use existing payment method
+      paymentIntentData.payment_method = paymentMethodId;
+      paymentIntentData.confirmation_method = 'manual';
+      paymentIntentData.confirm = true;
+    } else {
+      // Allow new payment method
+      paymentIntentData.automatic_payment_methods = {
+        enabled: true,
+      };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
     console.log('✅ Payment intent created successfully:', {
       id: paymentIntent.id,
       amount: paymentIntent.amount,
       status: paymentIntent.status,
-      client_secret: paymentIntent.client_secret ? 'present' : 'missing'
+      client_secret: paymentIntent.client_secret ? 'present' : 'missing',
+      payment_method: paymentIntent.payment_method || 'none'
     })
 
     return new Response(
       JSON.stringify({ 
         client_secret: paymentIntent.client_secret,
-        payment_intent_id: paymentIntent.id
+        payment_intent_id: paymentIntent.id,
+        status: paymentIntent.status
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

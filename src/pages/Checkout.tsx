@@ -2,21 +2,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
-import EnhancedCheckoutForm from '@/components/checkout/EnhancedCheckoutForm';
+import SimpleCheckoutForm from '@/components/checkout/SimpleCheckoutForm';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 
 const Checkout = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { cartItems } = useCart();
-
-  const handleCheckoutComplete = async (orderData: any) => {
-    console.log('Checkout complete:', orderData);
-    // Additional completion logic can go here
-  };
 
   // Redirect if cart is empty
   if (cartItems.length === 0) {
@@ -42,7 +35,7 @@ const Checkout = () => {
     <SidebarLayout>
       <div className="bg-gray-50 min-h-screen">
         <div className="container mx-auto px-4 py-8">
-          <EnhancedCheckoutForm onCheckoutComplete={handleCheckoutComplete} />
+          <SimpleCheckoutForm />
         </div>
       </div>
     </SidebarLayout>

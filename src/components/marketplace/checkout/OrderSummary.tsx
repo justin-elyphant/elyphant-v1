@@ -70,16 +70,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         
         <Separator />
         
-        {/* Shipping Method Display */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Shipping</span>
-            <span>${shippingCost.toFixed(2)}</span>
-          </div>
-        </div>
-        
-        <Separator />
-        
         {/* Gift Options Display */}
         {giftOptions.isGift && (
           <div className="space-y-2">
@@ -107,7 +97,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
         )}
         
-        {/* Transparent Price Breakdown with Real Shipping */}
+        {/* Transparent Price Breakdown */}
         <TransparentPriceBreakdown
           basePrice={cartTotal}
           shippingCost={shippingCost}

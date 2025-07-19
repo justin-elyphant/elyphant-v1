@@ -3,6 +3,7 @@ import React from "react";
 import { useAuth } from "@/contexts/auth";
 import MyWishlists from "@/components/gifting/MyWishlists";
 import { ProductProvider } from "@/contexts/ProductContext";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const Wishlists = () => {
   const { user } = useAuth();
@@ -43,12 +44,14 @@ const Wishlists = () => {
   const pageTitle = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
 
   return (
-    <ProductProvider>
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
-        <MyWishlists />
-      </div>
-    </ProductProvider>
+    <SidebarLayout>
+      <ProductProvider>
+        <div className="container mx-auto py-8 px-4">
+          <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
+          <MyWishlists />
+        </div>
+      </ProductProvider>
+    </SidebarLayout>
   );
 };
 

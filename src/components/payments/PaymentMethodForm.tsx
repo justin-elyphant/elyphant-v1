@@ -13,6 +13,7 @@ interface PaymentMethodFormProps {
 const PaymentMethodForm = ({ onSuccess }: PaymentMethodFormProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cardholderName, setCardholderName] = useState('');
   
   const stripe = useStripe();
   const elements = useElements();
@@ -40,6 +41,9 @@ const PaymentMethodForm = ({ onSuccess }: PaymentMethodFormProps) => {
       const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
+        billing_details: {
+          name: cardholderName || user.email,
+        },
       });
       
       if (stripeError) {
@@ -67,8 +71,9 @@ const PaymentMethodForm = ({ onSuccess }: PaymentMethodFormProps) => {
         
         toast.success("Payment method added successfully");
         
-        // Reset the card element
+        // Reset the form
         cardElement.clear();
+        setCardholderName('');
         
         // Call onSuccess if provided
         if (onSuccess) {
@@ -85,38 +90,70 @@ const PaymentMethodForm = ({ onSuccess }: PaymentMethodFormProps) => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <div className="p-3 border rounded-md bg-white">
-        <CardElement 
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }}
-        />
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-semibold">Add Payment Method</h3>
+        <p className="text-muted-foreground text-sm">
+          Securely add a new payment method to your account
+        </p>
       </div>
-      
-      {error && (
-        <div className="text-red-500 text-sm">{error}</div>
-      )}
-      
-      <Button 
-        type="submit" 
-        disabled={!stripe || isProcessing}
-        className="w-full"
-      >
-        {isProcessing ? "Processing..." : "Add Payment Method"}
-      </Button>
-    </form>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="cardholder-name" className="text-sm font-medium">
+            Cardholder Name
+          </label>
+          <input
+            id="cardholder-name"
+            type="text"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            placeholder="Enter cardholder name"
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Card Information</label>
+          <div className="p-3 border border-input rounded-md bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+            <CardElement 
+              options={{
+                style: {
+                  base: {
+                    fontSize: '16px',
+                    color: 'hsl(var(--foreground))',
+                    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                    '::placeholder': {
+                      color: 'hsl(var(--muted-foreground))',
+                    },
+                  },
+                  invalid: {
+                    color: 'hsl(var(--destructive))',
+                  },
+                },
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Your payment information is encrypted and secure
+          </p>
+        </div>
+        
+        {error && (
+          <div className="text-destructive text-sm bg-destructive/10 p-3 rounded-md">
+            {error}
+          </div>
+        )}
+        
+        <Button 
+          type="submit" 
+          disabled={!stripe || isProcessing}
+          className="w-full"
+        >
+          {isProcessing ? "Adding Payment Method..." : "Add Payment Method"}
+        </Button>
+      </form>
+    </div>
   );
 };
 

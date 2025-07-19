@@ -28,18 +28,36 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ shippingInfo, onUpdate }) =
   const { defaultAddress, loading } = useDefaultAddress();
   const addressWasAutoFilled = React.useRef(false);
 
+  // State abbreviation to full name mapping
+  const stateMapping: Record<string, string> = {
+    'CA': 'California',
+    'NY': 'New York',
+    'TX': 'Texas',
+    'FL': 'Florida',
+    // Add more as needed
+  };
+
+  // Country abbreviation to full name mapping
+  const countryMapping: Record<string, string> = {
+    'US': 'United States',
+    'USA': 'United States',
+  };
+
   // Auto-fill the form with default address when it loads
   useEffect(() => {
     if (defaultAddress && !addressWasAutoFilled.current && !shippingInfo.address) {
+      const mappedState = stateMapping[defaultAddress.address.state] || defaultAddress.address.state || 'California';
+      const mappedCountry = countryMapping[defaultAddress.address.country] || defaultAddress.address.country || 'United States';
+      
       onUpdate({
         name: defaultAddress.name,
         email: shippingInfo.email,
         address: defaultAddress.address.street,
         addressLine2: defaultAddress.address.address_line2 || '',
         city: defaultAddress.address.city,
-        state: defaultAddress.address.state || 'California',
+        state: mappedState,
         zipCode: defaultAddress.address.zipCode,
-        country: defaultAddress.address.country
+        country: mappedCountry
       });
       addressWasAutoFilled.current = true;
     }

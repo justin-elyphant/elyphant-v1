@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import TestZincOrder from "./pages/TestZincOrder";
 import AdminAmazonCredentials from "./pages/AdminAmazonCredentials";
 import Marketplace from "./pages/Marketplace";
+import Dashboard from "./pages/Dashboard";
 
 export interface NavItem {
   to: string;
@@ -13,5 +14,6 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { to: "/", page: <Home /> },
   { to: "/marketplace", page: <Marketplace /> },
+  { to: "/dashboard", page: <Dashboard /> },
   { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

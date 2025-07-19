@@ -8,11 +8,11 @@ import { TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import CheckoutTabs from './CheckoutTabs';
-import ShippingForm from './ShippingForm';
-import OrderSummary from './OrderSummary';
-import PaymentSection from '@/components/payments/PaymentSection';
-import { useCheckoutState } from './useCheckoutState';
+import CheckoutTabs from '@/components/marketplace/checkout/CheckoutTabs';
+import { ShippingAddressForm } from '@/components/profile-setup/steps/shipping-address/ShippingAddressForm';
+import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
+import PaymentSection from '@/components/marketplace/checkout/PaymentSection';
+import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import { createOrder } from '@/services/orderService';
 import { toast } from 'sonner';
 
@@ -29,13 +29,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   
   const {
     activeTab,
-    setActiveTab,
-    shippingInfo,
-    setShippingInfo,
-    giftOptions,
-    setGiftOptions,
     isProcessing,
-    setIsProcessing
+    checkoutData,
+    setIsProcessing,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    canPlaceOrder,
+    getShippingCost
   } = useCheckoutState();
 
   const cartTotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -43,12 +43,11 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   const getTaxAmount = () => cartTotal * 0.0825; // 8.25% tax
   const totalAmount = cartTotal + shippingCost + getTaxAmount();
 
-  const canProceedToNext = (tab: string) => {
+  const canProceedToNext = (tab: string): boolean => {
     switch (tab) {
       case 'shipping':
-        return shippingInfo.firstName && shippingInfo.lastName && 
-               shippingInfo.address && shippingInfo.city && 
-               shippingInfo.state && shippingInfo.zipCode;
+        const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+        return !!(name && email && address && city && state && zipCode);
       default:
         return true;
     }
@@ -56,13 +55,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
 
   const handleNextStep = () => {
     if (activeTab === 'shipping' && canProceedToNext('shipping')) {
-      setActiveTab('payment');
+      handleTabChange('payment');
     }
   };
 
   const handleBackStep = () => {
     if (activeTab === 'payment') {
-      setActiveTab('shipping');
+      handleTabChange('shipping');
     }
   };
 
@@ -77,8 +76,8 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         shippingCost,
         taxAmount: getTaxAmount(),
         totalAmount,
-        shippingInfo,
-        giftOptions,
+        shippingInfo: checkoutData.shippingInfo,
+        giftOptions: { isGift: false, recipientName: '', giftMessage: '', giftWrapping: false, isSurpriseGift: false },
         paymentIntentId
       };
 
@@ -95,30 +94,30 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 quantity: item.quantity
               })),
               shipping_address: {
-                first_name: shippingInfo.firstName,
-                last_name: shippingInfo.lastName,
-                address_line1: shippingInfo.address,
-                address_line2: shippingInfo.address2 || '',
-                zip_code: shippingInfo.zipCode,
-                city: shippingInfo.city,
-                state: shippingInfo.state,
+                first_name: checkoutData.shippingInfo.name?.split(' ')[0] || '',
+                last_name: checkoutData.shippingInfo.name?.split(' ')[1] || '',
+                address_line1: checkoutData.shippingInfo.address,
+                address_line2: '',
+                zip_code: checkoutData.shippingInfo.zipCode,
+                city: checkoutData.shippingInfo.city,
+                state: checkoutData.shippingInfo.state,
                 country: 'US'
               },
               billing_address: {
-                first_name: shippingInfo.firstName,
-                last_name: shippingInfo.lastName,
-                address_line1: shippingInfo.address,
-                address_line2: shippingInfo.address2 || '',
-                zip_code: shippingInfo.zipCode,
-                city: shippingInfo.city,
-                state: shippingInfo.state,
+                first_name: checkoutData.shippingInfo.name?.split(' ')[0] || '',
+                last_name: checkoutData.shippingInfo.name?.split(' ')[1] || '',
+                address_line1: checkoutData.shippingInfo.address,
+                address_line2: '',
+                zip_code: checkoutData.shippingInfo.zipCode,
+                city: checkoutData.shippingInfo.city,
+                state: checkoutData.shippingInfo.state,
                 country: 'US'
               },
               payment_method: {
                 use_gift: false
               },
-              is_gift: giftOptions.isGift,
-              gift_message: giftOptions.giftMessage,
+              is_gift: false,
+              gift_message: '',
               is_test: true
             },
             orderId: order.id,
@@ -171,7 +170,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
         <div className="lg:col-span-2">
           <CheckoutTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             availableTabs={availableTabs}
             canProceedToNext={canProceedToNext}
           >
@@ -179,9 +178,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
-                  <ShippingForm
-                    shippingInfo={shippingInfo}
-                    onShippingInfoChange={setShippingInfo}
+                  <ShippingAddressForm
+                    address={checkoutData.shippingInfo}
+                    onChange={handleUpdateShippingInfo}
                   />
                   <div className="flex justify-end mt-6">
                     <Button 
@@ -211,14 +210,16 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                   </div>
                   
                   <PaymentSection
-                    amount={totalAmount}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onPaymentError={(error) => {
-                      console.error('Payment error:', error);
-                      toast.error('Payment failed. Please try again.');
-                    }}
+                    paymentMethod={checkoutData.paymentMethod}
+                    onPaymentMethodChange={() => {}}
+                    onPlaceOrder={handlePaymentSuccess}
                     isProcessing={isProcessing}
-                    onProcessingChange={setIsProcessing}
+                    canPlaceOrder={canPlaceOrder() !== ''}
+                    onPrevious={handleBackStep}
+                    totalAmount={totalAmount}
+                    cartItems={cartItems}
+                    shippingInfo={checkoutData.shippingInfo}
+                    giftOptions={{ isGift: false, recipientName: '', giftMessage: '', giftWrapping: false, isSurpriseGift: false }}
                   />
                 </CardContent>
               </Card>
@@ -232,7 +233,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
             cartTotal={cartTotal}
             shippingCost={shippingCost}
             selectedShippingOption={null}
-            giftOptions={giftOptions}
+            giftOptions={{ isGift: false, recipientName: '', giftMessage: '', giftWrapping: false, isSurpriseGift: false }}
           />
         </div>
       </div>

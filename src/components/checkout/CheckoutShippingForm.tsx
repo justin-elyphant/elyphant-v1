@@ -7,6 +7,7 @@ interface ShippingInfo {
   name: string;
   email: string;
   address: string;
+  addressLine2?: string;
   city: string;
   state: string;
   zipCode: string;
@@ -22,6 +23,74 @@ const CheckoutShippingForm: React.FC<CheckoutShippingFormProps> = ({
   shippingInfo,
   onUpdateShippingInfo
 }) => {
+  // State mapping from abbreviations to full names
+  const stateMapping: { [key: string]: string } = {
+    'CA': 'California',
+    'NY': 'New York',
+    'TX': 'Texas',
+    'FL': 'Florida',
+    'WA': 'Washington',
+    'OR': 'Oregon',
+    'NV': 'Nevada',
+    'AZ': 'Arizona',
+    'CO': 'Colorado',
+    'UT': 'Utah',
+    'NM': 'New Mexico',
+    'ID': 'Idaho',
+    'MT': 'Montana',
+    'WY': 'Wyoming',
+    'ND': 'North Dakota',
+    'SD': 'South Dakota',
+    'NE': 'Nebraska',
+    'KS': 'Kansas',
+    'OK': 'Oklahoma',
+    'AR': 'Arkansas',
+    'LA': 'Louisiana',
+    'MS': 'Mississippi',
+    'AL': 'Alabama',
+    'TN': 'Tennessee',
+    'KY': 'Kentucky',
+    'IN': 'Indiana',
+    'OH': 'Ohio',
+    'MI': 'Michigan',
+    'IL': 'Illinois',
+    'WI': 'Wisconsin',
+    'MN': 'Minnesota',
+    'IA': 'Iowa',
+    'MO': 'Missouri',
+    'GA': 'Georgia',
+    'SC': 'South Carolina',
+    'NC': 'North Carolina',
+    'VA': 'Virginia',
+    'WV': 'West Virginia',
+    'MD': 'Maryland',
+    'DE': 'Delaware',
+    'PA': 'Pennsylvania',
+    'NJ': 'New Jersey',
+    'CT': 'Connecticut',
+    'RI': 'Rhode Island',
+    'MA': 'Massachusetts',
+    'VT': 'Vermont',
+    'NH': 'New Hampshire',
+    'ME': 'Maine',
+    'AK': 'Alaska',
+    'HI': 'Hawaii'
+  };
+
+  // Country mapping from codes to full names
+  const countryMapping: { [key: string]: string } = {
+    'US': 'United States',
+    'CA': 'Canada'
+  };
+
+  // Get display values for dropdowns
+  const getStateDisplayValue = () => {
+    return stateMapping[shippingInfo.state] || shippingInfo.state;
+  };
+
+  const getCountryDisplayValue = () => {
+    return countryMapping[shippingInfo.country] || shippingInfo.country;
+  };
   return (
     <div className="space-y-4">
       <div>
@@ -55,6 +124,16 @@ const CheckoutShippingForm: React.FC<CheckoutShippingFormProps> = ({
         />
       </div>
 
+      <div>
+        <Label htmlFor="addressLine2">Address Line 2 (Optional)</Label>
+        <Input
+          id="addressLine2"
+          value={shippingInfo.addressLine2 || ''}
+          onChange={(e) => onUpdateShippingInfo({ addressLine2: e.target.value })}
+          placeholder="Apt, suite, etc."
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="city">City</Label>
@@ -67,7 +146,7 @@ const CheckoutShippingForm: React.FC<CheckoutShippingFormProps> = ({
         </div>
         <div>
           <Label htmlFor="state">State</Label>
-          <Select value={shippingInfo.state} onValueChange={(value) => onUpdateShippingInfo({ state: value })}>
+          <Select value={getStateDisplayValue()} onValueChange={(value) => onUpdateShippingInfo({ state: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Select state" />
             </SelectTrigger>
@@ -139,7 +218,7 @@ const CheckoutShippingForm: React.FC<CheckoutShippingFormProps> = ({
         </div>
         <div>
           <Label htmlFor="country">Country</Label>
-          <Select value={shippingInfo.country} onValueChange={(value) => onUpdateShippingInfo({ country: value })}>
+          <Select value={getCountryDisplayValue()} onValueChange={(value) => onUpdateShippingInfo({ country: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Select country" />
             </SelectTrigger>

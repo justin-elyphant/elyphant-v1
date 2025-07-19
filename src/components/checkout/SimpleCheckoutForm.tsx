@@ -20,6 +20,7 @@ interface ShippingInfo {
   name: string;
   email: string;
   address: string;
+  addressLine2?: string;
   city: string;
   state: string;
   zipCode: string;
@@ -50,6 +51,7 @@ const SimpleCheckoutForm: React.FC = () => {
     name: '',
     email: '',
     address: '',
+    addressLine2: '',
     city: '',
     state: '',
     zipCode: '',
@@ -66,6 +68,7 @@ const SimpleCheckoutForm: React.FC = () => {
         name: profile.name || prev.name,
         email: user.email || prev.email,
         address: (shippingAddress?.address_line1 || shippingAddress?.street) || prev.address,
+        addressLine2: shippingAddress?.address_line2 || prev.addressLine2,
         city: shippingAddress?.city || prev.city,
         state: shippingAddress?.state || prev.state,
         zipCode: (shippingAddress?.zip_code || shippingAddress?.zipCode) || prev.zipCode,

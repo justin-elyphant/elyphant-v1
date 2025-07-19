@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
+import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, MapPin, Package } from 'lucide-react';
@@ -37,6 +38,7 @@ interface PaymentMethod {
 
 const SimpleCheckoutForm: React.FC = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { cartItems, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -56,14 +58,21 @@ const SimpleCheckoutForm: React.FC = () => {
 
   // Pre-fill shipping info from user profile
   useEffect(() => {
-    if (user) {
-      // This will be handled by the CheckoutShippingForm component
+    if (user && profile) {
+      const shippingAddress = profile.shipping_address;
+      
       setShippingInfo(prev => ({
         ...prev,
-        email: user.email || ''
+        name: profile.name || prev.name,
+        email: user.email || prev.email,
+        address: (shippingAddress?.address_line1 || shippingAddress?.street) || prev.address,
+        city: shippingAddress?.city || prev.city,
+        state: shippingAddress?.state || prev.state,
+        zipCode: (shippingAddress?.zip_code || shippingAddress?.zipCode) || prev.zipCode,
+        country: shippingAddress?.country || prev.country
       }));
     }
-  }, [user]);
+  }, [user, profile]);
 
   const shippingCost = 6.99;
   const taxAmount = cartTotal * 0.0825; // 8.25% tax

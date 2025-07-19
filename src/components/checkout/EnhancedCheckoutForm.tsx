@@ -39,7 +39,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
   } = useCheckoutState();
 
   const cartTotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shippingCost = 9.99; // Standard shipping cost
+  const shippingCost = getShippingCost(); // Use the shipping cost from the hook
   const getTaxAmount = () => cartTotal * 0.0825; // 8.25% tax
   const totalAmount = cartTotal + shippingCost + getTaxAmount();
 

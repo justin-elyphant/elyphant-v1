@@ -103,6 +103,9 @@ const MultiDestinationSummary: React.FC<MultiDestinationSummaryProps> = ({
                   <div className="text-sm text-blue-700">
                     <p>{profile?.name}</p>
                     <p>{shippingAddress.address_line1 || shippingAddress.street}</p>
+                    {shippingAddress.address_line2 && (
+                      <p>{shippingAddress.address_line2}</p>
+                    )}
                     <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code || shippingAddress.zipCode}</p>
                   </div>
                 ) : (

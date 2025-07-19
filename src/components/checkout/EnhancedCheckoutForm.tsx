@@ -9,7 +9,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import CheckoutTabs from '@/components/marketplace/checkout/CheckoutTabs';
-import { ShippingAddressForm } from '@/components/profile-setup/steps/shipping-address/ShippingAddressForm';
+import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
 import OrderSummary from '@/components/marketplace/checkout/OrderSummary';
 import PaymentSection from '@/components/marketplace/checkout/PaymentSection';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
@@ -97,7 +97,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 first_name: checkoutData.shippingInfo.name?.split(' ')[0] || '',
                 last_name: checkoutData.shippingInfo.name?.split(' ')[1] || '',
                 address_line1: checkoutData.shippingInfo.address,
-                address_line2: '',
+                address_line2: checkoutData.shippingInfo.addressLine2 || '',
                 zip_code: checkoutData.shippingInfo.zipCode,
                 city: checkoutData.shippingInfo.city,
                 state: checkoutData.shippingInfo.state,
@@ -107,7 +107,7 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
                 first_name: checkoutData.shippingInfo.name?.split(' ')[0] || '',
                 last_name: checkoutData.shippingInfo.name?.split(' ')[1] || '',
                 address_line1: checkoutData.shippingInfo.address,
-                address_line2: '',
+                address_line2: checkoutData.shippingInfo.addressLine2 || '',
                 zip_code: checkoutData.shippingInfo.zipCode,
                 city: checkoutData.shippingInfo.city,
                 state: checkoutData.shippingInfo.state,
@@ -178,9 +178,9 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
-                  <ShippingAddressForm
-                    address={checkoutData.shippingInfo}
-                    onChange={handleUpdateShippingInfo}
+                  <CheckoutForm
+                    shippingInfo={checkoutData.shippingInfo}
+                    onUpdate={handleUpdateShippingInfo}
                   />
                   <div className="flex justify-end mt-6">
                     <Button 

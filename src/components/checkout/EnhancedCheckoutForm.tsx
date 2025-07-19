@@ -72,9 +72,13 @@ const EnhancedCheckoutForm: React.FC<EnhancedCheckoutFormProps> = ({
       }
 
       if (data?.url) {
-        // Redirect to Stripe Checkout
+        // Redirect to Stripe Checkout at top level to avoid iframe issues
         console.log("Redirecting to Stripe checkout:", data.url);
-        window.location.href = data.url;
+        if (window.top) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
       } else {
         throw new Error('No checkout URL received from Stripe');
       }

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Truck, CreditCard, FileText, CheckCircle } from 'lucide-react';
-import ShippingForm from './ShippingForm';
+import CheckoutForm from '../marketplace/checkout/CheckoutForm';
 import PaymentForm from '../marketplace/checkout/PaymentForm';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import PaymentMethodSelector from './PaymentMethodSelector';
@@ -20,11 +20,10 @@ import { usePricingSettings } from '@/hooks/usePricingSettings';
 
 interface CheckoutData {
   shippingInfo: {
-    firstName: string;
-    lastName: string;
+    name: string;
     email: string;
-    phone: string;
     address: string;
+    addressLine2: string;
     city: string;
     state: string;
     zipCode: string;
@@ -42,15 +41,14 @@ const UnifiedCheckoutForm = () => {
   const [activeTab, setActiveTab] = useState('shipping');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     shippingInfo: {
-      firstName: '',
-      lastName: '',
+      name: '',
       email: user?.email || '',
-      phone: '',
       address: '',
+      addressLine2: '',
       city: '',
       state: '',
       zipCode: '',
-      country: 'US'
+      country: 'United States'
     },
     paymentMethod: 'card'
   });
@@ -69,6 +67,7 @@ const UnifiedCheckoutForm = () => {
   const shippingInfo = checkoutData.shippingInfo;
   const giftOptions = {
     isGift: false,
+    recipientName: '',
     giftMessage: '',
     giftWrapping: false,
     isSurpriseGift: false,
@@ -108,12 +107,11 @@ const UnifiedCheckoutForm = () => {
     }
   };
 
-  const handleShippingSubmit = (shippingData: any) => {
+  const handleShippingUpdate = (shippingData: any) => {
     setCheckoutData(prev => ({
       ...prev,
       shippingInfo: { ...prev.shippingInfo, ...shippingData }
     }));
-    setActiveTab('payment');
   };
 
   const handlePaymentMethodChange = (method: string) => {
@@ -156,8 +154,8 @@ const UnifiedCheckoutForm = () => {
   };
 
   const canProceedToPayment = () => {
-    const { firstName, lastName, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return firstName && lastName && email && address && city && state && zipCode;
+    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+    return name && email && address && city && state && zipCode;
   };
 
   const canProceedToReview = () => {
@@ -219,10 +217,19 @@ const UnifiedCheckoutForm = () => {
                   <CardTitle>Shipping Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ShippingForm
-                    initialData={checkoutData.shippingInfo}
-                    onSubmit={handleShippingSubmit}
+                  <CheckoutForm
+                    shippingInfo={checkoutData.shippingInfo}
+                    onUpdate={handleShippingUpdate}
                   />
+                  <div className="mt-6">
+                    <Button 
+                      onClick={() => setActiveTab('payment')}
+                      disabled={!canProceedToPayment()}
+                      className="w-full"
+                    >
+                      Continue to Payment
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

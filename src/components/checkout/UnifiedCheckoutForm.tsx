@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
-import PaymentMethodForm from '@/components/checkout/PaymentMethodForm';
+import PaymentMethodForm from '@/components/payments/PaymentMethodForm';
 import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
 import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
 import { createOrder } from '@/services/orderService';
@@ -69,21 +69,20 @@ const UnifiedCheckoutForm = () => {
     
     try {
       const orderData = {
-        user_id: user?.id,
-        items: cartItems.map(item => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price,
-          name: item.product.name
-        })),
-        shipping_info: checkoutData.shippingInfo,
-        shipping_method: checkoutData.shippingMethod,
-        payment_method: selectedPaymentMethod,
+        cartItems,
         subtotal,
-        shipping_cost: calculatedShippingCost,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
-        status: 'pending'
+        shippingCost: calculatedShippingCost,
+        taxAmount,
+        totalAmount,
+        shippingInfo: checkoutData.shippingInfo,
+        giftOptions: {
+          isGift: false,
+          recipientName: '',
+          giftMessage: '',
+          giftWrapping: false,
+          isSurpriseGift: false,
+          scheduledDeliveryDate: undefined
+        }
       };
 
       const order = await createOrder(orderData);
@@ -142,10 +141,10 @@ const UnifiedCheckoutForm = () => {
                 </TabsContent>
 
                 <TabsContent value="payment" className="space-y-6">
-                  <PaymentMethodForm
-                    selectedMethod={selectedPaymentMethod}
-                    onMethodChange={setSelectedPaymentMethod}
-                  />
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Payment Method</h3>
+                    <PaymentMethodForm />
+                  </div>
                   
                   <div className="flex justify-between">
                     <Button 

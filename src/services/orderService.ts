@@ -1,8 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
 import { DeliveryGroup } from "@/types/recipient";
+import { addressService } from "./addressService";
+import { FormAddress } from "@/utils/addressStandardization";
 
 export interface CreateOrderData {
   cartItems: CartItem[];
@@ -129,6 +130,26 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   }
 
   console.log('Order items created successfully:', createdItems.length);
+
+  // Save shipping address to user's address book if it's a new address
+  try {
+    const shippingAddress: FormAddress = {
+      street: orderData.shippingInfo.address,
+      city: orderData.shippingInfo.city,
+      state: orderData.shippingInfo.state,
+      zipCode: orderData.shippingInfo.zipCode,
+      country: orderData.shippingInfo.country
+    };
+
+    // Save as "Order Address" with current date
+    const addressName = `Order Address - ${new Date().toLocaleDateString()}`;
+    await addressService.saveAddressToProfile(user.id, shippingAddress, addressName, false);
+    
+    console.log('Shipping address saved to user profile');
+  } catch (error) {
+    console.error('Error saving shipping address to profile:', error);
+    // Don't fail the order if address saving fails
+  }
 
   return {
     ...order,

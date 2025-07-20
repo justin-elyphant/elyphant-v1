@@ -86,7 +86,7 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
           {
             id: "amazon_expedited",
             name: "Expedited Shipping",
-            price: 9.99,
+            price: 12.99,
             delivery_time: "2-3 business days", 
             description: "Faster delivery"
           }
@@ -108,44 +108,19 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
       return mockResponse;
     }
 
-    // For real Zinc API implementation (when available):
-    /*
-    const response = await fetch(`${ZINC_API_BASE_URL}/shipping_quote`, {
-      method: 'POST',
-      headers: getZincHeaders(),
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Zinc API shipping quote error:", errorData);
-      throw new Error(errorData.message || "Failed to get shipping quote");
-    }
-
-    const quoteData = await response.json();
-    
-    // Cache the response
-    shippingQuoteCache.set(cacheKey, {
-      data: quoteData,
-      timestamp: Date.now()
-    });
-
-    return quoteData;
-    */
-
     return null;
   } catch (error) {
     console.error("Error fetching shipping quote:", error);
     toast.error("Unable to fetch shipping options. Using default rates.");
     
-    // Return fallback shipping options
+    // Return fallback shipping options with fixed $6.99 rate
     return {
       retailer: request.retailer,
       shipping_options: [
         {
           id: "fallback_standard",
           name: "Standard Shipping",
-          price: 4.99,
+          price: 6.99,
           delivery_time: "3-5 business days"
         },
         {

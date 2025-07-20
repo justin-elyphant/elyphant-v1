@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { addressService } from "@/services/addressService";
+import { FormAddress } from "@/utils/addressStandardization";
 
 export interface ShippingInfo {
   name: string;
@@ -38,6 +40,8 @@ export const useCheckoutState = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("shipping");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
+  
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     shippingInfo: {
       name: "",
@@ -60,107 +64,49 @@ export const useCheckoutState = () => {
     }
   }, [cartItems.length, navigate]);
 
-  // Pre-fill with user data when available (only for empty fields)
+  // Load and pre-fill address data
   useEffect(() => {
-    if (user && profile) {
-      console.log("Pre-filling checkout state with user/profile data:", { user: user.id, profile });
-      
-      // State abbreviation to full name mapping
-      const stateMapping: Record<string, string> = {
-        'CA': 'California',
-        'NY': 'New York',
-        'TX': 'Texas',
-        'FL': 'Florida',
-        'AL': 'Alabama',
-        'AK': 'Alaska',
-        'AZ': 'Arizona',
-        'AR': 'Arkansas',
-        'CO': 'Colorado',
-        'CT': 'Connecticut',
-        'DE': 'Delaware',
-        'GA': 'Georgia',
-        'HI': 'Hawaii',
-        'ID': 'Idaho',
-        'IL': 'Illinois',
-        'IN': 'Indiana',
-        'IA': 'Iowa',
-        'KS': 'Kansas',
-        'KY': 'Kentucky',
-        'LA': 'Louisiana',
-        'ME': 'Maine',
-        'MD': 'Maryland',
-        'MA': 'Massachusetts',
-        'MI': 'Michigan',
-        'MN': 'Minnesota',
-        'MS': 'Mississippi',
-        'MO': 'Missouri',
-        'MT': 'Montana',
-        'NE': 'Nebraska',
-        'NV': 'Nevada',
-        'NH': 'New Hampshire',
-        'NJ': 'New Jersey',
-        'NM': 'New Mexico',
-        'NC': 'North Carolina',
-        'ND': 'North Dakota',
-        'OH': 'Ohio',
-        'OK': 'Oklahoma',
-        'OR': 'Oregon',
-        'PA': 'Pennsylvania',
-        'RI': 'Rhode Island',
-        'SC': 'South Carolina',
-        'SD': 'South Dakota',
-        'TN': 'Tennessee',
-        'UT': 'Utah',
-        'VT': 'Vermont',
-        'VA': 'Virginia',
-        'WA': 'Washington',
-        'WV': 'West Virginia',
-        'WI': 'Wisconsin',
-        'WY': 'Wyoming'
-      };
+    const loadAddressData = async () => {
+      if (!user || addressesLoaded) return;
 
-      // Country abbreviation to full name mapping
-      const countryMapping: Record<string, string> = {
-        'US': 'United States',
-        'USA': 'United States',
-      };
-      
-      setCheckoutData(prev => {
-        const updatedShippingInfo = {
-          ...prev.shippingInfo,
-          // Only pre-fill if current value is empty
-          name: prev.shippingInfo.name || profile.name || user.user_metadata?.name || "",
-          email: prev.shippingInfo.email || profile.email || user.email || ""
-        };
+      try {
+        // Get default address from address service
+        const defaultAddress = await addressService.getDefaultAddress(user.id);
+        
+        setCheckoutData(prev => {
+          const updatedShippingInfo = {
+            ...prev.shippingInfo,
+            // Pre-fill basic info from user/profile
+            name: prev.shippingInfo.name || profile?.name || user.user_metadata?.name || "",
+            email: prev.shippingInfo.email || profile?.email || user.email || ""
+          };
 
-        // Pre-fill shipping address if available in profile and fields are empty
-        if (profile.shipping_address) {
-          const address = profile.shipping_address;
-          console.log("Found shipping address in profile, pre-filling empty fields:", address);
-          
-          // Only pre-fill empty fields to preserve user input
-          updatedShippingInfo.address = prev.shippingInfo.address || address.address_line1 || address.street || "";
-          updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || address.address_line2 || "";
-          updatedShippingInfo.city = prev.shippingInfo.city || address.city || "";
-          
-          // Map state abbreviation to full name
-          const mappedState = address.state ? (stateMapping[address.state] || address.state) : "";
-          updatedShippingInfo.state = prev.shippingInfo.state || mappedState;
-          
-          updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || address.zip_code || address.zipCode || "";
-          
-          // Map country abbreviation to full name
-          const mappedCountry = address.country ? (countryMapping[address.country] || address.country) : "United States";
-          updatedShippingInfo.country = prev.shippingInfo.country || mappedCountry;
-        }
+          // Pre-fill address if available and fields are empty
+          if (defaultAddress) {
+            console.log("Pre-filling with default address:", defaultAddress);
+            updatedShippingInfo.address = prev.shippingInfo.address || defaultAddress.street;
+            updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || "";
+            updatedShippingInfo.city = prev.shippingInfo.city || defaultAddress.city;
+            updatedShippingInfo.state = prev.shippingInfo.state || defaultAddress.state;
+            updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || defaultAddress.zipCode;
+            updatedShippingInfo.country = prev.shippingInfo.country || defaultAddress.country;
+          }
 
-        return {
-          ...prev,
-          shippingInfo: updatedShippingInfo
-        };
-      });
-    }
-  }, [user, profile]);
+          return {
+            ...prev,
+            shippingInfo: updatedShippingInfo
+          };
+        });
+
+        setAddressesLoaded(true);
+      } catch (error) {
+        console.error("Error loading address data:", error);
+        setAddressesLoaded(true);
+      }
+    };
+
+    loadAddressData();
+  }, [user, profile, addressesLoaded]);
 
   const handleTabChange = (value: string) => {
     console.log("Changing tab to:", value);
@@ -190,18 +136,34 @@ export const useCheckoutState = () => {
   };
 
   const getShippingCost = () => {
-    return 6.99; // Flat shipping rate
+    return 6.99; // Fixed shipping rate
+  };
+
+  const saveCurrentAddressToProfile = async (name: string = 'Checkout Address', setAsDefault: boolean = false): Promise<boolean> => {
+    if (!user) return false;
+
+    const formAddress: FormAddress = {
+      street: checkoutData.shippingInfo.address,
+      city: checkoutData.shippingInfo.city,
+      state: checkoutData.shippingInfo.state,
+      zipCode: checkoutData.shippingInfo.zipCode,
+      country: checkoutData.shippingInfo.country
+    };
+
+    return await addressService.saveAddressToProfile(user.id, formAddress, name, setAsDefault);
   };
 
   return {
     activeTab,
     isProcessing,
     checkoutData,
+    addressesLoaded,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
     handlePaymentMethodChange,
     canPlaceOrder,
-    getShippingCost
+    getShippingCost,
+    saveCurrentAddressToProfile
   };
 };

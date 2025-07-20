@@ -1,178 +1,83 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/auth';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/integrations/stripe/client';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Truck, CreditCard, FileText, CheckCircle } from 'lucide-react';
-import CheckoutForm from '../marketplace/checkout/CheckoutForm';
-import PaymentForm from '../marketplace/checkout/PaymentForm';
-import CheckoutOrderSummary from './CheckoutOrderSummary';
-import PaymentMethodSelector from './PaymentMethodSelector';
-import { createOrder, CreateOrderData } from '@/services/orderService';
+import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight, ShoppingCart } from 'lucide-react';
+import UnifiedShippingSection from './UnifiedShippingSection';
+import PaymentMethodSelector from '@/components/marketplace/checkout/PaymentMethodSelector';
+import CheckoutOrderSummary from './CheckoutOrderSummary';
+import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useShippingQuote } from '@/components/marketplace/checkout/hooks/useShippingQuote';
+import { Badge } from '@/components/ui/badge';
+import { Shield } from 'lucide-react';
 
-interface CheckoutData {
-  shippingInfo: {
-    name: string;
-    email: string;
-    address: string;
-    addressLine2: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  paymentMethod: string;
-}
-
-const UnifiedCheckoutForm = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { cartItems, cartTotal, clearCart } = useCart();
+const UnifiedCheckoutForm: React.FC = () => {
+  const { cartItems, cartTotal } = useCart();
   const { calculatePriceBreakdown } = usePricingSettings();
   
-  const [activeTab, setActiveTab] = useState('shipping');
-  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-    shippingInfo: {
-      name: '',
-      email: user?.email || '',
-      address: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'United States'
-    },
-    paymentMethod: 'card'
-  });
-  
-  const [clientSecret, setClientSecret] = useState('');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const {
+    activeTab,
+    isProcessing,
+    checkoutData,
+    addressesLoaded,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handlePaymentMethodChange,
+    canPlaceOrder,
+    getShippingCost,
+    saveCurrentAddressToProfile
+  } = useCheckoutState();
 
-  // Calculate pricing with dynamic gifting fee
-  const shippingCost = 5.99; // This could be dynamic based on shipping method
+  const { shippingOptions, isLoading: isLoadingShipping } = useShippingQuote({
+    address: {
+      first_name: checkoutData.shippingInfo.name.split(' ')[0] || '',
+      last_name: checkoutData.shippingInfo.name.split(' ').slice(1).join(' ') || '',
+      address_line1: checkoutData.shippingInfo.address,
+      city: checkoutData.shippingInfo.city,
+      state: checkoutData.shippingInfo.state,
+      zip_code: checkoutData.shippingInfo.zipCode,
+      country: checkoutData.shippingInfo.country
+    },
+    products: cartItems.map(item => ({
+      product_id: item.product.product_id || item.product.id.toString(),
+      quantity: item.quantity
+    }))
+  });
+
+  const shippingCost = getShippingCost();
   const priceBreakdown = calculatePriceBreakdown(cartTotal, shippingCost);
-  const taxAmount = cartTotal * 0.08; // 8% tax
+  const taxAmount = cartTotal * 0.0825; // 8.25% tax rate
   const totalAmount = priceBreakdown.total + taxAmount;
 
-  // Extract data from checkoutData with fallbacks
-  const shippingInfo = checkoutData.shippingInfo;
-  const giftOptions = {
-    isGift: false,
-    recipientName: '',
-    giftMessage: '',
-    giftWrapping: false,
-    isSurpriseGift: false,
-    scheduledDeliveryDate: undefined
-  }; // Default gift options since gift functionality is not implemented yet
-
-  // Create payment intent when we reach the review tab
-  useEffect(() => {
-    if (activeTab === 'review' && !clientSecret && totalAmount > 0) {
-      createPaymentIntent();
-    }
-  }, [activeTab, totalAmount, clientSecret]);
-
-  const createPaymentIntent = async () => {
-    try {
-      console.log('Creating payment intent for amount:', totalAmount);
-      
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(totalAmount * 100), // Convert to cents
-          currency: 'usd',
-          metadata: {
-            order_type: 'marketplace_purchase',
-            item_count: cartItems.length,
-            user_id: user?.id
-          }
-        }
-      });
-
-      if (error) throw error;
-      
-      console.log('Payment intent created:', data);
-      setClientSecret(data.client_secret);
-    } catch (error) {
-      console.error('Error creating payment intent:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    }
-  };
-
-  const handleShippingUpdate = (shippingData: any) => {
-    setCheckoutData(prev => ({
-      ...prev,
-      shippingInfo: { ...prev.shippingInfo, ...shippingData }
-    }));
-  };
-
-  const handlePaymentMethodChange = (method: string) => {
-    setCheckoutData(prev => ({
-      ...prev,
-      paymentMethod: method
-    }));
-  };
-
-  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
-    try {
-      console.log('Payment successful, creating order...');
-      
-      const orderData: CreateOrderData = {
-        cartItems,
-        subtotal: cartTotal,
-        shippingCost,
-        taxAmount,
-        totalAmount,
-        shippingInfo,
-        giftOptions,
-        paymentIntentId
-      };
-
-      const order = await createOrder(orderData);
-      console.log('Order created successfully:', order.id);
-      
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate(`/order-confirmation/${order.id}`);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Payment successful but failed to create order. Please contact support.');
-    }
-  };
-
-  const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error);
-    toast.error(error);
-  };
-
-  const canProceedToPayment = () => {
+  const isShippingComplete = () => {
     const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
     return name && email && address && city && state && zipCode;
   };
 
-  const canProceedToReview = () => {
-    return canProceedToPayment() && checkoutData.paymentMethod;
+  const canContinueToPayment = () => {
+    return isShippingComplete() && checkoutData.shippingMethod;
   };
 
-  if (cartItems.length === 0) {
+  const handleContinueToPayment = () => {
+    if (canContinueToPayment()) {
+      handleTabChange('payment');
+    }
+  };
+
+  const handleBackToShipping = () => {
+    handleTabChange('shipping');
+  };
+
+  if (!addressesLoaded) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center py-16">
-          <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-          <p className="text-muted-foreground mb-6">
-            Add some items to your cart before checking out
-          </p>
-          <Button onClick={() => navigate("/marketplace")}>
-            Continue Shopping
-          </Button>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">Loading checkout...</span>
         </div>
       </div>
     );
@@ -180,132 +85,98 @@ const UnifiedCheckoutForm = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Checkout</h1>
-        <p className="text-muted-foreground">Complete your purchase</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <ShoppingCart className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Checkout</h1>
+        </div>
+        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+          <Shield className="h-3 w-3" />
+          Secure Checkout
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Checkout Flow */}
         <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="shipping" className="flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                Shipping
-              </TabsTrigger>
-              <TabsTrigger 
-                value="payment" 
-                disabled={!canProceedToPayment()}
-                className="flex items-center gap-2"
-              >
-                <CreditCard className="h-4 w-4" />
-                Payment
-              </TabsTrigger>
-              <TabsTrigger 
-                value="review" 
-                disabled={!canProceedToReview()}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                Review
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="shipping">Shipping & Gifts</TabsTrigger>
+              <TabsTrigger value="payment" disabled={!canContinueToPayment()}>
+                Payment & Review
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="shipping" className="space-y-6">
+            <TabsContent value="shipping" className="space-y-6 mt-6">
+              {/* Shipping Information */}
+              <UnifiedShippingSection
+                shippingInfo={checkoutData.shippingInfo}
+                onUpdateShippingInfo={handleUpdateShippingInfo}
+                selectedShippingMethod={checkoutData.shippingMethod}
+                onShippingMethodChange={(method) => 
+                  handleUpdateShippingInfo({ shippingMethod: method } as any)
+                }
+                shippingOptions={shippingOptions}
+                isLoadingShipping={isLoadingShipping}
+                onSaveAddress={saveCurrentAddressToProfile}
+              />
+
+              {/* Gift Recipients */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Shipping Information</CardTitle>
+                  <CardTitle>Gift Recipients & Scheduling</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CheckoutForm
-                    shippingInfo={checkoutData.shippingInfo}
-                    onUpdate={handleShippingUpdate}
-                  />
-                  <div className="mt-6">
-                    <Button 
-                      onClick={() => setActiveTab('payment')}
-                      disabled={!canProceedToPayment()}
-                      className="w-full"
-                    >
-                      Continue to Payment
-                    </Button>
-                  </div>
+                  <RecipientAssignmentSection />
                 </CardContent>
               </Card>
+
+              {/* Continue Button */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleContinueToPayment}
+                  disabled={!canContinueToPayment()}
+                  className="flex items-center gap-2"
+                >
+                  Continue to Payment
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </TabsContent>
 
-            <TabsContent value="payment" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PaymentForm
-                    paymentMethod={checkoutData.paymentMethod}
-                    onMethodChange={handlePaymentMethodChange}
-                  />
-                  <div className="mt-6 flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setActiveTab('shipping')}
-                    >
-                      Back to Shipping
-                    </Button>
-                    <Button 
-                      onClick={() => setActiveTab('review')}
-                      disabled={!checkoutData.paymentMethod}
-                    >
-                      Continue to Review
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <TabsContent value="payment" className="space-y-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleBackToShipping}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Shipping
+                </Button>
+              </div>
 
-            <TabsContent value="review" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    Place Your Order
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {clientSecret ? (
-                    <Elements stripe={stripePromise}>
-                      <PaymentMethodSelector
-                        clientSecret={clientSecret}
-                        totalAmount={totalAmount}
-                        onPaymentSuccess={handlePaymentSuccess}
-                        onPaymentError={handlePaymentError}
-                        isProcessingPayment={isProcessingPayment}
-                        onProcessingChange={setIsProcessingPayment}
-                        refreshKey={refreshKey}
-                        onRefreshKeyChange={setRefreshKey}
-                      />
-                    </Elements>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Preparing your order...</p>
-                    </div>
-                  )}
-                  
-                  <div className="mt-6 flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setActiveTab('payment')}
-                      disabled={isProcessingPayment}
-                    >
-                      Back to Payment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Payment Method Selection */}
+              <PaymentMethodSelector
+                selectedMethod={checkoutData.paymentMethod}
+                onMethodChange={handlePaymentMethodChange}
+                orderData={{
+                  cartItems,
+                  subtotal: cartTotal,
+                  shippingCost,
+                  giftingFee: priceBreakdown.giftingFee,
+                  taxAmount,
+                  totalAmount,
+                  shippingInfo: checkoutData.shippingInfo
+                }}
+                isProcessing={isProcessing}
+                canPlaceOrder={canPlaceOrder()}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
+        {/* Order Summary Sidebar */}
         <div className="lg:col-span-1">
           <CheckoutOrderSummary
             items={cartItems}

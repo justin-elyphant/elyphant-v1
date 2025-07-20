@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
+import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingCart, AlertCircle } from 'lucide-react';
 import UnifiedShippingForm from './UnifiedShippingForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
@@ -13,10 +14,16 @@ import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSec
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const UnifiedCheckoutForm: React.FC = () => {
   const { cartItems, cartTotal } = useCart();
   const { calculatePriceBreakdown } = usePricingSettings();
+  
+  // Payment intent state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
+  const [paymentIntentError, setPaymentIntentError] = useState<string | null>(null);
   
   const {
     activeTab,
@@ -43,6 +50,55 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxAmount = cartTotal * 0.0825; // 8.25% tax rate
   const totalAmount = priceBreakdown.total + taxAmount;
 
+  const createPaymentIntent = async () => {
+    if (isCreatingPaymentIntent || clientSecret) return;
+
+    try {
+      setIsCreatingPaymentIntent(true);
+      setPaymentIntentError(null);
+
+      console.log('Creating payment intent for amount:', totalAmount);
+
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: Math.round(totalAmount * 100), // Convert to cents
+          currency: 'usd',
+          metadata: {
+            order_type: 'marketplace_purchase',
+            item_count: cartItems.length,
+            shipping_method: checkoutData.shippingMethod
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error creating payment intent:', error);
+        throw new Error(error.message || 'Failed to create payment intent');
+      }
+
+      if (!data?.client_secret) {
+        throw new Error('No client secret returned from payment intent creation');
+      }
+
+      console.log('Payment intent created successfully');
+      setClientSecret(data.client_secret);
+    } catch (error: any) {
+      console.error('Payment intent creation failed:', error);
+      setPaymentIntentError(error.message || 'Failed to prepare payment. Please try again.');
+    } finally {
+      setIsCreatingPaymentIntent(false);
+    }
+  };
+
+  // Reset payment intent when cart or total changes
+  useEffect(() => {
+    if (clientSecret) {
+      console.log('Cart or total changed, resetting payment intent');
+      setClientSecret(null);
+      setPaymentIntentError(null);
+    }
+  }, [cartTotal, cartItems.length]);
+
   const isShippingComplete = () => {
     const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
     return name && email && address && city && state && zipCode;
@@ -52,15 +108,26 @@ const UnifiedCheckoutForm: React.FC = () => {
     return isShippingComplete() && checkoutData.shippingMethod;
   };
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     if (canContinueToPayment()) {
       handleTabChange('payment');
+      // Create payment intent when moving to payment tab
+      if (!clientSecret && !isCreatingPaymentIntent) {
+        await createPaymentIntent();
+      }
     }
   };
 
   const handleBackToShipping = () => {
     handleTabChange('shipping');
   };
+
+  // Create payment intent when payment tab is accessed directly
+  useEffect(() => {
+    if (activeTab === 'payment' && !clientSecret && !isCreatingPaymentIntent && canContinueToPayment()) {
+      createPaymentIntent();
+    }
+  }, [activeTab, clientSecret, isCreatingPaymentIntent]);
 
   if (!addressesLoaded) {
     return (
@@ -145,9 +212,39 @@ const UnifiedCheckoutForm: React.FC = () => {
                 </Button>
               </div>
 
+              {/* Payment Intent Creation Status */}
+              {isCreatingPaymentIntent && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      Preparing secure payment...
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {paymentIntentError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{paymentIntentError}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={createPaymentIntent}
+                      disabled={isCreatingPaymentIntent}
+                    >
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Payment Method Selection */}
               <PaymentMethodSelector
-                clientSecret="placeholder"
+                clientSecret={clientSecret || "placeholder"}
                 totalAmount={totalAmount}
                 onPaymentSuccess={(paymentIntentId, paymentMethodId) => {
                   console.log('Payment successful:', paymentIntentId, paymentMethodId);

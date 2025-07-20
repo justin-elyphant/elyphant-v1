@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
-import { useProfile } from '@/contexts/ProfileContext';
+import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,7 +68,7 @@ const SimpleCheckoutForm: React.FC = () => {
     if (profile) {
       const address = profile.shipping_address;
       setFormData({
-        name: profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        name: profile.name || profile.email || '',
         email: profile.email || '',
         address: address?.street || address?.address_line1 || '',
         city: address?.city || '',
@@ -177,9 +177,9 @@ const SimpleCheckoutForm: React.FC = () => {
           const { error: zincError } = await supabase.functions.invoke('process-zinc-order', {
             body: {
               orderId: order.id,
-              productId: item.id,
+              productId: item.product.product_id,
               quantity: item.quantity,
-              maxPrice: item.price * 100,
+              maxPrice: item.product.price * 100,
               shippingAddress: {
                 first_name: formData.name.split(' ')[0],
                 last_name: formData.name.split(' ').slice(1).join(' '),
@@ -193,10 +193,10 @@ const SimpleCheckoutForm: React.FC = () => {
           });
 
           if (zincError) {
-            console.error('Zinc processing error for item:', item.id, zincError);
+            console.error('Zinc processing error for item:', item.product.product_id, zincError);
           }
         } catch (zincError) {
-          console.error('Failed to process item with Zinc:', item.id, zincError);
+          console.error('Failed to process item with Zinc:', item.product.product_id, zincError);
         }
       }
 
@@ -436,12 +436,12 @@ const SimpleCheckoutForm: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {cartItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-start">
+                <div key={item.product.product_id} className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.name}</h4>
+                    <h4 className="font-medium text-sm">{item.product.name || item.product.title}</h4>
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                   </div>
-                  <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
                 </div>
               ))}
               

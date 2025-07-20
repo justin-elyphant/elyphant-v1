@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/integrations/stripe/client';
@@ -92,14 +93,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   if (!user) {
     return (
-      <StripePaymentForm
-        clientSecret={clientSecret}
-        amount={totalAmount}
-        onSuccess={onPaymentSuccess}
-        onError={onPaymentError}
-        isProcessing={isProcessingPayment}
-        onProcessingChange={onProcessingChange}
-      />
+      <Elements stripe={stripePromise}>
+        <StripePaymentForm
+          clientSecret={clientSecret}
+          amount={totalAmount}
+          onSuccess={onPaymentSuccess}
+          onError={onPaymentError}
+          isProcessing={isProcessingPayment}
+          onProcessingChange={onProcessingChange}
+        />
+      </Elements>
     );
   }
 
@@ -152,22 +155,24 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 Save this card for future purchases
               </label>
             </div>
-            <StripePaymentForm
-              clientSecret={clientSecret}
-              amount={totalAmount}
-              onSuccess={(paymentIntentId, paymentMethodId) => {
-                // Handle saving payment method if requested
-                if (saveNewCard && paymentMethodId) {
-                  // This will be handled in the parent component
-                  onRefreshKeyChange(refreshKey + 1);
-                }
-                onPaymentSuccess(paymentIntentId, paymentMethodId);
-              }}
-              onError={onPaymentError}
-              isProcessing={isProcessingPayment}
-              onProcessingChange={onProcessingChange}
-              savePaymentMethod={saveNewCard}
-            />
+            <Elements stripe={stripePromise}>
+              <StripePaymentForm
+                clientSecret={clientSecret}
+                amount={totalAmount}
+                onSuccess={(paymentIntentId, paymentMethodId) => {
+                  // Handle saving payment method if requested
+                  if (saveNewCard && paymentMethodId) {
+                    // This will be handled in the parent component
+                    onRefreshKeyChange(refreshKey + 1);
+                  }
+                  onPaymentSuccess(paymentIntentId, paymentMethodId);
+                }}
+                onError={onPaymentError}
+                isProcessing={isProcessingPayment}
+                onProcessingChange={onProcessingChange}
+                savePaymentMethod={saveNewCard}
+              />
+            </Elements>
           </div>
         </div>
       )}

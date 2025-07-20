@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
+import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { createOrder } from '@/services/orderService';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
   const { user } = useAuth();
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
+  const { calculatePriceBreakdown } = usePricingSettings();
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
@@ -54,9 +56,9 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
   // Calculate pricing
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
-  const giftingFee = 2.99; // Add gifting fee
+  const breakdown = calculatePriceBreakdown(subtotal, shippingCost);
   const taxAmount = subtotal * 0.08; // 8% tax
-  const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
+  const totalAmount = breakdown.total + taxAmount;
 
   const createOrderRecord = async () => {
     if (!user) {
@@ -72,7 +74,7 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
         cartItems,
         subtotal,
         shippingCost,
-        giftingFee,
+        giftingFee: breakdown.giftingFee,
         taxAmount,
         totalAmount,
         shippingInfo: checkoutData.shippingInfo,
@@ -323,7 +325,9 @@ const EnhancedCheckoutForm = ({ onCheckoutComplete }: EnhancedCheckoutFormProps)
           items={cartItems}
           subtotal={subtotal}
           shippingCost={shippingCost}
-          giftingFee={giftingFee}
+          giftingFee={breakdown.giftingFee}
+          giftingFeeName={breakdown.giftingFeeName}
+          giftingFeeDescription={breakdown.giftingFeeDescription}
           taxAmount={taxAmount}
           totalAmount={totalAmount}
         />

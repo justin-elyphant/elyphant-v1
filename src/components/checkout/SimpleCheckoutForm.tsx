@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
 import { useProfile } from '@/contexts/profile/ProfileContext';
+import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, MapPin, Package } from 'lucide-react';
@@ -41,6 +42,7 @@ const SimpleCheckoutForm: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { calculatePriceBreakdown } = usePricingSettings();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -80,9 +82,9 @@ const SimpleCheckoutForm: React.FC = () => {
   }, [user, profile]);
 
   const shippingCost = 6.99;
-  const giftingFee = 2.99; // Add gifting fee
+  const breakdown = calculatePriceBreakdown(cartTotal, shippingCost);
   const taxAmount = cartTotal * 0.0825; // 8.25% tax
-  const totalAmount = cartTotal + shippingCost + giftingFee + taxAmount;
+  const totalAmount = breakdown.total + taxAmount;
 
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedPaymentMethod(method);
@@ -393,7 +395,9 @@ const SimpleCheckoutForm: React.FC = () => {
           items={cartItems}
           subtotal={cartTotal}
           shippingCost={shippingCost}
-          giftingFee={giftingFee}
+          giftingFee={breakdown.giftingFee}
+          giftingFeeName={breakdown.giftingFeeName}
+          giftingFeeDescription={breakdown.giftingFeeDescription}
           taxAmount={taxAmount}
           totalAmount={totalAmount}
         />

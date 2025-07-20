@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ShoppingBag } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
+import ContextualHelp from '@/components/help/ContextualHelp';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
   subtotal: number;
   shippingCost: number;
   giftingFee: number;
+  giftingFeeName?: string;
+  giftingFeeDescription?: string;
   taxAmount: number;
   totalAmount: number;
 }
@@ -18,6 +21,8 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   subtotal,
   shippingCost,
   giftingFee,
+  giftingFeeName = 'Gifting Fee',
+  giftingFeeDescription = '',
   taxAmount,
   totalAmount
 }) => {
@@ -68,7 +73,31 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
           </div>
           {giftingFee > 0 && (
             <div className="flex justify-between text-sm">
-              <span>Gifting Fee</span>
+              <span className="flex items-center gap-1">
+                {giftingFeeName}
+                <ContextualHelp
+                  id="gifting-fee-checkout-summary"
+                  title={`About Our ${giftingFeeName}`}
+                  content={
+                    <div className="space-y-2">
+                      <p>
+                        {giftingFeeDescription || 
+                          "This fee supports system enhancements, AI-powered features, and automation that make gifting seamless and delightful."
+                        }
+                      </p>
+                      <div className="space-y-1">
+                        <p className="font-medium">What's included:</p>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                          <li>AI-powered gift recommendations</li>
+                          <li>Automated gifting workflows</li>
+                          <li>Enhanced tracking and notifications</li>
+                          <li>Premium customer support</li>
+                        </ul>
+                      </div>
+                    </div>
+                  }
+                />
+              </span>
               <span>${giftingFee.toFixed(2)}</span>
             </div>
           )}

@@ -92,10 +92,7 @@ const UnifiedCheckoutForm = () => {
 
   const handlePlaceOrder = async () => {
     if (!selectedPaymentMethod) {
-      toast({
-        description: "Please select a payment method to continue.",
-        variant: "destructive",
-      });
+      toast.error("Please select a payment method to continue.");
       return;
     }
 
@@ -104,10 +101,7 @@ const UnifiedCheckoutForm = () => {
     const missingFields = requiredFields.filter(field => !shippingInfo[field as keyof ShippingInfo]);
     
     if (missingFields.length > 0) {
-      toast({
-        description: `Please fill in: ${missingFields.join(', ')}`,
-        variant: "destructive",
-      });
+      toast.error(`Please fill in: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -135,9 +129,7 @@ const UnifiedCheckoutForm = () => {
 
       const order = await createOrder(orderData);
       
-      toast({
-        description: `Order #${order.order_number} has been created.`,
-      });
+      toast.success(`Order #${order.order_number} has been created.`);
 
       // Clear cart and navigate to success page
       clearCart();
@@ -145,10 +137,7 @@ const UnifiedCheckoutForm = () => {
       
     } catch (error) {
       console.error('Error placing order:', error);
-      toast({
-        description: error instanceof Error ? error.message : "Failed to place order. Please try again.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to place order. Please try again.");
     } finally {
       setIsLoading(false);
     }

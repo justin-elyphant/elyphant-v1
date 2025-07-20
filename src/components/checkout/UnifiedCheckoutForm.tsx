@@ -60,7 +60,7 @@ const UnifiedCheckoutForm = () => {
   const taxAmount = subtotal * 0.08; // 8% tax
   const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
 
-  // Extract data from checkoutData
+  // Extract data from checkoutData with fallbacks
   const shippingInfo = checkoutData.shippingInfo;
   const giftOptions = {
     isGift: false,
@@ -69,7 +69,7 @@ const UnifiedCheckoutForm = () => {
     giftWrapping: false,
     isSurpriseGift: false,
     scheduledDeliveryDate: undefined
-  }; // Default gift options
+  }; // Default gift options since gift functionality is not implemented yet
 
   // Create payment intent when we have all necessary info
   useEffect(() => {

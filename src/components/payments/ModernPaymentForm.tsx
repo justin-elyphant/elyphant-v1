@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useStripe, useElements, CardElement, PaymentRequestButtonElement, PaymentRequest } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardElement, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,7 +31,7 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [saveCard, setSaveCard] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [paymentRequest, setPaymentRequest] = useState<any | null>(null);
   const [canMakePayment, setCanMakePayment] = useState(false);
 
   // Initialize Apple Pay and Google Pay

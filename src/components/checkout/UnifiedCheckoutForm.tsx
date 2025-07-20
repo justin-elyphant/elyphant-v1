@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
-import { Elements, useStripe, useElements, CardElement, PaymentRequestButtonElement, PaymentRequest } from '@stripe/react-stripe-js';
+import { Elements, useStripe, useElements, CardElement, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/integrations/stripe/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,7 +87,7 @@ const CheckoutProgress = ({ currentStep }: { currentStep: number }) => {
 };
 
 const ExpressCheckoutButtons = ({ paymentRequest, canMakePayment }: { 
-  paymentRequest: PaymentRequest | null; 
+  paymentRequest: any | null; 
   canMakePayment: boolean;
 }) => {
   if (!paymentRequest || !canMakePayment) return null;
@@ -163,7 +163,7 @@ const MobileOrderSummary = ({
                   <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
                 <div className="text-right">
-                  <pClassName="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
                 </div>
               </div>
             ))}
@@ -238,7 +238,7 @@ const CheckoutForm = () => {
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [savedMethodsRefreshKey, setSavedMethodsRefreshKey] = useState(0);
   const [mobileOrderExpanded, setMobileOrderExpanded] = useState(false);
-  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [paymentRequest, setPaymentRequest] = useState<any | null>(null);
   const [canMakePayment, setCanMakePayment] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
 

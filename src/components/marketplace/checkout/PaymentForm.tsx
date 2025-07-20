@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -27,16 +28,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
   const { user } = useAuth();
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
-  const [showNewCardForm, setShowNewCardForm] = useState(false);
 
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
-    setShowNewCardForm(!method);
+    // When a saved method is selected, we're using card payment
+    if (method) {
+      onMethodChange('card');
+    }
   };
 
   const handleAddNewMethod = () => {
     setSelectedSavedMethod(null);
-    setShowNewCardForm(true);
+    onMethodChange('card');
   };
 
   return (
@@ -87,11 +90,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         </Card>
       )}
 
-      {paymentMethod === "card" && user && showNewCardForm && (
+      {paymentMethod === "paypal" && (
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">
-              You'll be able to add a new credit card during checkout.
+              You'll be redirected to PayPal to complete your payment.
             </div>
           </CardContent>
         </Card>

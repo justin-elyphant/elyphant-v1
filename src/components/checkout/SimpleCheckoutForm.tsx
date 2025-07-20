@@ -351,6 +351,16 @@ const SimpleCheckoutForm: React.FC = () => {
                 
                 {useNewCard && (
                   <div className="mt-4 pt-4 border-t">
+                    <h3 className="text-lg font-medium mb-4">Enter Payment Details</h3>
+                    <div className="mb-4 p-4 border rounded-lg">
+                      <Elements stripe={stripePromise}>
+                        <div className="space-y-4">
+                          <div className="text-sm text-muted-foreground">
+                            Card details will be entered after clicking "Place Order"
+                          </div>
+                        </div>
+                      </Elements>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"

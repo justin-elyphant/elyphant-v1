@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/integrations/stripe/client';
@@ -29,6 +28,14 @@ interface PaymentMethodSelectorProps {
   onProcessingChange: (processing: boolean) => void;
   refreshKey: number;
   onRefreshKeyChange: (key: number) => void;
+  shippingAddress?: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
 }
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
@@ -39,7 +46,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   isProcessingPayment,
   onProcessingChange,
   refreshKey,
-  onRefreshKeyChange
+  onRefreshKeyChange,
+  shippingAddress
 }) => {
   const { user } = useAuth();
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
@@ -101,6 +109,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           onError={onPaymentError}
           isProcessing={isProcessingPayment}
           onProcessingChange={onProcessingChange}
+          shippingAddress={shippingAddress}
         />
       </Elements>
     );
@@ -171,6 +180,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 isProcessing={isProcessingPayment}
                 onProcessingChange={onProcessingChange}
                 savePaymentMethod={saveNewCard}
+                shippingAddress={shippingAddress}
               />
             </Elements>
           </div>

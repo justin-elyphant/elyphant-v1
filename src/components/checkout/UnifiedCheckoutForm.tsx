@@ -42,15 +42,34 @@ const UnifiedCheckoutForm = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const {
-    shippingInfo,
-    setShippingInfo,
-    giftOptions,
-    setGiftOptions,
-    subtotal,
-    shippingCost,
-    taxAmount,
-    totalAmount
-  } = useCheckoutState(cartItems);
+    activeTab: checkoutActiveTab,
+    isProcessing,
+    checkoutData,
+    setIsProcessing,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handlePaymentMethodChange,
+    canPlaceOrder: checkoutCanPlaceOrder,
+    getShippingCost
+  } = useCheckoutState();
+
+  // Calculate order totals
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const shippingCost = getShippingCost();
+  const giftingFee = 0; // No gifting fee for now
+  const taxAmount = subtotal * 0.08; // 8% tax
+  const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
+
+  // Extract data from checkoutData
+  const shippingInfo = checkoutData.shippingInfo;
+  const giftOptions = {
+    isGift: false,
+    recipientName: '',
+    giftMessage: '',
+    giftWrapping: false,
+    isSurpriseGift: false,
+    scheduledDeliveryDate: undefined
+  }; // Default gift options
 
   // Create payment intent when we have all necessary info
   useEffect(() => {
@@ -152,7 +171,7 @@ const UnifiedCheckoutForm = () => {
       const orderData = {
         cartItems,
         subtotal,
-        shippingCost,
+        shippingCost: shippingCost,
         taxAmount,
         totalAmount,
         shippingInfo,
@@ -227,9 +246,7 @@ const UnifiedCheckoutForm = () => {
                 <CardContent>
                   <CheckoutForm
                     shippingInfo={shippingInfo}
-                    onShippingInfoChange={setShippingInfo}
-                    giftOptions={giftOptions}
-                    onGiftOptionsChange={setGiftOptions}
+                    onUpdate={(data) => handleUpdateShippingInfo(data)}
                   />
                 </CardContent>
               </Card>
@@ -364,7 +381,7 @@ const UnifiedCheckoutForm = () => {
                     <div className="text-sm text-muted-foreground">
                       <p>{shippingInfo.name}</p>
                       <p>{shippingInfo.address}</p>
-                      {shippingInfo.line2 && <p>{shippingInfo.line2}</p>}
+                      {shippingInfo.addressLine2 && <p>{shippingInfo.addressLine2}</p>}
                       <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zipCode}</p>
                       <p>{shippingInfo.country}</p>
                     </div>
@@ -420,9 +437,10 @@ const UnifiedCheckoutForm = () => {
         <div className="lg:col-span-1">
           <div className="sticky top-4">
             <CheckoutOrderSummary
-              cartItems={cartItems}
+              items={cartItems}
               subtotal={subtotal}
               shippingCost={shippingCost}
+              giftingFee={giftingFee}
               taxAmount={taxAmount}
               totalAmount={totalAmount}
             />

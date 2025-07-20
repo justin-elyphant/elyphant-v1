@@ -115,12 +115,23 @@ const SimpleCheckoutForm = () => {
         shippingCost: shippingCost,
         taxAmount: taxAmount,
         totalAmount: total,
-        shippingInfo: formData,
+        shippingInfo: {
+          name: formData.name,
+          email: user?.email || '',
+          address: formData.address,
+          addressLine2: formData.line2,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: 'US'
+        },
         giftOptions: {
           isGift: false,
+          recipientName: '',
           giftMessage: '',
-          scheduledDeliveryDate: null,
-          isSurpriseGift: false
+          giftWrapping: false,
+          isSurpriseGift: false,
+          scheduledDeliveryDate: undefined
         },
         paymentIntentId
       };

@@ -365,15 +365,22 @@ const SimpleCheckoutForm: React.FC = () => {
                               Card Number
                             </label>
                             <div className="relative">
-                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-400">•••• •••• •••• ••••</span>
-                                  <div className="flex space-x-1">
-                                    <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
-                                    <div className="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">MC</div>
-                                    <div className="w-8 h-5 bg-blue-800 rounded text-white text-xs flex items-center justify-center font-bold">AMEX</div>
-                                  </div>
-                                </div>
+                              <input
+                                type="text"
+                                placeholder="1234 5678 9012 3456"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
+                                maxLength={19}
+                                onChange={(e) => {
+                                  // Format card number with spaces
+                                  let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+                                  const formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                                  e.target.value = formattedValue;
+                                }}
+                              />
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                                <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
+                                <div className="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">MC</div>
+                                <div className="w-8 h-5 bg-blue-800 rounded text-white text-xs flex items-center justify-center font-bold">AMEX</div>
                               </div>
                             </div>
                           </div>
@@ -384,17 +391,35 @@ const SimpleCheckoutForm: React.FC = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Expiry Date
                               </label>
-                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
-                                <span className="text-gray-400">MM / YY</span>
-                              </div>
+                              <input
+                                type="text"
+                                placeholder="MM / YY"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
+                                maxLength={7}
+                                onChange={(e) => {
+                                  // Format expiry date
+                                  let value = e.target.value.replace(/\D/g, '');
+                                  if (value.length >= 2) {
+                                    value = value.substring(0, 2) + ' / ' + value.substring(2, 4);
+                                  }
+                                  e.target.value = value;
+                                }}
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 CVC
                               </label>
-                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
-                                <span className="text-gray-400">•••</span>
-                              </div>
+                              <input
+                                type="text"
+                                placeholder="123"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
+                                maxLength={4}
+                                onChange={(e) => {
+                                  // Only allow numbers
+                                  e.target.value = e.target.value.replace(/\D/g, '');
+                                }}
+                              />
                             </div>
                           </div>
 
@@ -402,7 +427,7 @@ const SimpleCheckoutForm: React.FC = () => {
                             <div className="flex items-center">
                               <CreditCard className="h-5 w-5 text-blue-600 mr-2" />
                               <span className="text-sm text-blue-800">
-                                Card details will be securely collected when you place your order
+                                Your card information is encrypted and secure
                               </span>
                             </div>
                           </div>

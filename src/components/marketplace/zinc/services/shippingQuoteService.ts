@@ -72,7 +72,7 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
           {
             id: "amazon_standard",
             name: "Standard Shipping",
-            price: 4.99,
+            price: 6.99,
             delivery_time: "3-5 business days",
             description: "Standard delivery"
           },

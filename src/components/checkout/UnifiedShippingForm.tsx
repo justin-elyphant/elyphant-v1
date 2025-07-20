@@ -10,6 +10,8 @@ import { StandardizedAddress } from "@/services/googlePlacesService";
 import { standardizedToForm } from "@/utils/addressStandardization";
 import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 import { ShippingOption } from "@/components/marketplace/zinc/services/shippingQuoteService";
+import SmartAddressSelector from './SmartAddressSelector';
+import AddressAutoComplete from './AddressAutoComplete';
 
 interface ShippingInfo {
   name: string;
@@ -67,7 +69,7 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
         name: defaultAddress.name,
         email: shippingInfo.email,
         address: defaultAddress.address.street,
-        addressLine2: defaultAddress.address.address_line2 || '',
+        addressLine2: (defaultAddress.address as any).address_line2 || '',
         city: defaultAddress.address.city,
         state: mappedState,
         zipCode: defaultAddress.address.zipCode,
@@ -121,6 +123,33 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Address Book & Smart Suggestions */}
+      <SmartAddressSelector
+        onAddressSelect={(selectedAddress) => {
+          onUpdate({
+            name: selectedAddress.name,
+            address: selectedAddress.address.street,
+            addressLine2: (selectedAddress.address as any).address_line2 || '',
+            city: selectedAddress.address.city,
+            state: selectedAddress.address.state,
+            zipCode: selectedAddress.address.zipCode,
+            country: selectedAddress.address.country
+          });
+        }}
+        currentShippingInfo={{
+          name: shippingInfo.name,
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          zipCode: shippingInfo.zipCode,
+          country: shippingInfo.country
+        }}
+        recentRecipients={[
+          // This would come from order history in real implementation
+          // Example: Recently shipped to recipients for smart suggestions
+        ]}
+      />
+
       {/* Shipping Information Form */}
       <div className="rounded-lg border p-6">
         <div className="mb-6">
@@ -154,12 +183,13 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
           </div>
           
           <div className="space-y-2 md:col-span-2">
-            <GooglePlacesAutocomplete
+            <AddressAutoComplete
               value={shippingInfo.address}
               onChange={(value) => onUpdate({ address: value })}
               onAddressSelect={handleGooglePlacesSelect}
               label="Street Address"
               placeholder="Start typing your address..."
+              showValidation={true}
             />
           </div>
           

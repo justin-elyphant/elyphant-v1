@@ -11,8 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import UnifiedShippingForm from './UnifiedShippingForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
-import RecipientAssignmentSection from './RecipientAssignmentSection';
-import OrderSummary from './OrderSummary';
+import RecipientAssignmentSection from '../marketplace/checkout/RecipientAssignmentSection';
+import CheckoutOrderSummary from './CheckoutOrderSummary';
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
@@ -60,9 +60,9 @@ const UnifiedCheckoutForm = () => {
             order_type: 'marketplace_purchase',
             user_id: user?.id || 'guest',
             cart_items: JSON.stringify(cartItems.map(item => ({
-              product_id: item.product_id,
+              product_id: item.product.product_id,
               quantity: item.quantity,
-              price: item.price
+              price: item.product.price
             })))
           }
         }
@@ -81,7 +81,7 @@ const UnifiedCheckoutForm = () => {
   };
 
   const getTotalAmount = () => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     const shipping = getShippingCost();
     const tax = subtotal * 0.0875; // 8.75% tax
     return subtotal + shipping + tax;
@@ -95,9 +95,9 @@ const UnifiedCheckoutForm = () => {
       const orderData = {
         user_id: user?.id || null,
         total_amount: getTotalAmount(),
-        subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        subtotal: cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
         shipping_cost: getShippingCost(),
-        tax_amount: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.0875,
+        tax_amount: cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * 0.0875,
         currency: 'usd',
         status: 'pending',
         payment_status: 'completed',
@@ -126,11 +126,11 @@ const UnifiedCheckoutForm = () => {
       // Create order items
       const orderItems = cartItems.map(item => ({
         order_id: order.id,
-        product_id: item.product_id,
+        product_id: item.product.product_id,
         quantity: item.quantity,
-        price: item.price,
-        product_name: item.name,
-        product_image: item.image
+        price: item.product.price,
+        product_name: item.product.name,
+        product_image: item.product.image
       }));
 
       const { error: itemsError } = await supabase
@@ -218,7 +218,13 @@ const UnifiedCheckoutForm = () => {
                 </CardContent>
               </Card>
 
-              <RecipientAssignmentSection cartItems={cartItems} />
+              <RecipientAssignmentSection 
+                cartItems={cartItems}
+                recipientAssignments={{}}
+                setRecipientAssignments={() => {}}
+                deliveryGroups={[]}
+                setDeliveryGroups={() => {}}
+              />
 
               <div className="flex justify-end">
                 <Button 
@@ -259,12 +265,13 @@ const UnifiedCheckoutForm = () => {
 
         {/* Order Summary Sidebar */}
         <div className="lg:col-span-1">
-          <OrderSummary
-            cartItems={cartItems}
-            subtotal={cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)}
-            shipping={getShippingCost()}
-            tax={cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.0875}
-            total={getTotalAmount()}
+          <CheckoutOrderSummary
+            items={cartItems}
+            subtotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
+            shippingCost={getShippingCost()}
+            giftingFee={0}
+            taxAmount={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * 0.0875}
+            totalAmount={getTotalAmount()}
           />
         </div>
       </div>

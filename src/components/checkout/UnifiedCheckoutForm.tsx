@@ -1,94 +1,55 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/integrations/stripe/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, CreditCard, Truck, Package, ShoppingCart } from 'lucide-react';
+import { CreditCard, Truck, Package, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/contexts/profile/ProfileContext';
-import { useToast } from '@/hooks/use-toast';
-import { createOrder } from '@/services/orderService';
-import { getTransparentPricing } from '@/utils/transparentPricing';
+import { useAuth } from '@/contexts/auth';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
-import { ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
-import AddressBookSelector from './components/AddressBookSelector';
-import { useDefaultAddress } from '@/hooks/useDefaultAddress';
-import SavedPaymentMethodsSection from '@/components/checkout/SavedPaymentMethodsSection';
+import PaymentMethodForm from '@/components/checkout/PaymentMethodForm';
+import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
+import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
+import { createOrder } from '@/services/orderService';
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const { cartItems, clearCart } = useCart();
-  const { toast } = useToast();
-  const { defaultAddress } = useDefaultAddress();
-
-  // State management
+  const { user } = useAuth();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
   const [isLoading, setIsLoading] = useState(false);
-  const [subtotal, setSubtotal] = useState(0);
-  const [shippingCost, setShippingCost] = useState(0);
-  const [taxAmount, setTaxAmount] = useState(0);
-  const [giftingFee, setGiftingFee] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
   
-  // Shipping information state with auto-population
-  const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    email: user?.email || '',
-    name: profile?.name || defaultAddress?.name || '',
-    address: defaultAddress?.address?.street || profile?.shipping_address?.address_line1 || '',
-    addressLine2: defaultAddress?.address?.address_line2 || profile?.shipping_address?.address_line2 || '',
-    city: defaultAddress?.address?.city || profile?.shipping_address?.city || '',
-    state: defaultAddress?.address?.state || profile?.shipping_address?.state || '',
-    zipCode: defaultAddress?.address?.zipCode || profile?.shipping_address?.zip_code || '',
-    country: defaultAddress?.address?.country || profile?.shipping_address?.country || 'United States'
-  });
+  const {
+    activeTab,
+    checkoutData,
+    handleTabChange,
+    handleUpdateShippingInfo,
+    handlePaymentMethodChange,
+    canPlaceOrder,
+    getShippingCost
+  } = useCheckoutState();
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  // Calculate totals using the centralized shipping cost function
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const calculatedShippingCost = getShippingCost();
+  const taxAmount = subtotal * 0.08875; // NY tax rate
+  const totalAmount = subtotal + calculatedShippingCost + taxAmount;
 
-  // Calculate pricing on component mount and when cart changes
+  // Redirect if cart is empty
   useEffect(() => {
-    const calculatePricing = async () => {
-      let calculatedSubtotal = 0;
-      let calculatedGiftingFee = 0;
-
-      for (const item of cartItems) {
-        const itemTotal = item.product.price * item.quantity;
-        calculatedSubtotal += itemTotal;
-        
-        // Get gifting fee for each item
-        const pricing = await getTransparentPricing(itemTotal);
-        calculatedGiftingFee += pricing.giftingFee;
-      }
-
-      const calculatedTaxAmount = calculatedSubtotal * 0.08; // 8% tax
-      const calculatedShippingCost = 9.99; // Flat shipping
-      const calculatedTotal = calculatedSubtotal + calculatedGiftingFee + calculatedTaxAmount + calculatedShippingCost;
-
-      setSubtotal(calculatedSubtotal);
-      setGiftingFee(calculatedGiftingFee);
-      setTaxAmount(calculatedTaxAmount);
-      setShippingCost(calculatedShippingCost);
-      setTotalAmount(calculatedTotal);
-    };
-
-    if (cartItems.length > 0) {
-      calculatePricing();
+    if (cartItems.length === 0) {
+      navigate("/cart");
     }
-  }, [cartItems]);
+  }, [cartItems.length, navigate]);
 
-  const handleUpdateShippingInfo = (data: Partial<ShippingInfo>) => {
-    setShippingInfo(prev => ({ ...prev, ...data }));
-  };
-
-  const handlePaymentMethodSelect = (method: any) => {
-    const methodId = typeof method === 'string' ? method : method?.id || '';
-    setSelectedPaymentMethod(methodId);
-  };
+  // Ensure user is authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const handlePlaceOrder = async () => {
     if (!selectedPaymentMethod) {
@@ -96,9 +57,8 @@ const UnifiedCheckoutForm = () => {
       return;
     }
 
-    // Validate shipping info
-    const requiredFields = ['email', 'name', 'address', 'city', 'state', 'zipCode'];
-    const missingFields = requiredFields.filter(field => !shippingInfo[field as keyof ShippingInfo]);
+    const requiredFields = ['name', 'email', 'address', 'city', 'state', 'zipCode'];
+    const missingFields = requiredFields.filter(field => !checkoutData.shippingInfo[field as keyof ShippingInfo]);
     
     if (missingFields.length > 0) {
       toast.error(`Please fill in: ${missingFields.join(', ')}`);
@@ -106,25 +66,24 @@ const UnifiedCheckoutForm = () => {
     }
 
     setIsLoading(true);
-
+    
     try {
-      // Create order
       const orderData = {
-        cartItems,
+        user_id: user?.id,
+        items: cartItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+          name: item.product.name
+        })),
+        shipping_info: checkoutData.shippingInfo,
+        shipping_method: checkoutData.shippingMethod,
+        payment_method: selectedPaymentMethod,
         subtotal,
-        shippingCost,
-        taxAmount,
-        totalAmount,
-        shippingInfo,
-        giftOptions: {
-          isGift: false,
-          recipientName: '',
-          giftMessage: '',
-          giftWrapping: false,
-          isSurpriseGift: false,
-          scheduledDeliveryDate: ''
-        },
-        paymentIntentId: selectedPaymentMethod
+        shipping_cost: calculatedShippingCost,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        status: 'pending'
       };
 
       const order = await createOrder(orderData);
@@ -133,7 +92,7 @@ const UnifiedCheckoutForm = () => {
 
       // Clear cart and navigate to success page
       clearCart();
-      navigate(`/order-confirmation/${order.id}`);
+      navigate('/order-confirmation', { state: { orderId: order.id } });
       
     } catch (error) {
       console.error('Error placing order:', error);
@@ -142,192 +101,96 @@ const UnifiedCheckoutForm = () => {
       setIsLoading(false);
     }
   };
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center py-16">
-          <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-          <p className="text-muted-foreground mb-6">
-            Add some items to your cart before checking out
-          </p>
-          <Button onClick={() => navigate("/marketplace")}>
-            Continue Shopping
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+  
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-muted-foreground">Complete your order below</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Forms */}
-        <div className="space-y-6">
-          {/* Shipping Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main checkout form */}
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5" />
-                Shipping Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <AddressBookSelector 
-                onSelect={(address) => {
-                  handleUpdateShippingInfo({
-                    name: address.name,
-                    address: address.address?.street || address.address?.address_line1 || '',
-                    addressLine2: address.address?.address_line2 || '',
-                    city: address.address?.city || '',
-                    state: address.address?.state || '',
-                    zipCode: address.address?.zipCode || address.address?.zip_code || '',
-                    country: address.address?.country || 'United States'
-                  });
-                }}
-                onClose={() => {}}
-              />
-              <CheckoutForm 
-                shippingInfo={shippingInfo} 
-                onUpdate={handleUpdateShippingInfo} 
-              />
-            </CardContent>
-          </Card>
-
-          {/* Payment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payment Information
-              </CardTitle>
+              <CardTitle>Checkout</CardTitle>
             </CardHeader>
             <CardContent>
-              <Elements stripe={stripePromise}>
-                <SavedPaymentMethodsSection
-                  onSelectPaymentMethod={handlePaymentMethodSelect}
-                  onAddNewMethod={() => {}}
-                  selectedMethodId={selectedPaymentMethod}
-                  refreshKey={0}
-                />
-              </Elements>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="shipping" className="flex items-center gap-2">
+                    <Truck className="h-4 w-4" />
+                    Shipping
+                  </TabsTrigger>
+                  <TabsTrigger value="payment" className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Payment
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="shipping" className="space-y-6">
+                  <CheckoutForm 
+                    shippingInfo={checkoutData.shippingInfo}
+                    onUpdate={handleUpdateShippingInfo}
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={() => handleTabChange('payment')}
+                      className="flex items-center gap-2"
+                    >
+                      Continue to Payment
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="payment" className="space-y-6">
+                  <PaymentMethodForm
+                    selectedMethod={selectedPaymentMethod}
+                    onMethodChange={setSelectedPaymentMethod}
+                  />
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleTabChange('shipping')}
+                      className="flex items-center gap-2"
+                    >
+                      <Truck className="h-4 w-4" />
+                      Back to Shipping
+                    </Button>
+                    
+                    <Button 
+                      onClick={handlePlaceOrder}
+                      disabled={!canPlaceOrder() || isLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          Placing Order...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4" />
+                          Place Order
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Order Summary */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Order Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Cart Items */}
-              <div className="space-y-3">
-                {cartItems.map((item) => (
-                  <div key={`${item.product.product_id}-${item.recipientAssignment?.connectionId || 'self'}`} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <div className="relative">
-                      {item.product.image ? (
-                        <img 
-                          src={item.product.image} 
-                          alt={item.product.name || item.product.title}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                          <Package className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                      >
-                        {item.quantity}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {item.product.name || item.product.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        ${item.product.price.toFixed(2)} each
-                      </p>
-                      {item.recipientAssignment && (
-                        <Badge variant="outline" className="text-xs mt-1">
-                          Gift for {item.recipientAssignment.connectionName}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm font-medium">
-                      ${(item.product.price * item.quantity).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Separator />
-
-              {/* Pricing Breakdown */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span>Gifting Fee</span>
-                  <span>${giftingFee.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span>${shippingCost.toFixed(2)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span>Tax</span>
-                  <span>${taxAmount.toFixed(2)}</span>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span>${totalAmount.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handlePlaceOrder}
-                disabled={isLoading || !selectedPaymentMethod}
-                className="w-full"
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing Order...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Place Order - ${totalAmount.toFixed(2)}
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Order summary */}
+        <div>
+          <CheckoutOrderSummary
+            items={cartItems}
+            subtotal={subtotal}
+            shippingCost={calculatedShippingCost}
+            giftingFee={0}
+            taxAmount={taxAmount}
+            totalAmount={totalAmount}
+          />
         </div>
       </div>
     </div>

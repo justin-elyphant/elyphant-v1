@@ -9,19 +9,29 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, ShoppingBag, CreditCard } from 'lucide-react';
 import { toast } from "sonner";
 import { createOrder } from '@/services/orderService';
-import { ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
-import { ModernPaymentForm } from '@/components/payments/ModernPaymentForm';
+import ModernPaymentForm from '@/components/payments/ModernPaymentForm';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { SavedPaymentMethodsSection } from '@/components/payments/SavedPaymentMethodsSection';
 import TransparentPriceBreakdown from '@/components/marketplace/checkout/TransparentPriceBreakdown';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 
+interface ShippingInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}
+
 interface GiftOptions {
   isGift: boolean;
-  giftMessage?: string;
-  scheduledDeliveryDate?: string;
+  recipientName: string;
+  giftMessage: string;
+  giftWrapping: boolean;
   isSurpriseGift: boolean;
+  scheduledDeliveryDate?: string;
 }
 
 const SimpleCheckoutForm = () => {
@@ -40,9 +50,11 @@ const SimpleCheckoutForm = () => {
   });
   const [giftOptions, setGiftOptions] = useState<GiftOptions>({
     isGift: false,
+    recipientName: '',
     giftMessage: '',
-    scheduledDeliveryDate: '',
-    isSurpriseGift: false
+    giftWrapping: false,
+    isSurpriseGift: false,
+    scheduledDeliveryDate: ''
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -122,7 +134,16 @@ const SimpleCheckoutForm = () => {
         shippingCost: 6.99,
         taxAmount: taxAmount,
         totalAmount: finalTotal, // Use final total here too
-        shippingInfo,
+        shippingInfo: {
+          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          email: shippingInfo.email,
+          address: shippingInfo.address,
+          addressLine2: '',
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          zipCode: shippingInfo.postalCode,
+          country: 'US'
+        },
         giftOptions,
         paymentIntentId
       };
@@ -285,13 +306,6 @@ const SimpleCheckoutForm = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user && (
-                  <SavedPaymentMethodsSection
-                    onSelectPaymentMethod={setSelectedPaymentMethod}
-                    selectedPaymentMethodId={selectedPaymentMethod?.id}
-                  />
-                )}
-
                 {!showPaymentForm && (
                   <Button 
                     onClick={handlePayment}

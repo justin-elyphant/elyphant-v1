@@ -57,7 +57,7 @@ const SimpleCheckoutForm = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(false);
 
-  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const shippingCost = 6.99;
   const finalTotal = calculatePriceBreakdown(cartTotal, shippingCost).total;
 
@@ -141,11 +141,11 @@ const SimpleCheckoutForm = () => {
     try {
       const orderData = {
         items: cartItems.map(item => ({
-          product_id: item.id,
+          product_id: item.product.product_id,
           quantity: item.quantity,
-          price: item.price,
-          name: item.name,
-          image: item.image
+          price: item.product.price,
+          name: item.product.name || item.product.title,
+          image: item.product.image
         })),
         shipping_info: shippingInfo,
         payment_intent_id: paymentIntentId,
@@ -222,8 +222,17 @@ const SimpleCheckoutForm = () => {
     }
   };
 
-  const handlePaymentMethodSelect = (paymentMethodId: string) => {
-    setSelectedPaymentMethod(paymentMethodId);
+  const handlePaymentMethodSelect = (method: any) => {
+    if (method) {
+      setSelectedPaymentMethod(method.stripe_payment_method_id || method.id);
+    } else {
+      setSelectedPaymentMethod('');
+    }
+    setClientSecret('');
+  };
+
+  const handleAddNewMethod = () => {
+    setSelectedPaymentMethod('');
     setClientSecret('');
   };
 
@@ -323,10 +332,9 @@ const SimpleCheckoutForm = () => {
           </Card>
 
           <SavedPaymentMethodsSection
-            savedPaymentMethods={savedPaymentMethods}
-            selectedPaymentMethod={selectedPaymentMethod}
             onSelectPaymentMethod={handlePaymentMethodSelect}
-            isLoading={isLoadingPaymentMethods}
+            onAddNewMethod={handleAddNewMethod}
+            selectedMethodId={selectedPaymentMethod}
           />
 
           {clientSecret && (
@@ -365,18 +373,18 @@ const SimpleCheckoutForm = () => {
             <CardContent>
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                  <div key={item.product.product_id} className="flex items-center gap-4 p-4 border rounded-lg">
                     <img
-                      src={item.image || '/placeholder.svg'}
-                      alt={item.name}
+                      src={item.product.image || '/placeholder.svg'}
+                      alt={item.product.name || item.product.title}
                       className="w-16 h-16 object-cover rounded"
                     />
                     <div className="flex-1">
-                      <h4 className="font-medium">{item.name}</h4>
+                      <h4 className="font-medium">{item.product.name || item.product.title}</h4>
                       <p className="text-sm text-muted-foreground">
                         Qty: {item.quantity}
                       </p>
-                      <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}

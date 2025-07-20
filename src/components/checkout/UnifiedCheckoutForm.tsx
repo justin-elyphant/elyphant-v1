@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
 import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
-import PaymentMethodForm from '@/components/payments/PaymentMethodForm';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
 import { useCheckoutState, ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
 import { createOrder } from '@/services/orderService';
@@ -143,7 +144,22 @@ const UnifiedCheckoutForm = () => {
                 <TabsContent value="payment" className="space-y-6">
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Payment Method</h3>
-                    <PaymentMethodForm />
+                    <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="card" id="card" />
+                        <Label htmlFor="card" className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          Credit Card
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="paypal" id="paypal" />
+                        <Label htmlFor="paypal" className="flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          PayPal
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
                   
                   <div className="flex justify-between">

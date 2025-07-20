@@ -11,9 +11,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createOrder, CreateOrderData } from '@/services/orderService';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+import { stripePromise } from '@/integrations/stripe/client';
 
 const CARD_OPTIONS = {
   iconStyle: 'solid',
@@ -39,10 +37,12 @@ const CARD_OPTIONS = {
   },
 };
 
-const SimpleCheckoutForm = () => {
+const CheckoutFormContent = () => {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
+  const stripe = useStripe();
+  const elements = useElements();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -209,40 +209,62 @@ const SimpleCheckoutForm = () => {
     e.preventDefault();
     setPaymentError(null);
 
-    if (!stripePromise) {
+    if (!stripe || !elements) {
       toast.error('Stripe is not initialized.');
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      toast.error('Card element not found.');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const response = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Create payment intent via Supabase edge function
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
           amount: Math.round(total * 100),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create payment intent');
-      }
-
-      const { clientSecret } = await response.json();
-
-      navigate('/stripe-payment', {
-        state: {
-          clientSecret: clientSecret,
-          amount: total,
-          onSuccess: handlePaymentSuccess,
-          onError: handlePaymentError,
-          isProcessing: isProcessing,
-          onProcessingChange: setIsProcessing
+          currency: 'usd',
+          metadata: {
+            orderId: 'temp-order-id'
+          }
         }
       });
+
+      if (paymentError) {
+        throw new Error(paymentError.message);
+      }
+
+      const { clientSecret } = paymentData;
+
+      // Confirm payment with Stripe
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: cardName || formData.name,
+            address: {
+              line1: formData.address,
+              line2: formData.line2,
+              city: formData.city,
+              state: formData.state,
+              postal_code: formData.zipCode,
+              country: 'US'
+            }
+          }
+        }
+      });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        await handlePaymentSuccess(paymentIntent.id, paymentIntent.payment_method as string);
+      }
 
     } catch (error: any) {
       console.error('Payment processing error:', error);
@@ -350,6 +372,22 @@ const SimpleCheckoutForm = () => {
 
           <Separator />
 
+          {/* Payment Information Section */}
+          <div className="space-y-4">
+            <div className="text-lg font-semibold">Payment Information</div>
+            <div>
+              <Label htmlFor="card-element">Credit or Debit Card</Label>
+              <div className="mt-1 p-3 border border-input rounded-md bg-background">
+                <CardElement
+                  id="card-element"
+                  options={CARD_OPTIONS as any}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           <div className="space-y-2">
             <div className="text-lg font-semibold">Order Summary</div>
             <div className="flex justify-between">
@@ -385,6 +423,14 @@ const SimpleCheckoutForm = () => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+const SimpleCheckoutForm = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutFormContent />
+    </Elements>
   );
 };
 

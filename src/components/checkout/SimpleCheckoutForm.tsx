@@ -209,6 +209,12 @@ const CheckoutFormContent = () => {
     e.preventDefault();
     setPaymentError(null);
 
+    // Basic form validation
+    if (!formData.name || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     if (!stripe || !elements) {
       toast.error('Stripe is not initialized.');
       return;
@@ -276,7 +282,7 @@ const CheckoutFormContent = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <form onSubmit={handleFormSubmit} className="container mx-auto p-4">
       <Card className="bg-white shadow-md rounded-md">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold">Checkout</CardTitle>
@@ -414,15 +420,15 @@ const CheckoutFormContent = () => {
           )}
 
           <Button
-            onClick={handleFormSubmit}
+            type="submit"
             disabled={isProcessing}
             className="w-full"
           >
-            {isProcessing ? 'Processing...' : 'Continue to Payment'}
+            {isProcessing ? 'Processing Payment...' : 'Complete Payment'}
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </form>
   );
 };
 

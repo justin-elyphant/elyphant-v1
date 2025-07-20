@@ -147,7 +147,7 @@ const PricingControlsCard = () => {
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>$4.99</span>
+              <span>$6.99</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1">
@@ -159,7 +159,7 @@ const PricingControlsCard = () => {
             <hr className="my-2" />
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>${(10 + 4.99 + (10 * markupPercentage) / 100).toFixed(2)}</span>
+              <span>${(10 + 6.99 + (10 * markupPercentage) / 100).toFixed(2)}</span>
             </div>
           </div>
         </div>

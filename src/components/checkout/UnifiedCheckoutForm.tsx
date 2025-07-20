@@ -143,10 +143,10 @@ const UnifiedCheckoutForm = () => {
             <TabsContent value="shipping" className="space-y-6">
               <Card>
                 <CardContent className="p-6">
-                  <UnifiedShippingForm
-                    shippingInfo={checkoutData.shippingInfo}
-                    onUpdateShippingInfo={handleUpdateShippingInfo}
-                  />
+                   <UnifiedShippingForm
+                     shippingInfo={checkoutData.shippingInfo}
+                     onShippingInfoChange={handleUpdateShippingInfo}
+                   />
                 </CardContent>
               </Card>
 
@@ -168,13 +168,14 @@ const UnifiedCheckoutForm = () => {
             <TabsContent value="payment">
               <Card>
                 <CardContent className="p-6">
-                  <PaymentMethodSelector
-                    amount={getTotalAmount()}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onPaymentMethodChange={handlePaymentMethodChange}
-                    disabled={!canPlaceOrder() || isProcessing}
-                    shippingAddress={checkoutData.shippingInfo}
-                  />
+                   <PaymentMethodSelector
+                     totalAmount={getTotalAmount()}
+                     onSuccess={handlePaymentSuccess}
+                     onError={(error) => toast.error(error)}
+                     isProcessing={isProcessing}
+                     onProcessingChange={setIsProcessing}
+                     shippingAddress={checkoutData.shippingInfo}
+                   />
                 </CardContent>
               </Card>
 

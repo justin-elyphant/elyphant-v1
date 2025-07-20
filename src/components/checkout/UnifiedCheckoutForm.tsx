@@ -12,24 +12,18 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronDown, ChevronUp, CreditCard, Apple, Shield, Lock, MapPin, Plus } from 'lucide-react';
+import { CalendarIcon, ChevronDown, ChevronUp, CreditCard, Apple, Shield, Lock, MapPin, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
 import { useDefaultAddress } from '@/hooks/useDefaultAddress';
-import { useProfile } from '@/contexts/profile/ProfileProvider';
+import { useProfile } from '@/contexts/profile/ProfileContext';
 import AddressBookSelector from './components/AddressBookSelector';
 import ShippingAddressForm from '@/components/profile-setup/steps/shipping-address/ShippingAddressForm';
 import { ShippingAddress } from '@/types/shipping';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
+import { CartItem } from '@/contexts/CartContext';
 
 interface ShippingInfo {
   name: string;
@@ -126,7 +120,7 @@ const UnifiedCheckoutContent = () => {
       // Fallback to profile data if no default address
       setShippingInfo(prev => ({
         ...prev,
-        name: profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        name: profile.name || '',
         email: prev.email || profile.email || user?.email || ''
       }));
     }
@@ -173,7 +167,7 @@ const UnifiedCheckoutContent = () => {
           return;
         }
 
-        const { paymentIntent, error: stripeError } = await stripe.confirmPayment({
+        const { error: stripeError } = await stripe.confirmPayment({
           // `Elements` instance that was used to create the Payment Element
           elements,
           clientSecret: clientSecret,
@@ -187,7 +181,7 @@ const UnifiedCheckoutContent = () => {
           setPaymentError(stripeError.message || 'Payment failed');
           toast.error(stripeError.message || 'Payment failed');
           ev.complete('fail');
-        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        } else {
           // Your customer will be redirected to your `return_url`.
           ev.complete('success');
           toast.success('Payment succeeded!');
@@ -201,7 +195,7 @@ const UnifiedCheckoutContent = () => {
     }
   }, [stripe, elements, clearCart, navigate]);
 
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
   const shippingCost = 5;
   const taxRate = 0.08;
   const tax = subtotal * taxRate;
@@ -277,7 +271,7 @@ const UnifiedCheckoutContent = () => {
         clientSecret,
         {
           payment_method: {
-            card: elements.getElement(CardElement) as CardElement,
+            card: elements.getElement(CardElement) as any,
             billing_details: {
               name: shippingInfo.name,
               email: shippingInfo.email,
@@ -547,8 +541,9 @@ const UnifiedCheckoutContent = () => {
                   </h3>
 
                   <SavedPaymentMethodsSection
-                    selectedMethod={selectedPaymentMethod}
-                    onSelect={setSelectedPaymentMethod}
+                    selectedMethodId={selectedPaymentMethod}
+                    onSelectPaymentMethod={(method) => setSelectedPaymentMethod(method?.id || null)}
+                    onAddNewMethod={() => setShowNewCardForm(true)}
                     refreshKey={savedMethodsRefreshKey}
                   />
 
@@ -642,15 +637,15 @@ const UnifiedCheckoutContent = () => {
                 {/* Cart Items */}
                 <div className={cn("mt-6 space-y-4", !mobileOrderExpanded && "hidden lg:block")}>
                   {cartItems.map((item: CartItem) => (
-                    <div key={item.id} className="flex items-center justify-between">
+                    <div key={item.product.product_id} className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <img src={item.image || "placeholder_image_url"} alt={item.name} className="w-16 h-16 object-cover rounded mr-4" />
+                        <img src={item.product.images?.[0] || "/placeholder.svg"} alt={item.product.name} className="w-16 h-16 object-cover rounded mr-4" />
                         <div>
-                          <div className="font-semibold">{item.name}</div>
+                          <div className="font-semibold">{item.product.name}</div>
                           <div className="text-muted-foreground text-sm">Quantity: {item.quantity}</div>
                         </div>
                       </div>
-                      <div>${(item.price * item.quantity).toFixed(2)}</div>
+                      <div>${(item.product.price * item.quantity).toFixed(2)}</div>
                     </div>
                   ))}
                 </div>

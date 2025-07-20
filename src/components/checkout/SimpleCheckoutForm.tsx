@@ -350,28 +350,77 @@ const SimpleCheckoutForm: React.FC = () => {
                 />
                 
                 {useNewCard && (
-                  <div className="mt-4 pt-4 border-t">
-                    <h3 className="text-lg font-medium mb-4">Enter Payment Details</h3>
-                    <div className="mb-4 p-4 border rounded-lg">
-                      <Elements stripe={stripePromise}>
+                  <div className="mt-6 pt-6 border-t">
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Payment Information</h3>
+                        <p className="text-sm text-gray-600">Enter your card details below</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                         <div className="space-y-4">
-                          <div className="text-sm text-muted-foreground">
-                            Card details will be entered after clicking "Place Order"
+                          {/* Card Number Field */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Card Number
+                            </label>
+                            <div className="relative">
+                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-400">•••• •••• •••• ••••</span>
+                                  <div className="flex space-x-1">
+                                    <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
+                                    <div className="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">MC</div>
+                                    <div className="w-8 h-5 bg-blue-800 rounded text-white text-xs flex items-center justify-center font-bold">AMEX</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Expiry and CVC */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Expiry Date
+                              </label>
+                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+                                <span className="text-gray-400">MM / YY</span>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                CVC
+                              </label>
+                              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+                                <span className="text-gray-400">•••</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center">
+                              <CreditCard className="h-5 w-5 text-blue-600 mr-2" />
+                              <span className="text-sm text-blue-800">
+                                Card details will be securely collected when you place your order
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </Elements>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="save-payment-method"
-                        checked={savePaymentMethod}
-                        onChange={(e) => setSavePaymentMethod(e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor="save-payment-method" className="text-sm text-gray-600">
-                        Save this payment method for future purchases
-                      </label>
+                      </div>
+
+                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
+                        <input
+                          type="checkbox"
+                          id="save-payment-method"
+                          checked={savePaymentMethod}
+                          onChange={(e) => setSavePaymentMethod(e.target.checked)}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="save-payment-method" className="text-sm text-gray-700 flex-1">
+                          Save this payment method for future purchases
+                        </label>
+                      </div>
                     </div>
                   </div>
                 )}

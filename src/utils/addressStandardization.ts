@@ -16,6 +16,7 @@ export interface DatabaseAddress {
 // Form address interface for UI components
 export interface FormAddress {
   street: string;
+  addressLine2?: string;
   city: string;
   state: string;
   zipCode: string;
@@ -40,6 +41,7 @@ export function databaseToForm(address: DatabaseAddress | null | undefined): For
   if (!address) {
     return {
       street: '',
+      addressLine2: '',
       city: '',
       state: '',
       zipCode: '',
@@ -49,6 +51,7 @@ export function databaseToForm(address: DatabaseAddress | null | undefined): For
 
   return {
     street: address.address_line1 || '',
+    addressLine2: address.address_line2 || '',
     city: address.city || '',
     state: address.state || '',
     zipCode: address.zip_code || '',
@@ -60,6 +63,7 @@ export function databaseToForm(address: DatabaseAddress | null | undefined): For
 export function formToDatabase(address: FormAddress): DatabaseAddress {
   return {
     address_line1: address.street,
+    address_line2: address.addressLine2,
     city: address.city,
     state: address.state,
     zip_code: address.zipCode,
@@ -71,6 +75,7 @@ export function formToDatabase(address: FormAddress): DatabaseAddress {
 export function standardizedToForm(address: StandardizedAddress): FormAddress {
   return {
     street: address.street,
+    addressLine2: '',
     city: address.city,
     state: address.state,
     zipCode: address.zipCode,
@@ -104,9 +109,15 @@ export function validateAddressCompleteness(address: FormAddress | DatabaseAddre
 // Format address for display
 export function formatAddressForDisplay(address: DatabaseAddress | FormAddress): string {
   if ('street' in address) {
-    return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
+    const parts = [address.street];
+    if (address.addressLine2) parts.push(address.addressLine2);
+    parts.push(`${address.city}, ${address.state} ${address.zipCode}`);
+    return parts.join(', ');
   } else {
-    return address.formatted_address || 
-           `${address.address_line1}, ${address.city}, ${address.state} ${address.zip_code}`;
+    if (address.formatted_address) return address.formatted_address;
+    const parts = [address.address_line1];
+    if (address.address_line2) parts.push(address.address_line2);
+    parts.push(`${address.city}, ${address.state} ${address.zip_code}`);
+    return parts.join(', ');
   }
 }

@@ -18,7 +18,7 @@ import CheckoutForm from '@/components/marketplace/checkout/CheckoutForm';
 import { ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
 import AddressBookSelector from './components/AddressBookSelector';
 import { useDefaultAddress } from '@/hooks/useDefaultAddress';
-import SavedPaymentMethodsSection from '@/components/payments/SavedPaymentMethodsSection';
+import SavedPaymentMethodsSection from '@/components/checkout/SavedPaymentMethodsSection';
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
@@ -39,14 +39,13 @@ const UnifiedCheckoutForm = () => {
   // Shipping information state with auto-population
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     email: user?.email || '',
-    fullName: profile?.name || defaultAddress?.name || '',
-    address: defaultAddress?.address_line1 || profile?.shipping_address?.address_line1 || '',
-    address2: defaultAddress?.address_line2 || profile?.shipping_address?.address_line2 || '',
-    city: defaultAddress?.city || profile?.shipping_address?.city || '',
-    state: defaultAddress?.state || profile?.shipping_address?.state || '',
-    zipCode: defaultAddress?.zip_code || profile?.shipping_address?.zip_code || '',
-    country: defaultAddress?.country || profile?.shipping_address?.country || 'United States',
-    phone: profile?.phone || ''
+    name: profile?.name || defaultAddress?.name || '',
+    address: defaultAddress?.address?.street || profile?.shipping_address?.address_line1 || '',
+    addressLine2: defaultAddress?.address?.address_line2 || profile?.shipping_address?.address_line2 || '',
+    city: defaultAddress?.address?.city || profile?.shipping_address?.city || '',
+    state: defaultAddress?.address?.state || profile?.shipping_address?.state || '',
+    zipCode: defaultAddress?.address?.zipCode || profile?.shipping_address?.zip_code || '',
+    country: defaultAddress?.address?.country || profile?.shipping_address?.country || 'United States'
   });
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
@@ -86,14 +85,14 @@ const UnifiedCheckoutForm = () => {
     setShippingInfo(prev => ({ ...prev, ...data }));
   };
 
-  const handlePaymentMethodSelect = (paymentMethodId: string) => {
-    setSelectedPaymentMethod(paymentMethodId);
+  const handlePaymentMethodSelect = (method: any) => {
+    const methodId = typeof method === 'string' ? method : method?.id || '';
+    setSelectedPaymentMethod(methodId);
   };
 
   const handlePlaceOrder = async () => {
     if (!selectedPaymentMethod) {
       toast({
-        title: "Payment Method Required",
         description: "Please select a payment method to continue.",
         variant: "destructive",
       });
@@ -101,12 +100,11 @@ const UnifiedCheckoutForm = () => {
     }
 
     // Validate shipping info
-    const requiredFields = ['email', 'fullName', 'address', 'city', 'state', 'zipCode'];
+    const requiredFields = ['email', 'name', 'address', 'city', 'state', 'zipCode'];
     const missingFields = requiredFields.filter(field => !shippingInfo[field as keyof ShippingInfo]);
     
     if (missingFields.length > 0) {
       toast({
-        title: "Missing Information",
         description: `Please fill in: ${missingFields.join(', ')}`,
         variant: "destructive",
       });
@@ -125,8 +123,10 @@ const UnifiedCheckoutForm = () => {
         totalAmount,
         shippingInfo,
         giftOptions: {
-          giftMessage: '',
           isGift: false,
+          recipientName: '',
+          giftMessage: '',
+          giftWrapping: false,
           isSurpriseGift: false,
           scheduledDeliveryDate: ''
         },
@@ -136,7 +136,6 @@ const UnifiedCheckoutForm = () => {
       const order = await createOrder(orderData);
       
       toast({
-        title: "Order Placed Successfully!",
         description: `Order #${order.order_number} has been created.`,
       });
 
@@ -147,7 +146,6 @@ const UnifiedCheckoutForm = () => {
     } catch (error) {
       console.error('Error placing order:', error);
       toast({
-        title: "Order Failed",
         description: error instanceof Error ? error.message : "Failed to place order. Please try again.",
         variant: "destructive",
       });
@@ -192,7 +190,20 @@ const UnifiedCheckoutForm = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <AddressBookSelector onSelectAddress={handleUpdateShippingInfo} />
+              <AddressBookSelector 
+                onSelect={(address) => {
+                  handleUpdateShippingInfo({
+                    name: address.name,
+                    address: address.address?.street || address.address?.address_line1 || '',
+                    addressLine2: address.address?.address_line2 || '',
+                    city: address.address?.city || '',
+                    state: address.address?.state || '',
+                    zipCode: address.address?.zipCode || address.address?.zip_code || '',
+                    country: address.address?.country || 'United States'
+                  });
+                }}
+                onClose={() => {}}
+              />
               <CheckoutForm 
                 shippingInfo={shippingInfo} 
                 onUpdate={handleUpdateShippingInfo} 
@@ -211,9 +222,10 @@ const UnifiedCheckoutForm = () => {
             <CardContent>
               <Elements stripe={stripePromise}>
                 <SavedPaymentMethodsSection
-                  selectedPaymentMethod={selectedPaymentMethod}
-                  onPaymentMethodSelect={handlePaymentMethodSelect}
-                  totalAmount={totalAmount}
+                  onSelectPaymentMethod={handlePaymentMethodSelect}
+                  onAddNewMethod={() => {}}
+                  selectedMethodId={selectedPaymentMethod}
+                  refreshKey={0}
                 />
               </Elements>
             </CardContent>

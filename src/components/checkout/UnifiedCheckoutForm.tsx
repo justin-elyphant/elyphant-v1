@@ -145,7 +145,11 @@ const UnifiedCheckoutForm = () => {
                 <CardContent className="p-6">
                    <UnifiedShippingForm
                      shippingInfo={checkoutData.shippingInfo}
-                     onShippingInfoChange={handleUpdateShippingInfo}
+                     onUpdate={handleUpdateShippingInfo}
+                     selectedShippingMethod={'standard'}
+                     onShippingMethodChange={(method) => {}}
+                     shippingOptions={[]}
+                     isLoadingShipping={false}
                    />
                 </CardContent>
               </Card>
@@ -169,11 +173,14 @@ const UnifiedCheckoutForm = () => {
               <Card>
                 <CardContent className="p-6">
                    <PaymentMethodSelector
+                     clientSecret=""
                      totalAmount={getTotalAmount()}
-                     onSuccess={handlePaymentSuccess}
-                     onError={(error) => toast.error(error)}
-                     isProcessing={isProcessing}
+                     onPaymentSuccess={handlePaymentSuccess}
+                     onPaymentError={(error) => toast.error(error)}
+                     isProcessingPayment={isProcessing}
                      onProcessingChange={setIsProcessing}
+                     refreshKey={0}
+                     onRefreshKeyChange={() => {}}
                      shippingAddress={checkoutData.shippingInfo}
                    />
                 </CardContent>

@@ -1,491 +1,378 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/auth';
-import { useProfile } from '@/contexts/profile/ProfileContext';
-import { usePricingSettings } from '@/hooks/usePricingSettings';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CreditCard, MapPin, Package } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/integrations/stripe/client';
-import CheckoutShippingForm from './CheckoutShippingForm';
-import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
-import CheckoutOrderSummary from './CheckoutOrderSummary';
-import StripePaymentForm from '../marketplace/checkout/StripePaymentForm';
+import { createOrder, CreateOrderData } from '@/services/orderService';
+import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
-interface ShippingInfo {
-  name: string;
-  email: string;
-  address: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
-interface PaymentMethod {
-  id: string;
-  stripe_payment_method_id: string;
-  card_type: string;
-  last_four: string;
-  exp_month: number;
-  exp_year: number;
-  is_default: boolean;
-}
+const CARD_OPTIONS = {
+  iconStyle: 'solid',
+  style: {
+    base: {
+      iconColor: '#c4f0ff',
+      color: 'black',
+      fontWeight: 500,
+      fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
+      fontSize: '16px',
+      fontSmoothing: 'antialiased',
+      ':-webkit-autofill': {
+        color: '#fce883',
+      },
+      '::placeholder': {
+        color: '#87bbfd',
+      },
+    },
+    invalid: {
+      iconColor: '#ffc7ee',
+      color: '#ffc7ee',
+    },
+  },
+};
 
-const SimpleCheckoutForm: React.FC = () => {
-  const { user } = useAuth();
-  const { profile } = useProfile();
-  const { cartItems, cartTotal, clearCart } = useCart();
-  const { calculatePriceBreakdown } = usePricingSettings();
+const SimpleCheckoutForm = () => {
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [useNewCard, setUseNewCard] = useState(false);
-  const [savePaymentMethod, setSavePaymentMethod] = useState(true);
-  const [paymentMethodsRefreshKey, setPaymentMethodsRefreshKey] = useState(0);
+  const { cartItems, clearCart } = useCart();
+  const { user } = useAuth();
   
-  const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
+  const [formData, setFormData] = useState({
     name: '',
-    email: '',
     address: '',
-    addressLine2: '',
+    line2: '',
     city: '',
     state: '',
     zipCode: '',
-    country: 'United States'
   });
+  const [cardName, setCardName] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [subtotal, setSubtotal] = useState(0);
+  const [shippingCost, setShippingCost] = useState(10);
+  const [taxRate, setTaxRate] = useState(0.07);
+  const [taxAmount, setTaxAmount] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  // Pre-fill shipping info from user profile
   useEffect(() => {
-    if (user && profile) {
-      const shippingAddress = profile.shipping_address;
-      
-      setShippingInfo(prev => ({
-        ...prev,
-        name: profile.name || prev.name,
-        email: user.email || prev.email,
-        address: (shippingAddress?.address_line1 || shippingAddress?.street) || prev.address,
-        addressLine2: shippingAddress?.address_line2 || prev.addressLine2,
-        city: shippingAddress?.city || prev.city,
-        state: shippingAddress?.state || prev.state,
-        zipCode: (shippingAddress?.zip_code || shippingAddress?.zipCode) || prev.zipCode,
-        country: shippingAddress?.country || prev.country
-      }));
-    }
-  }, [user, profile]);
+    calculateTotals();
+    loadUserProfile();
+  }, [cartItems]);
 
-  const shippingCost = 6.99;
-  const breakdown = calculatePriceBreakdown(cartTotal, shippingCost);
-  const taxAmount = cartTotal * 0.0825; // 8.25% tax
-  const totalAmount = breakdown.total + taxAmount;
+  const calculateTotals = () => {
+    const newSubtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+    setSubtotal(newSubtotal);
 
-  const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
-    setSelectedPaymentMethod(method);
-    setUseNewCard(!method);
+    const newTaxAmount = newSubtotal * taxRate;
+    setTaxAmount(newTaxAmount);
+
+    const newTotal = newSubtotal + shippingCost + newTaxAmount;
+    setTotal(newTotal);
   };
 
-  const handleAddNewMethod = () => {
-    setSelectedPaymentMethod(null);
-    setUseNewCard(true);
-  };
-
-  const createOrder = async () => {
-    try {
-      const { data: order, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id,
-          total_amount: Math.round(totalAmount * 100),
-          shipping_info: shippingInfo,
-          payment_status: 'pending',
-          status: 'pending'
-        })
-        .select()
+  const loadUserProfile = async () => {
+    if (user) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
         .single();
 
-      if (error) throw error;
-
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        product_id: item.product.product_id || item.product.id?.toString(),
-        product_name: item.product.name || item.product.title,
-        quantity: item.quantity,
-        unit_price: item.product.price,
-        total_price: item.product.price * item.quantity,
-        product_image: item.product.image
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      return order;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
+      if (profile) {
+        setFormData({
+          name: profile.full_name || '',
+          address: profile.address || '',
+          line2: profile.address_line2 || '',
+          city: profile.city || '',
+          state: profile.state || '',
+          zipCode: profile.zip_code || '',
+        });
+      }
     }
   };
 
-  const createPaymentIntent = async (orderId: string) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(totalAmount * 100),
-          currency: 'usd',
-          metadata: {
-            orderId,
-            userId: user?.id,
-            customerEmail: user?.email,
-            useExistingPaymentMethod: !!selectedPaymentMethod,
-            paymentMethodId: selectedPaymentMethod?.stripe_payment_method_id
+      setIsProcessing(true);
+      
+      // Create order data
+      const orderData: CreateOrderData = {
+        cartItems,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        taxAmount: taxAmount,
+        totalAmount: total,
+        shippingInfo: formData,
+        giftOptions: {
+          isGift: false,
+          giftMessage: '',
+          scheduledDeliveryDate: null,
+          isSurpriseGift: false
+        },
+        paymentIntentId
+      };
+
+      console.log('Creating order with payment intent:', paymentIntentId);
+      const order = await createOrder(orderData);
+      console.log('Order created successfully:', order.id);
+
+      // Update order status to reflect successful payment
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          payment_status: 'succeeded',
+          status: 'processing',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
+
+      if (updateError) {
+        console.error('Error updating order status:', updateError);
+        toast.error('Payment successful but order status update failed');
+      }
+
+      // Trigger Zinc order processing
+      try {
+        console.log('Triggering Zinc order processing for order:', order.id);
+        
+        const { data: zincResponse, error: zincError } = await supabase.functions.invoke('process-zinc-order', {
+          body: { 
+            orderId: order.id,
+            isTestMode: true // Set to false for production
           }
+        });
+
+        if (zincError) {
+          console.error('Zinc processing error:', zincError);
+          toast.error('Payment successful but order fulfillment may be delayed');
+        } else if (zincResponse?.success) {
+          console.log('Zinc order processing initiated:', zincResponse.zincOrderId);
+          toast.success('Payment successful! Your order is being processed for fulfillment.');
+        } else {
+          console.error('Zinc processing failed:', zincResponse);
+          toast.warning('Payment successful but order fulfillment may be delayed');
         }
+      } catch (zincError) {
+        console.error('Failed to trigger Zinc processing:', zincError);
+        toast.warning('Payment successful but order fulfillment may be delayed');
+      }
+
+      // Clear cart and navigate to success page
+      clearCart();
+      toast.success('Order placed successfully!');
+      navigate('/checkout-success', { 
+        state: { 
+          orderId: order.id,
+          orderNumber: order.order_number,
+          total: total
+        } 
       });
 
-      if (error) throw error;
-      return data.client_secret;
     } catch (error) {
-      console.error('Error creating payment intent:', error);
-      throw error;
+      console.error('Error in payment success handler:', error);
+      toast.error('There was an error processing your order. Please contact support.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handlePlaceOrder = async () => {
-    if (!user) {
-      toast.error('Please sign in to continue');
-      return;
-    }
+  const handlePaymentError = (errorMessage: string) => {
+    setPaymentError(errorMessage);
+    toast.error(errorMessage);
+  };
 
-    if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.city || !shippingInfo.state || !shippingInfo.zipCode) {
-      toast.error('Please fill in all shipping information');
-      return;
-    }
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPaymentError(null);
 
-    if (!selectedPaymentMethod && !useNewCard) {
-      toast.error('Please select a payment method');
+    if (!stripePromise) {
+      toast.error('Stripe is not initialized.');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // Create order
-      const order = await createOrder();
-      
-      // Create payment intent
-      const secret = await createPaymentIntent(order.id);
-      setClientSecret(secret);
+      const response = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: Math.round(total * 100),
+        }),
+      });
 
-      toast.success('Order created! Please complete payment.');
+      if (!response.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const { clientSecret } = await response.json();
+
+      navigate('/stripe-payment', {
+        state: {
+          clientSecret: clientSecret,
+          amount: total,
+          onSuccess: handlePaymentSuccess,
+          onError: handlePaymentError,
+          isProcessing: isProcessing,
+          onProcessingChange: setIsProcessing
+        }
+      });
+
     } catch (error: any) {
-      console.error('Error placing order:', error);
-      toast.error(error.message || 'Failed to create order');
+      console.error('Payment processing error:', error);
+      setPaymentError(error.message || 'Failed to process payment');
+      toast.error(error.message || 'Failed to process payment');
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
-    try {
-      // Update order status
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          payment_status: 'succeeded',
-          status: 'processing',
-          stripe_payment_intent_id: paymentIntentId
-        })
-        .eq('stripe_payment_intent_id', paymentIntentId);
-
-      if (error) throw error;
-
-      // Save payment method if user chose to and we have a new payment method
-      if (savePaymentMethod && paymentMethodId && useNewCard) {
-        try {
-          await supabase.functions.invoke('save-payment-method', {
-            body: {
-              paymentMethodId,
-            makeDefault: !selectedPaymentMethod // Make it default if no other method was selected
-          }
-        });
-        toast.success('Payment method saved for future use');
-        // Refresh payment methods list
-        setPaymentMethodsRefreshKey(prev => prev + 1);
-      } catch (saveError) {
-        console.error('Error saving payment method:', saveError);
-        // Don't fail the whole flow if saving payment method fails
-        toast.error('Payment succeeded but failed to save payment method');
-      }
-      }
-
-      // Clear cart
-      clearCart();
-
-      // Navigate to success page
-      toast.success('Order placed successfully!');
-      navigate('/orders');
-    } catch (error: any) {
-      console.error('Error updating order:', error);
-      toast.error('Payment succeeded but order update failed');
-    }
-  };
-
-  const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error);
-    toast.error(error);
-    setIsProcessing(false);
-  };
-
-  if (clientSecret) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => setClientSecret(null)}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Order Review
-          </Button>
-          <h2 className="text-2xl font-bold">Complete Payment</h2>
-        </div>
-
-        <Elements stripe={stripePromise}>
-          <StripePaymentForm
-            clientSecret={clientSecret}
-            amount={totalAmount}
-            onSuccess={handlePaymentSuccess}
-            onError={handlePaymentError}
-            isProcessing={isProcessing}
-            onProcessingChange={setIsProcessing}
-            savePaymentMethod={savePaymentMethod && useNewCard}
-          />
-        </Elements>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Main Content */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/cart')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Cart
-          </Button>
-          <h1 className="text-2xl font-bold">Checkout</h1>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center space-x-8 mb-8">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
-              1
+    <div className="container mx-auto p-4">
+      <Card className="bg-white shadow-md rounded-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold">Checkout</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="John Doe"
+                className="mt-1"
+              />
             </div>
-            <span className="font-medium">Shipping</span>
-          </div>
-          <div className="flex-1 h-px bg-border"></div>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
-              2
+            <div>
+              <Label htmlFor="cardName">Name on Card</Label>
+              <Input
+                type="text"
+                id="cardName"
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="John Doe"
+                className="mt-1"
+              />
             </div>
-            <span className="font-medium">Payment</span>
           </div>
-          <div className="flex-1 h-px bg-border"></div>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center font-semibold">
-              3
-            </div>
-            <span className="text-muted-foreground">Confirmation</span>
-          </div>
-        </div>
-
-        {/* Shipping Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Shipping Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CheckoutShippingForm
-              shippingInfo={shippingInfo}
-              onUpdateShippingInfo={(data) => setShippingInfo(prev => ({ ...prev, ...data }))}
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Input
+              type="text"
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="123 Main St"
+              className="mt-1"
             />
-          </CardContent>
-        </Card>
+          </div>
+          <div>
+            <Label htmlFor="line2">Address Line 2 (Optional)</Label>
+            <Input
+              type="text"
+              id="line2"
+              name="line2"
+              value={formData.line2}
+              onChange={handleChange}
+              placeholder="Apt 4B"
+              className="mt-1"
+            />
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="city">City</Label>
+              <Input
+                type="text"
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                placeholder="New York"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="state">State</Label>
+              <Input
+                type="text"
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+                placeholder="NY"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="zipCode">Zip Code</Label>
+              <Input
+                type="text"
+                id="zipCode"
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleChange}
+                placeholder="10001"
+                className="mt-1"
+              />
+            </div>
+          </div>
 
-        {/* Payment Method */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Method
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {user && (
-              <>
-                <SavedPaymentMethodsSection
-                  onSelectPaymentMethod={handleSelectPaymentMethod}
-                  onAddNewMethod={handleAddNewMethod}
-                  selectedMethodId={selectedPaymentMethod?.id}
-                  refreshKey={paymentMethodsRefreshKey}
-                />
-                
-                {useNewCard && (
-                  <div className="mt-6 pt-6 border-t">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Payment Information</h3>
-                        <p className="text-sm text-gray-600">Enter your card details below</p>
-                      </div>
-                      
-                      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                        <div className="space-y-4">
-                          {/* Card Number Field */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Card Number
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                placeholder="1234 5678 9012 3456"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
-                                maxLength={19}
-                                onChange={(e) => {
-                                  // Format card number with spaces
-                                  let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-                                  const formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-                                  e.target.value = formattedValue;
-                                }}
-                              />
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                                <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
-                                <div className="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">MC</div>
-                                <div className="w-8 h-5 bg-blue-800 rounded text-white text-xs flex items-center justify-center font-bold">AMEX</div>
-                              </div>
-                            </div>
-                          </div>
+          <Separator />
 
-                          {/* Expiry and CVC */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Expiry Date
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="MM / YY"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
-                                maxLength={7}
-                                onChange={(e) => {
-                                  // Format expiry date
-                                  let value = e.target.value.replace(/\D/g, '');
-                                  if (value.length >= 2) {
-                                    value = value.substring(0, 2) + ' / ' + value.substring(2, 4);
-                                  }
-                                  e.target.value = value;
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                CVC
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="123"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 placeholder-gray-400"
-                                maxLength={4}
-                                onChange={(e) => {
-                                  // Only allow numbers
-                                  e.target.value = e.target.value.replace(/\D/g, '');
-                                }}
-                              />
-                            </div>
-                          </div>
+          <div className="space-y-2">
+            <div className="text-lg font-semibold">Order Summary</div>
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Shipping:</span>
+              <span>${shippingCost.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tax:</span>
+              <span>${taxAmount.toFixed(2)}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between text-xl font-semibold">
+              <span>Total:</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+          </div>
 
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div className="flex items-center">
-                              <CreditCard className="h-5 w-5 text-blue-600 mr-2" />
-                              <span className="text-sm text-blue-800">
-                                Your card information is encrypted and secure
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+          {paymentError && (
+            <div className="text-red-500">{paymentError}</div>
+          )}
 
-                      <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
-                        <input
-                          type="checkbox"
-                          id="save-payment-method"
-                          checked={savePaymentMethod}
-                          onChange={(e) => setSavePaymentMethod(e.target.checked)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="save-payment-method" className="text-sm text-gray-700 flex-1">
-                          Save this payment method for future purchases
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            
-            {!user && (
-              <div className="text-center py-4 text-muted-foreground">
-                Please sign in to use saved payment methods
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Place Order Button */}
-        <div className="pt-4">
           <Button
-            onClick={handlePlaceOrder}
+            onClick={handleFormSubmit}
             disabled={isProcessing}
-            size="lg"
             className="w-full"
           >
-            {isProcessing ? 'Processing...' : `Place Order - $${totalAmount.toFixed(2)}`}
+            {isProcessing ? 'Processing...' : 'Continue to Payment'}
           </Button>
-        </div>
-      </div>
-
-      {/* Order Summary Sidebar */}
-      <div className="lg:col-span-1">
-        <CheckoutOrderSummary
-          items={cartItems}
-          subtotal={cartTotal}
-          shippingCost={shippingCost}
-          giftingFee={breakdown.giftingFee}
-          giftingFeeName={breakdown.giftingFeeName}
-          giftingFeeDescription={breakdown.giftingFeeDescription}
-          taxAmount={taxAmount}
-          totalAmount={totalAmount}
-        />
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

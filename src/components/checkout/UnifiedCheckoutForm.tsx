@@ -6,7 +6,7 @@ import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, ShoppingCart } from 'lucide-react';
-import UnifiedShippingSection from './UnifiedShippingSection';
+import UnifiedShippingForm from './UnifiedShippingForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
@@ -21,6 +21,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   const {
     activeTab,
     isProcessing,
+    setIsProcessing,
     checkoutData,
     addressesLoaded,
     handleTabChange,
@@ -98,16 +99,15 @@ const UnifiedCheckoutForm: React.FC = () => {
 
             <TabsContent value="shipping" className="space-y-6 mt-6">
               {/* Shipping Information */}
-              <UnifiedShippingSection
+              <UnifiedShippingForm
                 shippingInfo={checkoutData.shippingInfo}
-                onUpdateShippingInfo={handleUpdateShippingInfo}
+                onUpdate={handleUpdateShippingInfo}
                 selectedShippingMethod={checkoutData.shippingMethod}
                 onShippingMethodChange={(method) => 
                   handleUpdateShippingInfo({ shippingMethod: method } as any)
                 }
                 shippingOptions={shippingOptions}
                 isLoadingShipping={isLoadingShipping}
-                onSaveAddress={saveCurrentAddressToProfile}
               />
 
               {/* Gift Recipients */}
@@ -149,10 +149,14 @@ const UnifiedCheckoutForm: React.FC = () => {
               <PaymentMethodSelector
                 clientSecret="placeholder"
                 totalAmount={totalAmount}
-                onPaymentSuccess={() => {}}
-                onPaymentError={() => {}}
+                onPaymentSuccess={(paymentIntentId, paymentMethodId) => {
+                  console.log('Payment successful:', paymentIntentId, paymentMethodId);
+                }}
+                onPaymentError={(error) => {
+                  console.error('Payment error:', error);
+                }}
                 isProcessingPayment={isProcessing}
-                onProcessingChange={() => {}}
+                onProcessingChange={setIsProcessing}
                 refreshKey={0}
                 onRefreshKeyChange={() => {}}
               />

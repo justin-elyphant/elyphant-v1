@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Truck, Users, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import CheckoutForm from './CheckoutForm';
-import ShippingOptionsForm from './ShippingOptionsForm';
+import UnifiedShippingForm from '@/components/checkout/UnifiedShippingForm';
 import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
 import { ShippingInfo } from './useCheckoutState';
 import { ShippingOption } from '@/components/marketplace/zinc/services/shippingQuoteService';
@@ -76,19 +75,14 @@ const UnifiedDeliverySection: React.FC<UnifiedDeliverySectionProps> = ({
               Your Shipping Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <CheckoutForm 
-              shippingInfo={shippingInfo} 
-              onUpdate={onUpdateShippingInfo} 
-            />
-            
-            <Separator />
-            
-            <ShippingOptionsForm
-              selectedMethod={selectedShippingMethod}
-              onSelect={onShippingMethodChange}
+          <CardContent>
+            <UnifiedShippingForm
+              shippingInfo={shippingInfo}
+              onUpdate={onUpdateShippingInfo}
+              selectedShippingMethod={selectedShippingMethod}
+              onShippingMethodChange={onShippingMethodChange}
               shippingOptions={shippingOptions}
-              isLoading={isLoadingShipping}
+              isLoadingShipping={isLoadingShipping}
             />
           </CardContent>
         </Card>

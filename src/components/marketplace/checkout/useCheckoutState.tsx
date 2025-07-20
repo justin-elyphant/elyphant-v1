@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -85,7 +84,7 @@ export const useCheckoutState = () => {
           if (defaultAddress) {
             console.log("Pre-filling with default address:", defaultAddress);
             updatedShippingInfo.address = prev.shippingInfo.address || defaultAddress.street;
-            updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || "";
+            updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || defaultAddress.addressLine2 || "";
             updatedShippingInfo.city = prev.shippingInfo.city || defaultAddress.city;
             updatedShippingInfo.state = prev.shippingInfo.state || defaultAddress.state;
             updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || defaultAddress.zipCode;
@@ -144,6 +143,7 @@ export const useCheckoutState = () => {
 
     const formAddress: FormAddress = {
       street: checkoutData.shippingInfo.address,
+      addressLine2: checkoutData.shippingInfo.addressLine2,
       city: checkoutData.shippingInfo.city,
       state: checkoutData.shippingInfo.state,
       zipCode: checkoutData.shippingInfo.zipCode,

@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { ShoppingBag, ArrowLeft, CreditCard, Lock } from 'lucide-react';
 import SavedPaymentMethodsSection from '@/components/checkout/SavedPaymentMethodsSection';
 import ModernPaymentForm from '@/components/payments/ModernPaymentForm';
+import TransparentPriceBreakdown from '@/components/marketplace/checkout/TransparentPriceBreakdown';
 
 interface PaymentMethod {
   id: string;
@@ -481,29 +482,11 @@ const SimpleCheckoutForm: React.FC = () => {
               
               <Separator />
               
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${cartTotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">$6.99</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">${(cartTotal * 0.0725).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Trunkline Gifting Fee</span>
-                  <span className="font-medium">$2.99</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span>${(cartTotal + 6.99 + (cartTotal * 0.0725) + 2.99).toFixed(2)}</span>
-                </div>
-              </div>
+              <TransparentPriceBreakdown 
+                basePrice={cartTotal}
+                shippingCost={6.99}
+                className="text-sm"
+              />
             </CardContent>
           </Card>
         </div>

@@ -3,8 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
-import SimpleCheckoutForm from '@/components/checkout/SimpleCheckoutForm';
+import { ShoppingBag } from 'lucide-react';
+import UnifiedCheckoutForm from '@/components/checkout/UnifiedCheckoutForm';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 
 const Checkout = () => {
@@ -33,11 +33,7 @@ const Checkout = () => {
 
   return (
     <SidebarLayout>
-      <div className="bg-gray-50 min-h-screen">
-        <div className="container mx-auto px-4 py-8">
-          <SimpleCheckoutForm />
-        </div>
-      </div>
+      <UnifiedCheckoutForm />
     </SidebarLayout>
   );
 };

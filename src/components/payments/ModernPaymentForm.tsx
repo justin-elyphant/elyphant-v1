@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import React, { useState, useEffect } from 'react';
+import { useStripe, useElements, CardElement, PaymentRequestButtonElement, PaymentRequest } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,6 +31,52 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [saveCard, setSaveCard] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
+  const [canMakePayment, setCanMakePayment] = useState(false);
+
+  // Initialize Apple Pay and Google Pay
+  useEffect(() => {
+    if (!stripe) return;
+
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: 'usd',
+      total: {
+        label: 'Total',
+        amount: Math.round(amount * 100),
+      },
+      requestPayerName: true,
+      requestPayerEmail: true,
+    });
+
+    pr.canMakePayment().then(result => {
+      if (result) {
+        setPaymentRequest(pr);
+        setCanMakePayment(true);
+      }
+    });
+
+    pr.on('paymentmethod', async (ev) => {
+      const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: ev.paymentMethod.id
+      });
+
+      if (confirmError) {
+        ev.complete('fail');
+        toast.error(confirmError.message);
+        setError(confirmError.message || 'Payment failed');
+      } else {
+        ev.complete('success');
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          if (saveCard && user && paymentIntent.payment_method) {
+            await savePaymentMethod(paymentIntent.payment_method);
+          }
+          toast.success('Payment successful!');
+          onSuccess(paymentIntent.id, saveCard);
+        }
+      }
+    });
+  }, [stripe, amount, clientSecret, saveCard, user]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -90,10 +136,8 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
 
   const savePaymentMethod = async (paymentMethodId: any) => {
     try {
-      // Get payment method details from Stripe
       if (!stripe) return;
       
-      // Payment method details are already available from the paymentIntent
       const paymentMethod = paymentMethodId;
       if (!paymentMethod?.card) return;
 
@@ -138,6 +182,33 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Express Checkout Buttons */}
+      {paymentRequest && canMakePayment && (
+        <div className="space-y-4">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Express Checkout</span>
+            </div>
+          </div>
+          
+          <div className="max-w-sm mx-auto">
+            <PaymentRequestButtonElement options={{ paymentRequest }} />
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or pay with card</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-4">

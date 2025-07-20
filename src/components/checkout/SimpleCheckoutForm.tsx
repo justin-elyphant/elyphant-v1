@@ -31,6 +31,7 @@ interface FormData {
   name: string;
   email: string;
   address: string;
+  address2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -49,6 +50,7 @@ const SimpleCheckoutForm: React.FC = () => {
     name: '',
     email: '',
     address: '',
+    address2: '',
     city: '',
     state: '',
     zipCode: '',
@@ -71,6 +73,7 @@ const SimpleCheckoutForm: React.FC = () => {
         name: profile.name || profile.email || '',
         email: profile.email || '',
         address: address?.street || address?.address_line1 || '',
+        address2: address?.line2 || address?.address_line2 || '',
         city: address?.city || '',
         state: address?.state || '',
         zipCode: address?.zipCode || address?.zip_code || '',
@@ -184,6 +187,7 @@ const SimpleCheckoutForm: React.FC = () => {
                 first_name: formData.name.split(' ')[0],
                 last_name: formData.name.split(' ').slice(1).join(' '),
                 address_line1: formData.address,
+                address_line2: formData.address2,
                 city: formData.city,
                 state: formData.state,
                 zip_code: formData.zipCode,
@@ -309,6 +313,16 @@ const SimpleCheckoutForm: React.FC = () => {
                       value={formData.address}
                       onChange={handleInputChange}
                       required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address2">Apt/Suite/Unit (Optional)</Label>
+                    <Input
+                      id="address2"
+                      name="address2"
+                      value={formData.address2}
+                      onChange={handleInputChange}
                     />
                   </div>
 

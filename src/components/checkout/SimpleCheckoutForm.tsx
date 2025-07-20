@@ -450,30 +450,58 @@ const SimpleCheckoutForm: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {cartItems.map((item) => (
-                <div key={item.product.product_id} className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.product.name || item.product.title}</h4>
-                    <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                <div
+                  key={item.product.product_id}
+                  className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0"
+                >
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {item.product.image ? (
+                      <img 
+                        src={item.product.image} 
+                        alt={item.product.name || item.product.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                        No Image
+                      </div>
+                    )}
                   </div>
-                  <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm text-gray-900 line-clamp-2">
+                      {item.product.name || item.product.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-medium text-sm">${(item.product.price * item.quantity).toFixed(2)}</p>
+                  </div>
                 </div>
               ))}
               
               <Separator />
               
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium">${cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span>FREE</span>
+                  <span className="text-gray-600">Shipping</span>
+                  <span className="font-medium">$6.99</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="font-medium">${(cartTotal * 0.0725).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Trunkline Gifting Fee</span>
+                  <span className="font-medium">$2.99</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between font-semibold">
+                <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>${(cartTotal + 6.99 + (cartTotal * 0.0725) + 2.99).toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import Hero from "./Hero";
-import FeaturedProducts from "./sections/FeaturedProducts";
+import GiftCategoriesCarousel from "./sections/GiftCategoriesCarousel";
 import FeaturedCategories from "./sections/FeaturedCategories";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
@@ -28,12 +28,8 @@ const HomeContent = () => {
       
       {/* Container with consistent padding for all sections */}
       <div className="container mx-auto px-4 py-12 space-y-16">
-        {/* Gifts for Her Section - Featured Products */}
-        <FeaturedProducts 
-          searchTerm="gifts for her" 
-          title="Gifts for Her" 
-          maxProducts={20}
-        />
+        {/* Gift Categories Carousel - Quick Picks */}
+        <GiftCategoriesCarousel />
         
         {/* Popular Brands Section */}
         <PopularBrands />

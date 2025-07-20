@@ -39,15 +39,19 @@ const UnifiedCheckoutForm = () => {
 
   // Create payment intent when switching to payment tab
   React.useEffect(() => {
+    console.log('🔍 Payment tab effect triggered:', { activeTab, clientSecret, isCreatingPaymentIntent });
     if (activeTab === 'payment' && !clientSecret && !isCreatingPaymentIntent) {
+      console.log('✅ Calling createPaymentIntent');
       createPaymentIntent();
     }
   }, [activeTab, clientSecret, isCreatingPaymentIntent]);
 
   const createPaymentIntent = async () => {
+    console.log('🚀 createPaymentIntent called', { isCreatingPaymentIntent });
     if (isCreatingPaymentIntent) return;
     
     setIsCreatingPaymentIntent(true);
+    console.log('💰 Creating payment intent with total:', getTotalAmount());
     
     try {
       const totalAmount = getTotalAmount() * 100; // Convert to cents
@@ -70,10 +74,11 @@ const UnifiedCheckoutForm = () => {
 
       if (error) throw error;
 
+      console.log('✅ Payment intent created:', { client_secret: data.client_secret, payment_intent_id: data.payment_intent_id });
       setClientSecret(data.client_secret);
       setPaymentIntentId(data.payment_intent_id);
     } catch (error: any) {
-      console.error('Error creating payment intent:', error);
+      console.error('❌ Error creating payment intent:', error);
       toast.error('Failed to initialize payment. Please try again.');
     } finally {
       setIsCreatingPaymentIntent(false);

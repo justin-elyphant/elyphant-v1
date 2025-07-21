@@ -139,7 +139,15 @@ const UserButton = () => {
 
         <DropdownMenuItem onClick={() => navigate("/messages")}>
           <MessageSquare className="mr-2 h-4 w-4" />
-          <span>Messages</span>
+          <span className="relative">
+            Messages
+            {unreadMessagesCount > 0 && (
+              <NotificationBadge 
+                count={unreadMessagesCount} 
+                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
+              />
+            )}
+          </span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/connections")}>

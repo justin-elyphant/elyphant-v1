@@ -23,6 +23,7 @@ import {
   Heart,
   Package,
   MessageSquare,
+  LayoutDashboard,
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
@@ -41,6 +42,11 @@ const AppSidebar = () => {
       title: "Home",
       url: "/",
       icon: Home,
+    },
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
     },
     {
       title: "Marketplace",

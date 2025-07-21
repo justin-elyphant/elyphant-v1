@@ -208,7 +208,7 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="font-medium">{option.name}</div>
-                        <div className="text-sm text-muted-foreground">{option.estimatedDays}</div>
+                        <div className="text-sm text-muted-foreground">{option.delivery_time}</div>
                       </div>
                       <div className="font-bold">
                         ${option.price.toFixed(2)}

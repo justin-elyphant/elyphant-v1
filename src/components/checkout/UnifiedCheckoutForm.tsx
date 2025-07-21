@@ -215,7 +215,7 @@ const UnifiedCheckoutForm = () => {
                       // Handle shipping method change if needed
                     }}
                     shippingOptions={[
-                      { id: 'standard', name: 'Standard Shipping', price: shippingCost, estimatedDays: '5-7 business days' }
+                      { id: 'standard', name: 'Standard Shipping', price: shippingCost, delivery_time: '5-7 business days' }
                     ]}
                     isLoadingShipping={false}
                   />

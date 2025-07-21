@@ -90,7 +90,7 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-4">
         <Logo />
       </SidebarHeader>

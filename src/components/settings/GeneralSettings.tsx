@@ -19,7 +19,7 @@ const GeneralSettings = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("basic");
-  const [debugMode, setDebugMode] = useState(false);
+  
   
   const {
     form,
@@ -115,52 +115,10 @@ const GeneralSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">General Settings</h2>
-          <p className="text-gray-600">Manage your profile information and preferences</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDebugMode(!debugMode)}
-            className="text-xs"
-          >
-            {debugMode ? "Hide Debug" : "Show Debug"}
-          </Button>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold">General Settings</h2>
+        <p className="text-gray-600">Manage your profile information and preferences</p>
       </div>
-
-      {debugMode && (
-        <Alert>
-          <AlertDescription>
-            <strong>Debug Info:</strong>
-            <pre className="text-xs mt-2 overflow-x-auto">
-              {JSON.stringify({
-                formValues: {
-                  first_name: currentFormValues.first_name,
-                  last_name: currentFormValues.last_name,
-                  email: currentFormValues.email,
-                  date_of_birth: currentFormValues.date_of_birth?.toISOString(),
-                  address: currentFormValues.address,
-                  interests: currentFormValues.interests,
-                  importantDates: currentFormValues.importantDates?.map(d => ({
-                    date: d.date?.toISOString(),
-                    description: d.description
-                  }))
-                },
-                state: {
-                  loading,
-                  isSaving,
-                  hasUnsavedChanges,
-                  dataLoadError
-                }
-              }, null, 2)}
-            </pre>
-          </AlertDescription>
-        </Alert>
-      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, (errors) => {

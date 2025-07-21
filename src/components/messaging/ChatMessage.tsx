@@ -10,6 +10,7 @@ import WishlistSharePreview from "./WishlistSharePreview";
 import MessageContextMenu from "./MessageContextMenu";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
+import { useProductContext } from "@/contexts/ProductContext";
 
 interface ChatMessageProps {
   message: Message;
@@ -33,7 +34,15 @@ const ChatMessage = ({
   showTimestamp = true
 }: ChatMessageProps) => {
   const { user } = useAuth();
+  const { allProducts } = useProductContext();
   const isOwn = user?.id === message.sender_id;
+
+  // Find the actual product from our marketplace data
+  const actualProduct = message.product_link_id ? 
+    allProducts.find(p => 
+      p.product_id === message.product_link_id || 
+      p.id === message.product_link_id
+    ) : null;
 
   const getMessageStatus = () => {
     if (!isOwn) return "read";
@@ -116,16 +125,16 @@ const ChatMessage = ({
 
           <p className="text-sm leading-relaxed pr-6">{message.content}</p>
           
-          {message.product_link_id && productDetails && (
+          {message.product_link_id && actualProduct && (
             <div className="mt-2">
               <ProductSharePreview
-                productId={productDetails.id}
-                productName={productDetails.name}
-                productImage="/placeholder.svg"
-                productPrice={99.99}
-                productBrand="Demo Brand"
+                productId={parseInt(actualProduct.product_id || actualProduct.id || "0")}
+                productName={actualProduct.title || actualProduct.name || ""}
+                productImage={actualProduct.image}
+                productPrice={actualProduct.price}
+                productBrand={actualProduct.brand}
                 onViewProduct={() => {
-                  window.open(`/marketplace?productId=${productDetails.id}`, '_blank');
+                  window.open(`/marketplace?productId=${actualProduct.product_id || actualProduct.id}`, '_blank');
                 }}
               />
             </div>

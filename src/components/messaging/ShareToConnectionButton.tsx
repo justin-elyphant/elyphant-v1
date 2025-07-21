@@ -47,10 +47,11 @@ const ShareToConnectionButton = ({
       : selectedTemplate;
 
     try {
+      // Use the actual product ID string instead of converting to int
       const result = await sendMessage({
         recipientId: selectedConnection.id,
         content: messageContent,
-        productLinkId: parseInt(product.product_id || product.id || "0")
+        productLinkId: product.product_id || product.id || "0"
       });
 
       if (result) {

@@ -18,7 +18,7 @@ interface SocialShareButtonProps {
     price?: number;
     brand?: string;
   };
-  variant?: "icon" | "outline" | "ghost";
+  variant?: "outline" | "ghost" | "default";
   size?: "sm" | "default" | "lg";
   className?: string;
 }

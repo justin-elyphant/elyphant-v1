@@ -57,7 +57,6 @@ const ProductDetailsImageSection = ({
           product={shareProduct}
           variant="ghost"
           size="sm"
-          className="bg-white/80 hover:bg-white"
         />
 
         {/* Wishlist Button - Always use the popover version for authenticated users */}

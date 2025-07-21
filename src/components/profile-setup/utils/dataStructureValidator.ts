@@ -64,18 +64,21 @@ export const convertProfileDataToSettingsForm = (profileData: ProfileData): Sett
     ...(profileData.data_sharing_settings || {})
   };
 
+  // Split name into first and last name
+  const nameParts = profileData.name?.split(' ') || [];
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
   // Convert to settings form format  
   const settingsData: SettingsFormValues = {
-    first_name: profileData.name?.split(' ')[0] || '',
-    last_name: profileData.name?.split(' ').slice(1).join(' ') || '',
+    first_name: firstName,
+    last_name: lastName,
     name: profileData.name || '',
     email: profileData.email || '',
     username: profileData.username || '',
     bio: profileData.bio || '',
     profile_image: profileData.profile_image || null,
-    date_of_birth: profileData.birthday ? 
-      new Date(new Date().getFullYear(), profileData.birthday.month - 1, profileData.birthday.day) : 
-      undefined,
+    date_of_birth: profileData.date_of_birth || undefined,
     address: {
       street: profileData.address?.street || '',
       city: profileData.address?.city || '',
@@ -119,7 +122,8 @@ export const testDataStructureCompatibility = (profileData: ProfileData) => {
     console.log("Converted SettingsFormValues:", convertedData);
     
     // Verify required fields are present
-    const hasRequiredFields = convertedData.name && 
+    const hasRequiredFields = convertedData.first_name && 
+                             convertedData.last_name &&
                              convertedData.email && 
                              convertedData.address && 
                              convertedData.data_sharing_settings;

@@ -16,7 +16,7 @@ export const testOnboardingToSettingsCompatibility = () => {
     email: "john@example.com",
     bio: "Test bio",
     profile_image: null,
-    birthday: { month: 1, day: 15 }, // Use new month/day format
+    date_of_birth: new Date(1990, 0, 15), // Use full Date object
     address: {
       street: "123 Main St",
       city: "New York",
@@ -52,7 +52,7 @@ export const testOnboardingToSettingsCompatibility = () => {
     console.log("3. Converted to settings format:", settingsData);
 
     // Verify all required fields are present
-    const requiredFields = ['name', 'email', 'address', 'data_sharing_settings'];
+    const requiredFields = ['first_name', 'last_name', 'email', 'address', 'data_sharing_settings'];
     const missingFields = requiredFields.filter(field => !settingsData[field as keyof SettingsFormValues]);
     
     if (missingFields.length > 0) {
@@ -73,7 +73,8 @@ export const testOnboardingToSettingsCompatibility = () => {
 
     console.log("✅ All compatibility tests passed!");
     console.log("4. Final settings data structure:", {
-      hasName: !!settingsData.name,
+      hasFirstName: !!settingsData.first_name,
+      hasLastName: !!settingsData.last_name,
       hasEmail: !!settingsData.email,
       hasAddress: !!settingsData.address,
       hasDataSharingSettings: !!settingsData.data_sharing_settings,

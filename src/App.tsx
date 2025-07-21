@@ -15,6 +15,7 @@ import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import SignIn from "./pages/SignIn";
+import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Marketplace from "./pages/Marketplace";
 import Settings from "./pages/Settings";
@@ -50,6 +51,7 @@ function App() {
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/profile/:identifier" element={<Profile />} />
                           <Route path="/signin" element={<SignIn />} />
+                          <Route path="/signup" element={<StreamlinedSignUp />} />
                           <Route path="/forgot-password" element={<ForgotPassword />} />
                           <Route path="/marketplace" element={<Marketplace />} />
                           <Route path="/settings" element={<Settings />} />

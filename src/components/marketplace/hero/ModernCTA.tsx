@@ -66,7 +66,7 @@ const ModernCTA: React.FC = () => {
             <Button 
               size="lg" 
               className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/auth")}
             >
               <Gift className="mr-2 h-5 w-5" />
               Get Started Free
@@ -75,7 +75,7 @@ const ModernCTA: React.FC = () => {
               variant="outline" 
               size="lg" 
               className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
-              onClick={() => navigate("/sign-in")}
+              onClick={() => navigate("/auth")}
             >
               Sign In
             </Button>

@@ -88,7 +88,7 @@ const VerificationView: React.FC<VerificationViewProps> = ({
       <CardFooter className="flex flex-col space-y-4">
         {bypassVerification ? (
           <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-            <Link to="/signup?intent=complete-profile">Continue to Profile Setup</Link>
+            <Link to="/auth?intent=complete-profile">Continue to Profile Setup</Link>
           </Button>
         ) : (
           <Button 

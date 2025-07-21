@@ -74,7 +74,7 @@ const OrdersCard = () => {
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">Sign in to view your orders</p>
           <Button className="w-full" size="sm" asChild>
-            <Link to="/signin">Sign In</Link>
+            <Link to="/auth">Sign In</Link>
           </Button>
         </CardContent>
       </Card>

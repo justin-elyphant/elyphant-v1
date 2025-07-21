@@ -13,7 +13,7 @@ const ResultsPreviewStep = ({ botState, closeBot }: ResultsPreviewStepProps) => 
 
   const handleSignUp = () => {
     closeBot();
-    navigate("/signup");
+    navigate("/auth");
   };
 
   const handleViewLimitedResults = () => {

@@ -34,7 +34,7 @@ const MobileQuickActions = () => {
     {
       icon: <Heart className="h-5 w-5" />,
       label: "Wishlist",
-      action: () => navigate(user ? "/wishlists" : "/signup")
+      action: () => navigate(user ? "/wishlists" : "/auth")
     },
     {
       icon: <ShoppingCart className="h-5 w-5" />,

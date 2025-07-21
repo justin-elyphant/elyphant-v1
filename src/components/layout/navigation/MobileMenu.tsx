@@ -116,12 +116,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         {!user ? (
           <div className="pt-3 border-t border-border flex flex-col space-y-2">
             <Button asChild>
-              <Link to="/signup" onClick={onClose}>
+              <Link to="/auth" onClick={onClose}>
                 Sign Up
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/login" onClick={onClose}>
+              <Link to="/auth" onClick={onClose}>
                 Log In
               </Link>
             </Button>

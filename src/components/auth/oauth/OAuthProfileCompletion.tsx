@@ -28,7 +28,7 @@ const OAuthProfileCompletion = () => {
   useEffect(() => {
     if (!user) {
       console.log("❌ No user found, redirecting to sign-in");
-      navigate("/auth/signin");
+      navigate("/auth");
       return;
     }
 

@@ -35,7 +35,7 @@ const Hero = () => {
       }
     } else {
       // Not logged in: send to signup (streamlined onboarding flow will route post-auth)
-      navigate("/signup");
+      navigate("/auth");
     }
   };
 

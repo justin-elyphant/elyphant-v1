@@ -54,7 +54,7 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({
     
     // Otherwise redirect to signup with current path as redirect
     const redirectPath = `${location.pathname}${location.search}`;
-    return <Navigate to={`/signup?redirect=${encodeURIComponent(redirectPath)}`} replace />;
+    return <Navigate to={`/auth?redirect=${encodeURIComponent(redirectPath)}`} replace />;
   }
 
   // Mark profile as completed in localStorage

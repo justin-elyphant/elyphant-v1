@@ -22,7 +22,7 @@ const HomeCTA = () => {
       setShowIntentModal(true);
     } else {
       // Not logged in: send to signup
-      navigate("/signup");
+      navigate("/auth");
     }
   };
 
@@ -96,7 +96,7 @@ const HomeCTA = () => {
                 size="lg"
                 className="bg-white text-purple-600 hover:bg-gray-100 font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
               >
-                <Link to="/signup">
+                <Link to="/auth">
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>

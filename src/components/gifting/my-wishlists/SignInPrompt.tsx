@@ -15,10 +15,10 @@ const SignInPrompt: React.FC<SignInPromptProps> = () => (
       </p>
       <div className="flex gap-4">
         <Button asChild variant="default">
-          <a href="/signin">Sign In</a>
+          <a href="/auth">Sign In</a>
         </Button>
         <Button asChild variant="outline">
-          <a href="/signup">Create Account</a>
+          <a href="/auth">Create Account</a>
         </Button>
       </div>
     </div>

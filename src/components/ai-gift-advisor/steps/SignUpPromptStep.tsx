@@ -13,12 +13,12 @@ const SignUpPromptStep = ({ closeBot }: SignUpPromptStepProps) => {
 
   const handleSignUp = () => {
     closeBot();
-    navigate("/signup");
+    navigate("/auth");
   };
 
   const handleSignIn = () => {
     closeBot();
-    navigate("/signin");
+    navigate("/auth");
   };
 
   const handleBack = () => {

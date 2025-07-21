@@ -72,7 +72,7 @@ const EmailVerificationView = ({
           toast.success("Your email has been verified!");
           
           // Force reload with verification parameters  
-          window.location.href = `${window.location.origin}/signup?verified=true&email=${encodeURIComponent(userEmail)}`;
+          window.location.href = `${window.location.origin}/auth?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
           console.log("Default check - not verified yet");
           toast.error("Your email is not yet verified. Please enter the verification code from your email.");

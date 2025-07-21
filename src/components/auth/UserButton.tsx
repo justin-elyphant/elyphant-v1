@@ -76,7 +76,7 @@ const UserButton = () => {
       navigate(`/profile/${profileIdentifier}`);
     } else {
       // Fallback to streamlined signup flow for profile completion
-      navigate("/signup?intent=complete-profile");
+      navigate("/auth?intent=complete-profile");
     }
   };
 

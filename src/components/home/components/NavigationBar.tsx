@@ -20,7 +20,7 @@ const NavigationBar = () => {
   const location = useLocation();
 
   // Don't load heavy components on auth pages for better performance
-  const isAuthPage = ['/signin', '/signup', '/reset-password'].includes(location.pathname);
+  const isAuthPage = ['/auth', '/reset-password'].includes(location.pathname);
   const shouldShowSearch = !isAuthPage;
   const shouldShowCart = !isAuthPage;
 

@@ -1,285 +1,326 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
-import UnifiedShippingForm from './UnifiedShippingForm';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 import PaymentMethodSelector from './PaymentMethodSelector';
-import RecipientAssignmentSection from '../marketplace/checkout/RecipientAssignmentSection';
-import CheckoutOrderSummary from './CheckoutOrderSummary';
+import { Separator } from '@/components/ui/separator';
+import { OrderService } from '@/services';
+import { ShippingForm } from '@/components/checkout/ShippingForm';
+import { GiftOptionsForm } from '@/components/checkout/GiftOptionsForm';
+import { ReviewOrder } from '@/components/checkout/ReviewOrder';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+interface DeliveryGroup {
+  recipientConnectionId: string;
+  giftMessage: string;
+  scheduledDeliveryDate: string;
+}
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, subtotal, totalItems } = useCart();
   const { user } = useAuth();
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Payment intent state
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
-  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
-
   const {
     activeTab,
     isProcessing,
     checkoutData,
+    addressesLoaded,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
+    handlePaymentMethodChange,
     canPlaceOrder,
     getShippingCost,
     saveCurrentAddressToProfile
   } = useCheckoutState();
 
-  // Create payment intent when switching to payment tab
-  React.useEffect(() => {
-    console.log('🔍 Payment tab effect triggered:', { activeTab, clientSecret, isCreatingPaymentIntent });
-    if (activeTab === 'payment' && !clientSecret && !isCreatingPaymentIntent) {
-      console.log('✅ Calling createPaymentIntent');
-      createPaymentIntent();
-    }
-  }, [activeTab, clientSecret, isCreatingPaymentIntent]);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [giftOptions, setGiftOptions] = useState({
+    isGift: false,
+    recipientName: '',
+    giftMessage: '',
+    giftWrapping: false,
+    isSurpriseGift: false,
+    scheduledDeliveryDate: ''
+  });
 
-  const createPaymentIntent = async () => {
-    console.log('🚀 createPaymentIntent called', { isCreatingPaymentIntent });
-    if (isCreatingPaymentIntent) return;
-    
-    setIsCreatingPaymentIntent(true);
-    console.log('💰 Creating payment intent with total:', getTotalAmount());
-    
+  const shippingCost = getShippingCost();
+  const taxRate = 0.07; // 7% tax rate
+  const taxAmount = subtotal * taxRate;
+  const totalAmount = subtotal + shippingCost + taxAmount;
+
+  useEffect(() => {
+    // Create PaymentIntent as soon as the component mounts
+    const createPaymentIntent = async () => {
+      try {
+        const response = await fetch("/api/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: Math.round(totalAmount * 100) }),
+        });
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        toast({
+          title: "Error",
+          description: "Failed to initiate payment. Please try again.",
+        });
+      }
+    };
+
+    createPaymentIntent();
+  }, [totalAmount]);
+
+  const handleShippingSubmit = async () => {
     try {
-      const totalAmount = getTotalAmount() * 100; // Convert to cents
-      
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: totalAmount,
-          currency: 'usd',
-          metadata: {
-            order_type: 'marketplace_purchase',
-            user_id: user?.id || 'guest',
-            cart_items: JSON.stringify(cartItems.map(item => ({
-              product_id: item.product.product_id,
-              quantity: item.quantity,
-              price: item.product.price
-            })))
-          }
-        }
+      setIsProcessing(true);
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
+      handleTabChange('gift');
+    } catch (error) {
+      console.error("Shipping info submission error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save shipping information. Please try again.",
       });
-
-      if (error) throw error;
-
-      console.log('✅ Payment intent created:', { client_secret: data.client_secret, payment_intent_id: data.payment_intent_id });
-      setClientSecret(data.client_secret);
-      setPaymentIntentId(data.payment_intent_id);
-    } catch (error: any) {
-      console.error('❌ Error creating payment intent:', error);
-      toast.error('Failed to initialize payment. Please try again.');
     } finally {
-      setIsCreatingPaymentIntent(false);
+      setIsProcessing(false);
     }
   };
 
-  const getTotalAmount = () => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    const shipping = getShippingCost();
-    const tax = subtotal * 0.0875; // 8.75% tax
-    return subtotal + shipping + tax;
+  const handleGiftOptionsSubmit = async () => {
+    try {
+      setIsProcessing(true);
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
+      handleTabChange('payment');
+    } catch (error) {
+      console.error("Gift options submission error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save gift options. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCreateOrder = async (paymentIntentId: string, paymentMethodId?: string) => {
+    if (!checkoutData) {
+      console.error("Checkout data is missing");
+      toast.error("Checkout data is missing. Please review your information.");
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Prepare order data
+      const orderData = {
+        cartItems: cartItems,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        taxAmount: taxAmount,
+        totalAmount: totalAmount,
+        shippingInfo: checkoutData.shippingInfo,
+        giftOptions: giftOptions,
+        paymentIntentId: paymentIntentId,
+        deliveryGroups: [] as DeliveryGroup[] // Assuming no delivery groups for now
+      };
+
+      // Create the order
+      const newOrder = await OrderService.createOrder(orderData);
+      setOrderId(newOrder.id);
+
+      console.log('Order created successfully:', newOrder.id);
+      return newOrder.id;
+    } catch (error: any) {
+      console.error("Order creation error:", error);
+      toast.error(error.message || "Failed to create order. Please contact support.");
+      return null;
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handlePaymentSuccess = async (stripePaymentIntentId: string, paymentMethodId?: string) => {
+    console.log('🎉 Payment successful:', { stripePaymentIntentId, paymentMethodId, orderId });
+    
+    if (!orderId) {
+      console.error('❌ No order ID available for payment success');
+      toast.error('Order ID missing. Please contact support.');
+      return;
+    }
+
     try {
-      console.log('Payment successful, creating order...', { stripePaymentIntentId, paymentMethodId });
+      setIsProcessingPayment(true);
       
-      // Create order in database
-      const orderData = {
-        user_id: user?.id || null,
-        total_amount: getTotalAmount(),
-        subtotal: cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
-        shipping_cost: getShippingCost(),
-        tax_amount: cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * 0.0875,
-        currency: 'usd',
-        status: 'pending',
-        payment_status: 'completed',
-        stripe_payment_intent_id: stripePaymentIntentId,
-        shipping_info: {
-          name: checkoutData.shippingInfo.name,
-          email: checkoutData.shippingInfo.email,
-          address: checkoutData.shippingInfo.address,
-          line2: checkoutData.shippingInfo.addressLine2,
-          city: checkoutData.shippingInfo.city,
-          state: checkoutData.shippingInfo.state,
-          zipCode: checkoutData.shippingInfo.zipCode,
-          country: checkoutData.shippingInfo.country
-        },
-        shipping_method: checkoutData.shippingMethod
-      };
+      console.log('🔍 Verifying payment intent with order:', { 
+        payment_intent_id: stripePaymentIntentId, 
+        order_id: orderId 
+      });
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select('id, order_number')
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        product_id: item.product.product_id,
-        quantity: item.quantity,
-        price: item.product.price,
-        product_name: item.product.name,
-        product_image: item.product.image
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Call verify-checkout-session to trigger Zinc processing
-      const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-checkout-session', {
-        body: {
+      // Use the new verify-payment-intent function instead of verify-checkout-session
+      const { data, error } = await supabase.functions.invoke('verify-payment-intent', {
+        body: { 
           payment_intent_id: stripePaymentIntentId,
-          order_id: order.id
+          order_id: orderId
         }
       });
 
-      if (verificationError) {
-        console.error('Verification error:', verificationError);
-        // Don't fail the entire process if verification fails
+      console.log('📋 Payment verification response:', { data, error });
+
+      if (error) {
+        throw new Error(error.message || 'Payment verification failed');
       }
 
-      console.log('Order created successfully:', order);
-      
-      // Clear cart and navigate to success page
-      clearCart();
-      navigate(`/payment-success?order=${order.order_number}`);
-      
+      if (data?.success) {
+        console.log('✅ Payment verified successfully, clearing cart and navigating...');
+        
+        // Clear the cart
+        clearCart();
+        
+        // Show success message
+        toast.success('Payment successful! Your order has been confirmed.');
+        
+        // Navigate to orders page
+        navigate('/orders');
+      } else {
+        throw new Error(data?.error || 'Payment verification failed');
+      }
     } catch (error: any) {
-      console.error('Error in payment success handler:', error);
-      toast.error('Order creation failed. Please contact support.');
-      throw error; // Re-throw to handle in payment component
+      console.error('❌ Payment verification error:', error);
+      toast.error(error.message || 'There was an issue verifying your payment. Please contact support.');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
-  const canProceedToPayment = () => {
-    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return name && email && address && city && state && zipCode;
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error);
+    toast.error(error);
   };
 
-  if (cartItems.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center py-16">
-          <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-          <p className="text-muted-foreground mb-6">
-            Add some items to your cart before checking out
-          </p>
-          <Button onClick={() => navigate("/marketplace")}>
-            Continue Shopping
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handlePlaceOrder = async () => {
+    try {
+      setIsProcessingPayment(true);
+      setPaymentError(null);
+
+      // 1. Create Order
+      const newOrderId = await handleCreateOrder('');
+      if (!newOrderId) {
+        throw new Error("Failed to create order.");
+      }
+
+    } catch (error: any) {
+      console.error("Error during checkout process:", error);
+      setPaymentError(error.message || "An error occurred during checkout.");
+      toast.error(error.message || "An error occurred during checkout.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Checkout</h1>
-            <p className="text-muted-foreground">Complete your purchase</p>
-          </div>
+    <div className="container mx-auto py-12 px-4 max-w-3xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold">Checkout</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="shipping">
+              <AccordionTrigger>
+                <span className="w-full flex justify-between items-center">
+                  Shipping Information
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <ShippingForm
+                  active={activeTab === 'shipping'}
+                  checkoutData={checkoutData}
+                  isProcessing={isProcessing}
+                  addressesLoaded={addressesLoaded}
+                  onUpdateShippingInfo={handleUpdateShippingInfo}
+                  onSubmit={handleShippingSubmit}
+                  onSaveAddress={saveCurrentAddressToProfile}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shipping">Shipping</TabsTrigger>
-              <TabsTrigger value="payment" disabled={!canProceedToPayment()}>
-                Payment
-              </TabsTrigger>
-            </TabsList>
+            <AccordionItem value="gift">
+              <AccordionTrigger>
+                <span className="w-full flex justify-between items-center">
+                  Gift Options
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <GiftOptionsForm
+                  active={activeTab === 'gift'}
+                  isProcessing={isProcessing}
+                  giftOptions={giftOptions}
+                  setGiftOptions={setGiftOptions}
+                  onSubmit={handleGiftOptionsSubmit}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-            <TabsContent value="shipping" className="space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                   <UnifiedShippingForm
-                     shippingInfo={checkoutData.shippingInfo}
-                     onUpdate={handleUpdateShippingInfo}
-                     selectedShippingMethod={'standard'}
-                     onShippingMethodChange={(method) => {}}
-                     shippingOptions={[]}
-                     isLoadingShipping={false}
-                   />
-                </CardContent>
-              </Card>
+            <AccordionItem value="payment">
+              <AccordionTrigger>
+                <span className="w-full flex justify-between items-center">
+                  Payment
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                {clientSecret && (
+                  <PaymentMethodSelector
+                    clientSecret={clientSecret}
+                    totalAmount={totalAmount}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                    isProcessingPayment={isProcessingPayment}
+                    onProcessingChange={setIsProcessingPayment}
+                    refreshKey={refreshKey}
+                    onRefreshKeyChange={setRefreshKey}
+                    shippingAddress={checkoutData.shippingInfo}
+                  />
+                )}
+                {paymentError && (
+                  <div className="mt-4 text-red-500">{paymentError}</div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-              <RecipientAssignmentSection 
-                cartItems={cartItems}
-                recipientAssignments={{}}
-                setRecipientAssignments={() => {}}
-                deliveryGroups={[]}
-                setDeliveryGroups={() => {}}
-              />
+          <Separator />
 
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => handleTabChange('payment')}
-                  disabled={!canProceedToPayment()}
-                >
-                  Continue to Payment
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="payment" className="space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                  {isCreatingPaymentIntent ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Initializing payment...</p>
-                    </div>
-                  ) : (
-                    <PaymentMethodSelector
-                      clientSecret={clientSecret}
-                      totalAmount={getTotalAmount()}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={(error) => toast.error(error)}
-                      isProcessingPayment={isProcessing}
-                      onProcessingChange={setIsProcessing}
-                      refreshKey={refreshKey}
-                      onRefreshKeyChange={setRefreshKey}
-                      shippingAddress={checkoutData.shippingInfo}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Order Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <CheckoutOrderSummary
-            items={cartItems}
-            subtotal={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)}
-            shippingCost={getShippingCost()}
-            giftingFee={0}
-            taxAmount={cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * 0.0875}
-            totalAmount={getTotalAmount()}
+          <ReviewOrder
+            cartItems={cartItems}
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            taxAmount={taxAmount}
+            totalAmount={totalAmount}
+            shippingInfo={checkoutData.shippingInfo}
           />
-        </div>
-      </div>
+
+          <Button
+            disabled={!canPlaceOrder() || isProcessingPayment}
+            className="w-full"
+            size="lg"
+            onClick={handlePlaceOrder}
+          >
+            {isProcessingPayment ? 'Processing...' : `Place Order`}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

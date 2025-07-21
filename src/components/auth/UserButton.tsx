@@ -14,12 +14,16 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 const UserButton = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
+  const { unreadCount: notificationsCount } = useNotifications();
+  const unreadMessagesCount = useUnreadMessagesCount();
   
   // Run integrity check when component mounts or profile changes
   React.useEffect(() => {
@@ -65,6 +69,9 @@ const UserButton = () => {
   const userName = getUserFirstName();
   const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
   
+  // Calculate total notification count for avatar badge
+  const totalNotificationCount = notificationsCount + unreadMessagesCount + (hasIssues ? 1 : 0);
+  
   const handleSignOut = async () => {
     await signOut();
   };
@@ -105,6 +112,12 @@ const UserButton = () => {
               {userInitials}
             </AvatarFallback>
           </Avatar>
+          {totalNotificationCount > 0 && (
+            <NotificationBadge 
+              count={totalNotificationCount}
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs"
+            />
+          )}
         </button>
       </DropdownMenuTrigger>
       

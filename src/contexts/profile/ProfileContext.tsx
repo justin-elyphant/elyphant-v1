@@ -30,8 +30,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
-  // Combined loading and error states
-  const loading = isFetching || isUpdating;
+  // Combined loading and error states - only show loading if actively fetching/updating AND no profile data
+  const loading = (isFetching || isUpdating) && !profile;
   const error = fetchError || updateError;
 
   // Load profile data - properly depend on user and fetchProfile

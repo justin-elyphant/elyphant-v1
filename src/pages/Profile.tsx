@@ -42,8 +42,11 @@ const Profile = () => {
   const isAuthenticated = Boolean(user && !authLoading);
   console.log("Is authenticated:", isAuthenticated);
 
-  // Determine if this is the user's own profile - ONLY if authenticated
-  const isOwnProfile = isAuthenticated && ownProfile && identifier && (
+  // Determine if this is the user's own profile
+  // If no identifier, it's the user's own profile (authenticated user visiting /profile)
+  // If there is an identifier, check if it matches the user's profile
+  const isOwnProfile = isAuthenticated && ownProfile && (
+    !identifier || // No identifier means user's own profile
     identifier === ownProfile.username ||
     identifier === user.id ||
     identifier === ownProfile.id

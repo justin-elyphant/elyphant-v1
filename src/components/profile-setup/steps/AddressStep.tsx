@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileData } from "../hooks/types";
 import { ShippingAddress } from "@/hooks/settings/types";
+import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 
 interface AddressStepProps {
   profileData: ProfileData;
@@ -23,10 +24,29 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
     ? profileData.address 
     : defaultAddress;
 
+  const [addressQuery, setAddressQuery] = useState(currentAddress.street || "");
+
   const handleChange = (field: string, fieldValue: string) => {
     updateProfileData('address', {
       ...currentAddress,
       [field]: fieldValue
+    });
+  };
+
+  const handleAddressSelect = (address: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  }) => {
+    updateProfileData('address', {
+      ...currentAddress,
+      street: address.address,
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode,
+      country: address.country
     });
   };
 
@@ -40,15 +60,11 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
       </div>
       
       <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="street">Street Address</Label>
-          <Input
-            id="street"
-            placeholder="123 Main St"
-            value={currentAddress.street || ""}
-            onChange={(e) => handleChange("street", e.target.value)}
-          />
-        </div>
+        <AddressAutocomplete
+          value={addressQuery}
+          onChange={setAddressQuery}
+          onAddressSelect={handleAddressSelect}
+        />
 
         <div className="grid gap-2">
           <Label htmlFor="line2">Apartment, Suite, Unit, etc. (optional)</Label>
@@ -58,38 +74,6 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
             value={currentAddress.line2 || ""}
             onChange={(e) => handleChange("line2", e.target.value)}
           />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            placeholder="City"
-            value={currentAddress.city || ""}
-            onChange={(e) => handleChange("city", e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="state">State</Label>
-            <Input
-              id="state"
-              placeholder="State"
-              value={currentAddress.state || ""}
-              onChange={(e) => handleChange("state", e.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="zipCode">ZIP Code</Label>
-            <Input
-              id="zipCode"
-              placeholder="ZIP Code"
-              value={currentAddress.zipCode || ""}
-              onChange={(e) => handleChange("zipCode", e.target.value)}
-            />
-          </div>
         </div>
 
         <div className="grid gap-2">
@@ -106,6 +90,18 @@ const AddressStep: React.FC<AddressStepProps> = ({ profileData, updateProfileDat
             </SelectContent>
           </Select>
         </div>
+
+        {/* Show selected address details for confirmation */}
+        {(currentAddress.street || currentAddress.city) && (
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">Selected Address:</p>
+            <div className="space-y-1 text-sm">
+              <p>{currentAddress.street}</p>
+              <p>{currentAddress.city}, {currentAddress.state} {currentAddress.zipCode}</p>
+              <p>{currentAddress.country}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

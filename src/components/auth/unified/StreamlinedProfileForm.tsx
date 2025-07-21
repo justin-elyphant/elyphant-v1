@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import ProfileBubble from "@/components/ui/profile-bubble";
 import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const formSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -67,6 +68,30 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
       }
     }
   });
+
+  // Load stored data from localStorage on component mount
+  useEffect(() => {
+    const completionState = LocalStorageService.getProfileCompletionState();
+    if (completionState?.firstName || completionState?.lastName || completionState?.email) {
+      console.log('Pre-populating form with stored data:', completionState);
+      
+      // Pre-populate form with stored data
+      form.reset({
+        first_name: completionState.firstName || "",
+        last_name: completionState.lastName || "",
+        username: "", // Will be auto-generated
+        profile_image: null,
+        address: {
+          street: "",
+          line2: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "US"
+        }
+      });
+    }
+  }, [form]);
 
   // Auto-generate username from first and last name
   const firstName = form.watch("first_name");

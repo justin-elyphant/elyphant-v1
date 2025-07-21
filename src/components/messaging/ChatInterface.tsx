@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Message, fetchMessages, sendMessage, markMessagesAsRead, subscribeToMessages } from "@/utils/messageService";
+import { Message, fetchMessages, sendMessage, markMessageAsRead, subscribeToMessages } from "@/utils/messageService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +29,7 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
   const { user } = useAuth();
   const { wishlists } = useWishlists();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [productDetails, setProductDetails] = useState<Record<number, { name: string; id: number }>>({});
+  const [productDetails, setProductDetails] = useState<Record<string, { name: string; id: string }>>({});
   const [wishlistDetails, setWishlistDetails] = useState<Record<string, Wishlist>>({});
 
   // Load messages when the component mounts or the connection changes
@@ -42,22 +42,24 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
 
       // Mark unread messages as read
       const unreadMessageIds = data
-        .filter(msg => !msg.is_read && msg.recipient_id === user?.id)
+        .filter(msg => !msg.read_at && msg.recipient_id === user?.id)
         .map(msg => msg.id);
         
       if (unreadMessageIds.length > 0) {
-        markMessagesAsRead(unreadMessageIds);
+        for (const id of unreadMessageIds) {
+          await markMessageAsRead(id);
+        }
       }
 
       // Fetch product details for messages with product links
       const productIds = data
         .filter(msg => msg.product_link_id)
         .map(msg => msg.product_link_id)
-        .filter((id): id is number => id !== null);
+        .filter((id): id is string => id !== null);
       
       // Mock product details - in real app, fetch from marketplace
       const uniqueProductIds = [...new Set(productIds)];
-      const productDetailsMap: Record<number, { name: string; id: number }> = {};
+      const productDetailsMap: Record<string, { name: string; id: string }> = {};
       uniqueProductIds.forEach(id => {
         productDetailsMap[id] = { 
           name: `Product #${id}`, 
@@ -92,11 +94,8 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
   useEffect(() => {
     if (!connectionId || !user?.id) return;
 
-    const unsubscribe = subscribeToMessages(user.id, (newMsg) => {
-      if (newMsg.sender_id === connectionId) {
-        setMessages(prev => [...prev, newMsg]);
-        markMessagesAsRead([newMsg.id]);
-      }
+    const unsubscribe = subscribeToMessages(connectionId, (newMessages) => {
+      setMessages(newMessages);
     });
 
     return () => {

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import { Message, sendMessage, subscribeToMessages, markMessagesAsRead } from "@/utils/messageService";
+import { Message, sendMessage, subscribeToMessages, markMessageAsRead } from "@/utils/messageService";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -33,8 +33,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     if (!connectionId || !user) return;
 
-    const unsubscribe = subscribeToMessages(connectionId, (message: Message) => {
-      onMessagesUpdate([...messages, message]);
+    const unsubscribe = subscribeToMessages(connectionId, (newMessages: Message[]) => {
+      onMessagesUpdate(newMessages);
     });
 
     return unsubscribe;
@@ -43,11 +43,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   // Mark messages as read when viewing conversation
   useEffect(() => {
     const unreadMessages = messages.filter(msg => 
-      !msg.is_read && msg.recipient_id === user?.id
+      !msg.read_at && msg.recipient_id === user?.id
     );
     
     if (unreadMessages.length > 0) {
-      markMessagesAsRead(unreadMessages.map(msg => msg.id));
+      unreadMessages.forEach(msg => markMessageAsRead(msg.id));
     }
   }, [messages, user?.id]);
 

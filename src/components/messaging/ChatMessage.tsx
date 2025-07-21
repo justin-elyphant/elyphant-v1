@@ -10,11 +10,11 @@ import WishlistSharePreview from "./WishlistSharePreview";
 import MessageContextMenu from "./MessageContextMenu";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
-import { useProductContext } from "@/contexts/ProductContext";
+import { useProducts } from "@/contexts/ProductContext";
 
 interface ChatMessageProps {
   message: Message;
-  productDetails?: { name: string; id: number } | null;
+  productDetails?: { name: string; id: string } | null;
   wishlistDetails?: Wishlist | null;
   showStatus?: boolean;
   onReply?: (message: Message) => void;
@@ -34,7 +34,7 @@ const ChatMessage = ({
   showTimestamp = true
 }: ChatMessageProps) => {
   const { user } = useAuth();
-  const { allProducts } = useProductContext();
+  const { products: allProducts } = useProducts();
   const isOwn = user?.id === message.sender_id;
 
   // Find the actual product from our marketplace data

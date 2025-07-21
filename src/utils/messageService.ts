@@ -70,3 +70,24 @@ export const markMessageAsRead = async (messageId: string) => {
     throw error;
   }
 };
+
+export const subscribeToMessages = (connectionId: string, callback: (messages: Message[]) => void) => {
+  const channel = supabase
+    .channel(`messages:${connectionId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+      },
+      () => {
+        fetchMessages(connectionId).then(callback);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};

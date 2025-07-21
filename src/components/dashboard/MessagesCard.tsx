@@ -45,7 +45,7 @@ const MessagesCard = () => {
               avatar: conn.imageUrl,
               message: lastMessage.content,
               time: new Date(lastMessage.created_at).toLocaleTimeString(),
-              unread: !lastMessage.is_read && lastMessage.recipient_id === user.id
+              unread: !lastMessage.read_at && lastMessage.recipient_id === user.id
             };
           }
           return null;

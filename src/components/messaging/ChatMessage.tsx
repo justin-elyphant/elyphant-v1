@@ -18,6 +18,8 @@ interface ChatMessageProps {
   showStatus?: boolean;
   onReply?: (message: Message) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  isConsecutive?: boolean;
+  showTimestamp?: boolean;
 }
 
 const ChatMessage = ({ 
@@ -26,7 +28,9 @@ const ChatMessage = ({
   wishlistDetails, 
   showStatus = true,
   onReply,
-  onReact
+  onReact,
+  isConsecutive = false,
+  showTimestamp = true
 }: ChatMessageProps) => {
   const { user } = useAuth();
   const isOwn = user?.id === message.sender_id;
@@ -73,21 +77,31 @@ const ChatMessage = ({
   };
 
   return (
-    <div className={`group flex items-start gap-2 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
-      <Avatar className="h-8 w-8 mt-1">
-        <AvatarFallback>{isOwn ? 'Me' : 'U'}</AvatarFallback>
-        <AvatarImage src="" alt="" />
-      </Avatar>
+    <div className={`group flex items-start gap-2 ${isConsecutive ? 'mb-1' : 'mb-3'} ${isOwn ? 'flex-row-reverse' : ''}`}>
+      {!isConsecutive && (
+        <Avatar className="h-6 w-6 mt-1">
+          <AvatarFallback className="text-xs">{isOwn ? 'Me' : 'U'}</AvatarFallback>
+          <AvatarImage src="" alt="" />
+        </Avatar>
+      )}
+      
+      {isConsecutive && !isOwn && <div className="w-6" />}
 
-      <div className={`max-w-[80%] ${isOwn ? 'items-end' : 'items-start'}`}>
+      <div className={`max-w-[60%] ${isOwn ? 'items-end' : 'items-start'}`}>
+        {showTimestamp && (
+          <div className={`text-xs text-muted-foreground mb-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+          </div>
+        )}
+
         <div
-          className={`relative px-4 py-2 rounded-lg ${
+          className={`group relative px-2.5 py-1.5 rounded-2xl ${
             isOwn 
-              ? 'bg-primary text-primary-foreground rounded-tr-none'
-              : 'bg-muted rounded-tl-none'
+              ? 'bg-primary text-primary-foreground rounded-br-md'
+              : 'bg-muted rounded-bl-md'
           }`}
         >
-          <div className={`absolute top-2 ${isOwn ? 'left-2' : 'right-2'}`}>
+          <div className={`absolute top-1 ${isOwn ? 'left-1' : 'right-1'} opacity-0 group-hover:opacity-100 transition-opacity`}>
             <MessageContextMenu
               message={message}
               isOwn={isOwn}
@@ -100,7 +114,7 @@ const ChatMessage = ({
             />
           </div>
 
-          <p className="text-sm pr-8">{message.content}</p>
+          <p className="text-sm leading-relaxed pr-6">{message.content}</p>
           
           {message.product_link_id && productDetails && (
             <div className="mt-2">
@@ -129,15 +143,14 @@ const ChatMessage = ({
           )}
         </div>
         
-        <div className={`flex items-center gap-2 mt-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <p className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-          </p>
-          {isOwn && showStatus && (
+        {!isConsecutive && isOwn && showStatus && (
+          <div className="flex items-center justify-end mt-1">
             <MessageStatusIndicator status={getMessageStatus()} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
+      
+      {isConsecutive && isOwn && <div className="w-6" />}
     </div>
   );
 };

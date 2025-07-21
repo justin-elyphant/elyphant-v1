@@ -51,9 +51,15 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
 
 export const sendConnectionRequest = async (targetUserId: string, relationshipType: string = 'friend') => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     const { data, error } = await supabase
       .from('user_connections')
       .insert({
+        user_id: user.id,
         connected_user_id: targetUserId,
         relationship_type: relationshipType,
         status: 'pending'

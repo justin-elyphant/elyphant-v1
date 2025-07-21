@@ -7,6 +7,8 @@ export type GiftSource = "wishlist" | "marketplace" | "ai_selected";
 
 export type RecurringType = "yearly" | "monthly" | "custom";
 
+export type EventCategory = "self" | "others" | "shared";
+
 export interface ExtendedEventData {
   id: string;
   type: string;
@@ -43,6 +45,11 @@ export interface ExtendedEventData {
   giftCategories?: string[];
   notificationDays?: number[];
   giftSelectionCriteria?: any;
+  
+  // Event categorization
+  eventCategory?: EventCategory;
+  isUserRecipient?: boolean;
+  isSharedEvent?: boolean;
 }
 
 export interface EventEditData {

@@ -2,6 +2,59 @@
 import { ExtendedEventData } from "@/components/gifting/events/types";
 import { EventCreateData } from "./eventTypes";
 
+// Helper function to determine event category
+function determineEventCategory(dbEvent: any): 'self' | 'others' | 'shared' {
+  const connection = dbEvent.user_connections;
+  
+  // If no connection and it's a birthday, it's the user's own birthday
+  if (!connection && dbEvent.date_type === 'birthday') {
+    return 'self';
+  }
+  
+  // If there's a connection but it's marked as shared (like anniversary with spouse)
+  if (connection && connection.relationship_type === 'spouse' && 
+      (dbEvent.date_type.includes('anniversary') || dbEvent.date_type.includes('valentine'))) {
+    return 'shared';
+  }
+  
+  // Default to others (friends' birthdays, etc.)
+  return 'others';
+}
+
+// Helper function to get the display person name based on event category
+function getEventPersonName(dbEvent: any, category: 'self' | 'others' | 'shared'): string {
+  const connection = dbEvent.user_connections;
+  
+  if (category === 'self') {
+    return 'Me'; // User's own events
+  }
+  
+  if (connection) {
+    const recipientName = connection.pending_recipient_name || 
+      (connection.profiles ? `${connection.profiles.first_name} ${connection.profiles.last_name}`.trim() : null);
+    
+    if (recipientName) {
+      return recipientName;
+    }
+  }
+  
+  // Fallback: try to extract from date_type if it has the format "type - name"
+  if (dbEvent.date_type.includes(' - ')) {
+    const [, personName] = dbEvent.date_type.split(' - ');
+    return personName || 'Unknown Person';
+  }
+  
+  return 'Unknown Person';
+}
+
+// Helper function to get event type from date_type
+function getEventType(dateType: string): string {
+  if (dateType.includes(' - ')) {
+    return dateType.split(' - ')[0];
+  }
+  return dateType;
+}
+
 // Helper function to transform database records to ExtendedEventData format
 export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventData {
   const eventDate = new Date(dbEvent.date);
@@ -9,15 +62,13 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
   const diffTime = eventDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const [eventType, personName] = dbEvent.date_type.includes(' - ') 
-    ? dbEvent.date_type.split(' - ')
-    : [dbEvent.date_type, 'Unknown Person'];
+  const eventType = getEventType(dbEvent.date_type);
+  const eventCategory = determineEventCategory(dbEvent);
+  const personName = getEventPersonName(dbEvent, eventCategory);
 
-  // Extract recipient information from user_connections join or fallback to extracted name
+  // Extract recipient information from user_connections join
   const connection = dbEvent.user_connections;
   const recipientEmail = connection?.pending_recipient_email || connection?.profiles?.email || "";
-  const recipientName = connection?.pending_recipient_name || 
-    (connection?.profiles ? `${connection.profiles.first_name} ${connection.profiles.last_name}`.trim() : personName);
   const relationshipType = connection?.relationship_type || 'friend';
   const avatarUrl = connection?.profiles?.profile_image || "/placeholder.svg";
 
@@ -39,7 +90,7 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
   return {
     id: dbEvent.id,
     type: eventType,
-    person: recipientName,
+    person: personName,
     date: eventDate.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -72,7 +123,11 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
     giftingRuleId: autoGiftingRule?.id,
     giftCategories,
     notificationDays,
-    giftSelectionCriteria: autoGiftingRule?.gift_selection_criteria
+    giftSelectionCriteria: autoGiftingRule?.gift_selection_criteria,
+    // Event categorization
+    eventCategory,
+    isUserRecipient: eventCategory === 'self',
+    isSharedEvent: eventCategory === 'shared'
   };
 }
 
@@ -80,7 +135,7 @@ export function transformDatabaseEventToExtended(dbEvent: any): ExtendedEventDat
 export function transformExtendedEventToDatabase(event: ExtendedEventData, connectionId?: string): EventCreateData {
   return {
     date: event.dateObj?.toISOString() || new Date().toISOString(),
-    date_type: `${event.type} - ${event.person}`,
+    date_type: event.eventCategory === 'self' ? event.type : `${event.type} - ${event.person}`,
     visibility: event.privacyLevel,
     connection_id: connectionId,
     is_recurring: event.isRecurring,

@@ -9,14 +9,16 @@ import EnhancedEventsContent from "./enhanced/EnhancedEventsContent";
 import { useEvents } from "../context/EventsContext";
 import { useEventHandlers } from "../hooks/useEventHandlers";
 import { useEnhancedEventsState } from "../hooks/useEnhancedEventsState";
+import { ExtendedEventData } from "../types";
 
 interface EnhancedEventsContainerProps {
   onAddEvent: () => void;
+  events?: ExtendedEventData[]; // Optional filtered events to display
 }
 
-const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) => {
+const EnhancedEventsContainer = ({ onAddEvent, events: providedEvents }: EnhancedEventsContainerProps) => {
   const { 
-    events, 
+    events: contextEvents, 
     isLoading, 
     error, 
     viewMode, 
@@ -24,6 +26,9 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
     selectedEventType,
     setSelectedEventType
   } = useEvents();
+  
+  // Use provided events or fall back to context events
+  const events = providedEvents || contextEvents;
   
   const {
     selectedEvents,
@@ -58,12 +63,36 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
     setIsAddEventOpen(true);
   };
 
-  const handleBulkDelete = () => {
-    console.log('Bulk delete:', selectedEvents);
-  };
-
-  const handleBulkEdit = () => {
-    console.log('Bulk edit:', selectedEvents);
+  // Determine appropriate messaging based on event category
+  const getEmptyStateMessage = () => {
+    if (providedEvents && providedEvents.length === 0) {
+      const firstEvent = contextEvents[0];
+      if (firstEvent?.eventCategory === 'self') {
+        return {
+          title: "No personal events yet",
+          description: "Add your birthday, graduation, or other special occasions where friends can send you gifts.",
+          actionLabel: "Add My Event"
+        };
+      } else if (firstEvent?.eventCategory === 'shared') {
+        return {
+          title: "No shared events yet", 
+          description: "Add anniversaries, Valentine's Day, or other occasions you celebrate together.",
+          actionLabel: "Add Shared Event"
+        };
+      } else {
+        return {
+          title: "No upcoming gifts scheduled",
+          description: "Set up automated gifting for friends and family birthdays and special occasions.",
+          actionLabel: "Set Up Gift"
+        };
+      }
+    }
+    
+    return {
+      title: "No events yet",
+      description: "Add your first event to start tracking important dates and occasions.",
+      actionLabel: "Add Event"
+    };
   };
 
   if (isLoading) {
@@ -75,11 +104,12 @@ const EnhancedEventsContainer = ({ onAddEvent }: EnhancedEventsContainerProps) =
   }
 
   if (events.length === 0) {
+    const emptyState = getEmptyStateMessage();
     return (
       <EmptyEventsState 
-        title="No events yet"
-        description="Add your first event to start tracking important dates and occasions."
-        actionLabel="Add Event"
+        title={emptyState.title}
+        description={emptyState.description}
+        actionLabel={emptyState.actionLabel}
         onAction={handleAddEvent}
       />
     );

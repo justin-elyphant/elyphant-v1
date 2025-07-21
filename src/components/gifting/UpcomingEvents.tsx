@@ -4,19 +4,25 @@ import { EventsProvider } from "./events/context/EventsContext";
 import EnhancedEventsContainer from "./events/views/EnhancedEventsContainer";
 import { GiftSetupWizard } from "./GiftSetupWizard";
 import { useEvents } from "./events/context/EventsContext";
+import { ExtendedEventData } from "./events/types";
 
 interface UpcomingEventsProps {
   onAddEvent: () => void;
+  events?: ExtendedEventData[]; // Optional filtered events to display
 }
 
-const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
+const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingEventsProps) => {
   const { 
+    events: allEvents,
     isGiftWizardOpen,
     setIsGiftWizardOpen,
     giftWizardInitialData,
     setGiftWizardInitialData,
     refreshEvents
   } = useEvents();
+
+  // Use provided events or fall back to all events
+  const eventsToDisplay = filteredEvents || allEvents;
 
   const handleGiftWizardClose = () => {
     setIsGiftWizardOpen(false);
@@ -31,7 +37,10 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
 
   return (
     <div className="space-y-6">
-      <EnhancedEventsContainer onAddEvent={onAddEvent} />
+      <EnhancedEventsContainer 
+        onAddEvent={onAddEvent} 
+        events={eventsToDisplay}
+      />
       <GiftSetupWizard
         open={isGiftWizardOpen}
         onOpenChange={handleGiftWizardClose}
@@ -41,10 +50,15 @@ const UpcomingEventsContent = ({ onAddEvent }: UpcomingEventsProps) => {
   );
 };
 
-const UpcomingEvents = ({ onAddEvent }: UpcomingEventsProps) => {
+const UpcomingEvents = ({ onAddEvent, events }: UpcomingEventsProps) => {
+  // If we already have events context (from parent), don't wrap again
+  if (events !== undefined) {
+    return <UpcomingEventsContent onAddEvent={onAddEvent} events={events} />;
+  }
+
   return (
     <EventsProvider>
-      <UpcomingEventsContent onAddEvent={onAddEvent} />
+      <UpcomingEventsContent onAddEvent={onAddEvent} events={events} />
     </EventsProvider>
   );
 };

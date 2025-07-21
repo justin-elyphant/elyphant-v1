@@ -12,16 +12,16 @@ import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Info } from "lucide-react";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
   const handleAddEvent = () => {
-    console.log("Set up gifting button clicked"); // Debug log
-    // This will be handled inside EventsContent which has access to context
+    console.log("Set up gifting button clicked");
   };
 
   // Show sign-in prompt if not authenticated
@@ -62,6 +62,15 @@ const Events = () => {
             </p>
           </div>
           
+          {/* Educational Alert */}
+          <Alert className="mb-6 border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>How it works:</strong> "My Events" are occasions where you receive gifts (your birthday, graduation, etc.) - share these so friends can set up auto-gifts for you. 
+              "Upcoming Gifts" are for setting up gifts you'll send to others. "Shared Events" like anniversaries involve both giving and receiving.
+            </AlertDescription>
+          </Alert>
+          
           <EventsContent onAddEvent={handleAddEvent} />
         </div>
       </EventsProvider>
@@ -85,29 +94,29 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
   }, [searchParams, setSearchParams, setIsGiftWizardOpen]);
 
   const handleAddEventWithContext = () => {
-    console.log("Set up gifting button clicked"); // Debug log
+    console.log("Set up gifting button clicked");
     setIsGiftWizardOpen(true);
   };
   
   // Get default tab from URL parameter
   const defaultTab = searchParams.get("tab") || "overview";
   
-  // Separate past and upcoming events
-  const { upcomingEvents, pastEvents } = useMemo(() => {
+  // Categorize events by type
+  const { myEvents, upcomingGifts, sharedEvents, pastEvents } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const upcoming = events.filter(event => {
-      if (!event.dateObj) return true; // If no date object, consider upcoming
-      return event.dateObj >= today;
-    });
+    const my = events.filter(event => event.eventCategory === 'self' && (!event.dateObj || event.dateObj >= today));
+    const upcoming = events.filter(event => event.eventCategory === 'others' && (!event.dateObj || event.dateObj >= today));
+    const shared = events.filter(event => event.eventCategory === 'shared' && (!event.dateObj || event.dateObj >= today));
+    const past = events.filter(event => event.dateObj && event.dateObj < today);
     
-    const past = events.filter(event => {
-      if (!event.dateObj) return false; // If no date object, not past
-      return event.dateObj < today;
-    });
-    
-    return { upcomingEvents: upcoming, pastEvents: past };
+    return { 
+      myEvents: my, 
+      upcomingGifts: upcoming, 
+      sharedEvents: shared, 
+      pastEvents: past 
+    };
   }, [events]);
 
   return (
@@ -118,8 +127,14 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
             <TabsTrigger value="overview" className="text-sm">
               Overview
             </TabsTrigger>
-            <TabsTrigger value="upcoming" className="text-sm">
-              Upcoming Events ({upcomingEvents.length})
+            <TabsTrigger value="my-events" className="text-sm">
+              My Events ({myEvents.length})
+            </TabsTrigger>
+            <TabsTrigger value="upcoming-gifts" className="text-sm">
+              Upcoming Gifts ({upcomingGifts.length})
+            </TabsTrigger>
+            <TabsTrigger value="shared-events" className="text-sm">
+              Shared Events ({sharedEvents.length})
             </TabsTrigger>
             <TabsTrigger value="past" className="text-sm">
               Past Events ({pastEvents.length})
@@ -133,8 +148,43 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
           <UnifiedGiftTimingDashboard />
         </TabsContent>
           
-        <TabsContent value="upcoming" className="mt-6">
-          <UpcomingEvents onAddEvent={handleAddEventWithContext} />
+        <TabsContent value="my-events" className="mt-6">
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-900 mb-2">📅 My Events</h3>
+              <p className="text-blue-800 text-sm">
+                These are occasions where you receive gifts. Share these events with friends and family so they can 
+                set up automatic gift reminders and deliveries for you. You won't set up auto-gifting for yourself here.
+              </p>
+            </div>
+            <UpcomingEvents onAddEvent={handleAddEventWithContext} events={myEvents} />
+          </div>
+        </TabsContent>
+          
+        <TabsContent value="upcoming-gifts" className="mt-6">
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 className="font-medium text-green-900 mb-2">🎁 Upcoming Gifts</h3>
+              <p className="text-green-800 text-sm">
+                Set up automated gifting for friends and family. Configure budgets, preferences, and timing 
+                to never miss an important occasion. Perfect for birthdays, graduations, and special milestones.
+              </p>
+            </div>
+            <UpcomingEvents onAddEvent={handleAddEventWithContext} events={upcomingGifts} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="shared-events" className="mt-6">
+          <div className="space-y-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="font-medium text-purple-900 mb-2">💕 Shared Events</h3>
+              <p className="text-purple-800 text-sm">
+                Special occasions you celebrate together with someone special, like anniversaries with your partner 
+                or Valentine's Day. Both people can give and receive gifts for these mutual celebrations.
+              </p>
+            </div>
+            <UpcomingEvents onAddEvent={handleAddEventWithContext} events={sharedEvents} />
+          </div>
         </TabsContent>
           
         <TabsContent value="past" className="mt-6">

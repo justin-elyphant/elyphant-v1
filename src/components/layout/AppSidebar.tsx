@@ -28,11 +28,13 @@ import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const pendingConnectionsCount = usePendingConnectionsCount();
+  const unreadMessagesCount = useUnreadMessagesCount();
 
   const mainMenuItems = [
     {
@@ -62,6 +64,7 @@ const AppSidebar = () => {
       title: "Messages",
       url: "/messages",
       icon: MessageSquare,
+      badge: unreadMessagesCount,
     },
     {
       title: "Connections",

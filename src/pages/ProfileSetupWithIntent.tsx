@@ -3,9 +3,9 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { LocalStorageService, INTENT_STORAGE_KEY } from "@/services/LocalStorageService";
-import StreamlinedProfileForm from "@/components/onboarding/StreamlinedProfileForm";
-import OnboardingIntentModal from "@/components/onboarding/OnboardingIntentModal";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
+import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { Loader2 } from "lucide-react";
 import { createBirthdayImportantDate } from "@/utils/profileDataMapper";
 
@@ -41,7 +41,8 @@ const ProfileSetupWithIntent = () => {
     }
 
     // Check if we have an intent (from URL or stored)
-    const storedIntent = LocalStorageService.getIntent();
+    const nicoleContext = LocalStorageService.getNicoleContext();
+    const storedIntent = nicoleContext?.selectedIntent;
     const hasIntent = intentFromUrl || storedIntent;
 
     console.log("ProfileSetupWithIntent - Intent check:", {
@@ -52,7 +53,7 @@ const ProfileSetupWithIntent = () => {
     });
 
     if (intentFromUrl) {
-      LocalStorageService.setIntent(intentFromUrl);
+      LocalStorageService.setNicoleContext({ selectedIntent: intentFromUrl });
     }
 
     // If profile is complete and we have an intent, show the modal
@@ -109,7 +110,7 @@ const ProfileSetupWithIntent = () => {
       }
 
       // Format important dates for API
-      profileData.important_dates = importantDates.map((date: any) => ({
+      (profileData as any).important_dates = importantDates.map((date: any) => ({
         title: date.description,
         date: date.date.toISOString(),
         type: "custom",
@@ -120,7 +121,7 @@ const ProfileSetupWithIntent = () => {
       setHasCompletedProfile(true);
 
       // Check if we have an intent to show modal
-      const storedIntent = LocalStorageService.getIntent();
+      const storedIntent = LocalStorageService.getNicoleContext()?.selectedIntent;
       if (storedIntent || intentFromUrl) {
         console.log("Profile completed, showing intent modal");
         setShowIntentModal(true);
@@ -139,7 +140,7 @@ const ProfileSetupWithIntent = () => {
 
   const handleIntentSelect = async (intent: string) => {
     console.log(`Intent selected: ${intent}`);
-    LocalStorageService.setIntent(intent);
+    LocalStorageService.setNicoleContext({ selectedIntent: intent });
     setShowIntentModal(false);
     
     if (intent === 'auto-gifting') {
@@ -151,7 +152,7 @@ const ProfileSetupWithIntent = () => {
 
   const handleIntentSkip = () => {
     console.log("Intent skipped");
-    LocalStorageService.clearAll();
+    LocalStorageService.clearNicoleContext();
     setShowIntentModal(false);
     navigate('/dashboard');
   };
@@ -168,8 +169,7 @@ const ProfileSetupWithIntent = () => {
     <div className="min-h-screen bg-background">
       {!hasCompletedProfile && (
         <StreamlinedProfileForm 
-          onSubmit={handleProfileSubmit}
-          isLoading={isLoading}
+          onComplete={() => handleProfileSubmit({})}
         />
       )}
       

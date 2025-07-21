@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import ShareToConnectionButton from '@/components/messaging/ShareToConnectionButton';
 
 interface ProductShareButtonProps {
   product: {
@@ -98,6 +99,17 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
     }
   };
 
+  // Convert product to match ShareToConnectionButton expected format
+  const shareProduct = {
+    product_id: product.id,
+    id: product.id,
+    title: product.name,
+    name: product.name,
+    image: product.image || "/placeholder.svg",
+    price: product.price,
+    brand: product.brand
+  };
+
   const shareOptions = [
     {
       id: 'native',
@@ -134,7 +146,6 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
   ];
 
   const availableOptions = shareOptions.filter(option => option.available);
-  const primaryOption = availableOptions.find(option => option.primary);
 
   // If native sharing is available, use it directly
   if (navigator.share && !showLabel) {
@@ -192,22 +203,35 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
             </div>
           </div>
 
-          {/* Share Options */}
-          <div className="grid grid-cols-2 gap-3">
-            {availableOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <Button
-                  key={option.id}
-                  variant="outline"
-                  onClick={option.action}
-                  className="h-14 flex-col gap-2 touch-target-44 tap-feedback"
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs">{option.label}</span>
-                </Button>
-              );
-            })}
+          {/* Connection Sharing - New Feature */}
+          <div className="mb-4 pb-4 border-b">
+            <h3 className="text-sm font-medium mb-3 text-muted-foreground">Share with Friends</h3>
+            <ShareToConnectionButton 
+              product={shareProduct}
+              variant="full" 
+              className="w-full justify-start h-14 flex-col gap-2"
+            />
+          </div>
+
+          {/* Traditional Share Options */}
+          <div>
+            <h3 className="text-sm font-medium mb-3 text-muted-foreground">Other Options</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {availableOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <Button
+                    key={option.id}
+                    variant="outline"
+                    onClick={option.action}
+                    className="h-14 flex-col gap-2 touch-target-44 tap-feedback"
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-xs">{option.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </SheetContent>

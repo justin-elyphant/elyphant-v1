@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Share2, Search } from "lucide-react";
+import ShareToConnectionButton from "./ShareToConnectionButton";
 
 interface Product {
   id: number;
@@ -74,9 +75,28 @@ const ProductShareButton = ({ onShareProduct }: ProductShareButtonProps) => {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">{product.name}</h4>
-                      <p className="text-xs text-muted-foreground">{product.brand}</p>
-                      <p className="text-sm font-semibold text-primary">${product.price}</p>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm truncate">{product.name}</h4>
+                          <p className="text-xs text-muted-foreground">{product.brand}</p>
+                          <p className="text-sm font-semibold text-primary">${product.price}</p>
+                        </div>
+                        <div className="ml-2">
+                          <ShareToConnectionButton 
+                            product={{
+                              product_id: product.id.toString(),
+                              id: product.id.toString(),
+                              title: product.name,
+                              name: product.name,
+                              image: product.image,
+                              price: product.price,
+                              brand: product.brand
+                            }}
+                            variant="icon"
+                            className="h-8 w-8"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

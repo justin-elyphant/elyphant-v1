@@ -8,7 +8,12 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log('🔗 [useRealtimeConnections] No user, skipping realtime setup');
+      return;
+    }
+
+    console.log('🔗 [useRealtimeConnections] Setting up realtime listeners for user:', user.id);
 
     // Subscribe to changes in user_connections table
     const channel = supabase
@@ -22,7 +27,7 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Connection change detected:', payload);
+          console.log('🔗 [useRealtimeConnections] Connection change detected (as sender):', payload);
           
           // Show toast notifications for connection events
           if (payload.eventType === 'INSERT') {
@@ -56,7 +61,7 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           filter: `connected_user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Connection change detected (as recipient):', payload);
+          console.log('🔗 [useRealtimeConnections] Connection change detected (as recipient):', payload);
           
           // Show toast notifications for connection events
           if (payload.eventType === 'INSERT') {
@@ -77,9 +82,12 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           onConnectionChange();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔗 [useRealtimeConnections] Subscription status:', status);
+      });
 
     return () => {
+      console.log('🔗 [useRealtimeConnections] Cleaning up realtime listeners');
       supabase.removeChannel(channel);
     };
   }, [user, onConnectionChange]);

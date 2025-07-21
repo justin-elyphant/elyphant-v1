@@ -1,3 +1,41 @@
+
+/*
+ * ========================================================================
+ * 🚨 CRITICAL ORDER SERVICE - DO NOT SIMPLIFY 🚨
+ * ========================================================================
+ * 
+ * This service handles sophisticated order processing including:
+ * - Order creation with complex data structures
+ * - Integration with multiple database tables
+ * - Address management and profile updates
+ * - Support for multiple recipients and delivery groups
+ * 
+ * ⚠️  CRITICAL FEATURES:
+ * - Creates orders with full item details
+ * - Handles recipient assignments
+ * - Manages delivery groups
+ * - Saves shipping addresses to profiles
+ * - Provides order retrieval and status updates
+ * 
+ * 🔗 DEPENDENCIES:
+ * - Supabase client for database operations
+ * - addressService for address management
+ * - CartContext for cart item types
+ * - Complex type definitions for recipients
+ * 
+ * 🚫 DO NOT REPLACE WITH simple order creation
+ * 
+ * ⚠️  REFACTORING NOTE:
+ * This file is 217 lines and should be considered for breaking into
+ * smaller, focused services:
+ * - OrderCreationService
+ * - OrderRetrievalService
+ * - OrderStatusService
+ * - AddressIntegrationService
+ * 
+ * ========================================================================
+ */
+
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { CartItem } from "@/contexts/CartContext";
@@ -5,6 +43,7 @@ import { DeliveryGroup } from "@/types/recipient";
 import { addressService } from "./addressService";
 import { FormAddress } from "@/utils/addressStandardization";
 
+// CRITICAL: Order creation data interface
 export interface CreateOrderData {
   cartItems: CartItem[];
   subtotal: number;
@@ -17,6 +56,7 @@ export interface CreateOrderData {
   deliveryGroups?: DeliveryGroup[];
 }
 
+// CRITICAL: Order interface with all required fields
 export interface Order {
   id: string;
   order_number: string;
@@ -43,6 +83,7 @@ export interface Order {
   order_items: OrderItem[];
 }
 
+// CRITICAL: Order item interface
 export interface OrderItem {
   id: string;
   product_id: string;
@@ -58,6 +99,18 @@ export interface OrderItem {
   scheduled_delivery_date?: string;
 }
 
+/*
+ * 🎯 CREATE ORDER FUNCTION
+ * 
+ * This function creates a complete order with all necessary data
+ * including items, recipients, and delivery information.
+ * 
+ * CRITICAL: This function handles complex order creation with:
+ * - Multiple recipient support
+ * - Delivery group assignments
+ * - Address saving to profile
+ * - Full order and item creation
+ */
 export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -69,7 +122,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Creating order with data:', orderData);
 
-  // Create the order with proper schema alignment
+  // CRITICAL: Create the order with proper schema alignment
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -99,7 +152,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Order created successfully:', order.id);
 
-  // Create order items with recipient assignments
+  // CRITICAL: Create order items with recipient assignments
   const orderItems = orderData.cartItems.map(item => {
     const recipientAssignment = item.recipientAssignment;
     
@@ -131,7 +184,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Order items created successfully:', createdItems.length);
 
-  // Save shipping address to user's address book if it's a new address
+  // CRITICAL: Save shipping address to user's address book
   try {
     const shippingAddress: FormAddress = {
       street: orderData.shippingInfo.address,
@@ -157,6 +210,11 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   };
 };
 
+/*
+ * 🔗 CRITICAL: Order retrieval function
+ * 
+ * This function retrieves a complete order with all items
+ */
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
   console.log('Fetching order by ID:', orderId);
   
@@ -178,6 +236,9 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
   return order;
 };
 
+/*
+ * 🔗 CRITICAL: User orders retrieval function
+ */
 export const getUserOrders = async (): Promise<Order[]> => {
   const { data: orders, error } = await supabase
     .from('orders')
@@ -195,6 +256,9 @@ export const getUserOrders = async (): Promise<Order[]> => {
   return orders || [];
 };
 
+/*
+ * 🔗 CRITICAL: Order status update function
+ */
 export const updateOrderStatus = async (orderId: string, status: string, updates: any = {}) => {
   console.log('Updating order status:', orderId, status, updates);
   

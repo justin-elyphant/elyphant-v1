@@ -1,3 +1,32 @@
+
+/*
+ * ========================================================================
+ * 🚨 CRITICAL PAYMENT COMPONENT - DO NOT SIMPLIFY 🚨
+ * ========================================================================
+ * 
+ * This component handles sophisticated payment processing including:
+ * - Stripe integration for payment processing
+ * - Saved payment method management
+ * - New payment method collection
+ * - Payment method validation and security
+ * 
+ * ⚠️  CRITICAL FEATURES:
+ * - Integrates with Stripe Elements
+ * - Manages saved payment methods
+ * - Handles payment method saving preferences
+ * - Processes both new and existing payment methods
+ * 
+ * 🔗 DEPENDENCIES:
+ * - Stripe React components
+ * - SavedPaymentMethodsSection
+ * - StripePaymentForm
+ * - Supabase for payment method storage
+ * 
+ * 🚫 DO NOT REPLACE WITH simple payment forms
+ * 
+ * ========================================================================
+ */
+
 import React, { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/integrations/stripe/client';
@@ -9,6 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
 import StripePaymentForm from '@/components/marketplace/checkout/StripePaymentForm';
 
+// CRITICAL: Payment method interface
 interface PaymentMethod {
   id: string;
   stripe_payment_method_id: string;
@@ -19,6 +49,7 @@ interface PaymentMethod {
   is_default: boolean;
 }
 
+// CRITICAL: Component props interface
 interface PaymentMethodSelectorProps {
   clientSecret: string;
   totalAmount: number;
@@ -38,6 +69,14 @@ interface PaymentMethodSelectorProps {
   };
 }
 
+/*
+ * 🎯 PAYMENT METHOD SELECTOR COMPONENT
+ * 
+ * This component provides a comprehensive payment method selection interface
+ * with support for both saved and new payment methods.
+ * 
+ * CRITICAL: Handles complex payment flows with Stripe integration
+ */
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   clientSecret,
   totalAmount,
@@ -54,23 +93,37 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [saveNewCard, setSaveNewCard] = useState(false);
 
+  /*
+   * 🔗 CRITICAL: Payment method selection handler
+   * 
+   * This function manages the selection between saved and new payment methods
+   */
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
     setShowNewCardForm(!method);
   };
 
+  /*
+   * 🔗 CRITICAL: New payment method handler
+   */
   const handleAddNewMethod = () => {
     setSelectedSavedMethod(null);
     setShowNewCardForm(true);
   };
 
+  /*
+   * 🔗 CRITICAL: Existing payment method processing
+   * 
+   * This function processes payments using saved payment methods
+   * through Supabase edge functions.
+   */
   const handleUseExistingCard = async () => {
     if (!selectedSavedMethod) return;
 
     try {
       onProcessingChange(true);
       
-      // Create a new payment intent with the existing payment method
+      // CRITICAL: Create payment intent with existing payment method
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100),
@@ -99,6 +152,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     }
   };
 
+  // CRITICAL: Handle guest checkout (no user authentication)
   if (!user) {
     return (
       <Elements stripe={stripePromise}>
@@ -117,6 +171,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* CRITICAL: Saved payment methods section */}
       <SavedPaymentMethodsSection
         onSelectPaymentMethod={handleSelectPaymentMethod}
         onAddNewMethod={handleAddNewMethod}
@@ -124,6 +179,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         refreshKey={refreshKey}
       />
 
+      {/* CRITICAL: Selected payment method processing */}
       {selectedSavedMethod && (
         <Card>
           <CardContent className="p-4">
@@ -148,6 +204,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </Card>
       )}
 
+      {/* CRITICAL: New payment method form */}
       {showNewCardForm && (
         <div className="space-y-4">
           <Separator />

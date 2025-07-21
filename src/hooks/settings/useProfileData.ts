@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
+import { mapDatabaseToSettingsForm } from "@/utils/profileDataMapper";
 import { SettingsFormValues } from "./settingsFormSchema";
 
 export const useProfileData = (
@@ -32,7 +32,7 @@ export const useProfileData = (
     try {
       setDataLoadError(null);
       
-      // Use the improved mapping function
+      // Use the enhanced mapping function with birthday auto-population
       const mappedData = mapDatabaseToSettingsForm(profile);
       
       if (!mappedData) {
@@ -46,8 +46,21 @@ export const useProfileData = (
         date_of_birth: mappedData.date_of_birth,
         address: mappedData.address,
         interests_count: mappedData.interests?.length || 0,
-        important_dates_count: mappedData.importantDates?.length || 0
+        important_dates_count: mappedData.importantDates?.length || 0,
+        birthday_in_events: mappedData.importantDates?.some(d => d.description === "Birthday") || false
       });
+
+      // Check if we auto-populated birthday and need to save it back to the profile
+      const existingImportantDatesCount = profile.important_dates?.length || 0;
+      const newImportantDatesCount = mappedData.importantDates?.length || 0;
+      const birthdayAutoAdded = newImportantDatesCount > existingImportantDatesCount && 
+                               mappedData.importantDates?.some(d => d.description === "Birthday");
+      
+      if (birthdayAutoAdded) {
+        console.log("🎂 Birthday was auto-added, will trigger background update");
+        // We could trigger a background save here, but for now just log it
+        // The user will save it when they interact with the form
+      }
 
       // Force a complete form reset with the mapped data
       console.log("🔄 Resetting form with mapped data...");
@@ -77,7 +90,8 @@ export const useProfileData = (
           date_of_birth: currentFormValues.date_of_birth,
           address: currentFormValues.address,
           interests_count: currentFormValues.interests?.length || 0,
-          important_dates_count: currentFormValues.importantDates?.length || 0
+          important_dates_count: currentFormValues.importantDates?.length || 0,
+          birthday_found: currentFormValues.importantDates?.some(d => d.description === "Birthday") || false
         });
       }, 100);
 

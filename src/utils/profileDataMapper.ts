@@ -87,6 +87,40 @@ export function mapApiDatesToFormFormat(apiDates: ImportantDate[] | undefined) {
 }
 
 /**
+ * Creates a birthday important date from DOB and birth year
+ */
+export function createBirthdayImportantDate(dob: string, birthYear?: number | null) {
+  if (!dob) return null;
+  
+  try {
+    // Parse MM-DD format and add current year for display
+    const [month, day] = dob.split('-');
+    const currentYear = new Date().getFullYear();
+    const birthdayDate = new Date(currentYear, parseInt(month) - 1, parseInt(day));
+    
+    return {
+      date: birthdayDate,
+      description: "Birthday"
+    };
+  } catch (e) {
+    console.error("Error creating birthday important date:", e);
+    return null;
+  }
+}
+
+/**
+ * Checks if important dates already contains a birthday entry
+ */
+export function hasBirthdayInImportantDates(importantDates: { date: Date; description: string }[]): boolean {
+  if (!importantDates || !Array.isArray(importantDates)) return false;
+  
+  return importantDates.some(date => 
+    date.description && 
+    date.description.toLowerCase().includes('birthday')
+  );
+}
+
+/**
  * Normalizes gift preferences to ensure consistent format
  */
 export function normalizeGiftPreferences(preferences: any[]): GiftPreference[] {
@@ -111,7 +145,7 @@ export function normalizeGiftPreferences(preferences: any[]): GiftPreference[] {
 }
 
 /**
- * Enhanced database to settings form mapping
+ * Enhanced database to settings form mapping with birthday auto-population
  */
 export function mapDatabaseToSettingsForm(profile: any) {
   console.log("🔄 mapDatabaseToSettingsForm input:", profile);
@@ -149,7 +183,13 @@ export function mapDatabaseToSettingsForm(profile: any) {
   let dateOfBirth;
   if (profile.dob) {
     try {
-      dateOfBirth = new Date(profile.dob);
+      // Handle MM-DD format with birth_year
+      if (profile.birth_year && profile.dob.includes('-')) {
+        const [month, day] = profile.dob.split('-');
+        dateOfBirth = new Date(profile.birth_year, parseInt(month) - 1, parseInt(day));
+      } else {
+        dateOfBirth = new Date(profile.dob);
+      }
     } catch (e) {
       console.warn("Invalid date of birth format:", profile.dob);
       dateOfBirth = undefined;
@@ -158,6 +198,19 @@ export function mapDatabaseToSettingsForm(profile: any) {
 
   // Map address using the enhanced mapper
   const mappedAddress = mapApiAddressToFormAddress(profile.shipping_address);
+  
+  // Map existing important dates
+  let mappedImportantDates = mapApiDatesToFormFormat(profile.important_dates);
+  
+  // Auto-populate birthday if it exists but is not in important dates
+  if (profile.dob && !hasBirthdayInImportantDates(mappedImportantDates)) {
+    console.log("🎂 Auto-adding birthday to important dates from dob:", profile.dob);
+    const birthdayImportantDate = createBirthdayImportantDate(profile.dob, profile.birth_year);
+    if (birthdayImportantDate) {
+      mappedImportantDates = [birthdayImportantDate, ...mappedImportantDates];
+      console.log("✅ Birthday added to important dates:", birthdayImportantDate);
+    }
+  }
 
   const result = {
     first_name: profile.first_name || "",
@@ -170,7 +223,7 @@ export function mapDatabaseToSettingsForm(profile: any) {
     date_of_birth: dateOfBirth,
     address: mappedAddress,
     interests: profile.interests || [],
-    importantDates: mapApiDatesToFormFormat(profile.important_dates),
+    importantDates: mappedImportantDates,
     data_sharing_settings: profile.data_sharing_settings || {
       dob: "private",
       shipping_address: "private", 
@@ -180,6 +233,7 @@ export function mapDatabaseToSettingsForm(profile: any) {
   };
 
   console.log("✅ mapDatabaseToSettingsForm output:", result);
+  console.log("🎂 Important dates count:", result.importantDates.length);
   return result;
 }
 

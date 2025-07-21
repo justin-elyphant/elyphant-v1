@@ -12,7 +12,7 @@ import { Loader2, Upload, User, MapPin, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import { useAddresses } from "@/hooks/useAddresses";
+import { useAddresses } from "@/hooks/profile/useAddresses";
 
 const profileSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -89,16 +89,13 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
 
       // Add address to unified address book
       try {
-        await addAddress({
-          label: "Home",
-          full_name: `${data.firstName} ${data.lastName}`,
-          street_address: data.streetAddress,
+        await addAddress("Home", {
+          address_line1: data.streetAddress,
           city: data.city,
           state: data.state,
           zip_code: data.zipCode,
           country: data.country,
-          is_default: true,
-        });
+        }, true);
       } catch (addressError) {
         console.error('Address save error:', addressError);
         // Don't block the flow if address fails

@@ -110,14 +110,14 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Who can follow you</span>
+                <span className="text-sm font-medium">Connection requests</span>
                 <Badge 
                   variant="secondary" 
-                  className={getPrivacyColor(settings.allow_follows_from)}
+                  className={getPrivacyColor(settings.allow_connection_requests_from)}
                 >
                   <div className="flex items-center gap-1">
-                    {getPrivacyIcon(settings.allow_follows_from)}
-                    {getPrivacyLabel(settings.allow_follows_from)}
+                    {getPrivacyIcon(settings.allow_connection_requests_from)}
+                    {getPrivacyLabel(settings.allow_connection_requests_from)}
                   </div>
                 </Badge>
               </div>
@@ -151,24 +151,6 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
                       <EyeOff className="h-4 w-4" />
                     }
                     {settings.allow_message_requests ? 'Enabled' : 'Disabled'}
-                  </div>
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Follower count</span>
-                <Badge 
-                  variant="secondary" 
-                  className={settings.show_follower_count ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                >
-                  <div className="flex items-center gap-1">
-                    {settings.show_follower_count ? 
-                      <Eye className="h-4 w-4" /> : 
-                      <EyeOff className="h-4 w-4" />
-                    }
-                    {settings.show_follower_count ? 'Visible' : 'Hidden'}
                   </div>
                 </Badge>
               </div>

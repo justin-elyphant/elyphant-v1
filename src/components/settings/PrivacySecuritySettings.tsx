@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -30,16 +31,16 @@ const PrivacySecuritySettings: React.FC = () => {
               <div className="space-y-0.5">
                 <Label className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  Who can follow you
+                  Who can send connection requests
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Choose who can follow your profile
+                  Choose who can send you connection requests
                 </p>
               </div>
               <Select
-                value={settings.allow_follows_from}
+                value={settings.allow_connection_requests_from}
                 onValueChange={(value: 'everyone' | 'friends_only' | 'nobody') => 
-                  updateSettings({ allow_follows_from: value })
+                  updateSettings({ allow_connection_requests_from: value })
                 }
                 disabled={loading}
               >

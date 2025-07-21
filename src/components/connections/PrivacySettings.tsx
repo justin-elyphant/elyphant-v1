@@ -35,14 +35,14 @@ const PrivacySettings: React.FC = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-medium">Who can follow you</p>
-                <p className="text-sm text-muted-foreground">Control who can follow your profile</p>
+                <p className="font-medium">Who can send connection requests</p>
+                <p className="text-sm text-muted-foreground">Control who can send you connection requests</p>
               </div>
               <div className="w-[180px]">
                 <Select 
-                  value={settings.allow_follows_from}
+                  value={settings.allow_connection_requests_from}
                   onValueChange={(value: 'everyone' | 'friends_only' | 'nobody') => 
-                    updateSettings({ allow_follows_from: value })
+                    updateSettings({ allow_connection_requests_from: value })
                   }
                   disabled={loading}
                 >

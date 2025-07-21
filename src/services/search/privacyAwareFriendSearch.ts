@@ -1,296 +1,116 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
-export interface FilteredProfile {
+type PrivacySettings = Database['public']['Tables']['privacy_settings']['Row'];
+
+export interface PrivacyAwareFriendSearchResult {
   id: string;
   name: string;
   username: string;
-  email?: string;
   profile_image?: string;
   bio?: string;
-  connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
-  mutualConnections?: number;
-  lastActive?: string;
-  privacyLevel?: 'public' | 'limited' | 'private';
-  isPrivacyRestricted?: boolean;
+  can_connect: boolean;
+  connection_policy: string;
 }
 
-interface PrivacySettings {
-  profile_visibility: 'public' | 'followers_only' | 'private';
-  allow_follows_from: 'everyone' | 'friends_only' | 'nobody';
-  show_follower_count: boolean;
-  show_following_count: boolean;
-  allow_message_requests: boolean;
-}
-
-const getDefaultPrivacySettings = (): PrivacySettings => ({
-  profile_visibility: 'public',
-  allow_follows_from: 'everyone', 
-  show_follower_count: true,
-  show_following_count: true,
-  allow_message_requests: true
-});
-
-export const searchFriendsWithPrivacy = async (
-  query: string, 
-  currentUserId?: string
-): Promise<FilteredProfile[]> => {
-  console.log('🔍 [searchFriendsWithPrivacy] Starting search:', { query, currentUserId });
-  
-  if (!query || query.length < 2) {
-    console.log('🔍 [searchFriendsWithPrivacy] Query too short, returning empty results');
-    return [];
-  }
-
+export const privacyAwareFriendSearch = async (
+  searchTerm: string,
+  currentUserId: string,
+  limit: number = 20
+): Promise<PrivacyAwareFriendSearchResult[]> => {
   try {
-    // Clean and prepare search query
-    const cleanedQuery = query.trim();
-    const queryWithoutAt = cleanedQuery.startsWith('@') ? cleanedQuery.substring(1) : cleanedQuery;
-    const searchTerms = queryWithoutAt.split(/\s+/);
-    const conditions = [];
-    
-    console.log('🔍 [searchFriendsWithPrivacy] Original query:', cleanedQuery);
-    console.log('🔍 [searchFriendsWithPrivacy] Query without @:', queryWithoutAt);
-    
-    // Add full query matches
-    conditions.push(`name.ilike.%${cleanedQuery}%`);
-    conditions.push(`username.ilike.%${cleanedQuery}%`);
-    
-    // If query starts with @, also search without @ for username
-    if (cleanedQuery.startsWith('@')) {
-      conditions.push(`username.ilike.%${queryWithoutAt}%`);
-    }
-    
-    // Add individual word matches for multi-word queries
-    if (searchTerms.length > 1) {
-      searchTerms.forEach(term => {
-        if (term.length > 1) {
-          conditions.push(`name.ilike.%${term}%`);
-          conditions.push(`username.ilike.%${term}%`);
-        }
-      });
-    }
-    
-    console.log('🔍 [searchFriendsWithPrivacy] Search conditions:', conditions);
-    
-    const { data: profiles, error } = await supabase
+    // Search for profiles matching the search term
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select('id, name, username, email, profile_image, bio, created_at')
-      .or(conditions.join(','))
-      .limit(10);
+      .select(`
+        id,
+        name,
+        username,
+        profile_image,
+        bio
+      `)
+      .or(`name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`)
+      .neq('id', currentUserId)
+      .limit(limit);
 
-    if (error) {
-      console.error('🔍 [searchFriendsWithPrivacy] Database error:', error);
-      return [];
-    }
-
-    console.log('🔍 [searchFriendsWithPrivacy] Raw profiles found:', profiles?.length || 0);
-    console.log('🔍 [searchFriendsWithPrivacy] Profile details:', profiles?.map(p => ({ id: p.id, name: p.name, username: p.username })));
+    if (profileError) throw profileError;
 
     if (!profiles || profiles.length === 0) {
-      console.log('🔍 [searchFriendsWithPrivacy] No profiles found in database');
       return [];
     }
 
-    // Get privacy settings for all found profiles
-    console.log('🔍 [searchFriendsWithPrivacy] Fetching privacy settings...');
+    // Get privacy settings for found profiles
     const profileIds = profiles.map(p => p.id);
-    const { data: privacyData, error: privacyError } = await supabase
+    const { data: privacySettings, error: privacyError } = await supabase
       .from('privacy_settings')
-      .select('user_id, profile_visibility, allow_follows_from, show_follower_count, show_following_count, allow_message_requests')
+      .select('user_id, allow_connection_requests_from')
       .in('user_id', profileIds);
 
-    if (privacyError) {
-      console.error('🔍 [searchFriendsWithPrivacy] Privacy settings error:', privacyError);
-    }
+    if (privacyError) throw privacyError;
 
-    console.log('🔍 [searchFriendsWithPrivacy] Privacy settings found:', privacyData?.length || 0);
+    // Get existing connections to filter out already connected users
+    const { data: existingConnections, error: connectionError } = await supabase
+      .from('user_connections')
+      .select('user_id, connected_user_id')
+      .or(`and(user_id.eq.${currentUserId},connected_user_id.in.(${profileIds.join(',')})),and(user_id.in.(${profileIds.join(',')}),connected_user_id.eq.${currentUserId})`);
 
-    // Create privacy settings map with defaults
-    const privacyMap = new Map<string, PrivacySettings>();
-    profileIds.forEach(id => {
-      const defaultSettings = getDefaultPrivacySettings();
-      privacyMap.set(id, defaultSettings);
-      console.log(`🔍 [searchFriendsWithPrivacy] Set default privacy for ${id}:`, defaultSettings);
-    });
+    if (connectionError) throw connectionError;
 
-    // Override with actual privacy settings where available
-    privacyData?.forEach(setting => {
-      const privacySettings: PrivacySettings = {
-        profile_visibility: setting.profile_visibility || 'public',
-        allow_follows_from: setting.allow_follows_from || 'everyone',
-        show_follower_count: setting.show_follower_count ?? true,
-        show_following_count: setting.show_following_count ?? true,
-        allow_message_requests: setting.allow_message_requests ?? true
-      };
-      privacyMap.set(setting.user_id, privacySettings);
-      console.log(`🔍 [searchFriendsWithPrivacy] Updated privacy for ${setting.user_id}:`, privacySettings);
-    });
+    // Get blocked users
+    const { data: blockedUsers, error: blockError } = await supabase
+      .from('blocked_users')
+      .select('blocker_id, blocked_id')
+      .or(`and(blocker_id.eq.${currentUserId},blocked_id.in.(${profileIds.join(',')})),and(blocker_id.in.(${profileIds.join(',')}),blocked_id.eq.${currentUserId})`);
 
-    // Get connection statuses if user is authenticated
-    let connectionMap = new Map<string, string>();
-    if (currentUserId) {
-      console.log('🔍 [searchFriendsWithPrivacy] Fetching connection statuses...');
-      const { data: connections, error: connectionError } = await supabase
-        .from('user_connections')
-        .select('connected_user_id, user_id, status')
-        .or(`and(user_id.eq.${currentUserId},connected_user_id.in.(${profileIds.join(',')})),and(connected_user_id.eq.${currentUserId},user_id.in.(${profileIds.join(',')}))`);
+    if (blockError) throw blockError;
 
-      if (connectionError) {
-        console.error('🔍 [searchFriendsWithPrivacy] Connection status error:', connectionError);
-      }
+    // Create sets for quick lookup
+    const connectedUserIds = new Set(
+      existingConnections?.flatMap(conn => [
+        conn.user_id === currentUserId ? conn.connected_user_id : conn.user_id
+      ]) || []
+    );
 
-      connections?.forEach(conn => {
-        const targetUserId = conn.user_id === currentUserId ? conn.connected_user_id : conn.user_id;
-        const status = conn.status === 'accepted' ? 'connected' : 'pending';
-        connectionMap.set(targetUserId, status);
-      });
+    const blockedUserIds = new Set(
+      blockedUsers?.flatMap(block => [
+        block.blocker_id === currentUserId ? block.blocked_id : block.blocker_id
+      ]) || []
+    );
 
-      console.log('🔍 [searchFriendsWithPrivacy] Connection statuses:', Object.fromEntries(connectionMap));
-    }
+    // Process results
+    const results: PrivacyAwareFriendSearchResult[] = profiles
+      .filter(profile => 
+        !connectedUserIds.has(profile.id) && 
+        !blockedUserIds.has(profile.id)
+      )
+      .map(profile => {
+        const userPrivacy = privacySettings?.find(ps => ps.user_id === profile.id);
+        const connectionPolicy = userPrivacy?.allow_connection_requests_from || 'everyone';
+        
+        // Determine if current user can connect based on privacy settings
+        let canConnect = true;
+        if (connectionPolicy === 'nobody') {
+          canConnect = false;
+        } else if (connectionPolicy === 'friends_only') {
+          // For friends_only, they would need to be already connected, which we filtered out above
+          canConnect = false;
+        }
 
-    // Filter and transform profiles
-    const filteredProfiles: FilteredProfile[] = [];
-    
-    for (const profile of profiles) {
-      const privacy = privacyMap.get(profile.id);
-      const connectionStatus = connectionMap.get(profile.id) || 'none';
-      
-      console.log(`🔍 [searchFriendsWithPrivacy] Processing profile ${profile.username}:`, {
-        privacy: privacy?.profile_visibility,
-        connectionStatus,
-        isCurrentUser: profile.id === currentUserId
-      });
-
-      // Skip current user from results
-      if (profile.id === currentUserId) {
-        console.log(`🔍 [searchFriendsWithPrivacy] Skipping current user: ${profile.username}`);
-        continue;
-      }
-
-      // Apply privacy filtering
-      let canView = false;
-      
-      if (privacy?.profile_visibility === 'public') {
-        canView = true;
-        console.log(`🔍 [searchFriendsWithPrivacy] ${profile.username} is public - can view`);
-      } else if (privacy?.profile_visibility === 'followers_only' && connectionStatus === 'connected') {
-        canView = true;
-        console.log(`🔍 [searchFriendsWithPrivacy] ${profile.username} is followers_only and user is connected - can view`);
-      } else if (privacy?.profile_visibility === 'private') {
-        canView = false;
-        console.log(`🔍 [searchFriendsWithPrivacy] ${profile.username} is private - cannot view`);
-      } else {
-        console.log(`🔍 [searchFriendsWithPrivacy] ${profile.username} privacy check failed:`, {
-          visibility: privacy?.profile_visibility,
-          connectionStatus
-        });
-      }
-
-      if (canView) {
-        const filteredProfile: FilteredProfile = {
+        return {
           id: profile.id,
           name: profile.name || 'Unknown User',
-          username: profile.username || '@unknown',
-          email: profile.email,
-          profile_image: profile.profile_image,
-          bio: profile.bio,
-          connectionStatus: connectionStatus as any,
-          privacyLevel: privacy?.profile_visibility === 'public' ? 'public' : 'limited',
-          isPrivacyRestricted: privacy?.profile_visibility !== 'public'
+          username: profile.username || '',
+          profile_image: profile.profile_image || undefined,
+          bio: profile.bio || undefined,
+          can_connect: canConnect,
+          connection_policy: connectionPolicy
         };
+      });
 
-        filteredProfiles.push(filteredProfile);
-        console.log(`🔍 [searchFriendsWithPrivacy] Added ${profile.username} to results`);
-      } else {
-        console.log(`🔍 [searchFriendsWithPrivacy] Filtered out ${profile.username} due to privacy settings`);
-      }
-    }
-
-    console.log(`🔍 [searchFriendsWithPrivacy] Final results: ${filteredProfiles.length} profiles`);
-    console.log('🔍 [searchFriendsWithPrivacy] Result usernames:', filteredProfiles.map(p => p.username));
-    
-    return filteredProfiles;
-
+    return results;
   } catch (error) {
-    console.error('🔍 [searchFriendsWithPrivacy] Unexpected error:', error);
+    console.error('Error in privacy-aware friend search:', error);
     return [];
-  }
-};
-
-export const getConnectionPermissions = async (
-  targetUserId: string, 
-  currentUserId?: string
-) => {
-  if (!currentUserId) {
-    return {
-      canSendRequest: false,
-      restrictionReason: "You must be logged in to send connection requests"
-    };
-  }
-
-  if (targetUserId === currentUserId) {
-    return {
-      canSendRequest: false,
-      restrictionReason: "You cannot connect with yourself"
-    };
-  }
-
-  try {
-    // Check if there's already a connection
-    const { data: existingConnection, error } = await supabase
-      .from('user_connections')
-      .select('status')
-      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking existing connection:', error);
-      return {
-        canSendRequest: false,
-        restrictionReason: "Unable to verify connection status"
-      };
-    }
-
-    if (existingConnection) {
-      return {
-        canSendRequest: false,
-        restrictionReason: existingConnection.status === 'accepted' 
-          ? "Already connected" 
-          : "Connection request already sent"
-      };
-    }
-
-    // Check target user's privacy settings
-    const { data: privacy, error: privacyError } = await supabase
-      .from('privacy_settings')
-      .select('allow_follows_from')
-      .eq('user_id', targetUserId)
-      .single();
-
-    if (privacyError && privacyError.code !== 'PGRST116') {
-      console.error('Error checking privacy settings:', error);
-    }
-
-    const allowFollowsFrom = privacy?.allow_follows_from || 'everyone';
-
-    if (allowFollowsFrom === 'nobody') {
-      return {
-        canSendRequest: false,
-        restrictionReason: "This user doesn't accept connection requests"
-      };
-    }
-
-    return {
-      canSendRequest: true,
-      restrictionReason: null
-    };
-
-  } catch (error) {
-    console.error('Error checking connection permissions:', error);
-    return {
-      canSendRequest: false,
-      restrictionReason: "Unable to check connection permissions"
-    };
   }
 };

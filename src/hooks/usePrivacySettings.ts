@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
 export interface PrivacySettings {
-  allow_follows_from: 'everyone' | 'friends_only' | 'nobody';
+  allow_connection_requests_from: 'everyone' | 'friends_only' | 'nobody';
   profile_visibility: 'public' | 'followers_only' | 'private';
   block_list_visibility: 'hidden' | 'visible_to_friends';
   show_follower_count: boolean;
@@ -16,7 +16,7 @@ export interface PrivacySettings {
 export const usePrivacySettings = () => {
   const { user } = useAuth();
   const [settings, setSettings] = useState<PrivacySettings>({
-    allow_follows_from: 'everyone',
+    allow_connection_requests_from: 'everyone',
     profile_visibility: 'public',
     block_list_visibility: 'hidden',
     show_follower_count: true,
@@ -43,7 +43,7 @@ export const usePrivacySettings = () => {
 
       if (data) {
         setSettings({
-          allow_follows_from: data.allow_follows_from,
+          allow_connection_requests_from: data.allow_connection_requests_from,
           profile_visibility: data.profile_visibility,
           block_list_visibility: data.block_list_visibility,
           show_follower_count: data.show_follower_count,

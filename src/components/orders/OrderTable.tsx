@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { 
   Table, 
   TableBody, 
@@ -54,6 +55,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
       onOrderUpdated?.();
     }
   };
+  
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -106,9 +108,9 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
               <TableCell>${order.total_amount.toFixed(2)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-3 items-center">
-                  <a href={`/order/${order.id}`} className="text-blue-500 hover:underline text-sm">
+                  <Link to={`/order/${order.id}`} className="text-blue-500 hover:underline text-sm">
                     View Details
-                  </a>
+                  </Link>
                   {canCancelOrder(order.status) && (
                     <button
                       onClick={() => setCancellingOrderId(order.id)}

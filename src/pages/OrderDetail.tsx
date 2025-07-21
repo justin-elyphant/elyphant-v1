@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowLeft, MessageSquare } from "lucide-react";
-import { getMockOrders } from "@/components/marketplace/zinc/orderService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Import our components
@@ -41,27 +41,55 @@ const OrderDetail = () => {
     }
   }, [userData, navigate]);
 
-  // Load order details
+  // Load order details from Supabase
   useEffect(() => {
     if (!orderId) return;
     
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const orders = getMockOrders();
-      const foundOrder = orders.find(o => o.id === orderId);
+    const fetchOrder = async () => {
+      setIsLoading(true);
       
-      if (foundOrder) {
-        setOrder(foundOrder);
-      } else {
-        toast.error("Order not found");
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (*)
+          `)
+          .eq('id', orderId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching order:", error);
+          toast.error("Order not found");
+          navigate("/orders");
+          return;
+        }
+
+        if (data) {
+          // Transform the data to match the expected format
+          const transformedOrder = {
+            id: data.id,
+            date: data.created_at,
+            status: data.status,
+            total: data.total_amount,
+            items: data.order_items || [],
+            customerName: userData?.name || "Customer",
+            tracking_number: data.tracking_number || null,
+            zinc_order_id: data.zinc_order_id || null
+          };
+          setOrder(transformedOrder);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        toast.error("Failed to load order details");
         navigate("/orders");
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    }, 500);
-  }, [orderId, navigate]);
+    };
+
+    fetchOrder();
+  }, [orderId, navigate, userData]);
 
   const handleSendToVendor = () => {
     if (!vendorMessage.trim()) return;

@@ -17,11 +17,19 @@ export const useConnectionsAdapter = () => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return [];
 
+      // Get connections where current user is either the requester OR the recipient
       const { data, error } = await supabase
         .from('user_connections')
         .select(`
           *,
-          connected_profile:profiles!user_connections_connected_user_id_fkey(
+          requester_profile:profiles!user_connections_user_id_fkey(
+            id,
+            name,
+            username,
+            profile_image,
+            bio
+          ),
+          recipient_profile:profiles!user_connections_connected_user_id_fkey(
             id,
             name,
             username,
@@ -29,27 +37,53 @@ export const useConnectionsAdapter = () => {
             bio
           )
         `)
-        .eq('user_id', currentUser.user.id)
+        .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
         .eq('status', 'accepted');
 
       if (error) throw error;
 
-      return data?.map(conn => ({
-        id: conn.connected_user_id,
-        name: conn.connected_profile?.name || 'Unknown',
-        username: conn.connected_profile?.username || '',
-        imageUrl: conn.connected_profile?.profile_image || '',
-        mutualFriends: 0, // Would need to calculate
-        type: 'friend' as const,
-        lastActive: 'recently',
-        relationship: conn.relationship_type as RelationshipType,
-        dataStatus: {
-          shipping: 'missing' as const,
-          birthday: 'missing' as const,
-          email: 'missing' as const
-        },
-        bio: conn.connected_profile?.bio
-      })) || [];
+      return data?.map(conn => {
+        // Determine which profile to show (the other person)
+        const isCurrentUserRequester = conn.user_id === currentUser.user.id;
+        
+        if (isCurrentUserRequester) {
+          // Current user sent the request, show recipient profile
+          return {
+            id: conn.connected_user_id,
+            name: conn.recipient_profile?.name || 'Unknown',
+            username: conn.recipient_profile?.username || '',
+            imageUrl: conn.recipient_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.recipient_profile?.bio
+          };
+        } else {
+          // Current user received the request, show requester profile
+          return {
+            id: conn.user_id,
+            name: conn.requester_profile?.name || 'Unknown',
+            username: conn.requester_profile?.username || '',
+            imageUrl: conn.requester_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.requester_profile?.bio
+          };
+        }
+      }) || [];
     } catch (error) {
       console.error('Error fetching friends:', error);
       return [];

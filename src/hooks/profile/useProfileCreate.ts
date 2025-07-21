@@ -51,6 +51,7 @@ export const useProfileCreate = () => {
         birth_year: birthYear,
         shipping_address: {
           address_line1: formattedData.address?.street || "",
+          address_line2: formattedData.address?.line2 || "",
           city: formattedData.address?.city || "",
           state: formattedData.address?.state || "",
           zip_code: formattedData.address?.zipCode || "",

@@ -13,24 +13,26 @@ import ShareToConnectionButton from "@/components/messaging/ShareToConnectionBut
 interface SocialShareButtonProps {
   product: {
     id: string;
-    title: string;
+    name: string;
     image?: string;
     price?: number;
     brand?: string;
   };
-  variant?: "icon" | "full";
+  variant?: "icon" | "outline" | "ghost";
+  size?: "sm" | "default" | "lg";
   className?: string;
 }
 
 const SocialShareButton = ({ 
   product, 
-  variant = "icon", 
+  variant = "outline", 
+  size = "sm",
   className 
 }: SocialShareButtonProps) => {
   const [open, setOpen] = useState(false);
 
   // Generate sharing URLs
-  const title = encodeURIComponent(`Check out this gift: ${product.title}`);
+  const title = encodeURIComponent(`Check out this gift: ${product.name}`);
   const baseUrl = window.location.origin;
   const productUrl = `${baseUrl}/marketplace?productId=${product.id}`;
   const url = encodeURIComponent(productUrl);
@@ -53,8 +55,8 @@ const SocialShareButton = ({
   const shareProduct = {
     product_id: product.id,
     id: product.id,
-    title: product.title,
-    name: product.title,
+    title: product.name,
+    name: product.name,
     image: product.image || "/placeholder.svg",
     price: product.price || 0,
     brand: product.brand
@@ -64,13 +66,12 @@ const SocialShareButton = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button 
-          variant="ghost" 
-          size={variant === "icon" ? "icon" : "sm"}
+          variant={variant} 
+          size={size}
           className={className}
           aria-label="Share product"
         >
-          <Share className="h-4 w-4 mr-1" />
-          {variant === "full" && "Share"}
+          <Share className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3">

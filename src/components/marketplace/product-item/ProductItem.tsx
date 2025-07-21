@@ -10,6 +10,7 @@ import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import ProductRating from "./ProductRating";
+import SocialShareButton from "../product-item/SocialShareButton";
 
 interface ProductItemProps {
   product: Product;
@@ -70,6 +71,15 @@ const ProductItem = ({
   };
 
   const isListView = viewMode === "list";
+
+  // Convert product to share format
+  const shareProduct = {
+    id: productId,
+    name: productName,
+    price: productPrice,
+    image: product.image,
+    brand: product.brand
+  };
 
   return (
     <>
@@ -164,7 +174,7 @@ const ProductItem = ({
             )}
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Action Buttons */}
           <div className="mt-3 flex gap-2">
             <AddToCartButton
               product={product}
@@ -173,6 +183,17 @@ const ProductItem = ({
               className="flex-1 h-9 text-sm font-medium touch-target-48 touch-manipulation tap-feedback no-select"
               onClick={handleAddToCartClick}
             />
+            
+            {/* Share Button */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <SocialShareButton
+                product={shareProduct}
+                variant="outline"
+                size="sm"
+                className="flex-shrink-0 h-9 px-3 touch-target-48 touch-manipulation tap-feedback no-select"
+              />
+            </div>
+            
             <Button
               variant="outline"
               size="sm"

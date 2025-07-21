@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
+import ProductShareButton from "../social/ProductShareButton";
 
 interface ProductDetailsImageSectionProps {
   product: any;
@@ -39,19 +39,26 @@ const ProductDetailsImageSection = ({
     }
   };
 
+  // Convert product to share format
+  const shareProduct = {
+    id: String(product.product_id || product.id),
+    name: product.title || product.name || "",
+    price: product.price || 0,
+    image: product.image || "",
+    brand: product.brand || ""
+  };
+
   return (
     <>
       {/* Action Buttons Overlay - positioned absolutely over the carousel */}
       <div className="absolute top-4 right-4 flex gap-2 z-10">
-        {/* Share Button */}
-        <Button
+        {/* Enhanced Share Button with Connection Sharing */}
+        <ProductShareButton
+          product={shareProduct}
           variant="ghost"
-          size="icon"
+          size="sm"
           className="bg-white/80 hover:bg-white"
-          onClick={onShare}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
+        />
 
         {/* Wishlist Button - Always use the popover version for authenticated users */}
         {user ? (

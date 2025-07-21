@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import { Message, sendMessage, subscribeToMessages, markMessageAsRead } from "@/utils/messageService";
+import { Message, sendMessage, subscribeToMessages, markMessageAsRead } from "@/utils/messageService"; // Fixed import
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 

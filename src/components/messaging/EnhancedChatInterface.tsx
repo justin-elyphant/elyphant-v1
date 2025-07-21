@@ -103,7 +103,9 @@ const EnhancedChatInterface = ({
         .map(msg => msg.id);
       
       if (unreadMessageIds.length > 0) {
-        await markMessagesAsRead(unreadMessageIds);
+        for (const id of unreadMessageIds) {
+          await markMessagesAsRead([id]);
+        }
       }
       
       if (page === 0) {

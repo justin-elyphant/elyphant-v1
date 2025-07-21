@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import GiftOptionsForm from '@/components/checkout/components/GiftOptionsForm';
+import GiftOptionsForm from './components/GiftOptionsForm';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface DeliveryGroup {

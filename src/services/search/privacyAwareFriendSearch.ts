@@ -43,13 +43,23 @@ export const searchFriendsWithPrivacy = async (
   }
 
   try {
-    // Build search conditions for better matching
-    const searchTerms = query.trim().split(/\s+/);
+    // Clean and prepare search query
+    const cleanedQuery = query.trim();
+    const queryWithoutAt = cleanedQuery.startsWith('@') ? cleanedQuery.substring(1) : cleanedQuery;
+    const searchTerms = queryWithoutAt.split(/\s+/);
     const conditions = [];
     
-    // Add full query match
-    conditions.push(`name.ilike.%${query}%`);
-    conditions.push(`username.ilike.%${query}%`);
+    console.log('🔍 [searchFriendsWithPrivacy] Original query:', cleanedQuery);
+    console.log('🔍 [searchFriendsWithPrivacy] Query without @:', queryWithoutAt);
+    
+    // Add full query matches
+    conditions.push(`name.ilike.%${cleanedQuery}%`);
+    conditions.push(`username.ilike.%${cleanedQuery}%`);
+    
+    // If query starts with @, also search without @ for username
+    if (cleanedQuery.startsWith('@')) {
+      conditions.push(`username.ilike.%${queryWithoutAt}%`);
+    }
     
     // Add individual word matches for multi-word queries
     if (searchTerms.length > 1) {
@@ -60,6 +70,8 @@ export const searchFriendsWithPrivacy = async (
         }
       });
     }
+    
+    console.log('🔍 [searchFriendsWithPrivacy] Search conditions:', conditions);
     
     const { data: profiles, error } = await supabase
       .from('profiles')

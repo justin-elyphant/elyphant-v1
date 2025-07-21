@@ -65,7 +65,7 @@ const ConnectionPickerModal = ({
                   onClick={() => handleSelectConnection(connection)}
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={connection.profile_image} />
+                    <AvatarImage src={connection.imageUrl} />
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>
@@ -83,7 +83,7 @@ const ConnectionPickerModal = ({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {connection.verification_status === 'verified' && (
+                    {connection.type === 'friend' && (
                       <Badge variant="secondary" className="text-xs">
                         Verified
                       </Badge>

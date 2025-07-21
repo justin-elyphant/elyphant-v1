@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -21,6 +22,27 @@ const Dashboard = () => {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Clear any residual onboarding state when loading dashboard
+  useEffect(() => {
+    if (user) {
+      console.log("Dashboard loaded - cleaning up onboarding state");
+      
+      // Check if we have completion state that should be cleared
+      const completionState = LocalStorageService.getProfileCompletionState();
+      if (completionState?.step === 'completed') {
+        console.log("Clearing completed onboarding state");
+        LocalStorageService.clearProfileCompletionState();
+      }
+      
+      // Clear any Nicole context from onboarding
+      const nicoleContext = LocalStorageService.getNicoleContext();
+      if (nicoleContext?.source === 'profile-setup' || nicoleContext?.source === 'onboarding') {
+        console.log("Clearing onboarding Nicole context");
+        LocalStorageService.clearNicoleContext();
+      }
+    }
+  }, [user]);
   
   useEffect(() => {
     console.log('Dashboard.tsx Effect: user, isLoading, localLoadingTimeout', { user, isLoading, localLoadingTimeout });

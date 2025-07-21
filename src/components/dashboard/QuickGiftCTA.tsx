@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,16 @@ import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 
 const QuickGiftCTA = () => {
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  const handleOpenWizard = () => {
+    console.log("Opening GiftSetupWizard from QuickGiftCTA");
+    setWizardOpen(true);
+  };
+
+  const handleCloseWizard = (open: boolean) => {
+    console.log("Closing GiftSetupWizard, open:", open);
+    setWizardOpen(open);
+  };
 
   return (
     <>
@@ -24,7 +35,7 @@ const QuickGiftCTA = () => {
             <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Our AI will pick, purchase, and deliver the perfect gift automatically</p>
           </div>
           <Button 
-            onClick={() => setWizardOpen(true)}
+            onClick={handleOpenWizard}
             className="bg-gradient-to-r from-cyan-600 to-amber-600 hover:from-cyan-700 hover:to-amber-700 text-white border-0 shadow-md h-10 sm:h-9 w-full sm:w-auto"
             size="sm"
           >
@@ -37,7 +48,7 @@ const QuickGiftCTA = () => {
       {/* Gift Setup Wizard */}
       <GiftSetupWizard 
         open={wizardOpen}
-        onOpenChange={setWizardOpen}
+        onOpenChange={handleCloseWizard}
         initialData={null}
       />
     </>

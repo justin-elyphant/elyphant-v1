@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
-
 import MainLayout from "@/components/layout/MainLayout";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
@@ -11,6 +11,7 @@ import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDi
 /**
  * Handles the complete profile setup flow including intent selection
  * This component orchestrates both profile completion and intent modal display
+ * ONLY used during onboarding flows, NOT on dashboard
  */
 const ProfileSetupWithIntent = () => {
   const navigate = useNavigate();
@@ -27,25 +28,32 @@ const ProfileSetupWithIntent = () => {
       return;
     }
 
+    console.log("ProfileSetupWithIntent: Checking completion state");
+
     // Check profile completion state to determine what to show
     const completionState = LocalStorageService.getProfileCompletionState();
+    console.log("ProfileSetupWithIntent completion state:", completionState);
     
     if (completionState?.step === 'intent') {
       // Profile is complete, show intent modal
+      console.log("Showing intent modal");
       setShowIntentModal(true);
       setIsLoading(false);
     } else if (completionState?.step === 'profile' || !LocalStorageService.isProfileSetupCompleted()) {
       // Profile needs completion
-      setShowProfileSetup(true);
-      setIsLoading(false);
+      console.log("Profile needs completion - redirecting to main onboarding");
+      // In the current flow, profile setup is handled in the main signup flow
+      // So if we get here, redirect to dashboard since profile should be done
+      navigate('/dashboard');
     } else {
       // Everything is complete, redirect to dashboard
+      console.log("Profile setup complete - redirecting to dashboard");
       navigate('/dashboard');
     }
   }, [user, navigate]);
 
   const handleIntentSelect = (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
-    console.log(`User selected intent: ${intent}`);
+    console.log(`ProfileSetupWithIntent: User selected intent: ${intent}`);
     
     // Save intent selection
     LocalStorageService.setNicoleContext({
@@ -53,8 +61,8 @@ const ProfileSetupWithIntent = () => {
       source: 'profile-setup'
     });
     
-    // Clear completion state since we're done
-    LocalStorageService.clearProfileCompletionState();
+    // Mark profile setup as completed and clear completion state
+    LocalStorageService.markProfileSetupCompleted();
     
     // Close intent modal first
     setShowIntentModal(false);
@@ -75,7 +83,7 @@ const ProfileSetupWithIntent = () => {
   };
 
   const handleCreateWishlistSubmit = async (values: any) => {
-    console.log('Creating wishlist:', values);
+    console.log('Creating wishlist from onboarding:', values);
     setShowCreateWishlist(false);
     navigate('/dashboard');
   };

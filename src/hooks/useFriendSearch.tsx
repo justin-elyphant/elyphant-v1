@@ -11,17 +11,22 @@ export const useFriendSearch = () => {
   const [results, setResults] = useState<FriendSearchResult[]>([]);
 
   const searchForFriends = async (query: string) => {
+    console.log('🔍 [useFriendSearch] Starting search for:', query);
+    
     if (!query || query.length < 2) {
+      console.log('🔍 [useFriendSearch] Query too short, clearing results');
       setResults([]);
       return;
     }
 
     setIsLoading(true);
     try {
+      console.log('🔍 [useFriendSearch] Calling searchFriends with userId:', user?.id);
       const friendResults = await searchFriends(query, user?.id);
+      console.log('🔍 [useFriendSearch] Search results received:', friendResults.length);
       setResults(friendResults);
     } catch (error) {
-      console.error('Friend search error:', error);
+      console.error('🔍 [useFriendSearch] Friend search error:', error);
       toast.error("Error searching for friends");
       setResults([]);
     } finally {

@@ -1,15 +1,16 @@
 
 import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
-import { ZincProduct } from "@/components/marketplace/zinc/types";
+import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
+import { Product } from "@/types/product";
 
 export interface UnifiedSearchResults {
   friends: FilteredProfile[];
-  products: ZincProduct[];
+  products: Product[];
   brands: string[];
   total: number;
 }
 
-export interface UnifiedSearchOptions {
+export interface SearchOptions {
   maxResults?: number;
   currentUserId?: string;
   includeFriends?: boolean;
@@ -17,35 +18,18 @@ export interface UnifiedSearchOptions {
   includeBrands?: boolean;
 }
 
-const mockProducts: ZincProduct[] = [
-  {
-    product_id: "1",
-    title: "Wireless Bluetooth Headphones",
-    price: 79.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
-    rating: 4.5,
-    review_count: 1250,
-    retailer: "amazon"
-  },
-  {
-    product_id: "2", 
-    title: "Smart Fitness Watch",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
-    rating: 4.3,
-    review_count: 856,
-    retailer: "amazon"
-  }
-];
-
 const mockBrands = [
-  "Apple", "Nike", "Samsung", "Lululemon", "Stanley", "Made In", "Lego", "Sony"
+  "Nike", "Apple", "Samsung", "Sony", "Microsoft", "Google", "Amazon", 
+  "Tesla", "BMW", "Mercedes", "Louis Vuitton", "Gucci", "Rolex",
+  "Starbucks", "McDonald's", "Coca-Cola", "Pepsi", "Netflix", "Spotify"
 ];
 
 export const unifiedSearch = async (
   query: string,
-  options: UnifiedSearchOptions = {}
+  options: SearchOptions = {}
 ): Promise<UnifiedSearchResults> => {
+  console.log('🔍 [unifiedSearch] Starting unified search:', { query, options });
+  
   const {
     maxResults = 10,
     currentUserId,
@@ -54,14 +38,6 @@ export const unifiedSearch = async (
     includeBrands = true
   } = options;
 
-  console.log(`Unified Search: "${query}" with options:`, {
-    currentUserId: currentUserId || 'unauthenticated',
-    maxResults,
-    includeFriends,
-    includeProducts,
-    includeBrands
-  });
-
   const results: UnifiedSearchResults = {
     friends: [],
     products: [],
@@ -69,48 +45,52 @@ export const unifiedSearch = async (
     total: 0
   };
 
-  try {
-    // Search for friends with improved privacy handling
-    if (includeFriends && query.length >= 2) {
-      console.log('Unified Search: Starting friend search...');
+  // Search friends
+  if (includeFriends && query.length >= 2) {
+    try {
+      console.log('🔍 [unifiedSearch] Searching friends...');
       const friendResults = await searchFriendsWithPrivacy(query, currentUserId);
       results.friends = friendResults.slice(0, Math.floor(maxResults / 3));
-      console.log(`Unified Search: Found ${friendResults.length} friends, using ${results.friends.length}`);
+      console.log(`🔍 [unifiedSearch] Friend search completed: ${results.friends.length} results`);
+    } catch (error) {
+      console.error('🔍 [unifiedSearch] Error searching friends:', error);
     }
-
-    // Search for products (mock data for now)
-    if (includeProducts && query.length >= 2) {
-      console.log('Unified Search: Starting product search...');
-      const productResults = mockProducts.filter(product =>
-        product.title.toLowerCase().includes(query.toLowerCase())
-      );
-      results.products = productResults.slice(0, Math.floor(maxResults / 3));
-      console.log(`Unified Search: Found ${productResults.length} products, using ${results.products.length}`);
-    }
-
-    // Search for brands (mock data for now)
-    if (includeBrands && query.length >= 2) {
-      console.log('Unified Search: Starting brand search...');
-      const brandResults = mockBrands.filter(brand =>
-        brand.toLowerCase().includes(query.toLowerCase())
-      );
-      results.brands = brandResults.slice(0, Math.floor(maxResults / 3));
-      console.log(`Unified Search: Found ${brandResults.length} brands, using ${results.brands.length}`);
-    }
-
-    results.total = results.friends.length + results.products.length + results.brands.length;
-    
-    console.log(`Unified Search Results Summary:`, {
-      friends: results.friends.length,
-      products: results.products.length,
-      brands: results.brands.length,
-      total: results.total
-    });
-
-    return results;
-
-  } catch (error) {
-    console.error('Unified search error:', error);
-    return results;
   }
+
+  // Search products (mock for now)
+  if (includeProducts && query.length >= 2) {
+    try {
+      console.log('🔍 [unifiedSearch] Searching products...');
+      const productResults = searchMockProducts(query, Math.floor(maxResults / 3));
+      results.products = productResults;
+      console.log(`🔍 [unifiedSearch] Product search completed: ${results.products.length} results`);
+    } catch (error) {
+      console.error('🔍 [unifiedSearch] Error searching products:', error);
+    }
+  }
+
+  // Search brands (mock for now)
+  if (includeBrands && query.length >= 2) {
+    try {
+      console.log('🔍 [unifiedSearch] Searching brands...');
+      const brandResults = mockBrands
+        .filter(brand => brand.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, Math.floor(maxResults / 3));
+      results.brands = brandResults;
+      console.log(`🔍 [unifiedSearch] Brand search completed: ${results.brands.length} results`);
+    } catch (error) {
+      console.error('🔍 [unifiedSearch] Error searching brands:', error);
+    }
+  }
+
+  results.total = results.friends.length + results.products.length + results.brands.length;
+  
+  console.log('🔍 [unifiedSearch] Unified search completed:', {
+    totalResults: results.total,
+    friends: results.friends.length,
+    products: results.products.length,
+    brands: results.brands.length
+  });
+
+  return results;
 };

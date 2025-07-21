@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
 import { ProfileProvider } from "./contexts/profile/ProfileContext";
+import { CartProvider } from "./contexts/CartContext";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -23,25 +24,27 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ProfileProvider>
-          <ProductProvider>
-            <Router>
-              <div className="min-h-screen bg-background text-foreground">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/:orderId" element={<OrderDetail />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/order-status" element={<OrderStatusDashboard />} />
-                </Routes>
-              </div>
-            </Router>
-          </ProductProvider>
+          <CartProvider>
+            <ProductProvider>
+              <Router>
+                <div className="min-h-screen bg-background text-foreground">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/orders/:orderId" element={<OrderDetail />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/marketplace" element={<Marketplace />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/order-status" element={<OrderStatusDashboard />} />
+                  </Routes>
+                </div>
+              </Router>
+            </ProductProvider>
+          </CartProvider>
         </ProfileProvider>
       </AuthProvider>
     </QueryClientProvider>

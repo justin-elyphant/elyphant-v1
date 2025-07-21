@@ -12,7 +12,6 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
-
 type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
@@ -23,8 +22,26 @@ const Settings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [hasTimedOut, setHasTimedOut] = useState(false);
+  const [forceRefreshCount, setForceRefreshCount] = useState(0);
 
   console.log("Settings page - loading:", loading, "profile:", profile, "user:", user, "error:", error);
+
+  // Force profile refresh when navigating to settings to ensure fresh data
+  useEffect(() => {
+    const forceRefreshProfileOnNavigation = async () => {
+      if (user && refetchProfile) {
+        console.log("🔄 Settings page: Force refreshing profile data on navigation");
+        try {
+          await refetchProfile();
+          setForceRefreshCount(prev => prev + 1);
+        } catch (error) {
+          console.error("❌ Error force refreshing profile on settings navigation:", error);
+        }
+      }
+    };
+
+    forceRefreshProfileOnNavigation();
+  }, [user, refetchProfile]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -73,6 +90,7 @@ const Settings = () => {
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Loading your settings...</p>
+        <p className="text-xs text-muted-foreground">Force refresh count: {forceRefreshCount}</p>
       </div>
     );
   }
@@ -86,13 +104,13 @@ const Settings = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case "general":
-        return <GeneralSettings />;
+        return <GeneralSettings key={`general-${forceRefreshCount}`} />;
       case "notifications":
         return <NotificationSettings />;
       case "privacy":
         return <PrivacySecuritySettings />;
       default:
-        return <GeneralSettings />;
+        return <GeneralSettings key={`general-${forceRefreshCount}`} />;
     }
   };
 

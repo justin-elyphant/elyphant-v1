@@ -1,21 +1,32 @@
 
-import { useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useAutoSaveImportantDates, NewImportantDateState } from "./useAutoSaveImportantDates";
-import { useAutoSaveInterests } from "./useAutoSaveInterests";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { toast } from "sonner";
+import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { useProfileData } from "./useProfileData";
-import { useFormSubmission } from "./useFormSubmission";
-import { useUnsavedChanges } from "./useUnsavedChanges";
-import { formSchema, SettingsFormValues, ImportantDate } from "./settingsFormSchema";
-
-export { type NewImportantDateState } from "./useAutoSaveImportantDates";
+import { mapSettingsFormToDatabase } from "@/utils/profileDataMapper";
 
 export const useGeneralSettingsForm = () => {
+  const { user } = useAuth();
+  const { profile, updateProfile, loading, refetchProfile } = useProfile();
+  const [isSaving, setIsSaving] = useState(false);
+  const [newInterest, setNewInterest] = useState("");
+  const [newImportantDate, setNewImportantDate] = useState({
+    date: new Date(),
+    description: ""
+  });
+  const [isAutoSavingInterests, setIsAutoSavingInterests] = useState(false);
+  const [isAutoSavingDates, setIsAutoSavingDates] = useState(false);
+  const [initialFormValues, setInitialFormValues] = useState<SettingsFormValues | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Setup form with proper default values
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      // New mandatory fields
       first_name: "",
       last_name: "",
       name: "",
@@ -30,7 +41,7 @@ export const useGeneralSettingsForm = () => {
         city: "",
         state: "",
         zipCode: "",
-        country: ""
+        country: "US"
       },
       interests: [],
       importantDates: [],
@@ -43,40 +54,213 @@ export const useGeneralSettingsForm = () => {
     }
   });
 
-  // Use our custom hooks
-  const { user, isSaving, onSubmit } = useFormSubmission();
-  const { hasUnsavedChanges, setInitialFormValues, clearUnsavedChanges } = useUnsavedChanges(form);
-  const { profile, loading, loadProfileData, refetchProfile, dataLoadError } = useProfileData(form, setInitialFormValues);
-  const { newInterest, setNewInterest, handleAddInterest, handleRemoveInterest, isAutoSaving: isAutoSavingInterests } = useAutoSaveInterests(form);
-  const { newImportantDate, setNewImportantDate, handleAddImportantDate, handleRemoveImportantDate, isAutoSaving: isAutoSavingDates } = useAutoSaveImportantDates(form);
+  // Use the profile data hook for consistent data loading
+  const {
+    user: profileUser,
+    profile: profileData,
+    loading: profileLoading,
+    loadProfileData,
+    refetchProfile: refetchProfileData,
+    dataLoadError
+  } = useProfileData(form, setInitialFormValues);
 
-  // Enhanced onSubmit with unsaved changes tracking
-  const handleSubmit = async (data: SettingsFormValues) => {
-    console.log("📋 Form handleSubmit called with data:", data);
-    await onSubmit(data);
-    clearUnsavedChanges();
+  console.log("🔄 useGeneralSettingsForm - Profile data:", profileData);
+  console.log("🔄 useGeneralSettingsForm - Form values:", form.getValues());
+  console.log("🔄 useGeneralSettingsForm - Loading states:", { loading, profileLoading });
+
+  // Force refresh profile data when component mounts
+  useEffect(() => {
+    const forceRefreshProfileData = async () => {
+      console.log("🔄 Force refreshing profile data for settings");
+      try {
+        await refetchProfile();
+        await refetchProfileData();
+      } catch (error) {
+        console.error("❌ Error force refreshing profile data:", error);
+      }
+    };
+
+    if (user && !loading && !profileLoading) {
+      forceRefreshProfileData();
+    }
+  }, [user, refetchProfile, refetchProfileData]);
+
+  // Watch for form changes to detect unsaved changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (type === "change" && initialFormValues) {
+        const currentValues = form.getValues();
+        const hasChanges = JSON.stringify(currentValues) !== JSON.stringify(initialFormValues);
+        setHasUnsavedChanges(hasChanges);
+        
+        console.log("🔄 Form value changed:", { name, hasChanges });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, initialFormValues]);
+
+  // Debug form reset effectiveness
+  useEffect(() => {
+    const currentValues = form.getValues();
+    console.log("🔄 Current form values after potential reset:", {
+      first_name: currentValues.first_name,
+      last_name: currentValues.last_name,
+      date_of_birth: currentValues.date_of_birth,
+      address: currentValues.address,
+      interests: currentValues.interests?.length || 0,
+      importantDates: currentValues.importantDates?.length || 0
+    });
+  }, [form, profileData]);
+
+  // Handle form submission with proper error handling
+  const onSubmit = async (data: SettingsFormValues) => {
+    if (!user) {
+      toast.error("You must be logged in to update your profile");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      console.log("🔄 Submitting form data:", data);
+      
+      // Use the enhanced mapper to convert form data to database format
+      const databaseData = mapSettingsFormToDatabase(data);
+      console.log("🔄 Mapped database data:", databaseData);
+      
+      await updateProfile(databaseData);
+      
+      // Update initial values to reflect the save
+      setInitialFormValues(data);
+      setHasUnsavedChanges(false);
+      
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("❌ Failed to update profile:", error);
+      toast.error("Failed to update profile", {
+        description: error instanceof Error ? error.message : "Unknown error"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Auto-save interests
+  const handleAddInterest = async () => {
+    if (!newInterest.trim() || !user) return;
+    
+    try {
+      setIsAutoSavingInterests(true);
+      const currentInterests = form.getValues("interests") || [];
+      const updatedInterests = [...currentInterests, newInterest.trim()];
+      
+      form.setValue("interests", updatedInterests);
+      await updateProfile({ interests: updatedInterests });
+      
+      setNewInterest("");
+      toast.success("Interest added successfully");
+    } catch (error) {
+      console.error("❌ Error adding interest:", error);
+      toast.error("Failed to add interest");
+    } finally {
+      setIsAutoSavingInterests(false);
+    }
+  };
+
+  const handleRemoveInterest = async (index: number) => {
+    if (!user) return;
+    
+    try {
+      setIsAutoSavingInterests(true);
+      const currentInterests = form.getValues("interests") || [];
+      const updatedInterests = currentInterests.filter((_, i) => i !== index);
+      
+      form.setValue("interests", updatedInterests);
+      await updateProfile({ interests: updatedInterests });
+      
+      toast.success("Interest removed successfully");
+    } catch (error) {
+      console.error("❌ Error removing interest:", error);
+      toast.error("Failed to remove interest");
+    } finally {
+      setIsAutoSavingInterests(false);
+    }
+  };
+
+  // Auto-save important dates
+  const handleAddImportantDate = async () => {
+    if (!newImportantDate.description.trim() || !user) return;
+    
+    try {
+      setIsAutoSavingDates(true);
+      const currentDates = form.getValues("importantDates") || [];
+      const updatedDates = [...currentDates, newImportantDate];
+      
+      form.setValue("importantDates", updatedDates);
+      
+      // Convert to API format for saving
+      const apiDates = updatedDates.map(date => ({
+        date: date.date.toISOString(),
+        title: date.description,
+        type: "custom"
+      }));
+      
+      await updateProfile({ important_dates: apiDates });
+      
+      setNewImportantDate({ date: new Date(), description: "" });
+      toast.success("Important date added successfully");
+    } catch (error) {
+      console.error("❌ Error adding important date:", error);
+      toast.error("Failed to add important date");
+    } finally {
+      setIsAutoSavingDates(false);
+    }
+  };
+
+  const handleRemoveImportantDate = async (index: number) => {
+    if (!user) return;
+    
+    try {
+      setIsAutoSavingDates(true);
+      const currentDates = form.getValues("importantDates") || [];
+      const updatedDates = currentDates.filter((_, i) => i !== index);
+      
+      form.setValue("importantDates", updatedDates);
+      
+      // Convert to API format for saving
+      const apiDates = updatedDates.map(date => ({
+        date: date.date.toISOString(),
+        title: date.description,
+        type: "custom"
+      }));
+      
+      await updateProfile({ important_dates: apiDates });
+      
+      toast.success("Important date removed successfully");
+    } catch (error) {
+      console.error("❌ Error removing important date:", error);
+      toast.error("Failed to remove important date");
+    } finally {
+      setIsAutoSavingDates(false);
+    }
   };
 
   return {
-    user,
     form,
     isSaving,
-    loading,
+    loading: loading || profileLoading,
     newInterest,
     setNewInterest,
     newImportantDate,
     setNewImportantDate,
-    loadProfileData,
-    refetchProfile,
-    onSubmit: handleSubmit,
+    onSubmit,
     handleAddInterest,
     handleRemoveInterest,
     handleAddImportantDate,
     handleRemoveImportantDate,
     hasUnsavedChanges,
-    setInitialFormValues,
     isAutoSavingInterests,
     isAutoSavingDates,
+    refetchProfile: refetchProfileData,
     dataLoadError
   };
 };

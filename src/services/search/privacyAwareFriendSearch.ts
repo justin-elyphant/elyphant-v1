@@ -4,6 +4,20 @@ import { Database } from "@/integrations/supabase/types";
 
 type PrivacySettings = Database['public']['Tables']['privacy_settings']['Row'];
 
+export interface FilteredProfile {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  profile_image?: string;
+  bio?: string;
+  connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
+  mutualConnections?: number;
+  lastActive?: string;
+  privacyLevel?: 'public' | 'limited' | 'private';
+  isPrivacyRestricted?: boolean;
+}
+
 export interface PrivacyAwareFriendSearchResult {
   id: string;
   name: string;
@@ -14,11 +28,11 @@ export interface PrivacyAwareFriendSearchResult {
   connection_policy: string;
 }
 
-export const privacyAwareFriendSearch = async (
+export const searchFriendsWithPrivacy = async (
   searchTerm: string,
-  currentUserId: string,
+  currentUserId?: string,
   limit: number = 20
-): Promise<PrivacyAwareFriendSearchResult[]> => {
+): Promise<FilteredProfile[]> => {
   try {
     // Search for profiles matching the search term
     const { data: profiles, error: profileError } = await supabase
@@ -78,8 +92,25 @@ export const privacyAwareFriendSearch = async (
       ]) || []
     );
 
+    // Check connection status for each profile
+    const connectionStatusPromises = profiles.map(async (profile) => {
+      const { data: connectionData } = await supabase
+        .from('user_connections')
+        .select('status')
+        .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${profile.id}),and(user_id.eq.${profile.id},connected_user_id.eq.${currentUserId})`)
+        .single();
+
+      return {
+        profileId: profile.id,
+        status: connectionData ? (connectionData.status === 'accepted' ? 'connected' : 'pending') : 'none'
+      };
+    });
+
+    const connectionStatuses = await Promise.all(connectionStatusPromises);
+    const statusMap = new Map(connectionStatuses.map(cs => [cs.profileId, cs.status]));
+
     // Process results
-    const results: PrivacyAwareFriendSearchResult[] = profiles
+    const results: FilteredProfile[] = profiles
       .filter(profile => 
         !connectedUserIds.has(profile.id) && 
         !blockedUserIds.has(profile.id)
@@ -97,14 +128,21 @@ export const privacyAwareFriendSearch = async (
           canConnect = false;
         }
 
+        const connectionStatus = statusMap.get(profile.id) || 'none';
+        const privacyLevel = connectionPolicy === 'nobody' ? 'private' : 
+                           connectionPolicy === 'friends_only' ? 'limited' : 'public';
+
         return {
           id: profile.id,
           name: profile.name || 'Unknown User',
           username: profile.username || '',
+          email: '', // Email not included for privacy
           profile_image: profile.profile_image || undefined,
           bio: profile.bio || undefined,
-          can_connect: canConnect,
-          connection_policy: connectionPolicy
+          connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
+          mutualConnections: 0, // TODO: Implement mutual connections count
+          privacyLevel: privacyLevel as 'public' | 'limited' | 'private',
+          isPrivacyRestricted: !canConnect
         };
       });
 
@@ -112,5 +150,105 @@ export const privacyAwareFriendSearch = async (
   } catch (error) {
     console.error('Error in privacy-aware friend search:', error);
     return [];
+  }
+};
+
+export const privacyAwareFriendSearch = async (
+  searchTerm: string,
+  currentUserId: string,
+  limit: number = 20
+): Promise<PrivacyAwareFriendSearchResult[]> => {
+  const results = await searchFriendsWithPrivacy(searchTerm, currentUserId, limit);
+  return results.map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    username: profile.username,
+    profile_image: profile.profile_image,
+    bio: profile.bio,
+    can_connect: !profile.isPrivacyRestricted,
+    connection_policy: profile.privacyLevel === 'private' ? 'nobody' : 
+                      profile.privacyLevel === 'limited' ? 'friends_only' : 'everyone'
+  }));
+};
+
+export const getConnectionPermissions = async (targetUserId: string, currentUserId?: string) => {
+  if (!currentUserId) {
+    return {
+      canSendRequest: false,
+      canViewProfile: true,
+      canMessage: false,
+      restrictionReason: 'You must be logged in to send connection requests'
+    };
+  }
+
+  try {
+    // Get target user's privacy settings
+    const { data: privacySettings } = await supabase
+      .from('privacy_settings')
+      .select('allow_connection_requests_from')
+      .eq('user_id', targetUserId)
+      .single();
+
+    const connectionPolicy = privacySettings?.allow_connection_requests_from || 'everyone';
+
+    // Check if users are already connected
+    const { data: existingConnection } = await supabase
+      .from('user_connections')
+      .select('status')
+      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
+      .single();
+
+    if (existingConnection) {
+      return {
+        canSendRequest: false,
+        canViewProfile: true,
+        canMessage: existingConnection.status === 'accepted',
+        restrictionReason: existingConnection.status === 'accepted' ? 'Already connected' : 'Connection request pending'
+      };
+    }
+
+    // Check if blocked
+    const { data: blocked } = await supabase
+      .from('blocked_users')
+      .select('id')
+      .or(`and(blocker_id.eq.${currentUserId},blocked_id.eq.${targetUserId}),and(blocker_id.eq.${targetUserId},blocked_id.eq.${currentUserId})`)
+      .single();
+
+    if (blocked) {
+      return {
+        canSendRequest: false,
+        canViewProfile: false,
+        canMessage: false,
+        restrictionReason: 'User is blocked'
+      };
+    }
+
+    // Apply privacy policy
+    let canSendRequest = true;
+    let restrictionReason = undefined;
+
+    if (connectionPolicy === 'nobody') {
+      canSendRequest = false;
+      restrictionReason = 'User does not accept connection requests';
+    } else if (connectionPolicy === 'friends_only') {
+      canSendRequest = false;
+      restrictionReason = 'User only accepts requests from existing connections';
+    }
+
+    return {
+      canSendRequest,
+      canViewProfile: true,
+      canMessage: false,
+      restrictionReason
+    };
+
+  } catch (error) {
+    console.error('Error checking connection permissions:', error);
+    return {
+      canSendRequest: false,
+      canViewProfile: true,
+      canMessage: false,
+      restrictionReason: 'Unable to verify permissions'
+    };
   }
 };

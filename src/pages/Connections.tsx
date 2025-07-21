@@ -5,12 +5,11 @@ import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
-
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
 import PendingTabContent from "@/components/connections/PendingTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
 import PrivacyIntegration from "@/components/connections/PrivacyIntegration";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RelationshipType } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
 import { useAuth } from "@/contexts/auth";
@@ -42,6 +41,15 @@ const Connections = () => {
   const filteredFriends = filterConnections(friends, searchTerm);
   const filteredSuggestions = filterConnections(suggestions, searchTerm);
   const filteredPendingConnections = filterConnections(pendingConnections, searchTerm);
+
+  // Log connection counts for debugging
+  useEffect(() => {
+    console.log('📊 [Connections] Current counts:', {
+      friends: filteredFriends.length,
+      pending: filteredPendingConnections.length,
+      suggestions: filteredSuggestions.length
+    });
+  }, [filteredFriends.length, filteredPendingConnections.length, filteredSuggestions.length]);
 
   return (
     <SidebarLayout>

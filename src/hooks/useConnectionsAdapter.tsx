@@ -6,6 +6,7 @@ import { useMutualConnections } from "@/hooks/useMutualConnections";
 import { Connection, RelationshipType } from "@/types/connections";
 import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useConnectionsAdapter = () => {
   const { user } = useAuth();
@@ -19,17 +20,20 @@ export const useConnectionsAdapter = () => {
     sendConnectionRequest,
     acceptConnectionRequest,
     rejectConnectionRequest,
-    removeConnection
+    removeConnection,
+    refetch: refetchConnections
   } = useEnhancedConnections();
 
   const [pendingConnections, setPendingConnections] = useState<any[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { suggestions, loading: suggestionsLoading } = useConnectionSuggestions();
   const { calculateMutualFriends } = useMutualConnections();
 
   // Transform enhanced connections into UI-compatible format
   const transformedConnections = useMemo(() => {
+    console.log('🔄 [useConnectionsAdapter] Transforming connections:', connections.length);
     return connections.map(conn => {
       const connectedUserId = conn.user_id !== conn.connected_user_id 
         ? (conn.user_id === conn.id ? conn.connected_user_id : conn.user_id)
@@ -53,7 +57,7 @@ export const useConnectionsAdapter = () => {
         bio: conn.profile_bio || '',
       } as Connection;
     });
-  }, [connections]);
+  }, [connections, refreshTrigger]);
 
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({
@@ -75,52 +79,133 @@ export const useConnectionsAdapter = () => {
     })) as Connection[];
   }, [following]);
 
+  // Filter friends based on accepted status
   const friends = transformedConnections.filter(conn => 
     conn.type === 'friend' && conn.relationship === 'friend'
   );
 
-  // Fetch pending connections from quick gift wizard
+  // Fetch detailed pending connections that include both DB connections and gift-based invitations
   const fetchPendingConnections = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ [useConnectionsAdapter] No user found');
+      return;
+    }
     
     setPendingLoading(true);
     try {
-      const pendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
-      setPendingConnections(pendingData);
+      console.log('🔍 [useConnectionsAdapter] Fetching pending connections for user:', user.id);
+
+      // Get both incoming AND outgoing pending requests
+      const { data, error } = await supabase
+        .from('user_connections')
+        .select(`
+          *,
+          requester_profile:profiles!user_connections_user_id_fkey(
+            id,
+            name,
+            username,
+            profile_image,
+            bio
+          ),
+          recipient_profile:profiles!user_connections_connected_user_id_fkey(
+            id,
+            name,
+            username,
+            profile_image,
+            bio
+          )
+        `)
+        .or(`connected_user_id.eq.${user.id},user_id.eq.${user.id}`)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+
+      console.log('✅ [useConnectionsAdapter] Pending connections fetched:', data?.length || 0);
+
+      const pendingFromDB = data?.map(conn => {
+        // Determine if this is an incoming or outgoing request
+        const isIncoming = conn.connected_user_id === user.id;
+        
+        if (isIncoming) {
+          // Incoming request - show requester info
+          return {
+            id: conn.user_id,
+            connectionId: conn.id,
+            name: conn.requester_profile?.name || 'Unknown',
+            username: conn.requester_profile?.username || '',
+            imageUrl: conn.requester_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.requester_profile?.bio,
+            isPending: true,
+            isIncoming: true,
+            connectionDate: conn.created_at
+          };
+        } else {
+          // Outgoing request - show recipient info
+          return {
+            id: conn.connected_user_id,
+            connectionId: conn.id,
+            name: conn.recipient_profile?.name || 'Unknown',
+            username: conn.recipient_profile?.username || '',
+            imageUrl: conn.recipient_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.recipient_profile?.bio,
+            isPending: true,
+            isIncoming: false,
+            connectionDate: conn.created_at
+          };
+        }
+      }) || [];
+
+      // Also get gift-based pending connections
+      const giftPendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
+      const giftPending = giftPendingData.map(conn => ({
+        id: conn.id,
+        name: conn.pending_recipient_name || 'Unknown User',
+        username: `@${conn.pending_recipient_email?.split('@')[0] || 'unknown'}`,
+        imageUrl: '/placeholder.svg',
+        mutualFriends: 0,
+        type: 'suggestion' as const,
+        lastActive: 'Invitation Sent',
+        relationship: conn.relationship_type as RelationshipType,
+        dataStatus: {
+          shipping: 'missing' as const,
+          birthday: 'missing' as const,
+          email: 'verified' as const
+        },
+        interests: [],
+        bio: `Pending invitation sent to ${conn.pending_recipient_email}`,
+        connectionDate: conn.created_at,
+        isPending: true,
+        recipientEmail: conn.pending_recipient_email
+      }));
+
+      const allPending = [...pendingFromDB, ...giftPending];
+      console.log('🔗 [useConnectionsAdapter] Total pending connections:', allPending.length);
+      setPendingConnections(allPending);
     } catch (error) {
-      console.error('Error fetching pending connections:', error);
+      console.error('❌ [useConnectionsAdapter] Error fetching pending connections:', error);
+      setPendingConnections([]);
     } finally {
       setPendingLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPendingConnections();
-  }, [user]);
-
-  // Transform pending connections to Connection format
-  const transformedPendingConnections = useMemo(() => {
-    return pendingConnections.map(conn => ({
-      id: conn.id,
-      name: conn.pending_recipient_name || 'Unknown User',
-      username: `@${conn.pending_recipient_email?.split('@')[0] || 'unknown'}`,
-      imageUrl: '/placeholder.svg',
-      mutualFriends: 0,
-      type: 'suggestion' as const,
-      lastActive: 'Invitation Sent',
-      relationship: conn.relationship_type as RelationshipType,
-      dataStatus: {
-        shipping: 'missing' as const,
-        birthday: 'missing' as const,
-        email: 'verified' as const
-      },
-      interests: [],
-      bio: `Pending invitation sent to ${conn.pending_recipient_email}`,
-      connectionDate: conn.created_at,
-      isPending: true,
-      recipientEmail: conn.pending_recipient_email
-    })) as Connection[];
-  }, [pendingConnections]);
 
   // Enhanced search filtering
   const filterConnections = (connectionsList: Connection[], searchTerm: string) => {
@@ -147,22 +232,93 @@ export const useConnectionsAdapter = () => {
     // TODO: Implement verification request
   };
 
+  // Refresh all connection data
+  const refreshAllConnections = async () => {
+    console.log('🔄 [useConnectionsAdapter] Refreshing all connections');
+    setRefreshTrigger(prev => prev + 1);
+    await Promise.all([
+      refetchConnections(),
+      fetchPendingConnections()
+    ]);
+  };
+
+  // Set up real-time listeners for connection changes
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('🔗 [useConnectionsAdapter] Setting up real-time listeners');
+
+    const channel = supabase
+      .channel('connections-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_connections',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('🔗 [useConnectionsAdapter] Connection change detected (outgoing):', payload);
+          refreshAllConnections();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_connections',
+          filter: `connected_user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('🔗 [useConnectionsAdapter] Connection change detected (incoming):', payload);
+          refreshAllConnections();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔗 [useConnectionsAdapter] Cleaning up real-time listeners');
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchPendingConnections();
+  }, [user, refreshTrigger]);
+
   return {
     connections: transformedConnections,
     friends,
     following: transformedFollowing,
     suggestions,
-    pendingConnections: transformedPendingConnections,
+    pendingConnections,
     loading: loading || suggestionsLoading || pendingLoading,
     error,
     sendConnectionRequest,
-    acceptConnectionRequest,
-    rejectConnectionRequest,
+    acceptConnectionRequest: async (requestId: string) => {
+      const result = await acceptConnectionRequest(requestId);
+      if (result) {
+        // Trigger a refresh after successful acceptance
+        await refreshAllConnections();
+      }
+      return result;
+    },
+    rejectConnectionRequest: async (requestId: string) => {
+      const result = await rejectConnectionRequest(requestId);
+      if (result) {
+        // Trigger a refresh after successful rejection
+        await refreshAllConnections();
+      }
+      return result;
+    },
     removeConnection,
     handleRelationshipChange,
     handleSendVerificationRequest,
     filterConnections,
     calculateMutualFriends,
-    refreshPendingConnections: fetchPendingConnections
+    refreshPendingConnections: refreshAllConnections
   };
 };

@@ -2479,6 +2479,14 @@ export type Database = {
           user_id: string
         }
       }
+      is_group_admin: {
+        Args: { group_id: string; user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { group_id: string; user_id: string }
+        Returns: boolean
+      }
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean

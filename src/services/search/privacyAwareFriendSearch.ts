@@ -43,12 +43,28 @@ export const searchFriendsWithPrivacy = async (
   }
 
   try {
-    // Search profiles by name or username
-    console.log('🔍 [searchFriendsWithPrivacy] Executing database query...');
+    // Build search conditions for better matching
+    const searchTerms = query.trim().split(/\s+/);
+    const conditions = [];
+    
+    // Add full query match
+    conditions.push(`name.ilike.%${query}%`);
+    conditions.push(`username.ilike.%${query}%`);
+    
+    // Add individual word matches for multi-word queries
+    if (searchTerms.length > 1) {
+      searchTerms.forEach(term => {
+        if (term.length > 1) {
+          conditions.push(`name.ilike.%${term}%`);
+          conditions.push(`username.ilike.%${term}%`);
+        }
+      });
+    }
+    
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, name, username, email, profile_image, bio, created_at')
-      .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
+      .or(conditions.join(','))
       .limit(10);
 
     if (error) {

@@ -41,7 +41,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
           getConnectionPermissions(friend.id, user.id)
         ]);
         setConnectionStatus(status);
-        setPermissions(perms);
+        setPermissions(prev => ({ ...prev, ...perms }));
       }
     };
 

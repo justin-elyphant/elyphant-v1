@@ -1,32 +1,30 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
-import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import PaymentMethodSelector from './PaymentMethodSelector';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
-import GiftOptionsForm from './components/GiftOptionsForm';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-interface DeliveryGroup {
-  recipientConnectionId: string;
-  giftMessage: string;
-  scheduledDeliveryDate: string;
-}
+import { ShoppingCart, CreditCard, Truck, Gift } from 'lucide-react';
+import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
+import UnifiedShippingForm from './UnifiedShippingForm';
+import RecipientAssignmentSection from '@/components/marketplace/checkout/RecipientAssignmentSection';
+import PaymentMethodSelector from './PaymentMethodSelector';
+import { createOrder } from '@/services/orderService';
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
-  const { cartItems, clearCart, cartTotal, getItemCount } = useCart();
   const { user } = useAuth();
+  const { cartItems, clearCart } = useCart();
   const {
     activeTab,
     isProcessing,
     checkoutData,
-    addressesLoaded,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
@@ -36,287 +34,321 @@ const UnifiedCheckoutForm = () => {
     saveCurrentAddressToProfile
   } = useCheckoutState();
 
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
+  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [giftOptions, setGiftOptions] = useState({
-    giftMessage: '',
-    scheduledDeliveryDate: '',
-    specialInstructions: ''
-  });
+  const [recipientAssignments, setRecipientAssignments] = useState<Record<string, any>>({});
+  const [deliveryGroups, setDeliveryGroups] = useState<any[]>([]);
 
+  // Calculate totals
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
-  const taxRate = 0.07; // 7% tax rate
-  const taxAmount = cartTotal * taxRate;
-  const totalAmount = cartTotal + shippingCost + taxAmount;
+  const taxAmount = subtotal * 0.08; // 8% tax
+  const totalAmount = subtotal + shippingCost + taxAmount;
 
+  // Create payment intent when moving to payment tab
   useEffect(() => {
-    // Create PaymentIntent as soon as the component mounts
-    const createPaymentIntent = async () => {
-      try {
-        const response = await fetch("/api/create-payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: Math.round(totalAmount * 100) }),
-        });
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-      } catch (error) {
-        console.error("Error creating payment intent:", error);
-        toast.error("Failed to initiate payment. Please try again.");
+    if (activeTab === 'payment' && !clientSecret && !isCreatingPaymentIntent) {
+      createPaymentIntent();
+    }
+  }, [activeTab, clientSecret, isCreatingPaymentIntent]);
+
+  const createPaymentIntent = async () => {
+    if (isCreatingPaymentIntent) return;
+    
+    setIsCreatingPaymentIntent(true);
+    console.log('Creating payment intent for amount:', totalAmount);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: Math.round(totalAmount * 100), // Convert to cents
+          currency: 'usd',
+          metadata: {
+            order_type: 'marketplace_purchase',
+            item_count: cartItems.length.toString(),
+            shipping_cost: (shippingCost * 100).toString()
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error creating payment intent:', error);
+        throw new Error(error.message || 'Failed to create payment intent');
       }
-    };
 
-    createPaymentIntent();
-  }, [totalAmount]);
-
-  const handleShippingSubmit = async () => {
-    try {
-      setIsProcessing(true);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
-      handleTabChange('gift');
-    } catch (error) {
-      console.error("Shipping info submission error:", error);
-      toast.error("Failed to save shipping information. Please try again.");
+      if (data?.client_secret) {
+        setClientSecret(data.client_secret);
+        setPaymentIntentId(data.payment_intent_id);
+        console.log('Payment intent created successfully');
+      } else {
+        throw new Error('No client secret returned from payment intent creation');
+      }
+    } catch (error: any) {
+      console.error('Payment intent creation error:', error);
+      toast.error('Failed to initialize payment. Please try again.');
     } finally {
-      setIsProcessing(false);
+      setIsCreatingPaymentIntent(false);
     }
   };
 
-  const handleGiftOptionsSubmit = async () => {
-    try {
-      setIsProcessing(true);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
-      handleTabChange('payment');
-    } catch (error) {
-      console.error("Gift options submission error:", error);
-      toast.error("Failed to save gift options. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleCreateOrder = async (paymentIntentId: string, paymentMethodId?: string) => {
-    if (!checkoutData) {
-      console.error("Checkout data is missing");
-      toast.error("Checkout data is missing. Please review your information.");
-      return;
-    }
+  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
+    console.log('Payment successful:', { paymentIntentId, paymentMethodId });
+    setIsProcessing(true);
 
     try {
-      setIsProcessingPayment(true);
+      // Save address to profile
+      await saveCurrentAddressToProfile('Checkout Address', false);
 
-      // For now, create a simple order object (implement proper order service later)
-      const newOrder = {
-        id: `order_${Date.now()}`,
+      // Create order in database
+      const orderData = {
         cartItems,
-        subtotal: cartTotal,
+        subtotal,
         shippingCost,
         taxAmount,
         totalAmount,
         shippingInfo: checkoutData.shippingInfo,
-        giftOptions,
-        paymentIntentId
+        giftOptions: {
+          isGift: false,
+          recipientName: '',
+          giftMessage: '',
+          giftWrapping: false,
+          isSurpriseGift: false
+        },
+        paymentIntentId,
+        deliveryGroups
       };
-      setOrderId(newOrder.id);
 
-      console.log('Order created successfully:', newOrder.id);
-      return newOrder.id;
-    } catch (error: any) {
-      console.error("Order creation error:", error);
-      toast.error(error.message || "Failed to create order. Please contact support.");
-      return null;
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
+      console.log('Creating order with data:', orderData);
+      const order = await createOrder(orderData);
+      console.log('Order created successfully:', order.id);
 
-  const handlePaymentSuccess = async (stripePaymentIntentId: string, paymentMethodId?: string) => {
-    console.log('🎉 Payment successful:', { stripePaymentIntentId, paymentMethodId, orderId });
-    
-    if (!orderId) {
-      console.error('❌ No order ID available for payment success');
-      toast.error('Order ID missing. Please contact support.');
-      return;
-    }
-
-    try {
-      setIsProcessingPayment(true);
-      
-      console.log('🔍 Verifying payment intent with order:', { 
-        payment_intent_id: stripePaymentIntentId, 
-        order_id: orderId 
-      });
-
-      // Use the new verify-payment-intent function instead of verify-checkout-session
-      const { data, error } = await supabase.functions.invoke('verify-payment-intent', {
-        body: { 
-          payment_intent_id: stripePaymentIntentId,
-          order_id: orderId
+      // Verify payment with backend
+      const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-payment-intent', {
+        body: {
+          payment_intent_id: paymentIntentId,
+          order_id: order.id
         }
       });
 
-      console.log('📋 Payment verification response:', { data, error });
-
-      if (error) {
-        throw new Error(error.message || 'Payment verification failed');
+      if (verificationError) {
+        console.error('Payment verification error:', verificationError);
+        throw new Error(verificationError.message || 'Payment verification failed');
       }
 
-      if (data?.success) {
-        console.log('✅ Payment verified successfully, clearing cart and navigating...');
-        
-        // Clear the cart
-        clearCart();
-        
-        // Show success message
-        toast.success('Payment successful! Your order has been confirmed.');
-        
-        // Navigate to orders page
-        navigate('/orders');
-      } else {
-        throw new Error(data?.error || 'Payment verification failed');
-      }
+      console.log('Payment verified successfully:', verificationData);
+      
+      // Clear cart and navigate to success page
+      clearCart();
+      toast.success('Order placed successfully!');
+      navigate(`/order-confirmation/${order.id}`);
+
     } catch (error: any) {
-      console.error('❌ Payment verification error:', error);
-      toast.error(error.message || 'There was an issue verifying your payment. Please contact support.');
+      console.error('Error processing successful payment:', error);
+      toast.error('Payment succeeded but order processing failed. Please contact support.');
     } finally {
-      setIsProcessingPayment(false);
+      setIsProcessing(false);
     }
   };
 
   const handlePaymentError = (error: string) => {
-    setPaymentError(error);
+    console.error('Payment error:', error);
     toast.error(error);
+    setIsProcessing(false);
   };
 
-  const handlePlaceOrder = async () => {
-    try {
-      setIsProcessingPayment(true);
-      setPaymentError(null);
-
-      // 1. Create Order
-      const newOrderId = await handleCreateOrder('');
-      if (!newOrderId) {
-        throw new Error("Failed to create order.");
+  const handleNextStep = () => {
+    if (activeTab === 'shipping') {
+      // Validate shipping info
+      const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+      if (!name || !email || !address || !city || !state || !zipCode) {
+        toast.error('Please fill in all required shipping information');
+        return;
       }
-
-    } catch (error: any) {
-      console.error("Error during checkout process:", error);
-      setPaymentError(error.message || "An error occurred during checkout.");
-      toast.error(error.message || "An error occurred during checkout.");
-    } finally {
-      setIsProcessingPayment(false);
+      handleTabChange('payment');
     }
   };
 
+  const isShippingValid = () => {
+    const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
+    return name && email && address && city && state && zipCode;
+  };
+
   return (
-    <div className="container mx-auto py-12 px-4 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Checkout</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Accordion type="single" collapsible>
-            <AccordionItem value="shipping">
-              <AccordionTrigger>
-                <span className="w-full flex justify-between items-center">
-                  Shipping Information
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">Shipping form placeholder - implement shipping form component</p>
-                  <Button onClick={handleShippingSubmit} disabled={isProcessing}>
-                    {isProcessing ? 'Processing...' : 'Continue to Gift Options'}
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Checkout</h1>
+        <p className="text-muted-foreground">Complete your purchase</p>
+      </div>
 
-            <AccordionItem value="gift">
-              <AccordionTrigger>
-                <span className="w-full flex justify-between items-center">
-                  Gift Options
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <GiftOptionsForm
-                  giftOptions={giftOptions}
-                  onChange={setGiftOptions}
-                />
-                <Button onClick={handleGiftOptionsSubmit} disabled={isProcessing} className="mt-4">
-                  {isProcessing ? 'Processing...' : 'Continue to Payment'}
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Checkout Form */}
+        <div className="lg:col-span-2">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="shipping" className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Shipping
+                {isShippingValid() && <Badge variant="secondary" className="ml-2">✓</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="payment" className="flex items-center gap-2" disabled={!isShippingValid()}>
+                <CreditCard className="h-4 w-4" />
+                Payment
+              </TabsTrigger>
+            </TabsList>
 
-            <AccordionItem value="payment">
-              <AccordionTrigger>
-                <span className="w-full flex justify-between items-center">
-                  Payment
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                {clientSecret && (
-                  <PaymentMethodSelector
-                    clientSecret={clientSecret}
-                    totalAmount={totalAmount}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onPaymentError={handlePaymentError}
-                    isProcessingPayment={isProcessingPayment}
-                    onProcessingChange={setIsProcessingPayment}
-                    refreshKey={refreshKey}
-                    onRefreshKeyChange={setRefreshKey}
-                    shippingAddress={checkoutData.shippingInfo}
+            <TabsContent value="shipping" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Shipping Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UnifiedShippingForm
+                    shippingInfo={checkoutData.shippingInfo}
+                    onUpdate={handleUpdateShippingInfo}
+                    selectedShippingMethod={checkoutData.shippingMethod}
+                    onShippingMethodChange={(method) => {
+                      // Handle shipping method change if needed
+                    }}
+                    shippingOptions={[
+                      { id: 'standard', name: 'Standard Shipping', price: shippingCost, estimatedDays: '5-7 business days' }
+                    ]}
+                    isLoadingShipping={false}
                   />
-                )}
-                {paymentError && (
-                  <div className="mt-4 text-red-500">{paymentError}</div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </CardContent>
+              </Card>
 
-          <Separator />
+              <RecipientAssignmentSection
+                cartItems={cartItems}
+                recipientAssignments={recipientAssignments}
+                setRecipientAssignments={setRecipientAssignments}
+                deliveryGroups={deliveryGroups}
+                setDeliveryGroups={setDeliveryGroups}
+              />
 
-          <Card>
+              <div className="flex justify-end">
+                <Button onClick={handleNextStep} disabled={!isShippingValid()}>
+                  Continue to Payment
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="payment" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {clientSecret ? (
+                    <PaymentMethodSelector
+                      clientSecret={clientSecret}
+                      totalAmount={totalAmount}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                      isProcessingPayment={isProcessing}
+                      onProcessingChange={setIsProcessing}
+                      refreshKey={refreshKey}
+                      onRefreshKeyChange={setRefreshKey}
+                      shippingAddress={{
+                        name: checkoutData.shippingInfo.name,
+                        address: checkoutData.shippingInfo.address,
+                        city: checkoutData.shippingInfo.city,
+                        state: checkoutData.shippingInfo.state,
+                        zipCode: checkoutData.shippingInfo.zipCode,
+                        country: checkoutData.shippingInfo.country
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      {isCreatingPaymentIntent ? (
+                        <div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                          <p className="text-muted-foreground">Setting up payment...</p>
+                        </div>
+                      ) : (
+                        <Button onClick={createPaymentIntent} variant="outline">
+                          Initialize Payment
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Order Summary
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal ({getItemCount()} items)</span>
-                <span>${cartTotal.toFixed(2)}</span>
+            <CardContent className="space-y-4">
+              {/* Cart Items */}
+              <div className="space-y-3">
+                {cartItems.map((item) => (
+                  <div key={`${item.product.product_id}-${item.quantity}`} className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{item.product.name || item.product.title}</p>
+                      <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                    </div>
+                    <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>${shippingCost.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>${taxAmount.toFixed(2)}</span>
-              </div>
+
               <Separator />
-              <div className="flex justify-between font-semibold">
-                <span>Total</span>
-                <span>${totalAmount.toFixed(2)}</span>
+
+              {/* Totals */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping</span>
+                  <span>${shippingCost.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>${totalAmount.toFixed(2)}</span>
+                </div>
               </div>
+
+              {/* Payment Status */}
+              {activeTab === 'payment' && (
+                <div className="pt-4">
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Payment Status: {clientSecret ? 'Ready' : 'Initializing...'}
+                  </div>
+                  {isProcessing && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      Processing payment...
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
-
-          <Button
-            disabled={!canPlaceOrder() || isProcessingPayment}
-            className="w-full"
-            size="lg"
-            onClick={handlePlaceOrder}
-          >
-            {isProcessingPayment ? 'Processing...' : `Place Order`}
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -23,6 +23,7 @@ import OrderStatusDashboard from "./pages/OrderStatusDashboard";
 import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
+import Connections from "./pages/Connections";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ function App() {
                           <Route path="/order-status" element={<OrderStatusDashboard />} />
                           <Route path="/messages" element={<Messages />} />
                           <Route path="/messages/:userId" element={<Chat />} />
+                          <Route path="/connections" element={<Connections />} />
                         </Routes>
                       </div>
                     </Router>

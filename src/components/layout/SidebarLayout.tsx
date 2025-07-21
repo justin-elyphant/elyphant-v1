@@ -15,7 +15,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <Header />
       
       {/* Sidebar layout below header */}
-      <SidebarProvider defaultOpen={false} collapsible="icon">
+      <SidebarProvider defaultOpen={false}>
         <div className="flex w-full" style={{ height: 'calc(100vh - 73px)' }}>
           <AppSidebar />
           <SidebarInset className="flex-1">

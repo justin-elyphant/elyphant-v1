@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
-import ProfileSetupFlow from "@/components/profile-setup/ProfileSetupFlow";
+
 import MainLayout from "@/components/layout/MainLayout";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
@@ -115,10 +115,7 @@ const ProfileSetupWithIntent = () => {
     <MainLayout>
       {showProfileSetup && (
         <div className="min-h-screen flex items-center justify-center p-4">
-          <ProfileSetupFlow 
-            onComplete={handleProfileComplete}
-            onSkip={handleProfileSkip}
-          />
+          <div>Profile setup is now handled in the main signup flow</div>
         </div>
       )}
       

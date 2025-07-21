@@ -14,10 +14,13 @@ import {
 interface DatePickerProps {
   date?: Date;
   setDate: (date?: Date) => void;
-  disabled?: boolean;
+  disabled?: boolean | ((date: Date) => boolean);
 }
 
 export function DatePicker({ date, setDate, disabled }: DatePickerProps) {
+  const isDisabledFunction = typeof disabled === 'function';
+  const isButtonDisabled = typeof disabled === 'boolean' ? disabled : false;
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -26,9 +29,9 @@ export function DatePicker({ date, setDate, disabled }: DatePickerProps) {
           className={cn(
             "w-full justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            disabled && "opacity-50 cursor-not-allowed"
+            isButtonDisabled && "opacity-50 cursor-not-allowed"
           )}
-          disabled={disabled}
+          disabled={isButtonDisabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -40,7 +43,8 @@ export function DatePicker({ date, setDate, disabled }: DatePickerProps) {
           selected={date}
           onSelect={setDate}
           initialFocus
-          disabled={disabled ? { before: new Date() } : undefined}
+          disabled={isDisabledFunction ? disabled : undefined}
+          className="pointer-events-auto"
         />
       </PopoverContent>
     </Popover>

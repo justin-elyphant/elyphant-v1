@@ -30,7 +30,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
   };
 
   // Extract customer name from shipping info or fallback
-  const customerName = order.shipping_info?.name || order.customerName || "Customer";
+  const customerName = (order as any).shipping_info?.name || order.customerName || "Customer";
 
   return (
     <Card>

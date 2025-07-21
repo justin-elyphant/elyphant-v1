@@ -55,6 +55,10 @@ export type ZincOrder = {
     price: number 
   }[];
   total?: number;
+  
+  // Supabase order data properties (for OrderDetail page)
+  shipping_info?: any;
+  [key: string]: any; // Allow additional properties
 };
 
 // Zinc Return type (used by returnService.ts)

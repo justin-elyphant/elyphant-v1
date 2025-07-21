@@ -14,7 +14,7 @@ interface ShippingInfoCardProps {
 
 const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
   // Extract shipping info from order data
-  const shippingInfo = order.shipping_info || {};
+  const shippingInfo = (order as any).shipping_info || {};
   const customerName = shippingInfo.name || order.customerName || "Customer";
   const address = shippingInfo.address || {};
   

@@ -1,0 +1,1 @@
+DELETE FROM user_special_dates WHERE id = '7b33b15e-3cae-4f68-bdd4-ddacae488558' AND date_type = 'birthday';

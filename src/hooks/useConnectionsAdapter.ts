@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Connection, RelationshipType } from "@/types/connections";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
 
 export const useConnectionsAdapter = () => {
+  const { user } = useAuth();
   const [friends, setFriends] = useState<Connection[]>([]);
   const [suggestions, setSuggestions] = useState<Connection[]>([]);
   const [pendingConnections, setPendingConnections] = useState<Connection[]>([]);
@@ -149,7 +151,7 @@ export const useConnectionsAdapter = () => {
     return [];
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [friendsData, pendingData, suggestionsData] = await Promise.all([
@@ -169,7 +171,34 @@ export const useConnectionsAdapter = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Set up real-time listener for connection changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('connections-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_connections',
+          filter: `or(user_id.eq.${user.id},connected_user_id.eq.${user.id})`,
+        },
+        (payload) => {
+          console.log('🔄 [useConnectionsAdapter] Connection change detected:', payload);
+          // Reload data when any connection changes
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, loadData]);
 
   const handleRelationshipChange = async (connectionId: string, newRelationship: RelationshipType) => {
     try {
@@ -213,7 +242,7 @@ export const useConnectionsAdapter = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   return {
     friends,
@@ -226,6 +255,7 @@ export const useConnectionsAdapter = () => {
     handleRelationshipChange,
     handleSendVerificationRequest,
     filterConnections,
-    refreshPendingConnections
+    refreshPendingConnections,
+    loadData
   };
 };

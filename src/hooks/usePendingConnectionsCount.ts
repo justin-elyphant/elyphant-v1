@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 
@@ -7,30 +7,37 @@ export const usePendingConnectionsCount = () => {
   const { user } = useAuth();
   const [count, setCount] = useState(0);
 
-  useEffect(() => {
+  const fetchPendingCount = useCallback(async () => {
     if (!user) {
       setCount(0);
       return;
     }
 
-    const fetchPendingCount = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_connections')
-          .select('id')
-          .eq('connected_user_id', user.id)
-          .eq('status', 'pending');
+    try {
+      const { data, error } = await supabase
+        .from('user_connections')
+        .select('id')
+        .eq('connected_user_id', user.id)
+        .eq('status', 'pending');
 
-        if (error) {
-          console.error('Error fetching pending connections count:', error);
-          return;
-        }
-
-        setCount(data?.length || 0);
-      } catch (error) {
-        console.error('Error in fetchPendingCount:', error);
+      if (error) {
+        console.error('Error fetching pending connections count:', error);
+        return;
       }
-    };
+
+      const newCount = data?.length || 0;
+      console.log('🔔 [usePendingConnectionsCount] Updated count:', newCount);
+      setCount(newCount);
+    } catch (error) {
+      console.error('Error in fetchPendingCount:', error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setCount(0);
+      return;
+    }
 
     fetchPendingCount();
 
@@ -45,8 +52,10 @@ export const usePendingConnectionsCount = () => {
           table: 'user_connections',
           filter: `connected_user_id=eq.${user.id}`,
         },
-        () => {
-          fetchPendingCount();
+        (payload) => {
+          console.log('🔔 [usePendingConnectionsCount] Real-time update:', payload);
+          // Small delay to ensure database consistency
+          setTimeout(fetchPendingCount, 500);
         }
       )
       .subscribe();
@@ -54,7 +63,7 @@ export const usePendingConnectionsCount = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchPendingCount]);
 
   return count;
 };

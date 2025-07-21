@@ -14,6 +14,7 @@ import { RelationshipType } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
 import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 
 const Connections = () => {
   const { user } = useAuth();
@@ -34,8 +35,12 @@ const Connections = () => {
     handleRelationshipChange,
     handleSendVerificationRequest,
     filterConnections,
-    refreshPendingConnections
+    refreshPendingConnections,
+    loadData
   } = useConnectionsAdapter();
+
+  // Set up real-time connection updates
+  useRealtimeConnections(loadData);
 
   // Apply search filtering
   const filteredFriends = filterConnections(friends, searchTerm);

@@ -8,7 +8,6 @@ import { CartProvider } from "./contexts/CartContext";
 import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
 import { EventsProvider } from "./components/gifting/events/context/EventsContext";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
-import { SidebarLayout } from "./components/layout/SidebarLayout";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -49,8 +48,8 @@ function App() {
                           <Route path="/marketplace" element={<Marketplace />} />
                           <Route path="/settings" element={<Settings />} />
                           <Route path="/order-status" element={<OrderStatusDashboard />} />
-                          <Route path="/messages" element={<SidebarLayout><Messages /></SidebarLayout>} />
-                          <Route path="/messages/:userId" element={<SidebarLayout><Chat /></SidebarLayout>} />
+                          <Route path="/messages" element={<Messages />} />
+                          <Route path="/messages/:userId" element={<Chat />} />
                         </Routes>
                       </div>
                     </Router>

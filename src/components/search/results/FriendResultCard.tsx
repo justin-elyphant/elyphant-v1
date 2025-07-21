@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, UserPlus, Check, Clock, Lock, Users, Globe } from "lucide-react";
+import { User, UserPlus, Check, Clock, Lock, Users, Globe, LogIn } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
 import { getConnectionPermissions } from "@/services/search/privacyAwareFriendSearch";
 import { checkConnectionStatus } from "@/services/search/friendSearchService";
@@ -22,6 +22,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
   onViewProfile
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [connectionStatus, setConnectionStatus] = useState(friend.connectionStatus);
   const [permissions, setPermissions] = useState({
     canSendRequest: true,
@@ -91,7 +92,12 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
   const getConnectionButton = () => {
     if (!user) {
       return (
-        <Button size="sm" variant="outline" disabled>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => navigate(`/signin?redirect=${encodeURIComponent(window.location.pathname)}`)}
+        >
+          <LogIn className="h-4 w-4 mr-1" />
           Sign in to connect
         </Button>
       );

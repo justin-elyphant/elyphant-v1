@@ -11,9 +11,12 @@ import {
   User, 
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Users
 } from "lucide-react";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
+import NotificationBadge from "@/components/notifications/NotificationBadge";
+import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 
 interface CleanMobileNavMenuProps {
   isOpen: boolean;
@@ -32,6 +35,8 @@ const CleanMobileNavMenu = ({
   marketplaceItems, 
   profileItems 
 }: CleanMobileNavMenuProps) => {
+  const pendingConnectionsCount = usePendingConnectionsCount();
+
   if (!isOpen) return null;
 
   return (
@@ -103,6 +108,22 @@ const CleanMobileNavMenu = ({
                       </Link>
                     );
                   })}
+                  
+                  {/* Connections with notification badge */}
+                  <Link
+                    to="/connections"
+                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors text-gray-900 relative"
+                    onClick={onClose}
+                  >
+                    <Users className="h-5 w-5 text-gray-500 mr-3" />
+                    <span className="font-medium">Connections</span>
+                    {pendingConnectionsCount > 0 && (
+                      <NotificationBadge 
+                        count={pendingConnectionsCount} 
+                        className="ml-auto"
+                      />
+                    )}
+                  </Link>
                 </div>
               </div>
 

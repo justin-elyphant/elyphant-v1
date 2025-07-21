@@ -26,10 +26,13 @@ import {
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
+import NotificationBadge from "@/components/notifications/NotificationBadge";
+import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const pendingConnectionsCount = usePendingConnectionsCount();
 
   const mainMenuItems = [
     {
@@ -64,6 +67,7 @@ const AppSidebar = () => {
       title: "Connections",
       url: "/connections",
       icon: Users,
+      badge: pendingConnectionsCount,
     },
     {
       title: "Wishlists",
@@ -121,9 +125,15 @@ const AppSidebar = () => {
                 {userMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
-                      <Link to={item.url}>
+                      <Link to={item.url} className="relative">
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        {item.badge && item.badge > 0 && (
+                          <NotificationBadge 
+                            count={item.badge} 
+                            className="ml-auto"
+                          />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

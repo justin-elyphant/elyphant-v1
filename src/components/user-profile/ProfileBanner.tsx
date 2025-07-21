@@ -4,40 +4,35 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock } from "lucide-react";
-import FollowButton from "./FollowButton";
+import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
 
 export interface ProfileBannerProps {
   userData: any;
   isCurrentUser: boolean;
-  isFollowing: boolean;
-  onFollow: () => void;
+  isConnected: boolean;
+  onConnect: () => void;
   onShare: () => void;
   // Real data props
-  followerCount?: number;
-  followingCount?: number;
+  connectionCount?: number;
   wishlistCount?: number;
   // New props for public profile handling
-  canFollow?: boolean;
+  canConnect?: boolean;
   canMessage?: boolean;
   isAnonymousUser?: boolean;
-  // Connection status for privacy controls
-  isConnected?: boolean;
 }
 
 const ProfileBanner: React.FC<ProfileBannerProps> = ({
   userData,
   isCurrentUser,
-  isFollowing,
-  onFollow,
+  isConnected,
+  onConnect,
   onShare,
-  followerCount = 0,
-  followingCount = 0,
+  connectionCount = 0,
   wishlistCount = 0,
-  canFollow = true,
+  canConnect = true,
   canMessage = true,
-  isAnonymousUser = false,
-  isConnected = false
+  isAnonymousUser = false
 }) => {
   // Privacy logic for email display
   const shouldShowEmail = () => {
@@ -75,11 +70,11 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     window.location.href = `/messages/${userData.id}`;
   };
 
-  const handleFollowClick = () => {
+  const handleConnectClick = () => {
     if (isAnonymousUser) {
-      // Redirect to signup with intent to follow
+      // Redirect to signup with intent to connect
       sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-        type: 'follow',
+        type: 'connect',
         targetUserId: userData.id,
         targetName: userData.name
       }));
@@ -87,7 +82,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
       return;
     }
     
-    onFollow();
+    onConnect();
   };
 
   const renderActionButtons = () => {
@@ -107,13 +102,13 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     if (isAnonymousUser) {
       return (
         <div className="flex space-x-3">
-          {canFollow && (
+          {canConnect && (
             <Button
-              onClick={handleFollowClick}
+              onClick={handleConnectClick}
               className="bg-white text-gray-900 hover:bg-gray-100"
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Follow
+              Connect
             </Button>
           )}
           {canMessage && (
@@ -141,8 +136,8 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     // Authenticated user viewing someone else's profile
     return (
       <div className="flex space-x-3">
-        {canFollow && (
-          <FollowButton
+        {canConnect && (
+          <ConnectButton
             targetUserId={userData?.id}
             variant="default"
             className="bg-white text-gray-900 hover:bg-gray-100"
@@ -189,7 +184,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
             <div className="text-white space-y-3">
               <div className="flex items-center space-x-3">
                 <h1 className="text-4xl font-bold">{userData?.name || 'User'}</h1>
-                {!isCurrentUser && !canFollow && (
+                {!isCurrentUser && !canConnect && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                     <Lock className="h-3 w-3 mr-1" />
                     Private
@@ -248,7 +243,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                       }));
                     }}
                   >
-                    Sign up to follow and message
+                    Sign up to connect and message
                   </Link>
                 </div>
               )}
@@ -266,12 +261,8 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="flex justify-center space-x-12 py-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">{followingCount}</div>
-            <div className="text-base text-gray-600 font-medium">Following</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">{followerCount}</div>
-            <div className="text-base text-gray-600 font-medium">Followers</div>
+            <div className="text-3xl font-bold text-gray-900">{connectionCount}</div>
+            <div className="text-base text-gray-600 font-medium">Connections</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900">{wishlistCount}</div>

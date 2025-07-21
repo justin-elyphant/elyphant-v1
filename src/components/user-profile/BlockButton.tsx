@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useDirectFollow } from "@/hooks/useDirectFollow";
+import { useBlock } from "@/hooks/useBlock";
 import { UserX, Shield } from "lucide-react";
 
 interface BlockButtonProps {
@@ -23,7 +23,12 @@ interface BlockButtonProps {
 const BlockButton: React.FC<BlockButtonProps> = ({ targetUserId, targetName = "this user" }) => {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const { followState, loading, blockUser, unblockUser } = useDirectFollow(targetUserId);
+  const { blockState, loading, blockUser, unblockUser, checkBlockStatus } = useBlock(targetUserId);
+  
+  // Check block status on mount
+  React.useEffect(() => {
+    checkBlockStatus();
+  }, [checkBlockStatus]);
 
   const handleBlock = async () => {
     await blockUser(reason);
@@ -31,7 +36,7 @@ const BlockButton: React.FC<BlockButtonProps> = ({ targetUserId, targetName = "t
     setReason("");
   };
 
-  if (followState.isBlocked) {
+  if (blockState.isBlocked) {
     return (
       <Button
         onClick={unblockUser}
@@ -58,7 +63,7 @@ const BlockButton: React.FC<BlockButtonProps> = ({ targetUserId, targetName = "t
         <DialogHeader>
           <DialogTitle>Block {targetName}?</DialogTitle>
           <DialogDescription>
-            When you block someone, they won't be able to follow you, send you messages, 
+            When you block someone, they won't be able to connect with you, send you messages, 
             or view your profile. You can unblock them at any time.
           </DialogDescription>
         </DialogHeader>

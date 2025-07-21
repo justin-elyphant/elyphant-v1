@@ -12,11 +12,10 @@ export interface PublicProfileData {
   email?: string;
   created_at: string;
   // Privacy-filtered fields
-  follower_count?: number;
-  following_count?: number;
+  connection_count?: number;
   wishlist_count?: number;
   is_public: boolean;
-  can_follow: boolean;
+  can_connect: boolean;
   can_message: boolean;
 }
 
@@ -72,14 +71,13 @@ export const publicProfileService = {
           profile_image: profile.profile_image,
           created_at: profile.created_at,
           is_public: false,
-          can_follow: false,
+          can_connect: false,
           can_message: false
         };
       }
       
-      // Get follow/connection counts if allowed by privacy settings
-      const followerCount = privacySettings.show_follower_count ? await this.getFollowerCount(profile.id) : undefined;
-      const followingCount = privacySettings.show_following_count ? await this.getFollowingCount(profile.id) : undefined;
+      // Get connection counts and wishlist count
+      const connectionCount = await this.getConnectionCount(profile.id);
       const wishlistCount = await this.getWishlistCount(profile.id);
       
       return {
@@ -91,11 +89,10 @@ export const publicProfileService = {
         location: profile.location,
         email: profile.email, // Will be filtered based on data sharing settings
         created_at: profile.created_at,
-        follower_count: followerCount,
-        following_count: followingCount,
+        connection_count: connectionCount,
         wishlist_count: wishlistCount,
         is_public: true,
-        can_follow: true,
+        can_connect: true,
         can_message: privacySettings.allow_message_requests
       };
       
@@ -109,7 +106,7 @@ export const publicProfileService = {
     try {
       const { data, error } = await supabase
         .from('privacy_settings')
-        .select('profile_visibility, show_follower_count, show_following_count, allow_message_requests')
+        .select('profile_visibility, allow_message_requests')
         .eq('user_id', userId)
         .single();
       
@@ -117,8 +114,6 @@ export const publicProfileService = {
         // Return default public settings
         return {
           profile_visibility: 'public',
-          show_follower_count: true,
-          show_following_count: true,
           allow_message_requests: true
         };
       }
@@ -128,39 +123,21 @@ export const publicProfileService = {
       console.error("Error fetching privacy settings:", error);
       return {
         profile_visibility: 'public',
-        show_follower_count: true,
-        show_following_count: true,
         allow_message_requests: true
       };
     }
   },
   
-  async getFollowerCount(userId: string): Promise<number> {
+  async getConnectionCount(userId: string): Promise<number> {
     try {
       const { count, error } = await supabase
         .from('user_connections')
         .select('*', { count: 'exact', head: true })
-        .eq('connected_user_id', userId)
-        .eq('status', 'accepted');
+        .or(`and(user_id.eq.${userId},status.eq.accepted),and(connected_user_id.eq.${userId},status.eq.accepted)`);
       
       return count || 0;
     } catch (error) {
-      console.error("Error getting follower count:", error);
-      return 0;
-    }
-  },
-  
-  async getFollowingCount(userId: string): Promise<number> {
-    try {
-      const { count, error } = await supabase
-        .from('user_connections')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('status', 'accepted');
-      
-      return count || 0;
-    } catch (error) {
-      console.error("Error getting following count:", error);
+      console.error("Error getting connection count:", error);
       return 0;
     }
   },

@@ -30,7 +30,7 @@ const useConnectionsById = (connectionId: string) => {
   const updateRelationship = (newRelationship: RelationshipType, customValue?: string) => {
     if (!connection) return;
     
-    handleRelationshipChange(connectionId, newRelationship, customValue);
+    handleRelationshipChange(connectionId, newRelationship);
     
     // Update local state to reflect changes immediately
     setConnection(prev => {
@@ -46,7 +46,7 @@ const useConnectionsById = (connectionId: string) => {
   const sendVerificationRequest = (dataType: keyof Connection['dataStatus']) => {
     if (!connection) return;
     
-    handleSendVerificationRequest(connectionId, dataType);
+    handleSendVerificationRequest(connectionId);
   };
 
   return {

@@ -18,9 +18,9 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
     toast.success("Profile link copied to clipboard!");
   };
 
-  const handleFollow = () => {
-    // This would be handled by the FollowButton component
-    console.log("Follow clicked for user:", profile.id);
+  const handleConnect = () => {
+    // This would be handled by the ConnectButton component
+    console.log("Connect clicked for user:", profile.id);
   };
 
   return (
@@ -28,16 +28,14 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
       <ProfileBanner
         userData={profile}
         isCurrentUser={false}
-        isFollowing={false}
-        onFollow={handleFollow}
+        isConnected={false}
+        onConnect={handleConnect}
         onShare={handleShare}
-        followerCount={profile.follower_count}
-        followingCount={profile.following_count}
+        connectionCount={profile.connection_count || 0}
         wishlistCount={profile.wishlist_count}
-        canFollow={profile.can_follow}
+        canConnect={profile.can_connect}
         canMessage={profile.can_message}
         isAnonymousUser={true} // Set to true since this is a public view
-        isConnected={false} // Anonymous users are never connected
       />
       
       <div className="container mx-auto px-4 py-6">

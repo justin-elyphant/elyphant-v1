@@ -32,13 +32,12 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile }) => {
       <ProfileBanner
         userData={profile}
         isCurrentUser={true}
-        isFollowing={false}
-        onFollow={() => {}}
+        isConnected={false}
+        onConnect={() => {}}
         onShare={handleShare}
-        followerCount={0} // These would come from actual data
-        followingCount={0}
+        connectionCount={0} // These would come from actual data
         wishlistCount={profile.wishlists?.length || 0}
-        canFollow={false}
+        canConnect={false}
         canMessage={false}
         isAnonymousUser={false}
       />

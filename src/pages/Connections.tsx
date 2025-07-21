@@ -5,7 +5,7 @@ import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
-import FollowingTabContent from "@/components/connections/FollowingTabContent";
+
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
 import PendingTabContent from "@/components/connections/PendingTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
@@ -28,7 +28,6 @@ const Connections = () => {
   
   const {
     friends,
-    following,
     suggestions,
     pendingConnections,
     loading,
@@ -41,7 +40,6 @@ const Connections = () => {
 
   // Apply search filtering
   const filteredFriends = filterConnections(friends, searchTerm);
-  const filteredFollowing = filterConnections(following, searchTerm);
   const filteredSuggestions = filterConnections(suggestions, searchTerm);
   const filteredPendingConnections = filterConnections(pendingConnections, searchTerm);
 
@@ -66,9 +64,6 @@ const Connections = () => {
               <TabsTrigger value="friends" className="flex-1">
                 Friends ({filteredFriends.length})
               </TabsTrigger>
-              <TabsTrigger value="following" className="flex-1">
-                Following ({filteredFollowing.length})
-              </TabsTrigger>
               <TabsTrigger value="pending" className="flex-1">
                 Pending ({filteredPendingConnections.length})
               </TabsTrigger>
@@ -83,13 +78,6 @@ const Connections = () => {
                 searchTerm={searchTerm}
                 onRelationshipChange={handleRelationshipChange}
                 onVerificationRequest={handleSendVerificationRequest}
-              />
-            </TabsContent>
-            
-            <TabsContent value="following" className="mt-6">
-              <FollowingTabContent 
-                following={filteredFollowing}
-                searchTerm={searchTerm}
               />
             </TabsContent>
             

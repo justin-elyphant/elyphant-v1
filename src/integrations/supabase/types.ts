@@ -1806,7 +1806,7 @@ export type Database = {
       }
       privacy_settings: {
         Row: {
-          allow_follows_from: string
+          allow_connection_requests_from: string
           allow_message_requests: boolean | null
           block_list_visibility: string
           created_at: string | null
@@ -1818,7 +1818,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          allow_follows_from?: string
+          allow_connection_requests_from?: string
           allow_message_requests?: boolean | null
           block_list_visibility?: string
           created_at?: string | null
@@ -1830,7 +1830,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          allow_follows_from?: string
+          allow_connection_requests_from?: string
           allow_message_requests?: boolean | null
           block_list_visibility?: string
           created_at?: string | null
@@ -2414,8 +2414,8 @@ export type Database = {
         Args: { p_user_id: string; p_recipient_email: string }
         Returns: boolean
       }
-      can_user_follow: {
-        Args: { follower_id: string; target_id: string }
+      can_user_connect: {
+        Args: { requester_id: string; target_id: string }
         Returns: boolean
       }
       cancel_order: {
@@ -2467,7 +2467,7 @@ export type Database = {
       get_user_privacy_settings: {
         Args: { target_user_id: string }
         Returns: {
-          allow_follows_from: string
+          allow_connection_requests_from: string
           allow_message_requests: boolean | null
           block_list_visibility: string
           created_at: string | null

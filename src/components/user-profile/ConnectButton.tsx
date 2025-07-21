@@ -1,45 +1,44 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useDirectFollow } from "@/hooks/useDirectFollow";
-import { UserPlus, UserMinus, UserX, Clock } from "lucide-react";
+import { useDirectConnect } from "@/hooks/useDirectConnect";
+import { UserPlus, UserMinus, Clock, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface FollowButtonProps {
+interface ConnectButtonProps {
   targetUserId: string;
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "default" | "lg";
   className?: string;
 }
 
-const FollowButton: React.FC<FollowButtonProps> = ({
+const ConnectButton: React.FC<ConnectButtonProps> = ({
   targetUserId,
   variant = "default",
   size = "default",
   className
 }) => {
   const {
-    followState,
+    connectState,
     loading,
-    checkFollowStatus,
-    followUser,
-    unfollowUser
-  } = useDirectFollow(targetUserId);
+    checkConnectionStatus,
+    sendConnectionRequest,
+    removeConnection
+  } = useDirectConnect(targetUserId);
 
   useEffect(() => {
-    checkFollowStatus();
-  }, [checkFollowStatus]);
+    checkConnectionStatus();
+  }, [checkConnectionStatus]);
 
   const handleClick = () => {
-    if (followState.isFollowing) {
-      unfollowUser();
-    } else {
-      followUser();
+    if (connectState.isConnected) {
+      removeConnection();
+    } else if (!connectState.isPending) {
+      sendConnectionRequest();
     }
   };
 
-  // Don't render if blocked or can't follow
-  if (followState.isBlocked || !followState.canFollow) {
+  // Don't render if can't connect (blocked)
+  if (!connectState.canConnect) {
     return null;
   }
 
@@ -53,20 +52,20 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       );
     }
 
-    if (followState.isFollowing) {
+    if (connectState.isConnected) {
       return (
         <>
-          <UserMinus className="h-4 w-4 mr-2" />
-          Following
+          <UserCheck className="h-4 w-4 mr-2" />
+          Connected
         </>
       );
     }
 
-    if (followState.requiresRequest) {
+    if (connectState.isPending) {
       return (
         <>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Request to Follow
+          <Clock className="h-4 w-4 mr-2" />
+          Request Sent
         </>
       );
     }
@@ -74,13 +73,13 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     return (
       <>
         <UserPlus className="h-4 w-4 mr-2" />
-        Follow
+        Connect
       </>
     );
   };
 
   const getButtonVariant = () => {
-    if (followState.isFollowing) {
+    if (connectState.isConnected) {
       return "outline";
     }
     return variant;
@@ -89,11 +88,11 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   return (
     <Button
       onClick={handleClick}
-      disabled={loading}
+      disabled={loading || connectState.isPending}
       variant={getButtonVariant()}
       size={size}
       className={cn(
-        followState.isFollowing && "hover:bg-destructive hover:text-destructive-foreground",
+        connectState.isConnected && "hover:bg-destructive hover:text-destructive-foreground",
         className
       )}
     >
@@ -102,4 +101,4 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   );
 };
 
-export default FollowButton;
+export default ConnectButton;

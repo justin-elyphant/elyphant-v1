@@ -13,6 +13,11 @@ interface ShippingInfoCardProps {
 }
 
 const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
+  // Extract shipping info from order data
+  const shippingInfo = order.shipping_info || {};
+  const customerName = shippingInfo.name || order.customerName || "Customer";
+  const address = shippingInfo.address || {};
+  
   return (
     <Card>
       <CardHeader>
@@ -23,16 +28,18 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
           {order.status === "delivered" ? "Delivered to:" : "Shipping to:"}
         </p>
         <div className="mb-4">
-          <p className="font-medium">{order.customerName}</p>
-          <p>123 Main Street</p>
-          <p>Apt 4B</p>
-          <p>San Francisco, CA 94103</p>
-          <p>United States</p>
+          <p className="font-medium">{customerName}</p>
+          {address.address_line1 && <p>{address.address_line1}</p>}
+          {address.address_line2 && <p>{address.address_line2}</p>}
+          {address.city && address.state && address.zip_code && (
+            <p>{address.city}, {address.state} {address.zip_code}</p>
+          )}
+          {address.country && <p>{address.country}</p>}
         </div>
-        {order.status === "shipped" && (
+        {order.status === "shipped" && order.tracking_number && (
           <div className="mt-4">
             <p className="font-medium">Tracking Number:</p>
-            <p className="text-blue-600">1Z999AA10123456784</p>
+            <p className="text-blue-600">{order.tracking_number}</p>
           </div>
         )}
       </CardContent>

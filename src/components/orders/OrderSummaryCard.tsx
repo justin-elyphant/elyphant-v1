@@ -29,6 +29,9 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
     }, 1000);
   };
 
+  // Extract customer name from shipping info or fallback
+  const customerName = order.shipping_info?.name || order.customerName || "Customer";
+
   return (
     <Card>
       <CardHeader>
@@ -50,7 +53,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Customer:</dt>
-            <dd>{order.customerName}</dd>
+            <dd>{customerName}</dd>
           </div>
           <div className="flex justify-between font-semibold">
             <dt>Total:</dt>

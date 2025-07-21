@@ -73,7 +73,8 @@ const OrderDetail = () => {
             status: data.status,
             total: data.total_amount,
             items: data.order_items || [],
-            customerName: user?.user_metadata?.name || "Customer",
+            shipping_info: data.shipping_info || {},
+            customerName: data.shipping_info?.name || user?.user_metadata?.name || "Customer",
             tracking_number: data.tracking_number || null,
             zinc_order_id: data.zinc_order_id || null
           };

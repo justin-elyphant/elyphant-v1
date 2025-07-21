@@ -14,8 +14,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
-import SignIn from "./pages/SignIn";
-import StreamlinedSignUp from "./pages/StreamlinedSignUp";
+import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import Marketplace from "./pages/Marketplace";
 import Settings from "./pages/Settings";
@@ -26,6 +25,7 @@ import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
 import Connections from "./pages/Connections";
 import Wishlists from "./pages/Wishlists";
+import StreamlinedProfileSetup from "./pages/StreamlinedProfileSetup";
 
 const queryClient = new QueryClient();
 
@@ -50,8 +50,8 @@ function App() {
                           <Route path="/orders/:orderId" element={<OrderDetail />} />
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/profile/:identifier" element={<Profile />} />
-                          <Route path="/signin" element={<SignIn />} />
-                          <Route path="/signup" element={<StreamlinedSignUp />} />
+                          <Route path="/auth" element={<Auth />} />
+                          <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
                           <Route path="/forgot-password" element={<ForgotPassword />} />
                           <Route path="/marketplace" element={<Marketplace />} />
                           <Route path="/settings" element={<Settings />} />
@@ -60,6 +60,9 @@ function App() {
                           <Route path="/messages/:userId" element={<Chat />} />
                           <Route path="/connections" element={<Connections />} />
                           <Route path="/wishlists" element={<Wishlists />} />
+                          {/* Legacy route redirects */}
+                          <Route path="/signin" element={<Auth />} />
+                          <Route path="/signup" element={<Auth />} />
                         </Routes>
                       </div>
                     </Router>

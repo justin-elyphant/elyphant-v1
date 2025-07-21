@@ -12,14 +12,14 @@ const AuthButtons = () => {
         asChild
         className="text-gray-600 hover:text-gray-900 font-medium"
       >
-        <Link to="/signin">Sign In</Link>
+        <Link to="/auth">Sign In</Link>
       </Button>
       <Button
         size="sm"
         asChild
         className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
       >
-        <Link to="/signup">Get Started</Link>
+        <Link to="/auth">Get Started</Link>
       </Button>
     </div>
   );

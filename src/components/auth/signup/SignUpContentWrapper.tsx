@@ -147,8 +147,7 @@ const SignUpContentWrapper: React.FC<SignUpContentWrapperProps> = ({
   if (step === "signup") {
     return (
       <SignUpView 
-        onSubmit={onSignUpSubmit} 
-        isSubmitting={isSubmitting} 
+        onSignUpSuccess={() => {}} 
       />
     );
   }

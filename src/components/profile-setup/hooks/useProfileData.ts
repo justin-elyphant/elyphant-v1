@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileData, BirthdayData } from "./types";
+import { ProfileData } from "./types";
 import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 import { parseBirthdayFromStorage } from "@/utils/dataFormatUtils";
 
@@ -17,7 +17,7 @@ export const useProfileData = () => {
     email: user?.email || "",
     bio: "",
     profile_image: null,
-    birthday: null,
+    date_of_birth: null,
     address: {
       street: "",
       city: "",
@@ -58,16 +58,20 @@ export const useProfileData = () => {
             ...(profile.data_sharing_settings || {})
           };
 
+          // Convert stored birthday back to full date
+          let fullBirthDate: Date | null = null;
+          if (profile.dob && profile.birth_year) {
+            const [month, day] = profile.dob.split('-').map(Number);
+            fullBirthDate = new Date(profile.birth_year, month - 1, day);
+          }
+
           // Map profile data to onboarding format with proper structure
           const mappedData: Partial<ProfileData> = {
             name: profile.name || "",
             email: profile.email || user.email || "",
             bio: profile.bio || "",
             profile_image: profile.profile_image,
-            birthday: (() => {
-              const date = parseBirthdayFromStorage(profile.dob, profile.birth_year);
-              return date ? { month: date.getMonth() + 1, day: date.getDate() } : null;
-            })(),
+            date_of_birth: fullBirthDate,
             address: {
               street: profile.shipping_address?.street || profile.shipping_address?.address_line1 || "",
               city: profile.shipping_address?.city || "",
@@ -90,7 +94,7 @@ export const useProfileData = () => {
           };
 
           setProfileData(prev => ({ ...prev, ...mappedData }));
-          console.log("Profile data loaded with consistent defaults:", completeDataSharingSettings);
+          console.log("Profile data loaded with full birthday:", fullBirthDate);
         }
       } catch (error) {
         console.error("Error loading profile:", error);

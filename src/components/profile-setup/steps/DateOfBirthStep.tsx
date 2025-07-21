@@ -1,11 +1,11 @@
 
 import React from "react";
 import { Label } from "@/components/ui/label";
-import { MonthDayPicker } from "@/components/ui/month-day-picker";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface DateOfBirthStepProps {
-  value: { month: number; day: number } | null;
-  onChange: (date: { month: number; day: number } | null) => void;
+  value: Date | null;
+  onChange: (date: Date | null) => void;
 }
 
 const DateOfBirthStep: React.FC<DateOfBirthStepProps> = ({ value, onChange }) => {
@@ -20,11 +20,14 @@ const DateOfBirthStep: React.FC<DateOfBirthStepProps> = ({ value, onChange }) =>
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Birthday (Month & Day)</Label>
-          <MonthDayPicker
-            value={value}
-            onChange={onChange}
-            placeholder="Select your birthday"
+          <Label>Date of Birth</Label>
+          <DatePicker
+            date={value}
+            setDate={onChange}
+            disabled={(date) => 
+              date > new Date() || 
+              date < new Date(new Date().getFullYear() - 120, 0, 1)
+            }
           />
         </div>
       </div>

@@ -7,12 +7,6 @@ export interface ImportantDate {
   description: string;
 }
 
-// Define birthday type as month/day only
-export interface BirthdayData {
-  month: number;
-  day: number;
-}
-
 export const formSchema = z.object({
   // Mandatory fields for enhanced onboarding
   first_name: z.string().min(1, { message: "First name is required" }),

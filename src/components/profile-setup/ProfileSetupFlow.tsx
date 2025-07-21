@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +10,7 @@ import InterestsStep from "./steps/InterestsStep";
 import ImportantDatesStep from "./steps/ImportantDatesStep";
 import PrivacyStep from "./steps/PrivacyStep";
 import NextStepsStep from "./steps/NextStepsStep";
+import DateOfBirthStep from "./steps/DateOfBirthStep";
 
 interface ProfileSetupFlowProps {
   onComplete: (nextStepsOption?: string) => void;
@@ -55,6 +55,13 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onComplete, onSkip 
           <AddressStep 
             profileData={profileData}
             updateProfileData={updateProfileData}
+          />
+        );
+      case 'date-of-birth':
+        return (
+          <DateOfBirthStep 
+            value={profileData.date_of_birth}
+            onChange={(date) => updateProfileData('date_of_birth', date)}
           />
         );
       case 'interests':

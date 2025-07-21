@@ -28,20 +28,14 @@ export const useProfileCreate = () => {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
-      // Extract birth year from birthday if available
+      // Extract birth year and format birthday from the full date
       let birthYear = new Date().getFullYear() - 25; // Default
-      if (formattedData.birthday?.month && formattedData.birthday?.day) {
-        // For birthday (month/day), we estimate birth year based on current age
-        const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        const birthdayThisYear = new Date(currentYear, formattedData.birthday.month - 1, formattedData.birthday.day);
-        
-        // If birthday hasn't happened this year yet, assume they're one year older
-        if (birthdayThisYear > currentDate) {
-          birthYear = currentYear - 25 - 1;
-        } else {
-          birthYear = currentYear - 25;
-        }
+      let formattedBirthday: string | null = null;
+      
+      if (formattedData.date_of_birth) {
+        const birthDate = new Date(formattedData.date_of_birth);
+        birthYear = birthDate.getFullYear();
+        formattedBirthday = `${(birthDate.getMonth() + 1).toString().padStart(2, '0')}-${birthDate.getDate().toString().padStart(2, '0')}`;
       }
       
       const profileRecord = {
@@ -53,7 +47,7 @@ export const useProfileCreate = () => {
         username: formattedData.username || `user_${user.id.substring(0, 8)}`,
         bio: formattedData.bio || "",
         profile_image: formattedData.profile_image || null,
-        dob: formatBirthdayForStorage(formattedData.birthday),
+        dob: formattedBirthday,
         birth_year: birthYear,
         shipping_address: {
           address_line1: formattedData.address?.street || "",

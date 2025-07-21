@@ -21,6 +21,7 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
 
   const steps = [
     { id: 'basic-info', title: 'Basic Information', description: 'Tell us about yourself' },
+    { id: 'date-of-birth', title: 'Date of Birth', description: 'When were you born?' },
     { id: 'address', title: 'Address', description: 'Where should we send gifts?' },
     { id: 'interests', title: 'Interests', description: 'What do you love?' },
     { id: 'important-dates', title: 'Important Dates', description: 'Special occasions to remember' },
@@ -46,6 +47,11 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         const hasEmail = profileData.email?.trim();
         console.log(`✓ Basic info validation: name=${!!hasName}, email=${!!hasEmail}`);
         return hasName && hasEmail;
+      case 'date-of-birth':
+        // Date of birth is required for better AI recommendations
+        const hasValidBirthday = profileData.date_of_birth instanceof Date;
+        console.log(`✓ Birthday validation: hasValidBirthday=${hasValidBirthday}`);
+        return hasValidBirthday;
       case 'address':
         // Address is optional for setup flow
         return true;
@@ -113,8 +119,8 @@ export const useProfileSetup = ({ onComplete, onSkip }: UseProfileSetupProps) =>
         photo: profileData.profile_image || null,
         
         // Convert birthday format if provided
-        birthYear: profileData.birthday ? new Date().getFullYear() - 25 : undefined,
-        dateOfBirth: profileData.birthday ? new Date(2000, profileData.birthday.month - 1, profileData.birthday.day) : undefined,
+        birthYear: profileData.date_of_birth ? profileData.date_of_birth.getFullYear() : undefined,
+        dateOfBirth: profileData.date_of_birth,
         
         // Address
         address: typeof profileData.address === 'string' ? profileData.address : "",

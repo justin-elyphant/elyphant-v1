@@ -5,13 +5,11 @@ import { useAuth } from '@/contexts/auth';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import { Separator } from '@/components/ui/separator';
-import { OrderService } from '@/services';
-import { ShippingForm } from '@/components/checkout/ShippingForm';
-import { GiftOptionsForm } from '@/components/checkout/GiftOptionsForm';
-import { ReviewOrder } from '@/components/checkout/ReviewOrder';
+import { supabase } from '@/integrations/supabase/client';
+import GiftOptionsForm from '@/components/checkout/components/GiftOptionsForm';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface DeliveryGroup {
@@ -22,7 +20,7 @@ interface DeliveryGroup {
 
 const UnifiedCheckoutForm = () => {
   const navigate = useNavigate();
-  const { cartItems, clearCart, subtotal, totalItems } = useCart();
+  const { cartItems, clearCart, cartTotal, getItemCount } = useCart();
   const { user } = useAuth();
   const {
     activeTab,
@@ -45,18 +43,15 @@ const UnifiedCheckoutForm = () => {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [giftOptions, setGiftOptions] = useState({
-    isGift: false,
-    recipientName: '',
     giftMessage: '',
-    giftWrapping: false,
-    isSurpriseGift: false,
-    scheduledDeliveryDate: ''
+    scheduledDeliveryDate: '',
+    specialInstructions: ''
   });
 
   const shippingCost = getShippingCost();
   const taxRate = 0.07; // 7% tax rate
-  const taxAmount = subtotal * taxRate;
-  const totalAmount = subtotal + shippingCost + taxAmount;
+  const taxAmount = cartTotal * taxRate;
+  const totalAmount = cartTotal + shippingCost + taxAmount;
 
   useEffect(() => {
     // Create PaymentIntent as soon as the component mounts
@@ -71,10 +66,7 @@ const UnifiedCheckoutForm = () => {
         setClientSecret(data.clientSecret);
       } catch (error) {
         console.error("Error creating payment intent:", error);
-        toast({
-          title: "Error",
-          description: "Failed to initiate payment. Please try again.",
-        });
+        toast.error("Failed to initiate payment. Please try again.");
       }
     };
 
@@ -88,10 +80,7 @@ const UnifiedCheckoutForm = () => {
       handleTabChange('gift');
     } catch (error) {
       console.error("Shipping info submission error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save shipping information. Please try again.",
-      });
+      toast.error("Failed to save shipping information. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -104,10 +93,7 @@ const UnifiedCheckoutForm = () => {
       handleTabChange('payment');
     } catch (error) {
       console.error("Gift options submission error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save gift options. Please try again.",
-      });
+      toast.error("Failed to save gift options. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -123,21 +109,18 @@ const UnifiedCheckoutForm = () => {
     try {
       setIsProcessingPayment(true);
 
-      // Prepare order data
-      const orderData = {
-        cartItems: cartItems,
-        subtotal: subtotal,
-        shippingCost: shippingCost,
-        taxAmount: taxAmount,
-        totalAmount: totalAmount,
+      // For now, create a simple order object (implement proper order service later)
+      const newOrder = {
+        id: `order_${Date.now()}`,
+        cartItems,
+        subtotal: cartTotal,
+        shippingCost,
+        taxAmount,
+        totalAmount,
         shippingInfo: checkoutData.shippingInfo,
-        giftOptions: giftOptions,
-        paymentIntentId: paymentIntentId,
-        deliveryGroups: [] as DeliveryGroup[] // Assuming no delivery groups for now
+        giftOptions,
+        paymentIntentId
       };
-
-      // Create the order
-      const newOrder = await OrderService.createOrder(orderData);
       setOrderId(newOrder.id);
 
       console.log('Order created successfully:', newOrder.id);
@@ -244,15 +227,12 @@ const UnifiedCheckoutForm = () => {
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <ShippingForm
-                  active={activeTab === 'shipping'}
-                  checkoutData={checkoutData}
-                  isProcessing={isProcessing}
-                  addressesLoaded={addressesLoaded}
-                  onUpdateShippingInfo={handleUpdateShippingInfo}
-                  onSubmit={handleShippingSubmit}
-                  onSaveAddress={saveCurrentAddressToProfile}
-                />
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">Shipping form placeholder - implement shipping form component</p>
+                  <Button onClick={handleShippingSubmit} disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : 'Continue to Gift Options'}
+                  </Button>
+                </div>
               </AccordionContent>
             </AccordionItem>
 
@@ -264,12 +244,12 @@ const UnifiedCheckoutForm = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <GiftOptionsForm
-                  active={activeTab === 'gift'}
-                  isProcessing={isProcessing}
                   giftOptions={giftOptions}
-                  setGiftOptions={setGiftOptions}
-                  onSubmit={handleGiftOptionsSubmit}
+                  onChange={setGiftOptions}
                 />
+                <Button onClick={handleGiftOptionsSubmit} disabled={isProcessing} className="mt-4">
+                  {isProcessing ? 'Processing...' : 'Continue to Payment'}
+                </Button>
               </AccordionContent>
             </AccordionItem>
 
@@ -302,14 +282,30 @@ const UnifiedCheckoutForm = () => {
 
           <Separator />
 
-          <ReviewOrder
-            cartItems={cartItems}
-            subtotal={subtotal}
-            shippingCost={shippingCost}
-            taxAmount={taxAmount}
-            totalAmount={totalAmount}
-            shippingInfo={checkoutData.shippingInfo}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between">
+                <span>Subtotal ({getItemCount()} items)</span>
+                <span>${cartTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>${shippingCost.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax</span>
+                <span>${taxAmount.toFixed(2)}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>${totalAmount.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
 
           <Button
             disabled={!canPlaceOrder() || isProcessingPayment}

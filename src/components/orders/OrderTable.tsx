@@ -109,7 +109,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2 items-center">
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/order/${order.id}`}>
+                    <Link to={`/orders/${order.id}`}>
                       View Details
                     </Link>
                   </Button>

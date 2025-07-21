@@ -24,6 +24,7 @@ import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
 import Connections from "./pages/Connections";
+import Wishlists from "./pages/Wishlists";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function App() {
                           <Route path="/messages" element={<Messages />} />
                           <Route path="/messages/:userId" element={<Chat />} />
                           <Route path="/connections" element={<Connections />} />
+                          <Route path="/wishlists" element={<Wishlists />} />
                         </Routes>
                       </div>
                     </Router>

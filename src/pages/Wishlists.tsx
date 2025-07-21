@@ -1,40 +1,31 @@
 
 import React from "react";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import MyWishlists from "@/components/gifting/MyWishlists";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const Wishlists = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
 
-  // Extract user's first name with fallback logic
+  // Get user's first name from profile, with fallbacks
   const getUserFirstName = () => {
-    if (!user) return "My";
+    // Use profile first_name if available (cast to any due to outdated types)
+    if ((profile as any)?.first_name?.trim()) {
+      return (profile as any).first_name.trim();
+    }
     
-    // Try user metadata name fields - extract first name only
-    if (user.user_metadata?.name) {
+    // Fallback to auth metadata
+    if (user?.user_metadata?.first_name?.trim()) {
+      return user.user_metadata.first_name.trim();
+    }
+    
+    // Fallback to extracting from full name
+    if (user?.user_metadata?.name) {
       const firstName = user.user_metadata.name.split(' ')[0].trim();
-      return firstName || "My";
-    }
-    if (user.user_metadata?.full_name) {
-      const firstName = user.user_metadata.full_name.split(' ')[0].trim();
-      return firstName || "My";
-    }
-    
-    // Try to extract from email - get first name only
-    if (user.email) {
-      const emailName = user.email.split('@')[0];
-      // Capitalize first letter and replace dots/underscores with spaces
-      const processedName = emailName
-        .replace(/[._]/g, ' ')
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      
-      // Extract just the first name from the processed email
-      const firstName = processedName.split(' ')[0].trim();
-      return firstName || "My";
+      if (firstName) return firstName;
     }
     
     return "My";

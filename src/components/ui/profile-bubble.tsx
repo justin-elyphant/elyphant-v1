@@ -58,6 +58,14 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
     .toUpperCase()
     .slice(0, 2);
 
+  // Debug: Log the component state on render
+  console.log("ProfileBubble render:", { 
+    hasOnImageSelect: !!onImageSelect, 
+    imageUrl, 
+    userName, 
+    size 
+  });
+
   return (
     <div className="relative group">
       <Avatar 
@@ -78,7 +86,7 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
       {onImageSelect && (
         <>
           {/* Overlay with camera icon on hover */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
             <Camera className={cn(iconSizes[size], "text-white")} />
           </div>
           
@@ -86,9 +94,10 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,image/jpeg,image/png,image/gif,image/webp"
             onChange={handleFileChange}
             className="hidden"
+            multiple={false}
           />
         </>
       )}

@@ -1,183 +1,185 @@
 
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Search, Plus, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, Search, Users } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
-import MessageThread from "@/components/messaging/MessageThread";
-import ChatWindow from "@/components/messaging/ChatWindow";
-import { fetchMessages, Message } from "@/utils/messageService";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { formatDistanceToNow } from "date-fns";
+
+interface ConversationItem {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+  isOnline?: boolean;
+}
 
 const Messages = () => {
   const { user } = useAuth();
-  const { connections } = useConnectionsAdapter();
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [messages, setMessages] = useState<{ [key: string]: Message[] }>({});
   const [loading, setLoading] = useState(true);
 
-  // Get accepted connections only
-  const acceptedConnections = connections.filter(conn => 
-    conn.type === 'friend' && !conn.isPending
-  );
-
-  const filteredConnections = acceptedConnections.filter(conn =>
-    conn.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conn.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   useEffect(() => {
-    const loadMessages = async () => {
-      if (!user || acceptedConnections.length === 0) {
-        setLoading(false);
-        return;
-      }
+    if (!user) return;
+    loadConversations();
+  }, [user]);
 
-      try {
-        const messagePromises = acceptedConnections.map(async (conn) => {
-          const connMessages = await fetchMessages(conn.id);
-          return { connectionId: conn.id, messages: connMessages };
-        });
+  const loadConversations = async () => {
+    try {
+      // Get all messages involving the current user
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select(`
+          sender_id,
+          recipient_id,
+          content,
+          created_at,
+          is_read
+        `)
+        .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
+        .order('created_at', { ascending: false });
 
-        const results = await Promise.all(messagePromises);
-        const messagesMap: { [key: string]: Message[] } = {};
+      if (messagesError) throw messagesError;
+
+      // Group messages by conversation partner
+      const conversationMap = new Map<string, ConversationItem>();
+
+      for (const message of messages || []) {
+        const partnerId = message.sender_id === user?.id ? message.recipient_id : message.sender_id;
         
-        results.forEach(({ connectionId, messages: connMessages }) => {
-          messagesMap[connectionId] = connMessages;
-        });
+        if (!conversationMap.has(partnerId)) {
+          // Get partner's profile info
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, username, profile_image')
+            .eq('id', partnerId)
+            .single();
 
-        setMessages(messagesMap);
-      } catch (error) {
-        console.error('Error loading messages:', error);
-      } finally {
-        setLoading(false);
+          conversationMap.set(partnerId, {
+            userId: partnerId,
+            userName: profile?.name || profile?.username || 'Unknown User',
+            userAvatar: profile?.profile_image || undefined,
+            lastMessage: message.content,
+            lastMessageTime: message.created_at,
+            unreadCount: 0,
+            isOnline: false
+          });
+        }
+
+        // Count unread messages
+        if (message.recipient_id === user?.id && !message.is_read) {
+          const conversation = conversationMap.get(partnerId)!;
+          conversation.unreadCount += 1;
+        }
       }
-    };
 
-    loadMessages();
-  }, [user, acceptedConnections.length]);
-
-  const getLastMessage = (connectionId: string) => {
-    const connMessages = messages[connectionId] || [];
-    return connMessages.length > 0 ? connMessages[connMessages.length - 1] : null;
+      setConversations(Array.from(conversationMap.values()));
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getUnreadCount = (connectionId: string) => {
-    const connMessages = messages[connectionId] || [];
-    return connMessages.filter(msg => !msg.is_read && msg.recipient_id === user?.id).length;
-  };
-
-  const selectedConnectionData = acceptedConnections.find(conn => conn.id === selectedConnection);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Loading messages...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const filteredConversations = conversations.filter(conv =>
+    conv.userName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="container mx-auto p-4 h-screen flex flex-col">
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
-        {/* Connections List */}
-        <div className="md:col-span-1">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="flex-shrink-0">
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Messages
-              </CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-0">
-              {acceptedConnections.length === 0 ? (
-                <div className="text-center py-8 px-4">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-medium mb-2">No connections yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Connect with friends to start messaging
-                  </p>
-                  <Button asChild>
-                    <Link to="/connections">Find Friends</Link>
-                  </Button>
-                </div>
-              ) : filteredConnections.length === 0 ? (
-                <div className="text-center py-8 px-4">
-                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No conversations found</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredConnections.map((connection) => {
-                    const lastMessage = getLastMessage(connection.id);
-                    return (
-                      <MessageThread
-                        key={connection.id}
-                        threadId={connection.id}
-                        connectionName={connection.name}
-                        connectionImage={connection.imageUrl}
-                        connectionUsername={connection.username}
-                        lastMessage={lastMessage?.content || "No messages yet"}
-                        lastMessageTime={lastMessage?.created_at || new Date().toISOString()}
-                        unreadCount={getUnreadCount(connection.id)}
-                        isActive={selectedConnection === connection.id}
-                        mutualFriends={connection.mutualFriends}
-                        onClick={() => setSelectedConnection(connection.id)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <SidebarLayout>
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Messages</h1>
+          <p className="text-muted-foreground">Chat with your connections</p>
         </div>
 
-        {/* Chat Window */}
-        <div className="md:col-span-2">
-          {selectedConnection && selectedConnectionData ? (
-            <ChatWindow
-              connectionId={selectedConnection}
-              connectionName={selectedConnectionData.name}
-              connectionImage={selectedConnectionData.imageUrl}
-              messages={messages[selectedConnection] || []}
-              onMessagesUpdate={(newMessages) => {
-                setMessages(prev => ({
-                  ...prev,
-                  [selectedConnection]: newMessages
-                }));
-              }}
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
+          </div>
+        </div>
+
+        {/* Conversations List */}
+        <div className="space-y-4">
+          {loading ? (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50 animate-pulse" />
+              <p className="text-muted-foreground">Loading conversations...</p>
+            </div>
+          ) : filteredConversations.length > 0 ? (
+            filteredConversations.map((conversation) => (
+              <Card key={conversation.userId} className="hover:bg-muted/50 transition-colors">
+                <Link to={`/messages/${conversation.userId}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={conversation.userAvatar} />
+                          <AvatarFallback>
+                            {conversation.userName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        {conversation.isOnline && (
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-medium truncate">{conversation.userName}</h3>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(conversation.lastMessageTime), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {conversation.lastMessage}
+                        </p>
+                      </div>
+                      
+                      {conversation.unreadCount > 0 && (
+                        <Badge variant="default" className="bg-primary text-primary-foreground min-w-[20px] h-5 text-xs">
+                          {conversation.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+            ))
           ) : (
-            <Card className="h-full flex items-center justify-center">
-              <CardContent className="text-center">
-                <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
-                <p className="text-muted-foreground">
-                  Choose a connection from the list to start messaging
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-12">
+              <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Start chatting with your connections to see conversations here.
+              </p>
+              <Button asChild>
+                <Link to="/connections">
+                  <Users className="h-4 w-4 mr-2" />
+                  View Connections
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </SidebarLayout>
   );
 };
 

@@ -1,158 +1,111 @@
+
 import React from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  Users, 
-  Heart, 
-  Settings, 
-  ShoppingBag, 
-  CreditCard, 
-  User, 
-  LogOut,
-  Store
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
-  SidebarFooter,
-  SidebarTrigger,
-  useSidebar,
+  SidebarRail,
 } from "@/components/ui/sidebar";
+import {
+  Home,
+  ShoppingBag,
+  ShoppingCart,
+  User,
+  Settings,
+  Users,
+  Heart,
+  Package,
+  MessageSquare,
+} from "lucide-react";
+import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/contexts/profile/ProfileContext";
-import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
-import NotificationBadge from "@/components/notifications/NotificationBadge";
 
-const mainNavigationItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Marketplace",
-    url: "/marketplace",
-    icon: Store,
-  },
-  {
-    title: "Messages",
-    url: "/messages",
-    icon: MessageSquare,
-  },
-  {
-    title: "Connections",
-    url: "/connections",
-    icon: Users,
-  },
-  {
-    title: "Wishlists",
-    url: "/wishlists",
-    icon: Heart,
-  },
-  {
-    title: "Orders",
-    url: "/orders",
-    icon: ShoppingBag,
-  },
-];
-
-const accountItems = [
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Payment",
-    url: "/payments",
-    icon: CreditCard,
-  },
-  {
-    title: "Profile",
-    url: "/profile",
-    icon: User,
-  },
-];
-
-export function AppSidebar() {
-  const { state } = useSidebar();
+const AppSidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { profile } = useProfile();
-  const { hasIssues } = useProfileDataIntegrity();
-  
-  const currentPath = location.pathname;
-  const isCollapsed = state === "collapsed";
+  const { user } = useAuth();
 
-  const isActive = (path: string) => {
-    if (path === "/profile") {
-      // Handle profile routes more specifically
-      const profileIdentifier = profile?.username || user?.id;
-      return currentPath === `/profile/${profileIdentifier}` || currentPath === "/profile";
+  const mainMenuItems = [
+    {
+      title: "Home",
+      url: "/",
+      icon: Home,
+    },
+    {
+      title: "Marketplace",
+      url: "/marketplace",
+      icon: ShoppingBag,
+    },
+    {
+      title: "Cart",
+      url: "/cart",
+      icon: ShoppingCart,
+    },
+  ];
+
+  const userMenuItems = user ? [
+    {
+      title: "Profile",
+      url: "/profile",
+      icon: User,
+    },
+    {
+      title: "Messages",
+      url: "/messages",
+      icon: MessageSquare,
+    },
+    {
+      title: "Connections",
+      url: "/connections",
+      icon: Users,
+    },
+    {
+      title: "Wishlists",
+      url: "/wishlists",
+      icon: Heart,
+    },
+    {
+      title: "Orders",
+      url: "/orders",
+      icon: Package,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: Settings,
+    },
+  ] : [];
+
+  const isActiveRoute = (url: string) => {
+    if (url === "/") {
+      return location.pathname === "/";
     }
-    return currentPath === path || currentPath.startsWith(path + '/');
-  };
-
-  const getNavClassName = (path: string) => {
-    return isActive(path) 
-      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
-  };
-
-  const handleProfileClick = () => {
-    const profileIdentifier = profile?.username || user?.id;
-    if (profileIdentifier) {
-      navigate(`/profile/${profileIdentifier}`);
-    } else {
-      navigate("/signup?intent=complete-profile");
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
+    return location.pathname.startsWith(url);
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      {/* Sidebar Trigger */}
-      <div className="p-2">
-        <SidebarTrigger className="h-8 w-8" />
-      </div>
-      
+    <Sidebar className="border-r">
+      <SidebarHeader className="p-4">
+        <Logo />
+      </SidebarHeader>
       <SidebarContent>
-        {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">
-            {!isCollapsed && "Navigation"}
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavigationItems.map((item) => (
+              {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClassName(item.url)}>
+                  <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
+                    <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && (
-                        <span className="relative">
-                          {item.title}
-                          {item.title === "Dashboard" && hasIssues && (
-                            <NotificationBadge 
-                              count={1} 
-                              className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
-                            />
-                          )}
-                        </span>
-                      )}
-                    </NavLink>
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -160,51 +113,29 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
-
-        {/* Account Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">
-            {!isCollapsed && "Account"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    {item.title === "Profile" ? (
-                      <button 
-                        onClick={handleProfileClick}
-                        className={`w-full flex items-center gap-2 h-8 px-2 rounded-md text-sm ${getNavClassName("/profile")}`}
-                      >
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Account</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {userMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
+                      <Link to={item.url}>
                         <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </button>
-                    ) : (
-                      <NavLink to={item.url} className={getNavClassName(item.url)}>
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
-
-      {/* Footer with Sign Out */}
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-              {!isCollapsed && <span>Sign Out</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
-}
+};
+
+export { AppSidebar };

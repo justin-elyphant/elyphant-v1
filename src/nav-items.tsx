@@ -17,6 +17,8 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderDetail from "./pages/OrderDetail";
 import SignIn from "./pages/SignIn";
 import StreamlinedSignUp from "./pages/StreamlinedSignUp";
+import Messages from "./pages/Messages";
+import Chat from "./pages/Chat";
 
 export interface NavItem {
   to: string;
@@ -36,6 +38,8 @@ export const navItems: NavItem[] = [
   { to: "/payments", page: <Payments /> },
   { to: "/cart", page: <Cart /> },
   { to: "/checkout", page: <Checkout /> },
+  { to: "/messages", page: <Messages /> },
+  { to: "/messages/:userId", page: <Chat /> },
   { to: "/profile/:identifier", page: <Profile /> },
   { to: "/order/:orderId", page: <OrderDetail /> },
   { to: "/order-confirmation/:orderId", page: <OrderConfirmation /> },

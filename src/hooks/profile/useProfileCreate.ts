@@ -31,11 +31,13 @@ export const useProfileCreate = () => {
       // Extract birth year and format birthday from the full date
       let birthYear = new Date().getFullYear() - 25; // Default
       let formattedBirthday: string | null = null;
+      let fullBirthdayDate: Date | null = null;
       
       if (formattedData.date_of_birth) {
         const birthDate = new Date(formattedData.date_of_birth);
         birthYear = birthDate.getFullYear();
         formattedBirthday = `${(birthDate.getMonth() + 1).toString().padStart(2, '0')}-${birthDate.getDate().toString().padStart(2, '0')}`;
+        fullBirthdayDate = birthDate;
       }
       
       const profileRecord = {
@@ -89,6 +91,51 @@ export const useProfileCreate = () => {
       }
 
       console.log("Profile created successfully:", data);
+
+      // Automatically create birthday entry in user_special_dates if birthday was provided
+      if (fullBirthdayDate && formattedBirthday) {
+        try {
+          console.log("Creating birthday entry in user_special_dates");
+          
+          // Create the birthday date for this year (or next year if already passed)
+          const today = new Date();
+          const currentYear = today.getFullYear();
+          const thisYearBirthday = new Date(currentYear, fullBirthdayDate.getMonth(), fullBirthdayDate.getDate());
+          
+          // If this year's birthday has passed, use next year's
+          const birthdayDateToUse = thisYearBirthday < today 
+            ? new Date(currentYear + 1, fullBirthdayDate.getMonth(), fullBirthdayDate.getDate())
+            : thisYearBirthday;
+
+          const birthdaySpecialDate = {
+            user_id: user.id,
+            date_type: 'birthday',
+            date: birthdayDateToUse.toISOString().split('T')[0], // YYYY-MM-DD format
+            visibility: 'friends', // Default visibility for birthdays
+            is_recurring: true,
+            recurring_type: 'yearly'
+          };
+
+          const { data: birthdayData, error: birthdayError } = await supabase
+            .from('user_special_dates')
+            .insert(birthdaySpecialDate)
+            .select()
+            .single();
+
+          if (birthdayError) {
+            console.error("Error creating birthday special date:", birthdayError);
+            // Don't throw error - we don't want to fail profile creation if birthday creation fails
+            toast.error("Profile created but couldn't add birthday to events");
+          } else {
+            console.log("Birthday special date created successfully:", birthdayData);
+            toast.success("Profile created and birthday added to My Events!");
+          }
+        } catch (birthdayCreationError) {
+          console.error("Failed to create birthday special date:", birthdayCreationError);
+          // Don't throw - profile creation should succeed even if birthday creation fails
+        }
+      }
+
       return data;
     } catch (error) {
       console.error("Failed to create profile:", error);

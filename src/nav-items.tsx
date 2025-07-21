@@ -14,6 +14,7 @@ import Payments from "./pages/Payments";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderDetail from "./pages/OrderDetail";
 
 export interface NavItem {
   to: string;
@@ -32,6 +33,7 @@ export const navItems: NavItem[] = [
   { to: "/cart", page: <Cart /> },
   { to: "/checkout", page: <Checkout /> },
   { to: "/profile/:identifier", page: <Profile /> },
+  { to: "/order/:orderId", page: <OrderDetail /> },
   { to: "/order-confirmation/:orderId", page: <OrderConfirmation /> },
   { to: "/admin/amazon-credentials", page: <AdminAmazonCredentials /> },
 ];

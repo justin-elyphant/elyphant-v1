@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -36,10 +38,35 @@ const StripePaymentForm = ({
 }: StripePaymentFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
+  const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
   const [useSameAddress, setUseSameAddress] = useState(true);
+
+  const savePaymentMethodToDatabase = async (paymentMethodId: string) => {
+    if (!user || !savePaymentMethod) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('save-payment-method', {
+        body: {
+          paymentMethodId,
+          makeDefault: false
+        }
+      });
+
+      if (error) {
+        console.error('Error saving payment method:', error);
+        // Don't fail the payment if saving fails, just log and notify
+        toast.error('Payment successful, but failed to save card for future use');
+      } else {
+        toast.success('Payment successful and card saved for future use!');
+      }
+    } catch (err) {
+      console.error('Error saving payment method:', err);
+      toast.error('Payment successful, but failed to save card for future use');
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -104,9 +131,16 @@ const StripePaymentForm = ({
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        toast.success('Payment successful!');
-        // Pass both payment intent ID and payment method ID if available
         const paymentMethodId = paymentIntent.payment_method as string;
+        
+        // Save payment method to database if requested
+        if (savePaymentMethod && paymentMethodId) {
+          await savePaymentMethodToDatabase(paymentMethodId);
+        } else {
+          toast.success('Payment successful!');
+        }
+        
+        // Call success handler
         onSuccess(paymentIntent.id, paymentMethodId);
       } else {
         throw new Error('Payment was not completed successfully');

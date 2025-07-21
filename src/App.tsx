@@ -19,6 +19,7 @@ import Marketplace from "./pages/Marketplace";
 import Settings from "./pages/Settings";
 import OrderDetail from "./pages/OrderDetail";
 import OrderStatusDashboard from "./pages/OrderStatusDashboard";
+import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
 
@@ -38,6 +39,7 @@ function App() {
                       <div className="min-h-screen bg-background text-foreground">
                         <Routes>
                           <Route path="/" element={<Home />} />
+                          <Route path="/dashboard" element={<Dashboard />} />
                           <Route path="/cart" element={<Cart />} />
                           <Route path="/checkout" element={<Checkout />} />
                           <Route path="/orders" element={<Orders />} />

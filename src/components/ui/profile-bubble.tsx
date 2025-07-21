@@ -34,14 +34,18 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
   };
 
   const handleClick = () => {
+    console.log("Profile bubble clicked", { onImageSelect: !!onImageSelect });
     if (onImageSelect) {
+      console.log("Triggering file input click");
       fileInputRef.current?.click();
     }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input changed", event.target.files);
     const file = event.target.files?.[0];
     if (file && onImageSelect) {
+      console.log("Selected file:", file.name);
       onImageSelect(file);
     }
   };

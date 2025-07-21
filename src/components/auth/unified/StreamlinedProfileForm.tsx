@@ -80,6 +80,7 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
   }, [firstName, lastName, form]);
 
   const handleImageSelect = async (file: File) => {
+    console.log("handleImageSelect called with file:", file.name);
     setProfileImageFile(file);
     
     // Create preview URL
@@ -182,7 +183,10 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
           <ProfileBubble
             imageUrl={profileImageUrl}
             userName={fullName}
-            onImageSelect={handleImageSelect}
+            onImageSelect={(file) => {
+              console.log("ProfileBubble onImageSelect called with file:", file.name);
+              handleImageSelect(file);
+            }}
             size="lg"
           />
           <p className="text-sm text-muted-foreground">Click to add a profile photo</p>

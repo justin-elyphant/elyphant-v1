@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
+import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowLeft, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,22 +28,22 @@ import { Textarea } from "@/components/ui/textarea";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
-  const [userData] = useLocalStorage("userData", null);
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vendorMessage, setVendorMessage] = useState("");
 
-  // Redirect to sign-up if not logged in
+  // Redirect to sign-in if not logged in
   useEffect(() => {
-    if (!userData) {
-      navigate("/signup");
+    if (!authLoading && !user) {
+      navigate("/signin");
     }
-  }, [userData, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Load order details from Supabase
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !user) return;
     
     const fetchOrder = async () => {
       setIsLoading(true);
@@ -73,7 +73,7 @@ const OrderDetail = () => {
             status: data.status,
             total: data.total_amount,
             items: data.order_items || [],
-            customerName: userData?.name || "Customer",
+            customerName: user?.user_metadata?.name || "Customer",
             tracking_number: data.tracking_number || null,
             zinc_order_id: data.zinc_order_id || null
           };
@@ -89,7 +89,7 @@ const OrderDetail = () => {
     };
 
     fetchOrder();
-  }, [orderId, navigate, userData]);
+  }, [orderId, navigate, user]);
 
   const handleSendToVendor = () => {
     if (!vendorMessage.trim()) return;
@@ -101,12 +101,16 @@ const OrderDetail = () => {
     setVendorMessage("");
   };
 
-  if (!userData || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="container max-w-6xl mx-auto py-8 px-4 flex justify-center">
         <OrderSkeleton />
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect to signin
   }
 
   if (!order) {

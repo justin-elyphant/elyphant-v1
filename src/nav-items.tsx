@@ -15,6 +15,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderDetail from "./pages/OrderDetail";
+import SignIn from "./pages/SignIn";
+import StreamlinedSignUp from "./pages/StreamlinedSignUp";
 
 export interface NavItem {
   to: string;
@@ -23,6 +25,8 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { to: "/", page: <Home /> },
+  { to: "/signup", page: <StreamlinedSignUp /> },
+  { to: "/signin", page: <SignIn /> },
   { to: "/marketplace", page: <Marketplace /> },
   { to: "/dashboard", page: <Dashboard /> },
   { to: "/connections", page: <Connections /> },

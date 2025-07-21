@@ -1,45 +1,36 @@
 
 import React from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import SignUpForm, { SignUpFormValues } from "@/components/auth/signup/SignUpForm";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmailPasswordSignUpForm } from "@/components/auth/signup/EmailPasswordSignUpForm";
 import { Link } from "react-router-dom";
-import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
-import { Separator } from "@/components/ui/separator";
 
 interface SignUpViewProps {
-  onSubmit: (values: SignUpFormValues) => Promise<void>;
-  isSubmitting?: boolean;
+  onSignUpSuccess: () => void;
 }
 
-const SignUpView: React.FC<SignUpViewProps> = ({ onSubmit, isSubmitting = false }) => {
+const SignUpView: React.FC<SignUpViewProps> = ({ onSignUpSuccess }) => {
   return (
-    <Card>
+    <Card className="w-full bg-background shadow-lg border border-border">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="font-sans text-2xl font-semibold">Create an Account</CardTitle>
+        <CardTitle className="font-sans text-2xl font-semibold text-foreground">Sign Up</CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          Join our community to discover and share amazing gift ideas
+          Create your account to get started
         </CardDescription>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        <SignUpForm onSubmit={onSubmit} isSubmitting={isSubmitting} />
+        <EmailPasswordSignUpForm onSuccess={onSignUpSuccess} />
         
-        <div className="relative my-4 w-full">
-          <Separator className="bg-slate-300" />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-            OR SIGN UP WITH
-          </span>
-        </div>
-        
-        <SocialLoginButtons />
-      </CardContent>
-      <CardFooter className="flex flex-col items-center gap-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground text-center mt-4">
           Already have an account?{" "}
-          <Link to="/signin" className="text-primary font-semibold underline-offset-4 hover:underline">
+          <Link 
+            to="/signin" 
+            className="text-primary font-semibold underline-offset-4 hover:underline"
+          >
             Sign in
           </Link>
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 };

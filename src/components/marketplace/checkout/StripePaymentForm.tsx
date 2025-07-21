@@ -4,7 +4,10 @@ import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -36,10 +39,40 @@ const StripePaymentForm = ({
 }: StripePaymentFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
+  const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
   const [useSameAddress, setUseSameAddress] = useState(true);
+  const [saveCard, setSaveCard] = useState(savePaymentMethod);
+
+  const savePaymentMethodToDatabase = async (paymentMethodId: string) => {
+    if (!user) return;
+
+    try {
+      console.log('Saving payment method to database:', paymentMethodId);
+      
+      const { data, error } = await supabase.functions.invoke('save-payment-method', {
+        body: {
+          paymentMethodId,
+          makeDefault: false
+        }
+      });
+
+      if (error) {
+        console.error('Error saving payment method:', error);
+        // Don't throw - we don't want to disrupt the successful payment
+        toast.error('Payment successful, but failed to save card for future use');
+      } else {
+        console.log('Payment method saved successfully:', data);
+        toast.success('Payment successful and card saved for future use!');
+      }
+    } catch (err: any) {
+      console.error('Error saving payment method:', err);
+      // Don't throw - we don't want to disrupt the successful payment
+      toast.error('Payment successful, but failed to save card for future use');
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -90,7 +123,7 @@ const StripePaymentForm = ({
             card: cardElement,
             billing_details: billingDetails,
           },
-          setup_future_usage: savePaymentMethod ? 'off_session' : undefined,
+          setup_future_usage: saveCard ? 'off_session' : undefined,
         }
       );
 
@@ -104,9 +137,15 @@ const StripePaymentForm = ({
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        toast.success('Payment successful!');
-        // Pass both payment intent ID and payment method ID if available
         const paymentMethodId = paymentIntent.payment_method as string;
+        
+        // Save payment method to database if requested and user is authenticated
+        if (saveCard && user && paymentMethodId) {
+          // Don't await - run in background so payment success isn't delayed
+          savePaymentMethodToDatabase(paymentMethodId);
+        }
+        
+        toast.success('Payment successful!');
         onSuccess(paymentIntent.id, paymentMethodId);
       } else {
         throw new Error('Payment was not completed successfully');
@@ -157,12 +196,10 @@ const StripePaymentForm = ({
 
         {shippingAddress && (
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id="same-address"
               checked={useSameAddress}
-              onChange={(e) => setUseSameAddress(e.target.checked)}
-              className="rounded border-gray-300"
+              onCheckedChange={(checked) => setUseSameAddress(checked as boolean)}
             />
             <Label htmlFor="same-address" className="text-sm">
               Billing address same as shipping address
@@ -176,6 +213,19 @@ const StripePaymentForm = ({
           </label>
           <CardElement options={cardElementOptions} />
         </div>
+
+        {user && (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="save-card"
+              checked={saveCard}
+              onCheckedChange={(checked) => setSaveCard(checked as boolean)}
+            />
+            <Label htmlFor="save-card" className="text-sm">
+              Save this card for future purchases
+            </Label>
+          </div>
+        )}
       </div>
 
       {error && (

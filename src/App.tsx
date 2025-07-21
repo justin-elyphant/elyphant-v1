@@ -1,47 +1,61 @@
-
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { navItems } from "./nav-items";
-import TestZincOrder from "./pages/TestZincOrder";
-import TrunklineLogin from "./pages/TrunklineLogin";
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { QueryClient } from "react-query";
+import { AuthProvider } from "./contexts/auth";
+import { ProductProvider } from "./contexts/ProductContext";
+import { ElementsProvider } from "./contexts/ElementsContext";
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import Returns from "./pages/Returns";
+import ReturnsDetail from "./pages/ReturnsDetail";
+import Profile from "./pages/Profile";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Marketplace from "./pages/Marketplace";
+import Settings from "./pages/Settings";
+import OrderDetail from "./pages/OrderDetail";
+import ReturnsCreate from "./pages/ReturnsCreate";
 import Trunkline from "./pages/Trunkline";
-import { AuthProvider } from "@/contexts/auth/AuthProvider";
-import { CartProvider } from "@/contexts/CartContext";
-import { ProfileProvider } from "@/contexts/profile/ProfileContext";
-import { ProductProvider } from "@/contexts/ProductContext";
+import Tracking from "./pages/Tracking";
+import OrderStatusDashboard from "./pages/OrderStatusDashboard";
 
-const queryClient = new QueryClient();
-
-const App = () => {
-  console.log("App component rendering with providers");
-  
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <ProfileProvider>
-            <ProductProvider>
-              <CartProvider>
-                <Toaster />
-                <BrowserRouter>
-                  <Routes>
-                    {navItems.map(({ to, page }) => (
-                      <Route key={to} path={to} element={page} />
-                    ))}
-                    <Route path="/test-zinc-order" element={<TestZincOrder />} />
-                    <Route path="/trunkline-login" element={<TrunklineLogin />} />
-                    <Route path="/trunkline/*" element={<Trunkline />} />
-                  </Routes>
-                </BrowserRouter>
-              </CartProvider>
-            </ProductProvider>
-          </ProfileProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <QueryClient>
+      <Router>
+        <div className="min-h-screen bg-background text-foreground">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:productId" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:orderId" element={<OrderDetail />} />
+            <Route path="/returns" element={<Returns />} />
+            <Route path="/returns/create/:orderId" element={<ReturnsCreate />} />
+            <Route path="/returns/:returnId" element={<ReturnsDetail />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/trunkline" element={<Trunkline />} />
+            <Route path="/tracking/:orderId" element={<Tracking />} />
+            <Route path="/order-status" element={<OrderStatusDashboard />} />
+          </Routes>
+        </div>
+      </Router>
+    </QueryClient>
   );
-};
+}
 
 export default App;

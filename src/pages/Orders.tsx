@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
-import OrderStatusRefresh from "@/components/orders/OrderStatusRefresh";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -54,36 +53,81 @@ const Orders = () => {
   }, [fetchOrders]);
 
   const refreshOrders = async () => {
-    await fetchOrders();
-  };
+    setIsRefreshing(true);
+    setError(null);
+    
+    try {
+      // First, refresh the order list from database
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  // Get Zinc order IDs for status refresh
-  const zincOrderIds = orders
-    .filter(order => order.zinc_order_id && order.status === 'processing')
-    .map(order => order.zinc_order_id!)
-    .filter(Boolean);
+      if (error) {
+        console.error("Error fetching orders:", error);
+        setError("Failed to load orders.");
+        toast.error("Failed to load orders.");
+        return;
+      } 
+      
+      setOrders(data || []);
+      
+      // Check if we have processing orders that need status updates
+      const processingOrders = (data || [])
+        .filter(order => order.zinc_order_id && order.status === 'processing')
+        .map(order => order.zinc_order_id!)
+        .filter(Boolean);
+
+      // If we have processing orders, also refresh their status from Zinc
+      if (processingOrders.length > 0) {
+        try {
+          const { data: statusData, error: statusError } = await supabase.functions.invoke('check-zinc-order-status', {
+            body: { orderIds: processingOrders }
+          });
+
+          if (statusError) {
+            console.error('Error checking Zinc status:', statusError);
+            toast.warning('Orders refreshed, but could not check latest status from Zinc');
+          } else {
+            const results = statusData.results || [];
+            const successCount = results.filter((r: any) => r.updated).length;
+            const stuckCount = results.filter((r: any) => r.status === 'placed' && !r.updated).length;
+            
+            if (successCount > 0) {
+              toast.success(`Orders refreshed! Updated ${successCount} order status(es) from Zinc`);
+            } else if (stuckCount > 0) {
+              toast.info(`Orders refreshed. ${stuckCount} order(s) still pending in Zinc (may need account verification)`);
+            } else {
+              toast.success('Orders refreshed!');
+            }
+            
+            // Refresh again to get the updated statuses
+            await fetchOrders();
+          }
+        } catch (statusErr) {
+          console.error('Error refreshing Zinc status:', statusErr);
+          toast.success('Orders refreshed! (Could not check Zinc status)');
+        }
+      } else {
+        toast.success('Orders refreshed!');
+      }
+      
+    } catch (err) {
+      console.error("Unexpected error refreshing orders:", err);
+      setError("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
-        <div className="flex items-center justify-between mb-6">
-          <OrdersHeader 
-            refreshOrders={refreshOrders} 
-            isRefreshing={isRefreshing}
-          />
-          
-          {zincOrderIds.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {zincOrderIds.length} processing order(s)
-              </span>
-              <OrderStatusRefresh
-                orderIds={zincOrderIds}
-                onRefreshComplete={refreshOrders}
-              />
-            </div>
-          )}
-        </div>
+        <OrdersHeader 
+          refreshOrders={refreshOrders} 
+          isRefreshing={isRefreshing}
+        />
         
         <OrderTable 
           orders={orders} 

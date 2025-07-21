@@ -59,7 +59,9 @@ export const useConnectionsAdapter = () => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return [];
 
-      // Get pending requests sent TO this user
+      console.log('🔍 [useConnectionsAdapter] Fetching pending connections for user:', currentUser.user.id);
+
+      // Get both incoming AND outgoing pending requests
       const { data, error } = await supabase
         .from('user_connections')
         .select(`
@@ -70,31 +72,74 @@ export const useConnectionsAdapter = () => {
             username,
             profile_image,
             bio
+          ),
+          recipient_profile:profiles!user_connections_connected_user_id_fkey(
+            id,
+            name,
+            username,
+            profile_image,
+            bio
           )
         `)
-        .eq('connected_user_id', currentUser.user.id)
+        .or(`connected_user_id.eq.${currentUser.user.id},user_id.eq.${currentUser.user.id}`)
         .eq('status', 'pending');
 
       if (error) throw error;
 
-      return data?.map(conn => ({
-        id: conn.user_id,
-        name: conn.requester_profile?.name || 'Unknown',
-        username: conn.requester_profile?.username || '',
-        imageUrl: conn.requester_profile?.profile_image || '',
-        mutualFriends: 0,
-        type: 'friend' as const,
-        lastActive: 'recently',
-        relationship: conn.relationship_type as RelationshipType,
-        dataStatus: {
-          shipping: 'missing' as const,
-          birthday: 'missing' as const,
-          email: 'missing' as const
-        },
-        bio: conn.requester_profile?.bio
-      })) || [];
+      console.log('✅ [useConnectionsAdapter] Pending connections fetched:', data?.length || 0);
+
+      return data?.map(conn => {
+        // Determine if this is an incoming or outgoing request
+        const isIncoming = conn.connected_user_id === currentUser.user.id;
+        
+        if (isIncoming) {
+          // Incoming request - show requester info
+          return {
+            id: conn.user_id,
+            connectionId: conn.id,
+            name: conn.requester_profile?.name || 'Unknown',
+            username: conn.requester_profile?.username || '',
+            imageUrl: conn.requester_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.requester_profile?.bio,
+            isPending: true,
+            isIncoming: true,
+            connectionDate: conn.created_at
+          };
+        } else {
+          // Outgoing request - show recipient info
+          return {
+            id: conn.connected_user_id,
+            connectionId: conn.id,
+            name: conn.recipient_profile?.name || 'Unknown',
+            username: conn.recipient_profile?.username || '',
+            imageUrl: conn.recipient_profile?.profile_image || '',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: conn.recipient_profile?.bio,
+            isPending: true,
+            isIncoming: false,
+            connectionDate: conn.created_at
+          };
+        }
+      }) || [];
     } catch (error) {
-      console.error('Error fetching pending connections:', error);
+      console.error('❌ [useConnectionsAdapter] Error fetching pending connections:', error);
       return [];
     }
   };

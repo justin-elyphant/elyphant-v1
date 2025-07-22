@@ -253,7 +253,7 @@ export function mapSettingsFormToDatabase(formData: any) {
   const databaseData = {
     first_name: formData.first_name || "",
     last_name: formData.last_name || "",
-    name: formData.name || `${formData.first_name || ""} ${formData.last_name || ""}`.trim(),
+    name: `${formData.first_name || ""} ${formData.last_name || ""}`.trim() || formData.name || "",
     email: formData.email || "",
     username: formData.username || "",
     bio: formData.bio || "",

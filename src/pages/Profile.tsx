@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { publicProfileService } from "@/services/publicProfileService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
@@ -17,7 +18,8 @@ import type { PublicProfileData } from "@/services/publicProfileService";
 const Profile = () => {
   const { identifier } = useParams();
   const { user, isLoading: authLoading } = useAuth();
-  const { profileData: ownProfile, isLoading: ownProfileLoading } = useProfileRetrieval();
+  const { profile: ownProfile, loading: ownProfileLoading } = useProfile();
+  const { profileData: fallbackProfile } = useProfileRetrieval();
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
   const [profileNotFound, setProfileNotFound] = useState(false);

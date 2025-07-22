@@ -8,9 +8,15 @@ import PopularBrands from "@/components/gifting/PopularBrands";
 import CategoriesGrid from "./sections/CategoriesGrid";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
 
 const HomeContent = () => {
+  const { trackRender } = usePerformanceMonitor();
+  
   useEffect(() => {
+    const startTime = performance.now();
+    console.log("HomeContent: Starting component mount and data operations");
+    
     // Clear any lingering onboarding state that might show the "Welcome to Gift Giver" screen
     LocalStorageService.clearProfileCompletionState();
     LocalStorageService.cleanupDeprecatedKeys();
@@ -21,7 +27,11 @@ const HomeContent = () => {
       currentPage: '/',
       timestamp: new Date().toISOString()
     });
-  }, []);
+    
+    const setupTime = performance.now() - startTime;
+    console.log(`HomeContent: Setup completed in ${setupTime.toFixed(2)}ms`);
+    trackRender("HomeContent", startTime);
+  }, [trackRender]);
 
   return (
     <div className="min-h-screen">

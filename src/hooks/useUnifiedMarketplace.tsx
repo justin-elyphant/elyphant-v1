@@ -104,7 +104,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       
       return [];
     }
-  }, [abortCurrentRequest, updateState, state.lastSearchId]);
+  }, [abortCurrentRequest, updateState]);
 
   /**
    * Handle search based on URL parameters

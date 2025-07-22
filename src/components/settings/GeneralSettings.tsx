@@ -187,7 +187,6 @@ const GeneralSettings = () => {
               <Button 
                 type="submit" 
                 disabled={isSaving}
-                onClick={() => console.log("🔘 Save button clicked!")}
               >
                 {isSaving ? (
                   <>

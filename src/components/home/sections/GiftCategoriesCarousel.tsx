@@ -18,7 +18,7 @@ const giftCategories = [
     id: "gifts-for-her",
     title: "Gifts for Her",
     description: "Thoughtful gifts she'll love",
-    image: "/lovable-uploads/53a8bb31-a163-45ec-bb67-ee4bed4cc1db.png?v=2",
+    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&h=1200&fit=crop&crop=center",
     searchTerm: "gifts for her",
     navigationUrl: "/marketplace?search=gifts+for+her"
   },
@@ -26,7 +26,7 @@ const giftCategories = [
     id: "gifts-for-him",
     title: "Gifts for Him", 
     description: "Perfect gifts for the special man",
-    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1200&fit=crop&crop=center",
     searchTerm: "gifts for him",
     navigationUrl: "/marketplace?search=gifts+for+him"
   },
@@ -34,7 +34,7 @@ const giftCategories = [
     id: "gifts-under-50",
     title: "Gifts under $50",
     description: "Amazing gifts that won't break the bank",
-    image: "/lovable-uploads/d566eefb-d68c-4d0d-beb0-a3a4c0676ae4.png",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=1200&fit=crop&crop=center",
     searchTerm: "gifts under 50",
     navigationUrl: "/marketplace?search=gifts+under+50&maxPrice=50"
   },

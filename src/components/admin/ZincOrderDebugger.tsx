@@ -1,260 +1,262 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { orderVerificationService } from '@/services/orderVerificationService';
+
+interface ZincStatus {
+  orderId: string;
+  zincOrderId?: string;
+  status?: string;
+  error?: string;
+  debugInfo?: any;
+}
 
 const ZincOrderDebugger = () => {
-  const [orderInput, setOrderInput] = useState('c5526964e99a6214ad309b2bd4dbc184');
-  const [isChecking, setIsChecking] = useState(false);
-  const [debugResult, setDebugResult] = useState<any>(null);
-  const [logs, setLogs] = useState<string>('');
+  const [orderRequestId, setOrderRequestId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [statusResult, setStatusResult] = useState<ZincStatus | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string>('');
+  const { toast } = useToast();
 
   const checkOrderStatus = async () => {
-    if (!orderInput.trim()) {
-      toast.error('Please enter an order ID');
+    if (!orderRequestId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an order request ID",
+        variant: "destructive",
+      });
       return;
     }
 
-    setIsChecking(true);
-    setDebugResult(null);
-    setLogs('Starting order status check...\n');
+    setLoading(true);
+    setStatusResult(null);
+    setDebugLogs('');
 
     try {
-      console.log('Checking order status for:', orderInput);
+      console.log(`🔍 Checking order status for: ${orderRequestId}`);
       
+      // Call the edge function with the correct parameter name
       const { data, error } = await supabase.functions.invoke('check-zinc-order-status', {
-        body: { 
-          orderRequestId: orderInput.trim(),
-          debug: true 
+        body: {
+          singleOrderId: orderRequestId, // Fixed: changed from orderRequestId to singleOrderId
+          debugMode: true
         }
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        setLogs(prev => prev + `Error: ${error.message}\n`);
-        setDebugResult({ 
-          success: false, 
-          error: error.message,
-          timestamp: new Date().toISOString()
+        console.error('❌ Edge function error:', error);
+        setDebugLogs(`Edge Function Error: ${error.message}\n\nContext: ${error.context || 'No additional context'}`);
+        toast({
+          title: "API Error",
+          description: error.message,
+          variant: "destructive",
         });
-        toast.error('Failed to check order status');
         return;
       }
 
-      console.log('Order status response:', data);
-      setLogs(prev => prev + `Success: Received response\n${JSON.stringify(data, null, 2)}\n`);
-      setDebugResult({
-        ...data,
-        timestamp: new Date().toISOString()
-      });
+      console.log('✅ Edge function response:', data);
+      setDebugLogs(`API Response:\n${JSON.stringify(data, null, 2)}`);
 
-      if (data.success) {
-        toast.success('Order status retrieved successfully');
+      if (data.success && data.results && data.results.length > 0) {
+        const result = data.results[0];
+        setStatusResult({
+          orderId: orderRequestId,
+          zincOrderId: result.zinc_order_id,
+          status: result.status,
+          error: result.error,
+          debugInfo: result
+        });
+        
+        toast({
+          title: "Status Check Complete",
+          description: `Order status: ${result.status}`,
+        });
       } else {
-        toast.warning('Order check completed with issues');
+        setStatusResult({
+          orderId: orderRequestId,
+          error: data.error || 'No results returned'
+        });
+        
+        toast({
+          title: "No Results",
+          description: data.error || 'No order data found',
+          variant: "destructive",
+        });
       }
 
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setLogs(prev => prev + `Unexpected error: ${errorMessage}\n`);
-      setDebugResult({ 
-        success: false, 
-        error: errorMessage,
-        timestamp: new Date().toISOString()
+    } catch (error) {
+      console.error('💥 Unexpected error:', error);
+      setDebugLogs(`Unexpected Error: ${error.message}\n\nStack trace: ${error.stack}`);
+      setStatusResult({
+        orderId: orderRequestId,
+        error: error.message
       });
-      toast.error('Unexpected error occurred');
+      
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
-      setIsChecking(false);
+      setLoading(false);
     }
   };
 
-  const manualVerification = async () => {
-    if (!orderInput.trim()) {
-      toast.error('Please enter an order ID');
+  const manualVerifyOrder = async () => {
+    if (!orderRequestId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an order request ID",
+        variant: "destructive",
+      });
       return;
     }
 
-    setIsChecking(true);
-    setLogs(prev => prev + '\nStarting manual verification...\n');
-
+    setLoading(true);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('process-zinc-order', {
-        body: { 
-          orderRequestId: orderInput.trim(),
-          action: 'verify',
-          debug: true 
-        }
+      console.log(`🔄 Manually verifying order: ${orderRequestId}`);
+      
+      const result = await orderVerificationService.verifyOrder(orderRequestId);
+      
+      setStatusResult({
+        orderId: result.orderId,
+        zincOrderId: result.zincOrderId,
+        status: result.status,
+        error: result.error,
+        debugInfo: result
       });
-
-      if (error) {
-        setLogs(prev => prev + `Verification error: ${error.message}\n`);
-        toast.error('Manual verification failed');
-        return;
-      }
-
-      setLogs(prev => prev + `Verification complete: ${JSON.stringify(data, null, 2)}\n`);
-      toast.success('Manual verification completed');
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setLogs(prev => prev + `Verification error: ${errorMessage}\n`);
-      toast.error('Manual verification failed');
+      
+      setDebugLogs(`Manual Verification Result:\n${JSON.stringify(result, null, 2)}`);
+      
+      toast({
+        title: "Manual Verification Complete",
+        description: result.verified ? "Order verified successfully" : `Verification failed: ${result.error}`,
+        variant: result.verified ? "default" : "destructive",
+      });
+      
+    } catch (error) {
+      console.error('💥 Manual verification error:', error);
+      setDebugLogs(`Manual Verification Error: ${error.message}`);
+      
+      toast({
+        title: "Verification Error",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
-      setIsChecking(false);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'placed':
-      case 'shipped':
-      case 'delivered':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-      case 'cancelled':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'placed':
-      case 'shipped':
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'failed':
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
+      setLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          This tool helps troubleshoot Zinc order processing issues. Use it to check order status, 
-          view detailed logs, and manually verify orders that may be stuck.
-        </AlertDescription>
-      </Alert>
-
+      {/* Input Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Order Status Checker
-          </CardTitle>
+          <CardTitle>Order Lookup</CardTitle>
+          <CardDescription>
+            Enter an order request ID to check its status with Zinc and verify synchronization
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="orderInput">Zinc Order ID</Label>
+          <div className="flex gap-2">
             <Input
-              id="orderInput"
-              value={orderInput}
-              onChange={(e) => setOrderInput(e.target.value)}
-              placeholder="Enter Zinc order request ID"
-              disabled={isChecking}
+              placeholder="Enter order request ID (e.g., c5526964e99a6214ad309b2bd4dbc184)"
+              value={orderRequestId}
+              onChange={(e) => setOrderRequestId(e.target.value)}
+              className="flex-1"
             />
           </div>
-
+          
           <div className="flex gap-2">
             <Button 
               onClick={checkOrderStatus} 
-              disabled={isChecking}
-              className="flex items-center gap-2"
+              disabled={loading}
+              className="flex-1"
             >
-              {isChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              Check Status
+              {loading ? 'Checking...' : 'Check Status'}
             </Button>
             
             <Button 
-              onClick={manualVerification} 
-              disabled={isChecking}
+              onClick={manualVerifyOrder} 
+              disabled={loading}
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex-1"
             >
-              {isChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-              Manual Verify
+              {loading ? 'Verifying...' : 'Manual Verify'}
             </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          {debugResult && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">Status Result:</h3>
-                <Badge variant={debugResult.success ? "default" : "destructive"}>
-                  {debugResult.success ? 'Success' : 'Failed'}
-                </Badge>
+      {/* Status Result Section */}
+      {statusResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Status Result</CardTitle>
+            <CardDescription>
+              Current status information for order {statusResult.orderId}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Order ID</label>
+                <p className="font-mono text-sm">{statusResult.orderId}</p>
               </div>
-
-              {debugResult.zincStatus && (
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(debugResult.zincStatus)}
-                  <span className="font-medium">Zinc Status:</span>
-                  <Badge className={getStatusColor(debugResult.zincStatus)}>
-                    {debugResult.zincStatus}
+              
+              {statusResult.zincOrderId && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Zinc Order ID</label>
+                  <p className="font-mono text-sm">{statusResult.zincOrderId}</p>
+                </div>
+              )}
+            </div>
+            
+            {statusResult.status && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Status</label>
+                <div className="mt-1">
+                  <Badge variant={statusResult.status === 'placed' ? 'default' : 'secondary'}>
+                    {statusResult.status}
                   </Badge>
                 </div>
-              )}
-
-              {debugResult.orderData && (
-                <div className="p-3 bg-gray-50 rounded-md">
-                  <h4 className="font-medium mb-2">Order Details:</h4>
-                  <pre className="text-sm overflow-x-auto">
-                    {JSON.stringify(debugResult.orderData, null, 2)}
-                  </pre>
-                </div>
-              )}
-
-              {debugResult.error && (
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>{debugResult.error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="text-sm text-gray-500">
-                Checked at: {new Date(debugResult.timestamp).toLocaleString()}
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+            
+            {statusResult.error && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Error</label>
+                <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{statusResult.error}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Debug Logs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={logs}
-            readOnly
-            className="min-h-[200px] font-mono text-sm"
-            placeholder="Debug logs will appear here..."
-          />
-          <Button 
-            onClick={() => setLogs('')}
-            variant="outline"
-            size="sm"
-            className="mt-2"
-          >
-            Clear Logs
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Debug Logs Section */}
+      {debugLogs && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Debug Logs</CardTitle>
+            <CardDescription>
+              Detailed information from the API calls and processing
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs bg-muted p-4 rounded-lg overflow-auto max-h-96 whitespace-pre-wrap">
+              {debugLogs}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

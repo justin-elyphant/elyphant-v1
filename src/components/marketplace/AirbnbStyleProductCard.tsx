@@ -43,12 +43,45 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
   };
 
   const getProductImage = () => {
+    // Priority order for best image quality:
+    // 1. main_image (highest quality from Zinc API)
+    // 2. First image from images array
+    // 3. Basic image field
+    // 4. Fallback placeholder
+    
+    const highQualityImage = (product as any).main_image;
+    if (highQualityImage) {
+      return highQualityImage;
+    }
+    
     const images = product.images || [product.image] || ["/placeholder.svg"];
-    return images[currentImageIndex] || images[0] || "/placeholder.svg";
+    const selectedImage = images[currentImageIndex] || images[0] || "/placeholder.svg";
+    
+    // If it's an Amazon image URL, try to get higher resolution version
+    if (selectedImage && selectedImage.includes('amazon.com') && selectedImage.includes('._AC_UL320_')) {
+      // Replace small resolution with larger one for better quality
+      return selectedImage.replace('._AC_UL320_', '._AC_UL480_');
+    }
+    
+    return selectedImage;
   };
 
   const getProductImages = () => {
-    return product.images || [product.image] || ["/placeholder.svg"];
+    // Get all available images for carousel, prioritizing higher quality versions
+    const mainImage = (product as any).main_image;
+    const standardImages = product.images || [product.image] || ["/placeholder.svg"];
+    
+    // Combine and deduplicate images
+    const allImages = mainImage ? [mainImage, ...standardImages] : standardImages;
+    const uniqueImages = [...new Set(allImages.filter(Boolean))];
+    
+    // Enhance Amazon image URLs for better quality
+    return uniqueImages.map(img => {
+      if (img && img.includes('amazon.com') && img.includes('._AC_UL320_')) {
+        return img.replace('._AC_UL320_', '._AC_UL480_');
+      }
+      return img;
+    });
   };
 
   const getProductTitle = () => {
@@ -75,13 +108,20 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
       className="group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl"
       onClick={onProductClick}
     >
-      {/* Image Section - Airbnb Style */}
+      {/* Image Section - Airbnb Style with Enhanced Quality */}
       <div className="relative aspect-square overflow-hidden rounded-t-xl group">
         <img
           src={getProductImage()}
           alt={getProductTitle()}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
+          onError={(e) => {
+            // Fallback to standard image if high-quality version fails
+            const target = e.target as HTMLImageElement;
+            if (target.src.includes('._AC_UL480_')) {
+              target.src = target.src.replace('._AC_UL480_', '._AC_UL320_');
+            }
+          }}
         />
         
         {/* Image Navigation Arrows */}

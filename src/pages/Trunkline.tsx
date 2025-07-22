@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TrunklineSidebar } from "@/components/trunkline/TrunklineSidebar";
+import TrunklineHeader from "@/components/trunkline/TrunklineHeader";
 import OverviewTab from "@/components/trunkline/dashboard/OverviewTab";
 import ReturnTrackingTab from "@/components/trunkline/dashboard/ReturnTrackingTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
@@ -21,6 +22,7 @@ const Trunkline = () => {
         <div className="flex min-h-screen w-full">
           <TrunklineSidebar />
           <SidebarInset className="flex-1">
+            <TrunklineHeader />
             <div className="p-6">
               <Routes>
                 <Route path="/" element={<OverviewTab />} />

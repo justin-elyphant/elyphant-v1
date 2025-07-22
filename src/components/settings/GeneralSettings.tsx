@@ -121,9 +121,13 @@ const GeneralSettings = () => {
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+        <form onSubmit={form.handleSubmit((data) => {
+          console.log("✅ Form submission triggered with data:", data);
+          return onSubmit(data);
+        }, (errors) => {
           console.log("❌ Form validation errors:", errors);
           console.log("❌ Detailed validation errors:", JSON.stringify(errors, null, 2));
+          console.log("❌ Form state:", form.formState);
         })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
@@ -187,6 +191,11 @@ const GeneralSettings = () => {
               <Button 
                 type="submit" 
                 disabled={isSaving}
+                onClick={(e) => {
+                  console.log("🔘 Save button clicked!");
+                  console.log("🔍 Button type:", e.currentTarget.type);
+                  console.log("🔍 Form element:", e.currentTarget.closest('form'));
+                }}
               >
                 {isSaving ? (
                   <>

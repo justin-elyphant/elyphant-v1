@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import BleedFirstLayout from "@/components/marketplace/BleedFirstLayout";
+import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import {
   Carousel,
   CarouselContent,
@@ -11,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const giftCategories = [
   {
@@ -49,13 +50,19 @@ const giftCategories = [
 
 const GiftCategoriesCarousel: React.FC = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleCategoryClick = (category: typeof giftCategories[0]) => {
     navigate(category.navigationUrl, { state: { fromHome: true } });
   };
 
   return (
-    <BleedFirstLayout className="py-12 md:py-16 bg-white intersection-target">
+    <FullBleedSection 
+      background="bg-white" 
+      height="auto"
+      className="intersection-target"
+    >
+      {/* Header content with proper spacing */}
       <div className="text-center mb-8 md:mb-12">
         <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
           Quick Picks
@@ -65,7 +72,8 @@ const GiftCategoriesCarousel: React.FC = () => {
         </p>
       </div>
 
-      <div className="relative">
+      {/* Full-width carousel that bleeds to edges */}
+      <div className="relative -mx-4 md:-mx-6">
         <Carousel
           opts={{
             align: "start",
@@ -80,7 +88,7 @@ const GiftCategoriesCarousel: React.FC = () => {
                   className="group relative overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 h-full touch-target-48 touch-manipulation tap-feedback"
                   onClick={() => handleCategoryClick(category)}
                 >
-                  {/* Image Container */}
+                  {/* Image Container - Full bleed within card */}
                   <div className="relative h-48 md:h-56 lg:h-64 overflow-hidden">
                     <img
                       src={category.image}
@@ -113,12 +121,12 @@ const GiftCategoriesCarousel: React.FC = () => {
             ))}
           </CarouselContent>
           
-          {/* Navigation arrows - hidden on mobile, visible on desktop */}
-          <CarouselPrevious className="hidden md:flex -left-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
-          <CarouselNext className="hidden md:flex -right-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
+          {/* Navigation arrows - positioned outside content area */}
+          <CarouselPrevious className="hidden md:flex left-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
+          <CarouselNext className="hidden md:flex right-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
         </Carousel>
       </div>
-    </BleedFirstLayout>
+    </FullBleedSection>
   );
 };
 

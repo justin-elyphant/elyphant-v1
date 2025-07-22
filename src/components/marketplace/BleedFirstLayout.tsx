@@ -1,31 +1,61 @@
 
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface BleedFirstLayoutProps {
   children: React.ReactNode;
   className?: string;
+  variant?: "full-bleed" | "content-bleed";
+  height?: "auto" | "min-screen" | "screen";
+  background?: string;
 }
 
 const BleedFirstLayout: React.FC<BleedFirstLayoutProps> = ({
   children,
   className = "",
+  variant = "content-bleed",
+  height = "auto",
+  background = "",
 }) => {
   const isMobile = useIsMobile();
   
-  if (isMobile) {
-    // Mobile: Full bleed for maximum product visibility
+  const heightClasses = {
+    auto: "",
+    "min-screen": "min-h-screen",
+    screen: "h-screen",
+  };
+  
+  if (variant === "full-bleed") {
+    // Complete edge-to-edge with no internal constraints
     return (
-      <div className={`w-full ${className}`}>
+      <div className={cn(
+        "w-full",
+        heightClasses[height],
+        background,
+        className
+      )}>
         {children}
       </div>
     );
   }
   
-  // Desktop: Strategic container with generous margins for products
+  // Content-bleed: Edge-to-edge visuals with internal content padding
   return (
-    <div className={`w-full max-w-[1400px] mx-auto px-4 lg:px-6 ${className}`}>
-      {children}
+    <div className={cn(
+      "w-full",
+      heightClasses[height],
+      background,
+      className
+    )}>
+      <div className={cn(
+        "w-full h-full",
+        isMobile 
+          ? "px-4" // Minimal mobile padding for readability
+          : "px-6 max-w-[1400px] mx-auto" // Desktop: content constraint with generous padding
+      )}>
+        {children}
+      </div>
     </div>
   );
 };

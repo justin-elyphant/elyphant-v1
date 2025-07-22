@@ -23,11 +23,11 @@ const MarketplaceQuickFilters = () => {
     
     // Apply filter logic through search
     if (filterId === 'local') {
-      search("local vendors", { localVendorsOnly: true });
+      search("local vendors");
     } else if (filterId === 'trending') {
-      search("trending", { trending: true });
+      search("trending");
     } else if (filterId === 'under50') {
-      search("", { maxPrice: 50 });
+      search("under $50");
     }
   };
 

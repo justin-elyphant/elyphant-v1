@@ -41,10 +41,16 @@ const StreamlinedMarketplaceWrapper = () => {
     return false;
   };
 
-  const getProductStatus = (product: any) => {
-    if (product.vendor === "Local Vendor") return "local";
-    if (product.onSale) return "sale";
-    if (product.isNew) return "new";
+  const getProductStatus = (product: any): { badge: string; color: string } | null => {
+    if (product.vendor === "Local Vendor") {
+      return { badge: "Local", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    }
+    if (product.onSale) {
+      return { badge: "Sale", color: "bg-red-100 text-red-800 border-red-200" };
+    }
+    if (product.isNew) {
+      return { badge: "New", color: "bg-green-100 text-green-800 border-green-200" };
+    }
     return null;
   };
 
@@ -115,7 +121,10 @@ const StreamlinedMarketplaceWrapper = () => {
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && products.length > 0 && (
-        <AirbnbStyleCategorySections products={products} />
+        <AirbnbStyleCategorySections 
+          products={products} 
+          onProductClick={handleProductClick}
+        />
       )}
 
       {/* Products Grid (when search is active or as fallback) */}
@@ -125,10 +134,8 @@ const StreamlinedMarketplaceWrapper = () => {
             <AirbnbStyleProductCard
               key={product.id || product.product_id || index}
               product={product}
-              onClick={() => handleProductClick(product)}
-              onWishlistToggle={() => toggleWishlist(product.id || product.product_id)}
-              isFavorited={isFavorited(product.id || product.product_id)}
-              status={getProductStatus(product)}
+              onProductClick={() => handleProductClick(product)}
+              statusBadge={getProductStatus(product)}
             />
           ))}
         </div>

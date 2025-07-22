@@ -11,6 +11,7 @@ import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab"
 import TrunklineSupportTab from "@/components/trunkline/TrunklineSupportTab";
 import TrunklineAmazonTab from "@/components/trunkline/TrunklineAmazonTab";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
+import TrunklineZincDebuggerTab from "@/components/trunkline/TrunklineZincDebuggerTab";
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
 
 const Trunkline = () => {
@@ -29,6 +30,7 @@ const Trunkline = () => {
                 <Route path="/returns" element={<ReturnTrackingTab />} />
                 <Route path="/amazon" element={<TrunklineAmazonTab />} />
                 <Route path="/zinc" element={<TrunklineZincTab />} />
+                <Route path="/zinc-debugger" element={<TrunklineZincDebuggerTab />} />
                 <Route path="/vendors" element={<TrunklineVendorsTab />} />
               </Routes>
             </div>

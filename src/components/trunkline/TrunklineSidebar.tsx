@@ -10,7 +10,8 @@ import {
   Building2,
   CreditCard,
   Search,
-  ArrowLeft
+  ArrowLeft,
+  Bug
 } from "lucide-react";
 import {
   Sidebar,
@@ -72,6 +73,11 @@ const systemItems = [
     title: "Zinc Integration",
     url: "/trunkline/zinc",
     icon: Settings,
+  },
+  {
+    title: "Zinc Debugger",
+    url: "/trunkline/zinc-debugger",
+    icon: Bug,
   },
   {
     title: "Vendors",

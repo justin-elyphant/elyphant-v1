@@ -64,6 +64,13 @@ export const useProfileData = (
 
       // Force a complete form reset with the mapped data
       console.log("🔄 Resetting form with mapped data...");
+      console.log("🔍 About to reset form with values:", {
+        first_name: mappedData.first_name,
+        last_name: mappedData.last_name,
+        current_form_first_name: form.getValues("first_name"),
+        current_form_last_name: form.getValues("last_name")
+      });
+      
       form.reset(mappedData, { 
         keepDefaultValues: false,
         keepErrors: false,
@@ -75,6 +82,10 @@ export const useProfileData = (
       
       // Set initial form values for comparison
       setInitialFormValues(mappedData);
+      
+      // Manually set the specific values that seem to be problematic
+      form.setValue("first_name", mappedData.first_name, { shouldValidate: false, shouldDirty: false });
+      form.setValue("last_name", mappedData.last_name, { shouldValidate: false, shouldDirty: false });
 
       // Force a re-render by incrementing the reset count
       setForceResetCount(prev => prev + 1);

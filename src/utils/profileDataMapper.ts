@@ -212,6 +212,13 @@ export function mapDatabaseToSettingsForm(profile: any) {
     }
   }
 
+  // Debug name mapping issue
+  console.log("🔍 Name mapping debug:", {
+    profile_first_name: profile.first_name,
+    profile_last_name: profile.last_name,
+    profile_name: profile.name
+  });
+
   const result = {
     first_name: profile.first_name || "",
     last_name: profile.last_name || "",

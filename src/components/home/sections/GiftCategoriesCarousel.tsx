@@ -34,7 +34,7 @@ const giftCategories = [
     id: "gifts-under-50",
     title: "Gifts under $50",
     description: "Amazing gifts that won't break the bank",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=1200&fit=crop&crop=center",
+    image: "/lovable-uploads/9c28137d-7145-44ee-a958-177f61bb637a.png",
     searchTerm: "gifts under 50",
     navigationUrl: "/marketplace?search=gifts+under+50&maxPrice=50"
   },

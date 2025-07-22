@@ -1,33 +1,63 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ZincDebugger = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
 
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/auth');
+  // Handle authentication with proper loading states
+  useEffect(() => {
+    if (!isLoading) {
+      setAuthChecked(true);
+      
+      if (!user) {
+        console.log("ZincDebugger: No user found, redirecting to auth");
+        navigate('/auth', { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
+  // Show loading state while auth is being checked
+  if (isLoading || !authChecked) {
+    return (
+      <AdminLayout>
+        <div className="container max-w-6xl mx-auto py-8 px-4">
+          <div className="mb-6">
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // If no user after auth check, show auth required message
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-          <p className="text-muted-foreground">Please sign in to access the Zinc debugger.</p>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground">Please sign in to access the Zinc debugger.</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <SidebarLayout>
+    <AdminLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Zinc Order Debugger</h1>
@@ -38,7 +68,7 @@ const ZincDebugger = () => {
         
         <ZincOrderDebugger />
       </div>
-    </SidebarLayout>
+    </AdminLayout>
   );
 };
 

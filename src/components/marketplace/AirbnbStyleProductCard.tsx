@@ -241,23 +241,10 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           {getProductTitle()}
         </h3>
 
-        {/* Brand - Enhanced display with full debugging */}
-        {(() => {
-          console.log(`Product object keys:`, Object.keys(product));
-          console.log(`Product brand value: "${product.brand}" (type: ${typeof product.brand})`);
-          console.log(`Product title: "${getProductTitle()}"`);
-          console.log(`Full product object:`, product);
-          
-          return product.brand && product.brand.trim() ? (
-            <p className="text-xs text-gray-600 font-medium uppercase tracking-wide bg-yellow-100 px-2 py-1 rounded">
-              {product.brand}
-            </p>
-          ) : (
-            <p className="text-xs text-red-500 bg-red-100 px-2 py-1 rounded">
-              No brand found
-            </p>
-          );
-        })()}
+        {/* Brand - Always show brand or "Amazon" fallback */}
+        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+          {(product.brand && product.brand.trim()) || "AMAZON"}
+        </p>
 
         {/* Rating */}
         {getRating() > 0 && (

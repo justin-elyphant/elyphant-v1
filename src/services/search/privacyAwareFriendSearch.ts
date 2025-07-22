@@ -34,17 +34,25 @@ export const searchFriendsWithPrivacy = async (
   limit: number = 20
 ): Promise<FilteredProfile[]> => {
   try {
-    // Search for profiles matching the search term
+    // Clean the search term - remove @ symbol if searching for username
+    const cleanedSearchTerm = searchTerm.startsWith('@') ? searchTerm.slice(1) : searchTerm;
+    
+    console.log(`🔍 Searching for profiles with term: "${searchTerm}" (cleaned: "${cleanedSearchTerm}")`);
+    
+    // Search for profiles matching the search term across multiple fields
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select(`
         id,
         name,
         username,
+        first_name,
+        last_name,
+        email,
         profile_image,
         bio
       `)
-      .or(`name.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`)
+      .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%,email.ilike.%${cleanedSearchTerm}%`)
       .neq('id', currentUserId)
       .limit(limit);
 

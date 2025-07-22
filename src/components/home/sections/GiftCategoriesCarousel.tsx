@@ -43,8 +43,8 @@ const giftCategories = [
     title: "Luxury Gifts",
     description: "Premium gifts for special occasions",
     image: "/lovable-uploads/89069d91-bc3d-4c97-ac4d-70be943ed556.png",
-    searchTerm: "luxury gifts",
-    navigationUrl: "/marketplace?search=luxury+gifts&minPrice=100"
+    searchTerm: "luxury categories",
+    navigationUrl: "/marketplace?luxuryCategories=true"
   }
 ];
 

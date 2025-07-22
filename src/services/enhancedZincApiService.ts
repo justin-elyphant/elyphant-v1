@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ZincApiResponse {
@@ -103,6 +102,48 @@ class EnhancedZincApiService {
         results: [],
         error: error instanceof Error ? error.message : 'Search failed'
       };
+    }
+  }
+
+  /**
+   * Search luxury categories and return diverse product array
+   */
+  async searchLuxuryCategories(limit: number = 16): Promise<ZincSearchResponse> {
+    console.log('Starting luxury category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          luxuryCategories: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error('Error calling luxury category search:', error);
+        // Fallback to single luxury search
+        return this.searchProducts('top designer bags for women', 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn('No luxury products returned, using fallback');
+        return this.searchProducts('top designer bags for women', 1, limit);
+      }
+
+      // Enhance luxury product data
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Luxury category search complete: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error('Luxury category search error:', error);
+      // Fallback to single luxury search
+      return this.searchProducts('top designer bags for women', 1, limit);
     }
   }
 

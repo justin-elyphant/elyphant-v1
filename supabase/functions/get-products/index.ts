@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -84,6 +83,77 @@ const processBestSellerData = (product: any) => {
   };
 };
 
+// Luxury category search handler
+const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
+  console.log('Starting luxury category batch search');
+  
+  const luxuryCategories = [
+    "top designer bags for women",
+    "top designer sunglasses", 
+    "luxury watches",
+    "designer jewelry"
+  ];
+  
+  const promises = luxuryCategories.map(async (category) => {
+    try {
+      console.log(`Searching luxury category: ${category}`);
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=1&retailer=amazon`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${api_key}:`)
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.results && Array.isArray(data.results)) {
+        // Take first 3-4 products from each category
+        const categoryResults = data.results.slice(0, 4).map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return {
+            ...product,
+            ...bestSellerData,
+            categorySource: category // Track which category this came from
+          };
+        });
+        
+        console.log(`Found ${categoryResults.length} products for category: ${category}`);
+        return categoryResults;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error(`Error searching category ${category}:`, error);
+      return [];
+    }
+  });
+  
+  try {
+    const categoryResults = await Promise.all(promises);
+    
+    // Flatten and mix results
+    const allResults = categoryResults.flat();
+    
+    // Shuffle to prevent category clustering
+    for (let i = allResults.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
+    }
+    
+    console.log(`Luxury category search complete: ${allResults.length} total products`);
+    
+    return {
+      results: allResults,
+      total: allResults.length,
+      categoryBatch: true
+    };
+    
+  } catch (error) {
+    console.error('Error in luxury category batch search:', error);
+    throw error;
+  }
+};
+
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
@@ -96,8 +166,21 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1} = await req.json();
+    const {query, retailer = "amazon", page = 1, luxuryCategories = false} = await req.json();
+    
     try {
+      // Handle luxury category batch search
+      if (luxuryCategories) {
+        console.log('Processing luxury category batch request');
+        const luxuryData = await searchLuxuryCategories(api_key, page);
+        
+        return new Response(JSON.stringify(luxuryData), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Existing single search logic (preserved exactly)
       const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`, {
         method: 'GET',
         headers: {

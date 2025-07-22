@@ -18,7 +18,7 @@ const giftCategories = [
     id: "gifts-for-her",
     title: "Gifts for Her",
     description: "Thoughtful gifts she'll love",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&h=1200&fit=crop&crop=center",
+    image: "/lovable-uploads/5f6e5bfc-2084-47e5-b28d-5fea068c2b93.png",
     searchTerm: "gifts for her",
     navigationUrl: "/marketplace?search=gifts+for+her"
   },

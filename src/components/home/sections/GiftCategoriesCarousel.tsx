@@ -26,7 +26,7 @@ const giftCategories = [
     id: "gifts-for-him",
     title: "Gifts for Him", 
     description: "Perfect gifts for the special man",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1200&fit=crop&crop=center",
+    image: "/lovable-uploads/19ec9b7e-120d-40e6-a4f2-2a411add14fb.png",
     searchTerm: "gifts for him",
     navigationUrl: "/marketplace?search=gifts+for+him"
   },

@@ -58,7 +58,11 @@ export const searchFriendsWithPrivacy = async (
 
     if (profileError) throw profileError;
 
+    console.log(`🔍 Raw search results: ${profiles?.length || 0} profiles found`);
+    console.log(`🔍 Profile results:`, profiles);
+
     if (!profiles || profiles.length === 0) {
+      console.log(`🔍 No profiles found for search term: "${cleanedSearchTerm}"`);
       return [];
     }
 

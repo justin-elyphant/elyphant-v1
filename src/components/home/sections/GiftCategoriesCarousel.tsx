@@ -84,9 +84,9 @@ const GiftCategoriesCarousel: React.FC = () => {
         >
           <CarouselContent className="h-full">
             {giftCategories.map((category) => (
-              <CarouselItem key={category.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item h-full">
+              <CarouselItem key={category.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item">
                 <div
-                  className="group relative overflow-hidden bg-white cursor-pointer h-full touch-target-48 touch-manipulation tap-feedback"
+                  className="group relative overflow-hidden bg-white cursor-pointer h-80 md:h-96 lg:h-[500px] touch-target-48 touch-manipulation tap-feedback"
                   onClick={() => handleCategoryClick(category)}
                 >
                   {/* Image Container - Full height of carousel */}

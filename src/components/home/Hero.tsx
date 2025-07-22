@@ -6,7 +6,7 @@ import { Gift } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import GiftCountdown from "./sections/GiftCountdown";
+import GiftCountdown from "./sections/countdown/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";

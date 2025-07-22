@@ -41,7 +41,7 @@ const giftCategories = [
     id: "luxury-gifts",
     title: "Luxury Gifts",
     description: "Premium gifts for special occasions",
-    image: "https://images.unsplash.com/photo-1549298916-f52d724204b4?w=600&h=400&fit=crop",
+    image: "/lovable-uploads/89069d91-bc3d-4c97-ac4d-70be943ed556.png",
     searchTerm: "luxury gifts",
     navigationUrl: "/marketplace?search=luxury+gifts&minPrice=100"
   }

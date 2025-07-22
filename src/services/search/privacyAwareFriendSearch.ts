@@ -66,6 +66,8 @@ export const searchFriendsWithPrivacy = async (
       return [];
     }
 
+    console.log(`🔍 Processing ${profiles.length} profiles through privacy filter...`);
+
     // Get privacy settings for found profiles
     const profileIds = profiles.map(p => p.id);
     const { data: privacySettings, error: privacyError } = await supabase
@@ -122,11 +124,19 @@ export const searchFriendsWithPrivacy = async (
     const statusMap = new Map(connectionStatuses.map(cs => [cs.profileId, cs.status]));
 
     // Process results
-    const results: FilteredProfile[] = profiles
-      .filter(profile => 
-        !connectedUserIds.has(profile.id) && 
-        !blockedUserIds.has(profile.id)
-      )
+    console.log(`🔍 Connected user IDs:`, Array.from(connectedUserIds));
+    console.log(`🔍 Blocked user IDs:`, Array.from(blockedUserIds));
+    
+    const filteredProfiles = profiles.filter(profile => {
+      const isConnected = connectedUserIds.has(profile.id);
+      const isBlocked = blockedUserIds.has(profile.id);
+      console.log(`🔍 Profile ${profile.id} (${profile.name}): connected=${isConnected}, blocked=${isBlocked}`);
+      return !isConnected && !isBlocked;
+    });
+    
+    console.log(`🔍 After filtering: ${filteredProfiles.length} profiles remain`);
+    
+    const results: FilteredProfile[] = filteredProfiles
       .map(profile => {
         const userPrivacy = privacySettings?.find(ps => ps.user_id === profile.id);
         const connectionPolicy = userPrivacy?.allow_connection_requests_from || 'everyone';

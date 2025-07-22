@@ -1,6 +1,5 @@
-
 import React, { useEffect } from "react";
-import Hero from "./Hero";
+import Hero from "./sections/hero/Hero";
 import GiftCategoriesCarousel from "./sections/GiftCategoriesCarousel";
 import FeaturedCategories from "./sections/FeaturedCategories";
 import AutomationFeatures from "./sections/AutomationFeatures";
@@ -28,19 +27,10 @@ const HomeContent = () => {
       
       {/* Container with consistent padding for all sections */}
       <div className="container mx-auto px-4 py-12 space-y-16">
-        {/* Gift Categories Carousel - Quick Picks */}
         <GiftCategoriesCarousel />
-        
-        {/* Popular Brands Section */}
         <PopularBrands />
-        
-        {/* Featured Categories */}
         <FeaturedCategories />
-        
-        {/* Categories Grid */}
         <CategoriesGrid />
-        
-        {/* Automation Features */}
         <AutomationFeatures />
       </div>
     </div>

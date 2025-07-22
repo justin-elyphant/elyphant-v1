@@ -74,7 +74,7 @@ const GiftCategoriesCarousel: React.FC = () => {
       </div>
 
       {/* True full-bleed carousel */}
-      <div className="h-full pt-24 md:pt-32">
+      <div className="h-full pt-32 md:pt-40 lg:pt-44">
         <Carousel
           opts={{
             align: "start",

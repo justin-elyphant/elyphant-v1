@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
@@ -20,7 +19,12 @@ const Connections = () => {
   const { user } = useAuth();
   const [userData] = useLocalStorage("userData", null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("friends");
+  
+  // Check URL params for tab selection
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(urlTab === 'pending' ? 'pending' : "friends");
+  
   const [filters, setFilters] = useState<ConnectionFilters>({
     relationship: 'all',
     verificationStatus: 'all'

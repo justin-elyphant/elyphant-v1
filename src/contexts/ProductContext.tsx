@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { loadMockProducts, loadSavedProducts } from "@/components/gifting/utils/productLoader";
-import { generateDescription } from "@/components/marketplace/zinc/utils/descriptions/descriptionGenerator";
-import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
+import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
   // Required fields
@@ -70,35 +69,29 @@ export const normalizeProducts = (products: Partial<Product>[]): Product[] => {
 
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Load products when context is initialized
-  useEffect(() => {
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
   
   const loadProducts = async (query: {keyword: string}) => {
+    const { keyword } = query;
     setIsLoading(true);
-    const {keyword} = query;
+    
     try {
-      const { data, error } = await supabase.functions.invoke("get-products", {
-        body: {
-          query: keyword,
-          page: 1
-        }
+      console.log(`[ProductContext] Loading products for keyword: "${keyword}"`);
+      
+      // Use the unified marketplace service
+      const results = await unifiedMarketplaceService.searchProducts(keyword, {
+        maxResults: 20
       });
       
-      if (error) throw new Error(error.message);
-      
-      // Normalize the product data to ensure consistent structure
-      const normalizedProducts = normalizeProducts(data?.results || []);
-      setProducts(normalizedProducts);
+      setProducts(results);
+      console.log(`[ProductContext] Loaded ${results.length} products`);
     } catch (err) {
       console.error("Error loading products:", err);
       setProducts([]);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <ProductContext.Provider value={{ products, setProducts, loadProducts, isLoading, setIsLoading }}>

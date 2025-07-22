@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import MarketplaceWrapper from "@/components/marketplace/MarketplaceWrapper";
 import StreamlinedMarketplaceWrapper from "@/components/marketplace/StreamlinedMarketplaceWrapper";
 import { Helmet } from "react-helmet";
 import MainLayout from "@/components/layout/MainLayout";
-
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import BulkGiftingModal from "@/components/marketplace/BulkGiftingModal";

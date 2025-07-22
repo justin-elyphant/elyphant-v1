@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bot, Sparkles } from "lucide-react";
+import { Search, Bot, Sparkles, X } from "lucide-react";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import VoiceInputButton from "../VoiceInputButton";
 
@@ -18,6 +18,7 @@ interface SearchInputProps {
   mobile: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
   onUserInteraction?: () => void;
+  onClear?: () => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
@@ -30,7 +31,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
   isListening,
   mobile,
   inputRef,
-  onUserInteraction
+  onUserInteraction,
+  onClear
 }) => {
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
@@ -47,6 +49,17 @@ const SearchInput: React.FC<SearchInputProps> = ({
     if (onUserInteraction) {
       onUserInteraction();
     }
+  };
+
+  const handleClearClick = () => {
+    setQuery("");
+    if (onClear) {
+      onClear();
+    }
+    if (onUserInteraction) {
+      onUserInteraction();
+    }
+    inputRef.current?.focus();
   };
 
   return (
@@ -77,7 +90,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           ref={inputRef}
           type="search"
           placeholder={placeholderText}
-          className={`pl-32 pr-24 transition-all duration-300 ${
+          className={`pl-32 pr-32 transition-all duration-300 ${
             mobile ? "text-base py-3 h-12" : ""
           } rounded-full border-gray-300 ${
             isNicoleMode 
@@ -88,6 +101,19 @@ const SearchInput: React.FC<SearchInputProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
         />
+
+        {/* Clear Button */}
+        {query && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleClearClick}
+            className="absolute right-16 h-6 w-6 p-0 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          >
+            <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+          </Button>
+        )}
 
         {/* Voice Input Button */}
         <VoiceInputButton

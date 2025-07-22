@@ -1,17 +1,14 @@
-
-import React, { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useSearchMode } from "@/hooks/useSearchMode";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import { useFriendSearch } from "@/hooks/useFriendSearch";
-import NicoleConversationEngine from "@/components/ai/NicoleConversationEngine";
-import MobileConversationModal from "@/components/ai/conversation/MobileConversationModal";
-import SearchInput from "./components/SearchInput";
-import SearchResults from "./components/SearchResults";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchState } from "./hooks/useSearchState";
 import { useSearchLogic } from "./hooks/useSearchLogic";
 import { useSearchHandlers } from "./hooks/useSearchHandlers";
+import SearchInput from "./components/SearchInput";
+import SearchResults from "./components/SearchResults";
+import NicoleDropdown from "./components/NicoleDropdown";
+import NicoleMobileModal from "./components/NicoleMobileModal";
 
 interface AIEnhancedSearchBarProps {
   mobile?: boolean;
@@ -22,12 +19,15 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   mobile = false, 
   className = "" 
 }) => {
+  const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { mode, setMode, isNicoleMode } = useSearchMode();
-  const { sendFriendRequest } = useFriendSearch();
+  const isMobile = useIsMobile();
   
+  const [isNicoleMode, setIsNicoleMode] = useState(false);
+  
+  // Use search state hook for centralized state management
   const {
     query,
     setQuery,
@@ -52,18 +52,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     nicoleDropdownRef
   } = useSearchState();
 
-  // Handle location changes - clear state when navigating
-  useEffect(() => {
-    setShowSuggestions(false);
-    setHasUserInteracted(false);
-    const searchParams = new URLSearchParams(location.search);
-    let urlSearchTerm = searchParams.get("search") || "";
-    setQuery(urlSearchTerm);
-    setShowNicoleDropdown(false);
-    setShowMobileModal(false);
-  }, [location.pathname]);
-
-  // Use search logic hook
+  // Enhanced search logic with friends, products, and brands
   useSearchLogic({
     query,
     isNicoleMode,
@@ -74,7 +63,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setSuggestions
   });
 
-  // Use search handlers hook
+  // Search handlers for different result types
   const {
     handleSubmit,
     handleSuggestionClick,
@@ -94,107 +83,111 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     inputRef
   });
 
-  const handleClickOutside = (event) => {
-    if (
-      inputRef.current && !inputRef.current.contains(event.target) &&
-      suggestionRef.current && !suggestionRef.current.contains(event.target)
-    ) {
-      setShowSuggestions(false);
-    } 
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Handle user interaction to show suggestions
-  const handleUserInteraction = () => {
-    setHasUserInteracted(true);
-    if (query.length > 1 && !isNicoleMode) {
-      const hasResults = unifiedResults.friends.length > 0 || 
-                        unifiedResults.products.length > 0 || 
-                        unifiedResults.brands.length > 0;
-      setShowSuggestions(hasResults);
-    } else if (query.length > 0 && isNicoleMode) {
-      setShowSuggestions(suggestions.length > 0);
-    }
-  };
-
-  // Check URL params for AI mode activation with personalized greeting
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const modeParam = params.get("mode");
-    const openParam = params.get("open");
-    const greetingParam = params.get("greeting");
-    
-    if (modeParam === "nicole") {
-      setMode("nicole");
-      if (openParam === "true") {
-        // Set personalized greeting if specified
-        if (greetingParam === "personalized" && user) {
-          const firstName = user.user_metadata?.name?.split(' ')[0] || 
-                          user.email?.split('@')[0] || 
-                          "there";
-          setQuery(`Hi ${firstName}, what brings you to Elyphant today?`);
-        }
-        
-        if (isMobile) {
-          setShowMobileModal(true);
-        } else {
-          setShowNicoleDropdown(true);
-        }
-        
-        // Clean up URL params after activation
-        const newParams = new URLSearchParams(params);
-        newParams.delete("open");
-        newParams.delete("greeting");
-        const newUrl = newParams.toString() ? 
-          `${location.pathname}?${newParams.toString()}` : 
-          location.pathname;
-        window.history.replaceState({}, '', newUrl);
+  // Handle mode toggle
+  const handleModeToggle = (checked: boolean) => {
+    setIsNicoleMode(checked);
+    if (checked && query.trim()) {
+      if (isMobile) {
+        setShowMobileModal(true);
+      } else {
+        setShowNicoleDropdown(true);
       }
     }
-  }, [location.search, isMobile, setMode, user, setQuery]);
-
-  const handleSendFriendRequest = async (friendId: string, friendName: string) => {
-    await sendFriendRequest(friendId, friendName);
   };
 
-  const handleModeToggle = (checked: boolean) => {
-    const newMode = checked ? "nicole" : "search";
-    setMode(newMode);
-    setQuery("");
-    setShowSuggestions(false);
-    setHasUserInteracted(false);
-    setShowNicoleDropdown(false);
-    setShowMobileModal(false);
-    if (inputRef.current) {
-      inputRef.current.focus();
+  // Handle user interaction for suggestions
+  const handleUserInteraction = () => {
+    setHasUserInteracted(true);
+    if (query.trim() && (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0)) {
+      setShowSuggestions(true);
     }
   };
 
-  // Show unified search results when not in Nicole mode, have query, and user has interacted
-  const shouldShowUnifiedSuggestions = !isNicoleMode && hasUserInteracted && showSuggestions && (
-    unifiedResults.friends.length > 0 || 
-    unifiedResults.products.length > 0 || 
-    unifiedResults.brands.length > 0
-  );
+  // Handle clear functionality with URL management
+  const handleClear = () => {
+    // Clear all search-related state
+    setShowSuggestions(false);
+    setShowNicoleDropdown(false);
+    setShowMobileModal(false);
+    setHasUserInteracted(false);
+    
+    // If we're on the marketplace page, update the URL to remove search params
+    if (location.pathname === '/marketplace') {
+      const params = new URLSearchParams(searchParams);
+      params.delete('search');
+      // Keep other parameters like category, filters, etc.
+      
+      if (params.toString()) {
+        navigate(`/marketplace?${params.toString()}`, { replace: true });
+      } else {
+        navigate('/marketplace', { replace: true });
+      }
+    }
+  };
 
-  // Show Nicole suggestions when in Nicole mode and user has interacted
-  const shouldShowNicoleSuggestions = isNicoleMode && hasUserInteracted && showSuggestions && suggestions.length > 0;
+  // Mock send friend request function
+  const handleSendFriendRequest = (friendId: string, friendName: string) => {
+    console.log(`Sending friend request to ${friendName} (${friendId})`);
+    // This would integrate with your friend request system
+  };
 
-  // Show no results message when query exists, user has interacted, but no results
-  const shouldShowNoResults = !isNicoleMode && hasUserInteracted && query.length > 1 && !searchLoading && 
+  // Initialize search term from URL on marketplace
+  useEffect(() => {
+    if (location.pathname === '/marketplace') {
+      const searchParam = searchParams.get("search");
+      if (searchParam && searchParam !== query) {
+        setQuery(searchParam);
+      } else if (!searchParam && query) {
+        setQuery("");
+      }
+    }
+  }, [searchParams, location.pathname]);
+
+  // Clear suggestions when navigating away
+  useEffect(() => {
+    setShowSuggestions(false);
+    setShowNicoleDropdown(false);
+    setShowMobileModal(false);
+  }, [location.pathname]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node) &&
+          inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+      if (nicoleDropdownRef.current && !nicoleDropdownRef.current.contains(event.target as Node) &&
+          inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowNicoleDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Determine what search results to show
+  const shouldShowUnifiedSuggestions = showSuggestions && 
+    (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0) &&
+    !searchLoading && !isNicoleMode && hasUserInteracted;
+
+  const shouldShowNicoleSuggestions = showSuggestions && suggestions.length > 0 && 
+    !searchLoading && isNicoleMode && hasUserInteracted;
+
+  const shouldShowNoResults = query.length > 1 && 
+    !searchLoading && 
+    hasUserInteracted &&
+    !shouldShowUnifiedSuggestions && 
+    !shouldShowNicoleSuggestions && 
     unifiedResults.friends.length === 0 && 
     unifiedResults.products.length === 0 && 
-    unifiedResults.brands.length === 0;
+    unifiedResults.brands.length === 0 && 
+    suggestions.length === 0;
 
   return (
     <div className={`relative w-full ${className}`}>
-      {/* Search Bar */}
+      {/* Enhanced Search Bar */}
       <SearchInput
         query={query}
         setQuery={setQuery}
@@ -206,59 +199,42 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         mobile={mobile}
         inputRef={inputRef}
         onUserInteraction={handleUserInteraction}
+        onClear={handleClear}
       />
 
-      {/* Mode Description */}
-      {isNicoleMode && (
-        <div className="mt-2 text-center">
-          <p className="text-xs text-purple-600 font-medium">
-            AI Mode Active - Nicole will help find perfect gifts
-          </p>
-        </div>
-      )}
-
       {/* Search Results */}
-      {(shouldShowUnifiedSuggestions || shouldShowNicoleSuggestions || shouldShowNoResults) && (
-        <div ref={suggestionRef}>
-          <SearchResults
-            shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
-            shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
-            shouldShowNoResults={shouldShowNoResults}
-            searchLoading={searchLoading}
-            query={query}
-            unifiedResults={unifiedResults}
-            suggestions={suggestions}
-            onFriendSelect={handleFriendSelect}
-            onProductSelect={handleProductSelect}
-            onBrandSelect={handleBrandSelect}
-            onSendFriendRequest={handleSendFriendRequest}
-            onSuggestionClick={handleSuggestionClick}
-            mobile={mobile}
-            isNicoleMode={isNicoleMode}
-          />
-        </div>
-      )}
+      <SearchResults
+        shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
+        shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
+        shouldShowNoResults={shouldShowNoResults}
+        searchLoading={searchLoading}
+        query={query}
+        unifiedResults={unifiedResults}
+        suggestions={suggestions}
+        onFriendSelect={handleFriendSelect}
+        onProductSelect={handleProductSelect}
+        onBrandSelect={handleBrandSelect}
+        onSendFriendRequest={handleSendFriendRequest}
+        onSuggestionClick={handleSuggestionClick}
+        mobile={mobile}
+        isNicoleMode={isNicoleMode}
+        ref={suggestionRef}
+      />
 
-      {/* Desktop Nicole Conversation Dropdown */}
-      {showNicoleDropdown && isNicoleMode && !isMobile && (
-        <div 
-          ref={nicoleDropdownRef}
-          className="absolute top-full left-0 right-0 z-50 bg-white shadow-xl border rounded-lg mt-1 max-h-96 overflow-hidden"
-        >
-          <NicoleConversationEngine
-            isOpen={true}
-            initialMessage={query}
-            onClose={handleCloseNicole}
-            onNavigateToMarketplace={handleNicoleNavigateToResults}
-          />
-        </div>
-      )}
+      {/* Nicole AI Dropdown (Desktop) */}
+      <NicoleDropdown
+        isOpen={showNicoleDropdown}
+        query={query}
+        onNavigateToResults={handleNicoleNavigateToResults}
+        onClose={handleCloseNicole}
+        ref={nicoleDropdownRef}
+      />
 
-      {/* Mobile Nicole Conversation Modal */}
-      <MobileConversationModal
+      {/* Nicole AI Modal (Mobile) */}
+      <NicoleMobileModal
         isOpen={showMobileModal}
         onClose={handleCloseNicole}
-        initialQuery={query}
+        query={query}
         onNavigateToResults={handleNicoleNavigateToResults}
       />
     </div>

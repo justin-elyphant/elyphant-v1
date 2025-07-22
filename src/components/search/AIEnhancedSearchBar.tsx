@@ -7,8 +7,6 @@ import { useSearchLogic } from "./hooks/useSearchLogic";
 import { useSearchHandlers } from "./hooks/useSearchHandlers";
 import SearchInput from "./components/SearchInput";
 import SearchResults from "./components/SearchResults";
-import NicoleDropdown from "./components/NicoleDropdown";
-import NicoleMobileModal from "./components/NicoleMobileModal";
 
 interface AIEnhancedSearchBarProps {
   mobile?: boolean;
@@ -218,25 +216,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         onSuggestionClick={handleSuggestionClick}
         mobile={mobile}
         isNicoleMode={isNicoleMode}
-        ref={suggestionRef}
       />
 
-      {/* Nicole AI Dropdown (Desktop) */}
-      <NicoleDropdown
-        isOpen={showNicoleDropdown}
-        query={query}
-        onNavigateToResults={handleNicoleNavigateToResults}
-        onClose={handleCloseNicole}
-        ref={nicoleDropdownRef}
-      />
-
-      {/* Nicole AI Modal (Mobile) */}
-      <NicoleMobileModal
-        isOpen={showMobileModal}
-        onClose={handleCloseNicole}
-        query={query}
-        onNavigateToResults={handleNicoleNavigateToResults}
-      />
     </div>
   );
 };

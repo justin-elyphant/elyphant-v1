@@ -18,13 +18,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { orderId, isTestMode = false } = await req.json();
+    const { orderId, isTestMode = false, debugMode = false } = await req.json();
     
     if (!orderId) {
       throw new Error('Order ID is required');
     }
 
-    console.log(`Processing Zinc order for order ${orderId}, test mode: ${isTestMode}`);
+    console.log(`🚀 Processing Zinc order for order ${orderId}, test mode: ${isTestMode}, debug mode: ${debugMode}`);
 
     // Get order details from database
     const { data: order, error: orderError } = await supabaseClient
@@ -37,10 +37,14 @@ serve(async (req) => {
       .single();
 
     if (orderError || !order) {
+      console.error(`❌ Order not found: ${orderError?.message}`);
       throw new Error(`Order not found: ${orderError?.message}`);
     }
 
-    console.log(`Processing Zinc order for user ${order.user_id}, order ${orderId}`);
+    console.log(`📋 Processing Zinc order for user ${order.user_id}, order ${orderId}`);
+    if (debugMode) {
+      console.log(`🐛 Full order data:`, JSON.stringify(order, null, 2));
+    }
 
     // Get Elyphant Amazon credentials (try active first, then any available)
     let { data: credentials, error: credError } = await supabaseClient
@@ -62,14 +66,14 @@ serve(async (req) => {
     }
 
     if (credError || !credentials) {
-      console.error('Amazon credentials error:', credError);
+      console.error('❌ Amazon credentials error:', credError);
       throw new Error(`Amazon credentials not configured: ${credError?.message}`);
     }
 
-    console.log(`Using Amazon credentials: ${credentials.email} (verified: ${credentials.is_verified})`);
+    console.log(`🔐 Using Amazon credentials: ${credentials.email} (verified: ${credentials.is_verified})`);
     
     if (!credentials.is_verified && !isTestMode) {
-      console.warn('Amazon credentials not verified, but proceeding with order');
+      console.warn('⚠️ Amazon credentials not verified, but proceeding with order');
     }
 
     // Prepare Zinc order data
@@ -111,38 +115,60 @@ serve(async (req) => {
       },
       is_gift: order.is_gift || false,
       gift_message: order.gift_message || "",
-      is_test: isTestMode, // Use the passed test mode flag
+      is_test: isTestMode,
       retailer_credentials: {
         email: credentials.email,
         password: credentials.encrypted_password,
-        verification_code: credentials.verification_code || "639146"
+        verification_code: credentials.verification_code || "639146",
+        totp_2fa_key: credentials.totp_2fa_key || undefined
       }
     };
 
-    console.log("Order data:", JSON.stringify(orderData, null, 2));
-    console.log("Sending request to Zinc API...");
+    if (debugMode) {
+      console.log("🐛 Complete order data being sent to Zinc:", JSON.stringify(orderData, null, 2));
+    } else {
+      console.log("📦 Order data prepared:", {
+        retailer: orderData.retailer,
+        productCount: orderData.products.length,
+        isGift: orderData.is_gift,
+        isTest: orderData.is_test,
+        hasVerificationCode: !!orderData.retailer_credentials.verification_code,
+        has2FA: !!orderData.retailer_credentials.totp_2fa_key
+      });
+    }
+
+    console.log("📡 Sending request to Zinc API...");
 
     const zincApiKey = Deno.env.get('ZINC_API_KEY');
     if (!zincApiKey) {
       throw new Error('ZINC_API_KEY not configured');
     }
 
-    console.log("Enhanced order request with Elyphant Amazon credentials prepared");
-
+    const requestStartTime = Date.now();
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${btoa(`${zincApiKey}:`)}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Elyphant-OrderProcessor/1.0'
       },
       body: JSON.stringify(orderData)
     });
 
-    console.log(`Zinc API response status: ${zincResponse.status} ${zincResponse.statusText}`);
+    const requestDuration = Date.now() - requestStartTime;
+    console.log(`⏱️ Zinc API response received in ${requestDuration}ms - Status: ${zincResponse.status} ${zincResponse.statusText}`);
+
+    if (debugMode) {
+      console.log(`🐛 Response Headers:`, Object.fromEntries(zincResponse.headers.entries()));
+    }
 
     if (zincResponse.ok) {
       const zincOrder = await zincResponse.json();
-      console.log("Zinc order processed successfully:", zincOrder.request_id);
+      console.log("✅ Zinc order processed successfully:", zincOrder.request_id);
+      
+      if (debugMode) {
+        console.log("🐛 Full Zinc response:", JSON.stringify(zincOrder, null, 2));
+      }
 
       // Update our order with Zinc order ID and initial status
       const { error: updateError } = await supabaseClient
@@ -156,14 +182,26 @@ serve(async (req) => {
         .eq('id', orderId);
 
       if (updateError) {
-        console.error('Error updating order with Zinc ID:', updateError);
+        console.error('❌ Error updating order with Zinc ID:', updateError);
       }
+
+      // Log successful order processing
+      await supabaseClient
+        .from('order_notes')
+        .insert({
+          order_id: orderId,
+          note_content: `Zinc order successfully submitted. Zinc Order ID: ${zincOrder.request_id}. Test mode: ${isTestMode}. Response time: ${requestDuration}ms.`,
+          note_type: 'system',
+          is_internal: true
+        });
 
       return new Response(JSON.stringify({
         success: true,
         zincOrderId: zincOrder.request_id,
         orderId: orderId,
-        testMode: isTestMode
+        testMode: isTestMode,
+        processingTime: requestDuration,
+        nextSteps: 'Order submitted to Zinc. Status will be updated automatically via background checks.'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -171,7 +209,21 @@ serve(async (req) => {
 
     } else {
       const errorResponse = await zincResponse.text();
-      console.error('Zinc API error:', errorResponse);
+      console.error(`❌ Zinc API error (${zincResponse.status}):`, errorResponse);
+      
+      if (debugMode) {
+        console.log(`🐛 Full error response body:`, errorResponse);
+      }
+      
+      // Log the error details
+      await supabaseClient
+        .from('order_notes')
+        .insert({
+          order_id: orderId,
+          note_content: `Zinc order submission failed. Status: ${zincResponse.status}. Error: ${errorResponse}. Test mode: ${isTestMode}.`,
+          note_type: 'error',
+          is_internal: true
+        });
       
       // Update order status to failed
       await supabaseClient
@@ -183,14 +235,34 @@ serve(async (req) => {
         })
         .eq('id', orderId);
 
-      throw new Error(`Zinc API error: ${errorResponse}`);
+      throw new Error(`Zinc API error (${zincResponse.status}): ${errorResponse}`);
     }
 
   } catch (error) {
     console.error('🚨 Error processing Zinc order:', error);
+    
+    // Try to log the error to the database if we have an orderId
+    const { orderId } = await req.json().catch(() => ({}));
+    if (orderId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      await supabaseClient
+        .from('order_notes')
+        .insert({
+          order_id: orderId,
+          note_content: `Critical error during Zinc order processing: ${error.message}`,
+          note_type: 'error',
+          is_internal: true
+        }).catch(console.error);
+    }
+    
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message,
+      timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

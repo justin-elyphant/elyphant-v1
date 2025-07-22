@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -26,6 +25,7 @@ import Chat from "./pages/Chat";
 import Connections from "./pages/Connections";
 import Wishlists from "./pages/Wishlists";
 import StreamlinedProfileSetup from "./pages/StreamlinedProfileSetup";
+import ZincDebugger from "@/pages/ZincDebugger";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +63,7 @@ function App() {
                           {/* Legacy route redirects */}
                           <Route path="/signin" element={<Auth />} />
                           <Route path="/signup" element={<Auth />} />
+                          <Route path="/zinc-debugger" element={<ZincDebugger />} />
                         </Routes>
                       </div>
                     </Router>

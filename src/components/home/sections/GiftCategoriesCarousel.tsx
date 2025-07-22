@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,7 @@ const giftCategories = [
     id: "gifts-for-her",
     title: "Gifts for Her",
     description: "Thoughtful gifts she'll love",
-    image: "/lovable-uploads/53a8bb31-a163-45ec-bb67-ee4bed4cc1db.png",
+    image: "/lovable-uploads/53a8bb31-a163-45ec-bb67-ee4bed4cc1db.png?v=2",
     searchTerm: "gifts for her",
     navigationUrl: "/marketplace?search=gifts+for+her"
   },

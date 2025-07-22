@@ -37,7 +37,9 @@ class UnifiedMarketplaceService {
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
     const { luxuryCategories, page = 1, maxResults = 20 } = options;
-    return `search:${searchTerm}:luxury:${luxuryCategories}:page:${page}:limit:${maxResults}`;
+    // Add timestamp to force cache invalidation for price fix
+    const timestamp = Math.floor(Date.now() / 10000); // Change every 10 seconds
+    return `search:${searchTerm}:luxury:${luxuryCategories}:page:${page}:limit:${maxResults}:ts:${timestamp}`;
   }
 
   /**
@@ -177,6 +179,9 @@ class UnifiedMarketplaceService {
       
       const errorMessage = error instanceof Error ? error.message : 'Search failed';
       this.showToast('Search failed', 'error', errorMessage);
+      
+      // Clear cache on error to force fresh data next time
+      this.cache.clear();
       
       // Fallback to mock products for development
       if (searchTerm.trim()) {

@@ -132,6 +132,9 @@ export const useGeneralSettingsForm = () => {
       const result = await updateProfile(databaseData);
       console.log("✅ Update profile result:", result);
       
+      // Force a profile refresh to sync all components
+      await refetchProfile();
+      
       // Update initial values to reflect the save
       setInitialFormValues(data);
       setHasUnsavedChanges(false);

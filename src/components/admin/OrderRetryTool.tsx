@@ -1,124 +1,85 @@
-/**
- * Order Retry Tool - Admin utility for retrying failed orders with billing info
- * 
- * This component demonstrates the complete billing info capture and retry functionality.
- * It can be used to fix the stuck order and test your wife's use case.
- */
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, RefreshCw, CreditCard } from "lucide-react";
-import { retryOrderWithBillingInfo, getOrdersNeedingRetry } from "@/services/orderRetryService";
-import { createBillingInfo } from "@/services/billingService";
-
-interface Order {
-  id: string;
-  order_number: string;
-  status: string;
-  zinc_status: string;
-  created_at: string;
-  billing_info: any;
-  shipping_info: any;
-  total_amount: number;
-}
+import { useToast } from "@/hooks/use-toast";
+import { retryOrderWithBillingInfo } from "@/services/orderRetryService";
 
 const OrderRetryTool = () => {
-  const [failedOrders, setFailedOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [cardholderName, setCardholderName] = useState<string>('');
-  const [billingAddress, setBillingAddress] = useState({
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'US'
-  });
-  const [retryResult, setRetryResult] = useState<string>('');
+  const [orderId, setOrderId] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
   const [isRetrying, setIsRetrying] = useState(false);
+  const [retryResult, setRetryResult] = useState<any>(null);
+  const { toast } = useToast();
 
-  const loadFailedOrders = async () => {
-    setLoading(true);
-    try {
-      const orders = await getOrdersNeedingRetry();
-      setFailedOrders(orders);
-    } catch (error) {
-      console.error('Error loading failed orders:', error);
-      setRetryResult(`Error loading orders: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOrderSelect = (order: Order) => {
-    setSelectedOrderId(order.id);
-    
-    // Pre-fill with existing billing info or shipping info as fallback
-    if (order.billing_info?.cardholderName) {
-      setCardholderName(order.billing_info.cardholderName);
-    } else if (order.shipping_info?.name) {
-      setCardholderName(order.shipping_info.name);
-    }
-
-    // Pre-fill billing address with shipping address as fallback
-    const shippingInfo = order.shipping_info;
-    if (shippingInfo) {
-      setBillingAddress({
-        address: shippingInfo.address || shippingInfo.address_line1 || '',
-        city: shippingInfo.city || '',
-        state: shippingInfo.state || '',
-        zipCode: shippingInfo.zipCode || shippingInfo.zip_code || '',
-        country: 'US'
+  const handleRetryOrder = async () => {
+    if (!orderId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an order ID",
+        variant: "destructive"
       });
+      return;
     }
-  };
 
-  const handleRetry = async () => {
-    if (!selectedOrderId || !cardholderName.trim()) {
-      setRetryResult('Please select an order and enter cardholder name');
+    if (!cardholderName.trim()) {
+      toast({
+        title: "Error", 
+        description: "Please enter the cardholder name",
+        variant: "destructive"
+      });
       return;
     }
 
     setIsRetrying(true);
-    setRetryResult('');
+    setRetryResult(null);
 
     try {
-      // Create billing info for the retry
-      const billingInfo = createBillingInfo(cardholderName, billingAddress);
+      console.log(`🔄 Starting retry for order ${orderId} with cardholder: ${cardholderName}`);
       
-      // Retry the order
-      const result = await retryOrderWithBillingInfo(selectedOrderId, billingInfo, true); // Use test mode
+      const billingInfo = {
+        cardholderName: cardholderName.trim(),
+        // The service will use the shipping address from the order for billing
+      };
+
+      const result = await retryOrderWithBillingInfo(orderId, billingInfo, false);
+      
+      setRetryResult(result);
       
       if (result.success) {
-        setRetryResult(`✅ SUCCESS! Order retried successfully. Zinc Order ID: ${result.zincOrderId}`);
-        // Refresh the failed orders list
-        await loadFailedOrders();
+        toast({
+          title: "Success",
+          description: result.message,
+        });
       } else {
-        setRetryResult(`❌ FAILED: ${result.message} - ${result.error}`);
+        toast({
+          title: "Retry Failed",
+          description: result.error || result.message,
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      setRetryResult(`❌ ERROR: ${error.message}`);
+      console.error('Error retrying order:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      setRetryResult({
+        success: false,
+        message: 'Order retry failed',
+        error: errorMessage
+      });
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsRetrying(false);
     }
-  };
-
-  const handleWifeUseCase = () => {
-    // Pre-fill for your wife's use case
-    setCardholderName('Mrs. Meeks'); // Your wife's name
-    setBillingAddress({
-      address: '309 Solana Hills Drive',
-      city: 'Solana Beach',
-      state: 'CA',
-      zipCode: '92075',
-      country: 'US'
-    });
   };
 
   return (
@@ -126,149 +87,97 @@ const OrderRetryTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Order Retry Tool - Billing Info Fix
+            <RefreshCw className="h-5 w-5" />
+            Retry Failed Order
           </CardTitle>
+          <CardDescription>
+            Enter the order ID and cardholder name to retry a failed Zinc order with proper billing information.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          
-          {/* Step 1: Load Failed Orders */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Step 1: Load Failed Orders</Label>
-            <div className="flex gap-2">
-              <Button onClick={loadFailedOrders} disabled={loading} size="sm">
-                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Load Failed Orders'}
-              </Button>
-              <Button variant="outline" onClick={handleWifeUseCase} size="sm">
-                Setup Wife's Use Case
-              </Button>
-            </div>
-            
-            {failedOrders.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">
-                  Found {failedOrders.length} failed orders:
-                </Label>
-                {failedOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    onClick={() => handleOrderSelect(order)}
-                    className={`p-3 border rounded cursor-pointer transition-colors ${
-                      selectedOrderId === order.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{order.order_number}</div>
-                        <div className="text-sm text-muted-foreground">
-                          ${order.total_amount} • {new Date(order.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Badge variant="destructive" className="text-xs">{order.status}</Badge>
-                        {order.billing_info ? (
-                          <Badge variant="secondary" className="text-xs">Has Billing</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">No Billing</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Step 2: Enter Billing Information */}
-          {selectedOrderId && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Step 2: Enter Billing Information</Label>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardholderName">Cardholder Name *</Label>
-                  <Input
-                    id="cardholderName"
-                    value={cardholderName}
-                    onChange={(e) => setCardholderName(e.target.value)}
-                    placeholder="Mrs. Meeks"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="address">Billing Address</Label>
-                  <Input
-                    id="address"
-                    value={billingAddress.address}
-                    onChange={(e) => setBillingAddress(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="309 Solana Hills Drive"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={billingAddress.city}
-                    onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder="Solana Beach"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    value={billingAddress.state}
-                    onChange={(e) => setBillingAddress(prev => ({ ...prev, state: e.target.value }))}
-                    placeholder="CA"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code</Label>
-                  <Input
-                    id="zipCode"
-                    value={billingAddress.zipCode}
-                    onChange={(e) => setBillingAddress(prev => ({ ...prev, zipCode: e.target.value }))}
-                    placeholder="92075"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Retry Order */}
-          {selectedOrderId && cardholderName && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Step 3: Retry Order</Label>
-              <Button 
-                onClick={handleRetry} 
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="orderId">Order ID</Label>
+              <Input
+                id="orderId"
+                placeholder="e.g., c5526964e99a6214ad309b2bd4dbc184"
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value)}
                 disabled={isRetrying}
-                className="w-full"
-              >
-                {isRetrying ? (
-                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
-                Retry Order with Billing Info (Test Mode)
-              </Button>
+              />
             </div>
-          )}
-
-          {/* Results */}
-          {retryResult && (
-            <Alert className={retryResult.startsWith('✅') ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <pre className="whitespace-pre-wrap text-sm">{retryResult}</pre>
-              </AlertDescription>
-            </Alert>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="cardholderName">Cardholder Name</Label>
+              <Input
+                id="cardholderName"
+                placeholder="e.g., Justin Meeks"
+                value={cardholderName}
+                onChange={(e) => setCardholderName(e.target.value)}
+                disabled={isRetrying}
+              />
+            </div>
+          </div>
           
+          <Button 
+            onClick={handleRetryOrder} 
+            disabled={isRetrying || !orderId.trim() || !cardholderName.trim()}
+            className="w-full"
+          >
+            {isRetrying ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Retrying Order...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry Order
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
+
+      {retryResult && (
+        <Alert className={retryResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+          {retryResult.success ? (
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          ) : (
+            <AlertCircle className="h-4 w-4 text-red-600" />
+          )}
+          <AlertDescription className={retryResult.success ? "text-green-700" : "text-red-700"}>
+            <div className="space-y-2">
+              <p className="font-medium">
+                {retryResult.success ? 'Order Retry Successful' : 'Order Retry Failed'}
+              </p>
+              <p>{retryResult.message}</p>
+              {retryResult.zincOrderId && (
+                <p className="text-sm">
+                  <strong>Zinc Order ID:</strong> {retryResult.zincOrderId}
+                </p>
+              )}
+              {retryResult.error && (
+                <p className="text-sm">
+                  <strong>Error:</strong> {retryResult.error}
+                </p>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <p className="font-medium mb-2">How this works:</p>
+          <ul className="text-sm space-y-1 list-disc list-inside">
+            <li>The tool updates the order with the cardholder name you provide</li>
+            <li>It uses the existing shipping address as the billing address</li>
+            <li>The order is resubmitted to Zinc with proper billing information</li>
+            <li>You can track the retry result and any new Zinc order ID generated</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };

@@ -80,7 +80,7 @@ export const standardizeProduct = (product: any): any => {
     id: product.id || product.product_id || `product-${Math.random().toString(36).substr(2, 9)}`,
     title: product.title || product.name || "Unnamed Product",
     name: product.name || product.title || "Unnamed Product",
-    price: parseFloat(product.price) || 19.99,
+    price: typeof product.price === 'number' ? product.price / 100 : parseFloat(product.price) / 100 || 19.99,
     image: product.image || "/placeholder.svg",
     
     // Optional fields

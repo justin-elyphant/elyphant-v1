@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -60,60 +61,59 @@ const GiftCategoriesCarousel: React.FC = () => {
       background="bg-white" 
       height="large"
       className="intersection-target"
+      contentPadding={false}
     >
-      {/* Center all content vertically */}
-      <div className="flex flex-col justify-center h-full">
-        {/* Header content with proper spacing */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
-            Quick Picks
-          </h2>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Find the perfect gift for any occasion with our curated collections
-          </p>
-        </div>
+      {/* Header positioned absolutely over the carousel */}
+      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
+          Quick Picks
+        </h2>
+        <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          Find the perfect gift for any occasion with our curated collections
+        </p>
+      </div>
 
-      {/* Full-width carousel that bleeds to edges */}
-      <div className="relative -mx-4 md:-mx-6">
+      {/* True full-bleed carousel */}
+      <div className="h-full pt-24 md:pt-32">
         <Carousel
           opts={{
             align: "start",
             loop: true,
           }}
-          className="w-full swipe-container will-change-scroll"
+          className="w-full h-full swipe-container will-change-scroll"
         >
-          <CarouselContent className="-ml-2 md:-ml-4">
+          <CarouselContent className="h-full">
             {giftCategories.map((category) => (
-              <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item">
+              <CarouselItem key={category.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item h-full">
                 <div
-                  className="group relative overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 h-full touch-target-48 touch-manipulation tap-feedback"
+                  className="group relative overflow-hidden bg-white cursor-pointer h-full touch-target-48 touch-manipulation tap-feedback"
                   onClick={() => handleCategoryClick(category)}
                 >
-                  {/* Image Container - Full bleed within card */}
-                  <div className="relative h-48 md:h-56 lg:h-64 overflow-hidden">
+                  {/* Image Container - Full height of carousel */}
+                  <div className="relative h-full overflow-hidden">
                     <img
                       src={category.image}
                       alt={category.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 gpu-accelerated"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     
-                    {/* Overlay Content */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-2">
+                    {/* Overlay Content - positioned at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10 text-white">
+                      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
                         {category.title}
                       </h3>
-                      <p className="text-sm md:text-base text-white/90 mb-3 md:mb-4">
+                      <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
                         {category.description}
                       </p>
                       <Button
                         variant="secondary"
-                        size="sm"
-                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select"
+                        size="lg"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-base md:text-lg px-6 py-3"
                       >
                         Shop Now
-                        <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                       </Button>
                     </div>
                   </div>
@@ -123,10 +123,9 @@ const GiftCategoriesCarousel: React.FC = () => {
           </CarouselContent>
           
           {/* Navigation arrows - positioned outside content area */}
-          <CarouselPrevious className="hidden md:flex left-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
-          <CarouselNext className="hidden md:flex right-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
+          <CarouselPrevious className="hidden md:flex left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm shadow-lg border border-white/20 hover:bg-white/90 z-30 w-12 h-12" />
+          <CarouselNext className="hidden md:flex right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm shadow-lg border border-white/20 hover:bg-white/90 z-30 w-12 h-12" />
         </Carousel>
-        </div>
       </div>
     </FullBleedSection>
   );

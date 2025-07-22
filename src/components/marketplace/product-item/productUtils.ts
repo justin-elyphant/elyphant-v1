@@ -74,13 +74,21 @@ export const getProductImages = (product: Product): string[] => {
 export const standardizeProduct = (product: any): any => {
   if (!product) return {};
   
+  // Convert price from cents to dollars for Zinc API responses
+  let normalizedPrice = 19.99;
+  if (product.price) {
+    const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
+    normalizedPrice = rawPrice > 100 ? rawPrice / 100 : rawPrice;
+    console.log(`Price conversion: ${rawPrice} -> ${normalizedPrice}`);
+  }
+  
   return {
     // Required fields with fallbacks
     product_id: product.product_id || product.id || `product-${Math.random().toString(36).substr(2, 9)}`,
     id: product.id || product.product_id || `product-${Math.random().toString(36).substr(2, 9)}`,
     title: product.title || product.name || "Unnamed Product",
     name: product.name || product.title || "Unnamed Product",
-    price: typeof product.price === 'number' ? product.price / 100 : parseFloat(product.price) / 100 || 19.99,
+    price: normalizedPrice,
     image: product.image || "/placeholder.svg",
     
     // Optional fields

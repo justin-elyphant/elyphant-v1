@@ -225,7 +225,9 @@ class UnifiedMarketplaceService {
     this.cache.clear();
     this.activeRequests.clear();
     this.toastHistory.clear();
-    console.log('[UnifiedMarketplaceService] Cache cleared');
+    console.log('[UnifiedMarketplaceService] Cache cleared - forcing page reload');
+    // Force reload to clear all cached data
+    setTimeout(() => window.location.reload(), 100);
   }
 
   /**

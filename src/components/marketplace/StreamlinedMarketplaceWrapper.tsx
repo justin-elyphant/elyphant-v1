@@ -9,6 +9,7 @@ import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -93,7 +94,15 @@ const StreamlinedMarketplaceWrapper = () => {
   
   return (
     <div className="container mx-auto px-4 py-6">
-      <MarketplaceHeader 
+      {/* Temporary: Clear cache button for price fix */}
+      <button 
+        onClick={() => unifiedMarketplaceService.clearCache()} 
+        className="mb-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        Clear Cache & Fix Prices
+      </button>
+      
+      <MarketplaceHeader
         totalResults={products.length}
         filteredProducts={products}
       />

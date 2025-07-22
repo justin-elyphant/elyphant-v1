@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share2 } from "lucide-react";
 import { Product } from "@/types/product";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useAuth } from "@/contexts/auth";
@@ -18,6 +18,8 @@ interface AirbnbStyleProductCardProps {
     name: string;
     location: string;
   };
+  onAddToCart?: (product: Product) => void;
+  onShare?: (product: Product) => void;
 }
 
 const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
@@ -25,7 +27,9 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
   onProductClick,
   statusBadge,
   isLocal = false,
-  vendorInfo
+  vendorInfo,
+  onAddToCart,
+  onShare
 }) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
@@ -215,14 +219,44 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           </div>
         )}
 
-        {/* Price */}
-        <div className="pt-1">
-          <span className="font-semibold text-gray-900">
-            ${getProductPrice()}
-          </span>
-          {product.tags?.includes("trending") && (
-            <span className="text-xs text-gray-500 ml-1">trending</span>
-          )}
+        {/* Price and Actions Row */}
+        <div className="pt-1 flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="font-semibold text-gray-900">
+              ${getProductPrice()}
+            </span>
+            {product.tags?.includes("trending") && (
+              <span className="text-xs text-gray-500 ml-1">trending</span>
+            )}
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Share Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare?.(product);
+              }}
+              className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+              title="Share product"
+            >
+              <Share2 className="h-4 w-4 text-gray-600" />
+            </button>
+            
+            {/* Add to Cart Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart?.(product);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors"
+              title="Add to cart"
+            >
+              <ShoppingCart className="h-3 w-3" />
+              Add
+            </button>
+          </div>
         </div>
       </div>
     </Card>

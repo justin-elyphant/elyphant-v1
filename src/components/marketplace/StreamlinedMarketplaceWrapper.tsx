@@ -36,6 +36,16 @@ const StreamlinedMarketplaceWrapper = () => {
     setShowProductDetails(true);
   };
 
+  const handleAddToCart = (product: any) => {
+    console.log('Add to cart:', product);
+    // TODO: Implement add to cart functionality
+  };
+
+  const handleShare = (product: any) => {
+    console.log('Share product:', product);
+    // TODO: Implement share functionality
+  };
+
   const toggleWishlist = (productId: string) => {
     console.log('Toggle wishlist for product:', productId);
     // Implement wishlist toggle logic
@@ -141,6 +151,8 @@ const StreamlinedMarketplaceWrapper = () => {
               product={product}
               onProductClick={() => handleProductClick(product)}
               statusBadge={getProductStatus(product)}
+              onAddToCart={handleAddToCart}
+              onShare={handleShare}
             />
           ))}
         </div>

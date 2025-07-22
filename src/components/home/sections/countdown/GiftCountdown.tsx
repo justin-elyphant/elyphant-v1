@@ -63,7 +63,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event }) => {
       <Button
         variant="outline"
         size="sm"
-        className="w-full text-white border-white/40 hover:bg-white/15 hover:text-white text-xs"
+        className="w-full text-gray-900 bg-white/90 border-white/40 hover:bg-white hover:text-gray-900 text-xs"
         onClick={handleShopGifts}
       >
         {buttonText}

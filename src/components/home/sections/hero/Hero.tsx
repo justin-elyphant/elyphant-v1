@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,8 @@ import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import GiftCountdown from "../countdown/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
+import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpecialDates";
+import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
@@ -18,6 +21,8 @@ const Hero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const nextHoliday = getNextHoliday();
+  const { friendOccasions } = useConnectedFriendsSpecialDates();
+  const { targetEvent } = useTargetEvent(user, nextHoliday, [], friendOccasions);
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
@@ -77,22 +82,22 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-black/15"></div>
       </div>
 
-      {/* Holiday Countdown Overlay */}
-      {nextHoliday && (
+      {/* Enhanced Holiday/Friend Event Countdown Overlay */}
+      {targetEvent && (
         <div className="absolute top-4 right-4 z-20 hidden md:block intersection-target safe-area-inset">
-          <GiftCountdown event={nextHoliday} />
+          <GiftCountdown event={targetEvent} />
         </div>
       )}
 
       {/* Mobile Countdown Banner - Optimized positioning */}
-      {nextHoliday && (
+      {targetEvent && (
         <div className="absolute top-4 left-0 right-0 z-20 md:hidden safe-area-inset safe-area-inset-top">
           <div className="mx-4">
             <ResponsiveContainer padding="minimal">
               <div className="text-center">
-                <GiftCountdown event={nextHoliday} />
+                <GiftCountdown event={targetEvent} />
                 <p className="text-white text-sm mt-2 font-medium bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block ios-modal-backdrop">
-                  {format(nextHoliday.date, "EEEE, MMMM d, yyyy")}
+                  {format(targetEvent.date, "EEEE, MMMM d, yyyy")}
                 </p>
               </div>
             </ResponsiveContainer>
@@ -102,7 +107,7 @@ const Hero = () => {
 
       {/* Hero Content - Optimized mobile padding */}
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
-        <ResponsiveContainer className={`${nextHoliday ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset safe-area-inset-top`}>
+        <ResponsiveContainer className={`${targetEvent ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset safe-area-inset-top`}>
           <div className="max-w-2xl text-white">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg no-select">
               Connecting Through Gifting

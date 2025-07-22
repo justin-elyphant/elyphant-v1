@@ -22,6 +22,7 @@ export const useFriendSearch = () => {
     setIsLoading(true);
     try {
       console.log('🔍 [useFriendSearch] Calling searchFriends with userId:', user?.id);
+      // Use the auth user ID for search
       const friendResults = await searchFriends(query, user?.id);
       console.log('🔍 [useFriendSearch] Search results received:', friendResults.length);
       setResults(friendResults);

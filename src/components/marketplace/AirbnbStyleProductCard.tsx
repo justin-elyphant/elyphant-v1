@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, MapPin, Clock } from "lucide-react";
+import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/types/product";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useAuth } from "@/contexts/auth";
@@ -29,6 +29,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
 }) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const productId = String(product.product_id || product.id);
   const isWishlisted = user ? isProductWishlisted(productId) : false;
@@ -38,7 +39,12 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
   };
 
   const getProductImage = () => {
-    return product.image || product.images?.[0] || "/placeholder.svg";
+    const images = product.images || [product.image] || ["/placeholder.svg"];
+    return images[currentImageIndex] || images[0] || "/placeholder.svg";
+  };
+
+  const getProductImages = () => {
+    return product.images || [product.image] || ["/placeholder.svg"];
   };
 
   const getProductTitle = () => {
@@ -66,13 +72,59 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
       onClick={onProductClick}
     >
       {/* Image Section - Airbnb Style */}
-      <div className="relative aspect-square overflow-hidden rounded-t-xl">
+      <div className="relative aspect-square overflow-hidden rounded-t-xl group">
         <img
           src={getProductImage()}
           alt={getProductTitle()}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
+        
+        {/* Image Navigation Arrows */}
+        {getProductImages().length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => 
+                  prev === 0 ? getProductImages().length - 1 : prev - 1
+                );
+              }}
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => 
+                  prev === getProductImages().length - 1 ? 0 : prev + 1
+                );
+              }}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        )}
+        
+        {/* Image Dots Indicator */}
+        {getProductImages().length > 1 && (
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {getProductImages().map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentImageIndex(index);
+                }}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
         
         {/* Status Badge - Top Left */}
         {statusBadge && (

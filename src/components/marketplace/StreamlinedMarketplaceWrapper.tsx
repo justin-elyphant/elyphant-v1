@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import ProductDetailsDialog from "./ProductDetailsDialog";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -25,11 +26,14 @@ const StreamlinedMarketplaceWrapper = () => {
 
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showProductDetails, setShowProductDetails] = useState(false);
 
   // Product interaction handlers
   const handleProductClick = (product: any) => {
     console.log('Product clicked:', product);
-    // Navigate to product details or open modal
+    setSelectedProduct(product);
+    setShowProductDetails(true);
   };
 
   const toggleWishlist = (productId: string) => {
@@ -160,6 +164,16 @@ const StreamlinedMarketplaceWrapper = () => {
             </p>
           </div>
         </div>
+      )}
+      
+      {/* Product Details Dialog */}
+      {selectedProduct && (
+        <ProductDetailsDialog
+          product={selectedProduct}
+          open={showProductDetails}
+          onOpenChange={setShowProductDetails}
+          userData={null}
+        />
       )}
     </div>
   );

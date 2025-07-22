@@ -11,7 +11,7 @@ const ZincDebugger = () => {
 
   React.useEffect(() => {
     if (!user) {
-      navigate('/sign-in');
+      navigate('/auth');
     }
   }, [user, navigate]);
 

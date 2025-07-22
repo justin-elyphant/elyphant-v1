@@ -155,7 +155,7 @@ class OrderVerificationService {
           note_content: `Automatic verification failed: ${error.message}`,
           note_type: 'error',
           is_internal: true
-        }).catch(console.error);
+        });
 
       return {
         orderId,

@@ -1582,6 +1582,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          billing_info: Json | null
           created_at: string
           currency: string
           delivery_groups: Json | null
@@ -1612,6 +1613,7 @@ export type Database = {
           zinc_status: string | null
         }
         Insert: {
+          billing_info?: Json | null
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
@@ -1642,6 +1644,7 @@ export type Database = {
           zinc_status?: string | null
         }
         Update: {
+          billing_info?: Json | null
           created_at?: string
           currency?: string
           delivery_groups?: Json | null

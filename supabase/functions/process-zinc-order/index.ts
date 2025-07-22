@@ -78,11 +78,28 @@ serve(async (req) => {
 
     // Prepare Zinc order data
     const shippingAddress = order.shipping_info;
+    const billingInfo = order.billing_info;
     
-    // Parse name field into first and last name
-    const nameParts = (shippingAddress.name || "").split(" ");
-    const firstName = nameParts[0] || "Customer";
-    const lastName = nameParts.slice(1).join(" ") || "Name";
+    // Parse shipping name into first and last name
+    const shippingNameParts = (shippingAddress.name || "").split(" ");
+    const shippingFirstName = shippingNameParts[0] || "Customer";
+    const shippingLastName = shippingNameParts.slice(1).join(" ") || "Name";
+    
+    // Use billing info if available, otherwise fall back to shipping
+    const cardholderName = billingInfo?.cardholderName || shippingAddress.name || "Customer Name";
+    const billingNameParts = cardholderName.split(" ");
+    const billingFirstName = billingNameParts[0] || "Customer";
+    const billingLastName = billingNameParts.slice(1).join(" ") || "Name";
+    
+    // Use billing address if provided, otherwise fall back to shipping address
+    const billingAddressData = billingInfo?.billingAddress || {
+      name: cardholderName,
+      address: shippingAddress.address || shippingAddress.address_line1,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      zipCode: shippingAddress.zipCode || shippingAddress.zip_code,
+      country: "US"
+    };
     
     const orderData = {
       retailer: "amazon",
@@ -91,8 +108,8 @@ serve(async (req) => {
         quantity: item.quantity
       })),
       shipping_address: {
-        first_name: firstName,
-        last_name: lastName,
+        first_name: shippingFirstName,
+        last_name: shippingLastName,
         address_line1: shippingAddress.address || shippingAddress.address_line1,
         address_line2: shippingAddress.addressLine2 || shippingAddress.address_line2 || "",
         zip_code: shippingAddress.zipCode || shippingAddress.zip_code,
@@ -101,16 +118,18 @@ serve(async (req) => {
         country: "US"
       },
       billing_address: {
-        first_name: firstName,
-        last_name: lastName,
-        address_line1: shippingAddress.address || shippingAddress.address_line1,
-        address_line2: shippingAddress.addressLine2 || shippingAddress.address_line2 || "",
-        zip_code: shippingAddress.zipCode || shippingAddress.zip_code,
-        city: shippingAddress.city,
-        state: shippingAddress.state,
-        country: "US"
+        first_name: billingFirstName,
+        last_name: billingLastName,
+        address_line1: billingAddressData.address,
+        address_line2: "",
+        zip_code: billingAddressData.zipCode,
+        city: billingAddressData.city,
+        state: billingAddressData.state,
+        country: billingAddressData.country
       },
       payment_method: {
+        name_on_card: cardholderName,
+        type: "card",
         use_gift: false
       },
       is_gift: order.is_gift || false,

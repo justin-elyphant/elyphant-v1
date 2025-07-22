@@ -54,6 +54,17 @@ export interface CreateOrderData {
   giftOptions: GiftOptions;
   paymentIntentId?: string;
   deliveryGroups?: DeliveryGroup[];
+  billingInfo?: {
+    cardholderName: string;
+    billingAddress?: {
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    };
+  };
 }
 
 // CRITICAL: Order interface with all required fields
@@ -132,6 +143,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       tax_amount: orderData.taxAmount,
       total_amount: orderData.totalAmount,
       shipping_info: orderData.shippingInfo,
+      billing_info: orderData.billingInfo || null,
       gift_message: orderData.giftOptions.giftMessage || null,
       is_gift: orderData.giftOptions.isGift,
       scheduled_delivery_date: orderData.giftOptions.scheduledDeliveryDate || null,

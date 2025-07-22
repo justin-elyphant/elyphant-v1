@@ -37,9 +37,7 @@ class UnifiedMarketplaceService {
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
     const { luxuryCategories, page = 1, maxResults = 20 } = options;
-    // Add timestamp to force cache invalidation for price fix
-    const timestamp = Math.floor(Date.now() / 10000); // Change every 10 seconds
-    return `search:${searchTerm}:luxury:${luxuryCategories}:page:${page}:limit:${maxResults}:ts:${timestamp}`;
+    return `search:${searchTerm}:luxury:${luxuryCategories}:page:${page}:limit:${maxResults}`;
   }
 
   /**

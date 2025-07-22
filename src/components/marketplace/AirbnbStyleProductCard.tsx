@@ -46,7 +46,10 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
   };
 
   const getProductPrice = () => {
-    return typeof product.price === 'number' ? product.price.toFixed(2) : '0.00';
+    const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
+    // Ensure price is in dollars, not cents
+    const normalizedPrice = price > 100 ? price / 100 : price;
+    return normalizedPrice.toFixed(2);
   };
 
   const getRating = () => {

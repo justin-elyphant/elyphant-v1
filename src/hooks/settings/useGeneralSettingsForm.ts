@@ -122,16 +122,20 @@ export const useGeneralSettingsForm = () => {
     try {
       setIsSaving(true);
       console.log("🔄 Submitting form data:", data);
+      console.log("🔍 Form first_name:", data.first_name, "last_name:", data.last_name);
       
       // Use the enhanced mapper to convert form data to database format
       const databaseData = mapSettingsFormToDatabase(data);
       console.log("🔄 Mapped database data:", databaseData);
+      console.log("🔍 Database first_name:", databaseData.first_name, "last_name:", databaseData.last_name);
       
-      await updateProfile(databaseData);
+      const result = await updateProfile(databaseData);
+      console.log("✅ Update profile result:", result);
       
       // Update initial values to reflect the save
       setInitialFormValues(data);
       setHasUnsavedChanges(false);
+      console.log("🔄 Updated initial form values after save");
       
       toast.success("Profile updated successfully");
     } catch (error) {

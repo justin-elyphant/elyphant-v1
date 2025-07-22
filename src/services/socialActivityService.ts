@@ -39,17 +39,20 @@ export class SocialActivityService {
         const otherUser = isInitiator ? conn.connected_profile : conn.user_profile;
         const otherUserId = isInitiator ? conn.connected_user_id : conn.user_id;
         
-        if (otherUser) {
+        // Handle both single object and array cases from Supabase joins
+        const userProfile = Array.isArray(otherUser) ? otherUser[0] : otherUser;
+        
+        if (userProfile) {
           activities.push({
             id: `connection-${conn.id}`,
             type: 'connection',
             title: isInitiator ? 'You connected with' : 'Connected with you',
-            description: `${otherUser.name} ${isInitiator ? 'accepted your connection' : 'sent you a connection request'}`,
+            description: `${userProfile.name} ${isInitiator ? 'accepted your connection' : 'sent you a connection request'}`,
             timestamp: conn.created_at,
             user: {
               id: otherUserId,
-              name: otherUser.name,
-              image: otherUser.profile_image
+              name: userProfile.name,
+              image: userProfile.profile_image
             },
             metadata: { relationship_type: conn.relationship_type }
           });
@@ -82,18 +85,21 @@ export class SocialActivityService {
 
         wishlists?.forEach(wishlist => {
           if (wishlist.profiles) {
-            activities.push({
-              id: `wishlist-${wishlist.id}`,
-              type: 'wishlist',
-              title: 'Updated wishlist',
-              description: `${wishlist.profiles.name} updated "${wishlist.title}"`,
-              timestamp: wishlist.updated_at,
-              user: {
-                id: wishlist.user_id,
-                name: wishlist.profiles.name,
-                image: wishlist.profiles.profile_image
-              }
-            });
+            const profile = Array.isArray(wishlist.profiles) ? wishlist.profiles[0] : wishlist.profiles;
+            if (profile) {
+              activities.push({
+                id: `wishlist-${wishlist.id}`,
+                type: 'wishlist',
+                title: 'Updated wishlist',
+                description: `${profile.name} updated "${wishlist.title}"`,
+                timestamp: wishlist.updated_at,
+                user: {
+                  id: wishlist.user_id,
+                  name: profile.name,
+                  image: profile.profile_image
+                }
+              });
+            }
           }
         });
       }
@@ -113,18 +119,21 @@ export class SocialActivityService {
 
         messages?.forEach(message => {
           if (message.sender) {
-            activities.push({
-              id: `message-${message.id}`,
-              type: 'message',
-              title: 'Sent a message',
-              description: `${message.sender.name}: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`,
-              timestamp: message.created_at,
-              user: {
-                id: message.sender_id,
-                name: message.sender.name,
-                image: message.sender.profile_image
-              }
-            });
+            const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
+            if (sender) {
+              activities.push({
+                id: `message-${message.id}`,
+                type: 'message',
+                title: 'Sent a message',
+                description: `${sender.name}: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`,
+                timestamp: message.created_at,
+                user: {
+                  id: message.sender_id,
+                  name: sender.name,
+                  image: sender.profile_image
+                }
+              });
+            }
           }
         });
       }
@@ -147,17 +156,20 @@ export class SocialActivityService {
         const otherUser = isRequester ? request.recipient : request.requester;
         const otherUserId = isRequester ? request.recipient_id : request.requester_id;
         
-        if (otherUser) {
+        // Handle both single object and array cases from Supabase joins
+        const userProfile = Array.isArray(otherUser) ? otherUser[0] : otherUser;
+        
+        if (userProfile) {
           activities.push({
             id: `address-${request.id}`,
             type: 'address',
             title: isRequester ? 'Shared address with you' : 'You shared address with',
-            description: `Address sharing with ${otherUser.name}`,
+            description: `Address sharing with ${userProfile.name}`,
             timestamp: request.created_at,
             user: {
               id: otherUserId,
-              name: otherUser.name,
-              image: otherUser.profile_image
+              name: userProfile.name,
+              image: userProfile.profile_image
             }
           });
         }

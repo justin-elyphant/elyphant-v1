@@ -18,20 +18,12 @@ const OrderRetryTool = () => {
 
   const handleRetryOrder = async () => {
     if (!orderId.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an order ID",
-        variant: "destructive"
-      });
+      toast.error("Please enter an order ID");
       return;
     }
 
     if (!cardholderName.trim()) {
-      toast({
-        title: "Error", 
-        description: "Please enter the cardholder name",
-        variant: "destructive"
-      });
+      toast.error("Please enter the cardholder name");
       return;
     }
 
@@ -51,16 +43,9 @@ const OrderRetryTool = () => {
       setRetryResult(result);
       
       if (result.success) {
-        toast({
-          title: "Success",
-          description: result.message,
-        });
+        toast.success(result.message);
       } else {
-        toast({
-          title: "Retry Failed",
-          description: result.error || result.message,
-          variant: "destructive"
-        });
+        toast.error(result.error || result.message);
       }
     } catch (error) {
       console.error('Error retrying order:', error);
@@ -72,11 +57,7 @@ const OrderRetryTool = () => {
         error: errorMessage
       });
       
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      toast.error(errorMessage);
     } finally {
       setIsRetrying(false);
     }

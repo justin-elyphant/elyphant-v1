@@ -11,6 +11,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import ProductDetailsDialog from "./ProductDetailsDialog";
+import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -108,6 +109,9 @@ const StreamlinedMarketplaceWrapper = () => {
   
   return (
     <div className="container mx-auto px-4 py-6">
+      {/* Hero Banner - only show when not searching */}
+      {!showSearchInfo && <MarketplaceHeroBanner />}
+      
       <MarketplaceHeader
         totalResults={products.length}
         filteredProducts={products}

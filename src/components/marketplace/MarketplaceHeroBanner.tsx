@@ -18,7 +18,7 @@ const MarketplaceHeroBanner: React.FC = () => {
       <div className="relative z-10 flex items-center justify-center h-full">
         <div className="text-center text-white px-6 max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
-            Gift Marketplace
+            Elyphant Marketplace
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl mb-6 drop-shadow-md opacity-90">
             Discover thoughtful gifts for every occasion

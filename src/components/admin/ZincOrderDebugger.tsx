@@ -26,11 +26,7 @@ const ZincOrderDebugger = () => {
 
   const checkOrderStatus = async () => {
     if (!orderRequestId.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an order request ID",
-        variant: "destructive",
-      });
+      toast("Please enter an order request ID");
       return;
     }
 
@@ -52,11 +48,7 @@ const ZincOrderDebugger = () => {
       if (error) {
         console.error('❌ Edge function error:', error);
         setDebugLogs(`Edge Function Error: ${error.message}\n\nContext: ${error.context || 'No additional context'}`);
-        toast({
-          title: "API Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast(`API Error: ${error.message}`);
         return;
       }
 
@@ -73,21 +65,14 @@ const ZincOrderDebugger = () => {
           debugInfo: result
         });
         
-        toast({
-          title: "Status Check Complete",
-          description: `Order status: ${result.status}`,
-        });
+        toast(`Status Check Complete - Order status: ${result.status}`);
       } else {
         setStatusResult({
           orderId: orderRequestId,
           error: data.error || 'No results returned'
         });
         
-        toast({
-          title: "No Results",
-          description: data.error || 'No order data found',
-          variant: "destructive",
-        });
+        toast(`No Results: ${data.error || 'No order data found'}`);
       }
 
     } catch (error) {
@@ -98,11 +83,7 @@ const ZincOrderDebugger = () => {
         error: error.message
       });
       
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      toast("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -110,11 +91,7 @@ const ZincOrderDebugger = () => {
 
   const manualVerifyOrder = async () => {
     if (!orderRequestId.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an order request ID",
-        variant: "destructive",
-      });
+      toast("Please enter an order request ID");
       return;
     }
 
@@ -135,21 +112,13 @@ const ZincOrderDebugger = () => {
       
       setDebugLogs(`Manual Verification Result:\n${JSON.stringify(result, null, 2)}`);
       
-      toast({
-        title: "Manual Verification Complete",
-        description: result.verified ? "Order verified successfully" : `Verification failed: ${result.error}`,
-        variant: result.verified ? "default" : "destructive",
-      });
+      toast(result.verified ? "Manual Verification Complete - Order verified successfully" : `Verification failed: ${result.error}`);
       
     } catch (error) {
       console.error('💥 Manual verification error:', error);
       setDebugLogs(`Manual Verification Error: ${error.message}`);
       
-      toast({
-        title: "Verification Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast(`Verification Error: ${error.message}`);
     } finally {
       setLoading(false);
     }

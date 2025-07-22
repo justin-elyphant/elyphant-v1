@@ -1,23 +1,16 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
-import { useAuth } from "@/contexts/auth";
-import { Skeleton } from "@/components/ui/skeleton";
-import AirbnbStyleSearchBar from "./AirbnbStyleSearchBar";
+import MarketplaceHeader from "./MarketplaceHeader";
+import MarketplaceQuickFilters from "./MarketplaceQuickFilters";
 import AirbnbStyleCategorySections from "./AirbnbStyleCategorySections";
-import ProductDetailsDialog from "./ProductDetailsDialog";
-import SignUpDialog from "./SignUpDialog";
+import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const StreamlinedMarketplaceWrapper = () => {
-  const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [showProductDialog, setShowProductDialog] = useState(false);
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  
-  // Use the unified marketplace hook
   const {
     products,
     isLoading,
@@ -25,195 +18,141 @@ const StreamlinedMarketplaceWrapper = () => {
     searchTerm,
     urlSearchTerm,
     luxuryCategories,
-    search,
-    clearSearch
-  } = useUnifiedMarketplace({
-    autoLoadOnMount: true
-  });
+    personId,
+    occasionType,
+  } = useUnifiedMarketplace();
 
-  const { isProductWishlisted, quickAddToWishlist, loadWishlists } = useUnifiedWishlist();
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
 
-  // Product click handler
-  const handleProductClick = useCallback((productId: string) => {
-    console.log("Product clicked:", productId);
-    setSelectedProduct(productId);
-    setShowProductDialog(true);
-  }, []);
+  // Product interaction handlers
+  const handleProductClick = (product: any) => {
+    console.log('Product clicked:', product);
+    // Navigate to product details or open modal
+  };
 
-  // Wishlist toggle handler
-  const toggleWishlist = useCallback(async (e: React.MouseEvent, productInfo: any) => {
-    e.stopPropagation();
+  const toggleWishlist = (productId: string) => {
+    console.log('Toggle wishlist for product:', productId);
+    // Implement wishlist toggle logic
+  };
 
-    if (!user) {
-      setShowSignUpDialog(true);
-      return;
-    }
+  const isFavorited = (productId: string) => {
+    // Implement favorited check logic
+    return false;
+  };
 
-    const product = products.find(p => (p.product_id || p.id) === productInfo.id);
-    if (!product) return;
-
-    const productData = {
-      id: product.product_id || product.id || "",
-      title: product.title || product.name || "",
-      name: product.title || product.name || "",
-      image: product.image,
-      price: product.price,
-      brand: product.brand
-    };
-
-    await quickAddToWishlist(productData);
-    await loadWishlists();
-  }, [user, products, quickAddToWishlist, loadWishlists]);
-
-  // Check if product is favorited
-  const isFavorited = useCallback((productId: string) => {
-    return user ? isProductWishlisted(productId) : false;
-  }, [user, isProductWishlisted]);
-
-  // Get product status badge
-  const getProductStatus = useCallback((product: any) => {
-    if (product.isBestSeller) {
-      return { badge: "Best Seller", color: "bg-amber-100 text-amber-800 border-amber-200" };
-    }
-    
-    if (product.tags?.includes("trending")) {
-      return { badge: "Trending", color: "bg-blue-100 text-blue-800 border-blue-200" };
-    }
-    
-    if (product.tags?.includes("limited")) {
-      return { badge: "Limited Stock", color: "bg-red-100 text-red-800 border-red-200" };
-    }
-    
-    if (product.tags?.includes("new") || (product.id && Number(product.id) > 9000)) {
-      return { badge: "New Arrival", color: "bg-green-100 text-green-800 border-green-200" };
-    }
-    
+  const getProductStatus = (product: any) => {
+    if (product.vendor === "Local Vendor") return "local";
+    if (product.onSale) return "sale";
+    if (product.isNew) return "new";
     return null;
-  }, []);
+  };
 
-  // Get selected product data
-  const selectedProductData = products.find(p => (p.product_id || p.id) === selectedProduct) || null;
-
-  // Show loading skeleton during initial load
-  if (isLoading && products.length === 0) {
+  // Show loading skeleton
+  if (isLoading) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${isMobile ? 'pb-safe' : ''}`}>
-        {/* Search Bar Skeleton */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <Skeleton className="h-14 w-full rounded-full" />
-          </div>
-        </div>
-
-        {/* Content Skeleton */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="space-y-8">
-            {/* Section Title Skeleton */}
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-96" />
+      <div className="container mx-auto px-4 py-6">
+        <MarketplaceHeader />
+        <MarketplaceQuickFilters />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="space-y-3">
+              <Skeleton className="h-48 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
-            
-            {/* Products Grid Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="space-y-4">
-                  <Skeleton className="h-64 w-full rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className={`min-h-screen bg-gray-50 ${isMobile ? 'pb-safe' : ''}`}>
-      {/* Header with Search Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <AirbnbStyleSearchBar onSearch={search} />
-        </div>
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <MarketplaceHeader />
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        {(urlSearchTerm || luxuryCategories) && (
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {luxuryCategories ? "Luxury Collections" : "Search Results"}
-            </h1>
-            {urlSearchTerm && (
-              <p className="text-gray-600 mt-2 text-lg">
-                {products.length} results for "{urlSearchTerm}"
+  // Show search results info
+  const showSearchInfo = urlSearchTerm || luxuryCategories || personId || occasionType;
+  
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <MarketplaceHeader 
+        totalResults={products.length}
+        filteredProducts={products}
+      />
+
+      {/* Quick Filters */}
+      <MarketplaceQuickFilters />
+
+      {/* Search Results Info */}
+      {showSearchInfo && (
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-blue-900">
+                {luxuryCategories && "Luxury Collections"}
+                {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
+                {personId && occasionType && `Gifts for ${occasionType}`}
+              </h3>
+              <p className="text-sm text-blue-700 mt-1">
+                Found {products.length} {products.length === 1 ? 'product' : 'products'}
               </p>
-            )}
-            {luxuryCategories && (
-              <p className="text-gray-600 mt-2 text-lg">
-                Premium brands and designer collections • {products.length} items
-              </p>
-            )}
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-12">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">Search Error</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button 
-              onClick={() => search(searchTerm)}
-              className="px-6 py-3 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+      {/* Category Sections (when no search active) */}
+      {!showSearchInfo && products.length > 0 && (
+        <AirbnbStyleCategorySections products={products} />
+      )}
 
-        {/* No Results */}
-        {!isLoading && !error && products.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-6">🔍</div>
-            <h3 className="text-2xl font-medium text-gray-900 mb-4">
-              {urlSearchTerm ? "No results found" : "Start exploring"}
-            </h3>
-            <p className="text-gray-600 text-lg max-w-md mx-auto">
-              {urlSearchTerm 
-                ? `We couldn't find any products matching "${urlSearchTerm}". Try adjusting your search terms.`
-                : "Search for products, brands, or experiences to discover amazing finds from retailers and local vendors."
+      {/* Products Grid (when search is active or as fallback) */}
+      {(showSearchInfo || !products.length) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map((product, index) => (
+            <AirbnbStyleProductCard
+              key={product.id || product.product_id || index}
+              product={product}
+              onClick={() => handleProductClick(product)}
+              onWishlistToggle={() => toggleWishlist(product.id || product.product_id)}
+              isFavorited={isFavorited(product.id || product.product_id)}
+              status={getProductStatus(product)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {products.length === 0 && !isLoading && (
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="text-gray-400 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1H9a1 1 0 00-1 1v1m7 0V4a1 1 0 00-1-1H6a1 1 0 00-1 1v1" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+            <p className="text-gray-500">
+              {showSearchInfo 
+                ? "Try adjusting your search terms or filters"
+                : "We're loading our product catalog. Please check back soon!"
               }
             </p>
           </div>
-        )}
-
-        {/* Products Display - Airbnb Style */}
-        {products.length > 0 && (
-          <AirbnbStyleCategorySections
-            products={products}
-            onProductClick={handleProductClick}
-          />
-        )}
-      </div>
-
-      {/* Product Details Dialog */}
-      <ProductDetailsDialog
-        product={selectedProductData}
-        open={showProductDialog}
-        onOpenChange={setShowProductDialog}
-        userData={user}
-        onWishlistChange={loadWishlists}
-      />
-
-      {/* Sign Up Dialog */}
-      <SignUpDialog
-        open={showSignUpDialog}
-        onOpenChange={setShowSignUpDialog}
-      />
+        </div>
+      )}
     </div>
   );
 };

@@ -9,6 +9,7 @@ import CategoriesGrid from "./sections/CategoriesGrid";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
+import { isInIframe } from "@/utils/iframeUtils";
 
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
@@ -17,20 +18,27 @@ const HomeContent = () => {
     const startTime = performance.now();
     console.log("HomeContent: Starting component mount and data operations");
     
-    // Clear any lingering onboarding state that might show the "Welcome to Gift Giver" screen
-    LocalStorageService.clearProfileCompletionState();
-    LocalStorageService.cleanupDeprecatedKeys();
+    try {
+      // Clear any lingering onboarding state that might show the "Welcome to Gift Giver" screen
+      LocalStorageService.clearProfileCompletionState();
+      LocalStorageService.cleanupDeprecatedKeys();
+      
+      // Set fresh context for homepage visit
+      LocalStorageService.setNicoleContext({
+        source: 'homepage_visit',
+        currentPage: '/',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('LocalStorage operations failed (possibly in iframe):', error);
+    }
     
-    // Set fresh context for homepage visit
-    LocalStorageService.setNicoleContext({
-      source: 'homepage_visit',
-      currentPage: '/',
-      timestamp: new Date().toISOString()
-    });
-    
-    const setupTime = performance.now() - startTime;
-    console.log(`HomeContent: Setup completed in ${setupTime.toFixed(2)}ms`);
-    trackRender("HomeContent", startTime);
+    // Only track performance outside of iframe to avoid interference
+    if (!isInIframe()) {
+      const setupTime = performance.now() - startTime;
+      console.log(`HomeContent: Setup completed in ${setupTime.toFixed(2)}ms`);
+      trackRender("HomeContent", startTime);
+    }
   }, [trackRender]);
 
   return (

@@ -2,6 +2,7 @@
 import React, { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getIframeSafeHeight } from "@/utils/iframeUtils";
 
 interface FullBleedSectionProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface FullBleedSectionProps {
 
 /**
  * A true bleed-first section that extends edge-to-edge in all directions
+ * Now optimized for iframe environments like Lovable preview
  */
 export const FullBleedSection: React.FC<FullBleedSectionProps> = ({
   children,
@@ -23,17 +25,13 @@ export const FullBleedSection: React.FC<FullBleedSectionProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  const heightClasses = {
-    auto: "",
-    "min-screen": "min-h-screen",
-    screen: "h-screen",
-    large: isMobile ? "min-h-[60vh]" : "min-h-[80vh]",
-  };
+  // Get iframe-safe height classes
+  const heightClass = getIframeSafeHeight(height, isMobile);
   
   return (
     <section className={cn(
       "w-full relative overflow-hidden",
-      heightClasses[height],
+      heightClass,
       background,
       className
     )}>

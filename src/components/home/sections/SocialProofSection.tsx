@@ -48,6 +48,8 @@ const SocialProofSection = () => {
       height="large"
       className="text-white overflow-hidden"
     >
+      {/* Center all content vertically */}
+      <div className="flex flex-col justify-center h-full">
       {/* Stats Section */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
@@ -101,6 +103,7 @@ const SocialProofSection = () => {
               ))}
             </CarouselContent>
           </Carousel>
+        </div>
         </div>
       </div>
     </FullBleedSection>

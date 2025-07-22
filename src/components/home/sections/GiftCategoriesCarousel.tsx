@@ -59,18 +59,20 @@ const GiftCategoriesCarousel: React.FC = () => {
   return (
     <FullBleedSection 
       background="bg-white" 
-      height="auto"
+      height="large"
       className="intersection-target"
     >
-      {/* Header content with proper spacing */}
-      <div className="text-center mb-8 md:mb-12">
-        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
-          Quick Picks
-        </h2>
-        <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          Find the perfect gift for any occasion with our curated collections
-        </p>
-      </div>
+      {/* Center all content vertically */}
+      <div className="flex flex-col justify-center h-full">
+        {/* Header content with proper spacing */}
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
+            Quick Picks
+          </h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Find the perfect gift for any occasion with our curated collections
+          </p>
+        </div>
 
       {/* Full-width carousel that bleeds to edges */}
       <div className="relative -mx-4 md:-mx-6">
@@ -125,6 +127,7 @@ const GiftCategoriesCarousel: React.FC = () => {
           <CarouselPrevious className="hidden md:flex left-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
           <CarouselNext className="hidden md:flex right-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50 z-10" />
         </Carousel>
+        </div>
       </div>
     </FullBleedSection>
   );

@@ -19,16 +19,34 @@ interface PrefilledRecipient {
   connectionId?: string;
 }
 
+export interface GiftSetupData {
+  recipientName: string;
+  relationshipType: string;
+  giftingEvents: Array<{
+    dateType: string;
+    date: string;
+    isRecurring: boolean;
+    customName?: string;
+  }>;
+  // Add other fields as needed
+  budget?: string;
+  specialRequests?: string;
+  giftPreferences?: string[];
+  [key: string]: any;
+}
+
 interface GiftSetupWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   prefilledRecipient?: PrefilledRecipient;
+  initialData?: GiftSetupData | null;
 }
 
 export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({ 
   open, 
   onOpenChange,
-  prefilledRecipient 
+  prefilledRecipient,
+  initialData
 }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -53,7 +71,19 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       setSpecialRequests("");
       setGiftPreferences([]);
       setCurrentStep(2); // Skip recipient step since it's prefilled
-    } else if (open && !prefilledRecipient) {
+    } else if (open && initialData) {
+      // Populate from initialData
+      setRecipientName(initialData.recipientName || "");
+      setRelationship(initialData.relationshipType || "");
+      // Extract occasion from first event if available
+      if (initialData.giftingEvents && initialData.giftingEvents.length > 0) {
+        setOccasion(initialData.giftingEvents[0].dateType || "");
+      }
+      setBudget(initialData.budget || "");
+      setSpecialRequests(initialData.specialRequests || "");
+      setGiftPreferences(initialData.giftPreferences || []);
+      setCurrentStep(1);
+    } else if (open && !prefilledRecipient && !initialData) {
       // Reset all fields for new gift
       setRecipientName("");
       setRelationship("");
@@ -63,7 +93,7 @@ export const GiftSetupWizard: React.FC<GiftSetupWizardProps> = ({
       setGiftPreferences([]);
       setCurrentStep(1);
     }
-  }, [open, prefilledRecipient]);
+  }, [open, prefilledRecipient, initialData]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {

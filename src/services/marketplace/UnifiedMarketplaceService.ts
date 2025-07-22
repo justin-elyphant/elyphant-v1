@@ -10,6 +10,8 @@ export interface SearchOptions {
   page?: number;
   filters?: any;
   luxuryCategories?: boolean;
+  personId?: string;
+  occasionType?: string;
 }
 
 export interface MarketplaceState {

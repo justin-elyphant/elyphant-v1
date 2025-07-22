@@ -2,7 +2,7 @@
 import React from "react";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
-import EnhancedSearchBar from "@/components/search/EnhancedSearchBar";
+import EnhancedSearchBar from "@/components/home/components/EnhancedSearchBar";
 import ProductGridOptimized from "./ProductGridOptimized";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,13 +23,7 @@ const StreamlinedMarketplaceWrapper = () => {
     autoLoadOnMount: true
   });
 
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      search(query);
-    } else {
-      clearSearch();
-    }
-  };
+  // The search handling is now done internally by the EnhancedSearchBar component
 
   // Show loading skeleton during initial load
   if (isLoading && products.length === 0) {
@@ -38,11 +32,7 @@ const StreamlinedMarketplaceWrapper = () => {
         {/* Search Bar */}
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <EnhancedSearchBar 
-              onSearch={handleSearch}
-              initialSearchTerm={urlSearchTerm}
-              placeholder="Search for products, brands, or categories..."
-            />
+            <EnhancedSearchBar mobile={false} />
           </div>
         </div>
 
@@ -67,11 +57,7 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Search Bar */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <EnhancedSearchBar 
-            onSearch={handleSearch}
-            initialSearchTerm={urlSearchTerm}
-            placeholder="Search for products, brands, or categories..."
-          />
+          <EnhancedSearchBar mobile={false} />
         </div>
       </div>
 

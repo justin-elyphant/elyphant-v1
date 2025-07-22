@@ -53,7 +53,6 @@ export const searchFriendsWithPrivacy = async (
         bio
       `)
       .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%,email.ilike.%${cleanedSearchTerm}%`)
-      .neq('id', currentUserId)
       .limit(limit);
 
     if (profileError) throw profileError;
@@ -130,8 +129,10 @@ export const searchFriendsWithPrivacy = async (
     const filteredProfiles = profiles.filter(profile => {
       const isConnected = connectedUserIds.has(profile.id);
       const isBlocked = blockedUserIds.has(profile.id);
-      console.log(`🔍 Profile ${profile.id} (${profile.name}): connected=${isConnected}, blocked=${isBlocked}`);
-      return !isConnected && !isBlocked;
+      const isSelf = profile.id === currentUserId;
+      console.log(`🔍 Profile ${profile.id} (${profile.name}): connected=${isConnected}, blocked=${isBlocked}, isSelf=${isSelf}`);
+      // Don't filter out blocked users, but do filter out already connected users (except yourself)
+      return !isBlocked && (!isConnected || isSelf);
     });
     
     console.log(`🔍 After filtering: ${filteredProfiles.length} profiles remain`);

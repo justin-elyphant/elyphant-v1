@@ -1,34 +1,47 @@
 
-import React from "react";
-import ModernCTA from "@/components/marketplace/hero/ModernCTA";
-import HeroImage from "@/components/marketplace/hero/HeroImage";
-import { useIsMobile } from "@/hooks/use-mobile";
-import QuickPicksCarousel from "@/components/marketplace/quick-picks/QuickPicksCarousel";
-import QuickGiftCTA from "@/components/dashboard/QuickGiftCTA";
+import React, { useEffect } from "react";
+import Hero from "./Hero";
+import GiftCategoriesCarousel from "./sections/GiftCategoriesCarousel";
+import FeaturedCategories from "./sections/FeaturedCategories";
+import AutomationFeatures from "./sections/AutomationFeatures";
+import PopularBrands from "@/components/gifting/PopularBrands";
+import CategoriesGrid from "./sections/CategoriesGrid";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const HomeContent = () => {
-  const isMobile = useIsMobile();
+  useEffect(() => {
+    // Clear any lingering onboarding state that might show the "Welcome to Gift Giver" screen
+    LocalStorageService.clearProfileCompletionState();
+    LocalStorageService.cleanupDeprecatedKeys();
+    
+    // Set fresh context for homepage visit
+    LocalStorageService.setNicoleContext({
+      source: 'homepage_visit',
+      currentPage: '/',
+      timestamp: new Date().toISOString()
+    });
+  }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-12">
-        <ModernCTA />
-        <HeroImage 
-          isMobile={isMobile}
-          imageSrc="https://images.unsplash.com/photo-1607083206968-13611e3d76db?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
-          altText="Gift giving made easy"
-        />
-      </div>
-
-      {/* Quick Gift CTA */}
-      <div className="mb-8">
-        <QuickGiftCTA />
-      </div>
+    <div className="min-h-screen">
+      <Hero />
       
-      {/* Quick Picks Carousel */}
-      <div className="mb-8">
-        <QuickPicksCarousel />
+      {/* Container with consistent padding for all sections */}
+      <div className="container mx-auto px-4 py-12 space-y-16">
+        {/* Gift Categories Carousel - Quick Picks */}
+        <GiftCategoriesCarousel />
+        
+        {/* Popular Brands Section */}
+        <PopularBrands />
+        
+        {/* Featured Categories */}
+        <FeaturedCategories />
+        
+        {/* Categories Grid */}
+        <CategoriesGrid />
+        
+        {/* Automation Features */}
+        <AutomationFeatures />
       </div>
     </div>
   );

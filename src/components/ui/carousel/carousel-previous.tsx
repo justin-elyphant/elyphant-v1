@@ -1,29 +1,35 @@
 
 import * as React from "react"
-import { ChevronLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { useCarousel } from "./carousel-context"
 
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button">
+  React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
-  const { scrollPrev, canScrollPrev } = useCarousel()
+  const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
-    <button
+    <Button
       ref={ref}
+      variant={variant}
+      size={size}
       className={cn(
-        "absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center bg-white/70 hover:bg-white/90 shadow-md border border-gray-200",
+        "absolute h-8 w-8 rounded-full",
+        orientation === "horizontal"
+          ? "-left-12 top-1/2 -translate-y-1/2"
+          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       {...props}
     >
-      <ChevronLeft className="h-4 w-4" />
+      <ArrowLeft className="h-4 w-4" />
       <span className="sr-only">Previous slide</span>
-    </button>
+    </Button>
   )
 })
 CarouselPrevious.displayName = "CarouselPrevious"

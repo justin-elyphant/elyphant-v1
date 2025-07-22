@@ -241,9 +241,9 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           {getProductTitle()}
         </h3>
 
-        {/* Brand */}
-        {product.brand && (
-          <p className="text-xs text-gray-500">
+        {/* Brand - Enhanced display */}
+        {product.brand && product.brand.trim() && (
+          <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
             {product.brand}
           </p>
         )}

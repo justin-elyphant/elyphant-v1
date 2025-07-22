@@ -2,6 +2,32 @@
 import { Product } from "@/contexts/ProductContext";
 
 /**
+ * Extract brand name from product title using common patterns
+ */
+const extractBrandFromTitle = (title: string): string => {
+  if (!title) return "";
+  
+  // Common brand patterns in product titles
+  const brandPatterns = [
+    // Look for brand names at the beginning of titles
+    /^([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/,
+    // Look for brand names in parentheses
+    /\(([A-Z][a-zA-Z0-9&\s]+?)\)/,
+    // Look for "by [Brand]" patterns
+    /by\s+([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/i,
+  ];
+  
+  for (const pattern of brandPatterns) {
+    const match = title.match(pattern);
+    if (match && match[1] && match[1].length > 1 && match[1].length < 30) {
+      return match[1].trim();
+    }
+  }
+  
+  return "";
+};
+
+/**
  * Format a product price to display as currency
  */
 export const formatProductPrice = (price: number): string => {
@@ -102,8 +128,19 @@ export const standardizeProduct = (product: any): any => {
     reviewCount: product.reviewCount || product.num_reviews || 10,
     num_reviews: product.num_reviews || product.reviewCount || 10,
     
-    // Additional fields
-    brand: product.brand || "",
+    // Enhanced brand extraction - try multiple possible brand field names
+    brand: (() => {
+      const extractedBrand = product.brand || 
+                           product.brand_name || 
+                           product.manufacturer || 
+                           product.vendor_name ||
+                           extractBrandFromTitle(product.title || product.name || "") || 
+                           "";
+      if (extractedBrand) {
+        console.log(`Brand extracted: "${extractedBrand}" for product: ${product.title || product.name}`);
+      }
+      return extractedBrand;
+    })(),
     images: Array.isArray(product.images) ? product.images : [product.image || "/placeholder.svg"],
     ...product
   };

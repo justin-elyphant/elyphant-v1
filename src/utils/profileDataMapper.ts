@@ -258,7 +258,9 @@ export function mapSettingsFormToDatabase(formData: any) {
     username: formData.username || "",
     bio: formData.bio || "",
     profile_image: formData.profile_image || null,
-    dob: formData.date_of_birth ? formData.date_of_birth.toISOString() : null,
+    dob: formData.date_of_birth ? 
+      `${String(formData.date_of_birth.getMonth() + 1).padStart(2, '0')}-${String(formData.date_of_birth.getDate()).padStart(2, '0')}` 
+      : null,
     birth_year: formData.date_of_birth ? formData.date_of_birth.getFullYear() : null,
     shipping_address: mapFormAddressToApiAddress(formData.address),
     interests: formData.interests || [],

@@ -130,7 +130,7 @@ export const searchFriendsWithPrivacy = async (
       const isConnected = connectedUserIds.has(profile.id);
       const isBlocked = blockedUserIds.has(profile.id);
       const isSelf = profile.id === currentUserId;
-      console.log(`🔍 Profile ${profile.id} (${profile.name}): connected=${isConnected}, blocked=${isBlocked}, isSelf=${isSelf}`);
+      console.log(`🔍 Profile ${profile.id} (${profile.name}): connected=${isConnected}, blocked=${isBlocked}, isSelf=${isSelf}, currentUserId=${currentUserId}`);
       // Don't filter out blocked users, but do filter out already connected users (except yourself)
       return !isBlocked && (!isConnected || isSelf);
     });

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, ExternalLink, List, Share2 } from "lucide-react";
+import { Heart, ExternalLink, List, Share } from "lucide-react";
 import { 
   Popover,
   PopoverTrigger,
@@ -119,7 +119,7 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
                           className="h-7 px-2"
                           onClick={(e) => handleShare(e, wishlist.id)}
                         >
-                          <Share2 className="h-3.5 w-3.5" />
+                          <Share className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       <Button 

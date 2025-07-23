@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Heart, Share2, Plus, Minus } from "lucide-react";
+import { Heart, Share, Plus, Minus } from "lucide-react";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
@@ -199,7 +199,7 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
                 className="h-8 w-8 bg-white/90 backdrop-blur-sm"
                 onClick={handleShare}
               >
-                <Share2 className="h-4 w-4" />
+                <Share className="h-4 w-4" />
               </Button>
             </div>
           </div>

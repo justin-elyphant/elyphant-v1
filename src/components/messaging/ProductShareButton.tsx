@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Share2, Search } from "lucide-react";
+import { Share, Search } from "lucide-react";
 import ShareToConnectionButton from "./ShareToConnectionButton";
 
 interface Product {
@@ -44,7 +44,7 @@ const ProductShareButton = ({ onShareProduct }: ProductShareButtonProps) => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" className="h-8 w-8">
-          <Share2 className="h-4 w-4" />
+          <Share className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">

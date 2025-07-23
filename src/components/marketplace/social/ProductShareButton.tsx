@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Copy, Check, MessageCircle, Mail, Link } from 'lucide-react';
+import { Share, Copy, Check, MessageCircle, Mail, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { triggerHapticFeedback, HapticPatterns } from '@/utils/haptics';
 import {
@@ -114,7 +114,7 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
     {
       id: 'native',
       label: 'Share',
-      icon: Share2,
+      icon: Share,
       action: handleNativeShare,
       available: !!navigator.share,
       primary: true
@@ -157,7 +157,7 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
         className="touch-target-44 tap-feedback"
         aria-label={`Share ${product.name}`}
       >
-        <Share2 className="w-4 h-4" />
+        <Share className="w-4 h-4" />
         {showLabel && <span className="ml-2">Share</span>}
       </Button>
     );
@@ -172,7 +172,7 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
           className="touch-target-44 tap-feedback"
           aria-label={`Share ${product.name}`}
         >
-          <Share2 className="w-4 h-4" />
+          <Share className="w-4 h-4" />
           {showLabel && <span className="ml-2">Share</span>}
         </Button>
       </SheetTrigger>

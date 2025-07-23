@@ -36,13 +36,12 @@ class StripeClientManager {
    * Supports multiple environment configurations
    */
   private initializeStripe(): void {
-    // Priority order for Stripe key detection
+    // Priority order for Stripe key detection - matching original client.ts pattern
     this.stripePublishableKey = 
-      process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 
-      import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-      'pk_test_51...'; // Fallback for development
+      import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+      'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z';
 
-    if (!this.stripePublishableKey || this.stripePublishableKey === 'pk_test_51...') {
+    if (!this.stripePublishableKey) {
       console.warn('Stripe publishable key not found. Payment functionality will be limited.');
       return;
     }

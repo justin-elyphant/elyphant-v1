@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from "@/integrations/stripe/client";
+import { stripeClientManager } from "@/services/payment/StripeClientManager";
 import PaymentMethodForm from "./PaymentMethodForm";
 import SavedPaymentMethods from "./SavedPaymentMethods";
 
@@ -36,7 +36,7 @@ const PaymentMethodManager = () => {
           </TabsContent>
           
           <TabsContent value="add" className="mt-4">
-            <Elements stripe={stripePromise}>
+            <Elements stripe={stripeClientManager.getStripePromise()}>
               <PaymentMethodForm onSuccess={handleAddSuccess} />
             </Elements>
           </TabsContent>

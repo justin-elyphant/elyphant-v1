@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { CreditCard, Smartphone, CheckCircle, ArrowLeft } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from "@/integrations/stripe/client";
+import { stripeClientManager } from "@/services/payment/StripeClientManager";
 import ModernPaymentForm from "../../payments/ModernPaymentForm";
 import SavedPaymentMethodsSection from "../../checkout/SavedPaymentMethodsSection";
 import ExpressCheckoutButton from "./ExpressCheckoutButton";
@@ -279,7 +279,7 @@ const PaymentSection = ({
                   <p className="text-sm">Setting up secure payment form...</p>
                 </div>
               ) : clientSecret ? (
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <Elements stripe={stripeClientManager.getStripePromise()} options={{ clientSecret }}>
                   <ModernPaymentForm
                     clientSecret={clientSecret}
                     amount={totalAmount}

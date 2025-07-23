@@ -29,7 +29,7 @@
 
 import React, { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/integrations/stripe/client';
+import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -155,7 +155,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   // CRITICAL: Handle guest checkout (no user authentication)
   if (!user) {
     return (
-      <Elements stripe={stripePromise}>
+      <Elements stripe={stripeClientManager.getStripePromise()}>
         <StripePaymentForm
           clientSecret={clientSecret}
           amount={totalAmount}
@@ -221,7 +221,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 Save this card for future purchases
               </label>
             </div>
-            <Elements stripe={stripePromise}>
+            <Elements stripe={stripeClientManager.getStripePromise()}>
               <StripePaymentForm
                 clientSecret={clientSecret}
                 amount={totalAmount}

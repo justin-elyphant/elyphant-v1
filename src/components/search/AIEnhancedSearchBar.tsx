@@ -7,6 +7,8 @@ import { useSearchLogic } from "./hooks/useSearchLogic";
 import { useSearchHandlers } from "./hooks/useSearchHandlers";
 import SearchInput from "./components/SearchInput";
 import SearchResults from "./components/SearchResults";
+import UnifiedNicoleConversation from "./components/UnifiedNicoleConversation";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface AIEnhancedSearchBarProps {
   mobile?: boolean;
@@ -45,6 +47,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setSearchLoading,
     hasUserInteracted,
     setHasUserInteracted,
+    nicoleResponse,
+    setNicoleResponse,
+    showSearchButton,
+    setShowSearchButton,
     inputRef,
     suggestionRef,
     nicoleDropdownRef
@@ -58,7 +64,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setSearchLoading,
     setUnifiedResults,
     setShowSuggestions,
-    setSuggestions
+    setSuggestions,
+    setNicoleResponse,
+    setShowSearchButton
   });
 
   // Search handlers for different result types
@@ -217,6 +225,35 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         mobile={mobile}
         isNicoleMode={isNicoleMode}
       />
+
+      {/* Nicole Conversation - Desktop Dropdown */}
+      {showNicoleDropdown && !isMobile && (
+        <div 
+          ref={nicoleDropdownRef}
+          className="absolute top-full left-0 right-0 z-50 mt-2"
+        >
+          <UnifiedNicoleConversation
+            isOpen={showNicoleDropdown}
+            onClose={handleCloseNicole}
+            onNavigateToResults={handleNicoleNavigateToResults}
+            initialQuery={query}
+            mobile={false}
+          />
+        </div>
+      )}
+
+      {/* Nicole Conversation - Mobile Modal */}
+      <Dialog open={showMobileModal && isMobile} onOpenChange={() => setShowMobileModal(false)}>
+        <DialogContent className="p-0 w-full max-w-full h-[90vh] bg-white">
+          <UnifiedNicoleConversation
+            isOpen={showMobileModal}
+            onClose={() => setShowMobileModal(false)}
+            onNavigateToResults={handleNicoleNavigateToResults}
+            initialQuery={query}
+            mobile={true}
+          />
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

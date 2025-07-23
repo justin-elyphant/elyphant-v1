@@ -17,6 +17,8 @@ export const useSearchState = () => {
   const [isListening, setIsListening] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [nicoleResponse, setNicoleResponse] = useState("");
+  const [showSearchButton, setShowSearchButton] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,10 @@ export const useSearchState = () => {
     setSearchLoading,
     hasUserInteracted,
     setHasUserInteracted,
+    nicoleResponse,
+    setNicoleResponse,
+    showSearchButton,
+    setShowSearchButton,
     inputRef,
     suggestionRef,
     nicoleDropdownRef

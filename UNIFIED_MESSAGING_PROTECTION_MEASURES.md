@@ -69,9 +69,10 @@ const productDetails = await fetch(`/api/products/${productId}`);
 #### UnifiedPaymentService Integration
 ```typescript
 // ✅ CORRECT: Route gift purchases through payment service
-await unifiedPaymentService.createOrder({
+await unifiedPaymentService.createGiftOrder({
   items: giftItems,
-  recipientId: messageRecipient
+  recipientId: messageRecipient,
+  giftMessage: messageContent
 });
 
 // ❌ FORBIDDEN: Direct payment processing
@@ -229,5 +230,8 @@ await supabase.from('messages')
 - ✅ Enhanced features working correctly
 
 ---
+
+**WEEK 3 UPDATE - PROTECTION COORDINATION**:
+This document now coordinates with UNIFIED_SYSTEMS_PROTECTION_COORDINATION.md for cross-system integration safeguards.
 
 **REMEMBER**: UnifiedMessagingService is part of a coordinated system. It must respect and enhance the existing unified architecture, never compete with or bypass it.

@@ -139,7 +139,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </span>
           
           {/* Styled Action Icons - Share and Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               className="p-1.5 rounded-full hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors"
               onClick={handleShare}
@@ -147,10 +147,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <Share className="h-4 w-4" />
             </button>
             <button
-              className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors"
               onClick={handleAddToCart}
             >
-              <ShoppingCart className="h-3 w-3 mr-1" />
+              <ShoppingCart className="h-3 w-3" />
               Add
             </button>
           </div>

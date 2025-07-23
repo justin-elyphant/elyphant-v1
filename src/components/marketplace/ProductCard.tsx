@@ -121,11 +121,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
         </div>
         
-        {/* Price */}
+        {/* Price and Action Icons */}
         <div className="flex items-center justify-between">
           <span className="font-semibold text-lg text-gray-900">
             {formatPrice(product.price)}
           </span>
+          
+          {/* Small Action Icons - Cart and Share */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              onClick={handleShare}
+            >
+              <Share className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

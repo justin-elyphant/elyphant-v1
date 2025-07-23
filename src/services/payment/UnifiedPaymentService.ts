@@ -69,6 +69,154 @@ export interface PaymentProcessingOptions {
 class UnifiedPaymentService {
   private cartItems: CartItem[] = [];
   private isProcessing = false;
+  private currentUser: any = null;
+  private cartKey = 'guest_cart';
+  private debounceTimer: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Initialize cart on service creation
+    this.initializeCart();
+  }
+
+  /*
+   * ========================================================================
+   * INITIALIZATION & PERSISTENCE
+   * ========================================================================
+   */
+
+  /**
+   * Initialize cart with localStorage data and auth integration
+   */
+  private async initializeCart(): Promise<void> {
+    try {
+      // Get current auth state
+      const { data: { user } } = await supabase.auth.getUser();
+      this.currentUser = user;
+      this.updateCartKey();
+
+      // Load cart from localStorage
+      this.loadCartFromStorage();
+
+      // Listen for auth changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        const previousUser = this.currentUser;
+        this.currentUser = session?.user || null;
+
+        if (event === 'SIGNED_IN' && previousUser === null) {
+          // User just logged in - transfer guest cart
+          this.transferGuestCart();
+        } else if (event === 'SIGNED_OUT') {
+          // User logged out - switch to guest cart
+          this.updateCartKey();
+          this.loadCartFromStorage();
+        } else if (this.currentUser?.id !== previousUser?.id) {
+          // User changed - update cart key and load
+          this.updateCartKey();
+          this.loadCartFromStorage();
+        }
+      });
+    } catch (error) {
+      console.error('Error initializing cart:', error);
+    }
+  }
+
+  /**
+   * Update cart key based on current user
+   */
+  private updateCartKey(): void {
+    this.cartKey = this.currentUser?.id ? `cart_${this.currentUser.id}` : 'guest_cart';
+  }
+
+  /**
+   * Load cart items from localStorage
+   */
+  private loadCartFromStorage(): void {
+    try {
+      const savedCart = localStorage.getItem(this.cartKey);
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        this.cartItems = parsedCart || [];
+        this.notifyCartChange();
+      } else {
+        this.cartItems = [];
+        this.notifyCartChange();
+      }
+    } catch (error) {
+      console.error('Error loading cart from storage:', error);
+      this.cartItems = [];
+      this.notifyCartChange();
+    }
+  }
+
+  /**
+   * Save cart to localStorage (debounced)
+   */
+  private saveCartToStorage(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(this.cartKey, JSON.stringify(this.cartItems));
+      } catch (error) {
+        console.error('Error saving cart to storage:', error);
+      }
+    }, 500);
+  }
+
+  /**
+   * Transfer guest cart to authenticated user
+   */
+  private transferGuestCart(): void {
+    if (!this.currentUser) return;
+
+    const guestCartKey = 'guest_cart';
+    const guestCart = localStorage.getItem(guestCartKey);
+
+    if (guestCart) {
+      try {
+        const guestItems = JSON.parse(guestCart) || [];
+        if (guestItems.length > 0) {
+          const userCartKey = `cart_${this.currentUser.id}`;
+          const userCart = localStorage.getItem(userCartKey);
+          let mergedCart = guestItems;
+
+          if (userCart) {
+            const userItems = JSON.parse(userCart) || [];
+            const mergedMap = new Map();
+
+            // Add user items first
+            userItems.forEach((item: CartItem) => {
+              mergedMap.set(item.product.product_id, item);
+            });
+
+            // Merge guest items (combine quantities if same product)
+            guestItems.forEach((item: CartItem) => {
+              const existing = mergedMap.get(item.product.product_id);
+              if (existing) {
+                existing.quantity += item.quantity;
+              } else {
+                mergedMap.set(item.product.product_id, item);
+              }
+            });
+
+            mergedCart = Array.from(mergedMap.values());
+          }
+
+          this.cartItems = mergedCart;
+          this.updateCartKey();
+          this.saveCartToStorage();
+          localStorage.removeItem(guestCartKey);
+
+          toast.success('Cart items transferred successfully!');
+          this.notifyCartChange();
+        }
+      } catch (error) {
+        console.error('Error transferring guest cart:', error);
+      }
+    }
+  }
 
   /*
    * ========================================================================
@@ -107,6 +255,7 @@ class UnifiedPaymentService {
       });
 
       this.notifyCartChange();
+      this.saveCartToStorage();
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
@@ -130,6 +279,7 @@ class UnifiedPaymentService {
     );
 
     this.notifyCartChange();
+    this.saveCartToStorage();
   }
 
   /**
@@ -142,6 +292,7 @@ class UnifiedPaymentService {
     
     toast.success('Removed from cart');
     this.notifyCartChange();
+    this.saveCartToStorage();
   }
 
   /**
@@ -149,6 +300,7 @@ class UnifiedPaymentService {
    */
   clearCart(): void {
     this.cartItems = [];
+    localStorage.removeItem(this.cartKey);
     toast.success('Cart cleared');
     this.notifyCartChange();
   }
@@ -165,6 +317,7 @@ class UnifiedPaymentService {
 
     toast.success('Item assigned to recipient');
     this.notifyCartChange();
+    this.saveCartToStorage();
   }
 
   /**

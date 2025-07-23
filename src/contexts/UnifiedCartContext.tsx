@@ -186,11 +186,10 @@ export const UnifiedCartProvider: React.FC<{ children: ReactNode }> = ({ childre
   const transferGuestCart = useCallback(() => {
     if (!user) return;
 
-    // TODO: Implement guest cart transfer in UnifiedPaymentService
-    console.log('Guest cart transfer - to be implemented in UnifiedPaymentService');
-    
-    // For now, this is a placeholder that maintains the interface
-    // The actual implementation will be added in Week 2
+    // The UnifiedPaymentService handles guest cart transfer automatically
+    // through its auth state change listeners, so this is mainly for 
+    // compatibility with the CartContext interface
+    console.log('Guest cart transfer handled automatically by UnifiedPaymentService');
   }, [user]);
 
   // ============================================================================

@@ -102,17 +102,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
         
+        {/* Brand - Show prominently at top */}
+        {product.brand && (
+          <p className="text-xs font-semibold text-gray-800 uppercase tracking-wide">{product.brand}</p>
+        )}
+        
         {/* Title */}
         <div onClick={onClick} className="cursor-pointer">
           <h3 className="font-medium text-sm text-gray-900 line-clamp-2 hover:text-primary transition-colors">
             {product.title}
           </h3>
         </div>
-        
-        {/* Brand */}
-        {product.brand && (
-          <p className="text-xs text-gray-600 font-medium">{product.brand}</p>
-        )}
         
         {/* Rating */}
         <div className="flex items-center gap-1 text-xs text-gray-600">

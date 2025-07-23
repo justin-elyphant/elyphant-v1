@@ -88,7 +88,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         
         <Input
           ref={inputRef}
-          type="search"
+          type="text"
           placeholder={placeholderText}
           className={`pl-32 pr-32 transition-all duration-300 ${
             mobile ? "text-base py-3 h-12" : ""
@@ -100,6 +100,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           value={query}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          autoComplete="off"
         />
 
         {/* Clear Button */}

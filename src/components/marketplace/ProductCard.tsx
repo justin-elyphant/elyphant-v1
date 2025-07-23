@@ -20,8 +20,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onShare 
 }) => {
   const formatPrice = (price: number) => {
-    // Convert cents to dollars if price is in cents
-    const actualPrice = price > 1000 ? price / 100 : price;
+    // More robust price detection: if price looks like cents (no decimals and > $100 equivalent), convert
+    // Examples: 1999 cents = $19.99, 79998 cents = $799.98
+    let actualPrice = price;
+    
+    // If the price is a whole number > 500 and looks like it could be in cents, convert it
+    if (Number.isInteger(price) && price > 500) {
+      // Check if converting to dollars makes more sense (between $5-$10000 range)
+      const dollarPrice = price / 100;
+      if (dollarPrice >= 5 && dollarPrice <= 10000) {
+        actualPrice = dollarPrice;
+      }
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

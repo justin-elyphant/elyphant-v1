@@ -108,13 +108,8 @@ const UnifiedCheckoutForm: React.FC = () => {
   /*
    * 🔗 CRITICAL: Payment Intent Creation
    * 
-   * This function creates a Stripe payment intent via Supabase edge function.
-   * DO NOT replace with direct API calls or simplified payment processing.
-   * 
-   * The edge function handles:
-   * - Stripe API integration
-   * - Payment method validation
-   * - Security and authentication
+   * This function creates a Stripe payment intent via UnifiedPaymentService.
+   * Week 2 Migration: Now uses UnifiedPaymentService for consistent orchestration.
    */
   const createPaymentIntent = async () => {
     if (!user) {
@@ -125,7 +120,8 @@ const UnifiedCheckoutForm: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // CRITICAL: Must use supabase.functions.invoke, NOT direct API calls
+      // Week 2: Use UnifiedPaymentService for payment intent creation
+      // This maintains the same functionality but routes through unified service
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents

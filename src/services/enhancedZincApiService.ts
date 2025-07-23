@@ -34,7 +34,7 @@ const CATEGORY_SEARCH_QUERIES = {
   electronics: "best selling electronics phones computers laptops headphones cameras",
   tech: "best selling smart home devices IoT gadgets tech accessories automation",
   beauty: "best selling skincare makeup cosmetics beauty products personal care",
-  homeKitchen: "best selling kitchen appliances home essentials cookware furniture"
+  homeKitchen: "kitchen home cooking utensils cookware appliances storage organization tools gadgets"
 };
 
 class EnhancedZincApiService {

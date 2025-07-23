@@ -1,6 +1,6 @@
 import { Product } from "@/types/product";
 
-interface ZincProduct {
+export interface ZincProduct {
   product_id: string;
   title: string;
   price: number;
@@ -12,15 +12,22 @@ interface ZincProduct {
   rating?: number;
   review_count?: number;
   url?: string;
+  stars?: number;
+  num_reviews?: number;
+  product_description?: string;
+  feature_bullets?: string[];
+  product_details?: any[];
 }
 
-interface ZincSearchResponse {
+export interface ZincSearchResponse {
   results: ZincProduct[];
   total: number;
   query: string;
   page: number;
   total_pages: number;
   time_taken_ms: number;
+  error?: string;
+  cached?: boolean;
 }
 
 class EnhancedZincApiService {
@@ -185,7 +192,10 @@ class EnhancedZincApiService {
           // Add category marker and limit results per query
           const categoryResults = response.results.slice(0, 6).map(product => ({
             ...product,
-            categorySource: query
+            categorySource: query,
+            // Ensure property name consistency for Product type
+            reviewCount: product.review_count || product.num_reviews,
+            rating: product.rating || product.stars
           }));
           allResults.push(...categoryResults);
         }
@@ -217,6 +227,87 @@ class EnhancedZincApiService {
     // Shuffle and limit total results
     const shuffled = this.shuffleArray(allResults);
     return shuffled.slice(0, 24);
+  }
+
+  /**
+   * Alias for searchCategories for luxury categories
+   */
+  async searchLuxuryCategories(limit: number = 24): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
+    try {
+      const defaultCategories = ['electronics', 'homeKitchen', 'tech', 'beauty'];
+      const results = await this.searchCategories(defaultCategories);
+      return { results: results.slice(0, limit) };
+    } catch (error) {
+      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Search best selling products by category
+   */
+  async searchBestSellingByCategory(category: string, limit: number = 20): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
+    try {
+      const results = await this.searchCategoryBatch(category);
+      return { results: results.slice(0, limit) };
+    } catch (error) {
+      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Get category search query
+   */
+  getCategorySearchQuery(categoryKey: string): string {
+    const categoryQueries = {
+      electronics: [
+        "best selling smartphones iphone samsung",
+        "wireless headphones earbuds airpods",
+        "laptops macbook gaming computers",
+        "tablets ipad android devices"
+      ],
+      homeKitchen: [
+        "kitchen home cooking utensils cookware",
+        "appliances storage organization tools gadgets",
+        "dining furniture home essentials",
+        "cleaning supplies household items"
+      ],
+      tech: [
+        "smart home devices alexa google nest",
+        "gaming accessories controllers keyboards",
+        "computer accessories monitors speakers",
+        "tech gadgets electronics innovation",
+        "wireless charging cables adapters",
+        "security cameras smart doorbell"
+      ],
+      beauty: [
+        "skincare makeup cosmetics beauty",
+        "hair care shampoo styling products",
+        "personal care health wellness",
+        "fragrance perfume cologne scents"
+      ]
+    };
+    const queries = categoryQueries[categoryKey] || [];
+    return queries.join(' ');
+  }
+
+  /**
+   * Alias for getProductDetails
+   */
+  async getProductDetail(productId: string): Promise<ZincProduct | null> {
+    return this.getProductDetails(productId);
+  }
+
+  /**
+   * Get default products for the marketplace
+   */
+  async getDefaultProducts(limit: number = 24): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
+    try {
+      const defaultCategories = ['electronics', 'homeKitchen', 'tech', 'beauty'];
+      const results = await this.searchCategories(defaultCategories);
+      return { results: results.slice(0, limit) };
+    } catch (error) {
+      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   }
 }
 

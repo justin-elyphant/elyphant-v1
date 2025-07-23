@@ -21,6 +21,7 @@ export type Product = {
   stars?: number;
   reviewCount?: number; // Alias for num_reviews
   num_reviews?: number;
+  review_count?: number; // Alias for reviewCount
   
   // Optional fields that might be present in some products
   description?: string;

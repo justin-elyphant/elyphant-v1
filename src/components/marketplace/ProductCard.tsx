@@ -127,20 +127,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {formatPrice(product.price)}
           </span>
           
-          {/* Small Action Icons - Cart and Share */}
-          <div className="flex items-center gap-2">
+          {/* Styled Action Icons - Share and Cart */}
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
               onClick={handleShare}
             >
               <Share className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+              variant="default"
+              size="icon" 
+              className="h-8 w-8 p-0 bg-gray-900 hover:bg-gray-800 text-white rounded"
               onClick={handleAddToCart}
             >
               <ShoppingCart className="h-4 w-4" />

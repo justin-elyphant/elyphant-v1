@@ -39,9 +39,8 @@ const ProductItemBase: React.FC<ProductItemBaseProps> = ({
       <div className="flex w-full max-w-[140px]">
         <AddToCartButton
           product={product}
-          variant="outline"
-          size="sm"
-          className="flex-1 min-w-0 px-1 py-1 h-8 text-[13px] font-medium rounded-md"
+          variant="luxury"
+          className="flex-1 min-w-0"
           // Add the click handler to prevent propagation
           onClick={handleAddToCartClick}
         />

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface AddToCartButtonProps {
   product: Product;
-  variant?: "default" | "outline" | "ghost";
+  variant?: "default" | "outline" | "ghost" | "luxury";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   quantity?: number;
@@ -39,6 +39,32 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     }, 2000);
   };
   
+  // Luxury variant uses custom styling
+  if (variant === "luxury") {
+    return (
+      <button
+        onClick={handleAddToCart}
+        disabled={isAdded}
+        className={cn(
+          "px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+          className
+        )}
+      >
+        {isAdded ? (
+          <>
+            <Check className="h-3 w-3 mr-1" />
+            Added
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="h-3 w-3 mr-1" />
+            Add
+          </>
+        )}
+      </button>
+    );
+  }
+
   return (
     <Button 
       onClick={handleAddToCart}

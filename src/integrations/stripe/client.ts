@@ -1,14 +1,23 @@
 
-// Stripe client integration
-import { loadStripe } from '@stripe/stripe-js';
+/*
+ * ========================================================================
+ * DEPRECATED STRIPE CLIENT - USE StripeClientManager INSTEAD
+ * ========================================================================
+ * 
+ * This file is kept for backward compatibility during Week 5 migration.
+ * All new code should use StripeClientManager from UnifiedPaymentService.
+ * 
+ * MIGRATION PATH:
+ * - Week 5: Components updated to use stripeClientManager
+ * - Future: This file will be removed
+ * ========================================================================
+ */
+
+import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { supabase } from "@/integrations/supabase/client";
 
-// Use environment variable or fallback to the provided key
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-  'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z';
-
-// Initialize Stripe
-export const stripePromise = loadStripe(stripePublishableKey);
+// Export for backward compatibility - NEW CODE: Use stripeClientManager.getStripePromise() instead
+export const stripePromise = stripeClientManager.getStripePromise();
 
 // Function to create a payment session for autogifting
 export const createPaymentSession = async (amount: number, eventId: string) => {

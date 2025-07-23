@@ -1,11 +1,29 @@
 
+/*
+ * ========================================================================
+ * 🎯 UNIFIED MODERN PAYMENT FORM - WEEK 5 CONSOLIDATION
+ * ========================================================================
+ * 
+ * Consolidated payment form that replaces scattered payment components.
+ * Integrates with UnifiedPaymentService for consistent payment processing.
+ * 
+ * CONSOLIDATION NOTES:
+ * - Replaced: src/components/checkout/ModernPaymentForm.tsx (duplicate)
+ * - Enhanced: Added Apple Pay, Google Pay support
+ * - Integrated: UnifiedPaymentService patterns
+ * ========================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, CardElement, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Lock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { CreditCard, Lock, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -13,24 +31,39 @@ import { useAuth } from '@/contexts/auth';
 interface ModernPaymentFormProps {
   clientSecret: string;
   amount: number;
-  onSuccess: (paymentIntentId: string, saveCard: boolean) => void;
+  onSuccess: (paymentIntentId: string, saveCard?: boolean) => void;
+  onError?: (error: string) => void;
   allowSaveCard?: boolean;
   buttonText?: string;
+  isProcessing?: boolean;
+  onProcessingChange?: (processing: boolean) => void;
 }
 
 const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
   clientSecret,
   amount,
   onSuccess,
+  onError,
   allowSaveCard = false,
-  buttonText = 'Pay Now'
+  buttonText = 'Pay Now',
+  isProcessing: externalIsProcessing = false,
+  onProcessingChange
 }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { user } = useAuth();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [internalIsProcessing, setInternalIsProcessing] = useState(false);
   const [saveCard, setSaveCard] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use external processing state if provided, otherwise use internal
+  const isProcessing = externalIsProcessing || internalIsProcessing;
+  
+  // Update processing state helper
+  const updateProcessingState = (processing: boolean) => {
+    setInternalIsProcessing(processing);
+    onProcessingChange?.(processing);
+  };
   const [paymentRequest, setPaymentRequest] = useState<any | null>(null);
   const [canMakePayment, setCanMakePayment] = useState(false);
 
@@ -63,8 +96,10 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
 
       if (confirmError) {
         ev.complete('fail');
-        toast.error(confirmError.message);
-        setError(confirmError.message || 'Payment failed');
+        const errorMsg = confirmError.message || 'Payment failed';
+        toast.error(errorMsg);
+        setError(errorMsg);
+        onError?.(errorMsg);
       } else {
         ev.complete('success');
         if (paymentIntent && paymentIntent.status === 'succeeded') {
@@ -85,13 +120,15 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
       return;
     }
 
-    setIsProcessing(true);
+    updateProcessingState(true);
     setError(null);
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      setError('Payment form not loaded properly');
-      setIsProcessing(false);
+      const errorMsg = 'Payment form not loaded properly';
+      setError(errorMsg);
+      onError?.(errorMsg);
+      updateProcessingState(false);
       return;
     }
 
@@ -128,9 +165,10 @@ const ModernPaymentForm: React.FC<ModernPaymentFormProps> = ({
       console.error('Payment error:', err);
       const errorMessage = err.message || 'Payment failed. Please try again.';
       setError(errorMessage);
+      onError?.(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setIsProcessing(false);
+      updateProcessingState(false);
     }
   };
 

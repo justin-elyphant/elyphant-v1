@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { loadStripe } from "@stripe/stripe-js";
+import { stripeClientManager } from "@/services/payment/StripeClientManager";
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_51...');
+// Use centralized Stripe client manager
+const stripePromise = stripeClientManager.getStripePromise();
 
 export interface GroupGiftContribution {
   id: string;

@@ -8,7 +8,7 @@ import { CreditCard, Smartphone, CheckCircle, ArrowLeft } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from "@/integrations/stripe/client";
-import ModernPaymentForm from "../../checkout/ModernPaymentForm";
+import ModernPaymentForm from "../../payments/ModernPaymentForm";
 import SavedPaymentMethodsSection from "../../checkout/SavedPaymentMethodsSection";
 import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";

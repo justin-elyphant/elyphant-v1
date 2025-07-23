@@ -29,6 +29,14 @@ export interface ZincProductDetail {
   best_seller_rank?: number;
 }
 
+// Category-specific search queries that Zinc API understands better
+const CATEGORY_SEARCH_QUERIES = {
+  electronics: "best selling electronics phones computers laptops headphones cameras",
+  tech: "best selling smart home devices IoT gadgets tech accessories automation",
+  beauty: "best selling skincare makeup cosmetics beauty products personal care",
+  homeKitchen: "best selling kitchen appliances home essentials cookware furniture"
+};
+
 class EnhancedZincApiService {
   private cache = new Map();
 
@@ -103,6 +111,77 @@ class EnhancedZincApiService {
         error: error instanceof Error ? error.message : 'Search failed'
       };
     }
+  }
+
+  /**
+   * NEW: Search for best selling products by category using targeted queries
+   */
+  async searchBestSellingByCategory(category: string, limit: number = 20): Promise<ZincSearchResponse> {
+    console.log(`Searching best selling products for category: ${category}`);
+    
+    const categoryQuery = CATEGORY_SEARCH_QUERIES[category as keyof typeof CATEGORY_SEARCH_QUERIES];
+    
+    if (!categoryQuery) {
+      console.warn(`No category query found for: ${category}`);
+      return {
+        results: [],
+        error: `Unknown category: ${category}`
+      };
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          query: categoryQuery,
+          page: 1,
+          limit,
+          filters: {
+            category: category,
+            best_sellers_only: true
+          }
+        }
+      });
+
+      if (error) {
+        console.error(`Error calling get-products for category ${category}:`, error);
+        return {
+          results: [],
+          error: `Category search failed: ${error.message}`
+        };
+      }
+
+      if (!data || !data.results) {
+        console.warn(`No products returned for category ${category}`);
+        return {
+          results: [],
+          error: `No products found for ${category}`
+        };
+      }
+
+      // Enhance product data with best seller information
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Found ${enhancedResults.length} best selling products for category: ${category}`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error(`Category search error for ${category}:`, error);
+      return {
+        results: [],
+        error: error instanceof Error ? error.message : `Search failed for ${category}`
+      };
+    }
+  }
+
+  /**
+   * NEW: Get the search query for a specific category (for "See All" functionality)
+   */
+  getCategorySearchQuery(category: string): string {
+    return CATEGORY_SEARCH_QUERIES[category as keyof typeof CATEGORY_SEARCH_QUERIES] || category;
   }
 
   /**

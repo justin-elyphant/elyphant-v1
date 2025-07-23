@@ -127,19 +127,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {formatPrice(product.price)}
           </span>
         </div>
-        
-        {/* Add to Cart Button - styled like the reference */}
-        <div className="pt-2">
-          <Button
-            onClick={handleAddToCart}
-            variant="outline"
-            size="sm"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
-          >
-            <ShoppingCart className="h-4 w-4 mr-1" />
-            Add to Cart
-          </Button>
-        </div>
       </div>
     </div>
   );

@@ -2,12 +2,19 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share2 } from "lucide-react";
+import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share2, Truck } from "lucide-react";
 import { Product } from "@/types/product";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
+import SocialShareButton from "@/components/marketplace/product-item/SocialShareButton";
+import SignUpDialog from "@/components/marketplace/SignUpDialog";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useProductDataSync } from "@/hooks/useProductDataSync";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -20,6 +27,15 @@ interface AirbnbStyleProductCardProps {
   };
   onAddToCart?: (product: Product) => void;
   onShare?: (product: Product) => void;
+  // Additional props for unified support
+  viewMode?: "grid" | "list" | "modern";
+  isFavorited?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
+  onClick?: () => void;
+  onWishlistClick?: () => void;
+  isWishlisted?: boolean;
+  isGifteeView?: boolean;
+  onToggleWishlist?: () => void;
 }
 
 const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
@@ -29,17 +45,61 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
   isLocal = false,
   vendorInfo,
   onAddToCart,
-  onShare
+  onShare,
+  // Additional unified props
+  viewMode = "grid",
+  isFavorited,
+  onToggleFavorite,
+  onClick,
+  onWishlistClick,
+  isWishlisted: propIsWishlisted,
+  isGifteeView = true,
+  onToggleWishlist
 }) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { addItem } = useRecentlyViewed();
+  const { trackProductView } = useProductDataSync();
+  const isMobile = useIsMobile();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
   const productId = String(product.product_id || product.id);
-  const isWishlisted = user ? isProductWishlisted(productId) : false;
+  // Use prop isWishlisted if provided, otherwise use unified wishlist system
+  const isWishlisted = propIsWishlisted !== undefined 
+    ? propIsWishlisted 
+    : (user ? isProductWishlisted(productId) : false);
   
   const handleWishlistAdded = async () => {
     await loadWishlists();
+    onToggleWishlist?.();
+    onWishlistClick?.();
+    onToggleFavorite?.({} as React.MouseEvent);
+  };
+
+  const handleCardClick = () => {
+    // Add to recently viewed and track
+    addItem({
+      id: productId,
+      title: getProductTitle(),
+      image: getProductImage(),
+      price: product.price
+    });
+    trackProductView(product);
+    
+    // Use onClick prop if provided, otherwise onProductClick
+    if (onClick) {
+      onClick();
+    } else {
+      onProductClick();
+    }
+  };
+
+  const handleWishlistClick = () => {
+    if (!user) {
+      setShowSignUpDialog(true);
+      return;
+    }
   };
 
   const getProductImage = () => {
@@ -103,13 +163,55 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
     return product.reviewCount || product.num_reviews || 0;
   };
 
+  // Additional helper functions from other cards
+  const getSalePrice = () => {
+    return (product as any).sale_price || null;
+  };
+
+  const hasDiscount = () => {
+    return getSalePrice() && getSalePrice()! < product.price;
+  };
+
+  const isFreeShipping = () => {
+    return product.prime || (product as any).free_shipping || false;
+  };
+
+  const isRecentlyViewed = () => {
+    return (product as any).recentlyViewed;
+  };
+
+  const isNewArrival = () => {
+    return product.tags?.includes("new") || (product.id && Number(product.id) > 9000);
+  };
+
+  const isBestSeller = () => {
+    return product.isBestSeller || product.tags?.includes("bestseller") || false;
+  };
+
+  const getBestSellerType = () => {
+    return product.bestSellerType || null;
+  };
+
+  const getBadgeText = () => {
+    return product.badgeText || null;
+  };
+
   return (
-    <Card 
-      className="group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl"
-      onClick={onProductClick}
-    >
+    <>
+      <Card 
+        className={cn(
+          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl",
+          viewMode === "list" && "flex flex-row",
+          isWishlisted && "border-2 border-pink-200 hover:border-pink-300",
+          isMobile && "active:scale-[0.98] touch-manipulation"
+        )}
+        onClick={handleCardClick}
+      >
       {/* Image Section - Airbnb Style with Enhanced Quality */}
-      <div className="relative aspect-square overflow-hidden rounded-t-xl group">
+      <div className={cn(
+        "relative overflow-hidden group",
+        viewMode === "list" ? "w-32 h-32 flex-shrink-0 rounded-l-xl" : "aspect-square rounded-t-xl"
+      )}>
         <img
           src={getProductImage()}
           alt={getProductTitle()}
@@ -257,32 +359,125 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           </div>
         )}
 
-        {/* Price and Actions Row */}
-        <div className="pt-1 flex items-center justify-between">
-          <div className="flex items-center">
+        {/* Enhanced Status Badges */}
+        <div className="space-y-1">
+          {/* Best Seller Badge */}
+          {isBestSeller() && (
+            <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
+              {getBadgeText() || "Best Seller"}
+            </Badge>
+          )}
+          
+          {/* New Arrival Badge */}
+          {isNewArrival() && (
+            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+              New
+            </Badge>
+          )}
+          
+          {/* Recently Viewed Badge */}
+          {isRecentlyViewed() && (
+            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
+              Recently Viewed
+            </Badge>
+          )}
+        </div>
+
+        {/* Price Section with Sale Support */}
+        <div className="flex items-center gap-2">
+          {hasDiscount() ? (
+            <>
+              <span className="font-semibold text-gray-900">
+                ${getSalePrice()?.toFixed(2)}
+              </span>
+              <span className="text-sm text-gray-500 line-through">
+                ${getProductPrice()}
+              </span>
+            </>
+          ) : (
             <span className="font-semibold text-gray-900">
               ${getProductPrice()}
             </span>
-            {product.tags?.includes("trending") && (
-              <span className="text-xs text-gray-500 ml-1">trending</span>
+          )}
+          {product.tags?.includes("trending") && (
+            <span className="text-xs text-gray-500">trending</span>
+          )}
+        </div>
+
+        {/* Free Shipping Indicator */}
+        {isFreeShipping() && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center text-xs text-green-600">
+                  <Truck className="h-3 w-3 mr-1" />
+                  <span>Free shipping</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Free shipping on this item</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* Tags Display */}
+        {product.tags && product.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {product.tags.slice(0, 2).map((tag: string, i: number) => (
+              <span 
+                key={i} 
+                className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-sm"
+              >
+                {tag}
+              </span>
+            ))}
+            {product.tags.length > 2 && (
+              <span className="text-xs text-gray-500">+{product.tags.length - 2}</span>
             )}
           </div>
+        )}
           
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            {/* Share Button */}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 pt-2">
+          {/* Enhanced Share Button */}
+          {onShare ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onShare?.(product);
+                onShare(product);
               }}
               className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
               title="Share product"
             >
               <Share2 className="h-4 w-4 text-gray-600" />
             </button>
-            
-            {/* Add to Cart Button */}
+          ) : (
+            <SocialShareButton
+              product={{
+                ...product,
+                id: productId,
+                name: getProductTitle()
+              } as any}
+              variant="ghost"
+              size="sm"
+              className="p-1.5"
+            />
+          )}
+          
+          {/* Enhanced Add to Cart Button */}
+          {viewMode === "list" || isMobile ? (
+            <AddToCartButton
+              product={product}
+              variant="luxury"
+              size="sm"
+              className="flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart?.(product);
+              }}
+            />
+          ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -294,10 +489,17 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
               <ShoppingCart className="h-3 w-3" />
               Add
             </button>
-          </div>
+          )}
         </div>
       </div>
-    </Card>
+      </Card>
+
+      {/* Sign Up Dialog */}
+      <SignUpDialog 
+        open={showSignUpDialog} 
+        onOpenChange={setShowSignUpDialog} 
+      />
+    </>
   );
 };
 

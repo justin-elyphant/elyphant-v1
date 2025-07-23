@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OptimizedImage from "@/components/ui/optimized-image";
-import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
+import UnifiedProductCard from "../UnifiedProductCard";
 import { useVirtualInfiniteScroll } from "@/hooks/useVirtualScroll";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
@@ -207,14 +207,15 @@ const MobileProductGrid = ({
               ${product.price?.toFixed(2)}
             </div>
 
-            {/* Add to Cart Button */}
-            <AddToCartButton
-              product={product}
+            {/* Add to Cart Button - keeping existing implementation */}
+            <Button
               variant="outline"
               size="sm"
               className="w-full h-9 text-sm font-medium border-gray-200 hover:border-gray-300 active:scale-[0.96] transition-transform duration-100"
               onClick={handleAddToCartClick}
-            />
+            >
+              Add to Cart
+            </Button>
           </div>
         </CardContent>
       </Card>

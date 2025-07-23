@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import ProductItem from "../../product-item/ProductItem";
-import ModernProductCard from "../../ui/ModernProductCard";
+import UnifiedProductCard from "../../UnifiedProductCard";
 
 export const useProductInteractions = (
   products: Product[], 
@@ -69,7 +69,8 @@ export const useProductInteractions = (
               {product.tags[0]}
             </Badge>
           )}
-          <ModernProductCard
+          <UnifiedProductCard
+            cardType="modern"
             product={product}
             isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
             onToggleFavorite={(e) => handleWishlistClick(e, product.product_id || product.id || "")}

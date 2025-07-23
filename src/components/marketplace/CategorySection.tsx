@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Product } from "@/types/product";
-import { ProductCard } from "./ProductCard";
+import UnifiedProductCard from "./UnifiedProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -85,7 +85,8 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
         {products.map((product) => (
           <div key={product.product_id} className="flex-shrink-0 w-48">
-            <ProductCard
+            <UnifiedProductCard
+              cardType="general"
               product={product}
               onClick={() => onProductClick?.(product)}
               onAddToCart={onAddToCart}

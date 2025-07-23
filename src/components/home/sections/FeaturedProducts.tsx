@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { searchProducts } from "@/components/marketplace/zinc/services/search/productSearchServiceImpl";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
-import ProductCard from "@/components/gifting/ProductCard";
+import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface FeaturedProductsProps {
@@ -91,7 +91,8 @@ const FeaturedProducts = ({
       <h2 className="text-2xl font-bold mb-6">{title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.slice(0, 12).map((product) => (
-          <ProductCard 
+          <UnifiedProductCard
+            cardType="gifting"
             key={product.product_id} 
             product={{
               id: product.product_id,

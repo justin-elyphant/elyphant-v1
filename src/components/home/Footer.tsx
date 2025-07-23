@@ -40,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><a href="/privacy" className="hover:text-foreground">Privacy Policy</a></li>
               <li><a href="/terms" className="hover:text-foreground">Terms of Service</a></li>
-              <li><a href="/trunkline-login" className="hover:text-foreground">Trunkline</a></li>
+              <li><a href="/trunkline" className="hover:text-foreground">Trunkline</a></li>
             </ul>
           </div>
         </div>

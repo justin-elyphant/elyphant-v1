@@ -22,13 +22,8 @@ const MarketplaceHeader = ({
   const searchParam = searchParams.get("search");
   const categoryParam = searchParams.get("category") || currentCategory;
   
-  // Only show header content when there's no active search or category
-  // since we have the "Showing results for: x" section that handles this
-  const shouldShowHeader = !searchParam && !categoryParam;
-  
-  if (!shouldShowHeader) {
-    return null;
-  }
+  // Always hide header content since we have the hero banner
+  return null;
 
   return (
     <div className="mb-6">

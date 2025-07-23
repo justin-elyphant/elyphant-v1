@@ -566,6 +566,54 @@ export type Database = {
         }
         Relationships: []
       }
+      business_payment_methods: {
+        Row: {
+          card_type: string
+          created_at: string
+          encrypted_cvv: string
+          encrypted_number: string
+          exp_month: number
+          exp_year: number
+          id: string
+          is_active: boolean
+          is_default: boolean
+          last_four: string
+          name: string
+          name_on_card: string
+          updated_at: string
+        }
+        Insert: {
+          card_type: string
+          created_at?: string
+          encrypted_cvv: string
+          encrypted_number: string
+          exp_month: number
+          exp_year: number
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          last_four: string
+          name: string
+          name_on_card: string
+          updated_at?: string
+        }
+        Update: {
+          card_type?: string
+          created_at?: string
+          encrypted_cvv?: string
+          encrypted_number?: string
+          exp_month?: number
+          exp_year?: number
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          last_four?: string
+          name?: string
+          name_on_card?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connection_nudges: {
         Row: {
           connection_id: string | null

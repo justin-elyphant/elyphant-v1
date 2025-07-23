@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.verify-checkout-session]
 verify_jwt = true
+
+[functions.manage-business-payment-methods]
+verify_jwt = false

@@ -70,6 +70,11 @@ const systemItems = [
     icon: CreditCard,
   },
   {
+    title: "Business Payment Methods",
+    url: "/trunkline/business-payments",
+    icon: CreditCard,
+  },
+  {
     title: "Zinc Integration",
     url: "/trunkline/zinc",
     icon: Settings,

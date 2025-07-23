@@ -14,6 +14,7 @@ import TrunklineAmazonTab from "@/components/trunkline/TrunklineAmazonTab";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
 import TrunklineZincDebuggerTab from "@/components/trunkline/TrunklineZincDebuggerTab";
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
+import BusinessPaymentMethodManager from "@/components/settings/BusinessPaymentMethodManager";
 
 const Trunkline = () => {
   return (
@@ -31,6 +32,7 @@ const Trunkline = () => {
                 <Route path="/support" element={<TrunklineSupportTab />} />
                 <Route path="/returns" element={<ReturnTrackingTab />} />
                 <Route path="/amazon" element={<TrunklineAmazonTab />} />
+                <Route path="/business-payments" element={<BusinessPaymentMethodManager />} />
                 <Route path="/zinc" element={<TrunklineZincTab />} />
                 <Route path="/zinc-debugger" element={<TrunklineZincDebuggerTab />} />
                 <Route path="/vendors" element={<TrunklineVendorsTab />} />

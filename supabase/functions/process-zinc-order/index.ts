@@ -76,6 +76,26 @@ serve(async (req) => {
       console.warn('⚠️ Amazon credentials not verified, but proceeding with order');
     }
 
+    // Get default business payment method
+    let businessPaymentMethod = null;
+    try {
+      const { data: paymentMethodResponse, error: pmError } = await supabaseClient
+        .functions.invoke('manage-business-payment-methods', {
+          body: { action: 'getDefault' }
+        });
+
+      if (pmError) {
+        console.error('❌ Error fetching business payment method:', pmError);
+      } else if (paymentMethodResponse?.success && paymentMethodResponse?.data) {
+        businessPaymentMethod = paymentMethodResponse.data;
+        console.log(`💳 Using business payment method: ${businessPaymentMethod.name} (****${businessPaymentMethod.last_four})`);
+      } else {
+        console.warn('⚠️ No default business payment method found');
+      }
+    } catch (pmFetchError) {
+      console.error('❌ Failed to fetch business payment method:', pmFetchError);
+    }
+
     // Prepare Zinc order data
     const shippingAddress = order.shipping_info;
     const billingInfo = order.billing_info;
@@ -127,7 +147,15 @@ serve(async (req) => {
         state: billingAddressData.state,
         country: billingAddressData.country
       },
-      payment_method: {
+      payment_method: businessPaymentMethod ? {
+        name_on_card: businessPaymentMethod.name_on_card,
+        number: businessPaymentMethod.decrypted_number,
+        expiration_month: businessPaymentMethod.exp_month,
+        expiration_year: businessPaymentMethod.exp_year,
+        security_code: businessPaymentMethod.decrypted_cvv,
+        type: "card",
+        use_gift: false
+      } : {
         name_on_card: cardholderName,
         type: "card",
         use_gift: false

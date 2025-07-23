@@ -140,7 +140,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Button
               variant="default"
               size="icon" 
-              className="h-8 w-8 p-0 bg-gray-900 hover:bg-gray-800 text-white rounded"
+              className="h-8 w-8 p-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded"
               onClick={handleAddToCart}
             >
               <ShoppingCart className="h-4 w-4" />

@@ -187,4 +187,75 @@ If Zinc integration fails:
 
 ---
 
+## 🔗 UNIFIED PAYMENT SERVICE COORDINATION
+
+### Payment Integration Protection (Week 2-3 Updates):
+The Enhanced Zinc API System now coordinates with UnifiedPaymentService while maintaining strict boundaries:
+
+#### Integration Rules:
+```typescript
+// ✅ CORRECT: UnifiedPaymentService routes to Zinc Edge Functions
+await unifiedPaymentService.processZincOrder(orderId);
+// Internally calls: supabase.functions.invoke('process-zinc-order')
+
+// ❌ FORBIDDEN: Direct Zinc API calls from payment service
+await fetch('https://api.zinc.io/v1/orders', { ... });
+```
+
+#### Protected Boundaries:
+- **UnifiedPaymentService** handles customer Stripe payments ONLY
+- **Enhanced Zinc API System** handles business Amazon fulfillment ONLY
+- **process-zinc-order Edge Function** remains the ONLY way to access Zinc API
+- **Payment method structure** continues to be protected and unchanged
+
+#### Coordination Points:
+1. **Order Creation Flow**:
+   ```
+   Customer Payment → UnifiedPaymentService → Order Created
+   Amazon Fulfillment → process-zinc-order → Zinc API
+   ```
+
+2. **Product Validation**:
+   ```
+   UnifiedPaymentService → UnifiedMarketplaceService → Enhanced Zinc API (if Amazon product)
+   ```
+
+3. **Order Processing**:
+   ```
+   UnifiedPaymentService.processPaymentSuccess() → this.processZincOrder() → Edge Function
+   ```
+
+### Shared Protection Rules with UnifiedPaymentService:
+- **Never modify payment_method structure** - Both systems respect this
+- **Always use Edge Functions for Zinc** - No direct API access from any service
+- **Maintain dual payment architecture** - Customer vs Business separation
+- **Respect Amazon Business credentials** - Only accessible via Edge Functions
+
+---
+
+## 📋 CROSS-SYSTEM VALIDATION CHECKLIST
+
+Before ANY changes to Enhanced Zinc API System, verify:
+
+### Zinc API System Specific:
+- [ ] Edge Functions still process orders correctly
+- [ ] Amazon Business credentials working
+- [ ] Payment method structure unchanged
+- [ ] Product search and enhancement functional
+
+### UnifiedPaymentService Coordination:
+- [ ] Payment service still routes Amazon orders through Edge Functions
+- [ ] No direct Zinc API calls from payment service
+- [ ] Customer/business payment separation maintained
+- [ ] Order creation flow preserved
+
+### UnifiedMarketplaceService Integration:
+- [ ] Product data still flows through marketplace service
+- [ ] Zinc products properly normalized via marketplace service
+- [ ] No bypassing of marketplace service for product operations
+
+---
+
 **REMEMBER: This integration took significant effort to get working. Preserve the current functionality at all costs.**
+
+*Last Updated: 2025-01-23 (Week 3 Coordination Update)*

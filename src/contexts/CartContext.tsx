@@ -119,8 +119,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const unassignItemFromRecipient = (productId: string) => {
-    // Clear assignment by passing empty assignment
-    serviceAssignToRecipient(productId, {} as RecipientAssignment);
+    // Find the item and clear its recipient assignment
+    const item = cartItems.find(item => item.product.product_id === productId);
+    if (item && item.recipientAssignment) {
+      serviceAssignToRecipient(productId, undefined as any);
+    }
   };
 
   const updateRecipientAssignment = (productId: string, updates: Partial<RecipientAssignment>) => {
@@ -228,7 +231,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     cartItems,
     cartTotal,
     deliveryGroups,
-    itemCount
+    itemCount,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getItemCount,
+    transferGuestCart,
+    assignItemToRecipient,
+    unassignItemFromRecipient,
+    updateRecipientAssignment,
+    getItemsByRecipient,
+    getUnassignedItems,
+    assignItemsToNewRecipient
   ]);
 
   return (

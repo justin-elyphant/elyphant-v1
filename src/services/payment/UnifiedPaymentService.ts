@@ -308,14 +308,18 @@ class UnifiedPaymentService {
   /**
    * Assign item to recipient (for gifting)
    */
-  assignItemToRecipient(productId: string, recipientAssignment: RecipientAssignment): void {
+  assignItemToRecipient(productId: string, recipientAssignment?: RecipientAssignment): void {
     this.cartItems = this.cartItems.map(item =>
       item.product.product_id === productId
         ? { ...item, recipientAssignment }
         : item
     );
 
-    toast.success('Item assigned to recipient');
+    if (recipientAssignment) {
+      toast.success('Item assigned to recipient');
+    } else {
+      toast.success('Item unassigned from recipient');
+    }
     this.notifyCartChange();
     this.saveCartToStorage();
   }

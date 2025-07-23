@@ -7,7 +7,8 @@ import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import ChatWindow from "@/components/messaging/ChatWindow";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { Message, fetchMessages } from "@/utils/messageService";
+import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 
 interface ConnectionInfo {
   id: string;
@@ -20,14 +21,20 @@ const Chat = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const [connection, setConnection] = useState<ConnectionInfo | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Use unified messaging hook for this chat
+  const { 
+    messages, 
+    loading, 
+    sendMessage, 
+    markAsRead, 
+    presence, 
+    isTyping 
+  } = useDirectMessaging(userId || '');
 
   useEffect(() => {
     if (!userId || !user) return;
-    
     loadConnectionInfo();
-    loadMessages();
   }, [userId, user]);
 
   const loadConnectionInfo = async () => {
@@ -47,21 +54,13 @@ const Chat = () => {
     }
   };
 
-  const loadMessages = async () => {
-    if (!userId) return;
-
-    try {
-      const messageData = await fetchMessages(userId);
-      setMessages(messageData);
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    } finally {
-      setLoading(false);
-    }
+  // Connection info loading stays the same but simplified
+  const handleSendMessage = async (content: string) => {
+    return await sendMessage({ content });
   };
 
-  const handleMessagesUpdate = (newMessages: Message[]) => {
-    setMessages(newMessages);
+  const handleMarkAsRead = async (messageIds: string[]) => {
+    await markAsRead(messageIds);
   };
 
   if (!userId) {
@@ -118,7 +117,11 @@ const Chat = () => {
             connectionName={connection.name || connection.username}
             connectionImage={connection.profile_image}
             messages={messages}
-            onMessagesUpdate={handleMessagesUpdate}
+            onSendMessage={handleSendMessage}
+            onMarkAsRead={handleMarkAsRead}
+            presence={presence}
+            isTyping={isTyping}
+            loading={loading}
           />
         </div>
       </div>

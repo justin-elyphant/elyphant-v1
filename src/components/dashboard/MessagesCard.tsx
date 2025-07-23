@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
-import { fetchMessages, Message } from "@/utils/messageService";
+import { unifiedMessagingService, type UnifiedMessage } from "@/services/UnifiedMessagingService";
 
 const MessagesCard = () => {
   const { user } = useAuth();
@@ -35,7 +35,8 @@ const MessagesCard = () => {
 
       try {
         const messagePromises = acceptedConnections.slice(0, 3).map(async (conn) => {
-          const connMessages = await fetchMessages(conn.id);
+          const result = await unifiedMessagingService.fetchDirectMessages(conn.id, 0, 1);
+          const connMessages = result.messages;
           const lastMessage = connMessages.length > 0 ? connMessages[connMessages.length - 1] : null;
           
           if (lastMessage) {
@@ -45,7 +46,7 @@ const MessagesCard = () => {
               avatar: conn.imageUrl,
               message: lastMessage.content,
               time: new Date(lastMessage.created_at).toLocaleTimeString(),
-              unread: !lastMessage.read_at && lastMessage.recipient_id === user.id
+              unread: !lastMessage.is_read && lastMessage.sender_id !== user.id
             };
           }
           return null;

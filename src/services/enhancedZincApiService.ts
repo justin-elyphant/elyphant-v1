@@ -1,315 +1,314 @@
-import { Product } from "@/types/product";
+import { supabase } from "@/integrations/supabase/client";
 
-export interface ZincProduct {
-  product_id: string;
-  title: string;
-  price: number;
-  description: string;
-  image: string;
-  images?: string[];
-  category: string;
-  retailer: string;
-  rating?: number;
-  review_count?: number;
-  url?: string;
-  stars?: number;
-  num_reviews?: number;
-  product_description?: string;
-  feature_bullets?: string[];
-  product_details?: any[];
+export interface ZincApiResponse {
+  products: any[];
+  total: number;
+  page: number;
+  hasMore: boolean;
 }
 
 export interface ZincSearchResponse {
-  results: ZincProduct[];
-  total: number;
-  query: string;
-  page: number;
-  total_pages: number;
-  time_taken_ms: number;
+  results: any[];
   error?: string;
   cached?: boolean;
 }
 
+export interface ZincProductDetail {
+  product_id: string;
+  title: string;
+  price: number;
+  images: string[];
+  main_image: string;
+  product_description: string;
+  feature_bullets: string[];
+  product_details: string[];
+  // Enhanced best seller fields
+  isBestSeller?: boolean;
+  bestSellerType?: 'amazon_choice' | 'best_seller' | 'popular' | 'top_rated' | 'highly_rated' | null;
+  badgeText?: string | null;
+  best_seller_rank?: number;
+}
+
+// Category-specific search queries that Zinc API understands better
+const CATEGORY_SEARCH_QUERIES = {
+  electronics: "best selling electronics phones computers laptops headphones cameras",
+  tech: "best selling smart home devices IoT gadgets tech accessories automation",
+  beauty: "best selling skincare makeup cosmetics beauty products personal care",
+  homeKitchen: "kitchen home cooking utensils cookware appliances storage organization tools gadgets"
+};
+
 class EnhancedZincApiService {
-  private apiKey: string | null = null;
-  private baseUrl = 'https://api.zinc.io/v1';
-  private cache: Map<string, { data: ZincSearchResponse; timestamp: number }> = new Map();
-  private cacheDuration = 5 * 60 * 1000; // 5 minutes
+  private cache = new Map();
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || null;
-  }
+  /**
+   * Process and enhance product data with best seller information
+   */
+  private enhanceProductData(product: any): any {
+    // Ensure best seller data is properly mapped
+    const enhanced = {
+      ...product,
+      isBestSeller: product.isBestSeller || false,
+      bestSellerType: product.bestSellerType || null,
+      badgeText: product.badgeText || null,
+    };
 
-  setApiKey(key: string) {
-    this.apiKey = key;
-  }
-
-  private async callZincApi(endpoint: string, params: any): Promise<ZincSearchResponse | null> {
-    if (!this.apiKey) {
-      console.error("Zinc API key not set");
-      return null;
+    // Log best seller detection for debugging
+    if (enhanced.isBestSeller) {
+      console.log(`Best seller detected: ${enhanced.title}`, {
+        type: enhanced.bestSellerType,
+        badge: enhanced.badgeText,
+        rank: enhanced.best_seller_rank || enhanced.sales_rank
+      });
     }
 
-    const url = `${this.baseUrl}/${endpoint}?${new URLSearchParams(params).toString()}`;
-    const cacheKey = url;
+    return enhanced;
+  }
 
-    const cachedData = this.cache.get(cacheKey);
-    if (cachedData && (Date.now() - cachedData.timestamp < this.cacheDuration)) {
-      console.log(`[Cache Hit] ${endpoint} - ${params.query}`);
-      return { ...cachedData.data, cached: true };
-    }
-
+  /**
+   * Search for products using the enhanced Zinc API via Supabase Edge Function
+   */
+  async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
+    console.log(`Searching products: "${query}", page: ${page}, limit: ${limit}`);
+    
     try {
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${this.apiKey}:`),
-          'Content-Type': 'application/json'
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          query,
+          page,
+          limit,
+          filters: filters || {}
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        console.error('Error calling get-products function:', error);
+        return {
+          results: [],
+          error: `Product search failed: ${error.message}`
+        };
       }
 
-      const data: ZincSearchResponse = await response.json();
-      this.cache.set(cacheKey, { data, timestamp: Date.now() });
-      console.log(`[API Call] ${endpoint} - ${params.query}`);
-      return data;
+      if (!data || !data.results) {
+        console.warn('No products returned from search');
+        return {
+          results: [],
+          error: 'No products found'
+        };
+      }
+
+      // Enhance product data with best seller information
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
     } catch (error) {
-      console.error("Zinc API error:", error);
-      return null;
+      console.error('Enhanced Zinc API search error:', error);
+      return {
+        results: [],
+        error: error instanceof Error ? error.message : 'Search failed'
+      };
     }
   }
 
   /**
-   * Search products using Zinc API
-   * @param query Search query
-   * @param page Page number
-   * @param maxResults Max results per page (1-200)
-   * @returns ZincSearchResponse or null
+   * NEW: Search for best selling products by category using targeted queries
    */
-  async searchProducts(query: string, page: number = 1, maxResults: number = 10): Promise<ZincSearchResponse> {
-    const params = {
-      query: query,
-      page: page.toString(),
-      retailer: 'amazon',
-      sort_by: 'relevancy',
-      max_results: maxResults.toString()
-    };
-
-    const data = await this.callZincApi('search', params);
-    return data || { results: [], total: 0, query: query, page: 1, total_pages: 0, time_taken_ms: 0 };
-  }
-
-  /**
-   * Fetch product details by ID
-   * @param productId Product ID
-   * @returns ZincProduct or null
-   */
-  async getProductDetails(productId: string): Promise<ZincProduct | null> {
-    const params = {
-      product_id: productId,
-      retailer: 'amazon'
-    };
-
-    const data = await this.callZincApi('product', params) as any; // Adjust type if needed
-    return data ? data.product : null;
-  }
-
-  /**
-   * Clear the cache
-   */
-  clearCache() {
-    this.cache.clear();
-    console.log('Zinc API cache cleared.');
-  }
-
-  /**
-   * Get cache stats
-   */
-  getCacheStats() {
-    return {
-      size: this.cache.size,
-      oldest: Array.from(this.cache.values()).sort((a, b) => a.timestamp - b.timestamp)[0]?.timestamp,
-      newest: Array.from(this.cache.values()).sort((a, b) => b.timestamp - a.timestamp)[0]?.timestamp
-    };
-  }
-
-  /**
-   * Shuffle array (Fisher-Yates shuffle)
-   */
-  private shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  async searchBestSellingByCategory(category: string, limit: number = 20): Promise<ZincSearchResponse> {
+    console.log(`Searching best selling products for category: ${category}`);
+    
+    const categoryQuery = CATEGORY_SEARCH_QUERIES[category as keyof typeof CATEGORY_SEARCH_QUERIES];
+    
+    if (!categoryQuery) {
+      console.warn(`No category query found for: ${category}`);
+      return {
+        results: [],
+        error: `Unknown category: ${category}`
+      };
     }
-    return shuffled;
-  }
 
-  /**
-   * Enhanced category search with multiple specific queries
-   */
-  private async searchCategoryBatch(categoryKey: string): Promise<Product[]> {
-    const categoryQueries = {
-      electronics: [
-        "best selling smartphones iphone samsung",
-        "wireless headphones earbuds airpods",
-        "laptops macbook gaming computers",
-        "tablets ipad android devices"
-      ],
-      homeKitchen: [
-        "kitchen home cooking utensils cookware",
-        "appliances storage organization tools gadgets",
-        "dining furniture home essentials",
-        "cleaning supplies household items"
-      ],
-      tech: [
-        "smart home devices alexa google nest",
-        "gaming accessories controllers keyboards",
-        "computer accessories monitors speakers",
-        "tech gadgets electronics innovation",
-        "wireless charging cables adapters",
-        "security cameras smart doorbell"
-      ],
-      beauty: [
-        "skincare makeup cosmetics beauty",
-        "hair care shampoo styling products",
-        "personal care health wellness",
-        "fragrance perfume cologne scents"
-      ]
-    };
-
-    const queries = categoryQueries[categoryKey] || [];
-    const allResults: Product[] = [];
-
-    for (const query of queries) {
-      try {
-        console.log(`Searching category ${categoryKey} with query: "${query}"`);
-        const response = await this.searchProducts(query, 1, 6);
-        
-        if (response.results && response.results.length > 0) {
-          // Add category marker and limit results per query
-          const categoryResults = response.results.slice(0, 6).map(product => ({
-            ...product,
-            categorySource: query,
-            // Ensure property name consistency for Product type
-            reviewCount: product.review_count || product.num_reviews,
-            rating: product.rating || product.stars
-          }));
-          allResults.push(...categoryResults);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          query: categoryQuery,
+          page: 1,
+          limit,
+          filters: {
+            category: category,
+            best_sellers_only: true
+          }
         }
-      } catch (error) {
-        console.error(`Error searching category ${categoryKey} with query "${query}":`, error);
+      });
+
+      if (error) {
+        console.error(`Error calling get-products for category ${category}:`, error);
+        return {
+          results: [],
+          error: `Category search failed: ${error.message}`
+        };
       }
-    }
 
-    // Shuffle and limit total results
-    const shuffled = this.shuffleArray(allResults);
-    return shuffled.slice(0, 20);
-  }
-
-  /**
-   * Batch search for multiple categories
-   */
-  async searchCategories(categoryKeys: string[]): Promise<Product[]> {
-    const allResults: Product[] = [];
-
-    for (const categoryKey of categoryKeys) {
-      try {
-        const categoryResults = await this.searchCategoryBatch(categoryKey);
-        allResults.push(...categoryResults);
-      } catch (error) {
-        console.error(`Error searching category ${categoryKey}:`, error);
+      if (!data || !data.results) {
+        console.warn(`No products returned for category ${category}`);
+        return {
+          results: [],
+          error: `No products found for ${category}`
+        };
       }
-    }
 
-    // Shuffle and limit total results
-    const shuffled = this.shuffleArray(allResults);
-    return shuffled.slice(0, 24);
-  }
+      // Enhance product data with best seller information
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
 
-  /**
-   * Alias for searchCategories for luxury categories
-   */
-  async searchLuxuryCategories(limit: number = 24): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
-    try {
-      const defaultCategories = ['electronics', 'homeKitchen', 'tech', 'beauty'];
-      const results = await this.searchCategories(defaultCategories);
-      return { results: results.slice(0, limit) };
+      console.log(`Found ${enhancedResults.length} best selling products for category: ${category}`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
     } catch (error) {
-      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+      console.error(`Category search error for ${category}:`, error);
+      return {
+        results: [],
+        error: error instanceof Error ? error.message : `Search failed for ${category}`
+      };
     }
   }
 
   /**
-   * Search best selling products by category
+   * NEW: Get the search query for a specific category (for "See All" functionality)
    */
-  async searchBestSellingByCategory(category: string, limit: number = 20): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
+  getCategorySearchQuery(category: string): string {
+    return CATEGORY_SEARCH_QUERIES[category as keyof typeof CATEGORY_SEARCH_QUERIES] || category;
+  }
+
+  /**
+   * Search luxury categories and return diverse product array
+   */
+  async searchLuxuryCategories(limit: number = 16): Promise<ZincSearchResponse> {
+    console.log('Starting luxury category search...');
+    
     try {
-      const results = await this.searchCategoryBatch(category);
-      return { results: results.slice(0, limit) };
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          luxuryCategories: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error('Error calling luxury category search:', error);
+        // Fallback to single luxury search
+        return this.searchProducts('top designer bags for women', 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn('No luxury products returned, using fallback');
+        return this.searchProducts('top designer bags for women', 1, limit);
+      }
+
+      // Enhance luxury product data
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Luxury category search complete: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
     } catch (error) {
-      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+      console.error('Luxury category search error:', error);
+      // Fallback to single luxury search
+      return this.searchProducts('top designer bags for women', 1, limit);
     }
   }
 
   /**
-   * Get category search query
+   * Get product details by ID
    */
-  getCategorySearchQuery(categoryKey: string): string {
-    const categoryQueries = {
-      electronics: [
-        "best selling smartphones iphone samsung",
-        "wireless headphones earbuds airpods",
-        "laptops macbook gaming computers",
-        "tablets ipad android devices"
-      ],
-      homeKitchen: [
-        "kitchen home cooking utensils cookware",
-        "appliances storage organization tools gadgets",
-        "dining furniture home essentials",
-        "cleaning supplies household items"
-      ],
-      tech: [
-        "smart home devices alexa google nest",
-        "gaming accessories controllers keyboards",
-        "computer accessories monitors speakers",
-        "tech gadgets electronics innovation",
-        "wireless charging cables adapters",
-        "security cameras smart doorbell"
-      ],
-      beauty: [
-        "skincare makeup cosmetics beauty",
-        "hair care shampoo styling products",
-        "personal care health wellness",
-        "fragrance perfume cologne scents"
-      ]
-    };
-    const queries = categoryQueries[categoryKey] || [];
-    return queries.join(' ');
+  async getProductDetails(productId: string): Promise<any> {
+    console.log(`Getting product details for: ${productId}`);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-product-detail', {
+        body: {
+          product_id: productId,
+          retailer: 'amazon'
+        }
+      });
+
+      if (error) {
+        console.error('Error getting product details:', error);
+        throw new Error(`Product details fetch failed: ${error.message}`);
+      }
+
+      // Enhance the detailed product data
+      return this.enhanceProductData(data);
+
+    } catch (error) {
+      console.error('Product details error:', error);
+      throw error;
+    }
   }
 
   /**
-   * Alias for getProductDetails
+   * Get product detail (alias for getProductDetails for backward compatibility)
    */
-  async getProductDetail(productId: string): Promise<ZincProduct | null> {
+  async getProductDetail(productId: string): Promise<ZincProductDetail> {
     return this.getProductDetails(productId);
   }
 
   /**
-   * Get default products for the marketplace
+   * Get default marketplace products (best sellers and popular items)
    */
-  async getDefaultProducts(limit: number = 24): Promise<{ results: Product[]; error?: string; cached?: boolean }> {
+  async getDefaultProducts(limit: number = 20): Promise<ZincSearchResponse> {
+    console.log('Loading default marketplace products...');
+    
     try {
-      const defaultCategories = ['electronics', 'homeKitchen', 'tech', 'beauty'];
-      const results = await this.searchCategories(defaultCategories);
-      return { results: results.slice(0, limit) };
+      // Search for best selling gifts as default products
+      const response = await this.searchProducts('best selling gifts', 1, limit);
+      
+      if (response.results && response.results.length > 0) {
+        console.log(`Loaded ${response.results.length} default products`);
+        return response;
+      }
+      
+      // Fallback to popular categories if no best sellers found
+      console.log('No best sellers found, trying popular categories...');
+      const fallbackResponse = await this.searchProducts('popular gifts', 1, limit);
+      
+      return fallbackResponse;
+      
     } catch (error) {
-      return { results: [], error: error instanceof Error ? error.message : 'Unknown error' };
+      console.error('Error loading default products:', error);
+      return {
+        results: [],
+        error: 'Failed to load default products'
+      };
     }
+  }
+
+  /**
+   * Search products by category
+   */
+  async searchByCategory(category: string, page: number = 1, limit: number = 20): Promise<ZincSearchResponse> {
+    return this.searchProducts(`category:${category}`, page, limit);
+  }
+
+  async searchWithPriceRange(query: string, minPrice: number, maxPrice: number, page: number = 1): Promise<ZincSearchResponse> {
+    return this.searchProducts(query, page, 20, {
+      min_price: minPrice,
+      max_price: maxPrice
+    });
+  }
+
+  clearCache(): void {
+    this.cache.clear();
+    console.log('Search cache cleared');
   }
 }
 
-const enhancedZincApiService = new EnhancedZincApiService();
-export { enhancedZincApiService };
+export const enhancedZincApiService = new EnhancedZincApiService();

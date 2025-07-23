@@ -37,7 +37,7 @@ class EnhancedZincApiService {
   private cacheDuration = 5 * 60 * 1000; // 5 minutes
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.ZINC_API_KEY || null;
+    this.apiKey = apiKey || null;
   }
 
   setApiKey(key: string) {

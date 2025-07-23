@@ -4,7 +4,7 @@ import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceQuickFilters from "./MarketplaceQuickFilters";
-import AirbnbStyleCategorySections from "./AirbnbStyleCategorySections";
+import { AirbnbStyleCategorySections } from "./AirbnbStyleCategorySections";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
@@ -139,11 +139,8 @@ const StreamlinedMarketplaceWrapper = () => {
       )}
 
       {/* Category Sections (when no search active) */}
-      {!showSearchInfo && products.length > 0 && (
-        <AirbnbStyleCategorySections 
-          products={products} 
-          onProductClick={handleProductClick}
-        />
+      {!showSearchInfo && (
+        <AirbnbStyleCategorySections />
       )}
 
       {/* Products Grid (when search is active or as fallback) */}

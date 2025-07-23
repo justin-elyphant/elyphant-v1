@@ -13,6 +13,8 @@ interface CategorySectionProps {
   onSeeAll?: () => void;
   onProductClick?: (product: Product) => void;
   showSeeAll?: boolean;
+  onAddToCart?: (product: Product) => void;
+  onShare?: (product: Product) => void;
 }
 
 export const CategorySection: React.FC<CategorySectionProps> = ({
@@ -22,7 +24,9 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   isLoading = false,
   onSeeAll,
   onProductClick,
-  showSeeAll = true
+  showSeeAll = true,
+  onAddToCart,
+  onShare
 }) => {
   if (isLoading) {
     return (
@@ -84,6 +88,8 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
             <ProductCard
               product={product}
               onClick={() => onProductClick?.(product)}
+              onAddToCart={onAddToCart}
+              onShare={onShare}
             />
           </div>
         ))}

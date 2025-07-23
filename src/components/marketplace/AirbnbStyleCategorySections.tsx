@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Product } from "@/types/product";
-import { ChevronRight, TrendingUp, MapPin, Star, Gift } from "lucide-react";
+import { ChevronRight, TrendingUp, MapPin, Star, Gift, Smartphone, Home, Cpu, Sparkles } from "lucide-react";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import { CATEGORY_CONFIGS, filterProductsByCategory, getGeneralBestSellers } from "./utils/productCategorization";
 
 interface CategorySectionProps {
   title: string;
@@ -96,8 +96,16 @@ const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = 
   products,
   onProductClick
 }) => {
-  // Categorize products
-  const trendingProducts = products.filter(p => p.tags?.includes("trending") || p.isBestSeller);
+  // Get general best sellers for the main section
+  const generalBestSellers = getGeneralBestSellers(products);
+  
+  // Get category-specific best sellers
+  const electronicsProducts = filterProductsByCategory(products, 'electronics');
+  const homeKitchenProducts = filterProductsByCategory(products, 'homeKitchen');
+  const techProducts = filterProductsByCategory(products, 'tech');
+  const beautyProducts = filterProductsByCategory(products, 'beauty');
+  
+  // Other categories (keeping existing logic)
   const newProducts = products.filter(p => p.tags?.includes("new") || (p.id && Number(p.id) > 9000));
   const localProducts = products.filter(p => p.vendor && !p.vendor.includes("Amazon") && !p.vendor.includes("Zinc"));
   const giftProducts = products.filter(p => 
@@ -108,14 +116,60 @@ const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = 
 
   return (
     <div className="space-y-12">
-      {/* Trending Section */}
-      <CategorySection
-        title="Trending now"
-        subtitle="Popular products everyone's talking about"
-        icon={<TrendingUp className="h-6 w-6" />}
-        products={trendingProducts}
-        onProductClick={onProductClick}
-      />
+      {/* Main Best Selling Section */}
+      {generalBestSellers.length > 0 && (
+        <CategorySection
+          title="Best Selling"
+          subtitle="Our most popular products right now"
+          icon={<TrendingUp className="h-6 w-6" />}
+          products={generalBestSellers}
+          onProductClick={onProductClick}
+        />
+      )}
+
+      {/* Best Selling Electronics */}
+      {electronicsProducts.length > 0 && (
+        <CategorySection
+          title={CATEGORY_CONFIGS.electronics.title}
+          subtitle={CATEGORY_CONFIGS.electronics.subtitle}
+          icon={<Smartphone className="h-6 w-6" />}
+          products={electronicsProducts}
+          onProductClick={onProductClick}
+        />
+      )}
+
+      {/* Best Selling Home & Kitchen */}
+      {homeKitchenProducts.length > 0 && (
+        <CategorySection
+          title={CATEGORY_CONFIGS.homeKitchen.title}
+          subtitle={CATEGORY_CONFIGS.homeKitchen.subtitle}
+          icon={<Home className="h-6 w-6" />}
+          products={homeKitchenProducts}
+          onProductClick={onProductClick}
+        />
+      )}
+
+      {/* Best Selling Tech */}
+      {techProducts.length > 0 && (
+        <CategorySection
+          title={CATEGORY_CONFIGS.tech.title}
+          subtitle={CATEGORY_CONFIGS.tech.subtitle}
+          icon={<Cpu className="h-6 w-6" />}
+          products={techProducts}
+          onProductClick={onProductClick}
+        />
+      )}
+
+      {/* Best Selling Beauty */}
+      {beautyProducts.length > 0 && (
+        <CategorySection
+          title={CATEGORY_CONFIGS.beauty.title}
+          subtitle={CATEGORY_CONFIGS.beauty.subtitle}
+          icon={<Sparkles className="h-6 w-6" />}
+          products={beautyProducts}
+          onProductClick={onProductClick}
+        />
+      )}
 
       {/* Local Vendors Section */}
       {localProducts.length > 0 && (

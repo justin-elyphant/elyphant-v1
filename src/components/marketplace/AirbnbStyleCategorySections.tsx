@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 interface AirbnbStyleCategorySectionsProps {
   className?: string;
+  onProductClick?: (product: Product) => void;
 }
 
 interface CategoryData {
@@ -39,7 +40,7 @@ const CATEGORIES = [
   }
 ];
 
-export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = ({ className }) => {
+export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = ({ className, onProductClick }) => {
   const navigate = useNavigate();
   const [categoryData, setCategoryData] = useState<Record<string, CategoryData>>({});
 
@@ -155,7 +156,10 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
   // Handle individual product clicks
   const handleProductClick = (product: Product) => {
     console.log(`Product clicked: ${product.title}`);
-    navigate(`/product/${product.product_id}`);
+    // Open product details in the StreamlinedMarketplaceWrapper's dialog instead of navigating
+    if (onProductClick) {
+      onProductClick(product);
+    }
   };
 
   if (Object.keys(categoryData).length === 0) {

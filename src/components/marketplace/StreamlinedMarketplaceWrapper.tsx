@@ -140,7 +140,7 @@ const StreamlinedMarketplaceWrapper = () => {
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && (
-        <AirbnbStyleCategorySections />
+        <AirbnbStyleCategorySections onProductClick={handleProductClick} />
       )}
 
       {/* Products Grid (when search is active or as fallback) */}

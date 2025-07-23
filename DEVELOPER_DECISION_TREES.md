@@ -34,16 +34,16 @@ Need to implement a feature?
 ```
 Working with products?
 ├── 🔍 Search Products
-│   ├── General Search → unifiedMarketplaceService.searchProducts()
+│   ├── General Search → unifiedMarketplaceService.searchProducts(query, options)
 │   ├── Amazon Specific → unifiedMarketplaceService.searchProducts() (handles Zinc internally)
-│   └── Best Sellers → unifiedMarketplaceService.getBestSellers()
+│   └── Paginated Search → unifiedMarketplaceService.searchProducts(query, { page, maxResults })
 ├── 📄 Product Details
-│   ├── By ID → unifiedMarketplaceService.getProductDetails(id)
-│   ├── Bulk Details → unifiedMarketplaceService.getBulkProductDetails(ids)
+│   ├── By ID → unifiedMarketplaceService.getProductDetails(productId)
+│   ├── Cache Stats → unifiedMarketplaceService.getCacheStats()
 │   └── Enhanced Details → Service handles enhancement automatically
 ├── 🏷️ Product Categories
-│   ├── Browse Categories → unifiedMarketplaceService.getCategories()
-│   └── Category Products → unifiedMarketplaceService.getProductsByCategory()
+│   ├── Search by Category → unifiedMarketplaceService.searchProducts(query, { filters })
+│   └── Category Filtering → Use search options with category filters
 └── ❌ NEVER DO
     ├── Direct Zinc API calls from frontend
     ├── Bypass marketplace service for any product operations
@@ -196,10 +196,10 @@ const processAmazonOrder = async (orderId: string) => {
 ### Pattern 3: Product Search with Validation
 ```typescript
 // ✅ CORRECT PATTERN
-const searchProducts = async (query: string) => {
+const searchProducts = async (query: string, options = {}) => {
   try {
     // UnifiedMarketplaceService handles Zinc integration internally
-    const products = await unifiedMarketplaceService.searchProducts(query);
+    const products = await unifiedMarketplaceService.searchProducts(query, options);
     return products; // Already normalized and enhanced
   } catch (error) {
     console.error('Search failed:', error);

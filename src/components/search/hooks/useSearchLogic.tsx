@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { unifiedSearch } from "@/services/search/unifiedSearchService";
-import { unifiedNicoleAI } from "@/services/ai/unified/UnifiedNicoleAIService";
-import { UnifiedNicoleContext } from "@/services/ai/unified/types";
+// Removed direct Nicole AI service import - respecting protection measures
 
 interface SearchLogicProps {
   query: string;
@@ -38,14 +37,6 @@ export const useSearchLogic = ({
   setNicoleResponse,
   setShowSearchButton
 }: SearchLogicProps) => {
-  const [nicoleSessionId] = useState(() => `search-${Date.now()}`);
-  const [nicoleContext, setNicoleContext] = useState<UnifiedNicoleContext>({
-    conversationPhase: 'greeting',
-    capability: 'conversation',
-    interests: [],
-    detectedBrands: [],
-    currentUserId: user?.id
-  });
   useEffect(() => {
     const searchUnified = async () => {
       if (query.length > 1 && !isNicoleMode) {
@@ -67,7 +58,6 @@ export const useSearchLogic = ({
             total: results.total
           });
           
-          // Log the actual friend results for debugging
           if (results.friends.length > 0) {
             console.log('Enhanced Search Logic: Friend results found:', results.friends);
           } else {
@@ -80,59 +70,30 @@ export const useSearchLogic = ({
             brands: results.brands
           });
           
-          // Don't automatically show suggestions here - let the component handle it based on user interaction
         } catch (error) {
           console.error('Enhanced Search Logic: Unified search error:', error);
         } finally {
           setSearchLoading(false);
         }
       } else if (query.length > 0 && isNicoleMode) {
-        // Nicole mode - use unified Nicole AI service for conversational responses
-        console.log(`Nicole Mode: Processing conversational query: "${query}"`);
-        setSearchLoading(true);
+        // Nicole mode - The actual Nicole conversation is handled by UnifiedNicoleConversation component
+        // This hook only provides fallback suggestions for graceful degradation
+        console.log(`Nicole Mode: Query detected, conversation handled by UnifiedNicoleConversation component`);
         
-        try {
-          const response = await unifiedNicoleAI.chat(query, nicoleContext, nicoleSessionId);
-          
-          console.log('Nicole AI Response:', {
-            message: response.message,
-            capability: response.capability,
-            showSearchButton: response.showSearchButton,
-            actions: response.actions
-          });
-          
-          // Update Nicole context for next interaction
-          setNicoleContext(response.context);
-          
-          // Set Nicole's response message
-          if (setNicoleResponse) {
-            setNicoleResponse(response.message);
-          }
-          
-          // Show search button if Nicole indicates readiness
-          if (setShowSearchButton) {
-            setShowSearchButton(response.showSearchButton);
-          }
-          
-          // Clear traditional suggestions since we're using Nicole's conversation
-          setSuggestions([]);
-          
-        } catch (error) {
-          console.error('Nicole AI Error:', error);
-          
-          // Fallback to mock suggestions for graceful degradation
-          const q = query.toLowerCase();
-          const matches = mockSuggestions
-            .filter(s => s.toLowerCase().includes(q))
-            .slice(0, 5);
+        // Provide fallback suggestions in case Nicole conversation fails
+        const q = query.toLowerCase();
+        const matches = mockSuggestions
+          .filter(s => s.toLowerCase().includes(q))
+          .slice(0, 5);
+        
+        if (matches.length > 0) {
           setSuggestions(matches);
-          
-          if (setNicoleResponse) {
-            setNicoleResponse("I'm having trouble right now. Let me show you some suggestions instead.");
-          }
-        } finally {
-          setSearchLoading(false);
+        } else {
+          setSuggestions([]);
         }
+        
+        // Clear search results since we're in conversation mode
+        setUnifiedResults({ friends: [], products: [], brands: [] });
       } else {
         setSuggestions([]);
         setUnifiedResults({ friends: [], products: [], brands: [] });

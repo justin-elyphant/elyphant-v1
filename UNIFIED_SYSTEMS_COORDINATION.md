@@ -11,6 +11,7 @@ This document provides comprehensive guidance for coordinating between all unifi
 1. **UnifiedMarketplaceService** - Product search, caching, normalization
 2. **Enhanced Zinc API System** - Amazon order processing via Edge Functions  
 3. **UnifiedPaymentService** - Cart management and payment orchestration
+4. **UnifiedMessagingService** - Direct messaging, group chat, presence, typing indicators
 
 ### Future Unified Systems:
 - UnifiedNicoleAI (AI assistance system)

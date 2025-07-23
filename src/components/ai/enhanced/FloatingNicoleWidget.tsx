@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, X } from "lucide-react";
 import EnhancedNicoleConversationEngine from "./EnhancedNicoleConversationEngine";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 
 interface FloatingNicoleWidgetProps {
   onNavigateToResults: (searchQuery: string) => void;
@@ -18,6 +19,14 @@ const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(!defaultMinimized);
   const isMobile = useIsMobile();
+  
+  // Initialize unified Nicole AI for this widget
+  const nicoleAI = useUnifiedNicoleAI({
+    sessionId: 'floating-widget',
+    initialContext: {
+      capability: 'conversation'
+    }
+  });
 
   const handleClose = () => {
     setIsOpen(false);

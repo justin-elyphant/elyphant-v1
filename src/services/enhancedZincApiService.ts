@@ -32,7 +32,7 @@ export interface ZincProductDetail {
 // Category-specific search queries that Zinc API understands better
 const CATEGORY_SEARCH_QUERIES = {
   electronics: "best selling electronics phones computers laptops headphones cameras",
-  tech: "best selling Apple Watch Fitbit Echo Nest AirPods Sony headphones Nintendo Switch PlayStation Xbox wireless earbuds iPad Kindle tablet",
+  tech: "best selling tech electronics Apple gaming headphones speakers smart watch wireless earbuds iPad tablet Nintendo PlayStation",
   beauty: "best selling skincare makeup cosmetics beauty products personal care",
   homeKitchen: "kitchen home cooking utensils cookware appliances storage organization tools gadgets"
 };

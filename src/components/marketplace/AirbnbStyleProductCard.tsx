@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share2, Truck } from "lucide-react";
+import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share, Truck } from "lucide-react";
 import { Product } from "@/types/product";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useAuth } from "@/contexts/auth";
@@ -450,7 +450,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
               className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
               title="Share product"
             >
-              <Share2 className="h-4 w-4 text-gray-600" />
+              <Share className="h-4 w-4 text-gray-600" />
             </button>
           ) : (
             <SocialShareButton

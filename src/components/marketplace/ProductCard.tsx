@@ -1,9 +1,7 @@
 
 import React from "react";
 import { Product } from "@/types/product";
-import { Badge } from "@/components/ui/badge";
-import { Star, Heart, Share } from "lucide-react";
-import AddToCartButton from "./components/AddToCartButton";
+import { Star, Heart, Share, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
@@ -51,7 +49,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group">
-      {/* Image Container */}
+      {/* Image Container with Overlay Actions */}
       <div className="relative aspect-square bg-gray-100 overflow-hidden cursor-pointer" onClick={onClick}>
         <img
           src={product.image || '/placeholder.svg'}
@@ -70,7 +68,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
         
-        {/* Action Buttons Overlay */}
+        {/* Best Seller Badge */}
+        {product.isBestSeller && (
+          <div className="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+            Best Seller
+          </div>
+        )}
+        
+        {/* Action Buttons Overlay - Heart and Share */}
         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <Button
             variant="outline"
@@ -92,27 +97,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
       
       {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Badges */}
-        <div className="flex gap-2">
-          {product.isBestSeller && (
-            <Badge variant="secondary" className="text-xs">
-              Best Seller
-            </Badge>
-          )}
-        </div>
-        
-        {/* Brand - Show prominently at top */}
-        {product.brand && (
-          <p className="text-xs font-semibold text-gray-800 uppercase tracking-wide">{product.brand}</p>
+      <div className="p-3 space-y-2">
+        {/* Brand Name - Prominent at top */}
+        {(product.brand || product.vendor) && (
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            {product.brand || product.vendor}
+          </p>
         )}
-        
-        {/* Title */}
-        <div onClick={onClick} className="cursor-pointer">
-          <h3 className="font-medium text-sm text-gray-900 line-clamp-2 hover:text-primary transition-colors">
-            {product.title}
-          </h3>
-        </div>
         
         {/* Rating */}
         <div className="flex items-center gap-1 text-xs text-gray-600">
@@ -123,21 +114,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
         
-        {/* Price and Add to Cart */}
-        <div className="flex items-center justify-between gap-2">
+        {/* Title */}
+        <div onClick={onClick} className="cursor-pointer">
+          <h3 className="font-medium text-sm text-gray-900 line-clamp-2 hover:text-primary transition-colors">
+            {product.title}
+          </h3>
+        </div>
+        
+        {/* Price */}
+        <div className="flex items-center justify-between">
           <span className="font-semibold text-lg text-gray-900">
             {formatPrice(product.price)}
           </span>
         </div>
         
-        {/* Add to Cart Button */}
-        <AddToCartButton
-          product={product}
-          variant="default"
-          size="sm"
-          className="w-full"
-          onClick={handleAddToCart}
-        />
+        {/* Add to Cart Button - styled like the reference */}
+        <div className="pt-2">
+          <Button
+            onClick={handleAddToCart}
+            variant="outline"
+            size="sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+          >
+            <ShoppingCart className="h-4 w-4 mr-1" />
+            Add to Cart
+          </Button>
+        </div>
       </div>
     </div>
   );

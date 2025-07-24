@@ -208,7 +208,7 @@ export function useUnifiedDataIntegrity(options: UseUnifiedDataIntegrityOptions 
   /**
    * Get cached data with automatic cache management
    */
-  const getCachedData = useCallback(async <T>(
+  const getCachedData = useCallback(async <T,>(
     key: string,
     dataLoader: () => Promise<T>,
     customOptions?: DataIntegrityOptions
@@ -289,6 +289,6 @@ export function useUnifiedDataIntegrity(options: UseUnifiedDataIntegrityOptions 
     refresh,
     
     // Performance monitoring
-    getPerformanceMetrics
+    getPerformanceMetrics,
   };
 }

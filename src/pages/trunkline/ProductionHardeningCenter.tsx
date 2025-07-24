@@ -267,12 +267,12 @@ const ProductionHardeningCenter: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'passed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed': return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'running': return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
-      case 'pending': return <RefreshCw className="h-4 w-4 text-gray-400" />;
-      default: return <Activity className="h-4 w-4 text-gray-400" />;
+      case 'passed': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'failed': return <XCircle className="h-4 w-4 text-destructive" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-orange-600" />;
+      case 'running': return <RefreshCw className="h-4 w-4 text-primary animate-spin" />;
+      case 'pending': return <RefreshCw className="h-4 w-4 text-muted-foreground" />;
+      default: return <Activity className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -290,11 +290,11 @@ const ProductionHardeningCenter: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
+      case 'critical': return 'text-destructive bg-destructive/10 border-destructive/20';
       case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
       case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
@@ -492,19 +492,19 @@ const ProductionHardeningCenter: React.FC = () => {
                     <CardContent className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Context-aware messaging</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Exponential backoff retry</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Error categorization</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Recovery procedures</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span>Error categorization</span>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span>Recovery procedures</span>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                     </CardContent>
                   </Card>
@@ -516,19 +516,19 @@ const ProductionHardeningCenter: React.FC = () => {
                     <CardContent className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Stripe error mapping</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Card validation</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Retry mechanisms</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Fallback UI states</span>
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span>Card validation</span>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span>Retry mechanisms</span>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span>Fallback UI states</span>
+                         <CheckCircle className="h-4 w-4 text-green-600" />
                       </div>
                     </CardContent>
                   </Card>

@@ -76,6 +76,45 @@ export interface TypingIndicator {
   updated_at: string;
 }
 
+// Social Activity & Notifications Types (Phase 1 Extension)
+export interface SocialActivity {
+  id: string;
+  type: 'message' | 'wishlist_update' | 'connection' | 'order' | 'gift_received';
+  userId: string;
+  userName: string;
+  userImage?: string;
+  content: string;
+  timestamp: string;
+  metadata?: any;
+}
+
+export interface CreateNotificationData {
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  data?: any;
+}
+
+export interface UserNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  data: any;
+  is_read: boolean;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface ConnectionStats {
+  totalConnections: number;
+  pendingConnections: number;
+  recentActivity: number;
+  engagementLevel: 'low' | 'medium' | 'high';
+}
+
 export interface SendMessageOptions {
   recipientId?: string;
   groupChatId?: string;

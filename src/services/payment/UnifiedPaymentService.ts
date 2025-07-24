@@ -927,10 +927,159 @@ class UnifiedPaymentService {
     return this.isProcessing;
   }
 
-  // Re-export order management functions from orderService
-  getOrderById = getOrderById;
-  getUserOrders = getUserOrders;
-  updateOrderStatus = updateOrderStatus;
+  /*
+   * ========================================================================
+   * ORDER MANAGEMENT CONSOLIDATION (Extended Phase 1)
+   * ========================================================================
+   */
+
+  /**
+   * Get order by ID with analytics tracking
+   */
+  async getOrderById(orderId: string): Promise<Order | null> {
+    const order = await getOrderById(orderId);
+    if (order) {
+      paymentAnalyticsService.trackPayment({
+        paymentIntentId: `order_${orderId}`,
+        amount: order.total_amount,
+        currency: 'usd',
+        status: 'succeeded',
+        paymentMethod: 'order_view',
+        userId: order.user_id
+      });
+    }
+    return order;
+  }
+
+  /**
+   * Get user orders with analytics and caching
+   */
+  async getUserOrders(): Promise<Order[]> {
+    const orders = await getUserOrders();
+    paymentAnalyticsService.trackPayment({
+      paymentIntentId: 'orders_fetch',
+      amount: 0,
+      currency: 'usd',
+      status: 'succeeded',
+      paymentMethod: 'system',
+      metadata: { order_count: orders.length }
+    });
+    return orders;
+  }
+
+  /**
+   * Update order status with analytics
+   */
+  async updateOrderStatus(orderId: string, status: string, updates: any = {}) {
+    await updateOrderStatus(orderId, status, updates);
+    paymentAnalyticsService.trackPayment({
+      paymentIntentId: `status_${orderId}`,
+      amount: 0,
+      currency: 'usd',
+      status: 'succeeded',
+      paymentMethod: 'system',
+      metadata: { order_id: orderId, new_status: status }
+    });
+  }
+
+  /**
+   * Get order analytics for customer intelligence
+   */
+  async getOrderAnalytics(userId?: string): Promise<{
+    totalOrders: number;
+    totalSpent: number;
+    averageOrderValue: number;
+    recentOrders: Order[];
+    orderTrends: any;
+  }> {
+    const orders = userId ? 
+      await this.getOrdersByUserId(userId) : 
+      await this.getUserOrders();
+    
+    const totalOrders = orders.length;
+    const totalSpent = orders.reduce((sum, order) => sum + Number(order.total_amount), 0);
+    const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    const recentOrders = orders.slice(0, 5);
+    
+    const orderTrends = this.calculateOrderTrends(orders);
+    
+    return {
+      totalOrders,
+      totalSpent,
+      averageOrderValue,
+      recentOrders,
+      orderTrends
+    };
+  }
+
+  /**
+   * Get orders by user ID (admin function)
+   */
+  private async getOrdersByUserId(userId: string): Promise<Order[]> {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (*)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user orders:', error);
+      return [];
+    }
+
+    return orders || [];
+  }
+
+  /**
+   * Calculate order trends for analytics
+   */
+  private calculateOrderTrends(orders: Order[]): any {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const recentOrders = orders.filter(order => 
+      new Date(order.created_at) >= thirtyDaysAgo
+    );
+    
+    const monthlySpend = recentOrders.reduce((sum, order) => 
+      sum + Number(order.total_amount), 0
+    );
+    
+    return {
+      monthlyOrderCount: recentOrders.length,
+      monthlySpend,
+      averageMonthlyOrder: recentOrders.length > 0 ? monthlySpend / recentOrders.length : 0,
+      growthTrend: this.calculateGrowthTrend(orders)
+    };
+  }
+
+  /**
+   * Calculate growth trend
+   */
+  private calculateGrowthTrend(orders: Order[]): 'up' | 'down' | 'stable' {
+    if (orders.length < 4) return 'stable';
+    
+    const now = new Date();
+    const currentMonth = orders.filter(order => {
+      const orderDate = new Date(order.created_at);
+      return orderDate.getMonth() === now.getMonth() && 
+             orderDate.getFullYear() === now.getFullYear();
+    });
+    
+    const lastMonth = orders.filter(order => {
+      const orderDate = new Date(order.created_at);
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
+      return orderDate.getMonth() === lastMonthDate.getMonth() && 
+             orderDate.getFullYear() === lastMonthDate.getFullYear();
+    });
+
+    if (currentMonth.length > lastMonth.length) return 'up';
+    if (currentMonth.length < lastMonth.length) return 'down';
+    return 'stable';
+  }
 }
 
 // ============================================================================

@@ -39,9 +39,9 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, page = 1, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, page = 1, maxResults = 20 } = options;
     // Add version suffix to force cache refresh for updated categories
-    const version = giftsUnder50 ? 'v5' : 'v1';
+    const version = giftsUnder50 ? 'v6' : 'v1';
     return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:page:${page}:limit:${maxResults}:${version}`;
   }
 
@@ -95,8 +95,28 @@ class UnifiedMarketplaceService {
     const cacheKey = this.getCacheKey(searchTerm, options);
     
     console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}`);
+    console.log(`[UnifiedMarketplaceService] Cache key: ${cacheKey}`);
     
-    // Check cache first
+    // FORCE bypass cache for gifts under $50 until it works
+    if (giftsUnder50) {
+      console.log('[UnifiedMarketplaceService] Force bypassing cache for gifts under $50');
+      const requestPromise = this.executeSearch(searchTerm, options);
+      try {
+        const results = await requestPromise;
+        // Cache the results
+        this.cache.set(cacheKey, {
+          data: results,
+          timestamp: Date.now(),
+          ttl: this.CACHE_TTL
+        });
+        return results;
+      } catch (error) {
+        console.error('[UnifiedMarketplaceService] Search error:', error);
+        throw error;
+      }
+    }
+    
+    // Check cache first for other searches
     if (this.isCacheValid(cacheKey)) {
       const cached = this.cache.get(cacheKey)!;
       console.log(`[UnifiedMarketplaceService] Cache hit for: ${cacheKey}`);

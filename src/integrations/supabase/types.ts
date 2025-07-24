@@ -1866,6 +1866,48 @@ export type Database = {
         }
         Relationships: []
       }
+      popularity_scores: {
+        Row: {
+          created_at: string
+          customer_score: number | null
+          engagement_score: number | null
+          final_score: number | null
+          id: string
+          last_calculated: string
+          product_id: string
+          purchase_score: number | null
+          trending_score: number | null
+          updated_at: string
+          zinc_score: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_score?: number | null
+          engagement_score?: number | null
+          final_score?: number | null
+          id?: string
+          last_calculated?: string
+          product_id: string
+          purchase_score?: number | null
+          trending_score?: number | null
+          updated_at?: string
+          zinc_score?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_score?: number | null
+          engagement_score?: number | null
+          final_score?: number | null
+          id?: string
+          last_calculated?: string
+          product_id?: string
+          purchase_score?: number | null
+          trending_score?: number | null
+          updated_at?: string
+          zinc_score?: number | null
+        }
+        Relationships: []
+      }
       pricing_settings: {
         Row: {
           applies_to: string
@@ -1938,6 +1980,39 @@ export type Database = {
           show_following_count?: boolean | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      product_analytics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          product_id: string
+          session_id: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          product_id: string
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          product_id?: string
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2025,6 +2100,45 @@ export type Database = {
           updated_at?: string | null
           username?: string
           wishlists?: Json | null
+        }
+        Relationships: []
+      }
+      purchase_analytics: {
+        Row: {
+          conversion_path: Json | null
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          purchase_source: string | null
+          quantity: number
+          total_price: number
+          unit_price: number
+          user_id: string | null
+        }
+        Insert: {
+          conversion_path?: Json | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          purchase_source?: string | null
+          quantity?: number
+          total_price: number
+          unit_price: number
+          user_id?: string | null
+        }
+        Update: {
+          conversion_path?: Json | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          purchase_source?: string | null
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2300,6 +2414,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_interaction_events: {
+        Row: {
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_presence: {
         Row: {

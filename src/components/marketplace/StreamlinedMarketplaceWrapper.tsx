@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
+import BrandHeroSection from "./BrandHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
@@ -208,8 +209,15 @@ const StreamlinedMarketplaceWrapper = () => {
   
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Hero Banner - always show for consistent branding */}
-      <MarketplaceHeroBanner />
+      {/* Conditional Hero Section */}
+      {brandCategories ? (
+        <BrandHeroSection 
+          brandName={brandCategories}
+          productCount={totalCount}
+        />
+      ) : (
+        <MarketplaceHeroBanner />
+      )}
       
       <MarketplaceHeader
         totalResults={products.length}
@@ -219,8 +227,8 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Quick Filters */}
       <MarketplaceQuickFilters />
 
-      {/* Search Results Info */}
-      {showSearchInfo && (
+      {/* Search Results Info for Non-Brand Categories */}
+      {showSearchInfo && !brandCategories && (
         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
@@ -229,7 +237,6 @@ const StreamlinedMarketplaceWrapper = () => {
                 {giftsForHer && "Gifts for Her"}
                 {giftsForHim && "Gifts for Him"}
                 {giftsUnder50 && "Gifts Under $50"}
-                {brandCategories && `${brandCategories} Products`}
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>

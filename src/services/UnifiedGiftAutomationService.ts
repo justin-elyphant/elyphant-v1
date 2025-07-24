@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { enhancedZincApiService } from "./enhancedZincApiService";
+import { protectedAutoGiftingService } from "./protected-auto-gifting-service";
 import { unifiedProfileService } from "./unifiedProfileService";
 import { toast } from "sonner";
 
@@ -109,16 +109,28 @@ class UnifiedGiftAutomationService {
   // ============= HIERARCHICAL GIFT SELECTION ============= 
 
   /**
-   * Main hierarchical gift selection algorithm
+   * Main hierarchical gift selection algorithm with protection measures
    * Tier 1: Wishlist -> Tier 2: Preferences -> Tier 3: Metadata -> Tier 4: AI Guess
    */
   async selectGiftForRecipient(
     recipientId: string, 
     budget: number, 
     occasion: string,
-    categories: string[] = []
+    categories: string[] = [],
+    userId?: string
   ): Promise<HierarchicalGiftSelection> {
     console.log(`🎁 Starting hierarchical gift selection for recipient ${recipientId}, budget: $${budget}, occasion: ${occasion}`);
+    
+    // Check emergency circuit breaker first
+    if (!await protectedAutoGiftingService.checkEmergencyCircuitBreaker()) {
+      console.log('🚨 Emergency circuit breaker active - returning empty results');
+      return {
+        tier: 'ai_guess',
+        products: [],
+        confidence: 0,
+        reasoning: 'Auto-gifting temporarily disabled due to budget limits'
+      };
+    }
     
     try {
       // Tier 1: Check recipient's public wishlist first
@@ -133,8 +145,8 @@ class UnifiedGiftAutomationService {
         };
       }
       
-      // Tier 2: Use recipient preferences  
-      const preferenceGifts = await this.getPreferenceBasedGifts(recipientId, budget, occasion, categories);
+      // Tier 2: Use recipient preferences with user context
+      const preferenceGifts = await this.getPreferenceBasedGifts(recipientId, budget, occasion, categories, userId);
       if (preferenceGifts.length > 0) {
         console.log(`✅ Tier 2: Found ${preferenceGifts.length} preference-based items`);
         return {
@@ -145,8 +157,8 @@ class UnifiedGiftAutomationService {
         };
       }
       
-      // Tier 3: Use metadata inference
-      const metadataGifts = await this.getMetadataBasedGifts(recipientId, budget, occasion, categories);
+      // Tier 3: Use metadata inference with user context
+      const metadataGifts = await this.getMetadataBasedGifts(recipientId, budget, occasion, categories, userId);
       if (metadataGifts.length > 0) {
         console.log(`✅ Tier 3: Found ${metadataGifts.length} metadata-based items`);
         return {
@@ -157,8 +169,8 @@ class UnifiedGiftAutomationService {
         };
       }
       
-      // Tier 4: AI-powered best guess
-      const aiGifts = await this.getAIGuessedGifts(recipientId, budget, occasion, categories);
+      // Tier 4: AI-powered best guess with user context
+      const aiGifts = await this.getAIGuessedGifts(recipientId, budget, occasion, categories, userId);
       console.log(`✅ Tier 4: Generated ${aiGifts.length} AI-suggested items`);
       return {
         tier: 'ai_guess',
@@ -231,7 +243,7 @@ class UnifiedGiftAutomationService {
   /**
    * Tier 2: Get gifts based on recipient's stated preferences
    */
-  private async getPreferenceBasedGifts(recipientId: string, budget: number, occasion: string, categories: string[]): Promise<any[]> {
+  private async getPreferenceBasedGifts(recipientId: string, budget: number, occasion: string, categories: string[], userId?: string): Promise<any[]> {
     try {
       // Get recipient's profile with preferences
       const { data: profile, error } = await supabase
@@ -266,13 +278,19 @@ class UnifiedGiftAutomationService {
 
       if (searchTerms.length === 0) return [];
 
-      // Search for products based on preferences
+      // Search for products based on preferences using protected service
       const query = `${searchTerms.slice(0, 3).join(' ')} ${occasion} gift`;
-      const searchResult = await enhancedZincApiService.searchProducts(query, 1, 15);
+      const priority = protectedAutoGiftingService.isPriorityOccasion(occasion) ? 'high' : 'normal';
+      const searchResults = await protectedAutoGiftingService.searchProductsForAutoGifting(
+        userId || 'system',
+        query, 
+        15,
+        priority
+      );
       
-      if (!searchResult.results) return [];
+      if (!searchResults || searchResults.length === 0) return [];
 
-      return this.filterAndRankProducts(searchResult.results, budget, 'preferences');
+      return this.filterAndRankProducts(searchResults, budget, 'preferences');
     } catch (error) {
       console.error('Error fetching preference-based gifts:', error);
       return [];
@@ -282,7 +300,7 @@ class UnifiedGiftAutomationService {
   /**
    * Tier 3: Get gifts based on recipient's metadata and profile data
    */
-  private async getMetadataBasedGifts(recipientId: string, budget: number, occasion: string, categories: string[]): Promise<any[]> {
+  private async getMetadataBasedGifts(recipientId: string, budget: number, occasion: string, categories: string[], userId?: string): Promise<any[]> {
     try {
       // Get recipient's profile metadata
       const { data: profile, error } = await supabase
@@ -322,16 +340,28 @@ class UnifiedGiftAutomationService {
       searchTerms.push(...categories, occasion);
 
       if (searchTerms.length === 0) {
-        // Fallback to occasion-based search
+        // Fallback to occasion-based search using protected service
         const query = `${occasion} gift popular`;
-        const searchResult = await enhancedZincApiService.searchProducts(query, 1, 15);
-        return searchResult.results ? this.filterAndRankProducts(searchResult.results, budget, 'metadata') : [];
+        const priority = protectedAutoGiftingService.isPriorityOccasion(occasion) ? 'high' : 'normal';
+      const searchResults = await protectedAutoGiftingService.searchProductsForAutoGifting(
+        userId || 'system',
+        query, 
+        15,
+        priority
+      );
+        return searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
       }
 
       const query = `${searchTerms.slice(0, 3).join(' ')} gift`;
-      const searchResult = await enhancedZincApiService.searchProducts(query, 1, 15);
+      const priority = protectedAutoGiftingService.isPriorityOccasion(occasion) ? 'high' : 'normal';
+        const searchResults = await protectedAutoGiftingService.searchProductsForAutoGifting(
+          userId || 'system',
+          query, 
+          15,
+          priority
+        );
       
-      return searchResult.results ? this.filterAndRankProducts(searchResult.results, budget, 'metadata') : [];
+      return searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
     } catch (error) {
       console.error('Error fetching metadata-based gifts:', error);
       return [];
@@ -341,7 +371,7 @@ class UnifiedGiftAutomationService {
   /**
    * Tier 4: AI-powered best guess based on demographic and occasion patterns
    */
-  private async getAIGuessedGifts(recipientId: string, budget: number, occasion: string, categories: string[]): Promise<any[]> {
+  private async getAIGuessedGifts(recipientId: string, budget: number, occasion: string, categories: string[], userId?: string): Promise<any[]> {
     try {
       // Fallback to popular/trending items for the occasion and budget
       const occasionQueries = {
@@ -362,15 +392,26 @@ class UnifiedGiftAutomationService {
         query = `${categories[0]} ${query}`;
       }
 
-      const searchResult = await enhancedZincApiService.searchProducts(query, 1, 20);
+      const priority = protectedAutoGiftingService.isPriorityOccasion(occasion) ? 'high' : 'normal';
+      const searchResults = await protectedAutoGiftingService.searchProductsForAutoGifting(
+        userId || 'system',
+        query, 
+        20,
+        priority
+      );
       
-      if (!searchResult.results) {
-        // Ultimate fallback
-        const fallbackResult = await enhancedZincApiService.searchProducts('gift popular', 1, 10);
-        return fallbackResult.results ? this.filterAndRankProducts(fallbackResult.results, budget, 'ai_guess') : [];
+      if (!searchResults || searchResults.length === 0) {
+        // Ultimate fallback using protected service
+        const fallbackResults = await protectedAutoGiftingService.searchProductsForAutoGifting(
+          userId || 'system',
+          'gift popular', 
+          10,
+          priority
+        );
+        return fallbackResults ? this.filterAndRankProducts(fallbackResults, budget, 'ai_guess') : [];
       }
 
-      return this.filterAndRankProducts(searchResult.results, budget, 'ai_guess');
+      return this.filterAndRankProducts(searchResults, budget, 'ai_guess');
     } catch (error) {
       console.error('Error generating AI gift suggestions:', error);
       return [];
@@ -537,12 +578,13 @@ class UnifiedGiftAutomationService {
         try {
           console.log(`📦 Processing execution ${execution.id}`);
           
-          // Use hierarchical gift selection
+          // Use hierarchical gift selection with user context for proper rate limiting
           const giftSelection = await this.selectGiftForRecipient(
             execution.auto_gifting_rules.recipient_id,
             execution.auto_gifting_rules.budget_limit || 50,
             execution.user_special_dates.date_type || 'birthday',
-            execution.auto_gifting_rules.gift_selection_criteria?.categories || []
+            execution.auto_gifting_rules.gift_selection_criteria?.categories || [],
+            userId
           );
           
           const totalAmount = giftSelection.products.reduce((sum, product) => sum + product.price, 0);

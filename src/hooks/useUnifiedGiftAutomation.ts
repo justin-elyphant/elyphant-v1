@@ -265,10 +265,11 @@ export const useUnifiedGiftAutomation = (): UseUnifiedGiftAutomationReturn => {
   ): Promise<HierarchicalGiftSelection | undefined> => {
     try {
       return await unifiedGiftAutomationService.selectGiftForRecipient(
-        recipientId, 
-        budget, 
-        occasion, 
-        categories
+        recipientId,
+        budget,
+        occasion,
+        categories,
+        user.id
       );
     } catch (err) {
       console.error("Error selecting gift:", err);

@@ -75,7 +75,7 @@ export const brandData: Record<string, BrandData> = {
   madein: {
     id: "madein",
     name: "Made In",
-    logo: "https://cdn.shopify.com/s/files/1/0013/9949/4180/files/MadeIn_Logo_Black_320x.png",
+    logo: "/lovable-uploads/fafc0202-32b9-4ea2-8754-fba313037ea7.png",
     searchTerm: "made in cookware",
     heroTagline: "Crafted for Chefs",
     description: "Professional-grade cookware made in the USA. Trusted by world-class chefs and cooking enthusiasts.",

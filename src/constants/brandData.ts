@@ -15,7 +15,7 @@ export const brandData: Record<string, BrandData> = {
   apple: {
     id: "apple",
     name: "Apple",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Apple",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
     searchTerm: "apple",
     heroTagline: "Innovation at Your Fingertips",
     description: "Discover Apple's latest collection of innovative products designed to enhance your digital lifestyle.",
@@ -27,7 +27,7 @@ export const brandData: Record<string, BrandData> = {
   samsung: {
     id: "samsung",
     name: "Samsung",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Samsung",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
     searchTerm: "samsung",
     heroTagline: "Do What You Can't",
     description: "Experience cutting-edge technology with Samsung's innovative lineup of smartphones, tablets, and home appliances.",
@@ -39,7 +39,7 @@ export const brandData: Record<string, BrandData> = {
   nike: {
     id: "nike",
     name: "Nike",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Nike",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg",
     searchTerm: "nike",
     heroTagline: "Just Do It",
     description: "Elevate your performance with Nike's premium athletic wear, footwear, and equipment designed for champions.",
@@ -51,7 +51,7 @@ export const brandData: Record<string, BrandData> = {
   adidas: {
     id: "adidas",
     name: "Adidas",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Adidas",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png",
     searchTerm: "adidas",
     heroTagline: "Impossible is Nothing",
     description: "Discover Adidas' iconic three stripes collection featuring premium sportswear and lifestyle products.",
@@ -63,7 +63,7 @@ export const brandData: Record<string, BrandData> = {
   sony: {
     id: "sony",
     name: "Sony",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Sony",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg",
     searchTerm: "sony",
     heroTagline: "Be Moved",
     description: "Immerse yourself in Sony's world of entertainment with cutting-edge audio, gaming, and electronics.",
@@ -75,7 +75,7 @@ export const brandData: Record<string, BrandData> = {
   madein: {
     id: "madein",
     name: "Made In",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Made+In",
+    logo: "https://cdn.shopify.com/s/files/1/0013/9949/4180/files/MadeIn_Logo_Black_320x.png",
     searchTerm: "made in cookware",
     heroTagline: "Crafted for Chefs",
     description: "Professional-grade cookware made in the USA. Trusted by world-class chefs and cooking enthusiasts.",
@@ -87,7 +87,7 @@ export const brandData: Record<string, BrandData> = {
   lego: {
     id: "lego",
     name: "Lego",
-    logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Lego",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg",
     searchTerm: "lego",
     heroTagline: "Play Well",
     description: "Build, create, and explore with LEGO's endless possibilities for builders of all ages.",

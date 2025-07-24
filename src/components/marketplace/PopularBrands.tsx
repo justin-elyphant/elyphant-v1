@@ -13,43 +13,43 @@ const PopularBrands = () => {
     {
       id: "apple",
       name: "Apple",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Apple",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
       searchTerm: "apple"
     },
     {
       id: "samsung",
       name: "Samsung",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Samsung",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
       searchTerm: "samsung"
     },
     {
       id: "nike",
       name: "Nike",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Nike",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg",
       searchTerm: "nike"
     },
     {
       id: "adidas",
       name: "Adidas",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Adidas",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png",
       searchTerm: "adidas"
     },
     {
       id: "sony",
       name: "Sony",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Sony",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/Sony_logo.svg",
       searchTerm: "sony"
     },
     {
       id: "madein",
       name: "Made In",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Made+In",
+      logo: "https://cdn.shopify.com/s/files/1/0013/9949/4180/files/MadeIn_Logo_Black_320x.png",
       searchTerm: "made in cookware"
     },
     {
       id: "lego",
       name: "Lego",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Lego",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg",
       searchTerm: "lego"
     }
   ];

@@ -21,6 +21,7 @@ const StreamlinedMarketplaceWrapper = () => {
     searchTerm,
     urlSearchTerm,
     luxuryCategories,
+    giftsForHer,
     personId,
     occasionType,
   } = useUnifiedMarketplace();
@@ -105,7 +106,7 @@ const StreamlinedMarketplaceWrapper = () => {
   }
 
   // Show search results info
-  const showSearchInfo = urlSearchTerm || luxuryCategories || personId || occasionType;
+  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || personId || occasionType;
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -127,6 +128,7 @@ const StreamlinedMarketplaceWrapper = () => {
             <div>
               <h3 className="font-medium text-blue-900">
                 {luxuryCategories && "Luxury Collections"}
+                {giftsForHer && "Gifts for Her"}
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>

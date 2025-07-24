@@ -10,6 +10,11 @@ import {
 } from "./validationRules";
 
 export function useDataConsistency() {
+  // 🚨 DEPRECATED: This hook will be removed in Phase 4 data integrity unification
+  // Please migrate to useUnifiedDataIntegrity from @/hooks/useUnifiedDataIntegrity
+  // See DATA_INTEGRITY_MIGRATION_GUIDE.md for migration instructions
+  console.warn("useDataConsistency is deprecated. Please migrate to useUnifiedDataIntegrity");
+  
   const { user } = useAuth();
   const [state, setState] = useState<DataConsistencyState>({
     isValidating: false,

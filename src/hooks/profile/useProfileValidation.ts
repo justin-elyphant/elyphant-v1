@@ -44,6 +44,11 @@ export type ProfileValidationData = z.infer<typeof profileValidationSchema>;
  * Hook for validating profile data before submission
  */
 export function useProfileValidation() {
+  // 🚨 DEPRECATED: This hook will be removed in Phase 4 data integrity unification
+  // Please migrate to useUnifiedDataIntegrity from @/hooks/useUnifiedDataIntegrity
+  // See DATA_INTEGRITY_MIGRATION_GUIDE.md for migration instructions
+  console.warn("useProfileValidation is deprecated. Please migrate to useUnifiedDataIntegrity");
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isValid, setIsValid] = useState<boolean>(false);
   

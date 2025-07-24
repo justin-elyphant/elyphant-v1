@@ -5,6 +5,11 @@ import { ZodError } from "zod";
 import { convertProfileDataToSettingsForm, validateDataStructureCompatibility } from "./dataStructureValidator";
 
 export const validateProfileStep = (step: number, data: ProfileData): boolean => {
+  // 🚨 DEPRECATED: This function will be removed in Phase 4 data integrity unification
+  // Please migrate to dataIntegrityRouter.validateProfileStep from @/services/unified/DataIntegrityRouter
+  // See DATA_INTEGRITY_MIGRATION_GUIDE.md for migration instructions
+  console.warn("validateProfileStep is deprecated. Please migrate to dataIntegrityRouter.validateProfileStep");
+  
   console.log(`Validating step ${step} with data:`, data);
   
   try {

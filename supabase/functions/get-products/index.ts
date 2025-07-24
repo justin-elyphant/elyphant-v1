@@ -155,31 +155,34 @@ const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
 };
 
 // Gifts for Her category search handler with pagination support
-const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
-  console.log(`Starting gifts for her category batch search - page ${page}, limit ${limit}`);
+// Shared category batch search utility
+const searchCategoryBatch = async (
+  api_key: string, 
+  categories: string[], 
+  batchName: string,
+  page: number = 1, 
+  limit: number = 20,
+  priceFilter?: { max?: number; min?: number }
+) => {
+  console.log(`Starting ${batchName} category batch search - page ${page}, limit ${limit}`);
   
-  const giftsForHerCategories = [
-    "skincare essentials for women",
-    "cozy sweaters and cardigans", 
-    "candles and home fragrance",
-    "books and reading accessories",
-    "yoga and fitness accessories",
-    "coffee and tea gifts"
-  ];
+  const productsPerCategory = Math.ceil(limit / categories.length);
   
-  // Calculate how many products to fetch from each category based on page and limit
-  const productsPerCategory = Math.ceil(limit / giftsForHerCategories.length);
-  
-  // For proper pagination, we need to offset the results based on page
-  // Page 1: categories 0-5, Page 2: offset the search within categories
-  const categoryOffset = (page - 1) * productsPerCategory;
-  
-  const promises = giftsForHerCategories.map(async (category, index) => {
+  const promises = categories.map(async (category, index) => {
     try {
-      // Use actual page number for pagination
       const actualPage = page + Math.floor(index / 3); // Stagger pages across categories
-      console.log(`Searching gifts for her category: ${category} (page ${actualPage})`);
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${actualPage}&retailer=amazon`, {
+      let query = encodeURIComponent(category);
+      
+      // Add price filtering for budget categories
+      if (priceFilter?.max) {
+        query += `&max_price=${priceFilter.max}`;
+      }
+      if (priceFilter?.min) {
+        query += `&min_price=${priceFilter.min}`;
+      }
+      
+      console.log(`Searching ${batchName} category: ${category} (page ${actualPage})`);
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${query}&page=${actualPage}&retailer=amazon`, {
         method: 'GET',
         headers: {
           'Authorization': 'Basic ' + btoa(`${api_key}:`)
@@ -189,20 +192,29 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
       const data = await response.json();
       
       if (data.results && Array.isArray(data.results)) {
-        // Take products based on pagination
-        const startIndex = page === 1 ? 0 : (page - 1) * 2; // Offset for subsequent pages
+        const startIndex = page === 1 ? 0 : (page - 1) * 2;
         const endIndex = startIndex + productsPerCategory;
-        const categoryResults = data.results.slice(startIndex, endIndex).map((product: any) => {
+        let categoryResults = data.results.slice(startIndex, endIndex);
+        
+        // Additional price filtering for budget categories
+        if (priceFilter?.max) {
+          categoryResults = categoryResults.filter((product: any) => {
+            const price = parseFloat(product.price) || 0;
+            return price <= priceFilter.max!;
+          });
+        }
+        
+        const processedResults = categoryResults.map((product: any) => {
           const bestSellerData = processBestSellerData(product);
           return {
             ...product,
             ...bestSellerData,
-            categorySource: category // Track which category this came from
+            categorySource: category
           };
         });
         
-        console.log(`Found ${categoryResults.length} products for category: ${category}`);
-        return categoryResults;
+        console.log(`Found ${processedResults.length} products for category: ${category}`);
+        return processedResults;
       }
       
       return [];
@@ -214,8 +226,6 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
   
   try {
     const categoryResults = await Promise.all(promises);
-    
-    // Flatten and mix results
     const allResults = categoryResults.flat();
     
     // Shuffle to prevent category clustering
@@ -224,23 +234,64 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
       [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
     }
     
-    // Apply final limit
     const paginatedResults = allResults.slice(0, limit);
     
-    console.log(`Gifts for her category search complete: ${paginatedResults.length} products returned (page ${page})`);
+    console.log(`${batchName} category search complete: ${paginatedResults.length} products returned (page ${page})`);
     
     return {
       results: paginatedResults,
       total: paginatedResults.length,
-      hasMore: allResults.length > limit || page <= 5, // Estimate if more pages available
+      hasMore: allResults.length > limit || page <= 5,
       currentPage: page,
       categoryBatch: true
     };
     
   } catch (error) {
-    console.error('Error in gifts for her category batch search:', error);
+    console.error(`Error in ${batchName} category batch search:`, error);
     throw error;
   }
+};
+
+// Gifts for Her category search handler
+const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
+  const giftsForHerCategories = [
+    "skincare essentials for women",
+    "cozy sweaters and cardigans", 
+    "candles and home fragrance",
+    "books and reading accessories",
+    "yoga and fitness accessories",
+    "coffee and tea gifts"
+  ];
+  
+  return searchCategoryBatch(api_key, giftsForHerCategories, "gifts for her", page, limit);
+};
+
+// Gifts for Him category search handler
+const searchGiftsForHimCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
+  const giftsForHimCategories = [
+    "tech gadgets for men",
+    "grooming essentials",
+    "fitness and sports gear",
+    "watches and accessories", 
+    "tools and gadgets",
+    "gaming accessories"
+  ];
+  
+  return searchCategoryBatch(api_key, giftsForHimCategories, "gifts for him", page, limit);
+};
+
+// Gifts Under $50 category search handler
+const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20) => {
+  const giftsUnder50Categories = [
+    "affordable tech accessories",
+    "budget home decor",
+    "inexpensive jewelry",
+    "affordable beauty products",
+    "budget kitchen gadgets",
+    "affordable fitness accessories"
+  ];
+  
+  return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, { max: 50 });
 };
 
 serve(async (req) => {
@@ -255,7 +306,7 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false} = await req.json();
+    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false} = await req.json();
     
     try {
       // Handle luxury category batch search
@@ -275,6 +326,28 @@ serve(async (req) => {
         const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit);
         
         return new Response(JSON.stringify(giftsForHerData), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Handle gifts for him category batch search
+      if (giftsForHim) {
+        console.log('Processing gifts for him category batch request');
+        const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit);
+        
+        return new Response(JSON.stringify(giftsForHimData), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Handle gifts under $50 category batch search
+      if (giftsUnder50) {
+        console.log('Processing gifts under $50 category batch request');
+        const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit);
+        
+        return new Response(JSON.stringify(giftsUnder50Data), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });

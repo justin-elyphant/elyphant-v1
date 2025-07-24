@@ -27,6 +27,8 @@ const StreamlinedMarketplaceWrapper = () => {
     urlSearchTerm,
     luxuryCategories,
     giftsForHer,
+    giftsForHim,
+    giftsUnder50,
     personId,
     occasionType,
   } = useUnifiedMarketplace();
@@ -43,15 +45,27 @@ const StreamlinedMarketplaceWrapper = () => {
       console.log(`handleLoadMore called for page ${page}`);
       console.log('URL params:', {
         giftsForHer: searchParams.get('giftsForHer'),
+        giftsForHim: searchParams.get('giftsForHim'),
+        giftsUnder50: searchParams.get('giftsUnder50'),
         luxuryCategories: searchParams.get('luxuryCategories'),
         search: searchParams.get('search')
       });
       
-      if (searchParams.get('giftsForHer')) {
-        console.log('Making gifts for her request with page:', page);
+      // Handle category-based searches
+      const categoryParams = {
+        ...(searchParams.get('giftsForHer') && { giftsForHer: true }),
+        ...(searchParams.get('giftsForHim') && { giftsForHim: true }),
+        ...(searchParams.get('giftsUnder50') && { giftsUnder50: true }),
+        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true })
+      };
+      
+      if (Object.keys(categoryParams).length > 0) {
+        const categoryType = Object.keys(categoryParams)[0];
+        console.log(`Making ${categoryType} request with page:`, page);
+        
         const response = await supabase.functions.invoke('get-products', {
           body: { 
-            giftsForHer: true,
+            ...categoryParams,
             page,
             limit: 20
           }
@@ -108,7 +122,7 @@ const StreamlinedMarketplaceWrapper = () => {
     paginatedProductsLength: paginatedProducts.length,
     hasMore,
     isPaginationLoading,
-    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || personId || occasionType
+    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || personId || occasionType
   });
 
   // Product interaction handlers
@@ -186,7 +200,7 @@ const StreamlinedMarketplaceWrapper = () => {
   }
 
   // Show search results info
-  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || personId || occasionType;
+  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || personId || occasionType;
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -209,6 +223,8 @@ const StreamlinedMarketplaceWrapper = () => {
               <h3 className="font-medium text-blue-900">
                 {luxuryCategories && "Luxury Collections"}
                 {giftsForHer && "Gifts for Her"}
+                {giftsForHim && "Gifts for Him"}
+                {giftsUnder50 && "Gifts Under $50"}
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>

@@ -27,16 +27,16 @@ const giftCategories = [
     title: "Gifts for Him", 
     description: "Perfect gifts for the special man",
     image: "/lovable-uploads/19ec9b7e-120d-40e6-a4f2-2a411add14fb.png",
-    searchTerm: "gifts for him",
-    navigationUrl: "/marketplace?search=gifts+for+him"
+    searchTerm: "gifts for him categories",
+    navigationUrl: "/marketplace?giftsForHim=true"
   },
   {
     id: "gifts-under-50",
     title: "Gifts under $50",
     description: "Amazing gifts that won't break the bank",
     image: "/lovable-uploads/9c28137d-7145-44ee-a958-177f61bb637a.png",
-    searchTerm: "gifts under 50",
-    navigationUrl: "/marketplace?search=gifts+under+50&maxPrice=50"
+    searchTerm: "gifts under $50 categories",
+    navigationUrl: "/marketplace?giftsUnder50=true"
   },
   {
     id: "luxury-gifts",

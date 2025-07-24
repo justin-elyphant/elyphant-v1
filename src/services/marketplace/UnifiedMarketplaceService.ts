@@ -11,6 +11,8 @@ export interface SearchOptions {
   filters?: any;
   luxuryCategories?: boolean;
   giftsForHer?: boolean;
+  giftsForHim?: boolean;
+  giftsUnder50?: boolean;
   personId?: string;
   occasionType?: string;
 }
@@ -37,8 +39,8 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories, giftsForHer, page = 1, maxResults = 20 } = options;
-    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:page:${page}:limit:${maxResults}`;
+    const { luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, page = 1, maxResults = 20 } = options;
+    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:page:${page}:limit:${maxResults}`;
   }
 
   /**
@@ -87,10 +89,10 @@ class UnifiedMarketplaceService {
    * Search products with unified caching and deduplication
    */
   async searchProducts(searchTerm: string, options: SearchOptions = {}): Promise<Product[]> {
-    const { luxuryCategories = false, maxResults = 20, page = 1 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, maxResults = 20, page = 1 } = options;
     const cacheKey = this.getCacheKey(searchTerm, options);
     
-    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}`);
+    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}`);
     
     // Check cache first
     if (this.isCacheValid(cacheKey)) {
@@ -130,7 +132,7 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, maxResults = 20 } = options;
     
     try {
       let response;
@@ -143,6 +145,14 @@ class UnifiedMarketplaceService {
         console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
         this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
         response = await enhancedZincApiService.searchGiftsForHerCategories(maxResults);
+      } else if (giftsForHim) {
+        console.log('[UnifiedMarketplaceService] Executing gifts for him category search');
+        this.showToast('Loading gifts for him...', 'loading', 'Finding perfect gifts for him');
+        response = await enhancedZincApiService.searchGiftsForHimCategories(maxResults);
+      } else if (giftsUnder50) {
+        console.log('[UnifiedMarketplaceService] Executing gifts under $50 category search');
+        this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
+        response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults);
       } else if (searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}"`);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
@@ -164,9 +174,13 @@ class UnifiedMarketplaceService {
           ? `Found ${normalizedProducts.length} luxury items`
           : giftsForHer
             ? `Found ${normalizedProducts.length} gifts for her`
-            : searchTerm 
-              ? `Found ${normalizedProducts.length} results`
-              : `Loaded ${normalizedProducts.length} featured products`;
+            : giftsForHim
+              ? `Found ${normalizedProducts.length} gifts for him`
+              : giftsUnder50
+                ? `Found ${normalizedProducts.length} gifts under $50`
+                : searchTerm 
+                  ? `Found ${normalizedProducts.length} results`
+                  : `Loaded ${normalizedProducts.length} featured products`;
             
         this.showToast(successMessage, 'success');
       } else {

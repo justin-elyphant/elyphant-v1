@@ -200,7 +200,6 @@ class EnhancedZincApiService {
 
       if (error) {
         console.error('Error calling gifts for her category search:', error);
-        // Fallback to single search
         return this.searchProducts('skincare essentials for women', 1, limit);
       }
 
@@ -209,7 +208,6 @@ class EnhancedZincApiService {
         return this.searchProducts('skincare essentials for women', 1, limit);
       }
 
-      // Enhance product data
       const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
 
       console.log(`Gifts for her category search complete: ${enhancedResults.length} products from multiple categories`);
@@ -221,8 +219,85 @@ class EnhancedZincApiService {
 
     } catch (error) {
       console.error('Gifts for her category search error:', error);
-      // Fallback to single search
       return this.searchProducts('skincare essentials for women', 1, limit);
+    }
+  }
+
+  /**
+   * Search gifts for him categories and return diverse product array
+   */
+  async searchGiftsForHimCategories(limit: number = 16): Promise<ZincSearchResponse> {
+    console.log('Starting gifts for him category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          giftsForHim: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error('Error calling gifts for him category search:', error);
+        return this.searchProducts('tech gadgets for men', 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn('No gifts for him products returned, using fallback');
+        return this.searchProducts('tech gadgets for men', 1, limit);
+      }
+
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Gifts for him category search complete: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error('Gifts for him category search error:', error);
+      return this.searchProducts('tech gadgets for men', 1, limit);
+    }
+  }
+
+  /**
+   * Search gifts under $50 categories and return diverse product array
+   */
+  async searchGiftsUnder50Categories(limit: number = 16): Promise<ZincSearchResponse> {
+    console.log('Starting gifts under $50 category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          giftsUnder50: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error('Error calling gifts under $50 category search:', error);
+        return this.searchProducts('affordable tech accessories', 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn('No gifts under $50 products returned, using fallback');
+        return this.searchProducts('affordable tech accessories', 1, limit);
+      }
+
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Gifts under $50 category search complete: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error('Gifts under $50 category search error:', error);
+      return this.searchProducts('affordable tech accessories', 1, limit);
     }
   }
 

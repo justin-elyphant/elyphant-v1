@@ -1,7 +1,9 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Clock, Award, Star, TrendingUp } from "lucide-react";
+import { Sparkles, Clock, Award, Star, TrendingUp, Heart, Eye } from "lucide-react";
+import { customerAnalyticsService } from "@/services/analytics/customerAnalyticsService";
+import { Product } from "@/types/product";
 
 interface ProductStatusBadgesProps {
   isBestSeller: boolean;
@@ -9,6 +11,15 @@ interface ProductStatusBadgesProps {
   isRecentlyViewed: boolean;
   bestSellerType?: 'amazon_choice' | 'best_seller' | 'popular' | 'top_rated' | 'highly_rated' | null;
   badgeText?: string | null;
+  product?: Product; // Add product prop for hybrid analytics
+}
+
+interface HybridBadgeData {
+  isBestSeller: boolean;
+  isPopular: boolean;
+  isTrending: boolean;
+  popularityScore: number;
+  badgeText?: string;
 }
 
 const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
@@ -17,11 +28,37 @@ const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
   isRecentlyViewed,
   bestSellerType,
   badgeText,
+  product,
 }) => {
-  const getBestSellerBadge = () => {
-    if (!isBestSeller) return null;
+  const [hybridData, setHybridData] = useState<HybridBadgeData | null>(null);
+  const [loading, setLoading] = useState(false);
 
-    const displayText = badgeText || 'Best Seller';
+  // Fetch hybrid analytics data when product prop is provided
+  useEffect(() => {
+    if (!product) return;
+
+    const fetchHybridData = async () => {
+      setLoading(true);
+      try {
+        const data = await customerAnalyticsService.getHybridBadgeData(product);
+        setHybridData(data);
+      } catch (error) {
+        console.error('Error fetching hybrid badge data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHybridData();
+  }, [product]);
+
+  // Use hybrid data if available, otherwise fall back to props
+  const effectiveBestSeller = hybridData?.isBestSeller ?? isBestSeller;
+  const effectiveBadgeText = hybridData?.badgeText ?? badgeText;
+  const getBestSellerBadge = () => {
+    if (!effectiveBestSeller) return null;
+
+    const displayText = effectiveBadgeText || 'Best Seller';
     
     switch (bestSellerType) {
       case 'amazon_choice':
@@ -69,9 +106,33 @@ const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
     }
   };
 
+  const getTrendingBadge = () => {
+    if (!hybridData?.isTrending) return null;
+    
+    return (
+      <Badge variant="secondary" className="bg-red-500 text-white border-0">
+        <TrendingUp className="h-3 w-3 mr-1" />
+        <span className="text-xs">Trending</span>
+      </Badge>
+    );
+  };
+
+  const getPopularBadge = () => {
+    if (!hybridData?.isPopular || hybridData?.isBestSeller || hybridData?.isTrending) return null;
+    
+    return (
+      <Badge variant="secondary" className="bg-pink-500 text-white border-0">
+        <Heart className="h-3 w-3 mr-1" />
+        <span className="text-xs">Popular</span>
+      </Badge>
+    );
+  };
+
   return (
     <div className="absolute top-2 left-2 flex flex-col gap-1">
       {getBestSellerBadge()}
+      {getTrendingBadge()}
+      {getPopularBadge()}
       {isNewArrival && (
         <Badge variant="secondary" className="bg-green-500 text-white border-0">
           <span className="text-xs">New</span>

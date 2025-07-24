@@ -280,6 +280,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           isRecentlyViewed={isRecentlyViewed()}
           bestSellerType={getBestSellerType()}
           badgeText={getBadgeText()}
+          product={product}
         />
 
         {/* Custom Status Badge - Top Left (below product status badges) */}

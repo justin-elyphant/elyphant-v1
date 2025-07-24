@@ -5,6 +5,7 @@ import { Product } from "@/types/product";
 import { useSearchParams } from "react-router-dom";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProductDataSync } from "@/hooks/useProductDataSync";
+import { customerAnalyticsService } from "@/services/analytics/customerAnalyticsService";
 
 /**
  * Hook for tracking product views in the marketplace
@@ -50,7 +51,7 @@ export const useProductTracking = (products: Product[]) => {
   };
   
   // Track a product view directly from product object
-  const trackProductObject = (product: Product) => {
+  const trackProductObject = async (product: Product) => {
     if (!product) return;
     
     const productId = product.product_id || product.id;
@@ -67,8 +68,15 @@ export const useProductTracking = (products: Product[]) => {
       price: product.price
     });
     
-    // Use the new centralized tracking mechanism
+    // Use the existing centralized tracking mechanism
     trackProductView(product);
+    
+    // Track with new customer analytics service
+    try {
+      await customerAnalyticsService.trackProductView(product);
+    } catch (error) {
+      console.error("Failed to track product view in analytics:", error);
+    }
   };
 
   return { 

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import { chatWithNicole, generateSearchQuery, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { useSmartCTALogic } from "@/components/ai/enhanced/hooks/useSmartCTALogic";
 import GroupedSearchResultsComponent from "./GroupedSearchResults";
 import type { GroupedSearchResults } from "@/services/ai/multiCategorySearchService";
@@ -28,10 +29,24 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const { shouldShowCTAButton, extractContextFromMessage } = useSmartCTALogic();
   const [messages, setMessages] = useState<NicoleMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [context, setContext] = useState<NicoleContext>({});
-  const [showSearchButton, setShowSearchButton] = useState(false);
   const [groupedResults, setGroupedResults] = useState<GroupedSearchResults | null>(null);
+
+  // Use unified Nicole AI service
+  const {
+    loading: isLoading,
+    context,
+    chatWithNicole,
+    generateSearchQuery,
+    isReadyToSearch,
+    updateContext
+  } = useUnifiedNicoleAI({
+    sessionId: `nicole-conversation-${user?.id || 'anonymous'}`,
+    initialContext: {
+      currentUserId: user?.id
+    }
+  });
+
+  const [showSearchButton, setShowSearchButton] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -161,7 +176,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     
     if (onNavigateToMarketplace) {
       try {
-        const searchQuery = generateSearchQuery(context);
+        const searchQuery = generateSearchQuery();
         console.log('🔍 Generated search query:', searchQuery);
         onNavigateToMarketplace(searchQuery);
         onClose();
@@ -187,36 +202,31 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
 
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
-    setIsLoading(true);
 
     try {
-      console.log('🤖 Calling chatWithNicole with context:', context);
-      const response = await chatWithNicole(messageToSend, context, messages);
-      console.log('✅ Received response from Nicole:', response);
-      console.log('🔍 Response showSearchButton:', response.showSearchButton);
+      console.log('🤖 Calling unified Nicole AI with context:', context);
+      const response = await chatWithNicole(messageToSend);
+      console.log('✅ Received response from unified Nicole:', response);
       
-      const assistantMessage: NicoleMessage = {
-        role: 'assistant',
-        content: response.message
-      };
+      if (response) {
+        console.log('🔍 Response showSearchButton:', response.showSearchButton);
+        
+        const assistantMessage: NicoleMessage = {
+          role: 'assistant',
+          content: response.message
+        };
 
-      setMessages(prev => [...prev, assistantMessage]);
-      setContext(response.context);
-      
-      // Enhanced search button logic with debugging
-      const shouldShow = Boolean(response.showSearchButton);
-      console.log('🎯 Setting showSearchButton to:', shouldShow);
-      setShowSearchButton(shouldShow);
-      
-      // Handle grouped results
-      if (response.groupedResults) {
-        console.log('📊 Setting grouped results:', response.groupedResults);
-        setGroupedResults(response.groupedResults);
-      }
-
-      // Handle follow-up requests
-      if (response.followUpRequest) {
-        console.log('🎯 Processing follow-up request:', response.followUpRequest);
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Enhanced search button logic with debugging
+        const shouldShow = Boolean(response.showSearchButton);
+        console.log('🎯 Setting showSearchButton to:', shouldShow);
+        setShowSearchButton(shouldShow);
+        
+        // Handle metadata updates
+        if (response.metadata?.contextUpdates) {
+          updateContext(response.metadata.contextUpdates);
+        }
       }
 
     } catch (error) {
@@ -227,7 +237,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false);
+      // Loading state is managed by the hook
     }
   };
 
@@ -243,10 +253,9 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
 
   const handleCategoryExpand = (categoryName: string) => {
     if (onNavigateToMarketplace) {
-      const searchQuery = generateSearchQuery({
-        ...context,
-        interests: [categoryName]
-      });
+      // Update context with category interest and generate search
+      updateContext({ interests: [categoryName] });
+      const searchQuery = generateSearchQuery();
       onNavigateToMarketplace(searchQuery);
       onClose();
     }

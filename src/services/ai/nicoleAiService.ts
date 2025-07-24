@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: This service is being phased out in favor of UnifiedNicoleAIService
+// Use useUnifiedNicoleAI hook instead of direct imports from this file
+// This will be removed in a future version
+
 import { supabase } from "@/integrations/supabase/client";
 import { parseEnhancedContext, ParsedContext } from "./enhancedContextParser";
 import { performMultiCategorySearch, GroupedSearchResults } from "./multiCategorySearchService";
@@ -182,6 +186,10 @@ function detectReadinessInResponse(message: string): boolean {
 
 /**
  * Enhanced chat with Nicole that supports multi-category search and conversation enhancement
+ */
+/**
+ * @deprecated Use useUnifiedNicoleAI hook instead
+ * This function will be removed in a future version
  */
 export async function chatWithNicole(
   message: string,

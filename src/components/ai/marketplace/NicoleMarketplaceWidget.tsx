@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2, Gift } from "lucide-react";
-import { chatWithNicole, NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
+import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -23,6 +24,7 @@ interface NicoleMarketplaceWidgetProps {
   searchQuery?: string;
   totalResults?: number;
   isFromNicole?: boolean;
+  selectedProduct?: any;
 }
 
 const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
@@ -34,15 +36,29 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   onMaximize,
   searchQuery,
   totalResults,
-  isFromNicole
+  isFromNicole,
+  selectedProduct
 }) => {
+  const { user } = useAuth();
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [context, setContext] = useState<NicoleContext>({});
   const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
-  
-  const { user } = useAuth();
+
+  // Use unified Nicole AI service
+  const {
+    loading: isGenerating,
+    context,
+    chatWithNicole,
+    updateContext
+  } = useUnifiedNicoleAI({
+    sessionId: `marketplace-nicole-${user?.id || 'anonymous'}`,
+    initialContext: {
+      currentUserId: user?.id,
+      capability: 'marketplace_assistant',
+      searchQuery: searchQuery,
+      productContext: selectedProduct
+    }
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,50 +107,49 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     setConversationHistory(prev => [...prev, userAiMessage]);
 
     setCurrentMessage("");
-    setIsGenerating(true);
 
     try {
       console.log('🛍️ Nicole Marketplace: Processing message', { message, context });
 
-      // Enhanced context for marketplace assistance
-      const marketplaceContext = {
-        ...context,
-        conversationPhase: 'providing_suggestions' as const
-      };
-
-      // Get AI response with proper parameter order
-      const aiResponse = await chatWithNicole(message, marketplaceContext, conversationHistory);
+      // Get AI response using unified service
+      const aiResponse = await chatWithNicole(message);
       
       console.log('✅ Nicole Marketplace: Received AI response', aiResponse);
 
-      // Add Nicole's response
-      const nicoleMessage: ConversationMessage = {
-        type: "nicole",
-        content: aiResponse.message,
-        timestamp: new Date()
-      };
-      addMessage(nicoleMessage);
+      if (aiResponse) {
+        // Add Nicole's response
+        const nicoleMessage: ConversationMessage = {
+          type: "nicole",
+          content: aiResponse.message,
+          timestamp: new Date()
+        };
+        addMessage(nicoleMessage);
 
-      // Update conversation history
-      const nicoleAiMessage: NicoleMessage = {
-        role: "assistant",
-        content: aiResponse.message
-      };
-      setConversationHistory(prev => [...prev, nicoleAiMessage]);
+        // Update conversation history
+        const nicoleAiMessage: NicoleMessage = {
+          role: "assistant",
+          content: aiResponse.message
+        };
+        setConversationHistory(prev => [...prev, nicoleAiMessage]);
 
-      // Update context with AI response
-      if (aiResponse.context) {
-        setContext(aiResponse.context);
-      }
+        // Handle metadata updates
+        if (aiResponse.metadata?.contextUpdates) {
+          updateContext(aiResponse.metadata.contextUpdates);
+        }
 
-      // Handle search suggestions
-      if (aiResponse.generateSearch && onSearchSuggestion) {
-        // Generate a search query based on the conversation
-        const searchQuery = extractSearchQuery(message, aiResponse.message);
-        if (searchQuery) {
+        // Handle search generation
+        if (aiResponse.searchQuery && onSearchSuggestion) {
           setTimeout(() => {
-            onSearchSuggestion(searchQuery);
+            onSearchSuggestion(aiResponse.searchQuery!);
           }, 1000);
+        } else if (onSearchSuggestion) {
+          // Generate a search query based on the conversation
+          const searchQuery = extractSearchQuery(message, aiResponse.message);
+          if (searchQuery) {
+            setTimeout(() => {
+              onSearchSuggestion(searchQuery);
+            }, 1000);
+          }
         }
       }
 
@@ -149,7 +164,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
       };
       addMessage(fallbackMessage);
     } finally {
-      setIsGenerating(false);
+      // Loading state is managed by the hook
     }
   }, [currentMessage, addMessage, conversationHistory, context, onSearchSuggestion]);
 

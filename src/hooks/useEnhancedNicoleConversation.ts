@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { EnhancedNicoleService, EnhancedNicoleContext, WishlistRecommendation } from "@/services/ai/enhancedNicoleService";
+// ⚠️ DEPRECATED: Use useUnifiedNicoleAI instead
 import { chatWithNicole, generateSearchQuery, NicoleMessage, ConversationPhase } from "@/services/ai/nicoleAiService";
 
 export interface EnhancedConversationMessage {

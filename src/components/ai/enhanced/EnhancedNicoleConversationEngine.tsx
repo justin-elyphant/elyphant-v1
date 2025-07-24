@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2 } from "lucide-react";
-import { chatWithNicole, NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
+import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import SearchButton from "./SearchButton";
@@ -40,16 +41,30 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   isMinimized = false,
   onMaximize
 }) => {
-  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
-  const [currentMessage, setCurrentMessage] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [context, setContext] = useState<EnhancedNicoleContext>({});
-  const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showCTAButton, setShowCTAButton] = useState(false);
-  
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Use unified Nicole AI service
+  const {
+    loading: isGenerating,
+    context,
+    chatWithNicole,
+    generateSearchQuery,
+    isReadyToSearch,
+    updateContext
+  } = useUnifiedNicoleAI({
+    sessionId: `enhanced-nicole-${user?.id || 'anonymous'}`,
+    initialContext: {
+      currentUserId: user?.id
+    }
+  });
+
+  const [showCTAButton, setShowCTAButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -132,12 +147,13 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     setConversationHistory(prev => [...prev, userAiMessage]);
 
     setCurrentMessage("");
-    setIsGenerating(true);
 
     try {
       // Extract context from user message (as backup)
-      const extractedContext = extractContextFromMessage(message, context);
-      setContext(extractedContext);
+      const extractedContext = extractContextFromMessage(message, context as any);
+      if (extractedContext) {
+        updateContext(extractedContext);
+      }
 
       console.log('🔄 Enhanced Nicole: Sending message with context', {
         message,
@@ -146,7 +162,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       });
 
       // Get AI response
-      const aiResponse = await chatWithNicole(message, extractedContext, conversationHistory);
+      const aiResponse = await chatWithNicole(message);
       
       console.log('✅ Enhanced Nicole: Received AI response', aiResponse);
       console.log('🎯 CTA Button Debug - showSearchButton from API:', aiResponse.showSearchButton);
@@ -166,15 +182,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       };
       setConversationHistory(prev => [...prev, nicoleAiMessage]);
 
-      // Update context with AI response and show CTA based on AI decision
-      if (aiResponse.context) {
-        const mergedContext = {
-          ...extractedContext,
-          ...aiResponse.context,
-          detectedBrands: extractedContext.detectedBrands || [],
-          ageGroup: extractedContext.ageGroup
-        };
-        setContext(mergedContext);
+      // Update context if needed
+      if (aiResponse.metadata?.contextUpdates) {
+        updateContext(aiResponse.metadata.contextUpdates);
       }
 
       // Use ONLY the AI's decision for showing the CTA button
@@ -193,7 +203,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       };
       addMessage(fallbackMessage);
     } finally {
-      setIsGenerating(false);
+      // Loading state is managed by the hook
     }
   }, [currentMessage, addMessage, conversationHistory, context, extractContextFromMessage]);
 
@@ -203,16 +213,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     try {
       console.log('🔍 Enhanced Nicole: Generating search query from context', context);
       
-      // Generate enhanced search query
-      const searchQuery = generateEnhancedSearchQuery({
-        recipient: context.recipient,
-        relationship: context.relationship,
-        occasion: context.occasion,
-        exactAge: context.exactAge,
-        interests: context.interests,
-        budget: context.budget,
-        detectedBrands: context.detectedBrands
-      });
+      // Generate search query using unified service
+      const searchQuery = generateSearchQuery();
       
       console.log('🎯 Enhanced Nicole: Generated search query:', searchQuery);
       

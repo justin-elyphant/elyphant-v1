@@ -7,6 +7,9 @@ import {
   type UserPresence 
 } from "@/utils/enhancedMessageService";
 
+// ⚠️ DEPRECATED: Use useUnifiedPresence from @/hooks/useUnifiedMessaging instead
+console.warn("useEnhancedPresence is deprecated. Use useUnifiedPresence from @/hooks/useUnifiedMessaging instead.");
+
 export type UserStatus = "online" | "offline" | "away";
 
 interface EnhancedPresenceState {

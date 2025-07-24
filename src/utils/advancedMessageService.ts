@@ -1,6 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// ⚠️ DEPRECATED: This service is deprecated. Use UnifiedMessagingService instead.
+console.warn("advancedMessageService is deprecated. Use UnifiedMessagingService from @/services/UnifiedMessagingService instead.");
+
 export interface Message {
   id: string;
   sender_id: string;

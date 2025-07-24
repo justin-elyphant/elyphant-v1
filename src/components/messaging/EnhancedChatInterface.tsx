@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { 
   Send, 
   Smile, 
@@ -13,25 +12,12 @@ import {
   MoreVertical, 
   Phone, 
   Video,
-  Heart,
-  ThumbsUp,
   Gift
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { 
-  fetchMessages, 
-  sendMessage, 
-  markMessagesAsRead, 
-  subscribeToMessages,
-  addMessageReaction,
-  removeMessageReaction,
-  setTypingStatus,
-  subscribeToTyping,
-  setupOfflineSupport,
-  type Message 
-} from "@/utils/advancedMessageService";
-import { useEnhancedPresence } from "@/hooks/useEnhancedPresence";
+import { useDirectMessaging, useUnifiedPresence } from "@/hooks/useUnifiedMessaging";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import { useAuth } from "@/contexts/auth";
 import TypingIndicator from "./TypingIndicator";
 import ChatGiftModal from "./ChatGiftModal";
@@ -53,27 +39,33 @@ const EnhancedChatInterface = ({
   relationshipType = 'friend'
 }: EnhancedChatInterfaceProps) => {
   const { user } = useAuth();
-  const { getUserStatus, subscribeToUserPresence } = useEnhancedPresence();
-  
-  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesStartRef = useRef<HTMLDivElement>(null);
   const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
+  
+  // Use unified messaging hooks
+  const { 
+    messages, 
+    loading, 
+    hasMore,
+    sendMessage: sendUnifiedMessage, 
+    loadMoreMessages,
+    addReaction, 
+    markAsRead,
+    presence,
+    isTyping: otherUserTyping,
+    startTyping,
+    stopTyping,
+    isOnline
+  } = useDirectMessaging(connectionId);
+  
+  const { getUserStatus, subscribeToUserPresence } = useUnifiedPresence();
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,58 +73,14 @@ const EnhancedChatInterface = ({
 
   const userStatus = getUserStatus(connectionId);
 
-  const loadMessages = useCallback(async (page: number = 0, append: boolean = false) => {
-    try {
-      if (page === 0) setLoading(true);
-      else setLoadingMore(true);
-      
-      const { messages: fetchedMessages, hasMore } = await fetchMessages(connectionId, page);
-      
-      if (append) {
-        setMessages(prev => [...fetchedMessages, ...prev]);
-      } else {
-        setMessages(fetchedMessages);
-      }
-      
-      setHasMoreMessages(hasMore);
-      setCurrentPage(page);
-      
-      // Mark unread messages as read
-      const unreadMessageIds = fetchedMessages
-        .filter(msg => !msg.is_read && msg.recipient_id === user?.id)
-        .map(msg => msg.id);
-      
-      if (unreadMessageIds.length > 0) {
-        for (const id of unreadMessageIds) {
-          await markMessagesAsRead([id]);
-        }
-      }
-      
-      if (page === 0) {
-        setTimeout(scrollToBottom, 100);
-      }
-    } catch (error) {
-      console.error("Error loading messages:", error);
-      toast.error("Failed to load messages");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [connectionId, user?.id, scrollToBottom]);
-
-  const loadMoreMessages = useCallback(async () => {
-    if (!hasMoreMessages || loadingMore) return;
-    await loadMessages(currentPage + 1, true);
-  }, [hasMoreMessages, loadingMore, currentPage, loadMessages]);
-
   // Set up intersection observer for automatic infinite scroll
   useEffect(() => {
-    if (!messagesStartRef.current || !hasMoreMessages) return;
+    if (!messagesStartRef.current || !hasMore) return;
 
     intersectionObserverRef.current = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting && !loadingMore) {
+        if (entry.isIntersecting) {
           loadMoreMessages();
         }
       },
@@ -146,45 +94,33 @@ const EnhancedChatInterface = ({
         intersectionObserverRef.current.disconnect();
       }
     };
-  }, [hasMoreMessages, loadingMore, loadMoreMessages]);
+  }, [hasMore, loadMoreMessages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !selectedFile) || sending) return;
+    if ((!newMessage.trim() && !selectedFile)) return;
 
     const messageContent = newMessage.trim() || (selectedFile ? `📎 ${selectedFile.name}` : "");
     setNewMessage("");
-    setSending(true);
     setUploading(!!selectedFile);
 
-    // Clear typing status
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-      setTypingTimeout(null);
-    }
-    setIsTyping(false);
-    await setTypingStatus(connectionId, false);
+    // Stop typing indicator
+    await stopTyping();
 
     try {
-      const sentMessage = await sendMessage({
-        recipientId: connectionId,
+      await sendUnifiedMessage({
         content: messageContent,
         attachment: selectedFile || undefined
       });
-
-      if (sentMessage) {
-        setMessages(prev => [...prev, sentMessage]);
-        setTimeout(scrollToBottom, 100);
-      }
       
       setSelectedFile(null);
       setUploadProgress(0);
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
       setNewMessage(messageContent); // Restore message on error
     } finally {
-      setSending(false);
       setUploading(false);
     }
   };
@@ -193,15 +129,7 @@ const EnhancedChatInterface = ({
     if (!user) return;
 
     try {
-      // Check if user already reacted with this emoji
-      const message = messages.find(m => m.id === messageId);
-      const hasReacted = message?.reactions[emoji]?.includes(user.id);
-
-      if (hasReacted) {
-        await removeMessageReaction(messageId, emoji);
-      } else {
-        await addMessageReaction(messageId, emoji);
-      }
+      await addReaction(messageId, emoji);
     } catch (error) {
       console.error("Error handling reaction:", error);
     }
@@ -212,99 +140,54 @@ const EnhancedChatInterface = ({
     setNewMessage(value);
 
     // Handle typing indicators
-    if (value.trim() && !isTyping) {
-      setIsTyping(true);
-      await setTypingStatus(connectionId, true);
+    if (value.trim()) {
+      await startTyping();
+    } else {
+      await stopTyping();
     }
-
-    // Clear existing timeout
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-
-    // Set new timeout to clear typing status
-    const timeout = setTimeout(async () => {
-      setIsTyping(false);
-      await setTypingStatus(connectionId, false);
-    }, 2000);
-
-    setTypingTimeout(timeout);
   };
 
   const handleSendGift = async (giftData: any) => {
     try {
       const giftMessage = `🎁 ${giftData.itemName}${giftData.message ? ` - ${giftData.message}` : ''}`;
       
-      const sentMessage = await sendMessage({
-        recipientId: connectionId,
+      await sendUnifiedMessage({
         content: giftMessage,
         messageType: 'gift',
         ...(giftData.type === 'wishlist' && { wishlistLinkId: giftData.itemId }),
         ...(giftData.type === 'marketplace' && { productLinkId: parseInt(giftData.itemId) })
       });
 
-      if (sentMessage) {
-        setMessages(prev => [...prev, sentMessage]);
-        setTimeout(scrollToBottom, 100);
-      }
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error("Error sending gift:", error);
       toast.error("Failed to send gift");
     }
   };
 
+  // Subscribe to user presence
   useEffect(() => {
-    if (!user) return;
-
-    loadMessages();
-    
-    // Set up offline support
-    const cleanupOffline = setupOfflineSupport();
-    
-    // Set up real-time subscriptions
-    const unsubscribeMessages = subscribeToMessages(
-      user.id,
-      connectionId,
-      (newMessage: Message) => {
-        setMessages(prev => [...prev, newMessage]);
-        setTimeout(scrollToBottom, 100);
-        
-        // Mark message as read if chat is active
-        if (newMessage.recipient_id === user.id) {
-          markMessagesAsRead([newMessage.id]);
-        }
-      },
-      (updatedMessage: Message) => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === updatedMessage.id ? updatedMessage : msg
-        ));
-      }
-    );
-
-    // Subscribe to typing indicators
-    const unsubscribeTyping = subscribeToTyping(
-      user.id,
-      connectionId,
-      (typing: boolean) => {
-        setOtherUserTyping(typing);
-      }
-    );
-
-    // Subscribe to user presence
     const unsubscribePresence = subscribeToUserPresence(connectionId);
+    return unsubscribePresence;
+  }, [connectionId, subscribeToUserPresence]);
 
-    return () => {
-      unsubscribeMessages();
-      unsubscribeTyping();
-      unsubscribePresence();
-      cleanupOffline();
-      
-      // Clear typing status on unmount
-      if (isTyping) {
-        setTypingStatus(connectionId, false);
-      }
-    };
-  }, [connectionId, loadMessages, user, isTyping, subscribeToUserPresence]);
+  // Mark messages as read when they come in
+  useEffect(() => {
+    const unreadMessageIds = messages
+      .filter(msg => !msg.is_read && msg.recipient_id === user?.id)
+      .map(msg => msg.id);
+    
+    if (unreadMessageIds.length > 0) {
+      markAsRead(unreadMessageIds);
+    }
+  }, [messages, user?.id, markAsRead]);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messages.length, scrollToBottom]);
 
   const initials = connectionName
     .split(' ')
@@ -385,20 +268,18 @@ const EnhancedChatInterface = ({
       </div>
 
       {/* Messages Area with Infinite Scroll */}
-      <ScrollArea className="flex-1 p-2 sm:p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-2 sm:p-4">
         <div className="space-y-2 sm:space-y-4">
           {/* Infinite scroll trigger - invisible div at top */}
-          {hasMoreMessages && (
+          {hasMore && (
             <div 
               ref={messagesStartRef} 
               className="h-4 flex items-center justify-center"
             >
-              {loadingMore && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="animate-spin h-3 w-3 border border-current border-t-transparent rounded-full"></div>
-                  Loading more...
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="animate-spin h-3 w-3 border border-current border-t-transparent rounded-full"></div>
+                Loading more...
+              </div>
             </div>
           )}
           
@@ -540,7 +421,7 @@ const EnhancedChatInterface = ({
               onFileRemove={() => setSelectedFile(null)}
               uploading={uploading}
               uploadProgress={uploadProgress}
-              disabled={sending}
+              disabled={false}
             />
           </div>
         )}
@@ -552,7 +433,6 @@ const EnhancedChatInterface = ({
               onChange={handleInputChange}
               placeholder={`Message ${connectionName}...`}
               className="pr-20 resize-none min-h-[48px] sm:min-h-[44px] touch-manipulation text-base sm:text-sm"
-              disabled={sending}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
               <FileAttachment
@@ -561,7 +441,7 @@ const EnhancedChatInterface = ({
                 selectedFile={selectedFile}
                 uploading={uploading}
                 uploadProgress={uploadProgress}
-                disabled={sending}
+                disabled={false}
               />
               <Button 
                 type="button" 
@@ -575,7 +455,7 @@ const EnhancedChatInterface = ({
           </div>
           <Button 
             type="submit" 
-            disabled={(!newMessage.trim() && !selectedFile) || sending}
+            disabled={(!newMessage.trim() && !selectedFile)}
             className="h-12 w-12 sm:h-11 sm:w-11 p-0 touch-manipulation"
           >
             <Send className="h-5 w-5 sm:h-4 sm:w-4" />

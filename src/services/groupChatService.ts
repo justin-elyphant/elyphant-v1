@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// ⚠️ DEPRECATED: This service is deprecated. Group chat functionality is now available in UnifiedMessagingService.
+console.warn("groupChatService is deprecated. Use UnifiedMessagingService from @/services/UnifiedMessagingService for group chat functionality.");
+
 export interface GroupChat {
   id: string;
   name: string;

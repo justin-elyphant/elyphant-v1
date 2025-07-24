@@ -1,6 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// ⚠️ DEPRECATED: This service is deprecated. Use UnifiedMessagingService instead.
+console.warn("messageService is deprecated. Use UnifiedMessagingService from @/services/UnifiedMessagingService instead.");
+
 export interface Message {
   id: string;
   sender_id: string;

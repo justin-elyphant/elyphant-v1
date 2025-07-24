@@ -154,9 +154,9 @@ const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
   }
 };
 
-// Gifts for Her category search handler
-const searchGiftsForHerCategories = async (api_key: string, page: number = 1) => {
-  console.log('Starting gifts for her category batch search');
+// Gifts for Her category search handler with pagination support
+const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
+  console.log(`Starting gifts for her category batch search - page ${page}, limit ${limit}`);
   
   const giftsForHerCategories = [
     "skincare essentials for women",
@@ -167,10 +167,14 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1) =>
     "coffee and tea gifts"
   ];
   
+  // Calculate how many products to fetch from each category based on page and limit
+  const productsPerCategory = Math.ceil(limit / giftsForHerCategories.length);
+  const zincPage = Math.ceil(page / 2); // Since we're fetching from multiple categories, adjust page
+  
   const promises = giftsForHerCategories.map(async (category) => {
     try {
-      console.log(`Searching gifts for her category: ${category}`);
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=1&retailer=amazon`, {
+      console.log(`Searching gifts for her category: ${category} (page ${zincPage})`);
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${zincPage}&retailer=amazon`, {
         method: 'GET',
         headers: {
           'Authorization': 'Basic ' + btoa(`${api_key}:`)
@@ -180,8 +184,10 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1) =>
       const data = await response.json();
       
       if (data.results && Array.isArray(data.results)) {
-        // Take first 3-4 products from each category
-        const categoryResults = data.results.slice(0, 4).map((product: any) => {
+        // Take products based on pagination
+        const startIndex = page === 1 ? 0 : (page - 1) * 2; // Offset for subsequent pages
+        const endIndex = startIndex + productsPerCategory;
+        const categoryResults = data.results.slice(startIndex, endIndex).map((product: any) => {
           const bestSellerData = processBestSellerData(product);
           return {
             ...product,
@@ -213,11 +219,16 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1) =>
       [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
     }
     
-    console.log(`Gifts for her category search complete: ${allResults.length} total products`);
+    // Apply final limit
+    const paginatedResults = allResults.slice(0, limit);
+    
+    console.log(`Gifts for her category search complete: ${paginatedResults.length} products returned (page ${page})`);
     
     return {
-      results: allResults,
-      total: allResults.length,
+      results: paginatedResults,
+      total: paginatedResults.length,
+      hasMore: allResults.length > limit || zincPage <= 3, // Estimate if more pages available
+      currentPage: page,
       categoryBatch: true
     };
     
@@ -239,7 +250,7 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1, luxuryCategories = false, giftsForHer = false} = await req.json();
+    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false} = await req.json();
     
     try {
       // Handle luxury category batch search
@@ -256,7 +267,7 @@ serve(async (req) => {
       // Handle gifts for her category batch search
       if (giftsForHer) {
         console.log('Processing gifts for her category batch request');
-        const giftsForHerData = await searchGiftsForHerCategories(api_key, page);
+        const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit);
         
         return new Response(JSON.stringify(giftsForHerData), {
           status: 200,

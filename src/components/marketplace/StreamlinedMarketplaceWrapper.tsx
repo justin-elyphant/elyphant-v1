@@ -7,11 +7,13 @@ import MarketplaceQuickFilters from "./MarketplaceQuickFilters";
 import { AirbnbStyleCategorySections } from "./AirbnbStyleCategorySections";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
+import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -30,6 +32,19 @@ const StreamlinedMarketplaceWrapper = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
+
+  // Use optimized products hook for pagination and loading
+  const {
+    products: paginatedProducts,
+    isLoading: isPaginationLoading,
+    hasMore,
+    loadMore,
+    refresh: refreshPagination,
+    totalCount
+  } = useOptimizedProducts({
+    initialProducts: products || [],
+    pageSize: 20
+  });
 
   // Product interaction handlers
   const handleProductClick = (product: any) => {
@@ -132,9 +147,9 @@ const StreamlinedMarketplaceWrapper = () => {
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>
-              <p className="text-sm text-blue-700 mt-1">
-                Found {products.length} {products.length === 1 ? 'product' : 'products'}
-              </p>
+               <p className="text-sm text-blue-700 mt-1">
+                 Found {totalCount} {totalCount === 1 ? 'product' : 'products'}
+               </p>
             </div>
           </div>
         </div>
@@ -146,23 +161,46 @@ const StreamlinedMarketplaceWrapper = () => {
       )}
 
       {/* Products Grid (when search is active or as fallback) */}
-      {(showSearchInfo || !products.length) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <AirbnbStyleProductCard
-              key={product.id || product.product_id || index}
-              product={product}
-              onProductClick={() => handleProductClick(product)}
-              statusBadge={getProductStatus(product)}
-              onAddToCart={handleAddToCart}
-              onShare={handleShare}
-            />
-          ))}
-        </div>
+      {(showSearchInfo || !products.length) && paginatedProducts.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {paginatedProducts.map((product, index) => (
+              <AirbnbStyleProductCard
+                key={product.id || product.product_id || index}
+                product={product}
+                onProductClick={() => handleProductClick(product)}
+                statusBadge={getProductStatus(product)}
+                onAddToCart={handleAddToCart}
+                onShare={handleShare}
+              />
+            ))}
+          </div>
+
+          {/* Load More Button */}
+          {hasMore && showSearchInfo && (
+            <div className="flex justify-center mt-8">
+              <Button 
+                onClick={loadMore} 
+                disabled={isPaginationLoading}
+                className="min-w-[160px]"
+                variant="outline"
+              >
+                {isPaginationLoading ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  `Load More Products`
+                )}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Empty State */}
-      {products.length === 0 && !isLoading && (
+      {paginatedProducts.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
             <div className="text-gray-400 mb-4">

@@ -271,6 +271,7 @@ class EnhancedZincApiService {
     try {
       const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
+          query: 'gifts under $50 categories', // Required by edge function
           giftsUnder50: true,
           limit
         }

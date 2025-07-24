@@ -124,6 +124,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       executeSearch("gifts for him categories", { giftsForHim: true, maxResults: 20 });
     } else if (giftsUnder50) {
       console.log('[useUnifiedMarketplace] Detected gifts under $50 parameter');
+      console.log('[useUnifiedMarketplace] URL params check:', { giftsUnder50, urlParam: searchParams.get("giftsUnder50") });
       executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20 });
     } else if (urlSearchTerm) {
       console.log(`[useUnifiedMarketplace] Detected URL search term: "${urlSearchTerm}"`);

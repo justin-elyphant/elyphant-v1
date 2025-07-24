@@ -14,7 +14,8 @@ import {
   Bug,
   Activity,
   Monitor,
-  TrendingUp
+  TrendingUp,
+  TestTube
 } from "lucide-react";
 import {
   Sidebar,
@@ -109,6 +110,11 @@ const monitoringItems = [
     title: "Scaling",
     url: "/trunkline/scaling",
     icon: TrendingUp,
+  },
+  {
+    title: "Production Hardening",
+    url: "/trunkline/production-hardening", 
+    icon: TestTube,
   },
 ];
 

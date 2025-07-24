@@ -18,6 +18,7 @@ import BusinessPaymentMethodManager from "@/components/settings/BusinessPaymentM
 import TrunklineAnalytics from "@/pages/trunkline/TrunklineAnalytics";
 import TrunklineMonitoring from "@/pages/trunkline/TrunklineMonitoring";
 import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
+import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
 
 const Trunkline = () => {
   return (
@@ -42,6 +43,7 @@ const Trunkline = () => {
                 <Route path="/analytics" element={<TrunklineAnalytics />} />
                 <Route path="/monitoring" element={<TrunklineMonitoring />} />
                 <Route path="/scaling" element={<TrunklineScaling />} />
+                <Route path="/production-hardening" element={<ProductionHardeningCenter />} />
               </Routes>
             </div>
           </SidebarInset>

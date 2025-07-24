@@ -1099,9 +1099,14 @@ class UnifiedGiftManagementService {
     
     try {
       const settings = await this.getSettings(userId);
-      const budgetTracking = settings?.budget_tracking || {};
+      const budgetTracking = settings?.budget_tracking as {
+        monthly_limit?: number;
+        annual_limit?: number;
+        spent_this_month?: number;
+        spent_this_year?: number;
+      } | undefined;
       
-      if (budgetTracking.monthly_limit) {
+      if (budgetTracking?.monthly_limit) {
         const monthlySpent = budgetTracking.spent_this_month || 0;
         if (monthlySpent + amount > budgetTracking.monthly_limit) {
           warnings.push(`Would exceed monthly limit of $${budgetTracking.monthly_limit}`);
@@ -1113,7 +1118,7 @@ class UnifiedGiftManagementService {
         }
       }
       
-      if (budgetTracking.annual_limit) {
+      if (budgetTracking?.annual_limit) {
         const annualSpent = budgetTracking.spent_this_year || 0;
         if (annualSpent + amount > budgetTracking.annual_limit) {
           warnings.push(`Would exceed annual limit of $${budgetTracking.annual_limit}`);

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock data for popular brands with real logos
@@ -44,8 +44,8 @@ const popularBrands = [
   },
   { 
     id: 7, 
-    name: "Canon", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Canon_logo.svg/2560px-Canon_logo.svg.png", 
+    name: "Made In", 
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Made_In_logo.svg/2560px-Made_In_logo.svg.png", 
     productCount: 87 
   },
   { 
@@ -59,6 +59,26 @@ const popularBrands = [
 const PopularBrands = () => {
   const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   const navigate = useNavigate();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Carousel scroll functions
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
+  };
   
   const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
     e.preventDefault(); // Prevent default navigation
@@ -68,8 +88,8 @@ const PopularBrands = () => {
     setLoadingBrand(brandName);
     
     try {
-      // Navigate to marketplace with brand search
-      const searchUrl = `/marketplace?search=${encodeURIComponent(brandName)}`;
+      // Navigate to marketplace with brand search using brandCategories
+      const searchUrl = `/marketplace?brandCategories=${encodeURIComponent(brandName)}`;
       navigate(searchUrl, { 
         state: { 
           fromBrand: true, 
@@ -90,13 +110,34 @@ const PopularBrands = () => {
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-6">Featured Brands</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Featured Brands</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={scrollLeft}
+            className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <button
+            onClick={scrollRight}
+            className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          </button>
+        </div>
+      </div>
       
-      <ScrollArea className="w-full whitespace-nowrap pb-4">
-        <div className="flex space-x-4">
+      <div 
+        ref={scrollContainerRef}
+        className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
           {popularBrands.map((brand) => (
             <Link 
-              to={`/marketplace?search=${encodeURIComponent(brand.name)}`} 
+              to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`}
               key={brand.id} 
               onClick={(e) => handleBrandClick(e, brand.name)}
               className={loadingBrand === brand.name ? "pointer-events-none opacity-70" : ""}
@@ -127,8 +168,7 @@ const PopularBrands = () => {
               </Card>
             </Link>
           ))}
-        </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };

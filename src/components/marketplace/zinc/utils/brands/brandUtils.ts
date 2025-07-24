@@ -5,7 +5,8 @@
 export function getBrandFromTitle(title: string): string {
   const commonBrands = [
     'Apple', 'Samsung', 'Sony', 'Nike', 'Adidas', 'Microsoft', 'Dell', 'HP', 
-    'LG', 'Bose', 'Sonos', 'Amazon', 'Google', 'Logitech', 'Levi\'s', 'Nintendo'
+    'LG', 'Bose', 'Sonos', 'Amazon', 'Google', 'Logitech', 'Levi\'s', 'Nintendo',
+    'Lululemon', 'Made In', 'Lego'
   ];
   
   for (const brand of commonBrands) {

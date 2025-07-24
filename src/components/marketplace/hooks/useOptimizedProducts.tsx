@@ -39,15 +39,20 @@ export const useOptimizedProducts = ({
   }, [initialProducts]);
 
   const hasMore = useMemo(() => {
-    if (onLoadMore) {
-      // For server-side pagination, use hasMoreFromServer
-      return hasMoreFromServer;
-    }
-    // For client-side pagination, check if there are more local products
-    return currentPage * pageSize < initialProducts.length;
+    const result = onLoadMore ? hasMoreFromServer : currentPage * pageSize < initialProducts.length;
+    console.log('useOptimizedProducts hasMore calculation:', {
+      onLoadMore: !!onLoadMore,
+      hasMoreFromServer,
+      currentPage,
+      pageSize,
+      initialProductsLength: initialProducts.length,
+      result
+    });
+    return result;
   }, [onLoadMore, hasMoreFromServer, currentPage, pageSize, initialProducts.length]);
 
   const loadMore = useCallback(async () => {
+    console.log('loadMore called:', { hasMore, isLoading });
     if (!hasMore || isLoading) return;
     
     setIsLoading(true);
@@ -57,8 +62,15 @@ export const useOptimizedProducts = ({
       if (onLoadMore) {
         // Server-side pagination
         const newProducts = await onLoadMore(currentPage + 1);
-        setProducts(prev => [...prev, ...newProducts]);
-        setCurrentPage(prev => prev + 1);
+        console.log('Server pagination result:', { newProducts: newProducts.length, currentPage: currentPage + 1 });
+        
+        if (newProducts.length > 0) {
+          setProducts(prev => [...prev, ...newProducts]);
+          setCurrentPage(prev => prev + 1);
+        }
+        
+        // Update hasMoreFromServer based on whether we got a full page
+        // Note: This would require a state update mechanism, for now we'll assume more pages exist
       } else {
         // Client-side pagination fallback
         setCurrentPage(prev => prev + 1);

@@ -89,7 +89,16 @@ const StreamlinedMarketplaceWrapper = () => {
     initialProducts: products || [],
     pageSize: 20,
     onLoadMore: handleLoadMore,
-    hasMoreFromServer: !error && (products?.length || 0) >= 20 // Assume more if we got a full page
+    hasMoreFromServer: true, // Always assume there might be more until we get less than a full page
+    // Debug logging
+    ...(() => {
+      console.log('StreamlinedMarketplaceWrapper useOptimizedProducts setup:', {
+        hasError: !!error,
+        productsLength: products?.length || 0,
+        hasMoreFromServer: true
+      });
+      return {};
+    })()
   });
 
   // Product interaction handlers

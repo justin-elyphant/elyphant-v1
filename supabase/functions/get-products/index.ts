@@ -283,12 +283,12 @@ const searchGiftsForHimCategories = async (api_key: string, page: number = 1, li
 // Gifts Under $50 category search handler
 const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20) => {
   const giftsUnder50Categories = [
-    "affordable tech accessories",
-    "budget home decor",
-    "inexpensive jewelry",
-    "affordable beauty products",
-    "budget kitchen gadgets",
-    "affordable fitness accessories"
+    "phone cases and accessories",
+    "home decor items",
+    "jewelry accessories",
+    "beauty and skincare",
+    "kitchen gadgets",
+    "fitness accessories"
   ];
   
   return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, { max: 50 });

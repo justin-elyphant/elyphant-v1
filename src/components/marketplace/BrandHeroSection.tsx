@@ -58,22 +58,29 @@ const BrandHeroSection: React.FC<BrandHeroSectionProps> = ({ brandName, productC
               {brandData.heroTagline}
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-600 mb-4 max-w-2xl">
+            <p 
+              className="text-lg md:text-xl mb-4 max-w-2xl opacity-90"
+              style={{ color: brandData.primaryColor }}
+            >
               {brandData.description}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
               <div 
-                className="px-4 py-2 rounded-full text-sm font-medium shadow-sm"
+                className="px-4 py-2 rounded-full text-sm font-medium shadow-sm border"
                 style={{ 
                   backgroundColor: brandData.secondaryColor,
-                  color: brandData.primaryColor 
+                  color: brandData.primaryColor,
+                  borderColor: brandData.primaryColor + '20'
                 }}
               >
                 {productCount} {productCount === 1 ? 'Product' : 'Products'} Available
               </div>
               
-              <div className="text-sm text-slate-500">
+              <div 
+                className="text-sm font-medium opacity-75"
+                style={{ color: brandData.primaryColor }}
+              >
                 ✨ Curated Collection
               </div>
             </div>

@@ -19,7 +19,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "apple",
     heroTagline: "Innovation at Your Fingertips",
     description: "Discover Apple's latest collection of innovative products designed to enhance your digital lifestyle.",
-    primaryColor: "hsl(0, 0%, 0%)",
+    primaryColor: "hsl(0, 0%, 17%)",
     secondaryColor: "hsl(0, 0%, 95%)",
     backgroundGradient: "linear-gradient(135deg, hsl(0, 0%, 98%) 0%, hsl(0, 0%, 92%) 100%)",
     ctaText: "Explore Apple Products"
@@ -31,7 +31,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "samsung",
     heroTagline: "Do What You Can't",
     description: "Experience cutting-edge technology with Samsung's innovative lineup of smartphones, tablets, and home appliances.",
-    primaryColor: "hsl(217, 91%, 60%)",
+    primaryColor: "hsl(217, 91%, 35%)",
     secondaryColor: "hsl(217, 91%, 95%)",
     backgroundGradient: "linear-gradient(135deg, hsl(217, 91%, 98%) 0%, hsl(217, 91%, 92%) 100%)",
     ctaText: "Shop Samsung"
@@ -43,7 +43,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "nike",
     heroTagline: "Just Do It",
     description: "Elevate your performance with Nike's premium athletic wear, footwear, and equipment designed for champions.",
-    primaryColor: "hsl(0, 0%, 0%)",
+    primaryColor: "hsl(0, 0%, 100%)",
     secondaryColor: "hsl(39, 100%, 50%)",
     backgroundGradient: "linear-gradient(135deg, hsl(0, 0%, 5%) 0%, hsl(0, 0%, 15%) 100%)",
     ctaText: "Shop Nike"
@@ -55,7 +55,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "adidas",
     heroTagline: "Impossible is Nothing",
     description: "Discover Adidas' iconic three stripes collection featuring premium sportswear and lifestyle products.",
-    primaryColor: "hsl(0, 0%, 0%)",
+    primaryColor: "hsl(0, 0%, 100%)",
     secondaryColor: "hsl(0, 0%, 100%)",
     backgroundGradient: "linear-gradient(135deg, hsl(0, 0%, 10%) 0%, hsl(0, 0%, 25%) 100%)",
     ctaText: "Explore Adidas"
@@ -67,7 +67,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "sony",
     heroTagline: "Be Moved",
     description: "Immerse yourself in Sony's world of entertainment with cutting-edge audio, gaming, and electronics.",
-    primaryColor: "hsl(0, 0%, 0%)",
+    primaryColor: "hsl(0, 0%, 17%)",
     secondaryColor: "hsl(210, 100%, 60%)",
     backgroundGradient: "linear-gradient(135deg, hsl(210, 100%, 98%) 0%, hsl(210, 100%, 92%) 100%)",
     ctaText: "Discover Sony"
@@ -79,7 +79,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "made in cookware",
     heroTagline: "Crafted for Chefs",
     description: "Professional-grade cookware made in the USA. Trusted by world-class chefs and cooking enthusiasts.",
-    primaryColor: "hsl(25, 95%, 53%)",
+    primaryColor: "hsl(25, 95%, 35%)",
     secondaryColor: "hsl(25, 95%, 95%)",
     backgroundGradient: "linear-gradient(135deg, hsl(25, 95%, 98%) 0%, hsl(25, 95%, 92%) 100%)",
     ctaText: "Shop Made In"
@@ -91,7 +91,7 @@ export const brandData: Record<string, BrandData> = {
     searchTerm: "lego",
     heroTagline: "Play Well",
     description: "Build, create, and explore with LEGO's endless possibilities for builders of all ages.",
-    primaryColor: "hsl(348, 100%, 50%)",
+    primaryColor: "hsl(348, 100%, 40%)",
     secondaryColor: "hsl(45, 100%, 50%)",
     backgroundGradient: "linear-gradient(135deg, hsl(348, 100%, 98%) 0%, hsl(45, 100%, 95%) 100%)",
     ctaText: "Build with LEGO"

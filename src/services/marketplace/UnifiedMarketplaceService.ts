@@ -13,6 +13,7 @@ export interface SearchOptions {
   giftsForHer?: boolean;
   giftsForHim?: boolean;
   giftsUnder50?: boolean;
+  brandCategories?: boolean;
   personId?: string;
   occasionType?: string;
 }
@@ -39,10 +40,10 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, page = 1, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, page = 1, maxResults = 20 } = options;
     // Add version suffix to force cache refresh for updated categories
-    const version = giftsUnder50 ? 'v7' : 'v1';
-    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:page:${page}:limit:${maxResults}:${version}`;
+    const version = giftsUnder50 ? 'v7' : brandCategories ? 'v1' : 'v1';
+    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:brandCategories:${brandCategories}:page:${page}:limit:${maxResults}:${version}`;
   }
 
   /**
@@ -91,10 +92,10 @@ class UnifiedMarketplaceService {
    * Search products with unified caching and deduplication
    */
   async searchProducts(searchTerm: string, options: SearchOptions = {}): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, maxResults = 20, page = 1 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, page = 1 } = options;
     const cacheKey = this.getCacheKey(searchTerm, options);
     
-    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}`);
+    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}, brandCategories: ${brandCategories}`);
     console.log(`[UnifiedMarketplaceService] Cache key: ${cacheKey}`);
     
     // FORCE bypass cache for gifts under $50 until it works
@@ -154,7 +155,7 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20 } = options;
     
     try {
       let response;
@@ -175,6 +176,10 @@ class UnifiedMarketplaceService {
         console.log('[UnifiedMarketplaceService] Executing gifts under $50 category search');
         this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
         response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults);
+      } else if (brandCategories && searchTerm.trim()) {
+        console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
+        this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
+        response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults);
       } else if (searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}"`);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
@@ -200,9 +205,11 @@ class UnifiedMarketplaceService {
               ? `Found ${normalizedProducts.length} gifts for him`
               : giftsUnder50
                 ? `Found ${normalizedProducts.length} gifts under $50`
-                : searchTerm 
-                  ? `Found ${normalizedProducts.length} results`
-                  : `Loaded ${normalizedProducts.length} featured products`;
+                : brandCategories
+                  ? `Found ${normalizedProducts.length} ${searchTerm} products`
+                  : searchTerm 
+                    ? `Found ${normalizedProducts.length} results`
+                    : `Loaded ${normalizedProducts.length} featured products`;
             
         this.showToast(successMessage, 'success');
       } else {

@@ -303,6 +303,46 @@ class EnhancedZincApiService {
   }
 
   /**
+   * Search brand categories and return diverse product array across all brand categories
+   */
+  async searchBrandCategories(brandName: string, limit: number = 16): Promise<ZincSearchResponse> {
+    console.log(`Starting brand category search for: ${brandName}`);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          query: brandName,
+          brandCategories: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error(`Error calling brand category search for ${brandName}:`, error);
+        return this.searchProducts(brandName, 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn(`No brand products returned for ${brandName}, using fallback`);
+        return this.searchProducts(brandName, 1, limit);
+      }
+
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Brand category search complete for ${brandName}: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error(`Brand category search error for ${brandName}:`, error);
+      return this.searchProducts(brandName, 1, limit);
+    }
+  }
+
+  /**
    * Search luxury categories and return diverse product array
    */
   async searchLuxuryCategories(limit: number = 16): Promise<ZincSearchResponse> {

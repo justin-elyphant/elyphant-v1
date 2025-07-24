@@ -5,6 +5,7 @@ import { ZincProduct } from "@/components/marketplace/zinc/types";
 import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 import { getAppleFallbackProducts } from "./fallbackProducts";
 import { generateDescription } from "@/components/marketplace/zinc/utils/productDescriptionUtils";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 // Minimum number of products to return for a brand
 const MIN_PRODUCTS_COUNT = 75;
@@ -41,24 +42,21 @@ export const handleBrandProducts = async (
       return existingProducts;
     }
     
-    // Special handling for Apple to avoid fruit results
-    const searchQuery = brandName.toLowerCase() === "apple" ? 
-      "apple technology products" : 
-      brandName;
+    // Use the new brand categories search for better results across multiple product types
+    console.log(`Fetching ${brandName} products using brand category search`);
     
-    // Search for products using the Zinc API with a timeout to prevent hanging
-    console.log(`Fetching ${searchQuery} products from Zinc API`);
-    
-    // Create a promise that will time out after 10 seconds
-    const timeoutPromise = new Promise<ZincProduct[]>((_, reject) => {
-      setTimeout(() => reject(new Error("API request timed out")), 10000);
+    // Create a promise that will time out after 15 seconds
+    const timeoutPromise = new Promise<any>((_, reject) => {
+      setTimeout(() => reject(new Error("API request timed out")), 15000);
     });
     
     // Race the API call against the timeout
-    const zincResults = await Promise.race([
-      searchProducts(searchQuery, MIN_PRODUCTS_COUNT.toString()), // Convert number to string
+    const zincResponse = await Promise.race([
+      enhancedZincApiService.searchBrandCategories(brandName, MIN_PRODUCTS_COUNT),
       timeoutPromise
     ]);
+    
+    const zincResults = zincResponse.results || [];
     
     if (zincResults && zincResults.length > 0) {
       console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);

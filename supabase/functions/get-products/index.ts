@@ -319,6 +319,100 @@ const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, l
   return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, { max: 50 });
 };
 
+// Brand category mappings for multi-category brand searches
+const BRAND_CATEGORY_MAPPINGS = {
+  apple: [
+    "apple macbook laptop computers",
+    "apple iphone smartphones",
+    "apple ipad tablets", 
+    "apple watch smartwatch",
+    "apple airpods earbuds headphones",
+    "apple mac desktop computers"
+  ],
+  nike: [
+    "nike running shoes",
+    "nike athletic clothing apparel",
+    "nike basketball shoes",
+    "nike workout gear",
+    "nike sports accessories"
+  ],
+  samsung: [
+    "samsung galaxy phones",
+    "samsung tablets",
+    "samsung smartwatch",
+    "samsung earbuds",
+    "samsung laptops",
+    "samsung televisions TVs"
+  ],
+  sony: [
+    "sony headphones",
+    "sony cameras", 
+    "sony playstation gaming",
+    "sony speakers",
+    "sony televisions TVs",
+    "sony electronics"
+  ],
+  adidas: [
+    "adidas running shoes",
+    "adidas athletic clothing",
+    "adidas soccer cleats",
+    "adidas workout gear",
+    "adidas sports accessories"
+  ],
+  lululemon: [
+    "lululemon athletic wear",
+    "lululemon yoga pants",
+    "lululemon workout tops",
+    "lululemon sports bras",
+    "lululemon activewear accessories"
+  ],
+  madein: [
+    "made in cookware pots pans",
+    "made in kitchen knives",
+    "made in bakeware",
+    "made in kitchen accessories",
+    "made in carbon steel pans"
+  ],
+  lego: [
+    "lego building sets",
+    "lego architecture",
+    "lego creator sets",
+    "lego technic",
+    "lego minifigures"
+  ]
+};
+
+// Brand categories search handler
+const searchBrandCategories = async (api_key: string, brandName: string, page: number = 1, limit: number = 20) => {
+  console.log(`Starting brand category search for: ${brandName}`);
+  
+  const brandKey = brandName.toLowerCase().replace(/\s+/g, '');
+  const categories = BRAND_CATEGORY_MAPPINGS[brandKey as keyof typeof BRAND_CATEGORY_MAPPINGS];
+  
+  if (!categories) {
+    console.log(`No category mapping found for brand: ${brandName}, using fallback search`);
+    // Fallback to single brand search
+    try {
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(brandName)}&page=${page}&retailer=amazon`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${api_key}:`)
+        }
+      });
+      const data = await response.json();
+      return {
+        results: data.results || [],
+        total: data.results?.length || 0
+      };
+    } catch (error) {
+      console.error(`Fallback search failed for ${brandName}:`, error);
+      return { results: [], total: 0 };
+    }
+  }
+  
+  return searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit);
+};
+
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
@@ -331,7 +425,7 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false} = await req.json();
+    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false} = await req.json();
     
     try {
       // Handle luxury category batch search
@@ -373,6 +467,17 @@ serve(async (req) => {
         const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit);
         
         return new Response(JSON.stringify(giftsUnder50Data), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Handle brand categories search
+      if (brandCategories && query) {
+        console.log(`Processing brand categories request for: ${query}`);
+        const brandData = await searchBrandCategories(api_key, query, page, limit);
+        
+        return new Response(JSON.stringify(brandData), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });

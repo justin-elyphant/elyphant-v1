@@ -1,6 +1,6 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 type Brand = {
   id: number;
@@ -14,8 +14,25 @@ type BrandsProps = {
 };
 
 const FeaturedBrands = ({ brands = [] }: BrandsProps) => {
+  const navigate = useNavigate();
+  const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
+
   // Filter to only show featured brands
   const featuredBrands = brands.filter(brand => brand.featured);
+  
+  // Handle brand click with multi-category search
+  const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
+    e.preventDefault();
+    setLoadingBrand(brandName);
+    
+    // Navigate to marketplace with brand category search
+    navigate(`/marketplace?brandCategories=${encodeURIComponent(brandName)}`, {
+      state: { fromBrandCategories: true }
+    });
+    
+    // Reset loading state after navigation
+    setTimeout(() => setLoadingBrand(null), 1000);
+  };
   
   if (!featuredBrands || featuredBrands.length === 0) {
     return (
@@ -41,9 +58,15 @@ const FeaturedBrands = ({ brands = [] }: BrandsProps) => {
         {featuredBrands.map((brand) => (
           <Link 
             key={brand.id} 
-            to={`/marketplace?brand=${brand.name}`}
-            className="bg-white rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-md transition-shadow border border-gray-100 group"
+            to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`}
+            onClick={(e) => handleBrandClick(e, brand.name)}
+            className="bg-white rounded-lg p-6 flex flex-col items-center justify-center hover:shadow-md transition-shadow border border-gray-100 group relative"
           >
+            {loadingBrand === brand.name && (
+              <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center">
+                <p className="text-sm text-purple-600">Loading...</p>
+              </div>
+            )}
             <div className="h-16 flex items-center justify-center mb-2">
               <img 
                 src={brand.logo} 

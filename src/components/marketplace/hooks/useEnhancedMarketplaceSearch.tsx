@@ -20,7 +20,10 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
   const searchParams = new URLSearchParams(location.search);
   let urlSearchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
+  const brandCategoriesParam = searchParams.get("brandCategories");
+  
   if (categoryParam) urlSearchTerm = "category=" + categoryParam;
+  if (brandCategoriesParam) urlSearchTerm = "brandCategories=" + brandCategoriesParam;
   
   // Use debounced search
   const {

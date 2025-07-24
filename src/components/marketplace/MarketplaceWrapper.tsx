@@ -58,6 +58,7 @@ const MarketplaceWrapper = () => {
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
+  const brandCategoriesParam = searchParams.get("brandCategories");
 
   const resultsRef = useRef<HTMLDivElement>(null);
   const lastSearchRef = useRef<string | null>(null);
@@ -87,7 +88,7 @@ const MarketplaceWrapper = () => {
 
   // Only show filters when there are active search parameters AND user manually interacts
   useEffect(() => {
-    const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
+    const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam || brandCategoriesParam);
     
     // Never auto-show filters - only show when user explicitly requests them
     // Reset to false when there are no search parameters
@@ -95,7 +96,7 @@ const MarketplaceWrapper = () => {
       setShowFilters(false);
     }
     // Note: Removed auto-show logic for desktop with active search parameters
-  }, [searchTerm, categoryParam, brandParam, isMobile, isInitialLoad]);
+  }, [searchTerm, categoryParam, brandParam, brandCategoriesParam, isMobile, isInitialLoad]);
 
   // Clean up conflicting URL parameters and dismiss lingering toasts
   useEffect(() => {

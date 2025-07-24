@@ -342,36 +342,7 @@ export const EnhancedAddressInput: React.FC<EnhancedAddressInputProps> = ({
         </Card>
       )}
 
-      {/* Shipping Preview */}
-      {showShippingPreview && shippingData && (
-        <Card>
-          <CardContent className="pt-4">
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Truck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Shipping Options</span>
-              </div>
-              
-              <div className="grid gap-2">
-                {shippingData.options.map((option) => (
-                  <div key={option.id} className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{option.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium">${option.cost}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {Math.ceil(option.timeMinutes / 1440)} days
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Shipping Preview - Removed in MVP simplification (using fixed $6.99 shipping) */}
 
       {/* Location Intelligence */}
       {showLocationIntelligence && selectedAddress && (

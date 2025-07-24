@@ -115,6 +115,7 @@ export interface ConnectionStats {
   engagementLevel: 'low' | 'medium' | 'high';
 }
 
+
 export interface SendMessageOptions {
   recipientId?: string;
   groupChatId?: string;
@@ -879,6 +880,266 @@ class UnifiedMessagingService {
         await this.updatePresence('online');
       }
     });
+  }
+
+  // ============================================================================
+  // SOCIAL ACTIVITY & NOTIFICATIONS EXTENSION (Phase 1)
+  // ============================================================================
+
+  /**
+   * Get social activity feed for user
+   */
+  async getSocialActivityFeed(userId: string, limit: number = 10): Promise<SocialActivity[]> {
+    try {
+      // Get user's connections
+      const { data: connections } = await supabase
+        .from('user_connections')
+        .select('connected_user_id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
+
+      if (!connections || connections.length === 0) {
+        return [];
+      }
+
+      const connectionIds = connections.map(c => c.connected_user_id);
+      const activities: SocialActivity[] = [];
+
+      // Recent messages
+      const { data: messages } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          content,
+          created_at,
+          sender_id,
+          sender:profiles!messages_sender_id_fkey(name, profile_image)
+        `)
+        .in('sender_id', connectionIds)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      messages?.forEach(message => {
+        const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
+        activities.push({
+          id: message.id,
+          type: 'message',
+          userId: message.sender_id,
+          userName: sender?.name || 'Unknown',
+          userImage: sender?.profile_image,
+          content: message.content,
+          timestamp: message.created_at,
+          metadata: { messageId: message.id }
+        });
+      });
+
+      // Recent wishlist updates
+      const { data: wishlists } = await supabase
+        .from('wishlists')
+        .select(`
+          id,
+          name,
+          updated_at,
+          user_id,
+          user:profiles!wishlists_user_id_fkey(name, profile_image)
+        `)
+        .in('user_id', connectionIds)
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+
+      wishlists?.forEach(wishlist => {
+        const user = Array.isArray(wishlist.user) ? wishlist.user[0] : wishlist.user;
+        activities.push({
+          id: wishlist.id,
+          type: 'wishlist_update',
+          userId: wishlist.user_id,
+          userName: user?.name || 'Unknown',
+          userImage: user?.profile_image,
+          content: `Updated wishlist: ${wishlist.name}`,
+          timestamp: wishlist.updated_at,
+          metadata: { wishlistId: wishlist.id }
+        });
+      });
+
+      // Sort by timestamp and return limited results
+      return activities
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error('Error fetching social activity feed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create notification for user
+   */
+  async createNotification(notification: CreateNotificationData): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: notification.userId,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          data: notification.data || {},
+          is_read: false
+        });
+
+      if (error) throw error;
+
+      // Send real-time notification
+      await this.sendRealtimeNotification(notification.userId, {
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        data: notification.data
+      });
+
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user notifications
+   */
+  async getUserNotifications(userId: string, limit: number = 20): Promise<UserNotification[]> {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Mark notification as read
+   */
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send real-time notification via channels
+   */
+  private async sendRealtimeNotification(userId: string, notification: any): Promise<void> {
+    const channel = supabase.channel(`user_notifications_${userId}`);
+    
+    channel.send({
+      type: 'broadcast',
+      event: 'new_notification',
+      payload: notification
+    });
+  }
+
+  /**
+   * Subscribe to user notifications
+   */
+  subscribeToNotifications(
+    userId: string,
+    onNotification: (notification: UserNotification) => void
+  ): () => void {
+    const channelKey = `notifications_${userId}`;
+    
+    this.closeChannel(channelKey);
+
+    const channel = supabase
+      .channel(channelKey)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          onNotification(payload.new as UserNotification);
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'new_notification' },
+        (payload) => {
+          onNotification(payload.payload as UserNotification);
+        }
+      )
+      .subscribe();
+
+    this.activeChannels.set(channelKey, channel);
+
+    return () => this.closeChannel(channelKey);
+  }
+
+  /**
+   * Get connection statistics for social features
+   */
+  async getConnectionStats(userId: string): Promise<ConnectionStats> {
+    try {
+      // Get connection counts
+      const { data: connections } = await supabase
+        .from('user_connections')
+        .select('status')
+        .eq('user_id', userId);
+
+      const accepted = connections?.filter(c => c.status === 'accepted').length || 0;
+      const pending = connections?.filter(c => c.status === 'pending').length || 0;
+
+      // Get recent activity count
+      const { data: recentMessages } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_id', userId)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      return {
+        totalConnections: accepted,
+        pendingConnections: pending,
+        recentActivity: recentMessages?.length || 0,
+        engagementLevel: this.calculateEngagementLevel(accepted, recentMessages?.length || 0)
+      };
+    } catch (error) {
+      console.error('Error getting connection stats:', error);
+      return {
+        totalConnections: 0,
+        pendingConnections: 0,
+        recentActivity: 0,
+        engagementLevel: 'low'
+      };
+    }
+  }
+
+  /**
+   * Calculate user engagement level
+   */
+  private calculateEngagementLevel(connections: number, recentActivity: number): 'low' | 'medium' | 'high' {
+    const score = connections * 0.1 + recentActivity * 0.2;
+    
+    if (score > 5) return 'high';
+    if (score > 2) return 'medium';
+    return 'low';
   }
 
   // =============================================================================

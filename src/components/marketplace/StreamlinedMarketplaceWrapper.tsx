@@ -29,6 +29,7 @@ const StreamlinedMarketplaceWrapper = () => {
     giftsForHer,
     giftsForHim,
     giftsUnder50,
+    brandCategories,
     personId,
     occasionType,
   } = useUnifiedMarketplace();
@@ -122,7 +123,7 @@ const StreamlinedMarketplaceWrapper = () => {
     paginatedProductsLength: paginatedProducts.length,
     hasMore,
     isPaginationLoading,
-    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || personId || occasionType
+    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType
   });
 
   // Product interaction handlers
@@ -200,7 +201,7 @@ const StreamlinedMarketplaceWrapper = () => {
   }
 
   // Show search results info
-  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || personId || occasionType;
+  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType;
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -225,6 +226,7 @@ const StreamlinedMarketplaceWrapper = () => {
                 {giftsForHer && "Gifts for Her"}
                 {giftsForHim && "Gifts for Him"}
                 {giftsUnder50 && "Gifts Under $50"}
+                {brandCategories && `${brandCategories} Products`}
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>

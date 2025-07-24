@@ -31,6 +31,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
   const giftsForHer = searchParams.get("giftsForHer") === "true";
   const giftsForHim = searchParams.get("giftsForHim") === "true";
   const giftsUnder50 = searchParams.get("giftsUnder50") === "true";
+  const brandCategories = searchParams.get("brandCategories");
   const personId = searchParams.get("personId");
   const occasionType = searchParams.get("occasionType");
 
@@ -126,6 +127,9 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Detected gifts under $50 parameter');
       console.log('[useUnifiedMarketplace] URL params check:', { giftsUnder50, urlParam: searchParams.get("giftsUnder50") });
       executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20 });
+    } else if (brandCategories) {
+      console.log(`[useUnifiedMarketplace] Detected brand categories parameter: "${brandCategories}"`);
+      executeSearch(brandCategories, { brandCategories: true, maxResults: 20 });
     } else if (urlSearchTerm) {
       console.log(`[useUnifiedMarketplace] Detected URL search term: "${urlSearchTerm}"`);
       executeSearch(urlSearchTerm, { 
@@ -137,7 +141,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Loading default products');
       executeSearch("", { maxResults: 20 });
     }
-  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, urlSearchTerm, personId, occasionType, executeSearch, autoLoadOnMount]);
+  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, urlSearchTerm, personId, occasionType, executeSearch, autoLoadOnMount]);
 
   /**
    * Public search function for manual searches
@@ -152,6 +156,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       params.delete("giftsForHer");
       params.delete("giftsForHim");
       params.delete("giftsUnder50");
+      params.delete("brandCategories");
       params.delete("personId");
       params.delete("occasionType");
       setSearchParams(params);
@@ -186,6 +191,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     params.delete("giftsForHer");
     params.delete("giftsForHim");
     params.delete("giftsUnder50");
+    params.delete("brandCategories");
     params.delete("personId");
     params.delete("occasionType");
     setSearchParams(params);
@@ -195,10 +201,10 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
    * Refresh current search
    */
   const refresh = useCallback(() => {
-    if (state.searchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50) {
+    if (state.searchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories) {
       handleUrlSearch();
     }
-  }, [state.searchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, handleUrlSearch]);
+  }, [state.searchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, handleUrlSearch]);
 
   // Handle URL parameter changes
   useEffect(() => {
@@ -227,6 +233,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     giftsForHer,
     giftsForHim,
     giftsUnder50,
+    brandCategories,
     personId,
     occasionType,
     

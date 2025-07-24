@@ -175,12 +175,13 @@ const searchCategoryBatch = async (
       // Build URL with proper parameters
       let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${actualPage}&retailer=amazon`;
       
-      // Add price filtering as URL parameters
+      // Try different parameter formats for price filtering
       if (priceFilter?.max) {
-        searchUrl += `&max_price=${priceFilter.max}`;
+        // Try both parameter formats that Zinc might accept
+        searchUrl += `&max_price=${priceFilter.max}&price_max=${priceFilter.max}`;
       }
       if (priceFilter?.min) {
-        searchUrl += `&min_price=${priceFilter.min}`;
+        searchUrl += `&min_price=${priceFilter.min}&price_min=${priceFilter.min}`;
       }
       
       console.log(`Searching ${batchName} category: ${category} (page ${actualPage})`);
@@ -194,16 +195,31 @@ const searchCategoryBatch = async (
       });
       
       const data = await response.json();
+      console.log(`API Response for ${category}:`, JSON.stringify(data, null, 2));
       
       if (data.results && Array.isArray(data.results)) {
         const startIndex = page === 1 ? 0 : (page - 1) * 2;
         const endIndex = startIndex + productsPerCategory;
         let categoryResults = data.results.slice(startIndex, endIndex);
         
-        // Additional price filtering for budget categories
+        // Additional price filtering for budget categories - try multiple price field formats
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
-            const price = parseFloat(product.price?.replace(/[$,]/g, '')) || 0;
+            // Try different price field formats
+            let price = 0;
+            if (product.price) {
+              if (typeof product.price === 'string') {
+                price = parseFloat(product.price.replace(/[$,]/g, ''));
+              } else if (typeof product.price === 'number') {
+                price = product.price;
+              }
+            } else if (product.price_cents) {
+              price = product.price_cents / 100;
+            } else if (product.price_amount) {
+              price = product.price_amount;
+            }
+            
+            console.log(`Product: ${product.title}, Price: ${price}, Max: ${priceFilter.max}`);
             return price > 0 && price <= priceFilter.max!;
           });
         }

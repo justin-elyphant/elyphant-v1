@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createGroupChat } from "@/services/groupChatService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Connection {
   id: string;
@@ -73,16 +73,46 @@ const CreateGroupModal = ({ isOpen, onClose, onGroupCreated, connections }: Crea
     setIsLoading(true);
 
     try {
-      const groupChat = await createGroupChat({
-        name: groupName.trim(),
-        description: description.trim() || undefined,
-        chat_type: chatType,
-        member_ids: selectedMembers
-      });
+      // Create the group chat using direct Supabase call
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
-      if (!groupChat) {
-        throw new Error('Failed to create group chat');
-      }
+      const { data: groupChat, error: chatError } = await supabase
+        .from('group_chats')
+        .insert({
+          name: groupName.trim(),
+          description: description.trim() || null,
+          chat_type: chatType,
+          creator_id: user.id
+        })
+        .select()
+        .single();
+
+      if (chatError) throw chatError;
+
+      // Add creator as admin and members
+      const members = [
+        {
+          group_chat_id: groupChat.id,
+          user_id: user.id,
+          role: 'admin',
+          can_invite: true,
+          can_manage_gifts: true
+        },
+        ...selectedMembers.filter(id => id !== user.id).map(user_id => ({
+          group_chat_id: groupChat.id,
+          user_id,
+          role: 'member',
+          can_invite: false,
+          can_manage_gifts: false
+        }))
+      ];
+
+      const { error: membersError } = await supabase
+        .from('group_chat_members')
+        .insert(members);
+
+      if (membersError) throw membersError;
 
       toast("Group chat created successfully!");
 

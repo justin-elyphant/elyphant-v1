@@ -6,17 +6,29 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Share2, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { GroupMessage, GroupChatMember } from "@/services/groupChatService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import GiftProposalCard from "./GiftProposalCard";
 import ThreadRepliesView from "./ThreadRepliesView";
 
+interface GroupChatMember {
+  id: string;
+  group_chat_id: string;
+  user_id: string;
+  role: string;
+  can_invite: boolean;
+  can_manage_gifts: boolean;
+  joined_at: string;
+  last_seen_at?: string;
+  profile?: { name: string; profile_image?: string };
+}
+
 interface EnhancedGroupMessageProps {
-  message: GroupMessage;
+  message: UnifiedMessage;
   members: GroupChatMember[];
   currentUserId: string;
   isOwnMessage: boolean;
   onReply?: (messageId: string) => void;
-  onShare?: (message: GroupMessage) => void;
+  onShare?: (message: UnifiedMessage) => void;
   onVoteUpdate?: () => void;
 }
 

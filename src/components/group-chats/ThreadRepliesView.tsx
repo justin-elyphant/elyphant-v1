@@ -4,7 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getThreadReplies, GroupMessage, GroupChatMember } from "@/services/groupChatService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
+import { supabase } from "@/integrations/supabase/client";
+
+interface GroupChatMember {
+  id: string;
+  user_id: string;
+  profile?: { name: string; profile_image?: string };
+}
 
 interface ThreadRepliesViewProps {
   parentMessageId: string;
@@ -13,15 +20,24 @@ interface ThreadRepliesViewProps {
 }
 
 const ThreadRepliesView = ({ parentMessageId, members, currentUserId }: ThreadRepliesViewProps) => {
-  const [replies, setReplies] = useState<GroupMessage[]>([]);
+  const [replies, setReplies] = useState<UnifiedMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadReplies = async () => {
       setLoading(true);
       try {
-        const repliesData = await getThreadReplies(parentMessageId);
-        setReplies(repliesData);
+        const { data: repliesData, error } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            sender:profiles!messages_sender_id_fkey(name, profile_image)
+          `)
+          .eq('message_parent_id', parentMessageId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        setReplies(repliesData as UnifiedMessage[] || []);
       } catch (error) {
         console.error('Error loading thread replies:', error);
       } finally {

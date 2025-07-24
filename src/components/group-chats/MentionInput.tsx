@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GroupChatMember } from "@/services/groupChatService";
+interface GroupChatMember {
+  id: string;
+  user_id: string;
+  profile?: { name: string; profile_image?: string };
+}
 
 interface MentionInputProps {
   value: string;

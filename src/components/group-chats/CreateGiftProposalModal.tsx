@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Gift, Calendar } from "lucide-react";
-import { createGiftProposal } from "@/services/groupChatService";
+import { unifiedMessagingService } from "@/services/UnifiedMessagingService";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateGiftProposalModalProps {
@@ -45,7 +45,14 @@ const CreateGiftProposalModal = ({ groupChatId, onProposalCreated, children }: C
         deadline: formData.deadline || undefined
       };
 
-      const proposal = await createGiftProposal(groupChatId, proposalData);
+      const content = `🎁 Gift Proposal: ${proposalData.product_name}\n💰 Price: $${proposalData.product_price}\n${proposalData.description ? `📝 ${proposalData.description}\n` : ''}Please vote to approve this gift!`;
+
+      const proposal = await unifiedMessagingService.sendMessage({
+        groupChatId,
+        content,
+        messageType: 'gift_proposal',
+        proposalData
+      });
       
       if (proposal) {
         toast("Gift proposal created successfully!");

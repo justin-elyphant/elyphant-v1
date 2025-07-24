@@ -7,11 +7,12 @@ import { Progress } from "@/components/ui/progress";
 import { Heart, X, Clock, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { GroupMessage, GiftProposalVote, voteOnGiftProposal } from "@/services/groupChatService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface GiftProposalCardProps {
-  message: GroupMessage;
+  message: UnifiedMessage;
   currentUserId: string;
   onVoteUpdate?: () => void;
 }
@@ -34,13 +35,18 @@ const GiftProposalCard = ({ message, currentUserId, onVoteUpdate }: GiftProposal
     
     setIsVoting(true);
     try {
-      const success = await voteOnGiftProposal(message.id, voteType);
-      if (success) {
-        toast("Vote recorded successfully!");
-        onVoteUpdate?.();
-      } else {
-        throw new Error('Failed to record vote');
-      }
+      const { error } = await supabase
+        .from('gift_proposal_votes')
+        .upsert({
+          message_id: message.id,
+          user_id: currentUserId,
+          vote_type: voteType
+        });
+
+      if (error) throw error;
+      
+      toast("Vote recorded successfully!");
+      onVoteUpdate?.();
     } catch (error) {
       console.error('Error voting:', error);
       toast("Failed to record vote");

@@ -4,7 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Users, Gift } from "lucide-react";
-import { GroupChat } from "@/services/groupChatService";
+interface GroupChat {
+  id: string;
+  name: string;
+  description?: string;
+  creator_id: string;
+  chat_type: string;
+  is_active: boolean;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+  members?: { id: string; user_id: string; profile?: { name: string; profile_image?: string } }[];
+  last_message?: {
+    content: string;
+    created_at: string;
+    sender_name: string;
+  };
+}
 
 interface GroupChatCardProps {
   groupChat: GroupChat;

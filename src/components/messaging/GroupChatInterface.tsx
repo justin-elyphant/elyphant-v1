@@ -9,17 +9,34 @@ import { Send, Users, Settings, Gift, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  GroupChat, 
-  GroupMessage, 
-  sendGroupMessage, 
-  fetchGroupMessages, 
-  subscribeToGroupMessages,
-  getGroupMembers,
-  GroupChatMember 
-} from "@/services/groupChatService";
+import { useGroupMessaging } from "@/hooks/useUnifiedMessaging";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
+import { supabase } from "@/integrations/supabase/client";
 import { getGroupGiftProjects, GroupGiftProject } from "@/services/groupGiftService";
 import GroupGiftProjectCard from "./GroupGiftProjectCard";
+
+interface GroupChat {
+  id: string;
+  name: string;
+  description?: string;
+  creator_id: string;
+  chat_type: string;
+  is_active: boolean;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+  members?: GroupChatMember[];
+}
+
+interface GroupChatMember {
+  id: string;
+  user_id: string;
+  role: string;
+  can_invite: boolean;
+  can_manage_gifts: boolean;
+  joined_at: string;
+  profile?: { name: string; profile_image?: string };
+}
 
 interface GroupChatInterfaceProps {
   groupChat: GroupChat;
@@ -28,48 +45,60 @@ interface GroupChatInterfaceProps {
 }
 
 const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: GroupChatInterfaceProps) => {
-  const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [members, setMembers] = useState<GroupChatMember[]>([]);
   const [giftProjects, setGiftProjects] = useState<GroupGiftProject[]>([]);
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Load messages, members, and gift projects
+  // Use unified messaging hook
+  const { 
+    messages, 
+    loading, 
+    sendMessage, 
+    markAsRead,
+    isOnline
+  } = useGroupMessaging(groupChat.id);
+
+  // Load members and gift projects
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
       try {
-        const [messagesData, membersData, projectsData] = await Promise.all([
-          fetchGroupMessages(groupChat.id),
+        const [membersData, projectsData] = await Promise.all([
           getGroupMembers(groupChat.id),
           getGroupGiftProjects(groupChat.id)
         ]);
         
-        setMessages(messagesData);
         setMembers(membersData);
         setGiftProjects(projectsData);
       } catch (error) {
         console.error('Error loading group data:', error);
         toast("Failed to load group data");
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadData();
   }, [groupChat.id, toast]);
 
-  // Subscribe to new messages
-  useEffect(() => {
-    const unsubscribe = subscribeToGroupMessages(groupChat.id, (message) => {
-      setMessages(prev => [...prev, message]);
-    });
+  // Helper function to get group members
+  const getGroupMembers = async (groupChatId: string): Promise<GroupChatMember[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('group_chat_members')
+        .select(`
+          *,
+          profile:profiles(name, profile_image)
+        `)
+        .eq('group_chat_id', groupChatId);
 
-    return unsubscribe;
-  }, [groupChat.id]);
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+      return [];
+    }
+  };
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -78,16 +107,13 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || isLoading) return;
+    if (!newMessage.trim() || loading) return;
 
     const content = newMessage.trim();
     setNewMessage("");
 
     try {
-      const message = await sendGroupMessage(groupChat.id, content);
-      if (!message) {
-        throw new Error('Failed to send message');
-      }
+      await sendMessage({ content });
     } catch (error) {
       console.error('Error sending message:', error);
       toast("Failed to send message");
@@ -99,7 +125,7 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
     return members.find(m => m.user_id === userId);
   };
 
-  const getMessageSenderName = (message: GroupMessage) => {
+  const getMessageSenderName = (message: UnifiedMessage) => {
     const member = getMemberById(message.sender_id);
     return member?.profile?.name || 'Unknown User';
   };
@@ -201,62 +227,72 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => {
-            const isOwnMessage = message.sender_id === currentUserId;
-            const senderName = getMessageSenderName(message);
-            
-            return (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3",
-                  isOwnMessage && "justify-end"
-                )}
-              >
-                {!isOwnMessage && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={getMemberById(message.sender_id)?.profile?.profile_image} alt={senderName} />
-                    <AvatarFallback className="text-xs">
-                      {senderName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                
-                <div className={cn(
-                  "max-w-[70%] space-y-1",
-                  isOwnMessage && "text-right"
-                )}>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            messages.map((message) => {
+              const isOwnMessage = message.sender_id === currentUserId;
+              const senderName = getMessageSenderName(message);
+              
+              return (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex gap-3",
+                    isOwnMessage && "justify-end"
+                  )}
+                >
                   {!isOwnMessage && (
-                    <div className="text-xs text-muted-foreground font-medium">
-                      {senderName}
-                    </div>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={getMemberById(message.sender_id)?.profile?.profile_image} alt={senderName} />
+                      <AvatarFallback className="text-xs">
+                        {senderName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
                   )}
                   
                   <div className={cn(
-                    "rounded-lg px-3 py-2 text-sm",
-                    isOwnMessage 
-                      ? "bg-primary text-primary-foreground ml-auto" 
-                      : "bg-muted"
+                    "max-w-[70%] space-y-1",
+                    isOwnMessage && "text-right"
                   )}>
-                    {message.content}
+                    {!isOwnMessage && (
+                      <div className="text-xs text-muted-foreground font-medium">
+                        {senderName}
+                      </div>
+                    )}
+                    
+                    <div className={cn(
+                      "rounded-lg px-3 py-2 text-sm",
+                      isOwnMessage 
+                        ? "bg-primary text-primary-foreground ml-auto" 
+                        : "bg-muted"
+                    )}>
+                      {message.content}
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                    </div>
                   </div>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                  </div>
-                </div>
 
-                {isOwnMessage && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={getMemberById(message.sender_id)?.profile?.profile_image} alt="You" />
-                    <AvatarFallback className="text-xs">
-                      You
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            );
-          })}
+                  {isOwnMessage && (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={getMemberById(message.sender_id)?.profile?.profile_image} alt="You" />
+                      <AvatarFallback className="text-xs">
+                        You
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
+              );
+            })
+          )}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -270,12 +306,12 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message ${groupChat.name}...`}
-            disabled={isLoading}
+            disabled={loading}
             className="flex-1"
           />
           <Button 
             type="submit" 
-            disabled={!newMessage.trim() || isLoading}
+            disabled={!newMessage.trim() || loading}
             size="sm"
           >
             <Send className="h-4 w-4" />

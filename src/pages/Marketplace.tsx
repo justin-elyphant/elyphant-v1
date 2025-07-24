@@ -6,11 +6,18 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import BulkGiftingModal from "@/components/marketplace/BulkGiftingModal";
+import { useLocation } from "react-router-dom";
 
 const Marketplace = () => {
   const isMobile = useIsMobile();
+  const location = useLocation();
   const [bulkGiftingOpen, setBulkGiftingOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const handleOpenBulkGifting = (event: CustomEvent) => {

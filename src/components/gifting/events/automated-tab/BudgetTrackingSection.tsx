@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DollarSign, TrendingUp, Calendar, PiggyBank } from "lucide-react";
-import { AutoGiftingSettings } from "@/services/autoGiftingService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
 
 interface BudgetTrackingSectionProps {
-  settings: AutoGiftingSettings | null;
-  onUpdateSettings: (updates: Partial<AutoGiftingSettings>) => void;
+  settings: UnifiedGiftSettings | null;
+  onUpdateSettings: (updates: Partial<UnifiedGiftSettings>) => void;
 }
 
 const BudgetTrackingSection = ({ settings, onUpdateSettings }: BudgetTrackingSectionProps) => {

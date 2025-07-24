@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Gift, Sparkles, List, Package } from "lucide-react";
-import { AutoGiftingSettings } from "@/services/autoGiftingService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
 
 interface DefaultGiftSourceSectionProps {
-  settings: AutoGiftingSettings | null;
-  onUpdateSettings: (updates: Partial<AutoGiftingSettings>) => void;
+  settings: UnifiedGiftSettings | null;
+  onUpdateSettings: (updates: Partial<UnifiedGiftSettings>) => void;
 }
 
 const DefaultGiftSourceSection = ({ settings, onUpdateSettings }: DefaultGiftSourceSectionProps) => {

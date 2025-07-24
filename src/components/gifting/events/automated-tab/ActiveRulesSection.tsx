@@ -5,11 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Settings, Trash2, DollarSign, Bell, Gift } from "lucide-react";
-import { AutoGiftingRule } from "@/services/autoGiftingService";
+import { UnifiedGiftRule } from "@/services/UnifiedGiftAutomationService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 
 interface ActiveRulesSectionProps {
-  rules: AutoGiftingRule[];
+  rules: UnifiedGiftRule[];
 }
 
 const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {

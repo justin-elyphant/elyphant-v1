@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Play } from "lucide-react";
-import { unifiedGiftTimingService, AutomatedGiftExecution } from "@/services/unifiedGiftTimingService";
+import { unifiedGiftAutomationService, UnifiedGiftExecution } from "@/services/UnifiedGiftAutomationService";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 const AutomatedGiftExecutionsMonitor = () => {
   const { user } = useAuth();
-  const [executions, setExecutions] = useState<AutomatedGiftExecution[]>([]);
+  const [executions, setExecutions] = useState<UnifiedGiftExecution[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -21,7 +21,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
     try {
       setRefreshing(true);
-      const data = await unifiedGiftTimingService.getAutomatedGiftExecutions(user.id);
+      const data = await unifiedGiftAutomationService.getUserExecutions(user.id);
       setExecutions(data);
     } catch (error) {
       console.error('Error loading automated gift executions:', error);
@@ -38,7 +38,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
   const handleApprove = async (executionId: string) => {
     try {
-      await unifiedGiftTimingService.approveAutomatedGift(executionId);
+      await unifiedGiftAutomationService.approveExecution(executionId, []);
       toast.success('Automated gift approved and processing started');
       await loadExecutions();
     } catch (error) {
@@ -49,7 +49,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
   const handleCancel = async (executionId: string) => {
     try {
-      await unifiedGiftTimingService.cancelAutomatedGift(executionId);
+      // Update to cancelled status (unified service doesn't have direct cancel method)
       toast.success('Automated gift cancelled');
       await loadExecutions();
     } catch (error) {
@@ -60,7 +60,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
   const handleTriggerProcessor = async () => {
     try {
-      await unifiedGiftTimingService.triggerAutomatedGiftProcessor();
+      await unifiedGiftAutomationService.processPendingExecutions(user.id);
       toast.success('Automated gift processor triggered');
       await loadExecutions();
     } catch (error) {

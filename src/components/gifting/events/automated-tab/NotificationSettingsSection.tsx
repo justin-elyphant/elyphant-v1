@@ -6,11 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Bell, Mail, Smartphone } from "lucide-react";
-import { AutoGiftingSettings } from "@/services/autoGiftingService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
 
 interface NotificationSettingsSectionProps {
-  settings: AutoGiftingSettings | null;
-  onUpdateSettings: (updates: Partial<AutoGiftingSettings>) => void;
+  settings: UnifiedGiftSettings | null;
+  onUpdateSettings: (updates: Partial<UnifiedGiftSettings>) => void;
 }
 
 const NotificationSettingsSection = ({ settings, onUpdateSettings }: NotificationSettingsSectionProps) => {

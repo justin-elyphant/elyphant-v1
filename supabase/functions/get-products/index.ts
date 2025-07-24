@@ -360,11 +360,11 @@ const BRAND_CATEGORY_MAPPINGS = {
     "adidas sports accessories"
   ],
   lululemon: [
-    "athletic wear",
-    "yoga pants",
-    "workout tops",
-    "sports bras",
-    "activewear accessories"
+    "yoga pants leggings",
+    "athletic workout tops",
+    "sports bras women",
+    "activewear shorts",
+    "yoga accessories"
   ],
   madein: [
     "made in cookware pots pans",
@@ -428,18 +428,18 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
   // Filter results to only include products from the specified brand
   if (categoryResults.results && categoryResults.results.length > 0) {
     const filteredResults = categoryResults.results.filter((product: any) => {
-      const productBrand = (product.brand || '').toLowerCase();
-      const targetBrand = brandName.toLowerCase();
-      const isMatch = productBrand.includes(targetBrand) || targetBrand.includes(productBrand);
+      const productBrand = (product.brand || '').toLowerCase().trim();
+      const targetBrand = brandName.toLowerCase().trim();
       
-      if (!isMatch) {
-        console.log(`Filtering out product: "${product.title}" (brand: "${product.brand}") - doesn't match ${brandName}`);
-      }
+      // Exact brand match (case insensitive)
+      const isExactMatch = productBrand === targetBrand;
       
-      return isMatch;
+      console.log(`Checking product: "${product.title}" | Product brand: "${productBrand}" | Target: "${targetBrand}" | Match: ${isExactMatch}`);
+      
+      return isExactMatch;
     });
     
-    console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products match brand ${brandName}`);
+    console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products exactly match brand "${brandName}"`);
     
     return {
       ...categoryResults,

@@ -6,6 +6,11 @@ import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { toast } from "sonner";
 import { normalizeProduct } from "@/contexts/ProductContext";
 
+// ⚠️ DEPRECATION WARNING: This hook is deprecated in favor of useUnifiedSearch
+// Please migrate to: import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+// Migration guide: Use searchProducts() method from the new hook
+console.warn('useSearchProducts is deprecated. Please migrate to useUnifiedSearch for better performance and unified search capabilities.');
+
 export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateAction<Product[]>>) => {
   const [isLoading, setIsLoading] = useState(false);
   const toastShownRef = useRef(false);

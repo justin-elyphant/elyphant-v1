@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 import { unifiedSearch } from "@/services/search/unifiedSearchService";
 // Removed direct Nicole AI service import - respecting protection measures
 
+// ⚠️ DEPRECATION WARNING: This hook is deprecated in favor of useUnifiedSearch
+// Please migrate to: import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+// The new hook provides better state management and unified search capabilities
+console.warn('useSearchLogic is deprecated. Please migrate to useUnifiedSearch for better performance and unified search capabilities.');
+
 interface SearchLogicProps {
   query: string;
   isNicoleMode: boolean;

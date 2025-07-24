@@ -1,7 +1,12 @@
 
 /**
  * Optimized Zinc service with caching and cost controls
+ * 
+ * ⚠️ DEPRECATION WARNING: This service is deprecated in favor of UnifiedMarketplaceService
+ * Please migrate to: import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+ * The new service provides better caching, error handling, and security measures.
  */
+console.warn('optimizedZincService is deprecated. Please migrate to unifiedMarketplaceService for better performance and security.');
 
 import { searchCache } from "../cache/searchCache";
 import { searchDebouncer } from "./searchDebouncer";

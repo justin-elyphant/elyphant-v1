@@ -1,6 +1,6 @@
 
 import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
-import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
+import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { Product } from "@/types/product";
 
 export interface UnifiedSearchResults {
@@ -16,6 +16,9 @@ export interface SearchOptions {
   includeFriends?: boolean;
   includeProducts?: boolean;
   includeBrands?: boolean;
+  luxuryCategories?: boolean;
+  personId?: string;
+  occasionType?: string;
 }
 
 const mockBrands = [
@@ -57,11 +60,16 @@ export const unifiedSearch = async (
     }
   }
 
-  // Search products (mock for now)
-  if (includeProducts && query.length >= 2) {
+  // Search products using protected marketplace service
+  if (includeProducts && query.length >= 1) {
     try {
-      console.log('🔍 [unifiedSearch] Searching products...');
-      const productResults = searchMockProducts(query, Math.floor(maxResults / 3));
+      console.log('🔍 [unifiedSearch] Searching products via UnifiedMarketplaceService...');
+      const productResults = await unifiedMarketplaceService.searchProducts(query, {
+        maxResults: Math.floor(maxResults / 3),
+        luxuryCategories: options.luxuryCategories,
+        personId: options.personId,
+        occasionType: options.occasionType
+      });
       results.products = productResults;
       console.log(`🔍 [unifiedSearch] Product search completed: ${results.products.length} results`);
     } catch (error) {

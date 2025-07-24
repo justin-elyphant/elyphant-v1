@@ -86,6 +86,15 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Sports & Outdoors"
   },
   {
+    id: 21,
+    name: "Athleisure",
+    value: "athleisure",
+    searchTerm: "athletic wear yoga pants leggings activewear",
+    icon: Dumbbell,
+    description: "Athletic and activewear",
+    displayName: "Athleisure & Activewear"
+  },
+  {
     id: 7,
     name: "Books",
     value: "books",

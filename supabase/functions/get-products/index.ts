@@ -359,12 +359,15 @@ const BRAND_CATEGORY_MAPPINGS = {
     "adidas workout gear",
     "adidas sports accessories"
   ],
-  lululemon: [
+  athleisure: [
     "yoga pants leggings",
     "athletic workout tops",
     "sports bras women",
     "activewear shorts",
-    "yoga accessories"
+    "yoga accessories",
+    "athletic clothing",
+    "workout gear",
+    "athleisure wear"
   ],
   madein: [
     "made in cookware pots pans",

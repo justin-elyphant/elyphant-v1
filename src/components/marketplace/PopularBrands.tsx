@@ -41,12 +41,6 @@ const PopularBrands = () => {
       searchTerm: "sony"
     },
     {
-      id: "lululemon",
-      name: "Lululemon",
-      logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Lululemon",
-      searchTerm: "lululemon"
-    },
-    {
       id: "madein",
       name: "Made In",
       logo: "https://placehold.co/200x100/e2e8f0/64748b?text=Made+In",

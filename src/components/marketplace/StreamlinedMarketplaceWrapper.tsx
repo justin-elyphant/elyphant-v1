@@ -40,9 +40,15 @@ const StreamlinedMarketplaceWrapper = () => {
   // Server-side load more function
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
     try {
-      console.log(`Loading more products for page ${page}`);
+      console.log(`handleLoadMore called for page ${page}`);
+      console.log('URL params:', {
+        giftsForHer: searchParams.get('giftsForHer'),
+        luxuryCategories: searchParams.get('luxuryCategories'),
+        search: searchParams.get('search')
+      });
       
       if (searchParams.get('giftsForHer')) {
+        console.log('Making gifts for her request with page:', page);
         const response = await supabase.functions.invoke('get-products', {
           body: { 
             giftsForHer: true,
@@ -51,10 +57,14 @@ const StreamlinedMarketplaceWrapper = () => {
           }
         });
         
+        console.log('Edge function response:', response);
+        
         if (response.error) {
+          console.error('Edge function error:', response.error);
           throw new Error(response.error.message);
         }
         
+        console.log('Returning products:', response.data?.products?.length || 0);
         return response.data?.products || [];
       }
       
@@ -90,15 +100,15 @@ const StreamlinedMarketplaceWrapper = () => {
     pageSize: 20,
     onLoadMore: handleLoadMore,
     hasMoreFromServer: true, // Always assume there might be more until we get less than a full page
-    // Debug logging
-    ...(() => {
-      console.log('StreamlinedMarketplaceWrapper useOptimizedProducts setup:', {
-        hasError: !!error,
-        productsLength: products?.length || 0,
-        hasMoreFromServer: true
-      });
-      return {};
-    })()
+  });
+
+  // Debug logging for the current state
+  console.log('StreamlinedMarketplaceWrapper render state:', {
+    productsLength: products?.length || 0,
+    paginatedProductsLength: paginatedProducts.length,
+    hasMore,
+    isPaginationLoading,
+    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || personId || occasionType
   });
 
   // Product interaction handlers
@@ -235,7 +245,10 @@ const StreamlinedMarketplaceWrapper = () => {
           {hasMore && showSearchInfo && (
             <div className="flex justify-center mt-8">
               <Button 
-                onClick={loadMore} 
+                onClick={() => {
+                  console.log('Load More button clicked!', { hasMore, isPaginationLoading });
+                  loadMore();
+                }} 
                 disabled={isPaginationLoading}
                 className="min-w-[160px]"
                 variant="outline"

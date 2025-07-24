@@ -67,10 +67,9 @@ const BrandHeroSection: React.FC<BrandHeroSectionProps> = ({ brandName, productC
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
               <div 
-                className="px-4 py-2 rounded-full text-sm font-medium shadow-sm border"
+                className="px-4 py-2 rounded-full text-sm font-medium shadow-sm border text-white"
                 style={{ 
                   backgroundColor: brandData.secondaryColor,
-                  color: brandData.primaryColor,
                   borderColor: brandData.primaryColor + '20'
                 }}
               >

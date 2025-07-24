@@ -1,50 +1,45 @@
 /*
  * ========================================================================
- * 🌍 UNIFIED LOCATION SERVICE - LOCATION INTELLIGENCE ORCHESTRATOR 🌍
+ * 🌍 SIMPLIFIED LOCATION SERVICE - MVP VERSION 🌍
  * ========================================================================
  * 
- * Centralized location intelligence service that enhances the application's
- * Google Maps integration with advanced location-based features and unified
- * service integration following established architectural patterns.
+ * Streamlined location service focused on essential address functionality
+ * for 100K users with Zinc Amazon API integration.
  * 
- * ⚠️  CRITICAL ARCHITECTURE BOUNDARIES:
- * - MUST call UnifiedMarketplaceService for location-based product operations
- * - MUST call UnifiedPaymentService for shipping cost calculations
- * - MUST preserve existing Google Places functionality
- * - MUST implement proper service boundaries and protection measures
+ * ⚠️  CORE FEATURES ONLY:
+ * - Address autocomplete via Google Places
+ * - Basic address validation
+ * - Simple geocoding for address standardization
+ * - Performance-optimized caching
  * 
  * 🔗 SYSTEM INTEGRATION:
- * - UnifiedMarketplaceService: Location-based product search and vendor matching
- * - UnifiedPaymentService: Dynamic shipping cost calculations
- * - Google Places Service: Enhanced with location intelligence
- * - Location Services Edge Function: Real-time geocoding and distance calculations
- * - Database: Vendor locations, shipping zones, location cache
+ * - Google Places Service: Enhanced address autocomplete
+ * - Google Maps API: Basic geocoding and validation
+ * - Fixed shipping: $6.99 (handled by checkout system)
  * 
- * 🚫 NEVER:
- * - Bypass UnifiedMarketplaceService for product operations
- * - Implement payment logic (belongs to UnifiedPaymentService)
- * - Duplicate existing Google Places functionality
- * - Make direct API calls without proper error handling and fallbacks
+ * 🚫 REMOVED OVERBUILT FEATURES:
+ * - Shipping cost calculations (fixed $6.99 rate)
+ * - Vendor location systems (not needed for Zinc API)
+ * - Shipping optimization (not applicable)
+ * - Location-based product search (Zinc handles this)
+ * - Complex business intelligence features
  * 
  * 🛡️ PROTECTION MEASURES:
  * - Request deduplication and caching
- * - Rate limiting for external API calls
- * - Unified error handling with fallback mechanisms
- * - Service boundary enforcement
- * - Performance monitoring and debugging
+ * - Rate limiting for Google Places API
+ * - Unified error handling with fallbacks
+ * - Performance monitoring
  * 
- * Last major update: 2025-01-24 (Phase 1-2 Implementation)
+ * Last major update: 2025-01-24 (MVP Simplification)
  * ========================================================================
  */
 
 import { googlePlacesService, GooglePlacesPrediction, StandardizedAddress } from '../googlePlacesService';
-import { unifiedMarketplaceService } from '../marketplace/UnifiedMarketplaceService';
-import { unifiedPaymentService } from '../payment/UnifiedPaymentService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // ================================
-// Type Definitions
+// Type Definitions (Simplified)
 // ================================
 
 export interface LocationCoordinates {
@@ -55,66 +50,24 @@ export interface LocationCoordinates {
 export interface EnhancedAddress extends StandardizedAddress {
   coordinates?: LocationCoordinates;
   timezone?: string;
-  region?: string;
   addressType?: 'business' | 'residential' | 'po_box';
-  deliveryZone?: string;
   isValidForDelivery?: boolean;
 }
 
-export interface ShippingZone {
-  id: string;
-  name: string;
-  coordinates: LocationCoordinates[];
-  deliveryTimeMinutes: number;
-  shippingCostMultiplier: number;
-  isActive: boolean;
-}
-
-export interface VendorLocation {
-  vendorId: string;
-  name: string;
-  address: EnhancedAddress;
-  coordinates: LocationCoordinates;
-  servicesArea: number; // radius in miles
-  shippingTimeMinutes: number;
-  isActive: boolean;
-}
-
-export interface LocationBasedSearch {
-  userLocation?: LocationCoordinates;
-  searchRadius?: number; // in miles
-  includeRegionalProducts?: boolean;
-  preferLocalVendors?: boolean;
-  maxShippingTime?: number; // in minutes
-}
-
-export interface ShippingOptimization {
-  fromLocation: LocationCoordinates;
-  toLocation: LocationCoordinates;
-  distance: number; // in miles
-  estimatedTime: number; // in minutes
-  cost: number;
-  options: ShippingOption[];
-}
-
-export interface ShippingOption {
-  id: string;
-  name: string;
-  cost: number;
-  timeMinutes: number;
-  carrier?: string;
-  trackingAvailable?: boolean;
+export interface AddressValidationResult {
+  isValid: boolean;
+  confidence: 'high' | 'medium' | 'low';
+  issues: string[];
+  suggestions: string[];
 }
 
 // ================================
-// UnifiedLocationService Class
+// Simplified Location Service
 // ================================
 
 class UnifiedLocationService {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   private coordinates = new Map<string, LocationCoordinates>();
-  private shippingZones: ShippingZone[] = [];
-  private vendorLocations: VendorLocation[] = [];
   private activeRequests = new Map<string, Promise<any>>();
   private toastHistory = new Set<string>();
   private rateLimitTracker = new Map<string, { count: number; resetTime: number }>();
@@ -126,39 +79,35 @@ class UnifiedLocationService {
   private readonly RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per minute
 
   constructor() {
-    console.log('🌍 [UnifiedLocationService] Service initialized');
-    this.initializeShippingZones();
-    this.initializeVendorLocations();
-    this.loadDatabaseShippingZones();
-    this.loadDatabaseVendorLocations();
+    console.log('🌍 [UnifiedLocationService] MVP service initialized');
   }
 
   // ================================
-  // Enhanced Address Operations
+  // Address Operations (Core Features)
   // ================================
 
   /**
-   * Enhanced address autocomplete with location intelligence
+   * Enhanced address autocomplete with caching
    */
   async getEnhancedAddressPredictions(
     input: string, 
     options?: {
-      preferBusiness?: boolean;
       includeCoordinates?: boolean;
-      filterByDelivery?: boolean;
     }
   ): Promise<GooglePlacesPrediction[]> {
-    console.log(`🌍 [UnifiedLocationService] Enhanced address predictions for: "${input}"`);
+    console.log(`🌍 [UnifiedLocationService] Address predictions for: "${input}"`);
     
+    if (!this.checkRateLimit('address_predictions')) {
+      return [];
+    }
+
+    const cacheKey = `predictions_${input}`;
+    const cached = this.getCachedData(cacheKey);
+    if (cached) return cached;
+
     try {
-      // Get base predictions from Google Places
       const predictions = await googlePlacesService.getAddressPredictions(input);
-      
-      if (options?.filterByDelivery) {
-        // Filter predictions based on delivery zones
-        return this.filterPredictionsByDeliveryZones(predictions);
-      }
-      
+      this.setCachedData(cacheKey, predictions);
       return predictions;
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Address prediction error:', error);
@@ -170,18 +119,17 @@ class UnifiedLocationService {
    * Get enhanced address details with location intelligence
    */
   async getEnhancedAddressDetails(placeId: string): Promise<EnhancedAddress | null> {
-    console.log(`🌍 [UnifiedLocationService] Enhanced address details for: ${placeId}`);
+    console.log(`🌍 [UnifiedLocationService] Address details for: ${placeId}`);
     
     const cacheKey = `enhanced_address_${placeId}`;
     const cached = this.getCachedData(cacheKey);
     if (cached) return cached;
 
     try {
-      // Get base address from Google Places
       const address = await googlePlacesService.getPlaceDetails(placeId);
       if (!address) return null;
 
-      // Enhance with location intelligence
+      // Enhance with basic location data
       const enhanced = await this.enhanceAddress(address);
       
       this.setCachedData(cacheKey, enhanced);
@@ -193,15 +141,9 @@ class UnifiedLocationService {
   }
 
   /**
-   * Validate address for delivery
+   * Validate address for basic delivery requirements
    */
-  async validateAddressForDelivery(address: StandardizedAddress): Promise<{
-    isValid: boolean;
-    confidence: 'high' | 'medium' | 'low';
-    issues: string[];
-    suggestions: string[];
-    deliveryZone?: string;
-  }> {
+  async validateAddressForDelivery(address: StandardizedAddress): Promise<AddressValidationResult> {
     console.log(`🌍 [UnifiedLocationService] Validating address for delivery`);
     
     const issues: string[] = [];
@@ -212,13 +154,17 @@ class UnifiedLocationService {
       issues.push('Missing required address fields');
     }
     
-    // Check if in delivery zone
-    const coordinates = await this.getCoordinatesFromAddress(address);
-    const deliveryZone = coordinates ? this.getDeliveryZone(coordinates) : null;
+    // Check for PO Box (commonly problematic for some deliveries)
+    if (address.street.toLowerCase().includes('po box') || 
+        address.street.toLowerCase().includes('p.o. box')) {
+      suggestions.push('Some items may not be deliverable to PO Boxes');
+    }
     
-    if (!deliveryZone) {
-      issues.push('Address is outside delivery zones');
-      suggestions.push('Check if address is correct or contact customer service');
+    // Validate ZIP code format (US)
+    if (address.country === 'US' && address.zipCode && 
+        !/^\d{5}(-\d{4})?$/.test(address.zipCode)) {
+      issues.push('Invalid ZIP code format');
+      suggestions.push('Please use 5-digit ZIP code (e.g., 12345 or 12345-6789)');
     }
     
     // Determine confidence
@@ -230,54 +176,56 @@ class UnifiedLocationService {
       isValid: issues.length === 0,
       confidence,
       issues,
-      suggestions,
-      deliveryZone: deliveryZone?.name
+      suggestions
     };
   }
 
   // ================================
-  // Location Intelligence
+  // Basic Location Intelligence
   // ================================
 
   /**
-   * Get coordinates from address using real Google Maps Geocoding
+   * Get coordinates from address using Google Maps Geocoding
    */
   async getCoordinatesFromAddress(address: StandardizedAddress): Promise<LocationCoordinates | null> {
     const addressKey = `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
     const cached = this.coordinates.get(addressKey);
     if (cached) return cached;
 
+    if (!this.checkRateLimit('geocoding')) {
+      return this.simulateGeocoding(address);
+    }
+
     try {
-      const { data, error } = await supabase.functions.invoke('location-services', {
-        body: {
-          operation: 'geocode',
-          data: { address: address.formatted_address || addressKey }
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('get-google-maps-key');
+      
+      if (error || !data?.apiKey) {
+        console.warn('🌍 [UnifiedLocationService] No Google Maps API key, using fallback');
+        return this.simulateGeocoding(address);
+      }
 
-      if (error) throw error;
+      // Use Google Geocoding API directly
+      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address.formatted_address || addressKey)}&key=${data.apiKey}`;
+      const response = await fetch(geocodeUrl);
+      const geocodeData = await response.json();
 
-      if (data.success && data.data) {
-        const coordinates = data.data;
+      if (geocodeData.status === 'OK' && geocodeData.results?.[0]) {
+        const location = geocodeData.results[0].geometry.location;
+        const coordinates = { lat: location.lat, lng: location.lng };
         this.coordinates.set(addressKey, coordinates);
         return coordinates;
       }
 
-      // Fallback to simulation for demo
-      const fallbackCoords = this.simulateGeocoding(address);
-      if (fallbackCoords) {
-        this.coordinates.set(addressKey, fallbackCoords);
-      }
-      return fallbackCoords;
+      // Fallback to simulation
+      return this.simulateGeocoding(address);
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Geocoding error:', error);
-      // Fallback to simulation
       return this.simulateGeocoding(address);
     }
   }
 
   /**
-   * Get address from coordinates using real Google Maps Reverse Geocoding
+   * Get address from coordinates using reverse geocoding
    */
   async getAddressFromCoordinates(coordinates: LocationCoordinates): Promise<StandardizedAddress | null> {
     const coordKey = `${coordinates.lat},${coordinates.lng}`;
@@ -285,273 +233,51 @@ class UnifiedLocationService {
     const cached = this.getCachedData(cacheKey);
     if (cached) return cached;
 
+    if (!this.checkRateLimit('reverse_geocoding')) {
+      return this.simulateReverseGeocoding(coordinates);
+    }
+
     try {
-      const { data, error } = await supabase.functions.invoke('location-services', {
-        body: {
-          operation: 'reverse_geocode',
-          data: { lat: coordinates.lat, lng: coordinates.lng }
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('get-google-maps-key');
+      
+      if (error || !data?.apiKey) {
+        console.warn('🌍 [UnifiedLocationService] No Google Maps API key, using fallback');
+        return this.simulateReverseGeocoding(coordinates);
+      }
 
-      if (error) throw error;
+      // Use Google Reverse Geocoding API directly
+      const reverseUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coordinates.lat},${coordinates.lng}&key=${data.apiKey}`;
+      const response = await fetch(reverseUrl);
+      const geocodeData = await response.json();
 
-      if (data.success && data.data) {
-        const address = data.data;
+      if (geocodeData.status === 'OK' && geocodeData.results?.[0]) {
+        const result = geocodeData.results[0];
+        const address = this.parseGoogleAddressComponents(result);
         this.setCachedData(cacheKey, address);
         return address;
       }
 
-      // Fallback to simulation for demo
-      const fallbackAddress = this.simulateReverseGeocoding(coordinates);
-      if (fallbackAddress) {
-        this.setCachedData(cacheKey, fallbackAddress);
-      }
-      return fallbackAddress;
+      return this.simulateReverseGeocoding(coordinates);
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Reverse geocoding error:', error);
       return this.simulateReverseGeocoding(coordinates);
     }
   }
 
-  /**
-   * Calculate distance between two addresses (fallback method)
-   */
-  async calculateDistance(
-    from: StandardizedAddress | LocationCoordinates,
-    to: StandardizedAddress | LocationCoordinates
-  ): Promise<{ distance: number; timeMinutes: number; cost: number } | null> {
-    try {
-      const fromCoords = 'lat' in from ? from : await this.getCoordinatesFromAddress(from);
-      const toCoords = 'lat' in to ? to : await this.getCoordinatesFromAddress(to);
-      
-      if (!fromCoords || !toCoords) return null;
-      
-      // Calculate distance using Haversine formula
-      const distance = this.calculateHaversineDistance(fromCoords, toCoords);
-      const timeMinutes = Math.ceil(distance * 1.5); // Rough estimate: 1.5 minutes per mile
-      const cost = this.calculateBaseCost(distance);
-      
-      return { distance, timeMinutes, cost };
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Distance calculation error:', error);
-      return null;
-    }
-  }
-
   // ================================
-  // Shipping Optimization
-  // ================================
-
-  /**
-   * Get optimized shipping options for an address
-   */
-  async getShippingOptimization(
-    toAddress: StandardizedAddress,
-    fromLocation?: LocationCoordinates
-  ): Promise<ShippingOptimization | null> {
-    console.log(`🌍 [UnifiedLocationService] Getting shipping optimization`);
-    
-    try {
-      const toCoords = await this.getCoordinatesFromAddress(toAddress);
-      if (!toCoords) return null;
-      
-      // Use default warehouse location if not provided
-      const fromCoords = fromLocation || { lat: 37.7749, lng: -122.4194 }; // SF default
-      
-      const distanceData = await this.calculateDistance(fromCoords, toCoords);
-      if (!distanceData) return null;
-      
-      // Generate shipping options based on distance
-      const options = this.generateShippingOptions(distanceData.distance, distanceData.timeMinutes);
-      
-      return {
-        fromLocation: fromCoords,
-        toLocation: toCoords,
-        distance: distanceData.distance,
-        estimatedTime: distanceData.timeMinutes,
-        cost: this.calculateBaseCost(distanceData.distance),
-        options
-      };
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Shipping optimization error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Find nearest vendors for location-based product search
-   */
-  async findNearbyVendors(
-    userLocation: LocationCoordinates,
-    maxDistance: number = 50
-  ): Promise<VendorLocation[]> {
-    console.log(`🌍 [UnifiedLocationService] Finding nearby vendors`);
-    
-    return this.vendorLocations.filter(vendor => {
-      const distance = this.calculateHaversineDistance(userLocation, vendor.coordinates);
-      return distance <= maxDistance && vendor.isActive;
-    }).sort((a, b) => {
-      const distA = this.calculateHaversineDistance(userLocation, a.coordinates);
-      const distB = this.calculateHaversineDistance(userLocation, b.coordinates);
-      return distA - distB;
-    });
-  }
-
-  // ================================
-  // Integration with Unified Services
-  // ================================
-
-  /**
-   * Location-based product search (integrates with UnifiedMarketplaceService)
-   */
-  async searchProductsByLocation(
-    searchTerm: string,
-    userLocation: LocationCoordinates,
-    options?: LocationBasedSearch
-  ) {
-    console.log(`🌍 [UnifiedLocationService] Location-based product search: "${searchTerm}"`);
-    
-    try {
-      // CRITICAL: Use UnifiedMarketplaceService for product operations
-      const products = await unifiedMarketplaceService.searchProducts(searchTerm);
-      
-      if (options?.preferLocalVendors) {
-        const nearbyVendors = await this.findNearbyVendors(
-          userLocation, 
-          options.searchRadius || 50
-        );
-        
-        // Filter products by nearby vendors (simulation for demo)
-        return products.slice(0, 10); // Simplified for demo
-      }
-      
-      return products;
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Location-based search error:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Calculate shipping costs with location intelligence (integrates with UnifiedPaymentService)
-   */
-  async calculateLocationBasedShipping(
-    items: any[],
-    shippingAddress: StandardizedAddress
-  ): Promise<{ cost: number; options: ShippingOption[]; optimization: ShippingOptimization | null }> {
-    console.log(`🌍 [UnifiedLocationService] Calculating location-based shipping for ${items.length} items`);
-    
-    if (!this.checkRateLimit('shipping_calculation')) {
-      return { cost: 9.99, options: [], optimization: null };
-    }
-
-    const cacheKey = this.generateCacheKey('shipping_calc', {
-      itemCount: items.length,
-      address: shippingAddress.formatted_address,
-      totalValue: items.reduce((sum, item) => sum + (item.price || 0), 0)
-    });
-
-    return this.executeWithDeduplication(
-      cacheKey,
-      async () => {
-        const optimization = await this.getShippingOptimization(shippingAddress);
-        if (!optimization) {
-          throw new Error('Unable to calculate shipping optimization');
-        }
-        
-        // Calculate item-based adjustments
-        const itemWeight = items.reduce((sum, item) => sum + (item.weight || 1), 0);
-        const itemValue = items.reduce((sum, item) => sum + (item.price || 0), 0);
-        
-        // Adjust shipping costs based on items
-        const adjustedOptions = optimization.options.map(option => ({
-          ...option,
-          cost: this.calculateAdjustedShippingCost(option.cost, itemWeight, itemValue)
-        }));
-
-        return {
-          cost: adjustedOptions[0]?.cost || optimization.cost,
-          options: adjustedOptions,
-          optimization
-        };
-      },
-      this.CACHE_TTL
-    ).catch(error => {
-      console.error('🌍 [UnifiedLocationService] Shipping calculation error:', error);
-      this.showToast('Shipping calculation failed', 'error', 'Using standard rates');
-      return { 
-        cost: 9.99, 
-        options: this.getDefaultShippingOptions(), 
-        optimization: null 
-      };
-    });
-  }
-
-  /**
-   * Calculate adjusted shipping cost based on item characteristics
-   */
-  private calculateAdjustedShippingCost(baseCost: number, weight: number, value: number): number {
-    let adjustedCost = baseCost;
-    
-    // Weight adjustment (add $1 per pound over 5 lbs)
-    if (weight > 5) {
-      adjustedCost += (weight - 5) * 1.0;
-    }
-    
-    // Value-based insurance (0.5% of value over $100)
-    if (value > 100) {
-      adjustedCost += (value - 100) * 0.005;
-    }
-    
-    return Math.round(adjustedCost * 100) / 100;
-  }
-
-  /**
-   * Get default shipping options for fallback scenarios
-   */
-  private getDefaultShippingOptions(): ShippingOption[] {
-    return [
-      {
-        id: 'standard',
-        name: 'Standard Shipping',
-        cost: 9.99,
-        timeMinutes: 4320, // 3 days
-        carrier: 'USPS',
-        trackingAvailable: true
-      },
-      {
-        id: 'expedited',
-        name: 'Expedited Shipping',
-        cost: 19.99,
-        timeMinutes: 2880, // 2 days
-        carrier: 'UPS',
-        trackingAvailable: true
-      }
-    ];
-  }
-
-  // ================================
-  // Private Helper Methods
+  // Helper Methods
   // ================================
 
   private async enhanceAddress(address: StandardizedAddress): Promise<EnhancedAddress> {
     const coordinates = await this.getCoordinatesFromAddress(address);
-    const deliveryZone = coordinates ? this.getDeliveryZone(coordinates) : null;
     
     return {
       ...address,
       coordinates,
       timezone: this.getTimezone(coordinates),
-      region: this.getRegion(address.state),
       addressType: this.detectAddressType(address),
-      deliveryZone: deliveryZone?.name,
-      isValidForDelivery: !!deliveryZone
+      isValidForDelivery: true // Default to true for MVP
     };
-  }
-
-  private filterPredictionsByDeliveryZones(predictions: GooglePlacesPrediction[]): GooglePlacesPrediction[] {
-    // For demo, return all predictions (would filter based on delivery zones in production)
-    return predictions;
   }
 
   private simulateGeocoding(address: StandardizedAddress): LocationCoordinates | null {
@@ -561,7 +287,10 @@ class UnifiedLocationService {
       'los angeles': { lat: 34.0522, lng: -118.2437 },
       'new york': { lat: 40.7128, lng: -74.0060 },
       'chicago': { lat: 41.8781, lng: -87.6298 },
-      'seattle': { lat: 47.6062, lng: -122.3321 }
+      'seattle': { lat: 47.6062, lng: -122.3321 },
+      'austin': { lat: 30.2672, lng: -97.7431 },
+      'denver': { lat: 39.7392, lng: -104.9903 },
+      'miami': { lat: 25.7617, lng: -80.1918 }
     };
     
     const cityKey = address.city.toLowerCase();
@@ -579,271 +308,73 @@ class UnifiedLocationService {
     };
   }
 
-  private calculateHaversineDistance(coord1: LocationCoordinates, coord2: LocationCoordinates): number {
-    const R = 3959; // Earth's radius in miles
-    const dLat = this.toRad(coord2.lat - coord1.lat);
-    const dLng = this.toRad(coord2.lng - coord1.lng);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(this.toRad(coord1.lat)) * Math.cos(this.toRad(coord2.lat)) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
+  private parseGoogleAddressComponents(result: any): StandardizedAddress {
+    const components = result.address_components;
+    let street = '';
+    let city = '';
+    let state = '';
+    let zipCode = '';
+    let country = '';
 
-  private toRad(value: number): number {
-    return value * Math.PI / 180;
-  }
-
-  private generateShippingOptions(distance: number, timeMinutes: number): ShippingOption[] {
-    const baseTime = timeMinutes;
-    return [
-      {
-        id: 'standard',
-        name: 'Standard Shipping',
-        cost: this.calculateBaseCost(distance),
-        timeMinutes: baseTime + 2880, // +2 days
-        carrier: 'USPS',
-        trackingAvailable: true
-      },
-      {
-        id: 'expedited',
-        name: 'Expedited Shipping',
-        cost: this.calculateBaseCost(distance) * 1.5,
-        timeMinutes: baseTime + 1440, // +1 day
-        carrier: 'UPS',
-        trackingAvailable: true
-      },
-      {
-        id: 'overnight',
-        name: 'Overnight Shipping',
-        cost: this.calculateBaseCost(distance) * 3,
-        timeMinutes: baseTime + 720, // +12 hours
-        carrier: 'FedEx',
-        trackingAvailable: true
+    components.forEach((component: any) => {
+      const types = component.types;
+      if (types.includes('street_number')) {
+        street = component.long_name + ' ';
       }
-    ];
-  }
-
-  private calculateBaseCost(distance: number): number {
-    const baseCost = 5.99;
-    const distanceCost = distance * 0.10;
-    const total = baseCost + distanceCost;
-    return Math.round(total * 100) / 100; // Round to 2 decimal places
-  }
-
-  /**
-   * Load shipping zones from database
-   */
-  private async loadDatabaseShippingZones(): Promise<void> {
-    try {
-      const { data: zones, error } = await supabase
-        .from('shipping_zones')
-        .select('*')
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('🌍 [UnifiedLocationService] Failed to load shipping zones:', error);
-        return;
+      if (types.includes('route')) {
+        street += component.long_name;
       }
-
-      if (zones) {
-        this.shippingZones = zones.map(zone => ({
-          id: zone.id,
-          name: zone.name,
-          coordinates: zone.coordinates,
-          deliveryTimeMinutes: zone.delivery_time_minutes,
-          shippingCostMultiplier: zone.shipping_cost_multiplier,
-          isActive: zone.is_active
-        }));
-        console.log(`🌍 [UnifiedLocationService] Loaded ${zones.length} shipping zones from database`);
+      if (types.includes('locality')) {
+        city = component.long_name;
       }
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Database shipping zones load error:', error);
-    }
-  }
-
-  /**
-   * Load vendor locations from database
-   */
-  private async loadDatabaseVendorLocations(): Promise<void> {
-    try {
-      const { data: vendors, error } = await supabase
-        .from('vendor_locations')
-        .select('*')
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('🌍 [UnifiedLocationService] Failed to load vendor locations:', error);
-        return;
+      if (types.includes('administrative_area_level_1')) {
+        state = component.short_name;
       }
-
-      if (vendors) {
-        this.vendorLocations = vendors.map(vendor => ({
-          vendorId: vendor.vendor_id,
-          name: vendor.name,
-          address: vendor.address,
-          coordinates: vendor.coordinates,
-          servicesArea: vendor.service_area_miles,
-          shippingTimeMinutes: vendor.shipping_time_minutes,
-          isActive: vendor.is_active
-        }));
-        console.log(`🌍 [UnifiedLocationService] Loaded ${vendors.length} vendor locations from database`);
+      if (types.includes('postal_code')) {
+        zipCode = component.long_name;
       }
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Database vendor locations load error:', error);
-    }
-  }
-
-  /**
-   * Calculate real distances using Google Distance Matrix API
-   */
-  async calculateRealDistance(
-    from: StandardizedAddress | LocationCoordinates,
-    to: StandardizedAddress | LocationCoordinates
-  ): Promise<{ distance: number; timeMinutes: number; cost: number } | null> {
-    try {
-      // Convert addresses to coordinate strings for Distance Matrix API
-      let fromStr: string;
-      let toStr: string;
-
-      if ('lat' in from) {
-        fromStr = `${from.lat},${from.lng}`;
-      } else {
-        fromStr = from.formatted_address || `${from.street}, ${from.city}, ${from.state} ${from.zipCode}`;
+      if (types.includes('country')) {
+        country = component.short_name;
       }
+    });
 
-      if ('lat' in to) {
-        toStr = `${to.lat},${to.lng}`;
-      } else {
-        toStr = to.formatted_address || `${to.street}, ${to.city}, ${to.state} ${to.zipCode}`;
-      }
-
-      const { data, error } = await supabase.functions.invoke('location-services', {
-        body: {
-          operation: 'distance_matrix',
-          data: {
-            origins: [fromStr],
-            destinations: [toStr]
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.success && data.data.rows?.[0]?.elements?.[0]) {
-        const element = data.data.rows[0].elements[0];
-        
-        if (element.status === 'OK') {
-          const distanceMeters = element.distance.value;
-          const durationSeconds = element.duration.value;
-          
-          const distanceMiles = distanceMeters * 0.000621371; // Convert meters to miles
-          const timeMinutes = Math.ceil(durationSeconds / 60); // Convert seconds to minutes
-          const cost = this.calculateBaseCost(distanceMiles);
-
-          return {
-            distance: Math.round(distanceMiles * 100) / 100,
-            timeMinutes,
-            cost
-          };
-        }
-      }
-
-      // Fallback to Haversine calculation
-      const fallbackResult = await this.calculateDistance(from, to);
-      return fallbackResult;
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Real distance calculation error:', error);
-      const fallbackResult = await this.calculateDistance(from, to);
-      return fallbackResult;
-    }
-  }
-
-  private getDeliveryZone(coordinates: LocationCoordinates): ShippingZone | null {
-    return this.shippingZones.find(zone => 
-      this.isPointInZone(coordinates, zone) && zone.isActive
-    ) || null;
-  }
-
-  private isPointInZone(point: LocationCoordinates, zone: ShippingZone): boolean {
-    // Simplified zone checking (would use proper polygon containment in production)
-    return zone.coordinates.some(coord => 
-      this.calculateHaversineDistance(point, coord) <= 50
-    );
+    return {
+      street: street.trim(),
+      city,
+      state,
+      zipCode,
+      country,
+      formatted_address: result.formatted_address
+    };
   }
 
   private getTimezone(coordinates: LocationCoordinates | undefined): string {
     if (!coordinates) return 'UTC';
     
-    // Simplified timezone detection
+    // Simplified timezone detection for US
     if (coordinates.lng < -120) return 'America/Los_Angeles';
     if (coordinates.lng < -105) return 'America/Denver';
     if (coordinates.lng < -90) return 'America/Chicago';
     return 'America/New_York';
   }
 
-  private getRegion(state: string): string {
-    const regions: { [key: string]: string } = {
-      'CA': 'West Coast',
-      'NY': 'Northeast',
-      'TX': 'South',
-      'IL': 'Midwest'
-    };
-    return regions[state] || 'Other';
-  }
-
   private detectAddressType(address: StandardizedAddress): 'business' | 'residential' | 'po_box' {
-    if (address.street.toLowerCase().includes('po box')) return 'po_box';
+    if (address.street.toLowerCase().includes('po box') || 
+        address.street.toLowerCase().includes('p.o. box')) return 'po_box';
     if (address.street.toLowerCase().includes('suite') || 
         address.street.toLowerCase().includes('ste') ||
-        address.street.toLowerCase().includes('floor')) return 'business';
+        address.street.toLowerCase().includes('floor') ||
+        address.street.toLowerCase().includes('unit')) return 'business';
     return 'residential';
   }
 
-  private initializeShippingZones(): void {
-    this.shippingZones = [
-      {
-        id: 'west_coast',
-        name: 'West Coast',
-        coordinates: [{ lat: 37.7749, lng: -122.4194 }],
-        deliveryTimeMinutes: 1440, // 1 day
-        shippingCostMultiplier: 1.0,
-        isActive: true
-      },
-      {
-        id: 'east_coast',
-        name: 'East Coast',
-        coordinates: [{ lat: 40.7128, lng: -74.0060 }],
-        deliveryTimeMinutes: 2880, // 2 days
-        shippingCostMultiplier: 1.2,
-        isActive: true
-      }
-    ];
-  }
-
-  private initializeVendorLocations(): void {
-    this.vendorLocations = [
-      {
-        vendorId: 'amazon_sf',
-        name: 'Amazon SF Warehouse',
-        address: {
-          street: '123 Warehouse St',
-          city: 'San Francisco',
-          state: 'CA',
-          zipCode: '94103',
-          country: 'US'
-        },
-        coordinates: { lat: 37.7749, lng: -122.4194 },
-        servicesArea: 100,
-        shippingTimeMinutes: 720,
-        isActive: true
-      }
-    ];
-  }
+  // ================================
+  // Caching & Performance
+  // ================================
 
   private getCachedData(key: string): any {
     const cached = this.cache.get(key);
-    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+    if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
       return cached.data;
     }
     this.cache.delete(key);
@@ -858,10 +389,6 @@ class UnifiedLocationService {
     });
   }
 
-  // ================================
-  // Service Protection & Error Handling
-  // ================================
-
   /**
    * Check rate limiting for API calls
    */
@@ -870,7 +397,6 @@ class UnifiedLocationService {
     const tracker = this.rateLimitTracker.get(operation);
     
     if (!tracker || now > tracker.resetTime) {
-      // Reset or initialize rate limit
       this.rateLimitTracker.set(operation, {
         count: 1,
         resetTime: now + this.RATE_LIMIT_WINDOW
@@ -892,17 +418,14 @@ class UnifiedLocationService {
   }
 
   /**
-   * Show toast with deduplication (following unified service patterns)
+   * Show toast with deduplication
    */
   private showToast(message: string, type: 'success' | 'error' | 'loading' = 'success', description?: string) {
     const toastKey = `${type}:${message}`;
     
-    // Check if we've shown this toast recently
     if (this.toastHistory.has(toastKey)) return;
     
     this.toastHistory.add(toastKey);
-    
-    // Remove from history after cooldown
     setTimeout(() => {
       this.toastHistory.delete(toastKey);
     }, this.TOAST_COOLDOWN);
@@ -916,76 +439,9 @@ class UnifiedLocationService {
     }
   }
 
-  /**
-   * Generate cache key with consistent patterns
-   */
-  private generateCacheKey(operation: string, params: any): string {
-    if (typeof params === 'object') {
-      const sortedParams = Object.keys(params)
-        .sort()
-        .map(key => `${key}:${params[key]}`)
-        .join(':');
-      return `${operation}:${sortedParams}`;
-    }
-    return `${operation}:${params}`;
-  }
-
-  /**
-   * Request deduplication for expensive operations
-   */
-  private async executeWithDeduplication<T>(
-    cacheKey: string,
-    operation: () => Promise<T>,
-    ttl: number = this.CACHE_TTL
-  ): Promise<T> {
-    // Check if request is already in progress
-    if (this.activeRequests.has(cacheKey)) {
-      console.log(`🌍 [UnifiedLocationService] Deduplicating request: ${cacheKey}`);
-      return this.activeRequests.get(cacheKey) as Promise<T>;
-    }
-
-    // Check cache first
-    const cached = this.getCachedData(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    // Execute operation and cache result
-    const promise = operation()
-      .then(result => {
-        this.setCachedData(cacheKey, result, ttl);
-        this.activeRequests.delete(cacheKey);
-        return result;
-      })
-      .catch(error => {
-        this.activeRequests.delete(cacheKey);
-        throw error;
-      });
-
-    this.activeRequests.set(cacheKey, promise);
-    return promise;
-  }
-
-  /**
-   * Enhanced error handling with fallback mechanisms
-   */
-  private async executeWithFallback<T>(
-    operation: () => Promise<T>,
-    fallback: () => T | Promise<T>,
-    errorContext: string
-  ): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      console.error(`🌍 [UnifiedLocationService] ${errorContext}:`, error);
-      this.showToast(
-        'Service temporarily unavailable',
-        'error',
-        'Using cached data or fallback'
-      );
-      return await fallback();
-    }
-  }
+  // ================================
+  // Public API
+  // ================================
 
   /**
    * Clear all caches and reset service state
@@ -1003,8 +459,6 @@ class UnifiedLocationService {
     return {
       cacheSize: this.cache.size,
       coordinatesCount: this.coordinates.size,
-      shippingZones: this.shippingZones.length,
-      vendorLocations: this.vendorLocations.length,
       googlePlacesStatus: googlePlacesService.getStatus()
     };
   }

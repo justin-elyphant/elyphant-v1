@@ -37,8 +37,7 @@ import {
 } from 'lucide-react';
 import { 
   useEnhancedAddressAutocomplete, 
-  useAddressValidation,
-  useShippingOptimization 
+  useAddressValidation
 } from '@/hooks/useUnifiedLocation';
 import { EnhancedAddress } from '@/services/location/UnifiedLocationService';
 import { StandardizedAddress } from '@/services/googlePlacesService';
@@ -110,12 +109,7 @@ export const EnhancedAddressInput: React.FC<EnhancedAddressInputProps> = ({
     validationResult
   } = useAddressValidation();
 
-  // Shipping optimization hook
-  const {
-    getShippingOptimization,
-    shippingData,
-    isCalculating: isCalculatingShipping
-  } = useShippingOptimization();
+  // Shipping optimization removed in MVP simplification
 
   // Sync external value with internal query
   useEffect(() => {
@@ -136,13 +130,11 @@ export const EnhancedAddressInput: React.FC<EnhancedAddressInputProps> = ({
     if (shouldValidate && selectedAddress) {
       validateAddress(selectedAddress);
       
-      if (showShippingPreview) {
-        getShippingOptimization(selectedAddress);
-      }
+      // Shipping preview removed in MVP simplification
       
       setShouldValidate(false);
     }
-  }, [shouldValidate, selectedAddress, validateAddress, getShippingOptimization, showShippingPreview]);
+  }, [shouldValidate, selectedAddress, validateAddress]);
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,13 +306,7 @@ export const EnhancedAddressInput: React.FC<EnhancedAddressInputProps> = ({
                 </Badge>
               </div>
 
-              {/* Delivery Zone */}
-              {validationResult.deliveryZone && (
-                <div className="flex items-center space-x-2 text-sm">
-                  <Truck className="h-4 w-4 text-muted-foreground" />
-                  <span>Delivery Zone: {validationResult.deliveryZone}</span>
-                </div>
-              )}
+              {/* Delivery Zone - removed in MVP simplification */}
 
               {/* Issues */}
               {validationResult.issues.length > 0 && (
@@ -414,12 +400,7 @@ export const EnhancedAddressInput: React.FC<EnhancedAddressInputProps> = ({
                   </div>
                 )}
                 
-                {selectedAddress.region && (
-                  <div>
-                    <span className="text-muted-foreground">Region:</span>
-                    <div>{selectedAddress.region}</div>
-                  </div>
-                )}
+{/* Region info removed in MVP simplification */}
                 
                 {selectedAddress.addressType && (
                   <div>

@@ -1,105 +1,61 @@
 /**
  * ================================
- * LocationBasedCheckout Component
+ * LocationBasedCheckout Component (Simplified)
  * ================================
  * 
- * Enhanced checkout component that integrates UnifiedLocationService 
- * with UnifiedPaymentService for intelligent shipping optimization.
+ * Simplified checkout component focused on address validation only.
+ * Uses fixed $6.99 shipping rate from checkout system.
  * 
  * FEATURES:
- * - Real-time shipping cost calculation based on location
- * - Multiple shipping options with delivery estimates
- * - Address validation and delivery zone checking
- * - Dynamic shipping costs based on distance
- * - Integration with existing payment flow
+ * - Address validation using UnifiedLocationService
+ * - Google Places autocomplete
+ * - Basic delivery validation
+ * - Fixed shipping cost (handled by checkout system)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Truck, Clock, DollarSign } from 'lucide-react';
+import { MapPin, CheckCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { unifiedLocationService, ShippingOption, ShippingOptimization } from '@/services/location/UnifiedLocationService';
-import { useUnifiedCart } from '@/hooks/useUnifiedPayment';
+import { unifiedLocationService, AddressValidationResult } from '@/services/location/UnifiedLocationService';
 import AddressAutoComplete from './AddressAutoComplete';
 import { StandardizedAddress } from '@/services/googlePlacesService';
 
 interface LocationBasedCheckoutProps {
-  onShippingUpdate?: (cost: number, option: ShippingOption) => void;
+  onAddressValidated?: (address: StandardizedAddress, isValid: boolean) => void;
   className?: string;
 }
 
 const LocationBasedCheckout: React.FC<LocationBasedCheckoutProps> = ({
-  onShippingUpdate,
+  onAddressValidated,
   className
 }) => {
   const [shippingAddress, setShippingAddress] = useState<StandardizedAddress | null>(null);
-  const [addressValid, setAddressValid] = useState(false);
-  const [shippingOptimization, setShippingOptimization] = useState<ShippingOptimization | null>(null);
-  const [selectedShippingOption, setSelectedShippingOption] = useState<ShippingOption | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [validationResult, setValidationResult] = useState<any>(null);
-
-  const { cartItems, cartTotal } = useUnifiedCart();
-
-  useEffect(() => {
-    if (shippingAddress && addressValid) {
-      calculateShipping();
-    }
-  }, [shippingAddress, addressValid]);
+  const [validationResult, setValidationResult] = useState<AddressValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   const handleAddressSelect = async (address: StandardizedAddress) => {
     console.log('🌍 [LocationBasedCheckout] Address selected:', address);
     setShippingAddress(address);
-    
-    // Validate address for delivery
-    const validation = await unifiedLocationService.validateAddressForDelivery(address);
-    setValidationResult(validation);
-    setAddressValid(validation.isValid);
-    
-    if (!validation.isValid) {
-      console.warn('🌍 [LocationBasedCheckout] Address validation failed:', validation.issues);
-    }
-  };
-
-  const calculateShipping = async () => {
-    if (!shippingAddress) return;
-    
-    setIsCalculating(true);
-    console.log('🌍 [LocationBasedCheckout] Calculating shipping for:', shippingAddress);
+    setIsValidating(true);
     
     try {
-      // Use UnifiedLocationService for shipping optimization
-      const optimization = await unifiedLocationService.getShippingOptimization(shippingAddress);
+      // Validate address for delivery
+      const validation = await unifiedLocationService.validateAddressForDelivery(address);
+      setValidationResult(validation);
       
-      if (optimization) {
-        setShippingOptimization(optimization);
-        
-        // Auto-select the standard shipping option
-        const standardOption = optimization.options.find(opt => opt.id === 'standard');
-        if (standardOption) {
-          setSelectedShippingOption(standardOption);
-          onShippingUpdate?.(standardOption.cost, standardOption);
-        }
+      // Notify parent component
+      onAddressValidated?.(address, validation.isValid);
+      
+      if (!validation.isValid) {
+        console.warn('🌍 [LocationBasedCheckout] Address validation failed:', validation.issues);
       }
     } catch (error) {
-      console.error('🌍 [LocationBasedCheckout] Shipping calculation error:', error);
+      console.error('🌍 [LocationBasedCheckout] Address validation error:', error);
     } finally {
-      setIsCalculating(false);
+      setIsValidating(false);
     }
-  };
-
-  const handleShippingOptionSelect = (option: ShippingOption) => {
-    setSelectedShippingOption(option);
-    onShippingUpdate?.(option.cost, option);
-    console.log('🌍 [LocationBasedCheckout] Shipping option selected:', option);
-  };
-
-  const formatDeliveryTime = (minutes: number): string => {
-    const days = Math.ceil(minutes / 1440);
-    if (days === 1) return '1 business day';
-    return `${days} business days`;
   };
 
   const getValidationBadgeColor = (confidence: string) => {
@@ -111,14 +67,21 @@ const LocationBasedCheckout: React.FC<LocationBasedCheckoutProps> = ({
     }
   };
 
+  const getValidationIcon = (isValid: boolean, confidence?: string) => {
+    if (isValid && confidence === 'high') {
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    }
+    return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+  };
+
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-4', className)}>
       {/* Address Selection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Shipping Address
+            Shipping Address Validation
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -131,138 +94,81 @@ const LocationBasedCheckout: React.FC<LocationBasedCheckoutProps> = ({
             showValidation={true}
           />
           
-          {validationResult && (
-            <div className="flex items-center gap-2">
-              <Badge className={getValidationBadgeColor(validationResult.confidence)}>
-                {validationResult.confidence} confidence
-              </Badge>
-              {validationResult.deliveryZone && (
-                <Badge variant="outline">
-                  Zone: {validationResult.deliveryZone}
+          {isValidating && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="animate-pulse">Validating address...</div>
+            </div>
+          )}
+          
+          {validationResult && shippingAddress && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                {getValidationIcon(validationResult.isValid, validationResult.confidence)}
+                <Badge className={getValidationBadgeColor(validationResult.confidence)}>
+                  {validationResult.confidence} confidence
                 </Badge>
+                {validationResult.isValid ? (
+                  <Badge className="bg-green-100 text-green-800">
+                    Valid for delivery
+                  </Badge>
+                ) : (
+                  <Badge className="bg-red-100 text-red-800">
+                    Delivery issues found
+                  </Badge>
+                )}
+              </div>
+
+              {validationResult.issues.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <h4 className="text-sm font-medium text-red-800 mb-2">Issues Found:</h4>
+                  <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                    {validationResult.issues.map((issue: string, index: number) => (
+                      <li key={index}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </div>
-          )}
-          
-          {validationResult?.issues.length > 0 && (
-            <div className="text-sm text-destructive">
-              <ul className="list-disc list-inside">
-                {validationResult.issues.map((issue: string, index: number) => (
-                  <li key={index}>{issue}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {validationResult?.suggestions.length > 0 && (
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium">Suggestions:</p>
-              <ul className="list-disc list-inside">
-                {validationResult.suggestions.map((suggestion: string, index: number) => (
-                  <li key={index}>{suggestion}</li>
-                ))}
-              </ul>
+              
+              {validationResult.suggestions.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                  <h4 className="text-sm font-medium text-yellow-800 mb-2">Suggestions:</h4>
+                  <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                    {validationResult.suggestions.map((suggestion: string, index: number) => (
+                      <li key={index}>{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {validationResult.isValid && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">
+                      Address validated successfully
+                    </span>
+                  </div>
+                  <p className="text-sm text-green-700 mt-1">
+                    This address can receive deliveries. Shipping cost: $6.99
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Shipping Options */}
-      {shippingOptimization && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Shipping Options
-            </CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Distance: {shippingOptimization.distance} miles
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {isCalculating ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-pulse">Calculating shipping costs...</div>
-              </div>
-            ) : (
-              shippingOptimization.options.map((option) => (
-                <div
-                  key={option.id}
-                  className={cn(
-                    'border rounded-lg p-4 cursor-pointer transition-all',
-                    selectedShippingOption?.id === option.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  )}
-                  onClick={() => handleShippingOptionSelect(option)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="font-medium">{option.name}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        {formatDeliveryTime(option.timeMinutes)}
-                      </div>
-                      {option.carrier && (
-                        <div className="text-sm text-muted-foreground">
-                          via {option.carrier}
-                        </div>
-                      )}
-                      {option.trackingAvailable && (
-                        <Badge variant="secondary" className="text-xs">
-                          Tracking included
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-1 font-medium">
-                        <DollarSign className="h-4 w-4" />
-                        {option.cost.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Order Summary */}
-      {cartItems.length > 0 && selectedShippingOption && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span>Items ({cartItems.length})</span>
-              <span>${cartTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Shipping ({selectedShippingOption.name})</span>
-              <span>${selectedShippingOption.cost.toFixed(2)}</span>
-            </div>
-            <hr />
-            <div className="flex justify-between font-medium">
-              <span>Total</span>
-              <span>${(cartTotal + selectedShippingOption.cost).toFixed(2)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Debug Information */}
-      {process.env.NODE_ENV === 'development' && shippingOptimization && (
+      {process.env.NODE_ENV === 'development' && shippingAddress && (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-sm">Debug: Location Intelligence</CardTitle>
+            <CardTitle className="text-sm">Debug: Address Data</CardTitle>
           </CardHeader>
           <CardContent className="text-xs space-y-2">
-            <div>From: {shippingOptimization.fromLocation.lat.toFixed(4)}, {shippingOptimization.fromLocation.lng.toFixed(4)}</div>
-            <div>To: {shippingOptimization.toLocation.lat.toFixed(4)}, {shippingOptimization.toLocation.lng.toFixed(4)}</div>
-            <div>Estimated Time: {shippingOptimization.estimatedTime} minutes</div>
-            <div>Base Cost: ${shippingOptimization.cost.toFixed(2)}</div>
+            <div>Formatted: {shippingAddress.formatted_address}</div>
+            <div>Street: {shippingAddress.street}</div>
+            <div>City: {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</div>
+            <div>Country: {shippingAddress.country}</div>
           </CardContent>
         </Card>
       )}

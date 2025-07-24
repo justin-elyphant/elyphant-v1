@@ -431,15 +431,45 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
       const productBrand = (product.brand || '').toLowerCase().trim();
       const targetBrand = brandName.toLowerCase().trim();
       
-      // Exact brand match (case insensitive)
-      const isExactMatch = productBrand === targetBrand;
+      // More flexible brand matching
+      const isMatch = productBrand === targetBrand || 
+                     productBrand.includes(targetBrand) || 
+                     targetBrand.includes(productBrand);
       
-      console.log(`Checking product: "${product.title}" | Product brand: "${productBrand}" | Target: "${targetBrand}" | Match: ${isExactMatch}`);
+      console.log(`Checking product: "${product.title}" | Product brand: "${product.brand}" | Target: "${brandName}" | Match: ${isMatch}`);
       
-      return isExactMatch;
+      return isMatch;
     });
     
-    console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products exactly match brand "${brandName}"`);
+    console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products match brand "${brandName}"`);
+    
+    // If no results after filtering, try a fallback search with brand name included
+    if (filteredResults.length === 0) {
+      console.log(`No products found after filtering, trying fallback search with brand name included`);
+      
+      try {
+        const fallbackCategories = categories.map(cat => `${brandName.toLowerCase()} ${cat}`);
+        const fallbackResults = await searchCategoryBatch(api_key, fallbackCategories, `${brandName} fallback`, page, limit);
+        
+        if (fallbackResults.results && fallbackResults.results.length > 0) {
+          const fallbackFiltered = fallbackResults.results.filter((product: any) => {
+            const productBrand = (product.brand || '').toLowerCase().trim();
+            const targetBrand = brandName.toLowerCase().trim();
+            return productBrand === targetBrand || productBrand.includes(targetBrand);
+          });
+          
+          console.log(`Fallback search returned ${fallbackFiltered.length} products for ${brandName}`);
+          
+          return {
+            ...categoryResults,
+            results: fallbackFiltered,
+            total: fallbackFiltered.length
+          };
+        }
+      } catch (error) {
+        console.error(`Fallback search failed:`, error);
+      }
+    }
     
     return {
       ...categoryResults,

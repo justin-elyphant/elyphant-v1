@@ -944,8 +944,7 @@ class UnifiedPaymentService {
         amount: order.total_amount,
         currency: 'usd',
         status: 'succeeded',
-        paymentMethod: 'order_view',
-        userId: order.user_id
+        paymentMethod: 'order_view'
       });
     }
     return order;

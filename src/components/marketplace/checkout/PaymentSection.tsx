@@ -8,7 +8,7 @@ import { CreditCard, Smartphone, CheckCircle, ArrowLeft } from "lucide-react";
 import { CartItem } from "@/contexts/CartContext";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from "@/services/payment/StripeClientManager";
-import ModernPaymentForm from "../../payments/ModernPaymentForm";
+import UnifiedPaymentForm from "../../payments/UnifiedPaymentForm";
 import SavedPaymentMethodsSection from "../../checkout/SavedPaymentMethodsSection";
 import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";
@@ -280,13 +280,15 @@ const PaymentSection = ({
                 </div>
               ) : clientSecret ? (
                 <Elements stripe={stripeClientManager.getStripePromise()} options={{ clientSecret }}>
-                  <ModernPaymentForm
+                  <UnifiedPaymentForm
                     clientSecret={clientSecret}
                     amount={totalAmount}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
                     isProcessing={paymentProcessing}
                     onProcessingChange={setPaymentProcessing}
+                    allowSaveCard={true}
+                    mode="payment"
                   />
                 </Elements>
               ) : (

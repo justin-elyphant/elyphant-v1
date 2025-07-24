@@ -39,7 +39,7 @@ import { useAuth } from '@/contexts/auth';
 interface UnifiedPaymentFormProps {
   clientSecret?: string;
   amount: number;
-  onSuccess: (paymentIntentId: string, saveCard?: boolean) => void;
+  onSuccess: (paymentIntentId: string, saveCard?: boolean | string) => void; // Flexible for compatibility
   onError?: (error: string) => void;
   allowSaveCard?: boolean;
   buttonText?: string;

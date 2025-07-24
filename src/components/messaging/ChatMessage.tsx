@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Message } from "@/utils/messageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,14 +9,15 @@ import WishlistSharePreview from "./WishlistSharePreview";
 import MessageContextMenu from "./MessageContextMenu";
 import { Wishlist } from "@/types/profile";
 import { toast } from "sonner";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import { useProducts } from "@/contexts/ProductContext";
 
 interface ChatMessageProps {
-  message: Message;
+  message: UnifiedMessage;
   productDetails?: { name: string; id: string } | null;
   wishlistDetails?: Wishlist | null;
   showStatus?: boolean;
-  onReply?: (message: Message) => void;
+  onReply?: (message: UnifiedMessage) => void;
   onReact?: (messageId: string, emoji: string) => void;
   isConsecutive?: boolean;
   showTimestamp?: boolean;
@@ -40,8 +40,8 @@ const ChatMessage = ({
   // Find the actual product from our marketplace data
   const actualProduct = message.product_link_id ? 
     allProducts.find(p => 
-      p.product_id === message.product_link_id || 
-      p.id === message.product_link_id
+      p.product_id === message.product_link_id.toString() || 
+      p.id === message.product_link_id.toString()
     ) : null;
 
   const getMessageStatus = () => {

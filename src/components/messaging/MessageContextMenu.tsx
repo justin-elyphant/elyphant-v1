@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Reply, Heart, Copy, Pin, Archive, Trash2 } from "lucide-react";
-import { Message } from "@/utils/messageService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 
 interface MessageContextMenuProps {
-  message: Message;
+  message: UnifiedMessage;
   isOwn: boolean;
-  onReply: (message: Message) => void;
+  onReply: (message: UnifiedMessage) => void;
   onReact: (messageId: string, emoji: string) => void;
   onCopy: (content: string) => void;
   onPin: (messageId: string) => void;

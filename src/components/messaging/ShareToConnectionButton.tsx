@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { Product } from "@/types/product";
-import { sendMessage } from "@/utils/messageService";
+import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +30,10 @@ const ShareToConnectionButton = ({
   const [selectedTemplate, setSelectedTemplate] = useState("Thought you might like this!");
   const [customMessage, setCustomMessage] = useState("");
   const [sending, setSending] = useState(false);
+  
+  // Get messaging functionality for the selected connection
+  const connectionId = selectedConnection?.id || "";
+  const { sendMessage } = useDirectMessaging(connectionId);
 
   const handleConnectionSelect = (connectionId: string, connectionName: string) => {
     setSelectedConnection({ id: connectionId, name: connectionName });
@@ -47,11 +51,10 @@ const ShareToConnectionButton = ({
       : selectedTemplate;
 
     try {
-      // Use the actual product ID string instead of converting to int
+      // Use the messaging hook to send the message
       const result = await sendMessage({
-        recipientId: selectedConnection.id,
         content: messageContent,
-        productLinkId: product.product_id || product.id || "0"
+        messageType: 'product_share'
       });
 
       if (result) {

@@ -2,10 +2,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Message } from "@/utils/messageService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 
 interface ReplyPreviewProps {
-  replyingTo: Message;
+  replyingTo: UnifiedMessage;
   onCancel: () => void;
 }
 

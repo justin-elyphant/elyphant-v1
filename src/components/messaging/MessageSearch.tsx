@@ -3,10 +3,10 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, ChevronUp, ChevronDown } from "lucide-react";
-import { Message } from "@/utils/messageService";
+import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 
 interface MessageSearchProps {
-  messages: Message[];
+  messages: UnifiedMessage[];
   onSearchResultClick: (messageId: string) => void;
   onClose: () => void;
 }

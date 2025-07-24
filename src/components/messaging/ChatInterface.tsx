@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Message, fetchMessages, sendMessage, markMessageAsRead, subscribeToMessages } from "@/utils/messageService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWishlists } from "@/components/gifting/hooks/useWishlists";
 import { toast } from "sonner";
 import { Wishlist } from "@/types/profile";
+import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
 
 interface ChatInterfaceProps {
   connectionId: string;
@@ -22,86 +22,70 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
   const { wishlists } = useWishlists();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const [productDetails, setProductDetails] = useState<Record<string, { name: string; id: string }>>({});
   const [wishlistDetails, setWishlistDetails] = useState<Record<string, Wishlist>>({});
 
-  // Load messages when the component mounts or the connection changes
+  // Use unified messaging hook
+  const { 
+    messages, 
+    loading: isLoading, 
+    sendMessage, 
+    markAsRead,
+    presence,
+    isTyping
+  } = useDirectMessaging(connectionId);
+
+  // Mark unread messages as read when component loads
   useEffect(() => {
-    const loadMessages = async () => {
-      setIsLoading(true);
-      const data = await fetchMessages(connectionId);
-      setMessages(data);
-      setIsLoading(false);
-
-      // Mark unread messages as read
-      const unreadMessageIds = data
-        .filter(msg => !msg.read_at && msg.recipient_id === user?.id)
-        .map(msg => msg.id);
-        
-      if (unreadMessageIds.length > 0) {
-        for (const id of unreadMessageIds) {
-          await markMessageAsRead(id);
-        }
-      }
-
-      // Fetch product details for messages with product links
-      const productIds = data
-        .filter(msg => msg.product_link_id)
-        .map(msg => msg.product_link_id)
-        .filter((id): id is string => id !== null);
+    const unreadMessageIds = messages
+      .filter(msg => !msg.is_read && msg.recipient_id === user?.id)
+      .map(msg => msg.id);
       
-      // Mock product details - in real app, fetch from marketplace
-      const uniqueProductIds = [...new Set(productIds)];
-      const productDetailsMap: Record<string, { name: string; id: string }> = {};
-      uniqueProductIds.forEach(id => {
-        productDetailsMap[id] = { 
-          name: `Product #${id}`, 
-          id 
-        };
-      });
-      setProductDetails(productDetailsMap);
-
-      // Fetch wishlist details for messages with wishlist links
-      const wishlistIds = data
-        .filter(msg => msg.wishlist_link_id)
-        .map(msg => msg.wishlist_link_id)
-        .filter((id): id is string => id !== null);
-      
-      const uniqueWishlistIds = [...new Set(wishlistIds)];
-      const wishlistDetailsMap: Record<string, Wishlist> = {};
-      uniqueWishlistIds.forEach(id => {
-        const wishlist = wishlists.find(w => w.id === id);
-        if (wishlist) {
-          wishlistDetailsMap[id] = wishlist;
-        }
-      });
-      setWishlistDetails(wishlistDetailsMap);
-    };
-
-    if (connectionId && user?.id) {
-      loadMessages();
+    if (unreadMessageIds.length > 0) {
+      markAsRead(unreadMessageIds);
     }
-  }, [connectionId, user?.id, wishlists]);
+  }, [messages, user?.id, markAsRead]);
 
-  // Subscribe to new messages
+  // Fetch product and wishlist details for messages
   useEffect(() => {
-    if (!connectionId || !user?.id) return;
-
-    const unsubscribe = subscribeToMessages(connectionId, (newMessages) => {
-      setMessages(newMessages);
+    // Fetch product details for messages with product links
+    const productIds = messages
+      .filter(msg => msg.product_link_id)
+      .map(msg => msg.product_link_id?.toString())
+      .filter((id): id is string => id !== undefined);
+    
+    // Mock product details - in real app, fetch from marketplace
+    const uniqueProductIds = [...new Set(productIds)];
+    const productDetailsMap: Record<string, { name: string; id: string }> = {};
+    uniqueProductIds.forEach(id => {
+      productDetailsMap[id] = { 
+        name: `Product #${id}`, 
+        id: id
+      };
     });
+    setProductDetails(productDetailsMap);
 
-    return () => {
-      unsubscribe();
-    };
-  }, [connectionId, user?.id]);
+    // Fetch wishlist details for messages with wishlist links
+    const wishlistIds = messages
+      .filter(msg => msg.wishlist_link_id)
+      .map(msg => msg.wishlist_link_id)
+      .filter((id): id is string => id !== null);
+    
+    const uniqueWishlistIds = [...new Set(wishlistIds)];
+    const wishlistDetailsMap: Record<string, Wishlist> = {};
+    uniqueWishlistIds.forEach(id => {
+      const wishlist = wishlists.find(w => w.id === id);
+      if (wishlist) {
+        wishlistDetailsMap[id] = wishlist;
+      }
+    });
+    setWishlistDetails(wishlistDetailsMap);
+  }, [messages, wishlists]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -113,60 +97,70 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
     if (!newMessage.trim() || !connectionId || isSending) return;
 
     setIsSending(true);
-    const sent = await sendMessage({
-      recipientId: connectionId,
-      content: newMessage
-    });
-    
-    if (sent) {
-      setMessages(prev => [...prev, sent]);
-      setNewMessage("");
+    try {
+      const sent = await sendMessage({
+        content: newMessage
+      });
+      
+      if (sent) {
+        setNewMessage("");
+        toast.success("Message sent!");
+      }
+    } catch (error) {
+      toast.error("Failed to send message");
+    } finally {
+      setIsSending(false);
     }
-    setIsSending(false);
   };
 
   const handleShareProduct = async (product: any) => {
     if (!connectionId || isSending) return;
 
     setIsSending(true);
-    const sent = await sendMessage({
-      recipientId: connectionId,
-      content: `Check out this product: ${product.name}`,
-      productLinkId: product.id
-    });
-    
-    if (sent) {
-      setMessages(prev => [...prev, sent]);
-      // Add product details for immediate display
-      setProductDetails(prev => ({
-        ...prev,
-        [product.id]: { name: product.name, id: product.id }
-      }));
-      toast.success("Product shared!");
+    try {
+      const sent = await sendMessage({
+        content: `Check out this product: ${product.name}`,
+        messageType: 'product_share'
+      });
+      
+      if (sent) {
+        // Add product details for immediate display
+        setProductDetails(prev => ({
+          ...prev,
+          [product.id]: { name: product.name, id: product.id }
+        }));
+        toast.success("Product shared!");
+      }
+    } catch (error) {
+      toast.error("Failed to share product");
+    } finally {
+      setIsSending(false);
     }
-    setIsSending(false);
   };
 
   const handleShareWishlist = async (wishlist: Wishlist) => {
     if (!connectionId || isSending) return;
 
     setIsSending(true);
-    const sent = await sendMessage({
-      recipientId: connectionId,
-      content: `Check out my wishlist: ${wishlist.title}`,
-      wishlistLinkId: wishlist.id
-    });
-    
-    if (sent) {
-      setMessages(prev => [...prev, sent]);
-      // Add wishlist details for immediate display
-      setWishlistDetails(prev => ({
-        ...prev,
-        [wishlist.id]: wishlist
-      }));
-      toast.success("Wishlist shared!");
+    try {
+      const sent = await sendMessage({
+        content: `Check out my wishlist: ${wishlist.title}`,
+        messageType: 'text'
+      });
+      
+      if (sent) {
+        // Add wishlist details for immediate display
+        setWishlistDetails(prev => ({
+          ...prev,
+          [wishlist.id]: wishlist
+        }));
+        toast.success("Wishlist shared!");
+      }
+    } catch (error) {
+      toast.error("Failed to share wishlist");
+    } finally {
+      setIsSending(false);
     }
-    setIsSending(false);
   };
 
   const handleViewProfile = () => {
@@ -201,7 +195,9 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
             </Avatar>
             <div>
               <h3 className="text-lg font-medium">{connectionName}</h3>
-              <p className="text-sm text-muted-foreground">Online</p>
+              <p className="text-sm text-muted-foreground">
+                {presence?.status === 'online' ? 'Online' : 'Offline'}
+              </p>
             </div>
           </div>
           
@@ -241,8 +237,8 @@ const ChatInterface = ({ connectionId, connectionName }: ChatInterfaceProps) => 
             {messages.map((message) => (
               <ChatMessage 
                 key={message.id} 
-                message={message} 
-                productDetails={message.product_link_id ? productDetails[message.product_link_id] : null}
+                message={message as any}
+                productDetails={message.product_link_id ? productDetails[message.product_link_id.toString()] : null}
                 wishlistDetails={message.wishlist_link_id ? wishlistDetails[message.wishlist_link_id] : null}
               />
             ))}

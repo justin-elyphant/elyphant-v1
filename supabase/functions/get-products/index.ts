@@ -212,6 +212,10 @@ const searchCategoryBatch = async (
                 price = parseFloat(product.price.replace(/[$,]/g, ''));
               } else if (typeof product.price === 'number') {
                 price = product.price;
+                // If price appears to be in cents (over 100 for items under $50), convert to dollars
+                if (price > 100 && price < 10000) {
+                  price = price / 100;
+                }
               }
             } else if (product.price_cents) {
               price = product.price_cents / 100;
@@ -219,8 +223,9 @@ const searchCategoryBatch = async (
               price = product.price_amount;
             }
             
-            console.log(`Product: ${product.title}, Price: ${price}, Max: ${priceFilter.max}`);
-            return price > 0 && price <= priceFilter.max!;
+            const isUnderBudget = price > 0 && price <= priceFilter.max!;
+            console.log(`Product: ${product.title}, Original Price: ${product.price}, Converted Price: ${price}, Max: ${priceFilter.max}, Under Budget: ${isUnderBudget}`);
+            return isUnderBudget;
           });
         }
         

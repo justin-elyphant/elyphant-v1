@@ -171,18 +171,22 @@ const searchCategoryBatch = async (
   const promises = categories.map(async (category, index) => {
     try {
       const actualPage = page + Math.floor(index / 3); // Stagger pages across categories
-      let query = encodeURIComponent(category);
       
-      // Add price filtering for budget categories
+      // Build URL with proper parameters
+      let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${actualPage}&retailer=amazon`;
+      
+      // Add price filtering as URL parameters
       if (priceFilter?.max) {
-        query += `&max_price=${priceFilter.max}`;
+        searchUrl += `&max_price=${priceFilter.max}`;
       }
       if (priceFilter?.min) {
-        query += `&min_price=${priceFilter.min}`;
+        searchUrl += `&min_price=${priceFilter.min}`;
       }
       
       console.log(`Searching ${batchName} category: ${category} (page ${actualPage})`);
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${query}&page=${actualPage}&retailer=amazon`, {
+      console.log(`Search URL: ${searchUrl}`);
+      
+      const response = await fetch(searchUrl, {
         method: 'GET',
         headers: {
           'Authorization': 'Basic ' + btoa(`${api_key}:`)
@@ -199,8 +203,8 @@ const searchCategoryBatch = async (
         // Additional price filtering for budget categories
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
-            const price = parseFloat(product.price) || 0;
-            return price <= priceFilter.max!;
+            const price = parseFloat(product.price?.replace(/[$,]/g, '')) || 0;
+            return price > 0 && price <= priceFilter.max!;
           });
         }
         
@@ -283,12 +287,12 @@ const searchGiftsForHimCategories = async (api_key: string, page: number = 1, li
 // Gifts Under $50 category search handler
 const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20) => {
   const giftsUnder50Categories = [
-    "phone cases and accessories",
-    "home decor items",
-    "jewelry accessories",
-    "beauty and skincare",
-    "kitchen gadgets",
-    "fitness accessories"
+    "bluetooth earbuds under 50",
+    "phone accessories under 50", 
+    "kitchen utensils under 50",
+    "skincare products under 50",
+    "jewelry under 50",
+    "home decor under 50"
   ];
   
   return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, { max: 50 });

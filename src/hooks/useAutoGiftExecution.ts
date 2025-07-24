@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { autoGiftExecutionService, AutoGiftExecution } from "@/services/autoGiftExecutionService";
+import { unifiedGiftAutomationService, UnifiedGiftExecution as AutoGiftExecution } from "@/services/UnifiedGiftAutomationService";
 import { toast } from "sonner";
 
 export const useAutoGiftExecution = () => {
@@ -15,7 +15,7 @@ export const useAutoGiftExecution = () => {
 
     try {
       setLoading(true);
-      const userExecutions = await autoGiftExecutionService.getUserExecutions(user.id);
+      const userExecutions = await unifiedGiftAutomationService.getUserExecutions(user.id);
       setExecutions(userExecutions);
     } catch (error) {
       console.error("Error loading auto-gift executions:", error);
@@ -30,7 +30,7 @@ export const useAutoGiftExecution = () => {
 
     try {
       setProcessing(true);
-      await autoGiftExecutionService.processPendingExecutions(user.id);
+      await unifiedGiftAutomationService.processPendingExecutions(user.id);
       await loadExecutions(); // Refresh the list
     } catch (error) {
       console.error("Error processing executions:", error);
@@ -42,7 +42,7 @@ export const useAutoGiftExecution = () => {
 
   const approveExecution = async (executionId: string, selectedProductIds: string[]) => {
     try {
-      await autoGiftExecutionService.approveExecution(executionId, selectedProductIds);
+      await unifiedGiftAutomationService.approveExecution(executionId, selectedProductIds);
       toast.success("Auto-gift approved for processing");
       await loadExecutions(); // Refresh the list
     } catch (error) {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { unifiedGiftTimingService, GiftTimingPreferences, ScheduledGiftEvent } from "@/services/unifiedGiftTimingService";
+import { unifiedGiftAutomationService, GiftTimingPreferences, ScheduledGiftEvent } from "@/services/UnifiedGiftAutomationService";
 import { toast } from "sonner";
 
 export const useUnifiedGiftTiming = () => {
@@ -20,9 +20,9 @@ export const useUnifiedGiftTiming = () => {
       setError(null);
 
       const [preferencesData, scheduledData, remindersData] = await Promise.all([
-        unifiedGiftTimingService.getUserGiftTimingPreferences(user.id),
-        unifiedGiftTimingService.getUserScheduledGifts(user.id),
-        unifiedGiftTimingService.getUpcomingGiftReminders(user.id, 7)
+        unifiedGiftAutomationService.getUserGiftTimingPreferences(user.id),
+        unifiedGiftAutomationService.getUserScheduledGifts(user.id),
+        unifiedGiftAutomationService.getUpcomingGiftReminders(user.id, 7)
       ]);
 
       setPreferences(preferencesData);
@@ -49,7 +49,16 @@ export const useUnifiedGiftTiming = () => {
     if (!user?.id) return;
 
     try {
-      await unifiedGiftTimingService.updateUnifiedNotificationPreferences(user.id, newPreferences);
+      await unifiedGiftAutomationService.upsertSettings({
+        user_id: user.id,
+        email_notifications: newPreferences.emailNotifications,
+        push_notifications: newPreferences.pushNotifications,
+        default_notification_days: newPreferences.defaultNotificationDays,
+        default_budget_limit: preferences?.defaultBudgetLimit || 50,
+        auto_approve_gifts: false,
+        default_gift_source: 'wishlist',
+        budget_tracking: { spent_this_month: 0, spent_this_year: 0 }
+      });
       await loadData(); // Reload to get updated data
       toast.success("Notification preferences updated");
     } catch (err) {

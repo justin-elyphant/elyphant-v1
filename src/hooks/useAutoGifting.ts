@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { autoGiftingService, AutoGiftingSettings, AutoGiftingRule } from "@/services/autoGiftingService";
+import { unifiedGiftAutomationService, UnifiedGiftSettings as AutoGiftingSettings, UnifiedGiftRule as AutoGiftingRule } from "@/services/UnifiedGiftAutomationService";
 import { toast } from "sonner";
 
 export const useAutoGifting = () => {
@@ -19,8 +19,8 @@ export const useAutoGifting = () => {
       setError(null);
 
       const [settingsData, rulesData] = await Promise.all([
-        autoGiftingService.getSettings(user.id),
-        autoGiftingService.getUserRules(user.id)
+        unifiedGiftAutomationService.getSettings(user.id),
+        unifiedGiftAutomationService.getUserRules(user.id)
       ]);
 
       setSettings(settingsData);
@@ -41,7 +41,7 @@ export const useAutoGifting = () => {
     if (!user?.id) return;
 
     try {
-      const updatedSettings = await autoGiftingService.upsertSettings({
+      const updatedSettings = await unifiedGiftAutomationService.upsertSettings({
         user_id: user.id,
         ...settings,
         ...updates
@@ -58,7 +58,7 @@ export const useAutoGifting = () => {
     if (!user?.id) return;
 
     try {
-      const newRule = await autoGiftingService.createRule({
+      const newRule = await unifiedGiftAutomationService.createRule({
         ...rule,
         user_id: user.id
       });
@@ -73,7 +73,7 @@ export const useAutoGifting = () => {
 
   const updateRule = async (id: string, updates: Partial<AutoGiftingRule>) => {
     try {
-      const updatedRule = await autoGiftingService.updateRule(id, updates);
+      const updatedRule = await unifiedGiftAutomationService.updateRule(id, updates);
       setRules(prev => prev.map(rule => rule.id === id ? updatedRule : rule));
       toast.success("Auto-gifting rule updated");
     } catch (err) {
@@ -84,7 +84,7 @@ export const useAutoGifting = () => {
 
   const deleteRule = async (id: string) => {
     try {
-      await autoGiftingService.deleteRule(id);
+      await unifiedGiftAutomationService.deleteRule(id);
       setRules(prev => prev.filter(rule => rule.id !== id));
       toast.success("Auto-gifting rule deleted");
     } catch (err) {

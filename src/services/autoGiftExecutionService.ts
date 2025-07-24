@@ -3,6 +3,17 @@ import { enhancedZincApiService } from "./enhancedZincApiService";
 import { autoGiftingService, AutoGiftingRule } from "./autoGiftingService";
 import { toast } from "sonner";
 
+// 🚨 DEPRECATION WARNING - Phase 5 Migration
+// This service has been consolidated into UnifiedGiftManagementService
+// Please migrate to use unifiedGiftManagementService instead
+// This service will be removed in a future version
+console.warn(`
+⚠️  DEPRECATED: autoGiftExecutionService
+📦 Use: unifiedGiftManagementService from @/services/UnifiedGiftManagementService
+🔄 Migration: Phase 5 Gift System Consolidation
+⏰ Will be removed in future version
+`);
+
 export interface AutoGiftExecution {
   id: string;
   rule_id: string;

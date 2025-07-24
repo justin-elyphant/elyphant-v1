@@ -1,8 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { unifiedGiftAutomationService, UnifiedGiftSettings as AutoGiftingSettings, UnifiedGiftRule as AutoGiftingRule } from "@/services/UnifiedGiftAutomationService";
+import { unifiedGiftManagementService, UnifiedGiftSettings as AutoGiftingSettings, UnifiedGiftRule as AutoGiftingRule } from "@/services/UnifiedGiftManagementService";
 import { toast } from "sonner";
+
+// 🚨 MIGRATION WARNING: This hook now uses UnifiedGiftManagementService
+// Legacy autoGiftingService calls have been migrated to the unified service
+console.warn("useAutoGifting: Now using UnifiedGiftManagementService (Phase 5 migration)");
 
 export const useAutoGifting = () => {
   const { user } = useAuth();
@@ -19,8 +23,8 @@ export const useAutoGifting = () => {
       setError(null);
 
       const [settingsData, rulesData] = await Promise.all([
-        unifiedGiftAutomationService.getSettings(user.id),
-        unifiedGiftAutomationService.getUserRules(user.id)
+        unifiedGiftManagementService.getSettings(user.id),
+        unifiedGiftManagementService.getUserRules(user.id)
       ]);
 
       setSettings(settingsData);
@@ -41,7 +45,7 @@ export const useAutoGifting = () => {
     if (!user?.id) return;
 
     try {
-      const updatedSettings = await unifiedGiftAutomationService.upsertSettings({
+      const updatedSettings = await unifiedGiftManagementService.upsertSettings({
         user_id: user.id,
         ...settings,
         ...updates
@@ -58,7 +62,7 @@ export const useAutoGifting = () => {
     if (!user?.id) return;
 
     try {
-      const newRule = await unifiedGiftAutomationService.createRule({
+      const newRule = await unifiedGiftManagementService.createRule({
         ...rule,
         user_id: user.id
       });
@@ -73,7 +77,7 @@ export const useAutoGifting = () => {
 
   const updateRule = async (id: string, updates: Partial<AutoGiftingRule>) => {
     try {
-      const updatedRule = await unifiedGiftAutomationService.updateRule(id, updates);
+      const updatedRule = await unifiedGiftManagementService.updateRule(id, updates);
       setRules(prev => prev.map(rule => rule.id === id ? updatedRule : rule));
       toast.success("Auto-gifting rule updated");
     } catch (err) {
@@ -84,7 +88,7 @@ export const useAutoGifting = () => {
 
   const deleteRule = async (id: string) => {
     try {
-      await unifiedGiftAutomationService.deleteRule(id);
+      await unifiedGiftManagementService.deleteRule(id);
       setRules(prev => prev.filter(rule => rule.id !== id));
       toast.success("Auto-gifting rule deleted");
     } catch (err) {

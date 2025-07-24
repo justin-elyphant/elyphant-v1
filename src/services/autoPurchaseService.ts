@@ -2,6 +2,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { GiftSelectionService, GiftSelectionCriteria } from "./giftSelectionService";
 import { Database } from "@/integrations/supabase/types";
 
+// 🚨 DEPRECATION WARNING - Phase 5 Migration
+// This service has been consolidated into UnifiedGiftManagementService
+// Please migrate to use unifiedGiftManagementService instead
+// This service will be removed in a future version
+console.warn(`
+⚠️  DEPRECATED: autoPurchaseService
+📦 Use: unifiedGiftManagementService from @/services/UnifiedGiftManagementService
+🔄 Migration: Phase 5 Gift System Consolidation
+⏰ Will be removed in future version
+`);
+
 type AutoGiftingRule = Database['public']['Tables']['auto_gifting_rules']['Row'];
 type AutoGiftingSettings = Database['public']['Tables']['auto_gifting_settings']['Row'];
 type ScheduledGiftEvent = Database['public']['Tables']['user_special_dates']['Row'];

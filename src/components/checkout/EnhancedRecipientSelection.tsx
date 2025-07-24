@@ -6,8 +6,10 @@ import { Users, MapPin, Plus, UserPlus } from 'lucide-react';
 import ConnectionRecipientSelector from '../connections/ConnectionRecipientSelector';
 import AddressBookSelector from './AddressBookSelector';
 import { RecipientInfoForm } from '@/components/marketplace/product-details/recipient-info/RecipientInfoForm';
-import { pendingGiftsService } from '@/services/pendingGiftsService';
+import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import { toast } from 'sonner';
+
+// 🚨 MIGRATION NOTICE: Now using UnifiedGiftManagementService instead of pendingGiftsService
 
 interface RecipientData {
   id: string;
@@ -51,8 +53,8 @@ const EnhancedRecipientSelection: React.FC<EnhancedRecipientSelectionProps> = ({
     try {
       setIsAddingRecipient(true);
       
-      // Create pending connection using the service
-      const pendingConnection = await pendingGiftsService.createPendingConnection(
+      // Create pending connection using the unified service
+      const pendingConnection = await unifiedGiftManagementService.createPendingConnection(
         data.recipientEmail,
         `${data.recipientFirstName} ${data.recipientLastName}`,
         'friend', // Default relationship type

@@ -1,8 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { unifiedGiftAutomationService, GiftTimingPreferences, ScheduledGiftEvent } from "@/services/UnifiedGiftAutomationService";
+import { unifiedGiftManagementService, UnifiedGiftTimingPreferences as GiftTimingPreferences, UnifiedScheduledGiftEvent as ScheduledGiftEvent } from "@/services/UnifiedGiftManagementService";
 import { toast } from "sonner";
+
+// 🚨 MIGRATION WARNING: This hook now uses UnifiedGiftManagementService
+// Legacy unifiedGiftAutomationService calls have been migrated to the unified service
+console.warn("useUnifiedGiftTiming: Now using UnifiedGiftManagementService (Phase 5 migration)");
 
 export const useUnifiedGiftTiming = () => {
   const { user } = useAuth();
@@ -20,9 +24,9 @@ export const useUnifiedGiftTiming = () => {
       setError(null);
 
       const [preferencesData, scheduledData, remindersData] = await Promise.all([
-        unifiedGiftAutomationService.getUserGiftTimingPreferences(user.id),
-        unifiedGiftAutomationService.getUserScheduledGifts(user.id),
-        unifiedGiftAutomationService.getUpcomingGiftReminders(user.id, 7)
+        unifiedGiftManagementService.getUserGiftTimingPreferences(user.id),
+        unifiedGiftManagementService.getUserScheduledGifts(user.id),
+        unifiedGiftManagementService.getUpcomingGiftReminders(user.id, 7)
       ]);
 
       setPreferences(preferencesData);
@@ -49,7 +53,7 @@ export const useUnifiedGiftTiming = () => {
     if (!user?.id) return;
 
     try {
-      await unifiedGiftAutomationService.upsertSettings({
+      await unifiedGiftManagementService.upsertSettings({
         user_id: user.id,
         email_notifications: newPreferences.emailNotifications,
         push_notifications: newPreferences.pushNotifications,
@@ -57,6 +61,7 @@ export const useUnifiedGiftTiming = () => {
         default_budget_limit: preferences?.defaultBudgetLimit || 50,
         auto_approve_gifts: false,
         default_gift_source: 'wishlist',
+        has_payment_method: false,
         budget_tracking: { spent_this_month: 0, spent_this_year: 0 }
       });
       await loadData(); // Reload to get updated data

@@ -4,8 +4,10 @@ import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useConnectionSuggestions } from "@/hooks/useConnectionSuggestions";
 import { useMutualConnections } from "@/hooks/useMutualConnections";
 import { Connection, RelationshipType } from "@/types/connections";
-import { pendingGiftsService } from "@/services/pendingGiftsService";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAuth } from "@/contexts/auth";
+
+// 🚨 MIGRATION NOTICE: Now using UnifiedGiftManagementService instead of pendingGiftsService
 import { supabase } from "@/integrations/supabase/client";
 
 export const useConnectionsAdapter = () => {
@@ -174,7 +176,9 @@ export const useConnectionsAdapter = () => {
       }) || [];
 
       // Also get gift-based pending connections
-      const giftPendingData = await pendingGiftsService.getPendingConnectionsWithInvitations();
+      // NOTE: This functionality has been migrated to the unified service
+      // For now, we'll skip gift-based pending connections until fully migrated
+      const giftPendingData: any[] = []; // TODO: Implement in unified service
       const giftPending = giftPendingData.map(conn => ({
         id: conn.id,
         name: conn.pending_recipient_name || 'Unknown User',

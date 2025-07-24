@@ -9,8 +9,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
-import { pendingGiftsService } from "@/services/pendingGiftsService";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { toast } from "sonner";
+
+// 🚨 MIGRATION NOTICE: Now using UnifiedGiftManagementService instead of pendingGiftsService
 
 interface InviteFriendModalProps {
   open: boolean;
@@ -75,7 +77,7 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         gift_preferences: {}
       };
 
-      await pendingGiftsService.createPendingConnection(
+      await unifiedGiftManagementService.createPendingConnection(
         formData.email,
         fullName,
         formData.relationshipType,

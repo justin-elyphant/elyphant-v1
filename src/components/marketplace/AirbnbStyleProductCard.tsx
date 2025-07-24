@@ -383,27 +383,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           )}
         </div>
 
-        {/* Price Section with Sale Support */}
-        <div className="flex items-center gap-2">
-          {hasDiscount() ? (
-            <>
-              <span className="font-semibold text-gray-900">
-                ${getSalePrice()?.toFixed(2)}
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                ${getProductPrice()}
-              </span>
-            </>
-          ) : (
-            <span className="font-semibold text-gray-900">
-              ${getProductPrice()}
-            </span>
-          )}
-          {product.tags?.includes("trending") && (
-            <span className="text-xs text-gray-500">trending</span>
-          )}
-        </div>
-
         {/* Free Shipping Indicator */}
         {isFreeShipping() && (
           <TooltipProvider>
@@ -437,59 +416,85 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
             )}
           </div>
         )}
-          
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-2">
-          {/* Enhanced Share Button */}
-          {onShare ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onShare(product);
-              }}
-              className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-              title="Share product"
-            >
-              <Share className="h-4 w-4 text-gray-600" />
-            </button>
-          ) : (
-            <SocialShareButton
-              product={{
-                ...product,
-                id: productId,
-                name: getProductTitle()
-              } as any}
-              variant="ghost"
-              size="sm"
-              className="p-1.5"
-            />
-          )}
-          
-          {/* Enhanced Add to Cart Button */}
-          {viewMode === "list" || isMobile ? (
-            <AddToCartButton
-              product={product}
-              variant="luxury"
-              size="sm"
-              className="flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToCart?.(product);
-              }}
-            />
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToCart?.(product);
-              }}
-              className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors"
-              title="Add to cart"
-            >
-              <ShoppingCart className="h-3 w-3" />
-              Add
-            </button>
-          )}
+
+        {/* Bottom Section: Price Left, Actions Right */}
+        <div className="flex items-center justify-between pt-2 mt-auto">
+          {/* Price Section - Bottom Left */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              {hasDiscount() ? (
+                <>
+                  <span className="font-bold text-lg text-gray-900">
+                    ${getSalePrice()?.toFixed(2)}
+                  </span>
+                  <span className="text-sm text-gray-500 line-through">
+                    ${getProductPrice()}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-lg text-gray-900">
+                  ${getProductPrice()}
+                </span>
+              )}
+            </div>
+            {product.tags?.includes("trending") && (
+              <span className="text-xs text-orange-600 font-medium">trending</span>
+            )}
+          </div>
+
+          {/* Action Buttons - Bottom Right */}
+          <div className="flex items-center gap-1">
+            {/* Share Button */}
+            {onShare ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare(product);
+                }}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
+                title="Share product"
+              >
+                <Share className="h-4 w-4" />
+              </button>
+            ) : (
+              <SocialShareButton
+                product={{
+                  ...product,
+                  id: productId,
+                  name: getProductTitle()
+                } as any}
+                variant="ghost"
+                size="sm"
+                className="p-2 hover:bg-gray-100"
+              />
+            )}
+            
+            {/* Add to Cart Button */}
+            {viewMode === "list" || isMobile ? (
+              <AddToCartButton
+                product={product}
+                variant="luxury"
+                size="sm"
+                className="min-w-[80px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCart?.(product);
+                }}
+              />
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCart?.(product);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+                title="Add to cart"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Add
+              </button>
+            )}
+          </div>
         </div>
       </div>
       </Card>

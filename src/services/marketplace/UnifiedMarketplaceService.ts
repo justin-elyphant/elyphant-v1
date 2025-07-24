@@ -10,6 +10,7 @@ export interface SearchOptions {
   page?: number;
   filters?: any;
   luxuryCategories?: boolean;
+  giftsForHer?: boolean;
   personId?: string;
   occasionType?: string;
 }
@@ -36,8 +37,8 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories, page = 1, maxResults = 20 } = options;
-    return `search:${searchTerm}:luxury:${luxuryCategories}:page:${page}:limit:${maxResults}`;
+    const { luxuryCategories, giftsForHer, page = 1, maxResults = 20 } = options;
+    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:page:${page}:limit:${maxResults}`;
   }
 
   /**
@@ -129,7 +130,7 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, maxResults = 20 } = options;
     
     try {
       let response;
@@ -138,6 +139,10 @@ class UnifiedMarketplaceService {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');
         this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
         response = await enhancedZincApiService.searchLuxuryCategories(maxResults);
+      } else if (giftsForHer) {
+        console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
+        this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
+        response = await enhancedZincApiService.searchGiftsForHerCategories(maxResults);
       } else if (searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}"`);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
@@ -157,9 +162,11 @@ class UnifiedMarketplaceService {
       if (normalizedProducts.length > 0) {
         const successMessage = luxuryCategories 
           ? `Found ${normalizedProducts.length} luxury items`
-          : searchTerm 
-            ? `Found ${normalizedProducts.length} results`
-            : `Loaded ${normalizedProducts.length} featured products`;
+          : giftsForHer
+            ? `Found ${normalizedProducts.length} gifts for her`
+            : searchTerm 
+              ? `Found ${normalizedProducts.length} results`
+              : `Loaded ${normalizedProducts.length} featured products`;
             
         this.showToast(successMessage, 'success');
       } else {

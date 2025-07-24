@@ -185,6 +185,48 @@ class EnhancedZincApiService {
   }
 
   /**
+   * Search gifts for her categories and return diverse product array
+   */
+  async searchGiftsForHerCategories(limit: number = 16): Promise<ZincSearchResponse> {
+    console.log('Starting gifts for her category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          giftsForHer: true,
+          limit
+        }
+      });
+
+      if (error) {
+        console.error('Error calling gifts for her category search:', error);
+        // Fallback to single search
+        return this.searchProducts('skincare essentials for women', 1, limit);
+      }
+
+      if (!data || !data.results) {
+        console.warn('No gifts for her products returned, using fallback');
+        return this.searchProducts('skincare essentials for women', 1, limit);
+      }
+
+      // Enhance product data
+      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      console.log(`Gifts for her category search complete: ${enhancedResults.length} products from multiple categories`);
+
+      return {
+        results: enhancedResults || [],
+        cached: false
+      };
+
+    } catch (error) {
+      console.error('Gifts for her category search error:', error);
+      // Fallback to single search
+      return this.searchProducts('skincare essentials for women', 1, limit);
+    }
+  }
+
+  /**
    * Search luxury categories and return diverse product array
    */
   async searchLuxuryCategories(limit: number = 16): Promise<ZincSearchResponse> {

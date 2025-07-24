@@ -14,14 +14,14 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const giftCategories = [
-  {
-    id: "gifts-for-her",
-    title: "Gifts for Her",
-    description: "Thoughtful gifts she'll love",
-    image: "/lovable-uploads/5f6e5bfc-2084-47e5-b28d-5fea068c2b93.png",
-    searchTerm: "gifts for her",
-    navigationUrl: "/marketplace?search=gifts+for+her"
-  },
+    {
+      id: "gifts-for-her",
+      title: "Gifts for Her",
+      description: "Thoughtful gifts she'll love",
+      image: "/lovable-uploads/5f6e5bfc-2084-47e5-b28d-5fea068c2b93.png",
+      searchTerm: "gifts for her categories",
+      navigationUrl: "/marketplace?giftsForHer=true"
+    },
   {
     id: "gifts-for-him",
     title: "Gifts for Him", 

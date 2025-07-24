@@ -154,6 +154,79 @@ const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
   }
 };
 
+// Gifts for Her category search handler
+const searchGiftsForHerCategories = async (api_key: string, page: number = 1) => {
+  console.log('Starting gifts for her category batch search');
+  
+  const giftsForHerCategories = [
+    "skincare essentials for women",
+    "cozy sweaters and cardigans", 
+    "candles and home fragrance",
+    "books and reading accessories",
+    "yoga and fitness accessories",
+    "coffee and tea gifts"
+  ];
+  
+  const promises = giftsForHerCategories.map(async (category) => {
+    try {
+      console.log(`Searching gifts for her category: ${category}`);
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=1&retailer=amazon`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${api_key}:`)
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.results && Array.isArray(data.results)) {
+        // Take first 3-4 products from each category
+        const categoryResults = data.results.slice(0, 4).map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return {
+            ...product,
+            ...bestSellerData,
+            categorySource: category // Track which category this came from
+          };
+        });
+        
+        console.log(`Found ${categoryResults.length} products for category: ${category}`);
+        return categoryResults;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error(`Error searching category ${category}:`, error);
+      return [];
+    }
+  });
+  
+  try {
+    const categoryResults = await Promise.all(promises);
+    
+    // Flatten and mix results
+    const allResults = categoryResults.flat();
+    
+    // Shuffle to prevent category clustering
+    for (let i = allResults.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
+    }
+    
+    console.log(`Gifts for her category search complete: ${allResults.length} total products`);
+    
+    return {
+      results: allResults,
+      total: allResults.length,
+      categoryBatch: true
+    };
+    
+  } catch (error) {
+    console.error('Error in gifts for her category batch search:', error);
+    throw error;
+  }
+};
+
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
@@ -166,7 +239,7 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1, luxuryCategories = false} = await req.json();
+    const {query, retailer = "amazon", page = 1, luxuryCategories = false, giftsForHer = false} = await req.json();
     
     try {
       // Handle luxury category batch search
@@ -175,6 +248,17 @@ serve(async (req) => {
         const luxuryData = await searchLuxuryCategories(api_key, page);
         
         return new Response(JSON.stringify(luxuryData), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Handle gifts for her category batch search
+      if (giftsForHer) {
+        console.log('Processing gifts for her category batch request');
+        const giftsForHerData = await searchGiftsForHerCategories(api_key, page);
+        
+        return new Response(JSON.stringify(giftsForHerData), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });

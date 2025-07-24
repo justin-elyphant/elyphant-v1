@@ -6,6 +6,8 @@ import { toast } from "sonner";
 interface UseOptimizedProductsProps {
   initialProducts: Product[];
   pageSize?: number;
+  onLoadMore?: (page: number) => Promise<Product[]>;
+  hasMoreFromServer?: boolean;
 }
 
 interface UseOptimizedProductsReturn {
@@ -16,44 +18,59 @@ interface UseOptimizedProductsReturn {
   loadMore: () => void;
   refresh: () => Promise<void>;
   totalCount: number;
+  currentPage: number;
 }
 
 export const useOptimizedProducts = ({
   initialProducts,
-  pageSize = 20
+  pageSize = 20,
+  onLoadMore,
+  hasMoreFromServer = false
 }: UseOptimizedProductsProps): UseOptimizedProductsReturn => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Memoize paginated products to prevent unnecessary recalculations
-  const paginatedProducts = useMemo(() => {
-    const startIndex = 0;
-    const endIndex = currentPage * pageSize;
-    return initialProducts.slice(startIndex, endIndex);
-  }, [initialProducts, currentPage, pageSize]);
-
-  // Update products when pagination changes
+  // Initialize products from initial data
   useEffect(() => {
-    setProducts(paginatedProducts);
-  }, [paginatedProducts]);
-
-  // Reset pagination when initial products change
-  useEffect(() => {
+    setProducts(initialProducts);
     setCurrentPage(1);
-    setError(null);
   }, [initialProducts]);
 
   const hasMore = useMemo(() => {
-    return currentPage * pageSize < initialProducts.length;
-  }, [currentPage, pageSize, initialProducts.length]);
-
-  const loadMore = useCallback(() => {
-    if (hasMore && !isLoading) {
-      setCurrentPage(prev => prev + 1);
+    if (onLoadMore) {
+      // For server-side pagination, use hasMoreFromServer
+      return hasMoreFromServer;
     }
-  }, [hasMore, isLoading]);
+    // For client-side pagination, check if there are more local products
+    return currentPage * pageSize < initialProducts.length;
+  }, [onLoadMore, hasMoreFromServer, currentPage, pageSize, initialProducts.length]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoading) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (onLoadMore) {
+        // Server-side pagination
+        const newProducts = await onLoadMore(currentPage + 1);
+        setProducts(prev => [...prev, ...newProducts]);
+        setCurrentPage(prev => prev + 1);
+      } else {
+        // Client-side pagination fallback
+        setCurrentPage(prev => prev + 1);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to load more products";
+      setError(errorMessage);
+      toast.error("Failed to load more products");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hasMore, isLoading, onLoadMore, currentPage]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -80,6 +97,7 @@ export const useOptimizedProducts = ({
     hasMore,
     loadMore,
     refresh,
-    totalCount: initialProducts.length
+    totalCount: products.length,
+    currentPage
   };
 };

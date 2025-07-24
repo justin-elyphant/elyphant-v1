@@ -14,6 +14,9 @@ import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketp
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
+import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
+import { useCallback } from "react";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -32,6 +35,47 @@ const StreamlinedMarketplaceWrapper = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Server-side load more function
+  const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
+    try {
+      console.log(`Loading more products for page ${page}`);
+      
+      if (searchParams.get('giftsForHer')) {
+        const response = await supabase.functions.invoke('get-products', {
+          body: { 
+            giftsForHer: true,
+            page,
+            limit: 20
+          }
+        });
+        
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+        
+        return response.data?.products || [];
+      }
+      
+      // For other search types, use unified marketplace
+      const searchOptions = {
+        page,
+        limit: 20,
+        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
+        ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
+        ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') })
+      };
+      
+      const searchTerm = searchParams.get('search') || '';
+      const result = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
+      
+      return result || [];
+    } catch (error) {
+      console.error('Failed to load more products:', error);
+      throw error;
+    }
+  }, [searchParams]);
 
   // Use optimized products hook for pagination and loading
   const {
@@ -43,7 +87,9 @@ const StreamlinedMarketplaceWrapper = () => {
     totalCount
   } = useOptimizedProducts({
     initialProducts: products || [],
-    pageSize: 20
+    pageSize: 20,
+    onLoadMore: handleLoadMore,
+    hasMoreFromServer: !error && (products?.length || 0) >= 20 // Assume more if we got a full page
   });
 
   // Product interaction handlers

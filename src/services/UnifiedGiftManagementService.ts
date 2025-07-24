@@ -17,7 +17,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { protectedAutoGiftingService } from "./protected-auto-gifting-service";
-import { unifiedProfileService } from "./unifiedProfileService";
+import { unifiedProfileService } from "./profiles/UnifiedProfileService";
 import { toast } from "sonner";
 
 // ============= UNIFIED TYPES =============

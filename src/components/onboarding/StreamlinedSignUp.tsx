@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { ProfileCreationService } from "@/services/profile/profileCreationService";
+import { unifiedProfileService } from "@/services/profiles/UnifiedProfileService";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { toast } from "sonner";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
@@ -152,7 +152,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
 
       // Save profile using ProfileCreationService
       console.log("🔄 Calling ProfileCreationService.createEnhancedProfile...");
-      const result = await ProfileCreationService.createEnhancedProfile(
+      const result = await unifiedProfileService.createEnhancedProfile(
         user.id,
         enhancedProfileData
       );

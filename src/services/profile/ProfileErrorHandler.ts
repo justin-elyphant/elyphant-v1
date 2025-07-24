@@ -82,8 +82,8 @@ export class ProfileErrorHandler {
         
         if (this.validateMinimalData(minimalData)) {
           // Try a simpler profile creation without full validation
-          const { ProfileCreationService } = await import('@/services/profile/profileCreationService');
-          const result = await ProfileCreationService.createProfileWithTimeout(userId, minimalData);
+          const { unifiedProfileService } = await import('@/services/profiles/UnifiedProfileService');
+          const result = await unifiedProfileService.createEnhancedProfile(userId, minimalData);
           
           if (result.success) {
             return {

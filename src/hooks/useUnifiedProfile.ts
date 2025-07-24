@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
-import { unifiedProfileService, UnifiedProfileData } from '@/services/unifiedProfileService';
+import { unifiedProfileService, UnifiedProfileData } from '@/services/profiles/UnifiedProfileService';
 
 export interface UseUnifiedProfileReturn {
   profile: UnifiedProfileData | null;
@@ -12,6 +12,17 @@ export interface UseUnifiedProfileReturn {
   profileType: string | null;
 }
 
+/**
+ * UNIFIED PROFILE HOOK
+ * 
+ * Primary hook for all profile operations. Replaces scattered profile hooks.
+ * 
+ * Features:
+ * - Centralized profile state management
+ * - Automatic caching and invalidation
+ * - Consistent error handling
+ * - Onboarding status tracking
+ */
 export const useUnifiedProfile = (): UseUnifiedProfileReturn => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UnifiedProfileData | null>(null);
@@ -45,8 +56,9 @@ export const useUnifiedProfile = (): UseUnifiedProfileReturn => {
       const result = await unifiedProfileService.updateProfile(updates);
       
       if (result.success) {
-        // Optimistically update local state
+        // Optimistically update local state, then refetch for consistency
         setProfile(prev => prev ? { ...prev, ...updates } : null);
+        await refetch(); // Ensure we have the latest data
       }
       
       return result;

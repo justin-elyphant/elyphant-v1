@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Upload, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { ProfileCreationService } from '@/services/profile/profileCreationService';
+import { unifiedProfileService } from '@/services/profiles/UnifiedProfileService';
 import { LocalStorageService } from '@/services/localStorage/LocalStorageService';
 
 interface OAuthProfileData {
@@ -140,8 +140,7 @@ const OAuthProfileCompletion = () => {
     setLoading(true);
     
     try {
-      // Use the enhanced ProfileCreationService
-      const result = await ProfileCreationService.createEnhancedProfile(user.id, {
+      const result = await unifiedProfileService.createEnhancedProfile(user.id, {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         email: profileData.email,
@@ -157,7 +156,7 @@ const OAuthProfileCompletion = () => {
       }
 
       // Verify profile creation
-      const profileExists = await ProfileCreationService.verifyProfileExists(user.id);
+      const profileExists = await unifiedProfileService.verifyProfileExists(user.id);
       if (!profileExists) {
         throw new Error('Profile verification failed');
       }

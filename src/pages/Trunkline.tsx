@@ -15,6 +15,9 @@ import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
 import TrunklineZincDebuggerTab from "@/components/trunkline/TrunklineZincDebuggerTab";
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
 import BusinessPaymentMethodManager from "@/components/settings/BusinessPaymentMethodManager";
+import TrunklineAnalytics from "@/pages/trunkline/TrunklineAnalytics";
+import TrunklineMonitoring from "@/pages/trunkline/TrunklineMonitoring";
+import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
 
 const Trunkline = () => {
   return (
@@ -36,6 +39,9 @@ const Trunkline = () => {
                 <Route path="/zinc" element={<TrunklineZincTab />} />
                 <Route path="/zinc-debugger" element={<TrunklineZincDebuggerTab />} />
                 <Route path="/vendors" element={<TrunklineVendorsTab />} />
+                <Route path="/analytics" element={<TrunklineAnalytics />} />
+                <Route path="/monitoring" element={<TrunklineMonitoring />} />
+                <Route path="/scaling" element={<TrunklineScaling />} />
               </Routes>
             </div>
           </SidebarInset>

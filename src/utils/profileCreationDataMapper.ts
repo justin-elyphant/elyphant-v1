@@ -1,5 +1,5 @@
 
-import { ProfileCreationData } from "@/services/profile/profileCreationService";
+import { ProfileCreationData } from "@/services/profiles/UnifiedProfileService";
 
 /**
  * Maps OAuth user metadata to ProfileCreationData format

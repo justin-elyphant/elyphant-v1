@@ -11,7 +11,10 @@ import {
   CreditCard,
   Search,
   ArrowLeft,
-  Bug
+  Bug,
+  Activity,
+  Monitor,
+  TrendingUp
 } from "lucide-react";
 import {
   Sidebar,
@@ -88,6 +91,24 @@ const systemItems = [
     title: "Vendors",
     url: "/trunkline/vendors",
     icon: Building2,
+  },
+];
+
+const monitoringItems = [
+  {
+    title: "Analytics",
+    url: "/trunkline/analytics",
+    icon: Activity,
+  },
+  {
+    title: "Monitoring",
+    url: "/trunkline/monitoring",
+    icon: Monitor,
+  },
+  {
+    title: "Scaling",
+    url: "/trunkline/scaling",
+    icon: TrendingUp,
   },
 ];
 
@@ -184,6 +205,32 @@ export function TrunklineSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {systemItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    className={isActive(item.url) ? "bg-slate-100 text-slate-900 font-medium" : ""}
+                  >
+                    <button
+                      onClick={() => navigate(item.url)}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{item.title}</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Scale Monitoring</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {monitoringItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

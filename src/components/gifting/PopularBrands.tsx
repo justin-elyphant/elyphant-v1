@@ -45,7 +45,7 @@ const popularBrands = [
   { 
     id: 7, 
     name: "Made In", 
-    logoUrl: "https://cdn.shopify.com/s/files/1/0017/2070/5987/files/logo_madein_1080x.png?v=1648137983", 
+    logoUrl: "/lovable-uploads/baaeaa58-7b69-413d-b176-6689d5eec58b.png", 
     productCount: 87 
   },
   { 

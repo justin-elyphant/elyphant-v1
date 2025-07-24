@@ -37,12 +37,6 @@ const popularBrands = [
     productCount: 134 
   },
   { 
-    id: 6, 
-    name: "Lululemon", 
-    logoUrl: "/lovable-uploads/f0a52aa3-9dcd-4367-9a66-0724e97f2641.png", 
-    productCount: 98 
-  },
-  { 
     id: 7, 
     name: "Made In", 
     logoUrl: "/lovable-uploads/baaeaa58-7b69-413d-b176-6689d5eec58b.png", 

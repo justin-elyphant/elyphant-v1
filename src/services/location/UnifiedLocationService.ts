@@ -1,34 +1,47 @@
-/**
- * ================================
- * UnifiedLocationService
- * ================================
+/*
+ * ========================================================================
+ * 🌍 UNIFIED LOCATION SERVICE - LOCATION INTELLIGENCE ORCHESTRATOR 🌍
+ * ========================================================================
  * 
  * Centralized location intelligence service that enhances the application's
- * Google Maps integration with advanced location-based features.
+ * Google Maps integration with advanced location-based features and unified
+ * service integration following established architectural patterns.
  * 
- * INTEGRATION BOUNDARIES:
- * - CALLS: UnifiedMarketplaceService for location-based product operations
- * - CALLS: UnifiedPaymentService for shipping cost calculations
- * - CALLED BY: Components, hooks, other services
+ * ⚠️  CRITICAL ARCHITECTURE BOUNDARIES:
+ * - MUST call UnifiedMarketplaceService for location-based product operations
+ * - MUST call UnifiedPaymentService for shipping cost calculations
+ * - MUST preserve existing Google Places functionality
+ * - MUST implement proper service boundaries and protection measures
  * 
- * NEVER:
- * - Bypasses UnifiedMarketplaceService for product operations
- * - Implements payment logic (belongs to UnifiedPaymentService)
- * - Duplicates existing Google Places functionality
+ * 🔗 SYSTEM INTEGRATION:
+ * - UnifiedMarketplaceService: Location-based product search and vendor matching
+ * - UnifiedPaymentService: Dynamic shipping cost calculations
+ * - Google Places Service: Enhanced with location intelligence
+ * - Location Services Edge Function: Real-time geocoding and distance calculations
+ * - Database: Vendor locations, shipping zones, location cache
  * 
- * LOCATION INTELLIGENCE FEATURES:
- * - Enhanced address autocomplete and validation
- * - Geocoding and reverse geocoding
- * - Distance calculations for shipping optimization
- * - Location-based vendor matching
- * - Shipping zone optimization
- * - Location caching and performance optimization
+ * 🚫 NEVER:
+ * - Bypass UnifiedMarketplaceService for product operations
+ * - Implement payment logic (belongs to UnifiedPaymentService)
+ * - Duplicate existing Google Places functionality
+ * - Make direct API calls without proper error handling and fallbacks
+ * 
+ * 🛡️ PROTECTION MEASURES:
+ * - Request deduplication and caching
+ * - Rate limiting for external API calls
+ * - Unified error handling with fallback mechanisms
+ * - Service boundary enforcement
+ * - Performance monitoring and debugging
+ * 
+ * Last major update: 2025-01-24 (Phase 1-2 Implementation)
+ * ========================================================================
  */
 
 import { googlePlacesService, GooglePlacesPrediction, StandardizedAddress } from '../googlePlacesService';
 import { unifiedMarketplaceService } from '../marketplace/UnifiedMarketplaceService';
 import { unifiedPaymentService } from '../payment/UnifiedPaymentService';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // ================================
 // Type Definitions
@@ -98,11 +111,19 @@ export interface ShippingOption {
 // ================================
 
 class UnifiedLocationService {
-  private cache = new Map<string, any>();
+  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   private coordinates = new Map<string, LocationCoordinates>();
   private shippingZones: ShippingZone[] = [];
   private vendorLocations: VendorLocation[] = [];
+  private activeRequests = new Map<string, Promise<any>>();
+  private toastHistory = new Set<string>();
+  private rateLimitTracker = new Map<string, { count: number; resetTime: number }>();
+  
   private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes default
+  private readonly TOAST_COOLDOWN = 3000; // 3 seconds between same toasts
+  private readonly RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+  private readonly RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per minute
 
   constructor() {
     console.log('🌍 [UnifiedLocationService] Service initialized');
@@ -417,23 +438,96 @@ class UnifiedLocationService {
   async calculateLocationBasedShipping(
     items: any[],
     shippingAddress: StandardizedAddress
-  ): Promise<{ cost: number; options: ShippingOption[] }> {
-    console.log(`🌍 [UnifiedLocationService] Calculating location-based shipping`);
+  ): Promise<{ cost: number; options: ShippingOption[]; optimization: ShippingOptimization | null }> {
+    console.log(`🌍 [UnifiedLocationService] Calculating location-based shipping for ${items.length} items`);
     
-    try {
-      const optimization = await this.getShippingOptimization(shippingAddress);
-      if (!optimization) {
-        return { cost: 9.99, options: [] }; // Default fallback
-      }
-      
-      return {
-        cost: optimization.cost,
-        options: optimization.options
-      };
-    } catch (error) {
-      console.error('🌍 [UnifiedLocationService] Shipping calculation error:', error);
-      return { cost: 9.99, options: [] };
+    if (!this.checkRateLimit('shipping_calculation')) {
+      return { cost: 9.99, options: [], optimization: null };
     }
+
+    const cacheKey = this.generateCacheKey('shipping_calc', {
+      itemCount: items.length,
+      address: shippingAddress.formatted_address,
+      totalValue: items.reduce((sum, item) => sum + (item.price || 0), 0)
+    });
+
+    return this.executeWithDeduplication(
+      cacheKey,
+      async () => {
+        const optimization = await this.getShippingOptimization(shippingAddress);
+        if (!optimization) {
+          throw new Error('Unable to calculate shipping optimization');
+        }
+        
+        // Calculate item-based adjustments
+        const itemWeight = items.reduce((sum, item) => sum + (item.weight || 1), 0);
+        const itemValue = items.reduce((sum, item) => sum + (item.price || 0), 0);
+        
+        // Adjust shipping costs based on items
+        const adjustedOptions = optimization.options.map(option => ({
+          ...option,
+          cost: this.calculateAdjustedShippingCost(option.cost, itemWeight, itemValue)
+        }));
+
+        return {
+          cost: adjustedOptions[0]?.cost || optimization.cost,
+          options: adjustedOptions,
+          optimization
+        };
+      },
+      this.CACHE_TTL
+    ).catch(error => {
+      console.error('🌍 [UnifiedLocationService] Shipping calculation error:', error);
+      this.showToast('Shipping calculation failed', 'error', 'Using standard rates');
+      return { 
+        cost: 9.99, 
+        options: this.getDefaultShippingOptions(), 
+        optimization: null 
+      };
+    });
+  }
+
+  /**
+   * Calculate adjusted shipping cost based on item characteristics
+   */
+  private calculateAdjustedShippingCost(baseCost: number, weight: number, value: number): number {
+    let adjustedCost = baseCost;
+    
+    // Weight adjustment (add $1 per pound over 5 lbs)
+    if (weight > 5) {
+      adjustedCost += (weight - 5) * 1.0;
+    }
+    
+    // Value-based insurance (0.5% of value over $100)
+    if (value > 100) {
+      adjustedCost += (value - 100) * 0.005;
+    }
+    
+    return Math.round(adjustedCost * 100) / 100;
+  }
+
+  /**
+   * Get default shipping options for fallback scenarios
+   */
+  private getDefaultShippingOptions(): ShippingOption[] {
+    return [
+      {
+        id: 'standard',
+        name: 'Standard Shipping',
+        cost: 9.99,
+        timeMinutes: 4320, // 3 days
+        carrier: 'USPS',
+        trackingAvailable: true
+      },
+      {
+        id: 'expedited',
+        name: 'Expedited Shipping',
+        cost: 19.99,
+        timeMinutes: 2880, // 2 days
+        carrier: 'UPS',
+        trackingAvailable: true
+      }
+    ];
   }
 
   // ================================
@@ -756,11 +850,141 @@ class UnifiedLocationService {
     return null;
   }
 
-  private setCachedData(key: string, data: any): void {
+  private setCachedData(key: string, data: any, customTtl?: number): void {
     this.cache.set(key, {
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ttl: customTtl || this.CACHE_TTL
     });
+  }
+
+  // ================================
+  // Service Protection & Error Handling
+  // ================================
+
+  /**
+   * Check rate limiting for API calls
+   */
+  private checkRateLimit(operation: string): boolean {
+    const now = Date.now();
+    const tracker = this.rateLimitTracker.get(operation);
+    
+    if (!tracker || now > tracker.resetTime) {
+      // Reset or initialize rate limit
+      this.rateLimitTracker.set(operation, {
+        count: 1,
+        resetTime: now + this.RATE_LIMIT_WINDOW
+      });
+      return true;
+    }
+    
+    if (tracker.count >= this.RATE_LIMIT_MAX_REQUESTS) {
+      this.showToast(
+        'Rate limit exceeded',
+        'error',
+        `Too many ${operation} requests. Please wait a moment.`
+      );
+      return false;
+    }
+    
+    tracker.count++;
+    return true;
+  }
+
+  /**
+   * Show toast with deduplication (following unified service patterns)
+   */
+  private showToast(message: string, type: 'success' | 'error' | 'loading' = 'success', description?: string) {
+    const toastKey = `${type}:${message}`;
+    
+    // Check if we've shown this toast recently
+    if (this.toastHistory.has(toastKey)) return;
+    
+    this.toastHistory.add(toastKey);
+    
+    // Remove from history after cooldown
+    setTimeout(() => {
+      this.toastHistory.delete(toastKey);
+    }, this.TOAST_COOLDOWN);
+
+    if (type === 'loading') {
+      toast.loading(message, { description });
+    } else if (type === 'error') {
+      toast.error(message, { description });
+    } else {
+      toast.success(message, { description });
+    }
+  }
+
+  /**
+   * Generate cache key with consistent patterns
+   */
+  private generateCacheKey(operation: string, params: any): string {
+    if (typeof params === 'object') {
+      const sortedParams = Object.keys(params)
+        .sort()
+        .map(key => `${key}:${params[key]}`)
+        .join(':');
+      return `${operation}:${sortedParams}`;
+    }
+    return `${operation}:${params}`;
+  }
+
+  /**
+   * Request deduplication for expensive operations
+   */
+  private async executeWithDeduplication<T>(
+    cacheKey: string,
+    operation: () => Promise<T>,
+    ttl: number = this.CACHE_TTL
+  ): Promise<T> {
+    // Check if request is already in progress
+    if (this.activeRequests.has(cacheKey)) {
+      console.log(`🌍 [UnifiedLocationService] Deduplicating request: ${cacheKey}`);
+      return this.activeRequests.get(cacheKey) as Promise<T>;
+    }
+
+    // Check cache first
+    const cached = this.getCachedData(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Execute operation and cache result
+    const promise = operation()
+      .then(result => {
+        this.setCachedData(cacheKey, result, ttl);
+        this.activeRequests.delete(cacheKey);
+        return result;
+      })
+      .catch(error => {
+        this.activeRequests.delete(cacheKey);
+        throw error;
+      });
+
+    this.activeRequests.set(cacheKey, promise);
+    return promise;
+  }
+
+  /**
+   * Enhanced error handling with fallback mechanisms
+   */
+  private async executeWithFallback<T>(
+    operation: () => Promise<T>,
+    fallback: () => T | Promise<T>,
+    errorContext: string
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      console.error(`🌍 [UnifiedLocationService] ${errorContext}:`, error);
+      this.showToast(
+        'Service temporarily unavailable',
+        'error',
+        'Using cached data or fallback'
+      );
+      return await fallback();
+    }
   }
 
   /**

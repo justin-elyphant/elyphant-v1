@@ -169,12 +169,17 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
   
   // Calculate how many products to fetch from each category based on page and limit
   const productsPerCategory = Math.ceil(limit / giftsForHerCategories.length);
-  const zincPage = Math.ceil(page / 2); // Since we're fetching from multiple categories, adjust page
   
-  const promises = giftsForHerCategories.map(async (category) => {
+  // For proper pagination, we need to offset the results based on page
+  // Page 1: categories 0-5, Page 2: offset the search within categories
+  const categoryOffset = (page - 1) * productsPerCategory;
+  
+  const promises = giftsForHerCategories.map(async (category, index) => {
     try {
-      console.log(`Searching gifts for her category: ${category} (page ${zincPage})`);
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${zincPage}&retailer=amazon`, {
+      // Use actual page number for pagination
+      const actualPage = page + Math.floor(index / 3); // Stagger pages across categories
+      console.log(`Searching gifts for her category: ${category} (page ${actualPage})`);
+      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${actualPage}&retailer=amazon`, {
         method: 'GET',
         headers: {
           'Authorization': 'Basic ' + btoa(`${api_key}:`)
@@ -227,7 +232,7 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
     return {
       results: paginatedResults,
       total: paginatedResults.length,
-      hasMore: allResults.length > limit || zincPage <= 3, // Estimate if more pages available
+      hasMore: allResults.length > limit || page <= 5, // Estimate if more pages available
       currentPage: page,
       categoryBatch: true
     };

@@ -64,8 +64,8 @@ const StreamlinedMarketplaceWrapper = () => {
           throw new Error(response.error.message);
         }
         
-        console.log('Returning products:', response.data?.products?.length || 0);
-        return response.data?.products || [];
+        console.log('Returning products:', response.data?.results?.length || 0);
+        return response.data?.results || [];
       }
       
       // For other search types, use unified marketplace

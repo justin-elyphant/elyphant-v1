@@ -99,5 +99,14 @@ export const brandData: Record<string, BrandData> = {
 };
 
 export const getBrandData = (brandId: string): BrandData | null => {
-  return brandData[brandId.toLowerCase()] || null;
+  const normalizedId = brandId.toLowerCase().replace(/\s+/g, '');
+  
+  // Handle special brand name mappings
+  const brandMappings: Record<string, string> = {
+    'madein': 'madein',
+    'made in': 'madein'
+  };
+  
+  const mappedId = brandMappings[normalizedId] || normalizedId;
+  return brandData[mappedId] || null;
 };

@@ -40,7 +40,9 @@ class UnifiedMarketplaceService {
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
     const { luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, page = 1, maxResults = 20 } = options;
-    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:page:${page}:limit:${maxResults}`;
+    // Add version suffix to force cache refresh for updated categories
+    const version = giftsUnder50 ? 'v2' : 'v1';
+    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:page:${page}:limit:${maxResults}:${version}`;
   }
 
   /**

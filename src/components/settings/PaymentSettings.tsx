@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PaymentMethodManager from "@/components/payments/PaymentMethodManager";
+import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 
 const PaymentSettings = () => {
   return (
@@ -14,7 +14,7 @@ const PaymentSettings = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodManager />
+          <UnifiedPaymentMethodManager mode="management" />
         </CardContent>
       </Card>
       

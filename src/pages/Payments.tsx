@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PaymentMethodManager from "@/components/payments/PaymentMethodManager";
+import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -32,7 +32,7 @@ const Payments = () => {
           </div>
 
           <div className="space-y-6">
-            <PaymentMethodManager />
+            <UnifiedPaymentMethodManager mode="management" />
             
             <Card>
               <CardHeader>

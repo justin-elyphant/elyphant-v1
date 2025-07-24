@@ -23,15 +23,13 @@ import {
   canUserContribute,
   type GroupGiftProject
 } from "@/services/groupGiftPaymentService";
-import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
   CardElement,
   useStripe,
   useElements
 } from "@stripe/react-stripe-js";
-
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_51...');
+import { stripeClientManager } from "@/services/payment/StripeClientManager";
 
 interface ContributionFormProps {
   project: GroupGiftProject;
@@ -300,7 +298,7 @@ const GroupGiftContributionModal = ({
           </DialogTitle>
         </DialogHeader>
         
-        <Elements stripe={stripePromise}>
+        <Elements stripe={stripeClientManager.getStripePromise()}>
           <ContributionForm
             project={project}
             onSuccess={handleSuccess}

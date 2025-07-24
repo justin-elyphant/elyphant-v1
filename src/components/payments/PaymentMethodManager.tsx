@@ -1,49 +1,28 @@
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
-import { Elements } from '@stripe/react-stripe-js';
-import { stripeClientManager } from "@/services/payment/StripeClientManager";
-import PaymentMethodForm from "./PaymentMethodForm";
-import SavedPaymentMethods from "./SavedPaymentMethods";
+/*
+ * ========================================================================
+ * ⚠️  DEPRECATED PAYMENT METHOD MANAGER - USE UnifiedPaymentMethodManager
+ * ========================================================================
+ * 
+ * ❌ DEPRECATED: This component is deprecated as of 2025-01-24
+ * ✅ USE INSTEAD: UnifiedPaymentMethodManager for all payment method management
+ * 
+ * MIGRATION COMPLETED:
+ * ✅ UnifiedPaymentMethodManager provides all functionality of this component
+ * ✅ Enhanced with better UX, error handling, and selection capabilities
+ * ✅ Integrated with UnifiedPaymentService protection measures
+ * 
+ * This wrapper is kept for backward compatibility only.
+ * ========================================================================
+ */
+
+import React from 'react';
+import UnifiedPaymentMethodManager from './UnifiedPaymentMethodManager';
 
 const PaymentMethodManager = () => {
-  const [activeTab, setActiveTab] = useState<string>("saved");
+  console.warn('DEPRECATED: PaymentMethodManager is deprecated. Use UnifiedPaymentMethodManager instead.');
   
-  const handleAddSuccess = () => {
-    setActiveTab("saved");
-  };
-  
-  return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>Payment Methods</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="saved">Saved Methods</TabsTrigger>
-            <TabsTrigger value="add">
-              <Plus className="h-4 w-4 mr-1" />
-              Add New
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="saved" className="mt-4">
-            <SavedPaymentMethods />
-          </TabsContent>
-          
-          <TabsContent value="add" className="mt-4">
-            <Elements stripe={stripeClientManager.getStripePromise()}>
-              <PaymentMethodForm onSuccess={handleAddSuccess} />
-            </Elements>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
+  return <UnifiedPaymentMethodManager mode="management" />;
 };
 
 export default PaymentMethodManager;

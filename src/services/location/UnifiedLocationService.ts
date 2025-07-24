@@ -28,6 +28,7 @@
 import { googlePlacesService, GooglePlacesPrediction, StandardizedAddress } from '../googlePlacesService';
 import { unifiedMarketplaceService } from '../marketplace/UnifiedMarketplaceService';
 import { unifiedPaymentService } from '../payment/UnifiedPaymentService';
+import { supabase } from '@/integrations/supabase/client';
 
 // ================================
 // Type Definitions
@@ -107,6 +108,8 @@ class UnifiedLocationService {
     console.log('🌍 [UnifiedLocationService] Service initialized');
     this.initializeShippingZones();
     this.initializeVendorLocations();
+    this.loadDatabaseShippingZones();
+    this.loadDatabaseVendorLocations();
   }
 
   // ================================
@@ -216,7 +219,7 @@ class UnifiedLocationService {
   // ================================
 
   /**
-   * Get coordinates from address
+   * Get coordinates from address using real Google Maps Geocoding
    */
   async getCoordinatesFromAddress(address: StandardizedAddress): Promise<LocationCoordinates | null> {
     const addressKey = `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
@@ -224,20 +227,36 @@ class UnifiedLocationService {
     if (cached) return cached;
 
     try {
-      // For demo, simulate geocoding based on city/state
-      const coordinates = this.simulateGeocoding(address);
-      if (coordinates) {
+      const { data, error } = await supabase.functions.invoke('location-services', {
+        body: {
+          operation: 'geocode',
+          data: { address: address.formatted_address || addressKey }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.data) {
+        const coordinates = data.data;
         this.coordinates.set(addressKey, coordinates);
+        return coordinates;
       }
-      return coordinates;
+
+      // Fallback to simulation for demo
+      const fallbackCoords = this.simulateGeocoding(address);
+      if (fallbackCoords) {
+        this.coordinates.set(addressKey, fallbackCoords);
+      }
+      return fallbackCoords;
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Geocoding error:', error);
-      return null;
+      // Fallback to simulation
+      return this.simulateGeocoding(address);
     }
   }
 
   /**
-   * Get address from coordinates (reverse geocoding)
+   * Get address from coordinates using real Google Maps Reverse Geocoding
    */
   async getAddressFromCoordinates(coordinates: LocationCoordinates): Promise<StandardizedAddress | null> {
     const coordKey = `${coordinates.lat},${coordinates.lng}`;
@@ -246,25 +265,40 @@ class UnifiedLocationService {
     if (cached) return cached;
 
     try {
-      // For demo, simulate reverse geocoding
-      const address = this.simulateReverseGeocoding(coordinates);
-      if (address) {
+      const { data, error } = await supabase.functions.invoke('location-services', {
+        body: {
+          operation: 'reverse_geocode',
+          data: { lat: coordinates.lat, lng: coordinates.lng }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.data) {
+        const address = data.data;
         this.setCachedData(cacheKey, address);
+        return address;
       }
-      return address;
+
+      // Fallback to simulation for demo
+      const fallbackAddress = this.simulateReverseGeocoding(coordinates);
+      if (fallbackAddress) {
+        this.setCachedData(cacheKey, fallbackAddress);
+      }
+      return fallbackAddress;
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Reverse geocoding error:', error);
-      return null;
+      return this.simulateReverseGeocoding(coordinates);
     }
   }
 
   /**
-   * Calculate distance between two addresses
+   * Calculate distance between two addresses (fallback method)
    */
   async calculateDistance(
     from: StandardizedAddress | LocationCoordinates,
     to: StandardizedAddress | LocationCoordinates
-  ): Promise<{ distance: number; timeMinutes: number } | null> {
+  ): Promise<{ distance: number; timeMinutes: number; cost: number } | null> {
     try {
       const fromCoords = 'lat' in from ? from : await this.getCoordinatesFromAddress(from);
       const toCoords = 'lat' in to ? to : await this.getCoordinatesFromAddress(to);
@@ -274,8 +308,9 @@ class UnifiedLocationService {
       // Calculate distance using Haversine formula
       const distance = this.calculateHaversineDistance(fromCoords, toCoords);
       const timeMinutes = Math.ceil(distance * 1.5); // Rough estimate: 1.5 minutes per mile
+      const cost = this.calculateBaseCost(distance);
       
-      return { distance, timeMinutes };
+      return { distance, timeMinutes, cost };
     } catch (error) {
       console.error('🌍 [UnifiedLocationService] Distance calculation error:', error);
       return null;
@@ -498,7 +533,136 @@ class UnifiedLocationService {
   private calculateBaseCost(distance: number): number {
     const baseCost = 5.99;
     const distanceCost = distance * 0.10;
-    return Number((baseCost + distanceCost).toFixed(2));
+    const total = baseCost + distanceCost;
+    return Math.round(total * 100) / 100; // Round to 2 decimal places
+  }
+
+  /**
+   * Load shipping zones from database
+   */
+  private async loadDatabaseShippingZones(): Promise<void> {
+    try {
+      const { data: zones, error } = await supabase
+        .from('shipping_zones')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('🌍 [UnifiedLocationService] Failed to load shipping zones:', error);
+        return;
+      }
+
+      if (zones) {
+        this.shippingZones = zones.map(zone => ({
+          id: zone.id,
+          name: zone.name,
+          coordinates: zone.coordinates,
+          deliveryTimeMinutes: zone.delivery_time_minutes,
+          shippingCostMultiplier: zone.shipping_cost_multiplier,
+          isActive: zone.is_active
+        }));
+        console.log(`🌍 [UnifiedLocationService] Loaded ${zones.length} shipping zones from database`);
+      }
+    } catch (error) {
+      console.error('🌍 [UnifiedLocationService] Database shipping zones load error:', error);
+    }
+  }
+
+  /**
+   * Load vendor locations from database
+   */
+  private async loadDatabaseVendorLocations(): Promise<void> {
+    try {
+      const { data: vendors, error } = await supabase
+        .from('vendor_locations')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('🌍 [UnifiedLocationService] Failed to load vendor locations:', error);
+        return;
+      }
+
+      if (vendors) {
+        this.vendorLocations = vendors.map(vendor => ({
+          vendorId: vendor.vendor_id,
+          name: vendor.name,
+          address: vendor.address,
+          coordinates: vendor.coordinates,
+          servicesArea: vendor.service_area_miles,
+          shippingTimeMinutes: vendor.shipping_time_minutes,
+          isActive: vendor.is_active
+        }));
+        console.log(`🌍 [UnifiedLocationService] Loaded ${vendors.length} vendor locations from database`);
+      }
+    } catch (error) {
+      console.error('🌍 [UnifiedLocationService] Database vendor locations load error:', error);
+    }
+  }
+
+  /**
+   * Calculate real distances using Google Distance Matrix API
+   */
+  async calculateRealDistance(
+    from: StandardizedAddress | LocationCoordinates,
+    to: StandardizedAddress | LocationCoordinates
+  ): Promise<{ distance: number; timeMinutes: number; cost: number } | null> {
+    try {
+      // Convert addresses to coordinate strings for Distance Matrix API
+      let fromStr: string;
+      let toStr: string;
+
+      if ('lat' in from) {
+        fromStr = `${from.lat},${from.lng}`;
+      } else {
+        fromStr = from.formatted_address || `${from.street}, ${from.city}, ${from.state} ${from.zipCode}`;
+      }
+
+      if ('lat' in to) {
+        toStr = `${to.lat},${to.lng}`;
+      } else {
+        toStr = to.formatted_address || `${to.street}, ${to.city}, ${to.state} ${to.zipCode}`;
+      }
+
+      const { data, error } = await supabase.functions.invoke('location-services', {
+        body: {
+          operation: 'distance_matrix',
+          data: {
+            origins: [fromStr],
+            destinations: [toStr]
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.data.rows?.[0]?.elements?.[0]) {
+        const element = data.data.rows[0].elements[0];
+        
+        if (element.status === 'OK') {
+          const distanceMeters = element.distance.value;
+          const durationSeconds = element.duration.value;
+          
+          const distanceMiles = distanceMeters * 0.000621371; // Convert meters to miles
+          const timeMinutes = Math.ceil(durationSeconds / 60); // Convert seconds to minutes
+          const cost = this.calculateBaseCost(distanceMiles);
+
+          return {
+            distance: Math.round(distanceMiles * 100) / 100,
+            timeMinutes,
+            cost
+          };
+        }
+      }
+
+      // Fallback to Haversine calculation
+      const fallbackResult = await this.calculateDistance(from, to);
+      return fallbackResult;
+    } catch (error) {
+      console.error('🌍 [UnifiedLocationService] Real distance calculation error:', error);
+      const fallbackResult = await this.calculateDistance(from, to);
+      return fallbackResult;
+    }
   }
 
   private getDeliveryZone(coordinates: LocationCoordinates): ShippingZone | null {

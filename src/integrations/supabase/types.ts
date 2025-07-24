@@ -17,29 +17,49 @@ export type Database = {
       address_intelligence: {
         Row: {
           address_hash: string
+          address_type: string | null
           analysis: Json
+          coordinates: Json | null
           created_at: string
+          delivery_zone_id: string | null
           id: string
+          is_valid_for_delivery: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address_hash: string
+          address_type?: string | null
           analysis: Json
+          coordinates?: Json | null
           created_at?: string
+          delivery_zone_id?: string | null
           id?: string
+          is_valid_for_delivery?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address_hash?: string
+          address_type?: string | null
           analysis?: Json
+          coordinates?: Json | null
           created_at?: string
+          delivery_zone_id?: string | null
           id?: string
+          is_valid_for_delivery?: boolean | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "address_intelligence_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       address_requests: {
         Row: {
@@ -1268,6 +1288,33 @@ export type Database = {
           },
         ]
       }
+      location_cache: {
+        Row: {
+          cache_data: Json
+          cache_key: string
+          cache_type: string
+          created_at: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          cache_data: Json
+          cache_key: string
+          cache_type: string
+          created_at?: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          cache_data?: Json
+          cache_key?: string
+          cache_type?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       message_mentions: {
         Row: {
           created_at: string | null
@@ -2075,6 +2122,39 @@ export type Database = {
           },
         ]
       }
+      shipping_zones: {
+        Row: {
+          coordinates: Json
+          created_at: string
+          delivery_time_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          shipping_cost_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          coordinates: Json
+          created_at?: string
+          delivery_time_minutes?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          shipping_cost_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          coordinates?: Json
+          created_at?: string
+          delivery_time_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          shipping_cost_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       typing_indicators: {
         Row: {
           chat_with_user_id: string
@@ -2353,6 +2433,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendor_locations: {
+        Row: {
+          address: Json
+          coordinates: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          service_area_miles: number
+          shipping_time_minutes: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          address: Json
+          coordinates: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          service_area_miles?: number
+          shipping_time_minutes?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          address?: Json
+          coordinates?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          service_area_miles?: number
+          shipping_time_minutes?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
       }
       wishlist_items: {
         Row: {

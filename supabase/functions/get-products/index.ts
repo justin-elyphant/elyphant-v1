@@ -360,11 +360,11 @@ const BRAND_CATEGORY_MAPPINGS = {
     "adidas sports accessories"
   ],
   lululemon: [
-    "lululemon athletic wear",
-    "lululemon yoga pants",
-    "lululemon workout tops",
-    "lululemon sports bras",
-    "lululemon activewear accessories"
+    "athletic wear",
+    "yoga pants",
+    "workout tops",
+    "sports bras",
+    "activewear accessories"
   ],
   madein: [
     "made in cookware pots pans",
@@ -382,7 +382,7 @@ const BRAND_CATEGORY_MAPPINGS = {
   ]
 };
 
-// Brand categories search handler
+// Brand categories search handler with brand filtering
 const searchBrandCategories = async (api_key: string, brandName: string, page: number = 1, limit: number = 20) => {
   console.log(`Starting brand category search for: ${brandName}`);
   
@@ -400,9 +400,21 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
         }
       });
       const data = await response.json();
+      
+      // Filter results by brand
+      let filteredResults = data.results || [];
+      if (filteredResults.length > 0) {
+        filteredResults = filteredResults.filter((product: any) => {
+          const productBrand = (product.brand || '').toLowerCase();
+          const targetBrand = brandName.toLowerCase();
+          return productBrand.includes(targetBrand) || targetBrand.includes(productBrand);
+        });
+        console.log(`Filtered fallback search: ${filteredResults.length} products match brand ${brandName}`);
+      }
+      
       return {
-        results: data.results || [],
-        total: data.results?.length || 0
+        results: filteredResults,
+        total: filteredResults.length
       };
     } catch (error) {
       console.error(`Fallback search failed for ${brandName}:`, error);
@@ -410,7 +422,33 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
     }
   }
   
-  return searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit);
+  // Use category batch search and then filter by brand
+  const categoryResults = await searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit);
+  
+  // Filter results to only include products from the specified brand
+  if (categoryResults.results && categoryResults.results.length > 0) {
+    const filteredResults = categoryResults.results.filter((product: any) => {
+      const productBrand = (product.brand || '').toLowerCase();
+      const targetBrand = brandName.toLowerCase();
+      const isMatch = productBrand.includes(targetBrand) || targetBrand.includes(productBrand);
+      
+      if (!isMatch) {
+        console.log(`Filtering out product: "${product.title}" (brand: "${product.brand}") - doesn't match ${brandName}`);
+      }
+      
+      return isMatch;
+    });
+    
+    console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products match brand ${brandName}`);
+    
+    return {
+      ...categoryResults,
+      results: filteredResults,
+      total: filteredResults.length
+    };
+  }
+  
+  return categoryResults;
 };
 
 serve(async (req) => {

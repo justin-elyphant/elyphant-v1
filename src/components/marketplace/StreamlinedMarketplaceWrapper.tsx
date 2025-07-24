@@ -49,6 +49,7 @@ const StreamlinedMarketplaceWrapper = () => {
         giftsForHim: searchParams.get('giftsForHim'),
         giftsUnder50: searchParams.get('giftsUnder50'),
         luxuryCategories: searchParams.get('luxuryCategories'),
+        brandCategories: searchParams.get('brandCategories'),
         search: searchParams.get('search')
       });
       
@@ -57,7 +58,8 @@ const StreamlinedMarketplaceWrapper = () => {
         ...(searchParams.get('giftsForHer') && { giftsForHer: true }),
         ...(searchParams.get('giftsForHim') && { giftsForHim: true }),
         ...(searchParams.get('giftsUnder50') && { giftsUnder50: true }),
-        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true })
+        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
+        ...(searchParams.get('brandCategories') && { brandCategories: true, query: searchParams.get('brandCategories') })
       };
       
       if (Object.keys(categoryParams).length > 0) {
@@ -88,11 +90,12 @@ const StreamlinedMarketplaceWrapper = () => {
         page,
         limit: 20,
         ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
+        ...(searchParams.get('brandCategories') && { brandCategories: true }),
         ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
         ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') })
       };
       
-      const searchTerm = searchParams.get('search') || '';
+      const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
       const result = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
       
       return result || [];

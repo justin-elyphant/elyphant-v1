@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { customerAnalyticsService } from "@/services/analytics/customerAnalyticsService";
 import { Product } from "@/types/product";
-import { useAuth } from "@/contexts/auth";
+import { useAuth } from "@/contexts/auth/AuthProvider";
 
 /**
  * Custom hook for customer analytics integration

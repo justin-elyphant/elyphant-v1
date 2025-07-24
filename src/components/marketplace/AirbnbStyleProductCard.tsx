@@ -15,6 +15,7 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -272,18 +273,27 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           </div>
         )}
         
-        {/* Status Badge - Top Left */}
+        {/* Product Status Badges - Top Left */}
+        <ProductStatusBadges
+          isBestSeller={isBestSeller()}
+          isNewArrival={isNewArrival()}
+          isRecentlyViewed={isRecentlyViewed()}
+          bestSellerType={getBestSellerType()}
+          badgeText={getBadgeText()}
+        />
+
+        {/* Custom Status Badge - Top Left (below product status badges) */}
         {statusBadge && (
-          <div className="absolute top-3 left-3 z-10">
+          <div className="absolute top-20 left-2 z-10">
             <Badge className={cn("text-xs font-medium", statusBadge.color)}>
               {statusBadge.badge}
             </Badge>
           </div>
         )}
 
-        {/* Vendor Badge - Top Left (below status) */}
+        {/* Vendor Badge - Top Left (below other badges) */}
         {isLocal && (
-          <div className="absolute top-3 left-3 z-10" style={{ marginTop: statusBadge ? '32px' : '0' }}>
+          <div className="absolute left-2 z-10" style={{ top: statusBadge ? '144px' : '80px' }}>
             <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs font-medium">
               <MapPin className="h-3 w-3 mr-1" />
               Local Vendor
@@ -359,29 +369,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
           </div>
         )}
 
-        {/* Enhanced Status Badges */}
-        <div className="space-y-1">
-          {/* Best Seller Badge */}
-          {isBestSeller() && (
-            <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
-              {getBadgeText() || "Best Seller"}
-            </Badge>
-          )}
-          
-          {/* New Arrival Badge */}
-          {isNewArrival() && (
-            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
-              New
-            </Badge>
-          )}
-          
-          {/* Recently Viewed Badge */}
-          {isRecentlyViewed() && (
-            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
-              Recently Viewed
-            </Badge>
-          )}
-        </div>
 
         {/* Free Shipping Indicator */}
         {isFreeShipping() && (

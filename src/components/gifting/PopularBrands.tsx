@@ -45,7 +45,7 @@ const popularBrands = [
   { 
     id: 7, 
     name: "Made In", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Made_In_logo.svg/2560px-Made_In_logo.svg.png", 
+    logoUrl: "https://cdn.shopify.com/s/files/1/0017/2070/5987/files/logo_madein_1080x.png?v=1648137983", 
     productCount: 87 
   },
   { 
@@ -61,24 +61,48 @@ const PopularBrands = () => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Carousel scroll functions
+  // Create infinite scroll data by duplicating brands
+  const infiniteBrands = [...popularBrands, ...popularBrands, ...popularBrands];
+
+  // Carousel scroll functions with infinite scrolling logic
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
+      const container = scrollContainerRef.current;
+      const cardWidth = 180 + 16; // card width + gap
+      const newScrollLeft = container.scrollLeft - cardWidth;
+      
+      // If we're at the beginning, jump to the end of the first set
+      if (newScrollLeft < 0) {
+        container.scrollLeft = popularBrands.length * cardWidth + newScrollLeft;
+      } else {
+        container.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      }
     }
   };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
+      const container = scrollContainerRef.current;
+      const cardWidth = 180 + 16; // card width + gap
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const newScrollLeft = container.scrollLeft + cardWidth;
+      
+      // If we're near the end, jump back to the beginning of the second set
+      if (newScrollLeft >= maxScroll - cardWidth) {
+        container.scrollLeft = popularBrands.length * cardWidth;
+      } else {
+        container.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
     }
   };
+
+  // Initialize scroll position to the middle set for infinite effect
+  React.useEffect(() => {
+    if (scrollContainerRef.current) {
+      const cardWidth = 180 + 16;
+      scrollContainerRef.current.scrollLeft = popularBrands.length * cardWidth;
+    }
+  }, []);
   
   const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
     e.preventDefault(); // Prevent default navigation
@@ -135,10 +159,10 @@ const PopularBrands = () => {
         className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-          {popularBrands.map((brand) => (
+        {infiniteBrands.map((brand, index) => (
             <Link 
-              to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`}
-              key={brand.id} 
+              to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`} 
+              key={`${brand.id}-${index}`} 
               onClick={(e) => handleBrandClick(e, brand.name)}
               className={loadingBrand === brand.name ? "pointer-events-none opacity-70" : ""}
             >

@@ -6,7 +6,7 @@ import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Sh
 import { Product } from "@/types/product";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
 import { useAuth } from "@/contexts/auth";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import SocialShareButton from "@/components/marketplace/product-item/SocialShareButton";
@@ -153,7 +153,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
     const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
     // Ensure price is in dollars, not cents
     const normalizedPrice = price > 100 ? price / 100 : price;
-    return normalizedPrice.toFixed(2);
+    return formatPrice(normalizedPrice);
   };
 
   const getRating = () => {
@@ -413,15 +413,15 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
               {hasDiscount() ? (
                 <>
                   <span className="font-bold text-lg text-gray-900">
-                    ${getSalePrice()?.toFixed(2)}
+                    {formatPrice(getSalePrice() || 0)}
                   </span>
                   <span className="text-sm text-gray-500 line-through">
-                    ${getProductPrice()}
+                    {getProductPrice()}
                   </span>
                 </>
               ) : (
                 <span className="font-bold text-lg text-gray-900">
-                  ${getProductPrice()}
+                  {getProductPrice()}
                 </span>
               )}
             </div>

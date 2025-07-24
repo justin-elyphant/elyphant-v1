@@ -8,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Format currency with proper formatting for the given locale and currency
+ * Handles thousand separators automatically and supports various price ranges
  * @param {number} amount - The amount to format
  * @param {string} currency - The currency code (e.g., 'USD', 'EUR')
  * @param {string} locale - The locale code (e.g., 'en-US', 'fr-FR')
@@ -18,12 +19,31 @@ export function formatCurrency(
   currency: string = 'USD',
   locale: string = 'en-US'
 ): string {
+  // Handle edge cases
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(0);
+  }
+
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+/**
+ * Simple price formatter for when you just need the dollar amount
+ * @param {number} price - The price to format
+ * @returns {string} The formatted price string (e.g., "$1,999.99")
+ */
+export function formatPrice(price: number): string {
+  return formatCurrency(price);
 }
 
 /**

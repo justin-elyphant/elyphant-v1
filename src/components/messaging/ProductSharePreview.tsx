@@ -3,6 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductSharePreviewProps {
   productId: number;
@@ -40,7 +41,7 @@ const ProductSharePreview = ({
               <p className="text-xs text-muted-foreground">{productBrand}</p>
             )}
             {productPrice && (
-              <p className="text-sm font-semibold text-primary">${productPrice}</p>
+              <p className="text-sm font-semibold text-primary">{formatPrice(productPrice)}</p>
             )}
             <Button
               size="sm"

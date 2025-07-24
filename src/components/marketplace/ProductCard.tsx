@@ -3,6 +3,7 @@ import React from "react";
 import { Product } from "@/types/product";
 import { Star, Heart, Share, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -19,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   onShare 
 }) => {
-  const formatPrice = (price: number) => {
+  const formatProductPrice = (price: number) => {
     // More robust price detection: if price looks like cents (no decimals and > $100 equivalent), convert
     // Examples: 1999 cents = $19.99, 79998 cents = $799.98
     let actualPrice = price;
@@ -33,10 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       }
     }
     
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(actualPrice);
+    return formatPrice(actualPrice);
   };
 
   const formatRating = (rating: number) => {
@@ -135,7 +133,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Price and Action Icons */}
         <div className="flex items-center justify-between">
           <span className="font-semibold text-lg text-gray-900">
-            {formatPrice(product.price)}
+            {formatProductPrice(product.price)}
           </span>
           
           {/* Styled Action Icons - Share and Cart */}

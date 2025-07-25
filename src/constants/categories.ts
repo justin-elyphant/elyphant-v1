@@ -80,7 +80,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 6,
     name: "Beauty",
     value: "beauty",
-    searchTerm: "best selling beauty products",
+    searchTerm: "best selling beauty products skincare makeup cosmetics", // Enhanced
     icon: Heart,
     description: "Skincare and cosmetics",
     displayName: "Beauty & Personal Care"
@@ -116,7 +116,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 9,
     name: "Toys & Games",
     value: "toys",
-    searchTerm: "best selling toys games",
+    searchTerm: "best selling toys games educational kids lego disney", // Enhanced for brand diversity
     icon: Gamepad2,
     description: "Fun for all ages"
   },
@@ -174,7 +174,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 16,
     name: "Tech",
     value: "tech",
-    searchTerm: "best selling tech products",
+    searchTerm: "best selling tech products electronics gadgets smart devices", // Enhanced
     icon: Monitor,
     description: "Technology and gadgets"
   },

@@ -136,16 +136,18 @@ export const useMarketplaceSearch = () => {
             console.log('Enhanced category search completed, filtering results');
             // Convert to Product format for filtering
             const convertedProducts = enhancedProducts.map(product => ({
-              id: product.product_id,
               product_id: product.product_id,
+              id: product.product_id,
               title: product.title || "Product",
+              name: product.title || "Product",
               price: product.price,
               category: product.category || categoryParam,
               image: product.image || "/placeholder.svg",
               vendor: "Amazon via Zinc",
               description: product.description || "",
               rating: product.rating,
-              reviewCount: product.review_count
+              reviewCount: product.review_count,
+              brand: product.brand
             }));
             filterBySearch(searchParam, convertedProducts);
           }).catch(error => {

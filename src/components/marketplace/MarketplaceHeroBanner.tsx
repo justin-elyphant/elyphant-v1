@@ -8,7 +8,7 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category 
   // Use flowers hero image for flowers category, default image for others
   const getHeroImage = () => {
     if (category === "flowers") {
-      return "/lovable-uploads/fa986ca2-612f-47db-af37-46e37b36f6ad.png";
+      return "/lovable-uploads/e18984c4-fb6f-467a-9e30-b6daf25924d6.png";
     }
     return "/lovable-uploads/d7528be3-a5aa-4199-8140-3faaaeb083cd.png";
   };

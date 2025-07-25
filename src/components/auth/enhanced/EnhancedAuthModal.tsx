@@ -38,7 +38,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   initialMode = "signup",
   suggestedIntent
 }) => {
-  const [currentStep, setCurrentStep] = useState<AuthStep>(initialMode === "signin" ? "sign-in" : defaultStep);
+  const [currentStep, setCurrentStep] = useState<AuthStep>(() => {
+    // Check for persisted step in localStorage on initialization
+    const savedStep = localStorage.getItem('modalCurrentStep');
+    if (savedStep && (savedStep as AuthStep) !== "sign-in") {
+      console.log("🔄 Modal: Restoring saved step from localStorage:", savedStep);
+      return savedStep as AuthStep;
+    }
+    return initialMode === "signin" ? "sign-in" : defaultStep;
+  });
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [preventClose, setPreventClose] = useState(false); // Prevent modal from closing during critical transitions
@@ -92,6 +100,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   // Additional useEffect to track currentStep changes specifically
   React.useEffect(() => {
     console.log("📍 Current step changed to:", currentStep);
+    // Persist step to localStorage for recovery
+    if (currentStep !== "sign-in") {
+      localStorage.setItem('modalCurrentStep', currentStep);
+    }
   }, [currentStep]);
 
   // Debug when onClose is called
@@ -103,6 +115,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       return;
     }
     
+    // Clear persisted step when modal actually closes
+    localStorage.removeItem('modalCurrentStep');
     console.trace("Modal close trace:");
     onClose();
   }, [onClose, currentStep, preventClose, forceOpen]);
@@ -179,6 +193,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           // Force immediate state update using functional update
           setCurrentStep(prevStep => {
             console.log("🔄 UnifiedSignupStep: Setting step from", prevStep, "to profile-setup");
+            // Persist to localStorage immediately
+            localStorage.setItem('modalCurrentStep', 'profile-setup');
             return "profile-setup";
           });
           

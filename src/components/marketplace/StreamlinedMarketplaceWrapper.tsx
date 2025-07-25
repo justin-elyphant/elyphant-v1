@@ -246,9 +246,6 @@ const StreamlinedMarketplaceWrapper = () => {
         filteredProducts={products}
       />
 
-      {/* Quick Filters */}
-      <MarketplaceQuickFilters />
-
       {/* Category Title and Description */}
       {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (() => {
         const categoryParam = searchParams.get("category");
@@ -270,6 +267,9 @@ const StreamlinedMarketplaceWrapper = () => {
           </div>
         );
       })()}
+
+      {/* Quick Filters */}
+      <MarketplaceQuickFilters />
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && (

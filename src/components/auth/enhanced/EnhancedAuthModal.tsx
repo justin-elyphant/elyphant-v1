@@ -33,57 +33,56 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Enhanced welcome screen with value propositions
   const WelcomeStep = () => (
-    <div className="text-center space-y-6 p-8">
-      <div className="space-y-3">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+    <div className="text-center space-y-4 p-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
           Welcome to Elyphant
         </h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto">
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
           The thoughtful way to give and receive gifts with friends and family
         </p>
       </div>
 
       {/* Value propositions */}
-      <div className="space-y-4 text-left max-w-sm mx-auto">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Gift className="w-4 h-4 text-foreground" />
+      <div className="space-y-2 text-left max-w-sm mx-auto">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+            <Gift className="w-3 h-3 text-foreground" />
           </div>
           <div>
-            <h3 className="font-medium">AI-Powered Gift Discovery</h3>
-            <p className="text-sm text-muted-foreground">
-              Let Nicole help you find the perfect gift for any occasion
+            <h3 className="text-sm font-medium">AI-Powered Gift Discovery</h3>
+            <p className="text-xs text-muted-foreground">
+              Let Nicole help you find the perfect gift
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Heart className="w-4 h-4 text-foreground" />
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+            <Heart className="w-3 h-3 text-foreground" />
           </div>
           <div>
-            <h3 className="font-medium">Shared Wishlists</h3>
-            <p className="text-sm text-muted-foreground">
-              Create and share wishlists with your inner circle
+            <h3 className="text-sm font-medium">Shared Wishlists</h3>
+            <p className="text-xs text-muted-foreground">
+              Create and share wishlists with your circle
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Bot className="w-4 h-4 text-foreground" />
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+            <Bot className="w-3 h-3 text-foreground" />
           </div>
           <div>
-            <h3 className="font-medium">Auto-Gifting</h3>
-            <p className="text-sm text-muted-foreground">
-              Never miss a birthday or special occasion again
+            <h3 className="text-sm font-medium">Auto-Gifting</h3>
+            <p className="text-xs text-muted-foreground">
+              Never miss a birthday or special occasion
             </p>
           </div>
         </div>
       </div>
 
       {/* Social login prominence */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <SocialLoginButtons />
         
         <div className="relative">

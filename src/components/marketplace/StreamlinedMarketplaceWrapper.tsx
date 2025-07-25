@@ -19,6 +19,7 @@ import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
 import { useCallback } from "react";
+import { getCategoryByValue } from "@/constants/categories";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -248,22 +249,27 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Quick Filters */}
       <MarketplaceQuickFilters />
 
-      {/* Search Results Info for Non-Brand Categories (excluding gift categories) */}
-      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-blue-900">
-                {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
-                {personId && occasionType && `Gifts for ${occasionType}`}
-              </h3>
-               <p className="text-sm text-blue-700 mt-1">
-                 Found {totalCount} {totalCount === 1 ? 'product' : 'products'}
-               </p>
+      {/* Category Title and Description */}
+      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (() => {
+        const categoryParam = searchParams.get("category");
+        const category = categoryParam ? getCategoryByValue(categoryParam) : null;
+        
+        return (
+          <div className="mb-8">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                {category ? (category.displayName || category.name) : "Search Results"}
+              </h1>
+              <p className="text-lg text-muted-foreground mb-4">
+                {category ? category.description : "Browse our curated selection"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && (

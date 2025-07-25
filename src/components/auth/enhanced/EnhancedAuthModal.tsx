@@ -216,33 +216,34 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           setForceOpen(true);
           console.log("🔒 Set preventClose=true, forceOpen=true");
           
-          // NUCLEAR OPTION: Force step change with immediate state override
-          console.log("🔄 UnifiedSignupStep: NUCLEAR STEP CHANGE to profile-setup");
+          // ULTIMATE FIX: Use a callback-based state update to ensure it actually changes
+          console.log("🔄 UnifiedSignupStep: ULTIMATE STEP CHANGE to profile-setup");
           
           // Clear the loading state first to allow re-render
           setIsLoading(false);
           
-          // Use a more aggressive approach - set the step multiple times with different delays
-          const forceStepChange = () => {
-            console.log("🚀 FORCE: Setting currentStep to profile-setup");
-            setCurrentStep("profile-setup");
-            
-            // Also force re-render by updating forceOpen
-            setForceOpen(prev => {
-              console.log("🚀 FORCE: Toggling forceOpen to trigger re-render");
-              return true; // Keep it true but trigger state change
+          // Use callback-based state update to ensure change is applied
+          const ultimateStepChange = () => {
+            console.log("🚀 ULTIMATE: Setting currentStep to profile-setup with callback");
+            setCurrentStep(prev => {
+              console.log("🚀 ULTIMATE: currentStep callback - prev:", prev, "setting to: profile-setup");
+              return "profile-setup";
             });
+            
+            // Also persist directly to DOM storage as backup
+            localStorage.setItem('modalCurrentStep', 'profile-setup');
+            localStorage.setItem('modalForceOpen', 'true');
+            
+            console.log("🚀 ULTIMATE: Step change completed, localStorage updated");
           };
           
-          // Execute immediately
-          forceStepChange();
+          // Execute immediately with callback
+          ultimateStepChange();
           
-          // Execute with multiple delays to override any competing effects
-          setTimeout(forceStepChange, 10);
-          setTimeout(forceStepChange, 50);
-          setTimeout(forceStepChange, 100);
-          setTimeout(forceStepChange, 200);
-          setTimeout(forceStepChange, 500);
+          // Also execute with delays to ensure it sticks
+          setTimeout(ultimateStepChange, 50);
+          setTimeout(ultimateStepChange, 100);
+          setTimeout(ultimateStepChange, 300);
           
           console.log("✅ UnifiedSignupStep: NUCLEAR step transition initiated");
           

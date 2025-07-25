@@ -238,7 +238,7 @@ const StreamlinedMarketplaceWrapper = () => {
           productCount={totalCount}
         />
       ) : (
-        <MarketplaceHeroBanner />
+        <MarketplaceHeroBanner category={searchParams.get("category") || undefined} />
       )}
       
       <MarketplaceHeader

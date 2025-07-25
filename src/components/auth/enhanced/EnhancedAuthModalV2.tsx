@@ -5,6 +5,7 @@ import { X, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 // Import components
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
@@ -42,6 +43,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [collectedData, setCollectedData] = useState<any>(null);
   
   const { user } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
 
   // Helper function to get initial step based on localStorage and props
@@ -60,12 +62,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     return defaultStep;
   }, [initialMode, defaultStep]);
 
-  // Initialize step on mount
-  useEffect(() => {
-    const initialStep = getInitialStep();
-    setCurrentStep(initialStep);
-  }, [getInitialStep]);
-
   // Persist critical state during signup flow
   const persistSignupState = useCallback((step: AuthStep) => {
     if (step !== "sign-in") {
@@ -82,17 +78,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     localStorage.removeItem('modalForceOpen');
     setSignupFlowActive(false);
   }, []);
-
-  // Handle modal close with signup flow protection
-  const handleClose = useCallback(() => {
-    if (signupFlowActive && (currentStep === "profile-setup" || currentStep === "intent-selection")) {
-      console.log("🛡️ Preventing close during active signup flow");
-      return;
-    }
-    
-    cleanupSignupState();
-    onClose();
-  }, [signupFlowActive, currentStep, cleanupSignupState, onClose]);
 
   // Step navigation
   const nextStep = useCallback((step: AuthStep, data?: any) => {
@@ -127,6 +112,31 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     console.log("✅ Profile setup complete, moving to intent selection");
     nextStep("intent-selection");
   }, [nextStep]);
+
+  // Handle modal close with signup flow protection
+  const handleClose = useCallback(() => {
+    if (signupFlowActive && (currentStep === "profile-setup" || currentStep === "intent-selection")) {
+      console.log("🛡️ Preventing close during active signup flow");
+      return;
+    }
+    
+    cleanupSignupState();
+    onClose();
+  }, [signupFlowActive, currentStep, cleanupSignupState, onClose]);
+
+  // Initialize step on mount
+  useEffect(() => {
+    const initialStep = getInitialStep();
+    setCurrentStep(initialStep);
+  }, [getInitialStep]);
+
+  // Auto-skip profile setup if profile already exists
+  useEffect(() => {
+    if (user && profile && currentStep === "profile-setup") {
+      console.log("✅ Profile already exists, skipping to intent selection");
+      handleProfileComplete();
+    }
+  }, [user, profile, currentStep, handleProfileComplete]);
 
   // Handle intent selection
   const handleIntentSelect = useCallback((intent: string) => {

@@ -1,8 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const useAuthFunctions = (user: any) => {
+  const navigate = useNavigate();
+  
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -14,10 +17,8 @@ export const useAuthFunctions = (user: any) => {
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userName");
       
-      // Redirect to home page after signout
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
+      // Gracefully navigate to home page instead of hard refresh
+      navigate('/', { replace: true });
     } catch (error: any) {
       console.error("Error signing out:", error.message);
       toast.error("Failed to sign out");
@@ -44,10 +45,8 @@ export const useAuthFunctions = (user: any) => {
       toast.dismiss();
       toast.success("Your account has been deleted");
       
-      // Redirect to home page
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      // Gracefully navigate to home page instead of hard refresh
+      navigate('/', { replace: true });
     } catch (error: any) {
       toast.dismiss();
       console.error("Error deleting account:", error.message);

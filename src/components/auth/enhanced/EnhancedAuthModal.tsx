@@ -41,8 +41,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [currentStep, setCurrentStep] = useState<AuthStep>(initialMode === "signin" ? "sign-in" : defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
+  const [preventClose, setPreventClose] = useState(false); // Prevent modal from closing during critical transitions
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Debug modal state changes
+  React.useEffect(() => {
+    console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep);
+  }, [isOpen, currentStep]);
+
+  // Debug when onClose is called
+  const handleClose = React.useCallback((reason?: any) => {
+    console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Reason:", reason);
+    
+    if (preventClose) {
+      console.log("🛡️ Modal close prevented during critical transition");
+      return;
+    }
+    
+    console.trace("Modal close trace:");
+    onClose();
+  }, [onClose, currentStep, preventClose]);
 
   const WelcomeStep = () => (
     <div className="text-center space-y-4 p-6">
@@ -161,6 +180,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       e.preventDefault();
       setIsLoading(true);
 
+      console.log("🚀 EmailSignupStep: Starting account creation");
+
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         
@@ -175,7 +196,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           }
         });
 
+        console.log("🚀 EmailSignupStep: Signup response:", { signUpData, signUpError });
+
         if (signUpError) {
+          console.error("🚨 EmailSignupStep: Signup error:", signUpError);
           if (signUpError.message.includes("already registered")) {
             toast.error("Email already registered", {
               description: "Please use a different email address or try to sign in."
@@ -189,6 +213,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         }
 
         if (signUpData?.user) {
+          console.log("✅ EmailSignupStep: User created successfully:", signUpData.user.id);
+          
+          // Prevent modal from closing during transition
+          setPreventClose(true);
+          
           // Store completion state for streamlined profile setup
           LocalStorageService.setProfileCompletionState({
             email: formData.email,
@@ -198,18 +227,29 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             source: 'email'
           });
 
+          console.log("✅ EmailSignupStep: Stored profile completion state");
+
           toast.success("Account created!", {
             description: "Please check your email to verify your account."
           });
 
+          console.log("🔄 EmailSignupStep: About to transition to profile-setup");
           // Move to profile setup step
           setCurrentStep("profile-setup");
+          console.log("✅ EmailSignupStep: Current step set to profile-setup");
+          
+          // Allow modal to be closed again after a brief delay
+          setTimeout(() => {
+            console.log("🔓 EmailSignupStep: Re-enabling modal close");
+            setPreventClose(false);
+          }, 1000);
         }
       } catch (error) {
-        console.error("Sign up error:", error);
+        console.error("🚨 EmailSignupStep: Unexpected error:", error);
         toast.error("An unexpected error occurred");
       } finally {
         setIsLoading(false);
+        console.log("🏁 EmailSignupStep: Loading finished");
       }
     };
 
@@ -801,6 +841,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   );
 
   const renderCurrentStep = () => {
+    console.log("🎬 Modal renderCurrentStep: Rendering step =", currentStep);
     switch (currentStep) {
       case "welcome":
         return <WelcomeStep />;
@@ -815,19 +856,30 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       case "agent-collection":
         return <AgentCollectionStep />;
       default:
+        console.log("⚠️ Modal renderCurrentStep: Unknown step, defaulting to welcome");
         return <WelcomeStep />;
     }
   };
 
-  // Handle OAuth success by moving to profile setup
+  // Handle OAuth success by moving to profile setup (only for OAuth, not email signup)
   React.useEffect(() => {
-    if (user && currentStep === "welcome") {
-      setCurrentStep("profile-setup");
+    console.log("🔍 Modal useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode);
+    
+    // Only trigger for OAuth users who land on welcome step
+    // Don't interfere with email signup flow
+    if (user && currentStep === "welcome" && authMode === "signup") {
+      const isOAuthUser = !LocalStorageService.getProfileCompletionState();
+      console.log("🔄 Modal useEffect: isOAuthUser =", isOAuthUser);
+      
+      if (isOAuthUser) {
+        console.log("🔄 Modal useEffect: Moving OAuth user from welcome to profile-setup");
+        setCurrentStep("profile-setup");
+      }
     }
-  }, [user, currentStep]);
+  }, [user, currentStep, authMode]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogPortal>
         {/* Lighter overlay like Etsy - more transparent to show homepage */}
         <DialogOverlay className="fixed inset-0 z-50 bg-black/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />

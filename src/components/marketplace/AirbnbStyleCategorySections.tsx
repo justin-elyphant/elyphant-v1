@@ -173,15 +173,18 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
 
   return (
     <div className={`space-y-8 ${className}`}>
-      {CATEGORIES.map(category => {
+      {CATEGORIES.map((category, index) => {
         const data = categoryData[category.key];
         
         if (!data) return null;
 
+        // Determine if this category should have a background (every other one)
+        const hasBackground = index % 2 === 1;
+
         // Show error state if there's an error and no products
         if (data.error && data.products.length === 0) {
           return (
-            <div key={category.key} className="border rounded-lg p-6 bg-red-50">
+            <div key={category.key} className={`border rounded-lg p-6 ${hasBackground ? 'bg-muted/30' : 'bg-red-50'}`}>
               <h3 className="text-lg font-semibold text-red-900 mb-2">{category.title}</h3>
               <p className="text-red-700">Failed to load products for this category</p>
             </div>
@@ -189,16 +192,20 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
         }
 
         return (
-          <CategorySection
-            key={category.key}
-            title={category.title}
-            subtitle={category.subtitle}
-            products={data.products}
-            isLoading={data.isLoading}
-            onSeeAll={() => handleSeeAll(category.key)}
-            onProductClick={handleProductClick}
-            showSeeAll={data.products.length > 0}
-          />
+          <div 
+            key={category.key} 
+            className={hasBackground ? 'bg-muted/30 py-8 px-4 rounded-lg' : 'py-4'}
+          >
+            <CategorySection
+              title={category.title}
+              subtitle={category.subtitle}
+              products={data.products}
+              isLoading={data.isLoading}
+              onSeeAll={() => handleSeeAll(category.key)}
+              onProductClick={handleProductClick}
+              showSeeAll={data.products.length > 0}
+            />
+          </div>
         );
       })}
     </div>

@@ -233,8 +233,10 @@ export const getCategoryName = (categoryUrl: string | null): string => {
 
 // Filtered categories for specific components
 export const getFeaturedCategories = (): Category[] => {
-  // Return the first 12 categories for the featured section (including the new Pets category)
-  return UNIVERSAL_CATEGORIES.slice(0, 12);
+  // Return featured categories including Tech
+  return UNIVERSAL_CATEGORIES.filter(cat => 
+    ['electronics', 'flowers', 'fashion', 'pets', 'home', 'beauty', 'sports', 'books', 'toys', 'food', 'arts', 'tech'].includes(cat.value)
+  );
 };
 
 export const getQuickAccessCategories = (): Category[] => {

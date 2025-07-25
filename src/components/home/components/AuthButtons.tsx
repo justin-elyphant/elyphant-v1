@@ -7,14 +7,29 @@ const AuthButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"signin" | "signup">("signup");
 
-  // Debug modal state changes
+  // Debug modal state changes and check for localStorage flags
   React.useEffect(() => {
     console.log("🏠 AuthButtons: isModalOpen =", isModalOpen);
+    
+    // Check for forced modal state from localStorage
+    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
+    if (shouldForceOpen && !isModalOpen) {
+      console.log("🏠 AuthButtons: Force opening modal due to localStorage flag");
+      setIsModalOpen(true);
+    }
   }, [isModalOpen]);
 
   const handleModalClose = () => {
     console.log("🏠 AuthButtons: handleModalClose called");
     console.trace("AuthButtons modal close trace:");
+    
+    // Don't close if we have a localStorage flag forcing it open
+    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
+    if (shouldForceOpen) {
+      console.log("🏠 AuthButtons: Preventing modal close due to localStorage flag");
+      return;
+    }
+    
     setIsModalOpen(false);
   };
 

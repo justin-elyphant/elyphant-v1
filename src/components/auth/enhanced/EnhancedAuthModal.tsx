@@ -432,20 +432,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-purple-50/30 border-0 shadow-xl">
-        {/* Close button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          className="absolute right-4 top-4 p-2 h-8 w-8"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-
+      <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-purple-50/30 border-0 shadow-xl p-0">
         {/* Step progress indicator */}
         {currentStep !== "welcome" && currentStep !== "intent-selection" && (
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-10">
             <div className="flex gap-1">
               {["welcome", "email-signup", "profile-setup", "agent-collection"].map((step, index) => (
                 <div

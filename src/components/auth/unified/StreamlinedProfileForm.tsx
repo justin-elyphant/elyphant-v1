@@ -75,21 +75,15 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
     if (completionState?.firstName || completionState?.lastName || completionState?.email) {
       console.log('Pre-populating form with stored data:', completionState);
       
-      // Pre-populate form with stored data
-      form.reset({
-        first_name: completionState.firstName || "",
-        last_name: completionState.lastName || "",
-        username: "", // Will be auto-generated
-        profile_image: null,
-        address: {
-          street: "",
-          line2: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: "US"
-        }
-      });
+      // Pre-populate form with stored data - ensure we set values even if they are empty strings
+      form.setValue('first_name', completionState.firstName || "");
+      form.setValue('last_name', completionState.lastName || "");
+      
+      // Generate username from the names if available
+      if (completionState.firstName && completionState.lastName) {
+        const generatedUsername = `${completionState.firstName.toLowerCase()}.${completionState.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, '');
+        form.setValue('username', generatedUsername);
+      }
     }
   }, [form]);
 
@@ -158,6 +152,12 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!user) {
+      console.log("⏳ StreamlinedProfileForm: No user yet, waiting for authentication...");
+      toast.error("Please wait for authentication to complete and try again.");
+      return;
+    }
+
     try {
       const profileData = {
         name: `${data.first_name} ${data.last_name}`,
@@ -288,7 +288,7 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
 
             {/* Address */}
             <div className="space-y-4">
-              <Label className="text-base font-medium">Shipping Address</Label>
+              <Label className="text-base font-medium">Your Shipping Address</Label>
               <AddressAutocomplete
                 value={form.watch('address.street')}
                 onChange={(value) => form.setValue('address.street', value)}

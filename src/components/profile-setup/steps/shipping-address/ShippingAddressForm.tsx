@@ -72,7 +72,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ addres
           value={formAddress.street}
           onChange={(value) => handleChange("street", value)}
           onAddressSelect={handleGooglePlacesSelect}
-          label="Street Address"
+          label="Your Street Address"
           placeholder="Start typing your address..."
         />
 

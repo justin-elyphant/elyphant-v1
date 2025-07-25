@@ -74,6 +74,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       }, 3000);
     }
     
+    // Check for pending profile data after user authentication
+    if (user && currentStep === "profile-setup") {
+      const pendingData = localStorage.getItem('profileDataPending');
+      if (pendingData) {
+        console.log("🔄 Found pending profile data, retrying profile creation");
+        localStorage.removeItem('profileDataPending');
+        // The ProfileSetupStep component will handle the retry
+      }
+    }
+    
     if (!isOpen && currentStep === "profile-setup") {
       console.error("🚨 MODAL CLOSED WHILE ON PROFILE-SETUP STEP! This is the bug!");
     }
@@ -83,7 +93,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const handleClose = React.useCallback((reason?: any) => {
     console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Force open:", forceOpen, "Reason:", reason);
     
-    if (preventClose || forceOpen) {
+    if (preventClose || forceOpen || currentStep === "profile-setup") {
       console.log("🛡️ Modal close prevented during critical transition");
       return;
     }
@@ -601,14 +611,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     return (
       <div className="space-y-6 p-6">
         <div className="text-center space-y-2">
+        <div className="flex justify-start mb-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCurrentStep("email-signup")}
-            className="mb-4"
+            className="self-start"
           >
             ← Back
           </Button>
+        </div>
           <h2 className="text-2xl font-semibold">Complete Your Profile</h2>
           <p className="text-muted-foreground">
             Just a few details to personalize your experience

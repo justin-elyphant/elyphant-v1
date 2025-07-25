@@ -43,7 +43,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [collectedData, setCollectedData] = useState<any>(null);
   
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, loading, error } = useProfile();
   const navigate = useNavigate();
 
   // Helper function to get initial step based on localStorage and props
@@ -130,21 +130,48 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     setCurrentStep(initialStep);
   }, [getInitialStep]);
 
-  // Auto-skip profile setup if profile already exists
+  // Enhanced auto-skip logic with better state management
   useEffect(() => {
-    console.log("🔍 Checking auto-skip conditions:", {
+    console.log("🔍 Auto-skip check:", {
       hasUser: !!user,
       hasProfile: !!profile,
       currentStep,
       profileId: profile?.id,
-      userName: profile?.name
+      profileName: profile?.name,
+      profileLoading: loading,
+      profileError: error
     });
     
-    if (user && profile && profile.id && currentStep === "profile-setup") {
-      console.log("✅ Profile already exists, skipping to intent selection");
-      handleProfileComplete();
+    // Only proceed if we have a user and we're not still loading profile data
+    if (user && !loading && currentStep === "profile-setup") {
+      if (profile && profile.id) {
+        console.log("✅ Profile exists, auto-skipping to intent selection");
+        // Add small delay to ensure UI is ready
+        setTimeout(() => {
+          handleProfileComplete();
+        }, 100);
+      } else if (error) {
+        console.log("⚠️ Profile loading error, staying on profile-setup");
+      } else {
+        console.log("📝 No profile found, user needs to complete profile setup");
+      }
     }
-  }, [user, profile, currentStep, handleProfileComplete]);
+  }, [user, profile, loading, error, currentStep, handleProfileComplete]);
+
+  // Timeout mechanism for stuck states
+  useEffect(() => {
+    if (currentStep === "profile-setup" && user && !loading) {
+      const timeout = setTimeout(() => {
+        console.log("⏰ Profile setup timeout - forcing step progression check");
+        if (profile && profile.id) {
+          console.log("🔄 Timeout: Profile exists, forcing skip to intent selection");
+          handleProfileComplete();
+        }
+      }, 3000); // 3 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentStep, user, loading, profile, handleProfileComplete]);
 
   // Handle intent selection
   const handleIntentSelect = useCallback((intent: string) => {

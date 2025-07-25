@@ -68,31 +68,39 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   React.useEffect(() => {
     console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep, "user =", !!user, "forceOpen =", forceOpen, "preventClose =", preventClose);
     
-    // Check for forced modal state from localStorage
+    // CRITICAL FIX: Always sync currentStep with localStorage on every render
+    const savedStep = localStorage.getItem('modalCurrentStep');
     const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    const targetStep = localStorage.getItem('modalTargetStep');
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    // Sync step state with localStorage if different
+    if (savedStep && savedStep !== currentStep && (inSignupFlow || shouldForceOpen)) {
+      console.log("🔄 SYNC: currentStep mismatch - localStorage:", savedStep, "state:", currentStep, "- syncing to localStorage");
+      setCurrentStep(savedStep as AuthStep);
+    }
     
     if (shouldForceOpen && !forceOpen) {
       console.log("🔒 Setting forceOpen = true from localStorage flag");
       setForceOpen(true);
       setPreventClose(true);
     }
-    
-    if (targetStep && targetStep !== currentStep) {
-      console.log("🎯 Setting target step from localStorage:", targetStep, "current user:", !!user);
-      setCurrentStep(targetStep as AuthStep);
+  }, [isOpen, currentStep, user, forceOpen, preventClose]);
+
+  // Separate effect to handle localStorage step sync on mount and when isOpen changes
+  React.useEffect(() => {
+    if (isOpen) {
+      const savedStep = localStorage.getItem('modalCurrentStep');
+      const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
       
-      // Clear the localStorage flags after a delay
-      setTimeout(() => {
-        console.log("🧹 Clearing localStorage flags and re-enabling modal close");
-        localStorage.removeItem('modalForceOpen');
-        localStorage.removeItem('modalTargetStep');
-        setForceOpen(false);
-        setPreventClose(false);
-      }, 3000);
+      if (savedStep && inSignupFlow && savedStep !== currentStep) {
+        console.log("🚀 MOUNT SYNC: Syncing currentStep to localStorage value:", savedStep);
+        setCurrentStep(savedStep as AuthStep);
+      }
     }
+  }, [isOpen]);
     
-    // Check for pending profile data after user authentication
+  // Check for pending profile data after user authentication
+  React.useEffect(() => {
     if (user && currentStep === "profile-setup") {
       const pendingData = localStorage.getItem('profileDataPending');
       if (pendingData) {
@@ -105,7 +113,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     if (!isOpen && currentStep === "profile-setup") {
       console.error("🚨 MODAL CLOSED WHILE ON PROFILE-SETUP STEP! This is the bug!");
     }
-  }, [isOpen, currentStep, user, forceOpen, preventClose]);
+  }, [isOpen, currentStep, user]);
 
   // Additional useEffect to track currentStep changes specifically
   React.useEffect(() => {

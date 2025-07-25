@@ -1,11 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart, Users, Star, TrendingUp, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
 
 const ModernCTA: React.FC = () => {
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const features = [
     { icon: Heart, text: "Save favorites", color: "text-pink-500" },
@@ -66,7 +68,7 @@ const ModernCTA: React.FC = () => {
             <Button 
               size="lg" 
               className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
-              onClick={() => navigate("/auth")}
+              onClick={() => setShowAuthModal(true)}
             >
               <Gift className="mr-2 h-5 w-5" />
               Get Started Free
@@ -75,7 +77,7 @@ const ModernCTA: React.FC = () => {
               variant="outline" 
               size="lg" 
               className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
-              onClick={() => navigate("/auth")}
+              onClick={() => setShowAuthModal(true)}
             >
               Sign In
             </Button>
@@ -105,6 +107,12 @@ const ModernCTA: React.FC = () => {
           </p>
         </div>
       </div>
+
+      <EnhancedAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        suggestedIntent="browse-shop"
+      />
     </div>
   );
 };

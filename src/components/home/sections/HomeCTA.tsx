@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, List } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ const HomeCTA = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showIntentModal, setShowIntentModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   
@@ -21,8 +23,8 @@ const HomeCTA = () => {
       // Authenticated user: show intent modal to choose their path
       setShowIntentModal(true);
     } else {
-      // Not logged in: send to signup
-      navigate("/auth");
+      // Not logged in: show enhanced auth modal
+      setShowAuthModal(true);
     }
   };
 
@@ -124,6 +126,12 @@ const HomeCTA = () => {
         open={showCreateWishlist}
         onOpenChange={setShowCreateWishlist}
         onSubmit={handleCreateWishlistSubmit}
+      />
+
+      <EnhancedAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        suggestedIntent="quick-gift"
       />
     </section>
   );

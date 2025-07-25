@@ -282,12 +282,67 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     };
 
     return (
-      <OnboardingIntentModal
-        open={true}
-        onSelect={handleIntentSelect}
-        onSkip={handleSkip}
-        suggestedIntent={suggestedIntent}
-      />
+      <div className="p-6 text-center space-y-6">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold">What would you like to do?</h2>
+          <p className="text-muted-foreground">
+            Choose how you'd like to get started with Elyphant
+          </p>
+        </div>
+
+        {/* Intent options */}
+        <div className="space-y-3">
+          <Button
+            onClick={() => handleIntentSelect("quick-gift")}
+            className="w-full p-4 h-auto text-left bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 hover:from-purple-100 hover:to-pink-100"
+            variant="outline"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎁</span>
+              <div>
+                <h3 className="font-medium text-purple-700">Auto Gift</h3>
+                <p className="text-sm text-muted-foreground">Let Elyphant pick the perfect gift</p>
+              </div>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => handleIntentSelect("browse-shop")}
+            className="w-full p-4 h-auto text-left bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+            variant="outline"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🛍️</span>
+              <div>
+                <h3 className="font-medium text-blue-700">Browse & Shop</h3>
+                <p className="text-sm text-muted-foreground">Explore with AI assistance</p>
+              </div>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => handleIntentSelect("create-wishlist")}
+            className="w-full p-4 h-auto text-left bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:from-green-100 hover:to-emerald-100"
+            variant="outline"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📝</span>
+              <div>
+                <h3 className="font-medium text-green-700">Create Wishlist</h3>
+                <p className="text-sm text-muted-foreground">Share what you'd love to receive</p>
+              </div>
+            </div>
+          </Button>
+        </div>
+
+        <Button
+          variant="ghost"
+          onClick={handleSkip}
+          className="w-full text-muted-foreground"
+        >
+          Skip for now
+        </Button>
+      </div>
     );
   };
 

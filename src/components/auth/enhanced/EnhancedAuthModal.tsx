@@ -47,8 +47,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   // Debug modal state changes
   React.useEffect(() => {
-    console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep);
-  }, [isOpen, currentStep]);
+    console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep, "user =", !!user);
+    if (!isOpen && currentStep === "profile-setup") {
+      console.error("🚨 MODAL CLOSED WHILE ON PROFILE-SETUP STEP! This is the bug!");
+    }
+  }, [isOpen, currentStep, user]);
 
   // Debug when onClose is called
   const handleClose = React.useCallback((reason?: any) => {
@@ -863,20 +866,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   // Handle OAuth success by moving to profile setup (only for OAuth, not email signup)
   React.useEffect(() => {
-    console.log("🔍 Modal useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode);
+    console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode, "isOpen =", isOpen);
     
     // Only trigger for OAuth users who land on welcome step
     // Don't interfere with email signup flow
-    if (user && currentStep === "welcome" && authMode === "signup") {
+    if (user && currentStep === "welcome" && authMode === "signup" && isOpen) {
       const isOAuthUser = !LocalStorageService.getProfileCompletionState();
-      console.log("🔄 Modal useEffect: isOAuthUser =", isOAuthUser);
+      console.log("🔄 Modal auth useEffect: isOAuthUser =", isOAuthUser);
       
       if (isOAuthUser) {
-        console.log("🔄 Modal useEffect: Moving OAuth user from welcome to profile-setup");
+        console.log("🔄 Modal auth useEffect: Moving OAuth user from welcome to profile-setup");
         setCurrentStep("profile-setup");
       }
     }
-  }, [user, currentStep, authMode]);
+  }, [user, currentStep, authMode, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

@@ -7,6 +7,17 @@ const AuthButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"signin" | "signup">("signup");
 
+  // Debug modal state changes
+  React.useEffect(() => {
+    console.log("🏠 AuthButtons: isModalOpen =", isModalOpen);
+  }, [isModalOpen]);
+
+  const handleModalClose = () => {
+    console.log("🏠 AuthButtons: handleModalClose called");
+    console.trace("AuthButtons modal close trace:");
+    setIsModalOpen(false);
+  };
+
   const handleSignIn = () => {
     setModalMode("signin");
     setIsModalOpen(true);
@@ -39,7 +50,7 @@ const AuthButtons = () => {
 
       <EnhancedAuthModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
         initialMode={modalMode}
       />
     </>

@@ -127,7 +127,9 @@ export function useAuthSession(): UseAuthSessionReturn {
         });
 
         if (event === 'SIGNED_IN') {
-          toast.success('Signed in successfully!');
+          console.log("🔥 Auth useAuthSession: SIGNED_IN event triggered");
+          // Don't show toast for programmatic sign-ins (like account creation)
+          // toast.success('Signed in successfully!');
         }
       } else if (event === 'SIGNED_OUT') {
         batchLocalStorageOperations({

@@ -55,7 +55,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 3,
     name: "Fashion",
     value: "fashion",
-    searchTerm: "best selling fashion",
+    searchTerm: "best selling fashion clothing apparel shoes accessories", // Enhanced for brand diversity
     icon: Shirt,
     description: "Clothing and accessories"
   },
@@ -63,7 +63,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 4,
     name: "Pets",
     value: "pets",
-    searchTerm: "best selling pet products dog cat supplies",
+    searchTerm: "best selling pet products dog cat supplies toys treats", // Enhanced with multiple terms
     icon: PawPrint,
     description: "Pet supplies and accessories"
   },
@@ -71,7 +71,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 5,
     name: "Home & Living",
     value: "home",
-    searchTerm: "best selling home products",
+    searchTerm: "best selling home products decor furniture accessories", // Enhanced for variety
     icon: Home,
     description: "Decor and household items",
     displayName: "Home & Garden"

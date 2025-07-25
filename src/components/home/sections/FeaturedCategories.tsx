@@ -19,12 +19,14 @@ const FeaturedCategories: React.FC = () => {
   const categories = getFeaturedCategories();
 
   const handleCategoryClick = (category: string, searchTerm: string) => {
-    // Use search terms for better gift-focused results
+    // Enhanced category navigation with brand diversity flag
     if (searchTerm) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category)}`, { state: { fromHome: true } });
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category)}&diversity=true`, 
+        { state: { fromHome: true, enableBrandDiversity: true } });
     } else {
       // Fallback to category-based navigation
-      navigate(`/marketplace?category=${encodeURIComponent(category)}`, { state: { fromHome: true } });
+      navigate(`/marketplace?category=${encodeURIComponent(category)}&diversity=true`, 
+        { state: { fromHome: true, enableBrandDiversity: true } });
     }
   };
 

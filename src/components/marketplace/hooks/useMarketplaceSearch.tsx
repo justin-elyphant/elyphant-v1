@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useSearchProducts } from "./useSearchProducts";
 import { useFilterProducts } from "./useFilterProducts";
 import { usePageInfo } from "./usePageInfo";
+import { useEnhancedCategorySearch } from "@/hooks/useEnhancedCategorySearch";
 import { ZincProduct } from "../zinc/types";
 import { convertZincProductToProduct } from "../zinc/utils/productConverter";
 
@@ -25,6 +26,8 @@ export const useMarketplaceSearch = () => {
     searchIdRef,
     RESULTS_LIMIT 
   } = useSearchProducts(setProducts);
+  
+  const { searchCategoryProducts } = useEnhancedCategorySearch();
   
   const { 
     filteredProducts, 
@@ -123,29 +126,64 @@ export const useMarketplaceSearch = () => {
         // Immediately dismiss any existing toasts
         toast.dismiss();
         
-        searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
-          console.log('Search completed, filtering results');
-          filterBySearch(searchParam, amazonProducts);
-        }).catch(error => {
-          console.error('Search error:', error);
-          toast.error("Search Error", {
-            description: "Error searching for products. Please try again.",
-            id: "search-error"
+        // Check if enhanced diversity is enabled
+        const params = new URLSearchParams(location.search);
+        const enableDiversity = params.get('diversity') === 'true';
+        
+        if (enableDiversity && categoryParam) {
+          // Use enhanced category search with brand diversity
+          searchCategoryProducts(categoryParam, searchParam).then(enhancedProducts => {
+            console.log('Enhanced category search completed, filtering results');
+            // Convert to Product format for filtering
+            const convertedProducts = enhancedProducts.map(product => ({
+              id: product.product_id,
+              product_id: product.product_id,
+              title: product.title || "Product",
+              price: product.price,
+              category: product.category || categoryParam,
+              image: product.image || "/placeholder.svg",
+              vendor: "Amazon via Zinc",
+              description: product.description || "",
+              rating: product.rating,
+              reviewCount: product.review_count
+            }));
+            filterBySearch(searchParam, convertedProducts);
+          }).catch(error => {
+            console.error('Enhanced search error, falling back to regular search:', error);
+            // Fallback to regular search
+            return searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
+              filterBySearch(searchParam, amazonProducts);
+            });
+          }).finally(() => {
+            searchInProgressRef.current = false;
+            setIsLocalLoading(false);
           });
-        }).finally(() => {
-          console.log('Search finalized, clearing loading states');
-          // Always clear the search in progress flag and local loading
-          searchInProgressRef.current = false;
-          setIsLocalLoading(false);
-          
-          // Dismiss any category or brand loading toasts that might be lingering
-          if (categoryParam) {
-            toast.dismiss(`category-search-${categoryParam}`);
-          }
-          if (brandParam) {
-            toast.dismiss(`brand-loading-${brandParam}`);
-          }
-        });
+        } else {
+          // Use regular search
+          searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
+            console.log('Search completed, filtering results');
+            filterBySearch(searchParam, amazonProducts);
+          }).catch(error => {
+            console.error('Search error:', error);
+            toast.error("Search Error", {
+              description: "Error searching for products. Please try again.",
+              id: "search-error"
+            });
+          }).finally(() => {
+            console.log('Search finalized, clearing loading states');
+            // Always clear the search in progress flag and local loading
+            searchInProgressRef.current = false;
+            setIsLocalLoading(false);
+            
+            // Dismiss any category or brand loading toasts that might be lingering
+            if (categoryParam) {
+              toast.dismiss(`category-search-${categoryParam}`);
+            }
+            if (brandParam) {
+              toast.dismiss(`brand-loading-${brandParam}`);
+            }
+          });
+        }
       } else if (brandParam) {
         // If there's a brand parameter but no search, we'll handle it elsewhere
         console.log(`Using brand parameter: ${brandParam}`);

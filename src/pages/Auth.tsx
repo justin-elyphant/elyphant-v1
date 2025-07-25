@@ -10,8 +10,14 @@ const Auth = () => {
   const { user, isLoading } = useAuth();
 
   React.useEffect(() => {
-    if (!isLoading && user) {
+    // Don't redirect if modal is in signup flow - let the modal handle navigation
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    if (!isLoading && user && !inSignupFlow) {
+      console.log("🚪 Auth page: Redirecting authenticated user to dashboard");
       navigate("/dashboard", { replace: true });
+    } else if (user && inSignupFlow) {
+      console.log("🚀 Auth page: User authenticated but in signup flow - not redirecting");
     }
   }, [user, isLoading, navigate]);
 

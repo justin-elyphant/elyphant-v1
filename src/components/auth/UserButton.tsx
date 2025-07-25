@@ -74,6 +74,8 @@ const UserButton = () => {
   
   const handleSignOut = async () => {
     await signOut();
+    // Navigate to home after signout
+    navigate('/', { replace: true });
   };
 
   const handleProfileClick = () => {

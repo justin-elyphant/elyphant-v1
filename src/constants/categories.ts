@@ -38,7 +38,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 1,
     name: "Electronics",
     value: "electronics",
-    searchTerm: "best selling electronics",
+    searchTerm: "best selling electronics apple samsung sony bose lg hp dell canon nikon fitbit garmin", // Enhanced for brand diversity
     icon: Smartphone,
     description: "Latest tech and gadgets",
     displayName: "Electronics & Accessories"
@@ -47,7 +47,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 2,
     name: "Flowers",
     value: "flowers",
-    searchTerm: "flowers for delivery",
+    searchTerm: "fresh flowers bouquet delivery roses tulips sunflowers orchids wedding flowers sympathy arrangements seasonal blooms", // Enhanced for variety
     icon: Flower,
     description: "Fresh flowers and arrangements"
   },
@@ -89,7 +89,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 7,
     name: "Sports",
     value: "sports",
-    searchTerm: "best selling sports equipment",
+    searchTerm: "best selling sports equipment nike adidas under armour wilson spalding yeti coleman outdoor gear fitness", // Enhanced for brand diversity
     icon: Dumbbell,
     description: "Fitness and outdoor gear",
     displayName: "Sports & Outdoors"
@@ -98,7 +98,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 21,
     name: "Athleisure",
     value: "athleisure",
-    searchTerm: "athletic wear yoga pants leggings activewear",
+    searchTerm: "athletic wear yoga pants leggings activewear nike adidas lululemon under armour alo yoga", // Enhanced for brand diversity
     icon: Dumbbell,
     description: "Athletic and activewear",
     displayName: "Athleisure & Activewear"
@@ -124,7 +124,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 10,
     name: "Food & Drinks",
     value: "food",
-    searchTerm: "best gourmet food",
+    searchTerm: "best gourmet food specialty snacks organic coffee tea chocolate wine cheese gift baskets", // Enhanced for variety
     icon: Coffee,
     description: "Gourmet and specialty items"
   },
@@ -132,7 +132,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 11,
     name: "Arts & Crafts",
     value: "arts",
-    searchTerm: "best arts crafts",
+    searchTerm: "best arts crafts supplies crayola fiskars michaels hobby lobby painting drawing knitting sewing scrapbooking", // Enhanced for brand diversity
     icon: Palette,
     description: "Creative supplies and tools",
     displayName: "Craft Supplies & Tools"

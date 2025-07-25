@@ -255,7 +255,7 @@ const StreamlinedMarketplaceWrapper = () => {
         if (categoryParam === "flowers") {
           return (
             <div className="mb-8">
-              <div className="text-center">
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">
                   {totalCount} {totalCount === 1 ? 'product' : 'products'} found
                 </p>

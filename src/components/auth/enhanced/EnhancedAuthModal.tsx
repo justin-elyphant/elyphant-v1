@@ -42,29 +42,30 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [preventClose, setPreventClose] = useState(false); // Prevent modal from closing during critical transitions
+  const [forceOpen, setForceOpen] = useState(false); // Force modal to stay open during transitions
   const { user } = useAuth();
   const navigate = useNavigate();
 
   // Debug modal state changes
   React.useEffect(() => {
-    console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep, "user =", !!user);
+    console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep, "user =", !!user, "forceOpen =", forceOpen);
     if (!isOpen && currentStep === "profile-setup") {
       console.error("🚨 MODAL CLOSED WHILE ON PROFILE-SETUP STEP! This is the bug!");
     }
-  }, [isOpen, currentStep, user]);
+  }, [isOpen, currentStep, user, forceOpen]);
 
   // Debug when onClose is called
   const handleClose = React.useCallback((reason?: any) => {
-    console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Reason:", reason);
+    console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Force open:", forceOpen, "Reason:", reason);
     
-    if (preventClose) {
+    if (preventClose || forceOpen) {
       console.log("🛡️ Modal close prevented during critical transition");
       return;
     }
     
     console.trace("Modal close trace:");
     onClose();
-  }, [onClose, currentStep, preventClose]);
+  }, [onClose, currentStep, preventClose, forceOpen]);
 
   const WelcomeStep = () => (
     <div className="text-center space-y-4 p-6">
@@ -218,8 +219,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         if (signUpData?.user) {
           console.log("✅ EmailSignupStep: User created successfully:", signUpData.user.id);
           
-          // Prevent modal from closing during transition
+          // Force modal to stay open and prevent any external closure
           setPreventClose(true);
+          setForceOpen(true);
           
           // Store completion state for streamlined profile setup
           LocalStorageService.setProfileCompletionState({
@@ -244,11 +246,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             setCurrentStep("profile-setup");
             console.log("✅ EmailSignupStep: Current step set to profile-setup (delayed)");
             
-            // Allow modal to be closed again after transition completes
+            // Keep protection for longer to ensure modal stays open
             setTimeout(() => {
-              console.log("🔓 EmailSignupStep: Re-enabling modal close");
+              console.log("🔓 EmailSignupStep: Re-enabling modal close after profile setup");
               setPreventClose(false);
-            }, 500);
+              setForceOpen(false);
+            }, 3000); // Longer protection period
           }, 100); // Small delay to avoid React state batching conflicts
         }
       } catch (error) {
@@ -886,7 +889,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   }, [user, currentStep, authMode, isOpen]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={forceOpen || isOpen} onOpenChange={handleClose}>
       <DialogPortal>
         {/* Lighter overlay like Etsy - more transparent to show homepage */}
         <DialogOverlay className="fixed inset-0 z-50 bg-black/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />

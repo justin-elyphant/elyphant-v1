@@ -10,7 +10,7 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category 
     if (category === "flowers") {
       return "/lovable-uploads/e18984c4-fb6f-467a-9e30-b6daf25924d6.png";
     }
-    return "/lovable-uploads/d7528be3-a5aa-4199-8140-3faaaeb083cd.png";
+    return "/lovable-uploads/74485aab-3902-47d2-9dd8-22a47480ae17.png";
   };
 
   const getHeroText = () => {

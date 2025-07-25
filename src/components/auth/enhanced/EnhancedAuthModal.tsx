@@ -1039,10 +1039,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   // Handle OAuth success by moving to profile setup (only for OAuth, not email signup)
   React.useEffect(() => {
-    console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode, "isOpen =", isOpen);
+    console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode);
     
     // Skip this effect entirely for email signup to avoid interference
-    if (authMode === "signup" && user && isOpen) {
+    if (authMode === "signup" && user) {
       const completionState = LocalStorageService.getProfileCompletionState();
       const isEmailSignup = completionState?.source === 'email';
       const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
@@ -1061,10 +1061,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         setCurrentStep("profile-setup");
       }
     }
-  }, [user, isOpen]); // Minimal dependencies to avoid interference
+  }, [user]); // Remove isOpen dependency to prevent interference
 
   return (
-    <Dialog open={forceOpen || isOpen} onOpenChange={handleClose}>
+    <Dialog open={forceOpen || isOpen} onOpenChange={(open) => {
+      console.log("🚪 Dialog onOpenChange called with:", open, "current forceOpen:", forceOpen);
+      if (!open && forceOpen) {
+        console.log("🛡️ Preventing dialog close due to forceOpen");
+        return; // Don't close if we're forcing it open
+      }
+      handleClose();
+    }}>
       <DialogPortal>
         {/* Lighter overlay like Etsy - more transparent to show homepage */}
         <DialogOverlay className="fixed inset-0 z-50 bg-black/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />

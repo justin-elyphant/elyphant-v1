@@ -111,16 +111,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
   // Additional useEffect to track currentStep changes specifically
   React.useEffect(() => {
-    console.log("📍 Current step changed to:", currentStep);
+    console.log("📍 Current step changed to:", currentStep, "timestamp:", Date.now());
     
     // Persist step to localStorage for recovery, but only during signup flow
     const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
     if (currentStep !== "sign-in" && (inSignupFlow || currentStep === "profile-setup" || currentStep === "intent-selection")) {
+      console.log("💾 Persisting step to localStorage:", currentStep);
       localStorage.setItem('modalCurrentStep', currentStep);
       
       // Mark as in signup flow if transitioning to profile-setup
       if (currentStep === "profile-setup") {
         localStorage.setItem('modalInSignupFlow', 'true');
+        console.log("🚀 Marked as in signup flow");
       }
     }
   }, [currentStep]);
@@ -215,13 +217,29 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           setForceOpen(true);
           console.log("🔒 Set preventClose=true, forceOpen=true");
           
-          // Force immediate state update using functional update
+          // Force immediate state update using multiple approaches
+          console.log("🔄 UnifiedSignupStep: Forcing step change to profile-setup using multiple methods");
+          
+          // Method 1: Direct state update
+          setCurrentStep("profile-setup");
+          
+          // Method 2: Force re-render with functional update
           setCurrentStep(prevStep => {
-            console.log("🔄 UnifiedSignupStep: Setting step from", prevStep, "to profile-setup");
-            // Persist to localStorage immediately
-            localStorage.setItem('modalCurrentStep', 'profile-setup');
+            console.log("🔄 Functional update: changing from", prevStep, "to profile-setup");
             return "profile-setup";
           });
+          
+          // Method 3: Delayed update to override any interference
+          setTimeout(() => {
+            console.log("🔄 Delayed update: setting to profile-setup");
+            setCurrentStep("profile-setup");
+          }, 50);
+          
+          // Method 4: Additional delayed update
+          setTimeout(() => {
+            console.log("🔄 Second delayed update: setting to profile-setup");
+            setCurrentStep("profile-setup");
+          }, 150);
           
           console.log("✅ UnifiedSignupStep: Step transition initiated");
           
@@ -1039,15 +1057,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     if (authMode === "signup" && user && isOpen) {
       const completionState = LocalStorageService.getProfileCompletionState();
       const isEmailSignup = completionState?.source === 'email';
+      const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
       
-      console.log("🔄 Modal auth useEffect: completionState =", completionState, "isEmailSignup =", isEmailSignup);
+      console.log("🔄 Modal auth useEffect: completionState =", completionState, "isEmailSignup =", isEmailSignup, "inSignupFlow =", inSignupFlow);
+      
+      // CRITICAL: Do NOT interfere with email signup flow
+      if (isEmailSignup && inSignupFlow) {
+        console.log("🚫 Modal auth useEffect: Email signup in progress - BLOCKING any step changes");
+        return; // Block any step changes during email signup
+      }
       
       // Only proceed if this is NOT an email signup (i.e., OAuth user)
       if (!isEmailSignup && !completionState && currentStep === "unified-signup") {
         console.log("🔄 Modal auth useEffect: Moving OAuth user from unified-signup to profile-setup");
         setCurrentStep("profile-setup");
-      } else if (isEmailSignup) {
-        console.log("🚫 Modal auth useEffect: Skipping auto-transition for email signup user - manual transition will handle this");
       }
     }
   }, [user, isOpen]); // Minimal dependencies to avoid interference

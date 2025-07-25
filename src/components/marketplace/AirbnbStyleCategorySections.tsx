@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Product } from "@/types/product";
 import { CategorySection } from "./CategorySection";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { getFeaturedCategories } from "@/constants/categories";
 import { toast } from "sonner";
 
 interface AirbnbStyleCategorySectionsProps {
@@ -17,28 +18,15 @@ interface CategoryData {
   error: string | null;
 }
 
-const CATEGORIES = [
-  {
-    key: 'electronics',
-    title: 'Best Selling Electronics',
-    subtitle: 'Top-rated phones, computers, and gadgets'
-  },
-  {
-    key: 'tech',
-    title: 'Best Selling Tech',
-    subtitle: 'Smart devices and innovative technology'
-  },
-  {
-    key: 'beauty',
-    title: 'Best Selling Beauty',
-    subtitle: 'Popular skincare, makeup, and personal care'
-  },
-  {
-    key: 'homeKitchen',
-    title: 'Best Selling Home & Kitchen',
-    subtitle: 'Essential appliances and home essentials'
-  }
-];
+// Get featured categories from the constants (same as homepage)
+const FEATURED_CATEGORIES = getFeaturedCategories();
+
+const CATEGORIES = FEATURED_CATEGORIES.map(category => ({
+  key: category.value,
+  title: `Best Selling ${category.displayName || category.name}`,
+  subtitle: category.description,
+  searchTerm: category.searchTerm
+}));
 
 export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = ({ className, onProductClick }) => {
   const navigate = useNavigate();
@@ -146,11 +134,14 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
   const handleSeeAll = (categoryKey: string) => {
     console.log(`See All clicked for category: ${categoryKey}`);
     
-    // Get the category-specific search query
-    const searchQuery = enhancedZincApiService.getCategorySearchQuery(categoryKey);
+    // Find the category data to get the search term
+    const categoryData = CATEGORIES.find(cat => cat.key === categoryKey);
+    const searchQuery = categoryData?.searchTerm || enhancedZincApiService.getCategorySearchQuery(categoryKey);
     
-    // Navigate to marketplace with category search
-    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+    // Navigate to marketplace with category search (same as homepage behavior)
+    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&category=${categoryKey}&diversity=true`, {
+      state: { from: 'marketplace-categories' }
+    });
   };
 
   // Handle individual product clicks

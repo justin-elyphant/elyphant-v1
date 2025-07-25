@@ -40,7 +40,7 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category 
         }}
       >
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/30"></div>
+        <div className={`absolute inset-0 ${category === "flowers" ? "bg-black/15" : "bg-black/30"}`}></div>
       </div>
       
       {/* Hero Content */}

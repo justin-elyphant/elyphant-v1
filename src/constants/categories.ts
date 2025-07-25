@@ -234,9 +234,11 @@ export const getCategoryName = (categoryUrl: string | null): string => {
 // Filtered categories for specific components
 export const getFeaturedCategories = (): Category[] => {
   // Return featured categories in alphabetical order
-  return UNIVERSAL_CATEGORIES.filter(cat => 
-    ['arts', 'athleisure', 'beauty', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys'].includes(cat.value)
-  );
+  return UNIVERSAL_CATEGORIES
+    .filter(cat => 
+      ['arts', 'athleisure', 'beauty', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys'].includes(cat.value)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
 export const getQuickAccessCategories = (): Category[] => {

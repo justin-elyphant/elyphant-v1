@@ -20,7 +20,7 @@ import ProfileBubble from "@/components/ui/profile-bubble";
 import { supabase } from "@/integrations/supabase/client";
 
 // Enhanced auth modal steps
-type AuthStep = "welcome" | "email-signup" | "profile-setup" | "intent-selection" | "agent-collection" | "sign-in";
+type AuthStep = "unified-signup" | "profile-setup" | "intent-selection" | "agent-collection" | "sign-in";
 type AuthMode = "signin" | "signup";
 
 interface EnhancedAuthModalProps {
@@ -34,7 +34,7 @@ interface EnhancedAuthModalProps {
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
   onClose,
-  defaultStep = "welcome",
+  defaultStep = "unified-signup",
   initialMode = "signup",
   suggestedIntent
 }) => {
@@ -102,110 +102,176 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     onClose();
   }, [onClose, currentStep, preventClose, forceOpen]);
 
-  const WelcomeStep = () => (
-    <div className="text-center space-y-4 p-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          {authMode === "signin" ? "Welcome Back!" : "Welcome to Elyphant"}
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {authMode === "signin" 
-            ? "Sign in to continue your thoughtful gift-giving journey" 
-            : "The thoughtful way to give and receive gifts with friends and family"
-          }
-        </p>
-      </div>
+  // Unified signup step that combines welcome content with signup form
+  const UnifiedSignupStep = () => {
+    const [formData, setFormData] = useState({
+      name: "",
+      email: "",
+      password: ""
+    });
 
-      {/* Value propositions */}
-      <div className="space-y-2 text-left max-w-sm mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Gift className="w-3 h-3 text-foreground" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium">AI-Powered Gift Discovery</h3>
-            <p className="text-xs text-muted-foreground">
-              Let Nicole help you find the perfect gift
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Heart className="w-3 h-3 text-foreground" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium">Shared Wishlists</h3>
-            <p className="text-xs text-muted-foreground">
-              Create and share wishlists with your circle
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-            <Bot className="w-3 h-3 text-foreground" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium">Auto-Gifting</h3>
-            <p className="text-xs text-muted-foreground">
-              Never miss a birthday or special occasion
-            </p>
-          </div>
-        </div>
-      </div>
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
 
-      {/* Social login prominence */}
-      <div className="space-y-3">
-        <SocialLoginButtons />
+      console.log("🚀 UnifiedSignupStep: Starting account creation");
+
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
         
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        });
+
+        console.log("🚀 UnifiedSignupStep: Signup response:", { signUpData, signUpError });
+
+        if (signUpError) {
+          console.error("🚨 UnifiedSignupStep: Signup error:", signUpError);
+          if (signUpError.message.includes("already registered")) {
+            toast.error("Email already registered", {
+              description: "Please use a different email address or try to sign in."
+            });
+          } else {
+            toast.error("Signup failed", {
+              description: signUpError.message
+            });
+          }
+          return;
+        }
+
+        if (signUpData?.user) {
+          console.log("✅ UnifiedSignupStep: User created successfully:", signUpData.user.id);
+          
+          // Store completion state for streamlined profile setup
+          LocalStorageService.setProfileCompletionState({
+            email: formData.email,
+            firstName: formData.name.split(' ')[0] || '',
+            lastName: formData.name.split(' ').slice(1).join(' ') || '',
+            step: 'profile',
+            source: 'email'
+          });
+
+          console.log("✅ UnifiedSignupStep: Stored profile completion state");
+
+          toast.success("Account created!", {
+            description: "Please check your email to verify your account."
+          });
+
+          console.log("🔄 UnifiedSignupStep: About to transition to profile-setup");
+          
+          // Set a flag in localStorage to force modal to stay open
+          localStorage.setItem('modalForceOpen', 'true');
+          localStorage.setItem('modalTargetStep', 'profile-setup');
+          
+          // Use setTimeout to ensure state change happens after React batching
+          setTimeout(() => {
+            console.log("🔄 UnifiedSignupStep: Setting step to profile-setup (delayed)");
+            setCurrentStep("profile-setup");
+            console.log("✅ UnifiedSignupStep: Current step set to profile-setup (delayed)");
+          }, 100);
+        }
+      } catch (error) {
+        console.error("🚨 UnifiedSignupStep: Unexpected error:", error);
+        toast.error("An unexpected error occurred");
+      } finally {
+        setIsLoading(false);
+        console.log("🏁 UnifiedSignupStep: Loading finished");
+      }
+    };
+
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-semibold">Create Your Account</h2>
+          <p className="text-muted-foreground">
+            Create your account today to discover and automate gifts for your loved ones or create a wishlist to share
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <PasswordInput
+              placeholder="Create Password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+              minLength={6}
+            />
+          </div>
+          
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            disabled={isLoading}
+          >
+            {isLoading ? "Creating Account..." : "Create Account"}
+          </Button>
+        </form>
+
+        {/* Social login buttons under password */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or continue with email
+              Or continue with
             </span>
           </div>
         </div>
 
-        <Button
-          onClick={() => setCurrentStep(authMode === "signin" ? "sign-in" : "email-signup")}
-          variant="outline"
-          className="w-full"
-        >
-          {authMode === "signin" ? "Sign In with Email" : "Continue with Email"}
-        </Button>
-      </div>
+        <SocialLoginButtons />
 
-      {/* Mode switching */}
-      <div className="text-center">
-        <p className="text-xs text-muted-foreground">
-          {authMode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            onClick={() => {
-              setAuthMode(authMode === "signin" ? "signup" : "signin");
-              setCurrentStep("welcome");
-            }}
-            className="text-primary hover:underline font-medium"
-          >
-            {authMode === "signin" ? "Sign up" : "Sign in"}
-          </button>
+        {/* Mode switching */}
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">
+            Already have an account?{" "}
+            <button
+              onClick={() => {
+                setAuthMode("signin");
+                setCurrentStep("sign-in");
+              }}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center">
+          By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>
-
-      {/* Trust elements */}
-      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Lock className="w-3 h-3 text-muted-foreground" />
-          Secure & Private
-        </span>
-        <span className="flex items-center gap-1">
-          <Zap className="w-3 h-3 text-muted-foreground" />
-          Free to Join
-        </span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Email signup step using existing form logic
   const EmailSignupStep = () => {
@@ -297,10 +363,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCurrentStep("welcome")}
+            onClick={() => setCurrentStep("unified-signup")}
             className="self-start"
           >
-            ← Back to Welcome
+            ← Back
           </Button>
         </div>
         <div className="text-center space-y-2">
@@ -403,10 +469,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCurrentStep("welcome")}
+            onClick={() => setCurrentStep("unified-signup")}
             className="mb-4"
           >
-            ← Back to Welcome
+            ← Back
           </Button>
           <h2 className="text-2xl font-semibold">Sign In</h2>
           <p className="text-muted-foreground">
@@ -465,7 +531,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             <button
               onClick={() => {
                 setAuthMode("signup");
-                setCurrentStep("welcome");
+                setCurrentStep("unified-signup");
               }}
               className="text-primary hover:underline font-medium"
             >
@@ -617,7 +683,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCurrentStep("email-signup")}
+            onClick={() => setCurrentStep("unified-signup")}
             className="self-start"
           >
             ← Back
@@ -885,10 +951,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const renderCurrentStep = () => {
     console.log("🎬 Modal renderCurrentStep: Rendering step =", currentStep);
     switch (currentStep) {
-      case "welcome":
-        return <WelcomeStep />;
-      case "email-signup":
-        return <EmailSignupStep />;
+      case "unified-signup":
+        return <UnifiedSignupStep />;
       case "sign-in":
         return <SignInStep />;
       case "profile-setup":
@@ -898,8 +962,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       case "agent-collection":
         return <AgentCollectionStep />;
       default:
-        console.log("⚠️ Modal renderCurrentStep: Unknown step, defaulting to welcome");
-        return <WelcomeStep />;
+        console.log("⚠️ Modal renderCurrentStep: Unknown step, defaulting to unified-signup");
+        return <UnifiedSignupStep />;
     }
   };
 
@@ -907,14 +971,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   React.useEffect(() => {
     console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode, "isOpen =", isOpen);
     
-    // Only trigger for OAuth users who land on welcome step
+    // Only trigger for OAuth users who land on unified-signup step
     // Don't interfere with email signup flow
-    if (user && currentStep === "welcome" && authMode === "signup" && isOpen) {
+    if (user && currentStep === "unified-signup" && authMode === "signup" && isOpen) {
       const isOAuthUser = !LocalStorageService.getProfileCompletionState();
       console.log("🔄 Modal auth useEffect: isOAuthUser =", isOAuthUser);
       
       if (isOAuthUser) {
-        console.log("🔄 Modal auth useEffect: Moving OAuth user from welcome to profile-setup");
+        console.log("🔄 Modal auth useEffect: Moving OAuth user from unified-signup to profile-setup");
         setCurrentStep("profile-setup");
       }
     }
@@ -928,14 +992,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <DialogContent className="fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-h-[85vh] max-w-md translate-x-[-50%] translate-y-[-50%] gap-0 overflow-y-auto bg-gradient-to-br from-white to-purple-50/30 border-0 shadow-xl p-0 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
           {/* Step progress indicator */}
-          {currentStep !== "welcome" && currentStep !== "intent-selection" && (
+          {currentStep !== "unified-signup" && currentStep !== "intent-selection" && (
             <div className="absolute top-4 left-4 z-10">
               <div className="flex gap-1">
-                {["welcome", "email-signup", "profile-setup", "agent-collection"].map((step, index) => (
+                {["unified-signup", "profile-setup", "agent-collection"].map((step, index) => (
                   <div
                     key={step}
                     className={`w-2 h-2 rounded-full ${
-                      index <= ["welcome", "email-signup", "profile-setup", "agent-collection"].indexOf(currentStep)
+                      index <= ["unified-signup", "profile-setup", "agent-collection"].indexOf(currentStep)
                         ? "bg-purple-600"
                         : "bg-gray-200"
                     }`}

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share, Truck } from "lucide-react";
@@ -16,6 +16,7 @@ import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
+import OptimizedImage from "./ui/OptimizedImage";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -39,7 +40,7 @@ interface AirbnbStyleProductCardProps {
   onToggleWishlist?: () => void;
 }
 
-const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
+const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   product,
   onProductClick,
   statusBadge,
@@ -213,18 +214,14 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
         "relative overflow-hidden group",
         viewMode === "list" ? "w-32 h-32 flex-shrink-0 rounded-l-xl" : "aspect-square rounded-t-xl"
       )}>
-        <img
+        <OptimizedImage
           src={getProductImage()}
           alt={getProductTitle()}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-          onError={(e) => {
-            // Fallback to standard image if high-quality version fails
-            const target = e.target as HTMLImageElement;
-            if (target.src.includes('._AC_UL480_')) {
-              target.src = target.src.replace('._AC_UL480_', '._AC_UL320_');
-            }
-          }}
+          className="group-hover:scale-105 transition-transform duration-300"
+          aspectRatio="square"
+          priority={currentImageIndex === 0}
+          quality={80}
+          sizes="300px"
         />
         
         {/* Image Navigation Arrows */}
@@ -494,6 +491,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = ({
       />
     </>
   );
-};
+});
+
+AirbnbStyleProductCard.displayName = "AirbnbStyleProductCard";
 
 export default AirbnbStyleProductCard;

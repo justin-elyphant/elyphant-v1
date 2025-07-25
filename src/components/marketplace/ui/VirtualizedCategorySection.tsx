@@ -1,11 +1,11 @@
-
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Product } from "@/types/product";
-import UnifiedProductCard from "./UnifiedProductCard";
+import UnifiedProductCard from "../UnifiedProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useVirtualScroll } from "@/hooks/useVirtualScroll";
 
-interface CategorySectionProps {
+interface VirtualizedCategorySectionProps {
   title: string;
   subtitle: string;
   products: Product[];
@@ -15,9 +15,10 @@ interface CategorySectionProps {
   showSeeAll?: boolean;
   onAddToCart?: (product: Product) => void;
   onShare?: (product: Product) => void;
+  maxInitialItems?: number;
 }
 
-export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
+export const VirtualizedCategorySection: React.FC<VirtualizedCategorySectionProps> = ({
   title,
   subtitle,
   products,
@@ -26,32 +27,42 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
   onProductClick,
   showSeeAll = true,
   onAddToCart,
-  onShare
+  onShare,
+  maxInitialItems = 5
 }) => {
-  // Memoize product cards for better performance
-  const memoizedProducts = useMemo(() => 
-    products.slice(0, 5).map((product, index) => ({ 
-      product, 
-      index,
-      key: product.product_id || product.id || index 
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  
+  // Limit initial products for better performance
+  const displayProducts = useMemo(() => {
+    if (showAllProducts) return products;
+    return products.slice(0, maxInitialItems);
+  }, [products, showAllProducts, maxInitialItems]);
+
+  // Memoized product cards for better performance
+  const productCards = useMemo(() => 
+    displayProducts.map((product, index) => ({
+      id: product.product_id || product.id || index,
+      product,
+      index
     })),
-    [products]
+    [displayProducts]
   );
+
   if (isLoading) {
     return (
       <div className="space-y-6 border-b border-border/20 pb-8 last:border-b-0">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <div className="h-8 bg-muted/60 rounded-md w-64 animate-pulse"></div>
-            <div className="h-4 bg-muted/40 rounded w-48 animate-pulse"></div>
+            <div className="h-8 bg-muted/50 rounded-md w-64 animate-pulse"></div>
+            <div className="h-4 bg-muted/30 rounded w-48 animate-pulse"></div>
           </div>
-          <div className="h-10 bg-muted/60 rounded-md w-24 animate-pulse"></div>
+          <div className="h-10 bg-muted/50 rounded-md w-24 animate-pulse"></div>
         </div>
         <div className="flex gap-4 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(maxInitialItems)].map((_, i) => (
             <div 
               key={i} 
-              className="flex-shrink-0 w-48 h-64 bg-muted/60 rounded-lg animate-pulse"
+              className="flex-shrink-0 w-48 h-64 bg-muted/50 rounded-lg animate-pulse"
               style={{ animationDelay: `${i * 100}ms` }}
             />
           ))}
@@ -76,6 +87,10 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
     );
   }
 
+  const handleLoadMore = () => {
+    setShowAllProducts(true);
+  };
+
   return (
     <div className="space-y-6 border-b border-border/20 pb-8 last:border-b-0">
       <div className="flex items-center justify-between">
@@ -87,19 +102,19 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
           <Button
             variant="outline"
             onClick={onSeeAll}
-            className="flex items-center gap-2 transition-all duration-300 hover:shadow-md hover:scale-105 border-border/50 hover:border-primary/30"
+            className="flex items-center gap-2 transition-all duration-200 hover:shadow-md border-border/50 hover:border-primary/30"
           >
             See All
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="w-4 h-4" />
           </Button>
         )}
       </div>
       
       <div className="relative">
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
-          {memoizedProducts.map(({ product, index, key }) => (
+          {productCards.map(({ id, product, index }) => (
             <div 
-              key={key}
+              key={id}
               className="flex-shrink-0 w-48 transition-transform duration-200 hover:scale-105"
               style={{ 
                 animationDelay: `${index * 30}ms`,
@@ -115,6 +130,24 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
               />
             </div>
           ))}
+          
+          {/* Load more button if there are more products */}
+          {!showAllProducts && products.length > maxInitialItems && (
+            <div className="flex-shrink-0 w-48 flex items-center justify-center">
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                className="h-32 w-full border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors"
+              >
+                <div className="text-center">
+                  <div className="text-sm font-medium">Load More</div>
+                  <div className="text-xs text-muted-foreground">
+                    +{products.length - maxInitialItems} more
+                  </div>
+                </div>
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Gradient fade for overflow indication */}
@@ -122,4 +155,4 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
       </div>
     </div>
   );
-});
+};

@@ -34,60 +34,62 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   initialMode = "signup",
   suggestedIntent
 }) => {
-  // Single source of truth for state management
+  // **PHASE 1.1: Single source of truth for state management**
   const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [signupFlowActive, setSignupFlowActive] = useState(false);
   const [collectedData, setCollectedData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const { user } = useAuth();
-  const { profile, loading, error, hasCompletedOnboarding } = useUnifiedProfile();
+  const { profile, loading, error: profileError, hasCompletedOnboarding } = useUnifiedProfile();
   const navigate = useNavigate();
 
-  // Helper function to get initial step based on localStorage and props
-  const getInitialStep = useCallback((): AuthStep => {
-    if (initialMode === "signin") return "sign-in";
-    
-    const savedStep = localStorage.getItem('modalCurrentStep');
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    
-    if (inSignupFlow && savedStep && savedStep !== "sign-in") {
-      console.log("🔄 Restoring step from signup flow:", savedStep);
-      setSignupFlowActive(true);
-      return savedStep as AuthStep;
-    }
-    
-    return defaultStep;
-  }, [initialMode, defaultStep]);
-
-  // Persist critical state during signup flow
-  const persistSignupState = useCallback((step: AuthStep) => {
-    if (step !== "sign-in") {
-      localStorage.setItem('modalCurrentStep', step);
+  // **PHASE 1.1: Simplified localStorage integration**
+  const persistCriticalState = useCallback((step: AuthStep) => {
+    // Only persist critical flow interruptions
+    if (step === 'profile-setup' || step === 'intent-selection' || step === 'agent-collection') {
       localStorage.setItem('modalInSignupFlow', 'true');
+      localStorage.setItem('modalCurrentStep', step);
       setSignupFlowActive(true);
     }
   }, []);
 
-  // Clean up state when flow completes or modal closes
+  // **PHASE 1.1: Clean state cleanup**
   const cleanupSignupState = useCallback(() => {
     localStorage.removeItem('modalCurrentStep');
     localStorage.removeItem('modalInSignupFlow');
     localStorage.removeItem('modalForceOpen');
     setSignupFlowActive(false);
+    setError(null);
   }, []);
 
-  // Step navigation
+  // **PHASE 1.2: Simplified step navigation with validation**
   const nextStep = useCallback((step: AuthStep, data?: any) => {
     console.log("📍 Navigating to step:", step);
-    setCurrentStep(step);
-    persistSignupState(step);
     
-    if (data) {
-      setCollectedData(data);
+    // Validate step transition
+    const validTransitions: Record<AuthStep, AuthStep[]> = {
+      "unified-signup": ["profile-setup", "sign-in"],
+      "profile-setup": ["intent-selection"],
+      "intent-selection": ["agent-collection"],
+      "agent-collection": [],
+      "sign-in": []
+    };
+    
+    if (validTransitions[currentStep]?.includes(step) || currentStep === step) {
+      setCurrentStep(step);
+      persistCriticalState(step);
+      
+      if (data) {
+        setCollectedData(data);
+      }
+    } else {
+      console.warn(`❌ Invalid step transition from ${currentStep} to ${step}`);
+      setError(`Invalid step transition from ${currentStep} to ${step}`);
     }
-  }, [persistSignupState]);
+  }, [currentStep, persistCriticalState]);
 
   const previousStep = useCallback(() => {
     const stepOrder: AuthStep[] = ["unified-signup", "profile-setup", "intent-selection", "agent-collection"];
@@ -96,25 +98,24 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     if (currentIndex > 0) {
       const prevStep = stepOrder[currentIndex - 1];
       setCurrentStep(prevStep);
-      persistSignupState(prevStep);
+      persistCriticalState(prevStep);
     }
-  }, [currentStep, persistSignupState]);
+  }, [currentStep, persistCriticalState]);
 
-  // Handle signup completion
+  // **PHASE 1.2: Clear entry/exit conditions**
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
     nextStep("profile-setup", userData);
   }, [nextStep]);
 
-  // Handle profile completion
   const handleProfileComplete = useCallback(() => {
     console.log("✅ Profile setup complete, moving to intent selection");
     nextStep("intent-selection");
   }, [nextStep]);
 
-  // Handle modal close with signup flow protection
+  // **PHASE 1.1: Enhanced modal close with protection**
   const handleClose = useCallback(() => {
-    if (signupFlowActive && (currentStep === "profile-setup" || currentStep === "intent-selection")) {
+    if (signupFlowActive && (currentStep === "profile-setup" || currentStep === "intent-selection" || currentStep === "agent-collection")) {
       console.log("🛡️ Preventing close during active signup flow");
       return;
     }
@@ -123,62 +124,64 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     onClose();
   }, [signupFlowActive, currentStep, cleanupSignupState, onClose]);
 
-  // Initialize step on mount
+  // **PHASE 1.1: Single initialization effect - eliminate race conditions**
   useEffect(() => {
+    // Get initial step based on props and localStorage
+    const getInitialStep = (): AuthStep => {
+      if (initialMode === "signin") return "sign-in";
+      
+      const savedStep = localStorage.getItem('modalCurrentStep');
+      const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+      
+      if (inSignupFlow && savedStep && savedStep !== "sign-in") {
+        console.log("🔄 Restoring step from signup flow:", savedStep);
+        setSignupFlowActive(true);
+        return savedStep as AuthStep;
+      }
+      
+      return defaultStep;
+    };
+
     const initialStep = getInitialStep();
     setCurrentStep(initialStep);
-  }, [getInitialStep]);
+  }, []); // Empty dependency array - only run once on mount
 
-  // Enhanced auto-skip logic using unified profile
+  // **PHASE 1.1: Simplified auto-skip logic - single responsibility**
   useEffect(() => {
     console.log("🔍 Auto-skip check:", {
       hasUser: !!user,
-      hasProfile: !!profile,
       hasCompletedOnboarding,
       currentStep,
       profileLoading: loading,
-      profileError: error
+      profileError
     });
     
-    // Only proceed if we have a user and we're not still loading profile data
-    if (user && !loading && currentStep === "profile-setup") {
-      if (hasCompletedOnboarding) {
-        console.log("✅ Profile onboarding completed, auto-skipping to intent selection");
-        // Add small delay to ensure UI is ready
-        setTimeout(() => {
-          handleProfileComplete();
-        }, 100);
-      } else if (error) {
-        console.log("⚠️ Profile loading error, staying on profile-setup");
-      } else {
-        console.log("📝 Profile not completed, user needs to complete profile setup");
-      }
+    // Only auto-skip if we have a user, profile is loaded, onboarding is completed, and we're on profile-setup
+    if (user && !loading && hasCompletedOnboarding && currentStep === "profile-setup") {
+      console.log("✅ Profile onboarding completed, auto-skipping to intent selection");
+      setTimeout(() => {
+        handleProfileComplete();
+      }, 100);
     }
-  }, [user, hasCompletedOnboarding, loading, error, currentStep, handleProfileComplete]);
+  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete]);
 
-  // Timeout mechanism for stuck states
+  // **PHASE 1.1: Error boundary and fallback mechanism**
   useEffect(() => {
-    if (currentStep === "profile-setup" && user && !loading) {
-      const timeout = setTimeout(() => {
-        console.log("⏰ Profile setup timeout - forcing step progression check");
-        if (hasCompletedOnboarding) {
-          console.log("🔄 Timeout: Profile onboarding completed, forcing skip to intent selection");
-          handleProfileComplete();
-        }
-      }, 3000); // 3 second timeout
-
-      return () => clearTimeout(timeout);
+    if (profileError) {
+      console.warn("⚠️ Profile error detected:", profileError);
+      setError(`Profile error: ${profileError}`);
     }
-  }, [currentStep, user, loading, hasCompletedOnboarding, handleProfileComplete]);
+  }, [profileError]);
 
-  // Handle intent selection
+  // **PHASE 3.3: Intent-based routing logic**
   const handleIntentSelect = useCallback((intent: string) => {
     console.log("✅ Intent selected:", intent);
     
     if (intent === "quick-gift") {
+      // **PHASE 3.1: Progress to agent-collection step (stays in modal)**
       nextStep("agent-collection");
     } else {
-      // Complete signup flow and navigate
+      // **PHASE 3.3: Close modal and navigate for other intents**
       cleanupSignupState();
       onClose();
       
@@ -191,12 +194,12 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [nextStep, cleanupSignupState, onClose, navigate]);
 
-  // Handle agent collection completion
+  // **PHASE 3.2: Agent collection completion handler**
   const handleAgentComplete = useCallback((giftData: any) => {
     console.log("✅ Agent collection complete:", giftData);
     setCollectedData(giftData);
     
-    // Complete signup flow and proceed to gift search
+    // **PHASE 4.2: Complete signup flow and proceed to gift search**
     cleanupSignupState();
     onClose();
     

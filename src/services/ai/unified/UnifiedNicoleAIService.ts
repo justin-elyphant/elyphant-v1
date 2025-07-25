@@ -275,9 +275,17 @@ export class UnifiedNicoleAIService {
     message: string,
     context: UnifiedNicoleContext
   ): Promise<NicoleResponse> {
-    // Use enhanced Nicole service for gift advisor functionality
+    // **PHASE 2.3: ChatGPT Agent Integration with existing system**
+    
+    // Check if this is a quick-gift flow - use ChatGPT Agent
+    if (context.conversationPhase === 'quick-gift' || context.giftCollectionPhase) {
+      console.log('🎁 Using ChatGPT Agent for quick-gift flow');
+      return this.handleChatGPTAgentFlow(message, context, 'default');
+    }
+    
+    // **PHASE 4.1: Preserve existing fallback chain**
+    // Use enhanced Nicole service for regular gift advisor functionality
     try {
-      // For now, fallback to basic conversation with gift advisor focus
       const nicoleContext: NicoleContext = this.convertToNicoleContext(context);
       const response = await chatWithNicole(message, {
         ...nicoleContext,
@@ -296,15 +304,27 @@ export class UnifiedNicoleAIService {
       console.error('Gift advisor capability error:', error);
       // Fallback to basic conversation
       const nicoleContext: NicoleContext = this.convertToNicoleContext(context);
-      const fallback = await chatWithNicole(message, nicoleContext);
-      return {
-        message: fallback.message,
-        context,
-        capability: 'conversation',
-        actions: [],
-        searchQuery: this.generateSearchQuery(context),
-        showSearchButton: fallback.showSearchButton || false
-      };
+      try {
+        const fallback = await chatWithNicole(message, nicoleContext);
+        return {
+          message: fallback.message,
+          context,
+          capability: 'conversation',
+          actions: [],
+          searchQuery: this.generateSearchQuery(context),
+          showSearchButton: fallback.showSearchButton || false
+        };
+      } catch (fallbackError) {
+        console.error('All gift advisor methods failed:', fallbackError);
+        return {
+          message: "I'd love to help you find the perfect gift! Tell me who you're shopping for and what the occasion is.",
+          context,
+          capability: 'gift_advisor',
+          actions: ['continue_conversation'],
+          searchQuery: '',
+          showSearchButton: false
+        };
+      }
     }
   }
 

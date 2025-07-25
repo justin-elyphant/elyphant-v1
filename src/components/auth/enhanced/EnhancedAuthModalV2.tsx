@@ -132,7 +132,15 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // Auto-skip profile setup if profile already exists
   useEffect(() => {
-    if (user && profile && currentStep === "profile-setup") {
+    console.log("🔍 Checking auto-skip conditions:", {
+      hasUser: !!user,
+      hasProfile: !!profile,
+      currentStep,
+      profileId: profile?.id,
+      userName: profile?.name
+    });
+    
+    if (user && profile && profile.id && currentStep === "profile-setup") {
       console.log("✅ Profile already exists, skipping to intent selection");
       handleProfileComplete();
     }

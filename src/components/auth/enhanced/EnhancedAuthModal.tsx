@@ -1049,14 +1049,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       
       console.log("🔄 Modal auth useEffect: completionState =", completionState, "isEmailSignup =", isEmailSignup, "inSignupFlow =", inSignupFlow);
       
-      // CRITICAL: Do NOT interfere with email signup flow
-      if (isEmailSignup && inSignupFlow) {
-        console.log("🚫 Modal auth useEffect: Email signup in progress - BLOCKING any step changes");
-        return; // Block any step changes during email signup
+      // CRITICAL: COMPLETELY BLOCK this useEffect for email signups
+      if (isEmailSignup) {
+        console.log("🚫 Modal auth useEffect: Email signup detected - COMPLETELY BLOCKING this useEffect");
+        return; // Block ANY changes for email signups
       }
       
-      // Only proceed if this is NOT an email signup (i.e., OAuth user)
-      if (!isEmailSignup && !completionState && currentStep === "unified-signup") {
+      // Only proceed for OAuth users (no completion state means OAuth)
+      if (!completionState && currentStep === "unified-signup") {
         console.log("🔄 Modal auth useEffect: Moving OAuth user from unified-signup to profile-setup");
         setCurrentStep("profile-setup");
       }

@@ -2,47 +2,96 @@
 import { ProfileCreationData } from "@/services/profiles/UnifiedProfileService";
 
 /**
- * Maps OAuth user metadata to ProfileCreationData format
+ * Enhanced OAuth mapping with better data extraction and sync
  */
 export function mapOAuthToProfileCreationData(user: any, additionalData: any = {}): ProfileCreationData {
-  console.log("🔄 Mapping OAuth data to ProfileCreationData");
-  console.log("📊 OAuth user:", user);
-  console.log("📊 Additional data:", additionalData);
+  console.log("🔄 Enhanced OAuth mapping starting...");
+  console.log("📊 User data:", { id: user.id, email: user.email, metadata: user.user_metadata });
+  console.log("📊 Additional form data:", additionalData);
 
   const metadata = user.user_metadata || {};
   
-  // Extract names from OAuth metadata
-  const firstName = additionalData.first_name || 
-                   metadata.first_name || 
-                   metadata.given_name || 
-                   (metadata.full_name || metadata.name || "").split(' ')[0] || 
-                   "";
-                   
-  const lastName = additionalData.last_name || 
-                  metadata.last_name || 
-                  metadata.family_name || 
-                  (metadata.full_name || metadata.name || "").split(' ').slice(1).join(' ') || 
-                  "";
+  // Enhanced name extraction with multiple fallbacks
+  let firstName = additionalData.first_name || additionalData.firstName;
+  let lastName = additionalData.last_name || additionalData.lastName;
+  
+  // If no names from additional data, try OAuth metadata
+  if (!firstName) {
+    firstName = metadata.first_name || 
+               metadata.given_name || 
+               metadata.name?.split(' ')[0] || 
+               metadata.full_name?.split(' ')[0] || 
+               "";
+  }
+  
+  if (!lastName) {
+    lastName = metadata.last_name || 
+              metadata.family_name ||
+              metadata.name?.split(' ').slice(1).join(' ') || 
+              metadata.full_name?.split(' ').slice(1).join(' ') || 
+              "";
+  }
+
+  // Ensure we have at least basic names
+  if (!firstName && !lastName) {
+    const emailUser = user.email?.split('@')[0] || 'User';
+    firstName = emailUser;
+    lastName = 'Name';
+  }
+
+  // Enhanced username generation to avoid conflicts
+  const generateUsername = () => {
+    const base = additionalData.username || 
+                 `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]/g, '') ||
+                 `user${user.id.substring(0, 8)}`;
+    return base.length < 3 ? `user_${user.id.substring(0, 8)}` : base;
+  };
+
+  // Enhanced photo extraction
+  const extractPhoto = () => {
+    return additionalData.profile_image || 
+           additionalData.photo ||
+           metadata.avatar_url || 
+           metadata.picture || 
+           metadata.profile_image_url ||
+           metadata.photo ||
+           null;
+  };
+
+  // Enhanced date of birth handling
+  const extractDateOfBirth = () => {
+    if (additionalData.dateOfBirth) {
+      return new Date(additionalData.dateOfBirth);
+    }
+    if (additionalData.birthday) {
+      const currentYear = new Date().getFullYear();
+      return new Date(currentYear - 25, additionalData.birthday.month - 1, additionalData.birthday.day);
+    }
+    return undefined;
+  };
 
   const profileData: ProfileCreationData = {
-    firstName: firstName,
-    lastName: lastName,
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
     email: user.email || "",
-    username: additionalData.username || `user_${user.id.substring(0, 8)}`,
-    photo: additionalData.profile_image || 
-                  metadata.avatar_url || 
-                  metadata.picture || 
-                  metadata.profile_image_url || 
-                  null,
+    username: generateUsername(),
+    photo: extractPhoto(),
+    dateOfBirth: extractDateOfBirth(),
+    birthYear: additionalData.birthYear || new Date().getFullYear() - 25,
     
-    // Handle address - could be string or object
+    // Enhanced address handling with Google Places integration
     address: normalizeAddressInput(additionalData.address),
     interests: additionalData.interests || [],
     gift_preferences: additionalData.gift_preferences || [],
     bio: additionalData.bio || ""
   };
 
-  console.log("✅ Mapped ProfileCreationData:", profileData);
+  console.log("✅ Enhanced OAuth mapping complete:", {
+    ...profileData,
+    hasPhoto: !!profileData.photo,
+    hasAddress: !!profileData.address
+  });
+  
   return profileData;
 }
 

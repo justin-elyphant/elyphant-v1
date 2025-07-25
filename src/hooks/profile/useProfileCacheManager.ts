@@ -31,21 +31,71 @@ export const useProfileCacheManager = () => {
   }, [invalidateCache, refetchProfile]);
 
   /**
-   * Handle post-onboarding data sync
+   * Handle post-onboarding data sync with enhanced retry logic
    */
   const handleOnboardingComplete = useCallback(async () => {
     console.log("🎯 Handling onboarding completion - forcing data sync");
     
-    // Wait a bit to ensure database writes are complete
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Enhanced wait logic with retries for OAuth sync
+    let retries = 3;
+    let profile = null;
     
-    // Force complete refresh
-    return await forceProfileRefresh();
+    while (retries > 0 && !profile) {
+      console.log(`🔄 Attempting profile sync (${4 - retries}/3)`);
+      
+      // Progressive wait times: 500ms, 1s, 2s
+      const waitTime = 500 * (4 - retries);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      
+      // Force complete refresh
+      profile = await forceProfileRefresh();
+      
+      if (!profile) {
+        retries--;
+        console.log(`⚠️ Profile sync failed, ${retries} retries remaining`);
+      }
+    }
+    
+    if (!profile) {
+      console.error("❌ Profile sync failed after all retries");
+    } else {
+      console.log("✅ Profile sync successful");
+    }
+    
+    return profile;
   }, [forceProfileRefresh]);
+
+  /**
+   * Enhanced OAuth to settings sync helper
+   */
+  const handleOAuthToSettingsSync = useCallback(async (user: any) => {
+    console.log("🔗 Handling OAuth to settings sync");
+    
+    try {
+      // Clear any stale auth states
+      invalidateCache();
+      unifiedDataService.invalidateCache();
+      
+      // Ensure profile exists and is properly synced
+      const profile = await refetchProfile();
+      
+      if (profile) {
+        console.log("✅ OAuth to settings sync complete");
+        return true;
+      } else {
+        console.error("❌ OAuth to settings sync failed - no profile found");
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ OAuth to settings sync error:", error);
+      return false;
+    }
+  }, [invalidateCache, refetchProfile]);
 
   return {
     forceProfileRefresh,
     handleOnboardingComplete,
+    handleOAuthToSettingsSync,
     invalidateCache
   };
 };

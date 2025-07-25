@@ -2,13 +2,13 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Search, List } from "lucide-react";
+import { Zap, Search, List, Bot } from "lucide-react";
 
 interface OnboardingIntentModalProps {
   open: boolean;
-  onSelect: (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => void;
+  onSelect: (userIntent: "quick-gift" | "browse-shop" | "create-wishlist" | "auto-gift") => void;
   onSkip: () => void; // Interface compatibility, not used here
-  suggestedIntent?: "quick-gift" | "browse-shop" | "create-wishlist";
+  suggestedIntent?: "quick-gift" | "browse-shop" | "create-wishlist" | "auto-gift";
 }
 
 const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
@@ -17,11 +17,11 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   onSkip,
   suggestedIntent,
 }) => {
-  const [selectedIntent, setSelectedIntent] = React.useState<"quick-gift" | "browse-shop" | "create-wishlist" | null>(null);
+  const [selectedIntent, setSelectedIntent] = React.useState<"quick-gift" | "browse-shop" | "create-wishlist" | "auto-gift" | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Enhanced: Handle intent selection with loading states
-  const handleIntentSelect = async (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
+  const handleIntentSelect = async (intent: "quick-gift" | "browse-shop" | "create-wishlist" | "auto-gift") => {
     setSelectedIntent(intent);
     setIsLoading(true);
     
@@ -33,7 +33,7 @@ const OnboardingIntentModal: React.FC<OnboardingIntentModalProps> = ({
   };
 
   // Add highlight style if suggested or selected
-  const getButtonClass = (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
+  const getButtonClass = (intent: "quick-gift" | "browse-shop" | "create-wishlist" | "auto-gift") => {
     let baseClass = "border-2 transition-all duration-200";
     
     if (selectedIntent === intent) {

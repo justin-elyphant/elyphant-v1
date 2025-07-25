@@ -46,9 +46,34 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Debug modal state changes
+  // Debug modal state changes and check for localStorage flags
   React.useEffect(() => {
     console.log("🎭 Modal state change: isOpen =", isOpen, "currentStep =", currentStep, "user =", !!user, "forceOpen =", forceOpen);
+    
+    // Check for forced modal state from localStorage
+    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
+    const targetStep = localStorage.getItem('modalTargetStep');
+    
+    if (shouldForceOpen && !forceOpen) {
+      console.log("🔒 Setting forceOpen = true from localStorage flag");
+      setForceOpen(true);
+      setPreventClose(true);
+    }
+    
+    if (targetStep && targetStep !== currentStep && user) {
+      console.log("🎯 Setting target step from localStorage:", targetStep);
+      setCurrentStep(targetStep as AuthStep);
+      
+      // Clear the localStorage flags after a delay
+      setTimeout(() => {
+        console.log("🧹 Clearing localStorage flags and re-enabling modal close");
+        localStorage.removeItem('modalForceOpen');
+        localStorage.removeItem('modalTargetStep');
+        setForceOpen(false);
+        setPreventClose(false);
+      }, 3000);
+    }
+    
     if (!isOpen && currentStep === "profile-setup") {
       console.error("🚨 MODAL CLOSED WHILE ON PROFILE-SETUP STEP! This is the bug!");
     }
@@ -219,10 +244,6 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         if (signUpData?.user) {
           console.log("✅ EmailSignupStep: User created successfully:", signUpData.user.id);
           
-          // Force modal to stay open and prevent any external closure
-          setPreventClose(true);
-          setForceOpen(true);
-          
           // Store completion state for streamlined profile setup
           LocalStorageService.setProfileCompletionState({
             email: formData.email,
@@ -240,18 +261,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
           console.log("🔄 EmailSignupStep: About to transition to profile-setup");
           
+          // Set a flag in localStorage to force modal to stay open
+          localStorage.setItem('modalForceOpen', 'true');
+          localStorage.setItem('modalTargetStep', 'profile-setup');
+          
           // Use setTimeout to ensure state change happens after React batching
           setTimeout(() => {
             console.log("🔄 EmailSignupStep: Setting step to profile-setup (delayed)");
             setCurrentStep("profile-setup");
             console.log("✅ EmailSignupStep: Current step set to profile-setup (delayed)");
-            
-            // Keep protection for longer to ensure modal stays open
-            setTimeout(() => {
-              console.log("🔓 EmailSignupStep: Re-enabling modal close after profile setup");
-              setPreventClose(false);
-              setForceOpen(false);
-            }, 3000); // Longer protection period
           }, 100); // Small delay to avoid React state batching conflicts
         }
       } catch (error) {

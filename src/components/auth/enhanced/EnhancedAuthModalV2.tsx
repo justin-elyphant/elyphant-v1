@@ -5,13 +5,12 @@ import { X, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
-import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 
 // Import components
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import { useProfileCreate } from "@/hooks/profile/useProfileCreate";
 import { PasswordInput } from "@/components/ui/password-input";
 import AgentCollectionStep from "./steps/AgentCollectionStep";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +42,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [collectedData, setCollectedData] = useState<any>(null);
   
   const { user } = useAuth();
-  const { profile, loading, error } = useProfile();
+  const { profile, loading, error, hasCompletedOnboarding } = useUnifiedProfile();
   const navigate = useNavigate();
 
   // Helper function to get initial step based on localStorage and props
@@ -130,22 +129,21 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     setCurrentStep(initialStep);
   }, [getInitialStep]);
 
-  // Enhanced auto-skip logic with better state management
+  // Enhanced auto-skip logic using unified profile
   useEffect(() => {
     console.log("🔍 Auto-skip check:", {
       hasUser: !!user,
       hasProfile: !!profile,
+      hasCompletedOnboarding,
       currentStep,
-      profileId: profile?.id,
-      profileName: profile?.name,
       profileLoading: loading,
       profileError: error
     });
     
     // Only proceed if we have a user and we're not still loading profile data
     if (user && !loading && currentStep === "profile-setup") {
-      if (profile && profile.id) {
-        console.log("✅ Profile exists, auto-skipping to intent selection");
+      if (hasCompletedOnboarding) {
+        console.log("✅ Profile onboarding completed, auto-skipping to intent selection");
         // Add small delay to ensure UI is ready
         setTimeout(() => {
           handleProfileComplete();
@@ -153,25 +151,25 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       } else if (error) {
         console.log("⚠️ Profile loading error, staying on profile-setup");
       } else {
-        console.log("📝 No profile found, user needs to complete profile setup");
+        console.log("📝 Profile not completed, user needs to complete profile setup");
       }
     }
-  }, [user, profile, loading, error, currentStep, handleProfileComplete]);
+  }, [user, hasCompletedOnboarding, loading, error, currentStep, handleProfileComplete]);
 
   // Timeout mechanism for stuck states
   useEffect(() => {
     if (currentStep === "profile-setup" && user && !loading) {
       const timeout = setTimeout(() => {
         console.log("⏰ Profile setup timeout - forcing step progression check");
-        if (profile && profile.id) {
-          console.log("🔄 Timeout: Profile exists, forcing skip to intent selection");
+        if (hasCompletedOnboarding) {
+          console.log("🔄 Timeout: Profile onboarding completed, forcing skip to intent selection");
           handleProfileComplete();
         }
       }, 3000); // 3 second timeout
 
       return () => clearTimeout(timeout);
     }
-  }, [currentStep, user, loading, profile, handleProfileComplete]);
+  }, [currentStep, user, loading, hasCompletedOnboarding, handleProfileComplete]);
 
   // Handle intent selection
   const handleIntentSelect = useCallback((intent: string) => {
@@ -443,14 +441,13 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // Profile Setup Step Component
   const ProfileSetupStep = () => {
-    const { createProfile, isCreating } = useProfileCreate();
+    const { updateProfile } = useUnifiedProfile();
     const [profileData, setProfileData] = useState({
       name: "",
       email: "",
-      username: "",
       bio: "",
-      profile_image: null,
-      address: {
+      date_of_birth: null as Date | null,
+      shipping_address: {
         street: "",
         line2: "",
         city: "",
@@ -458,9 +455,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         zipCode: "",
         country: "US"
       },
-      date_of_birth: null as Date | null,
-      interests: [],
-      importantDates: [],
+      gift_preferences: [],
       data_sharing_settings: {
         dob: 'friends' as const,
         shipping_address: 'private' as const,
@@ -484,14 +479,27 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+      setIsLoading(true);
       
       try {
-        await createProfile(profileData);
-        toast.success("Profile created successfully!");
-        handleProfileComplete();
+        const result = await updateProfile({
+          ...profileData,
+          onboarding_completed: true
+        });
+        
+        if (result.success) {
+          toast.success("Profile created successfully!");
+          // Clear localStorage state
+          LocalStorageService.clearProfileCompletionState();
+          handleProfileComplete();
+        } else {
+          toast.error(result.error || "Profile creation failed");
+        }
       } catch (error) {
         console.error("Profile creation failed:", error);
         toast.error("Profile creation failed");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -516,19 +524,11 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           
           <input
             type="text"
-            placeholder="Username (Optional)"
-            value={profileData.username}
-            onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          
-          <input
-            type="text"
             placeholder="City (Optional)"
-            value={profileData.address.city}
+            value={profileData.shipping_address.city}
             onChange={(e) => setProfileData(prev => ({ 
               ...prev, 
-              address: { ...prev.address, city: e.target.value }
+              shipping_address: { ...prev.shipping_address, city: e.target.value }
             }))}
             className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           />
@@ -544,9 +544,9 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            disabled={isCreating}
+            disabled={isLoading}
           >
-            {isCreating ? "Creating Profile..." : "Continue"}
+            {isLoading ? "Creating Profile..." : "Continue"}
           </Button>
         </form>
       </div>

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock } from "lucide-react";
 import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
+import { navigateInIframe } from "@/utils/iframeUtils";
 
 export interface ProfileBannerProps {
   userData: any;
@@ -62,12 +63,12 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
         targetUserId: userData.id,
         targetName: userData.name
       }));
-      window.location.href = '/signup';
+      navigateInIframe('/signup');
       return;
     }
     
-    // Navigate to messaging with this user
-    window.location.href = `/messages/${userData.id}`;
+    // Navigate to messaging with this user using iframe-safe navigation
+    navigateInIframe(`/messages/${userData.id}`);
   };
 
   const handleConnectClick = () => {
@@ -78,7 +79,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
         targetUserId: userData.id,
         targetName: userData.name
       }));
-      window.location.href = '/signup';
+      navigateInIframe('/signup');
       return;
     }
     

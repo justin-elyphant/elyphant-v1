@@ -54,3 +54,15 @@ export const getIframeSafeHeight = (height: "auto" | "min-screen" | "screen" | "
   
   return heightClasses[height] || "";
 };
+
+// Iframe-safe navigation function
+export const navigateInIframe = (path: string) => {
+  if (isInIframe()) {
+    // Use history API for iframe navigation to prevent reload
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  } else {
+    // Normal navigation for standalone windows
+    window.location.href = path;
+  }
+};

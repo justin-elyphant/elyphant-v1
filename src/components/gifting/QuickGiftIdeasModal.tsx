@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Connection } from "@/types/connections";
+import { navigateInIframe } from "@/utils/iframeUtils";
 
 interface QuickGiftIdeasModalProps {
   open: boolean;
@@ -144,8 +145,11 @@ const QuickGiftIdeasModal: React.FC<QuickGiftIdeasModalProps> = ({
             <Button 
               className="w-full" 
               onClick={() => {
-                // Navigate to marketplace with friend context
-                window.location.href = `/marketplace?friend=${connection.id}&name=${encodeURIComponent(connection.name)}`;
+                // Navigate to marketplace with friend context using iframe-safe navigation
+                const searchParams = new URLSearchParams();
+                searchParams.set('friend', connection.id);
+                searchParams.set('name', connection.name);
+                navigateInIframe(`/marketplace?${searchParams.toString()}`);
               }}
             >
               <Search className="h-4 w-4 mr-2" />

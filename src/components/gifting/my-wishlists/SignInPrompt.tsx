@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,10 +16,10 @@ const SignInPrompt: React.FC<SignInPromptProps> = () => (
       </p>
       <div className="flex gap-4">
         <Button asChild variant="default">
-          <a href="/auth">Sign In</a>
+          <Link to="/auth">Sign In</Link>
         </Button>
         <Button asChild variant="outline">
-          <a href="/auth">Create Account</a>
+          <Link to="/auth">Create Account</Link>
         </Button>
       </div>
     </div>

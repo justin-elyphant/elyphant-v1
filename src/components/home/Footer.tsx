@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface FooterProps {
@@ -14,33 +15,33 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="/about" className="hover:text-foreground">About Us</a></li>
-              <li><a href="/careers" className="hover:text-foreground">Careers</a></li>
-              <li><a href="/press" className="hover:text-foreground">Press</a></li>
+              <li><Link to="/about" className="hover:text-foreground">About Us</Link></li>
+              <li><Link to="/careers" className="hover:text-foreground">Careers</Link></li>
+              <li><Link to="/press" className="hover:text-foreground">Press</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">For Vendors</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="/vendor-partner" className="hover:text-foreground">Vendor Portal</a></li>
-              <li><a href="/vendor-signup" className="hover:text-foreground">Vendor Sign Up</a></li>
-              <li><a href="/vendor-login" className="hover:text-foreground">Vendor Login</a></li>
+              <li><Link to="/vendor-partner" className="hover:text-foreground">Vendor Portal</Link></li>
+              <li><Link to="/vendor-signup" className="hover:text-foreground">Vendor Sign Up</Link></li>
+              <li><Link to="/vendor-login" className="hover:text-foreground">Vendor Login</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="/help" className="hover:text-foreground">Help Center</a></li>
-              <li><a href="/contact" className="hover:text-foreground">Contact Us</a></li>
-              <li><a href="/returns" className="hover:text-foreground">Returns</a></li>
+              <li><Link to="/help" className="hover:text-foreground">Help Center</Link></li>
+              <li><Link to="/contact" className="hover:text-foreground">Contact Us</Link></li>
+              <li><Link to="/returns" className="hover:text-foreground">Returns</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Legal & Admin</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="/privacy" className="hover:text-foreground">Privacy Policy</a></li>
-              <li><a href="/terms" className="hover:text-foreground">Terms of Service</a></li>
-              <li><a href="/trunkline" className="hover:text-foreground">Trunkline</a></li>
+              <li><Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">Terms of Service</Link></li>
+              <li><Link to="/trunkline" className="hover:text-foreground">Trunkline</Link></li>
             </ul>
           </div>
         </div>

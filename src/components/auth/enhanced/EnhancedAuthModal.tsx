@@ -60,8 +60,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       setPreventClose(true);
     }
     
-    if (targetStep && targetStep !== currentStep && user) {
-      console.log("🎯 Setting target step from localStorage:", targetStep);
+    if (targetStep && targetStep !== currentStep) {
+      console.log("🎯 Setting target step from localStorage:", targetStep, "current user:", !!user);
       setCurrentStep(targetStep as AuthStep);
       
       // Clear the localStorage flags after a delay

@@ -237,15 +237,19 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           });
 
           console.log("🔄 EmailSignupStep: About to transition to profile-setup");
-          // Move to profile setup step
-          setCurrentStep("profile-setup");
-          console.log("✅ EmailSignupStep: Current step set to profile-setup");
           
-          // Allow modal to be closed again after a brief delay
+          // Use setTimeout to ensure state change happens after React batching
           setTimeout(() => {
-            console.log("🔓 EmailSignupStep: Re-enabling modal close");
-            setPreventClose(false);
-          }, 1000);
+            console.log("🔄 EmailSignupStep: Setting step to profile-setup (delayed)");
+            setCurrentStep("profile-setup");
+            console.log("✅ EmailSignupStep: Current step set to profile-setup (delayed)");
+            
+            // Allow modal to be closed again after transition completes
+            setTimeout(() => {
+              console.log("🔓 EmailSignupStep: Re-enabling modal close");
+              setPreventClose(false);
+            }, 500);
+          }, 100); // Small delay to avoid React state batching conflicts
         }
       } catch (error) {
         console.error("🚨 EmailSignupStep: Unexpected error:", error);

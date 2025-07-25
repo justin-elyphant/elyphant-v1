@@ -5,9 +5,9 @@ export class NicoleCapabilityRouter {
     {
       name: 'gift_advisor',
       description: 'Comprehensive gift recommendation and advisory',
-      triggers: ['gift advisor', 'help me find', 'recommend', 'suggest gift', 'gift idea'],
+      triggers: ['gift advisor', 'help me find', 'recommend', 'suggest gift', 'gift idea', 'quick gift', 'quick-gift'],
       contextRequirements: [],
-      availableActions: ['start_gift_flow', 'analyze_preferences', 'generate_recommendations']
+      availableActions: ['start_gift_flow', 'analyze_preferences', 'generate_recommendations', 'collect_recipient_info', 'collect_payment', 'send_sms', 'process_gift']
     },
     {
       name: 'search',

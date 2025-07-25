@@ -351,6 +351,32 @@ export class UnifiedNicoleAIService {
       showSearchButton: response.showSearchButton || false
     };
   }
+
+  /**
+   * Handle ChatGPT Agent flow for quick gift collection
+   */
+  private async handleChatGPTAgentFlow(
+    message: string,
+    context: UnifiedNicoleContext,
+    sessionId: string
+  ): Promise<NicoleResponse> {
+    try {
+      const response = await supabase.functions.invoke('nicole-chatgpt-agent', {
+        body: { message, context, sessionId }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('ChatGPT Agent error, falling back to original Nicole:', error);
+      
+      // Fallback to original gift advisor capability
+      return await this.handleGiftAdvisorCapability(message, context);
+    }
+  }
 }
 
 // Export singleton instance

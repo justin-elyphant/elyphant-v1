@@ -41,6 +41,24 @@ export interface UnifiedNicoleContext {
   searchQuery?: string;
   productContext?: any;
   marketplaceState?: any;
+  
+  // Gift collection workflow context
+  giftCollectionPhase?: 'recipient' | 'occasion' | 'budget' | 'payment' | 'confirmation';
+  recipientInfo?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
+  };
+  paymentMethod?: {
+    type?: 'card' | 'paypal';
+    details?: any;
+  };
+  giftSelections?: Array<{
+    productId: string;
+    name: string;
+    price: number;
+    image?: string;
+  }>;
 }
 
 export interface NicoleResponse {

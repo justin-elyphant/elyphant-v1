@@ -199,44 +199,48 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           
           // Mark as in active signup flow to prevent external interference
           localStorage.setItem('modalInSignupFlow', 'true');
+          localStorage.setItem('modalCurrentStep', 'profile-setup'); // Force persistence immediately
           
           // Set flags to prevent modal close and force step transition
           setPreventClose(true);
           setForceOpen(true);
           console.log("🔒 Set preventClose=true, forceOpen=true");
           
-          // Force immediate state update using multiple approaches
-          console.log("🔄 UnifiedSignupStep: Forcing step change to profile-setup using multiple methods");
+          // NUCLEAR OPTION: Force step change with immediate state override
+          console.log("🔄 UnifiedSignupStep: NUCLEAR STEP CHANGE to profile-setup");
           
-          // Method 1: Direct state update
-          setCurrentStep("profile-setup");
+          // Clear the loading state first to allow re-render
+          setIsLoading(false);
           
-          // Method 2: Force re-render with functional update
-          setCurrentStep(prevStep => {
-            console.log("🔄 Functional update: changing from", prevStep, "to profile-setup");
-            return "profile-setup";
-          });
-          
-          // Method 3: Delayed update to override any interference
-          setTimeout(() => {
-            console.log("🔄 Delayed update: setting to profile-setup");
+          // Use a more aggressive approach - set the step multiple times with different delays
+          const forceStepChange = () => {
+            console.log("🚀 FORCE: Setting currentStep to profile-setup");
             setCurrentStep("profile-setup");
-          }, 50);
+            
+            // Also force re-render by updating forceOpen
+            setForceOpen(prev => {
+              console.log("🚀 FORCE: Toggling forceOpen to trigger re-render");
+              return true; // Keep it true but trigger state change
+            });
+          };
           
-          // Method 4: Additional delayed update
+          // Execute immediately
+          forceStepChange();
+          
+          // Execute with multiple delays to override any competing effects
+          setTimeout(forceStepChange, 10);
+          setTimeout(forceStepChange, 50);
+          setTimeout(forceStepChange, 100);
+          setTimeout(forceStepChange, 200);
+          setTimeout(forceStepChange, 500);
+          
+          console.log("✅ UnifiedSignupStep: NUCLEAR step transition initiated");
+          
+          // Keep prevent flags active longer to ensure transition completes
           setTimeout(() => {
-            console.log("🔄 Second delayed update: setting to profile-setup");
-            setCurrentStep("profile-setup");
-          }, 150);
-          
-          console.log("✅ UnifiedSignupStep: Step transition initiated");
-          
-          // Clear prevent flags after transition, but keep forceOpen longer
-          setTimeout(() => {
-            console.log("🔓 Clearing preventClose flag");
+            console.log("🔓 Clearing preventClose flag after step transition");
             setPreventClose(false);
-            // Keep forceOpen true longer to prevent modal close
-          }, 2000);
+          }, 3000); // Give more time for the transition
         }
       } catch (error) {
         console.error("🚨 UnifiedSignupStep: Unexpected error:", error);

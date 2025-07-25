@@ -10,13 +10,10 @@ export const useProfileSetupState = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(
-      "[useProfileSetupState] Effect triggered. AuthLoading:", authLoading, 
-      "User:", !!user
-    );
-    
-    // Clear any old loading flags
-    localStorage.removeItem("profileSetupLoading");
+    // Optimized logging - only log when state changes meaningfully
+    if (process.env.NODE_ENV === 'development' && (authLoading || !user)) {
+      console.log("[useProfileSetupState] Auth state:", { authLoading, hasUser: !!user });
+    }
 
     // If auth is still loading, keep initializing
     if (authLoading || !user) {

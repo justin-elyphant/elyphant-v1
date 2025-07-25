@@ -13,29 +13,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Debug mode for development
   const isDebugMode = process.env.NODE_ENV === 'development';
   
-  // Enhanced debugging
-  console.log("AuthProvider - Current state:", {
-    hasUser: !!user,
-    userId: user?.id,
-    userEmail: user?.email,
-    hasSession: !!session,
-    isLoading,
-    isProcessingToken,
-    localStorage_userId: localStorage.getItem('userId'),
-    localStorage_userEmail: localStorage.getItem('userEmail')
-  });
-
-  // Clear stale localStorage if user is null but localStorage has data
-  if (!user && !isLoading && !isProcessingToken) {
-    const storedUserId = localStorage.getItem('userId');
-    const storedUserEmail = localStorage.getItem('userEmail');
-    
-    if (storedUserId || storedUserEmail) {
-      console.log("Clearing stale localStorage data - user is null but localStorage has data");
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userName');
-    }
+  // Optimized debug logging (only when necessary)
+  if (isDebugMode && (isLoading || isProcessingToken)) {
+    console.log("AuthProvider - Loading state:", {
+      hasUser: !!user,
+      isLoading,
+      isProcessingToken
+    });
   }
 
   const contextValue: AuthContextProps = {

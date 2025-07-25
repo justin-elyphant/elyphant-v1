@@ -121,7 +121,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     if (location.pathname === '/marketplace') {
       const params = new URLSearchParams(searchParams);
       params.delete('search');
-      // Keep other parameters like category, filters, etc.
+      params.delete('category'); // Clear category to return to general marketplace
+      // Keep other parameters like filters, etc.
       
       if (params.toString()) {
         navigate(`/marketplace?${params.toString()}`, { replace: true });

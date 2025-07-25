@@ -170,18 +170,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           setPreventClose(true);
           setForceOpen(true);
           
-          // Use setTimeout to ensure state change happens after React batching
+          // Use longer delay to ensure auth effects don't interfere
           setTimeout(() => {
             console.log("🔄 UnifiedSignupStep: Setting step to profile-setup (delayed)");
             setCurrentStep("profile-setup");
             console.log("✅ UnifiedSignupStep: Current step set to profile-setup (delayed)");
             
-            // Clear prevent flags after transition
+            // Clear prevent flags after transition, but keep forceOpen longer
             setTimeout(() => {
               setPreventClose(false);
-              setForceOpen(false);
-            }, 1000);
-          }, 100);
+              // Keep forceOpen true longer to prevent modal close
+            }, 2000);
+          }, 200); // Increased delay to avoid race conditions
         }
       } catch (error) {
         console.error("🚨 UnifiedSignupStep: Unexpected error:", error);
@@ -955,13 +955,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   );
 
   const renderCurrentStep = () => {
-    console.log("🎬 Modal renderCurrentStep: Rendering step =", currentStep);
+    console.log("🎬 Modal renderCurrentStep: Rendering step =", currentStep, "authMode =", authMode, "user =", !!user);
     switch (currentStep) {
       case "unified-signup":
         return <UnifiedSignupStep />;
       case "sign-in":
         return <SignInStep />;
       case "profile-setup":
+        console.log("🎬 Modal renderCurrentStep: Rendering ProfileSetupStep");
         return <ProfileSetupStep />;
       case "intent-selection":
         return <IntentSelectionStep />;
@@ -977,8 +978,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   React.useEffect(() => {
     console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode, "isOpen =", isOpen);
     
-    // Only trigger for OAuth users who land on unified-signup step
-    // Don't interfere with email signup flow that manually sets steps
+    // Don't interfere with email signup flow that manually manages step transitions
     if (user && currentStep === "unified-signup" && authMode === "signup" && isOpen) {
       const completionState = LocalStorageService.getProfileCompletionState();
       const isEmailSignup = completionState?.source === 'email';
@@ -986,12 +986,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       console.log("🔄 Modal auth useEffect: completionState =", completionState, "isEmailSignup =", isEmailSignup);
       
       // Only auto-transition for OAuth users (no completion state from email)
+      // Skip if this is an email signup user to avoid interfering with manual step management
       if (!isEmailSignup && !completionState) {
         console.log("🔄 Modal auth useEffect: Moving OAuth user from unified-signup to profile-setup");
         setCurrentStep("profile-setup");
+      } else if (isEmailSignup) {
+        console.log("🚫 Modal auth useEffect: Skipping auto-transition for email signup user");
       }
     }
-  }, [user, currentStep, authMode, isOpen]);
+  }, [user, isOpen]); // Remove currentStep and authMode from deps to prevent interference
 
   return (
     <Dialog open={forceOpen || isOpen} onOpenChange={handleClose}>

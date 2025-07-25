@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { X, Gift, Heart, Rocket, Lock, Zap, Bot, ShoppingBag, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
@@ -245,8 +246,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             />
           </div>
           <div>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Create Password"
               value={formData.password}
               onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
@@ -354,8 +354,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             />
           </div>
           <div>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Password"
               value={formData.password}
               onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}

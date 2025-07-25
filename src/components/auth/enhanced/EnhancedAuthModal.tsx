@@ -293,15 +293,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
     return (
       <div className="space-y-6 p-6">
-        <div className="text-center space-y-2">
+        <div className="flex justify-start mb-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCurrentStep("welcome")}
-            className="mb-4"
+            className="self-start"
           >
             ← Back to Welcome
           </Button>
+        </div>
+        <div className="text-center space-y-2">
           <h2 className="text-2xl font-semibold">Create Your Account</h2>
           <p className="text-muted-foreground">
             Join thousands of thoughtful gift-givers

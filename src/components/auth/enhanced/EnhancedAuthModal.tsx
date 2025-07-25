@@ -9,9 +9,15 @@ import { useNavigate } from "react-router-dom";
 
 // Import existing unified components
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
-import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import { useProfileCreate } from "@/hooks/profile/useProfileCreate";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
+import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
+import ProfileBubble from "@/components/ui/profile-bubble";
+import { supabase } from "@/integrations/supabase/client";
 
 // Enhanced auth modal steps
 type AuthStep = "welcome" | "email-signup" | "profile-setup" | "intent-selection" | "agent-collection" | "sign-in";
@@ -391,18 +397,251 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     );
   };
 
-  // Profile setup step using existing StreamlinedProfileForm
-  const ProfileSetupStep = () => (
-    <div className="p-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold">Complete Your Profile</h2>
-        <p className="text-muted-foreground">
-          Just a few details to personalize your experience
-        </p>
+  // Profile setup step with native form
+  const ProfileSetupStep = () => {
+    const { createProfile, isCreating } = useProfileCreate();
+    const [profileData, setProfileData] = useState({
+      first_name: "",
+      last_name: "",
+      username: "",
+      date_of_birth: null as Date | null,
+      profile_image: null as string | null,
+      address: {
+        street: "",
+        line2: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "US"
+      }
+    });
+    
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+    const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+
+    // Auto-generate username from first and last name
+    React.useEffect(() => {
+      if (profileData.first_name && profileData.last_name && !profileData.username) {
+        const generatedUsername = `${profileData.first_name.toLowerCase()}.${profileData.last_name.toLowerCase()}`.replace(/[^a-z0-9.]/g, '');
+        setProfileData(prev => ({ ...prev, username: generatedUsername }));
+      }
+    }, [profileData.first_name, profileData.last_name, profileData.username]);
+
+    // Load stored data on component mount
+    React.useEffect(() => {
+      const completionState = LocalStorageService.getProfileCompletionState();
+      if (completionState?.firstName || completionState?.lastName) {
+        setProfileData(prev => ({
+          ...prev,
+          first_name: completionState.firstName || "",
+          last_name: completionState.lastName || ""
+        }));
+      }
+    }, []);
+
+    const handleImageSelect = async (file: File) => {
+      setProfileImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setProfileImageUrl(previewUrl);
+
+      try {
+        if (!user) return;
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file);
+
+        if (error) {
+          toast.error('Failed to upload image');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        setProfileData(prev => ({ ...prev, profile_image: publicUrl }));
+        setProfileImageUrl(publicUrl);
+        toast.success('Profile photo uploaded successfully!');
+      } catch (error) {
+        toast.error('Failed to upload profile photo');
+      }
+    };
+
+    const handleAddressSelect = (address: {
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    }) => {
+      setProfileData(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          street: address.address,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+          country: address.country
+        }
+      }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!profileData.first_name || !profileData.last_name || !profileData.date_of_birth) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      try {
+        const submissionData = {
+          name: `${profileData.first_name} ${profileData.last_name}`,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          username: profileData.username,
+          email: user?.email || "",
+          profile_image: profileData.profile_image,
+          date_of_birth: profileData.date_of_birth,
+          address: profileData.address,
+          interests: [],
+          importantDates: [],
+          data_sharing_settings: {
+            dob: "friends" as const,
+            shipping_address: "private" as const,
+            gift_preferences: "public" as const,
+            email: "private" as const
+          }
+        };
+
+        await createProfile(submissionData);
+        console.log("Profile created successfully, transitioning to intent selection");
+        setCurrentStep("intent-selection");
+      } catch (error) {
+        console.error('Error creating profile:', error);
+        toast.error('Failed to create profile. Please try again.');
+      }
+    };
+
+    const fullName = `${profileData.first_name} ${profileData.last_name}`.trim();
+
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentStep("email-signup")}
+            className="mb-4"
+          >
+            ← Back
+          </Button>
+          <h2 className="text-2xl font-semibold">Complete Your Profile</h2>
+          <p className="text-muted-foreground">
+            Just a few details to personalize your experience
+          </p>
+        </div>
+
+        {/* Profile Photo Section */}
+        <div className="flex flex-col items-center space-y-4">
+          <ProfileBubble
+            imageUrl={profileImageUrl}
+            userName={fullName}
+            onImageSelect={handleImageSelect}
+            size="lg"
+          />
+          <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>First Name</Label>
+              <Input
+                placeholder="John"
+                value={profileData.first_name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Last Name</Label>
+              <Input
+                placeholder="Doe"
+                value={profileData.last_name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label>Username</Label>
+            <Input
+              placeholder="john.doe"
+              value={profileData.username}
+              onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
+          </div>
+
+          {/* Birthday */}
+          <div className="space-y-2">
+            <Label>Date of Birth</Label>
+            <DatePicker
+              date={profileData.date_of_birth}
+              setDate={(date) => setProfileData(prev => ({ ...prev, date_of_birth: date }))}
+              disabled={(date) => 
+                date > new Date() || 
+                date < new Date(new Date().getFullYear() - 120, 0, 1)
+              }
+            />
+          </div>
+
+          {/* Address */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Shipping Address</Label>
+            <AddressAutocomplete
+              value={profileData.address.street}
+              onChange={(value) => setProfileData(prev => ({ 
+                ...prev, 
+                address: { ...prev.address, street: value }
+              }))}
+              onAddressSelect={handleAddressSelect}
+            />
+
+            <Input
+              placeholder="Apartment, Suite, Unit, etc. (optional)"
+              value={profileData.address.line2}
+              onChange={(e) => setProfileData(prev => ({ 
+                ...prev, 
+                address: { ...prev.address, line2: e.target.value }
+              }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            disabled={isCreating}
+          >
+            {isCreating ? "Creating Profile..." : "Complete Profile"}
+          </Button>
+        </form>
       </div>
-      <StreamlinedProfileForm onComplete={() => setCurrentStep("intent-selection")} />
-    </div>
-  );
+    );
+  };
 
   // Intent selection step using existing OnboardingIntentModal logic
   const IntentSelectionStep = () => {

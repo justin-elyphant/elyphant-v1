@@ -34,7 +34,18 @@ const CATEGORY_SEARCH_QUERIES = {
   electronics: "best selling electronics phones computers laptops headphones cameras",
   tech: "best selling tech electronics Apple gaming headphones speakers smart watch wireless earbuds iPad tablet Nintendo PlayStation",
   beauty: "best selling skincare makeup cosmetics beauty products personal care",
-  homeKitchen: "kitchen home cooking utensils cookware appliances storage organization tools gadgets"
+  homeKitchen: "kitchen home cooking utensils cookware appliances storage organization tools gadgets",
+  // New categories to match getFeaturedCategories()
+  arts: "arts crafts supplies scrapbooking painting drawing crafting tools materials",
+  athleisure: "athletic wear yoga pants leggings activewear fitness clothing gym wear",
+  books: "best selling books novels fiction non-fiction educational textbooks",
+  fashion: "clothing apparel shoes accessories fashion style trending outfits",
+  flowers: "fresh flowers bouquet delivery roses tulips arrangements floral gifts",
+  food: "gourmet food specialty snacks organic coffee tea chocolate wine cheese",
+  home: "home decor furniture accessories organization storage household items",
+  pets: "pet supplies dog cat accessories toys treats food pet care",
+  sports: "sports equipment fitness gear outdoor recreation exercise equipment",
+  toys: "toys games kids children educational fun entertainment play"
 };
 
 class EnhancedZincApiService {

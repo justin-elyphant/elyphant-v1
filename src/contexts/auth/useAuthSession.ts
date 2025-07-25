@@ -106,6 +106,11 @@ export function useAuthSession(): UseAuthSessionReturn {
     const updateAuthState = (newSession: Session | null, event?: string) => {
       if (!mounted) return;
 
+      // Log auth state changes in development
+      if (process.env.NODE_ENV === 'development' && event) {
+        console.log(`Auth: ${event}`, { hasSession: !!newSession, hasUser: !!newSession?.user });
+      }
+
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setIsLoading(false);
@@ -143,19 +148,25 @@ export function useAuthSession(): UseAuthSessionReturn {
     // Set up auth state change listener (avoid async callback to prevent deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Use setTimeout to prevent Supabase deadlocks
-        setTimeout(() => updateAuthState(session, event), 0);
+        // Immediate state update for faster UI response
+        updateAuthState(session, event);
       }
     );
 
-    // Get initial session (use cache if recent)
+    // Get initial session with prioritized cache check
     const now = Date.now();
-    if (authCache.session && (now - authCache.lastUpdate) < 5000) {
-      // Use cached session if less than 5 seconds old
+    if (authCache.session && (now - authCache.lastUpdate) < 3000) {
+      // Use cached session if less than 3 seconds old
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Auth: Using cached session");
+      }
       updateAuthState(authCache.session);
     } else {
       // Fetch fresh session
       supabase.auth.getSession().then(({ data: { session } }) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Auth: Fresh session loaded", { hasSession: !!session });
+        }
         updateAuthState(session);
       });
     }

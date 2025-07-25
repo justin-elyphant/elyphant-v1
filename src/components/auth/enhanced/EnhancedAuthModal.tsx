@@ -39,11 +39,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   suggestedIntent
 }) => {
   const [currentStep, setCurrentStep] = useState<AuthStep>(() => {
-    // Always start fresh on page refresh - only restore state when modal is explicitly opened
-    localStorage.removeItem('modalCurrentStep');
-    localStorage.removeItem('modalInSignupFlow');
-    localStorage.removeItem('modalForceOpen');
-    localStorage.removeItem('modalTargetStep');
+    // Check for active signup flow first
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    const savedStep = localStorage.getItem('modalCurrentStep');
+    
+    if (inSignupFlow && savedStep && (savedStep as AuthStep) !== "sign-in") {
+      console.log("🔄 Modal: Restoring step from active signup flow:", savedStep);
+      return savedStep as AuthStep;
+    }
+    
+    // If not in signup flow, clear stale data and start fresh
+    if (!inSignupFlow) {
+      localStorage.removeItem('modalCurrentStep');
+      localStorage.removeItem('modalForceOpen');
+      localStorage.removeItem('modalTargetStep');
+    }
     
     return initialMode === "signin" ? "sign-in" : defaultStep;
   });

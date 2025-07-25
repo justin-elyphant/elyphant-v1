@@ -43,10 +43,10 @@ const CategoryHeroSection: React.FC<CategoryHeroSectionProps> = ({
 
   return (
     <div className="relative w-full h-48 md:h-56 overflow-hidden rounded-lg mb-8">
-      {/* Clean gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-        {/* Subtle overlay pattern */}
-        <div className="absolute inset-0 bg-black/20"></div>
+      {/* Neutral earthy gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-stone-700 via-stone-600 to-amber-900">
+        {/* Subtle overlay for depth */}
+        <div className="absolute inset-0 bg-black/10"></div>
       </div>
       
       {/* Hero Content */}

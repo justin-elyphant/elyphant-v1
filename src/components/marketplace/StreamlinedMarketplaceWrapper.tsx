@@ -248,16 +248,12 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Quick Filters */}
       <MarketplaceQuickFilters />
 
-      {/* Search Results Info for Non-Brand Categories */}
-      {showSearchInfo && !brandCategories && (
+      {/* Search Results Info for Non-Brand Categories (excluding gift categories) */}
+      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (
         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-medium text-blue-900">
-                {luxuryCategories && "Luxury Collections"}
-                {giftsForHer && "Gifts for Her"}
-                {giftsForHim && "Gifts for Him"}
-                {giftsUnder50 && "Gifts Under $50"}
                 {urlSearchTerm && `Showing results for: "${urlSearchTerm}"`}
                 {personId && occasionType && `Gifts for ${occasionType}`}
               </h3>

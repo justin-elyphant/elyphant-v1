@@ -13,23 +13,53 @@ const AuthButtons = () => {
     
     // Check for forced modal state from localStorage
     const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    if (shouldForceOpen && !isModalOpen) {
-      console.log("🏠 AuthButtons: Force opening modal due to localStorage flag");
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    if ((shouldForceOpen || inSignupFlow) && !isModalOpen) {
+      console.log("🏠 AuthButtons: Force opening modal due to localStorage flags", {
+        shouldForceOpen,
+        inSignupFlow
+      });
       setIsModalOpen(true);
     }
   }, [isModalOpen]);
+
+  // Add signup flow recovery mechanism
+  React.useEffect(() => {
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
+    
+    if (inSignupFlow || shouldForceOpen) {
+      console.log("🏠 AuthButtons: Signup flow detected on mount, ensuring modal is open", {
+        inSignupFlow,
+        shouldForceOpen,
+        currentModalOpen: isModalOpen
+      });
+      
+      if (!isModalOpen) {
+        console.log("🏠 AuthButtons: Recovering interrupted signup flow");
+        setIsModalOpen(true);
+      }
+    }
+  }, []);
 
   const handleModalClose = () => {
     console.log("🏠 AuthButtons: handleModalClose called");
     console.trace("AuthButtons modal close trace:");
     
-    // Don't close if we have a localStorage flag forcing it open
+    // Don't close if we have localStorage flags forcing it open or in signup flow
     const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    if (shouldForceOpen) {
-      console.log("🏠 AuthButtons: Preventing modal close due to localStorage flag");
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    if (shouldForceOpen || inSignupFlow) {
+      console.log("🏠 AuthButtons: Preventing modal close due to localStorage flags", {
+        shouldForceOpen,
+        inSignupFlow
+      });
       return;
     }
     
+    console.log("🏠 AuthButtons: Modal close allowed - no blocking flags detected");
     setIsModalOpen(false);
   };
 

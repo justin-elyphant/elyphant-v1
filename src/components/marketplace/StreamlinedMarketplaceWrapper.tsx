@@ -14,6 +14,7 @@ import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketp
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import BrandHeroSection from "./BrandHeroSection";
+import CategoryHeroSection from "./CategoryHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
@@ -213,6 +214,26 @@ const StreamlinedMarketplaceWrapper = () => {
       {brandCategories ? (
         <BrandHeroSection 
           brandName={brandCategories}
+          productCount={totalCount}
+        />
+      ) : giftsForHer ? (
+        <CategoryHeroSection 
+          categoryType="giftsForHer"
+          productCount={totalCount}
+        />
+      ) : giftsForHim ? (
+        <CategoryHeroSection 
+          categoryType="giftsForHim"
+          productCount={totalCount}
+        />
+      ) : giftsUnder50 ? (
+        <CategoryHeroSection 
+          categoryType="giftsUnder50"
+          productCount={totalCount}
+        />
+      ) : luxuryCategories ? (
+        <CategoryHeroSection 
+          categoryType="luxuryCategories"
           productCount={totalCount}
         />
       ) : (

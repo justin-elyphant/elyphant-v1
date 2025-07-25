@@ -10,6 +10,7 @@ import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
 import { isInIframe } from "@/utils/iframeUtils";
+import { preloadRoutes, preloadCriticalImages } from "@/utils/lazyLoading";
 
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
@@ -29,6 +30,14 @@ const HomeContent = () => {
         currentPage: '/',
         timestamp: new Date().toISOString()
       });
+      
+      // Preload likely next pages and critical assets
+      preloadRoutes();
+      
+      // Preload critical images (add your most important image URLs here)
+      preloadCriticalImages([
+        // Add URLs of hero images or other critical assets
+      ]);
     } catch (error) {
       console.warn('LocalStorage operations failed (possibly in iframe):', error);
     }

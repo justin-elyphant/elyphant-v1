@@ -42,6 +42,19 @@ function App() {
     const startTime = performance.now();
     console.log("App: Starting app initialization");
     
+    // Preload critical resources for faster subsequent loads
+    const preloadCriticalAssets = () => {
+      // Add resource hints for better performance
+      if (!document.querySelector('link[rel="dns-prefetch"][href*="supabase"]')) {
+        const dnsLink = document.createElement('link');
+        dnsLink.rel = 'dns-prefetch';
+        dnsLink.href = 'https://dmkxtkvlispxeqfzlczr.supabase.co';
+        document.head.appendChild(dnsLink);
+      }
+    };
+    
+    preloadCriticalAssets();
+    
     return () => {
       trackRender("App", startTime);
     };

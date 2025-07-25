@@ -13,12 +13,14 @@ import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModa
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 // Enhanced auth modal steps
-type AuthStep = "welcome" | "email-signup" | "profile-setup" | "intent-selection" | "agent-collection";
+type AuthStep = "welcome" | "email-signup" | "profile-setup" | "intent-selection" | "agent-collection" | "sign-in";
+type AuthMode = "signin" | "signup";
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultStep?: AuthStep;
+  initialMode?: AuthMode;
   suggestedIntent?: "quick-gift" | "browse-shop" | "create-wishlist";
 }
 
@@ -26,9 +28,11 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
   onClose,
   defaultStep = "welcome",
+  initialMode = "signup",
   suggestedIntent
 }) => {
-  const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
+  const [currentStep, setCurrentStep] = useState<AuthStep>(initialMode === "signin" ? "sign-in" : defaultStep);
+  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,10 +41,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <div className="text-center space-y-4 p-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Welcome to Elyphant
+          {authMode === "signin" ? "Welcome Back!" : "Welcome to Elyphant"}
         </h1>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          The thoughtful way to give and receive gifts with friends and family
+          {authMode === "signin" 
+            ? "Sign in to continue your thoughtful gift-giving journey" 
+            : "The thoughtful way to give and receive gifts with friends and family"
+          }
         </p>
       </div>
 
@@ -97,12 +104,28 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         </div>
 
         <Button
-          onClick={() => setCurrentStep("email-signup")}
+          onClick={() => setCurrentStep(authMode === "signin" ? "sign-in" : "email-signup")}
           variant="outline"
           className="w-full"
         >
-          Continue with Email
+          {authMode === "signin" ? "Sign In with Email" : "Continue with Email"}
         </Button>
+      </div>
+
+      {/* Mode switching */}
+      <div className="text-center">
+        <p className="text-xs text-muted-foreground">
+          {authMode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button
+            onClick={() => {
+              setAuthMode(authMode === "signin" ? "signup" : "signin");
+              setCurrentStep("welcome");
+            }}
+            className="text-primary hover:underline font-medium"
+          >
+            {authMode === "signin" ? "Sign up" : "Sign in"}
+          </button>
+        </p>
       </div>
 
       {/* Trust elements */}
@@ -245,6 +268,126 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         <p className="text-xs text-muted-foreground text-center">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
+      </div>
+    );
+  };
+
+  // Sign-in step using existing unified components
+  const SignInStep = () => {
+    const [formData, setFormData] = useState({
+      email: "",
+      password: ""
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          toast.error("Sign in failed", {
+            description: error.message
+          });
+          return;
+        }
+
+        if (data?.user) {
+          toast.success("Welcome back!");
+          onClose();
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.error("Sign in error:", error);
+        toast.error("An unexpected error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentStep("welcome")}
+            className="mb-4"
+          >
+            ← Back to Welcome
+          </Button>
+          <h2 className="text-2xl font-semibold">Sign In</h2>
+          <p className="text-muted-foreground">
+            Welcome back to your thoughtful gift-giving journey
+          </p>
+        </div>
+
+        {/* Social login buttons */}
+        <SocialLoginButtons />
+        
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with email
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
+          </div>
+          
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing In..." : "Sign In"}
+          </Button>
+        </form>
+
+        {/* Mode switching */}
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">
+            Don't have an account?{" "}
+            <button
+              onClick={() => {
+                setAuthMode("signup");
+                setCurrentStep("welcome");
+              }}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
       </div>
     );
   };
@@ -425,6 +568,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         return <WelcomeStep />;
       case "email-signup":
         return <EmailSignupStep />;
+      case "sign-in":
+        return <SignInStep />;
       case "profile-setup":
         return <ProfileSetupStep />;
       case "intent-selection":

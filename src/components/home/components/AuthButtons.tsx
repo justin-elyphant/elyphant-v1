@@ -6,6 +6,17 @@ import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
 
 const AuthButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"signin" | "signup">("signup");
+
+  const handleSignIn = () => {
+    setModalMode("signin");
+    setIsModalOpen(true);
+  };
+
+  const handleGetStarted = () => {
+    setModalMode("signup");
+    setIsModalOpen(true);
+  };
 
   return (
     <>
@@ -13,14 +24,14 @@ const AuthButtons = () => {
         <Button 
           variant="ghost" 
           size="sm" 
-          asChild
+          onClick={handleSignIn}
           className="text-gray-600 hover:text-gray-900 font-medium"
         >
-          <Link to="/auth">Sign In</Link>
+          Sign In
         </Button>
         <Button
           size="sm"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleGetStarted}
           className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
         >
           Get Started
@@ -30,6 +41,7 @@ const AuthButtons = () => {
       <EnhancedAuthModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        initialMode={modalMode}
       />
     </>
   );

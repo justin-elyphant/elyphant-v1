@@ -233,9 +233,9 @@ export const getCategoryName = (categoryUrl: string | null): string => {
 
 // Filtered categories for specific components
 export const getFeaturedCategories = (): Category[] => {
-  // Return featured categories including Tech
+  // Return featured categories in alphabetical order
   return UNIVERSAL_CATEGORIES.filter(cat => 
-    ['electronics', 'flowers', 'fashion', 'pets', 'home', 'beauty', 'sports', 'books', 'toys', 'food', 'arts', 'tech'].includes(cat.value)
+    ['arts', 'athleisure', 'beauty', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys'].includes(cat.value)
   );
 };
 

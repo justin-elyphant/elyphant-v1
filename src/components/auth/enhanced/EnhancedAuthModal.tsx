@@ -93,7 +93,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const handleClose = React.useCallback((reason?: any) => {
     console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Force open:", forceOpen, "Reason:", reason);
     
-    if (preventClose || forceOpen || currentStep === "profile-setup") {
+    if (preventClose || forceOpen || currentStep === "profile-setup" || currentStep === "intent-selection") {
       console.log("🛡️ Modal close prevented during critical transition");
       return;
     }
@@ -166,15 +166,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
           console.log("🔄 UnifiedSignupStep: About to transition to profile-setup");
           
-          // Set a flag in localStorage to force modal to stay open
-          localStorage.setItem('modalForceOpen', 'true');
-          localStorage.setItem('modalTargetStep', 'profile-setup');
+          // Set flags to prevent modal close and force step transition
+          setPreventClose(true);
+          setForceOpen(true);
           
           // Use setTimeout to ensure state change happens after React batching
           setTimeout(() => {
             console.log("🔄 UnifiedSignupStep: Setting step to profile-setup (delayed)");
             setCurrentStep("profile-setup");
             console.log("✅ UnifiedSignupStep: Current step set to profile-setup (delayed)");
+            
+            // Clear prevent flags after transition
+            setTimeout(() => {
+              setPreventClose(false);
+              setForceOpen(false);
+            }, 1000);
           }, 100);
         }
       } catch (error) {
@@ -972,12 +978,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     console.log("🔍 Modal auth useEffect: user =", !!user, "currentStep =", currentStep, "authMode =", authMode, "isOpen =", isOpen);
     
     // Only trigger for OAuth users who land on unified-signup step
-    // Don't interfere with email signup flow
+    // Don't interfere with email signup flow that manually sets steps
     if (user && currentStep === "unified-signup" && authMode === "signup" && isOpen) {
-      const isOAuthUser = !LocalStorageService.getProfileCompletionState();
-      console.log("🔄 Modal auth useEffect: isOAuthUser =", isOAuthUser);
+      const completionState = LocalStorageService.getProfileCompletionState();
+      const isEmailSignup = completionState?.source === 'email';
       
-      if (isOAuthUser) {
+      console.log("🔄 Modal auth useEffect: completionState =", completionState, "isEmailSignup =", isEmailSignup);
+      
+      // Only auto-transition for OAuth users (no completion state from email)
+      if (!isEmailSignup && !completionState) {
         console.log("🔄 Modal auth useEffect: Moving OAuth user from unified-signup to profile-setup");
         setCurrentStep("profile-setup");
       }

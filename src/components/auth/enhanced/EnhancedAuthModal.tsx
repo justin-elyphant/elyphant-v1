@@ -39,30 +39,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   suggestedIntent
 }) => {
   const [currentStep, setCurrentStep] = useState<AuthStep>(() => {
-    // Check for persisted step in localStorage on initialization
-    const savedStep = localStorage.getItem('modalCurrentStep');
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    
-    if (savedStep && (savedStep as AuthStep) !== "sign-in" && inSignupFlow) {
-      console.log("🔄 Modal: Restoring saved step from localStorage:", savedStep, "inSignupFlow:", inSignupFlow);
-      return savedStep as AuthStep;
-    }
-    
-    // Clear any stale signup flow flags if not in active signup
-    if (!inSignupFlow) {
-      localStorage.removeItem('modalCurrentStep');
-      localStorage.removeItem('modalInSignupFlow');
-    }
+    // Always start fresh on page refresh - only restore state when modal is explicitly opened
+    localStorage.removeItem('modalCurrentStep');
+    localStorage.removeItem('modalInSignupFlow');
+    localStorage.removeItem('modalForceOpen');
+    localStorage.removeItem('modalTargetStep');
     
     return initialMode === "signin" ? "sign-in" : defaultStep;
   });
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [preventClose, setPreventClose] = useState(false);
-  const [forceOpen, setForceOpen] = useState(() => {
-    // Force open if in signup flow
-    return localStorage.getItem('modalInSignupFlow') === 'true';
-  });
+  const [forceOpen, setForceOpen] = useState(false); // Never auto-open on page refresh
   const { user } = useAuth();
   const navigate = useNavigate();
 

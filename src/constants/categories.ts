@@ -19,7 +19,8 @@ import {
   Monitor,
   Utensils,
   PartyPopper,
-  Gem
+  Gem,
+  PawPrint
 } from "lucide-react";
 
 export interface Category {
@@ -60,6 +61,14 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
   },
   {
     id: 4,
+    name: "Pets",
+    value: "pets",
+    searchTerm: "best selling pet products dog cat supplies",
+    icon: PawPrint,
+    description: "Pet supplies and accessories"
+  },
+  {
+    id: 5,
     name: "Home & Living",
     value: "home",
     searchTerm: "best selling home products",
@@ -68,7 +77,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Home & Garden"
   },
   {
-    id: 5,
+    id: 6,
     name: "Beauty",
     value: "beauty",
     searchTerm: "best selling beauty products",
@@ -77,7 +86,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Beauty & Personal Care"
   },
   {
-    id: 6,
+    id: 7,
     name: "Sports",
     value: "sports",
     searchTerm: "best selling sports equipment",
@@ -95,7 +104,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Athleisure & Activewear"
   },
   {
-    id: 7,
+    id: 8,
     name: "Books",
     value: "books",
     searchTerm: "best selling books",
@@ -104,7 +113,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Books & Media"
   },
   {
-    id: 8,
+    id: 9,
     name: "Toys & Games",
     value: "toys",
     searchTerm: "best selling toys games",
@@ -112,7 +121,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Fun for all ages"
   },
   {
-    id: 9,
+    id: 10,
     name: "Food & Drinks",
     value: "food",
     searchTerm: "best gourmet food",
@@ -120,7 +129,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Gourmet and specialty items"
   },
   {
-    id: 10,
+    id: 11,
     name: "Arts & Crafts",
     value: "arts",
     searchTerm: "best arts crafts",
@@ -129,7 +138,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Craft Supplies & Tools"
   },
   {
-    id: 11,
+    id: 12,
     name: "Health",
     value: "health",
     searchTerm: "best wellness products",
@@ -138,7 +147,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     displayName: "Health & Household"
   },
   {
-    id: 12,
+    id: 13,
     name: "Baby",
     value: "baby",
     searchTerm: "best selling baby products",
@@ -146,7 +155,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Baby care and essentials"
   },
   {
-    id: 13,
+    id: 14,
     name: "Jewelry",
     value: "jewelry",
     searchTerm: "best selling jewelry",
@@ -154,7 +163,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Fine and fashion jewelry"
   },
   {
-    id: 14,
+    id: 15,
     name: "Kitchen",
     value: "kitchen",
     searchTerm: "best selling kitchen products",
@@ -162,7 +171,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Cooking and dining essentials"
   },
   {
-    id: 15,
+    id: 16,
     name: "Tech",
     value: "tech",
     searchTerm: "best selling tech products",
@@ -170,7 +179,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Technology and gadgets"
   },
   {
-    id: 16,
+    id: 17,
     name: "Music",
     value: "music",
     searchTerm: "best selling music",
@@ -178,7 +187,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Musical instruments and audio"
   },
   {
-    id: 17,
+    id: 18,
     name: "Gaming",
     value: "gaming",
     searchTerm: "best selling gaming",
@@ -186,7 +195,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Video games and accessories"
   },
   {
-    id: 18,
+    id: 19,
     name: "Wedding & Party",
     value: "wedding-party",
     searchTerm: "best selling wedding party",
@@ -194,7 +203,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Celebration essentials"
   },
   {
-    id: 19,
+    id: 20,
     name: "Gifts",
     value: "gifts",
     searchTerm: "best selling gifts",
@@ -202,7 +211,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Perfect gift ideas"
   },
   {
-    id: 20,
+    id: 22,
     name: "Bags & Purses",
     value: "bags-purses",
     searchTerm: "best selling bags purses",
@@ -224,8 +233,8 @@ export const getCategoryName = (categoryUrl: string | null): string => {
 
 // Filtered categories for specific components
 export const getFeaturedCategories = (): Category[] => {
-  // Return the first 11 categories for the featured section
-  return UNIVERSAL_CATEGORIES.slice(0, 11);
+  // Return the first 12 categories for the featured section (including the new Pets category)
+  return UNIVERSAL_CATEGORIES.slice(0, 12);
 };
 
 export const getQuickAccessCategories = (): Category[] => {

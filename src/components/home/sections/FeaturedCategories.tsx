@@ -54,23 +54,23 @@ const FeaturedCategories: React.FC = () => {
               {categories.map((category) => (
                 <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 swipe-item">
                   <div
-                    className="group relative p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 h-full touch-target-48 touch-manipulation tap-feedback"
+                    className="group relative p-3 md:p-4 lg:p-6 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 h-full touch-target-48 touch-manipulation tap-feedback flex flex-col"
                     onClick={() => handleCategoryClick(category.value, category.searchTerm)}
                   >
-                    <div className="text-center">
+                    <div className="text-center flex-1 flex flex-col">
                       <div className="text-gray-600 mb-2 md:mb-3 lg:mb-4 group-hover:scale-110 transition-transform duration-300 flex justify-center gpu-accelerated">
                         {category.icon && <category.icon className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10" />}
                       </div>
                       <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-900 mb-2">
                         {category.name}
                       </h3>
-                      <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 lg:mb-4 line-clamp-2 leading-relaxed">
+                      <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 lg:mb-4 line-clamp-2 leading-relaxed flex-1">
                         {category.description}
                       </p>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full group-hover:bg-gray-50 text-xs md:text-sm border border-gray-200 hover:border-gray-300 touch-target-44 no-select"
+                        className="w-full group-hover:bg-gray-50 text-xs md:text-sm border border-gray-200 hover:border-gray-300 touch-target-44 no-select mt-auto"
                       >
                         Browse
                         <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform duration-200" />

@@ -41,16 +41,28 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [currentStep, setCurrentStep] = useState<AuthStep>(() => {
     // Check for persisted step in localStorage on initialization
     const savedStep = localStorage.getItem('modalCurrentStep');
-    if (savedStep && (savedStep as AuthStep) !== "sign-in") {
-      console.log("🔄 Modal: Restoring saved step from localStorage:", savedStep);
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    if (savedStep && (savedStep as AuthStep) !== "sign-in" && inSignupFlow) {
+      console.log("🔄 Modal: Restoring saved step from localStorage:", savedStep, "inSignupFlow:", inSignupFlow);
       return savedStep as AuthStep;
     }
+    
+    // Clear any stale signup flow flags if not in active signup
+    if (!inSignupFlow) {
+      localStorage.removeItem('modalCurrentStep');
+      localStorage.removeItem('modalInSignupFlow');
+    }
+    
     return initialMode === "signin" ? "sign-in" : defaultStep;
   });
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
-  const [preventClose, setPreventClose] = useState(false); // Prevent modal from closing during critical transitions
-  const [forceOpen, setForceOpen] = useState(false); // Force modal to stay open during transitions
+  const [preventClose, setPreventClose] = useState(false);
+  const [forceOpen, setForceOpen] = useState(() => {
+    // Force open if in signup flow
+    return localStorage.getItem('modalInSignupFlow') === 'true';
+  });
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -100,9 +112,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   // Additional useEffect to track currentStep changes specifically
   React.useEffect(() => {
     console.log("📍 Current step changed to:", currentStep);
-    // Persist step to localStorage for recovery
-    if (currentStep !== "sign-in") {
+    
+    // Persist step to localStorage for recovery, but only during signup flow
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    if (currentStep !== "sign-in" && (inSignupFlow || currentStep === "profile-setup" || currentStep === "intent-selection")) {
       localStorage.setItem('modalCurrentStep', currentStep);
+      
+      // Mark as in signup flow if transitioning to profile-setup
+      if (currentStep === "profile-setup") {
+        localStorage.setItem('modalInSignupFlow', 'true');
+      }
     }
   }, [currentStep]);
 
@@ -110,13 +129,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const handleClose = React.useCallback((reason?: any) => {
     console.log("🚪 Modal onClose called! Current step:", currentStep, "Prevent close:", preventClose, "Force open:", forceOpen, "Reason:", reason);
     
-    if (preventClose || forceOpen || currentStep === "profile-setup" || currentStep === "intent-selection") {
+    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    
+    if (preventClose || forceOpen || inSignupFlow || currentStep === "profile-setup" || currentStep === "intent-selection") {
       console.log("🛡️ Modal close prevented during critical transition");
       return;
     }
     
     // Clear persisted step when modal actually closes
     localStorage.removeItem('modalCurrentStep');
+    localStorage.removeItem('modalInSignupFlow');
     console.trace("Modal close trace:");
     onClose();
   }, [onClose, currentStep, preventClose, forceOpen]);
@@ -184,6 +206,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           });
 
           console.log("🔄 UnifiedSignupStep: About to transition to profile-setup - currentStep before:", currentStep);
+          
+          // Mark as in active signup flow to prevent external interference
+          localStorage.setItem('modalInSignupFlow', 'true');
           
           // Set flags to prevent modal close and force step transition
           setPreventClose(true);
@@ -832,6 +857,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         setCurrentStep("agent-collection");
       } else {
         // Complete onboarding and close modal
+        // Clear signup flow flags since we're done
+        localStorage.removeItem('modalCurrentStep');
+        localStorage.removeItem('modalInSignupFlow');
+        
         toast.success("Welcome to Elyphant!", {
           description: "Your account is all set up!"
         });
@@ -842,6 +871,10 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
     const handleSkip = () => {
       localStorage.removeItem("userIntent");
+      // Clear signup flow flags since we're done
+      localStorage.removeItem('modalCurrentStep');
+      localStorage.removeItem('modalInSignupFlow');
+      
       toast.success("Welcome to Elyphant!");
       onClose();
       navigate("/dashboard");

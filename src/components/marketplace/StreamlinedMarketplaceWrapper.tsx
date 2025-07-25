@@ -251,6 +251,19 @@ const StreamlinedMarketplaceWrapper = () => {
         const categoryParam = searchParams.get("category");
         const category = categoryParam ? getCategoryByValue(categoryParam) : null;
         
+        // Don't show title/description for flowers category
+        if (categoryParam === "flowers") {
+          return (
+            <div className="mb-8">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+                </p>
+              </div>
+            </div>
+          );
+        }
+        
         return (
           <div className="mb-8">
             <div className="text-center">

@@ -16,8 +16,8 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category 
   const getHeroText = () => {
     if (category === "flowers") {
       return {
-        title: "",
-        subtitle: "",
+        title: "Fresh Flowers & Arrangements",
+        subtitle: "Beautiful blooms for every occasion",
         badges: ["🌸 Fresh Daily", "💐 Custom Arrangements", "🚚 Same Day Delivery"]
       };
     }

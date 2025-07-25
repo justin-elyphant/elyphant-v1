@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Gift, Heart, Rocket, Lock, Zap, Bot, ShoppingBag, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
@@ -48,7 +48,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       {/* Value propositions */}
       <div className="space-y-4 text-left max-w-sm mx-auto">
         <div className="flex items-start gap-3">
-          <span className="text-2xl">🎁</span>
+          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+            <Gift className="w-4 h-4 text-purple-600" />
+          </div>
           <div>
             <h3 className="font-medium">AI-Powered Gift Discovery</h3>
             <p className="text-sm text-muted-foreground">
@@ -57,7 +59,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <span className="text-2xl">💝</span>
+          <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
+            <Heart className="w-4 h-4 text-pink-600" />
+          </div>
           <div>
             <h3 className="font-medium">Shared Wishlists</h3>
             <p className="text-sm text-muted-foreground">
@@ -66,7 +70,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <span className="text-2xl">🚀</span>
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <Rocket className="w-4 h-4 text-blue-600" />
+          </div>
           <div>
             <h3 className="font-medium">Auto-Gifting</h3>
             <p className="text-sm text-muted-foreground">
@@ -103,10 +109,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       {/* Trust elements */}
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          🔒 Secure & Private
+          <Lock className="w-3 h-3" />
+          Secure & Private
         </span>
         <span className="flex items-center gap-1">
-          ⚡ Free to Join
+          <Zap className="w-3 h-3" />
+          Free to Join
         </span>
       </div>
     </div>
@@ -298,7 +306,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             variant="outline"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🎁</span>
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <Gift className="w-5 h-5 text-purple-600" />
+              </div>
               <div>
                 <h3 className="font-medium text-purple-700">Auto Gift</h3>
                 <p className="text-sm text-muted-foreground">Let Elyphant pick the perfect gift</p>
@@ -312,7 +322,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             variant="outline"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🛍️</span>
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-blue-600" />
+              </div>
               <div>
                 <h3 className="font-medium text-blue-700">Browse & Shop</h3>
                 <p className="text-sm text-muted-foreground">Explore with AI assistance</p>
@@ -326,7 +338,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
             variant="outline"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📝</span>
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
               <div>
                 <h3 className="font-medium text-green-700">Create Wishlist</h3>
                 <p className="text-sm text-muted-foreground">Share what you'd love to receive</p>
@@ -351,7 +365,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     <div className="p-6 text-center space-y-6">
       <div className="space-y-3">
         <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto">
-          <span className="text-2xl">🤖</span>
+          <Bot className="w-8 h-8 text-purple-600" />
         </div>
         <h2 className="text-2xl font-semibold">Meet Nicole</h2>
         <p className="text-muted-foreground max-w-md mx-auto">

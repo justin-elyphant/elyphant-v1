@@ -87,6 +87,12 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // Simplified signup success handler
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
+    console.log("🔒 Forcing profile-setup step for new user:", userData);
+    
+    // CRITICAL: Set localStorage flag to force profile setup
+    localStorage.setItem('modalCurrentStep', 'profile-setup');
+    localStorage.setItem('modalInSignupFlow', 'true');
+    
     nextStep("profile-setup");
   }, [nextStep]);
 
@@ -119,6 +125,16 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       return;
     }
     
+    // CRITICAL: Prevent modal close during profile setup for new signups
+    if (currentStep === "profile-setup") {
+      const inSignupFlow = localStorage.getItem('modalInSignupFlow');
+      if (inSignupFlow === 'true') {
+        console.log("🚫 Preventing modal close during mandatory profile setup");
+        toast.info("Please complete your profile to continue");
+        return;
+      }
+    }
+    
     // If user signed in successfully, navigate to homepage
     if (user && currentStep === "sign-in") {
       navigate("/");
@@ -128,10 +144,16 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     onClose();
   }, [currentStep, user, navigate, cleanupState, onClose, isLoading]);
 
-  // Single initialization effect
+  // Single initialization effect  
   useEffect(() => {
     const initialStep = initialMode === "signin" ? "sign-in" : defaultStep;
     console.log("🎯 Modal initialization effect running:", { initialMode, defaultStep, initialStep });
+    console.log("🔍 Auto-skip check:", { 
+      user: !!user, 
+      hasCompletedOnboarding, 
+      currentStep, 
+      shouldSkip: false // NEVER auto-skip in simplified flow
+    });
     setCurrentStep(initialStep);
   }, []);
 

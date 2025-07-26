@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,8 @@ const StreamlinedSignUp = () => {
 
   const handleProfileSetupRedirect = () => {
     console.log("✅ Signup successful, redirecting to profile setup");
+    // Set localStorage state to indicate user needs profile completion
+    LocalStorageService.setProfileCompletionState({ step: 'profile', source: 'email' });
     refetchProfile();
     navigate("/profile-setup", { replace: true });
   };

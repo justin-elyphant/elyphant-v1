@@ -27,18 +27,35 @@ const Hero = () => {
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
-  // Enhanced handler for CTAs: sets intent and routes based on auth
-  const handleCta = (intent: "giftor" | "giftee") => {
-    LocalStorageService.setNicoleContext({ selectedIntent: intent, source: 'hero_cta' });
+  // Handler for Start Gifting: triggers Nicole AI on homepage or shows auth
+  const handleStartGifting = () => {
+    LocalStorageService.setNicoleContext({ selectedIntent: "giftor", source: 'hero_cta' });
     if (user) {
-      // Authenticated user: show intent modal to choose their path
-      if (intent === "giftor") {
-        setShowIntentModal(true);
-      } else {
-        navigate("/wishlists");
+      // Authenticated user: trigger Nicole AI search bar
+      navigate("/?nicole=true&mode=giftor&greeting=Welcome back! Let's find the perfect gift. Who are you shopping for?");
+      
+      // If we're already on homepage, trigger Nicole directly
+      if (window.location.pathname === '/') {
+        // Dispatch a custom event to trigger Nicole
+        window.dispatchEvent(new CustomEvent('triggerNicole', { 
+          detail: { 
+            mode: 'giftor',
+            greeting: "Welcome back! Let's find the perfect gift. Who are you shopping for?"
+          }
+        }));
       }
     } else {
-      // Not logged in: send to signup (streamlined onboarding flow will route post-auth)
+      // Not logged in: send to signup
+      navigate("/auth");
+    }
+  };
+
+  // Enhanced handler for Create Wishlist CTA
+  const handleCreateWishlist = () => {
+    LocalStorageService.setNicoleContext({ selectedIntent: "giftee", source: 'hero_cta' });
+    if (user) {
+      navigate("/wishlists");
+    } else {
       navigate("/auth");
     }
   };
@@ -122,9 +139,9 @@ const Hero = () => {
                 className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleCta("giftor");
+                  handleStartGifting();
                 }}
-                aria-label="Start Gifting"
+                aria-label="Start Gifting with Nicole AI"
               >
                 <Gift className="mr-2 h-5 w-5" />
                 Start Gifting
@@ -135,7 +152,7 @@ const Hero = () => {
                 className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated ios-modal-backdrop"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleCta("giftee");
+                  handleCreateWishlist();
                 }}
                 aria-label="Create Wishlist"
               >

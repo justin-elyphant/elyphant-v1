@@ -9,14 +9,12 @@ import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 
 // Import components
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { PasswordInput } from "@/components/ui/password-input";
-import AgentCollectionStep from "./steps/AgentCollectionStep";
 import { supabase } from "@/integrations/supabase/client";
 
-// Enhanced auth modal steps
-type AuthStep = "unified-signup" | "profile-setup" | "intent-selection" | "agent-collection" | "sign-in";
+// Simplified auth modal steps - only signup and profile setup
+type AuthStep = "unified-signup" | "profile-setup" | "sign-in";
 type AuthMode = "signin" | "signup";
 
 interface EnhancedAuthModalProps {
@@ -24,25 +22,20 @@ interface EnhancedAuthModalProps {
   onClose: () => void;
   defaultStep?: AuthStep;
   initialMode?: AuthMode;
-  suggestedIntent?: "quick-gift" | "browse-shop" | "create-wishlist";
 }
 
 const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
   onClose,
   defaultStep = "unified-signup",
-  initialMode = "signup",
-  suggestedIntent
+  initialMode = "signup"
 }) => {
   console.log("🚀 EnhancedAuthModalV2 rendering with props:", { isOpen, defaultStep, initialMode });
-  // Single source of truth for state management
+  // Simplified state management
   const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFlowCompleted, setIsFlowCompleted] = useState(false);
-  const [collectedData, setCollectedData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isNewSignup, setIsNewSignup] = useState(false); // Flag to prevent auto-skip for fresh signups
   
   const { user } = useAuth();
   const { profile, loading, error: profileError, hasCompletedOnboarding, updateProfile } = useUnifiedProfile();
@@ -51,33 +44,30 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // Clean up state on modal close
   const cleanupState = useCallback(() => {
     console.log("🧹 Cleaning up modal state");
-    setIsFlowCompleted(false);
     setError(null);
-    setCollectedData(null);
-    setIsNewSignup(false);
+    
+    // Clear any conflicting localStorage flags
+    localStorage.removeItem("modalCurrentStep");
+    localStorage.removeItem("modalInSignupFlow");
+    localStorage.removeItem("modalForceOpen");
+    localStorage.removeItem("modalTargetStep");
   }, []);
 
-  // Step navigation with validation
-  const nextStep = useCallback((step: AuthStep, data?: any) => {
-    console.log(`🔄 Enhanced Modal V2 Step transition: ${currentStep} → ${step}`, data);
-    console.log(`📊 Modal Flow Progress: unified-signup → profile-setup → intent-selection → agent-collection`);
+  // Simplified step navigation
+  const nextStep = useCallback((step: AuthStep) => {
+    console.log(`🔄 Step transition: ${currentStep} → ${step}`);
+    console.log(`📊 Simplified Flow Progress: unified-signup → profile-setup → homepage`);
     console.log(`📍 Current Position: ${step}`);
     
-    // Validate step transition
+    // Simple validation for our streamlined flow
     const validTransitions: Record<AuthStep, AuthStep[]> = {
       "unified-signup": ["profile-setup", "sign-in"],
-      "profile-setup": ["intent-selection"],
-      "intent-selection": ["agent-collection"],
-      "agent-collection": [],
+      "profile-setup": [], // Profile setup completion redirects to homepage
       "sign-in": []
     };
     
     if (validTransitions[currentStep]?.includes(step) || currentStep === step) {
       setCurrentStep(step);
-      
-      if (data) {
-        setCollectedData(data);
-      }
     } else {
       console.warn(`❌ Invalid step transition from ${currentStep} to ${step}`);
       setError(`Invalid step transition from ${currentStep} to ${step}`);
@@ -85,7 +75,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   }, [currentStep]);
 
   const previousStep = useCallback(() => {
-    const stepOrder: AuthStep[] = ["unified-signup", "profile-setup", "intent-selection", "agent-collection"];
+    const stepOrder: AuthStep[] = ["unified-signup", "profile-setup"];
     const currentIndex = stepOrder.indexOf(currentStep);
     
     if (currentIndex > 0) {
@@ -94,145 +84,64 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [currentStep]);
 
-  // Clear signup success handler
+  // Simplified signup success handler
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
-    console.log("🏷️ Setting isNewSignup flag to prevent auto-skip");
-    setIsNewSignup(true); // Prevent auto-skip for fresh signups
-    nextStep("profile-setup", userData);
+    nextStep("profile-setup");
   }, [nextStep]);
 
   const handleProfileComplete = useCallback(() => {
-    console.log("✅ Profile setup complete, moving to intent selection");
-    console.log("🏷️ Clearing isNewSignup flag - user has progressed past profile setup");
-    setIsNewSignup(false); // Clear flag after profile setup
-    nextStep("intent-selection");
-  }, [nextStep]);
+    console.log("✅ Profile setup complete, redirecting to homepage");
+    
+    // Clear any completion state flags
+    LocalStorageService.clearProfileCompletionState();
+    
+    toast.success("Welcome to Elyphant! 🎉", {
+      description: "Your profile is set up. Explore our Nicole AI assistant on the homepage!"
+    });
+    
+    // Set flag for homepage to show welcome messaging
+    localStorage.setItem('justCompletedSignup', 'true');
+    
+    // Close modal and redirect to homepage
+    cleanupState();
+    onClose();
+    navigate("/");
+  }, [cleanupState, onClose, navigate]);
 
-  // Handle modal close with completion check
+  // Simplified modal close handler
   const handleClose = useCallback(() => {
-    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted, isNewSignup, isLoading });
+    console.log("🚪 Modal close requested", { currentStep, isLoading });
     
-    // Prevent auto-close for fresh signups going through onboarding
-    if (isNewSignup && currentStep === "profile-setup") {
-      console.log("🚫 Preventing modal close for fresh signup in profile setup");
+    // Prevent close during loading operations
+    if (isLoading) {
+      console.log("🚫 Preventing modal close during loading operation");
       return;
     }
     
-    // Prevent close during active profile operations
-    if (isLoading && currentStep === "profile-setup") {
-      console.log("🚫 Preventing modal close during profile update operation");
-      return;
-    }
-    
-    // If flow is completed or user is in signin, handle navigation
-    if (isFlowCompleted || currentStep === "sign-in") {
-      if (user && !isFlowCompleted) {
-        // User signed in successfully
-        navigate("/dashboard");
-      }
+    // If user signed in successfully, navigate to homepage
+    if (user && currentStep === "sign-in") {
+      navigate("/");
     }
     
     cleanupState();
     onClose();
-  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose, isNewSignup, isLoading]);
+  }, [currentStep, user, navigate, cleanupState, onClose, isLoading]);
 
   // Single initialization effect
   useEffect(() => {
     const initialStep = initialMode === "signin" ? "sign-in" : defaultStep;
     console.log("🎯 Modal initialization effect running:", { initialMode, defaultStep, initialStep });
     setCurrentStep(initialStep);
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
-  // Simplified auto-skip logic - single responsibility
-  useEffect(() => {
-    console.log("🔍 Auto-skip check:", {
-      hasUser: !!user,
-      hasCompletedOnboarding,
-      currentStep,
-      profileLoading: loading,
-      profileError,
-      isNewSignup,
-      profileData: profile,
-      onboardingCompleted: profile?.onboarding_completed
-    });
-    
-    // CRITICAL: Never auto-skip during fresh signup flow, regardless of profile state
-    if (isNewSignup && currentStep === "profile-setup") {
-      console.log("🚫 Fresh signup detected - BLOCKING auto-skip, user must complete full onboarding flow");
-      return; // Exit early to prevent any auto-skip logic
-    }
-    
-    // Only auto-skip if we have a user, profile is loaded, onboarding is completed, 
-    // we're on profile-setup, AND this is NOT a fresh signup
-    if (user && !loading && hasCompletedOnboarding && currentStep === "profile-setup" && !isNewSignup) {
-      console.log("✅ Profile onboarding completed (existing user), auto-skipping to intent selection");
-      setTimeout(() => {
-        handleProfileComplete();
-      }, 100);
-    }
-  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete, isNewSignup, profile]);
-
-  // Error boundary and fallback mechanism
+  // Error boundary
   useEffect(() => {
     if (profileError) {
       console.warn("⚠️ Profile error detected:", profileError);
       setError(`Profile error: ${profileError}`);
     }
   }, [profileError]);
-
-  // Intent-based routing logic
-  const handleIntentSelect = useCallback((intent: string) => {
-    console.log("✅ Intent selected:", intent);
-    
-    if (intent === "quick-gift") {
-      // Progress to agent-collection step (stays in modal)
-      nextStep("agent-collection");
-    } else {
-      // Mark flow as completed and navigate
-      setIsFlowCompleted(true);
-      
-      // Navigate based on intent
-      if (intent === "browse-shop") {
-        navigate("/marketplace");
-      } else if (intent === "create-wishlist") {
-        navigate("/wishlist");
-      }
-      
-      cleanupState();
-      onClose();
-    }
-  }, [nextStep, cleanupState, onClose, navigate]);
-
-  // Agent collection completion handler
-  const handleAgentComplete = useCallback(async (giftData: any) => {
-    console.log("✅ Agent collection complete:", giftData);
-    setCollectedData(giftData);
-    
-    // Mark onboarding as truly completed in profile
-    try {
-      await updateProfile({ onboarding_completed: true });
-      console.log("✅ Onboarding marked as completed in profile");
-    } catch (error) {
-      console.error("Failed to mark onboarding complete:", error);
-    }
-    
-    // Mark flow as completed and navigate to marketplace
-    setIsFlowCompleted(true);
-    
-    // Navigate to marketplace with search params
-    const searchParams = new URLSearchParams({
-      recipient: giftData.recipientInfo?.name || '',
-      occasion: giftData.occasion || '',
-      budget: giftData.budget ? `${giftData.budget[0]}-${giftData.budget[1]}` : ''
-    });
-    navigate(`/marketplace?${searchParams.toString()}`);
-    
-    cleanupState();
-    onClose();
-    
-    toast.success("Perfect! Let's find some great gift options for " + (giftData.recipientInfo?.name || "them"));
-  }, [updateProfile, cleanupState, onClose, navigate]);
 
   // Unified Signup Step Component
   const UnifiedSignupStep = () => {
@@ -391,8 +300,8 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         }
 
         toast.success("Welcome back!");
-        // Navigate to dashboard and close modal
-        navigate("/dashboard");
+        // Navigate to homepage and close modal
+        navigate("/");
         cleanupState();
         onClose();
       } catch (error) {
@@ -606,43 +515,10 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         return <SignInStep />;
       case "profile-setup":
         return <ProfileSetupStep />;
-      case "intent-selection":
-        return (
-          <OnboardingIntentModal
-            open={true}
-            onSelect={handleIntentSelect}
-            onSkip={() => {
-              console.log("Intent selection skipped");
-              handleClose();
-            }}
-            suggestedIntent={suggestedIntent}
-          />
-        );
-      case "agent-collection":
-        return (
-          <AgentCollectionStep
-            onComplete={handleAgentComplete}
-          />
-        );
       default:
         return <UnifiedSignupStep />;
     }
   };
-
-  // Show OnboardingIntentModal directly for intent-selection step
-  if (currentStep === "intent-selection") {
-    return (
-      <OnboardingIntentModal
-        open={isOpen}
-        onSelect={handleIntentSelect}
-        onSkip={() => {
-          console.log("Intent selection skipped");
-          handleClose();
-        }}
-        suggestedIntent={suggestedIntent}
-      />
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

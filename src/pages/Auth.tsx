@@ -55,7 +55,7 @@ const Auth = () => {
           </p>
         </div>
         
-        {/* Use EnhancedAuthModalV2 for the complete onboarding flow */}
+        {/* Use simplified EnhancedAuthModalV2 for streamlined signup flow */}
         <EnhancedAuthModalV2
           isOpen={modalOpen}
           onClose={handleModalClose}

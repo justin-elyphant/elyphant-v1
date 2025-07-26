@@ -131,7 +131,6 @@ const HomeCTA = () => {
       <EnhancedAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        suggestedIntent="quick-gift"
       />
     </section>
   );

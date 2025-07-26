@@ -157,6 +157,83 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setShowMobileModal(false);
   }, [location.pathname]);
 
+  // Listen for Nicole trigger events from homepage CTAs
+  useEffect(() => {
+    const handleTriggerNicole = (event: CustomEvent) => {
+      console.log("🎯 Nicole trigger event received:", event.detail);
+      const { mode, greeting } = event.detail;
+      
+      // Activate Nicole mode
+      setIsNicoleMode(true);
+      
+      // Set initial query/greeting if provided
+      if (greeting) {
+        setQuery(greeting);
+      }
+      
+      // Open Nicole interface
+      if (isMobile) {
+        setShowMobileModal(true);
+      } else {
+        setShowNicoleDropdown(true);
+      }
+      
+      // Focus the input
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    };
+
+    window.addEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    
+    return () => {
+      window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    };
+  }, [isMobile]);
+
+  // Check for Nicole URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const nicoleParam = urlParams.get('nicole');
+    const modeParam = urlParams.get('mode');
+    const greetingParam = urlParams.get('greeting');
+    
+    if (nicoleParam === 'true') {
+      console.log("🎯 Nicole URL trigger detected:", { mode: modeParam, greeting: greetingParam });
+      
+      // Activate Nicole mode
+      setIsNicoleMode(true);
+      
+      // Set greeting if provided
+      if (greetingParam) {
+        setQuery(decodeURIComponent(greetingParam));
+      }
+      
+      // Open Nicole interface
+      setTimeout(() => {
+        if (isMobile) {
+          setShowMobileModal(true);
+        } else {
+          setShowNicoleDropdown(true);
+        }
+        
+        // Focus the input
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+      
+      // Clean up URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('nicole');
+      newUrl.searchParams.delete('mode');
+      newUrl.searchParams.delete('greeting');
+      window.history.replaceState({}, '', newUrl.pathname + (newUrl.search ? newUrl.search : ''));
+    }
+  }, [isMobile]);
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

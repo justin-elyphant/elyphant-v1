@@ -9,7 +9,7 @@ export const useAuthFunctions = (user: any) => {
       
       toast.success("You have been signed out");
       
-      // Clear any user-related localStorage items
+      // Clear any user-related localStorage items and old modal flags
       localStorage.removeItem("userId");
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userName");
@@ -17,6 +17,9 @@ export const useAuthFunctions = (user: any) => {
       localStorage.removeItem("modalInSignupFlow");
       localStorage.removeItem("modalForceOpen");
       localStorage.removeItem("modalTargetStep");
+      localStorage.removeItem("profileCompletionState");
+      localStorage.removeItem("onboardingStep");
+      localStorage.removeItem("signupFlowActive");
       
       // The auth state change will trigger navigation in components that have access to Router context
     } catch (error: any) {

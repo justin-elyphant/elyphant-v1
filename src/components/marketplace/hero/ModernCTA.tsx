@@ -111,7 +111,6 @@ const ModernCTA: React.FC = () => {
       <EnhancedAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        suggestedIntent="browse-shop"
       />
     </div>
   );

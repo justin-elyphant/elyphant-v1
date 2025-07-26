@@ -20,16 +20,30 @@ const HomeContent = () => {
     console.log("HomeContent: Starting component mount and data operations");
     
     try {
-      // Clear any lingering onboarding state that might show the "Welcome to Gift Giver" screen
-      LocalStorageService.clearProfileCompletionState();
-      LocalStorageService.cleanupDeprecatedKeys();
-      
-      // Set fresh context for homepage visit
-      LocalStorageService.setNicoleContext({
-        source: 'homepage_visit',
-        currentPage: '/',
-        timestamp: new Date().toISOString()
-      });
+      // Check if user just completed signup for welcome messaging
+      const justCompletedSignup = localStorage.getItem('justCompletedSignup');
+      if (justCompletedSignup) {
+        console.log("🎉 New user detected - setting up welcome context");
+        localStorage.removeItem('justCompletedSignup');
+        
+        // Set Nicole context to be helpful for new users
+        LocalStorageService.setNicoleContext({
+          source: 'new_user_homepage',
+          currentPage: '/',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // Clear any lingering onboarding state for returning users
+        LocalStorageService.clearProfileCompletionState();
+        LocalStorageService.cleanupDeprecatedKeys();
+        
+        // Set fresh context for homepage visit
+        LocalStorageService.setNicoleContext({
+          source: 'homepage_visit',
+          currentPage: '/',
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // Preload likely next pages and critical assets
       preloadRoutes();

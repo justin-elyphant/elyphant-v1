@@ -17,41 +17,24 @@ const Auth = () => {
       modalOpen 
     });
 
-    // Don't redirect if modal is in signup flow - let the modal handle navigation
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    const modalCurrentStep = localStorage.getItem('modalCurrentStep');
-    const forceModalOpen = localStorage.getItem('modalForceOpen') === 'true';
-    
-    console.log("🚪 Auth page: Flow state", { 
-      inSignupFlow, 
-      modalCurrentStep,
-      forceModalOpen 
-    });
-    
-    if (!isLoading && user && !inSignupFlow && !forceModalOpen) {
-      console.log("🚪 Auth page: Redirecting authenticated user to dashboard");
+    // SIMPLIFIED: Only redirect when modal is closed AND user is authenticated
+    // Let the modal handle ALL navigation during signup flows
+    if (!isLoading && user && !modalOpen) {
+      console.log("🚪 Auth page: Redirecting authenticated user to dashboard (modal is closed)");
       navigate("/dashboard", { replace: true });
-    } else if (user && inSignupFlow) {
-      console.log("🚀 Auth page: User authenticated but in signup flow - keeping modal open");
-      setModalOpen(true);
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, modalOpen, navigate]);
 
   const handleModalClose = () => {
     console.log("🚪 Auth page: Modal close requested");
-    
-    // Check if we should prevent closing due to active signup flow
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    const modalCurrentStep = localStorage.getItem('modalCurrentStep');
-    
-    if (inSignupFlow && modalCurrentStep && modalCurrentStep !== 'unified-signup') {
-      console.log("🚪 Auth page: Preventing modal close due to active signup flow");
-      return;
-    }
-    
-    console.log("🚪 Auth page: Closing modal and navigating to homepage");
     setModalOpen(false);
-    navigate("/", { replace: true });
+    
+    // If user is authenticated, go to dashboard; otherwise go home
+    if (user) {
+      navigate("/dashboard", { replace: true });
+    } else {
+      navigate("/", { replace: true });
+    }
   };
 
   if (isLoading) {

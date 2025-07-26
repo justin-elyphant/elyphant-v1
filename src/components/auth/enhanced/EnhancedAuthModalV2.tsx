@@ -46,28 +46,14 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const { profile, loading, error: profileError, hasCompletedOnboarding } = useUnifiedProfile();
   const navigate = useNavigate();
 
-  // **PHASE 1.1: Simplified localStorage integration**
-  const persistCriticalState = useCallback((step: AuthStep) => {
-    // Persist state for any step in the signup flow to prevent redirects
-    if (step === 'profile-setup' || step === 'intent-selection' || step === 'agent-collection') {
-      console.log(`🔒 Setting signup flow flags for step: ${step}`);
-      localStorage.setItem('modalInSignupFlow', 'true');
-      localStorage.setItem('modalCurrentStep', step);
-      setSignupFlowActive(true);
-    }
-  }, []);
-
-  // **PHASE 1.1: Clean state cleanup**
+  // **SIMPLIFIED: Remove localStorage complexity - use modal state only**
   const cleanupSignupState = useCallback(() => {
-    console.log("🧹 Cleaning up signup state flags");
-    localStorage.removeItem('modalCurrentStep');
-    localStorage.removeItem('modalInSignupFlow');
-    localStorage.removeItem('modalForceOpen');
+    console.log("🧹 Cleaning up signup state");
     setSignupFlowActive(false);
     setError(null);
   }, []);
 
-  // **PHASE 1.2: Simplified step navigation with validation**
+  // **SIMPLIFIED: Step navigation with validation**
   const nextStep = useCallback((step: AuthStep, data?: any) => {
     console.log(`🔄 Enhanced Modal V2 Step transition: ${currentStep} → ${step}`, data);
     console.log(`📊 Modal Flow Progress: unified-signup → profile-setup → intent-selection → agent-collection`);
@@ -84,7 +70,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     
     if (validTransitions[currentStep]?.includes(step) || currentStep === step) {
       setCurrentStep(step);
-      persistCriticalState(step);
+      setSignupFlowActive(true); // Mark signup flow as active
       
       if (data) {
         setCollectedData(data);
@@ -93,7 +79,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       console.warn(`❌ Invalid step transition from ${currentStep} to ${step}`);
       setError(`Invalid step transition from ${currentStep} to ${step}`);
     }
-  }, [currentStep, persistCriticalState]);
+  }, [currentStep]);
 
   const previousStep = useCallback(() => {
     const stepOrder: AuthStep[] = ["unified-signup", "profile-setup", "intent-selection", "agent-collection"];
@@ -102,25 +88,13 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     if (currentIndex > 0) {
       const prevStep = stepOrder[currentIndex - 1];
       setCurrentStep(prevStep);
-      persistCriticalState(prevStep);
     }
-  }, [currentStep, persistCriticalState]);
+  }, [currentStep]);
 
-  // **PHASE 1.2: Clear entry/exit conditions**
+  // **SIMPLIFIED: Clear signup success handler**
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
-    
-    // Set flags IMMEDIATELY to prevent any redirects
-    console.log("🔒 Setting critical signup flow flags to prevent redirects");
-    localStorage.setItem('modalInSignupFlow', 'true');
-    localStorage.setItem('modalCurrentStep', 'profile-setup');
-    localStorage.setItem('modalForceOpen', 'true');
-    setSignupFlowActive(true);
-    
-    // Small delay to ensure localStorage is written before navigation logic runs
-    setTimeout(() => {
-      nextStep("profile-setup", userData);
-    }, 50);
+    nextStep("profile-setup", userData);
   }, [nextStep]);
 
   const handleProfileComplete = useCallback(() => {
@@ -139,25 +113,9 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     onClose();
   }, [signupFlowActive, currentStep, cleanupSignupState, onClose]);
 
-  // **PHASE 1.1: Single initialization effect - eliminate race conditions**
+  // **SIMPLIFIED: Single initialization effect**
   useEffect(() => {
-    // Get initial step based on props and localStorage
-    const getInitialStep = (): AuthStep => {
-      if (initialMode === "signin") return "sign-in";
-      
-      const savedStep = localStorage.getItem('modalCurrentStep');
-      const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-      
-      if (inSignupFlow && savedStep && savedStep !== "sign-in") {
-        console.log("🔄 Restoring step from signup flow:", savedStep);
-        setSignupFlowActive(true);
-        return savedStep as AuthStep;
-      }
-      
-      return defaultStep;
-    };
-
-    const initialStep = getInitialStep();
+    const initialStep = initialMode === "signin" ? "sign-in" : defaultStep;
     setCurrentStep(initialStep);
   }, []); // Empty dependency array - only run once on mount
 

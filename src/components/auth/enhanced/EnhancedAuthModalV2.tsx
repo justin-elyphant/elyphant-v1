@@ -48,8 +48,9 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // **PHASE 1.1: Simplified localStorage integration**
   const persistCriticalState = useCallback((step: AuthStep) => {
-    // Only persist critical flow interruptions
+    // Persist state for any step in the signup flow to prevent redirects
     if (step === 'profile-setup' || step === 'intent-selection' || step === 'agent-collection') {
+      console.log(`🔒 Setting signup flow flags for step: ${step}`);
       localStorage.setItem('modalInSignupFlow', 'true');
       localStorage.setItem('modalCurrentStep', step);
       setSignupFlowActive(true);
@@ -107,6 +108,13 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // **PHASE 1.2: Clear entry/exit conditions**
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
+    
+    // Set flags BEFORE transitioning to prevent Auth page redirect
+    console.log("🔒 Pre-setting signup flow flags before profile-setup transition");
+    localStorage.setItem('modalInSignupFlow', 'true');
+    localStorage.setItem('modalCurrentStep', 'profile-setup');
+    setSignupFlowActive(true);
+    
     nextStep("profile-setup", userData);
   }, [nextStep]);
 

@@ -32,7 +32,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Connections = lazy(() => import("./pages/Connections"));
 const Wishlists = lazy(() => import("./pages/Wishlists"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
-const StreamlinedSignUp = lazy(() => import("./pages/StreamlinedSignUp"));
+
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 
 const queryClient = new QueryClient();
@@ -99,7 +99,7 @@ function App() {
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/profile/:identifier" element={<Profile />} />
                             <Route path="/auth" element={<Auth />} />
-                            <Route path="/streamlined-signup" element={<StreamlinedSignUp />} />
+                            
                             <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/marketplace" element={<Marketplace />} />

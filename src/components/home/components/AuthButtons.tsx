@@ -11,7 +11,7 @@ const AuthButtons = () => {
   };
 
   const handleGetStarted = () => {
-    navigate("/streamlined-signup");
+    navigate("/auth");
   };
 
   return (

@@ -34,6 +34,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   initialMode = "signup",
   suggestedIntent
 }) => {
+  console.log("🚀 EnhancedAuthModalV2 rendering with props:", { isOpen, defaultStep, initialMode });
   // Single source of truth for state management
   const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
@@ -139,6 +140,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // Single initialization effect
   useEffect(() => {
     const initialStep = initialMode === "signin" ? "sign-in" : defaultStep;
+    console.log("🎯 Modal initialization effect running:", { initialMode, defaultStep, initialStep });
     setCurrentStep(initialStep);
   }, []); // Empty dependency array - only run once on mount
 
@@ -279,6 +281,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
             description: "Please check your email to verify your account."
           });
 
+          console.log("🎯 About to call handleSignupSuccess with data:", { email: formData.email, name: formData.name });
           handleSignupSuccess(formData);
         }
       } catch (error) {

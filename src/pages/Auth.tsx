@@ -17,11 +17,25 @@ const Auth = () => {
       modalOpen 
     });
 
-    // SIMPLIFIED: Only redirect when modal is closed AND user is authenticated
-    // Let the modal handle ALL navigation during signup flows
-    if (!isLoading && user && !modalOpen) {
-      console.log("🚪 Auth page: Redirecting authenticated user to dashboard (modal is closed)");
+    // Check if signup flow is active via localStorage markers
+    const modalInSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
+    const modalCurrentStep = localStorage.getItem('modalCurrentStep');
+    
+    console.log("🚪 Auth page: Navigation check", {
+      user: !!user,
+      isLoading,
+      modalOpen,
+      modalInSignupFlow,
+      modalCurrentStep
+    });
+
+    // CRITICAL FIX: Only redirect when modal is closed, user is authenticated, 
+    // AND no signup flow is active to prevent race conditions
+    if (!isLoading && user && !modalOpen && !modalInSignupFlow) {
+      console.log("🚪 Auth page: Safe to redirect authenticated user to dashboard");
       navigate("/dashboard", { replace: true });
+    } else if (!isLoading && user && modalInSignupFlow) {
+      console.log("🚪 Auth page: Signup flow active - preventing navigation interference");
     }
   }, [user, isLoading, modalOpen, navigate]);
 

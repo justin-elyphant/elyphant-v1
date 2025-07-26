@@ -46,6 +46,9 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
+  
+  // Signup flow state detection to prevent interference
+  const [signupFlowActive, setSignupFlowActive] = useState(false);
 
   // Process OAuth tokens from URL (optimized to only run when needed)
   useEffect(() => {
@@ -106,9 +109,21 @@ export function useAuthSession(): UseAuthSessionReturn {
     const updateAuthState = (newSession: Session | null, event?: string) => {
       if (!mounted) return;
 
+      // Check if signup flow is active by detecting modal state
+      const modalCurrentStep = localStorage.getItem('modalCurrentStep');
+      const isSignupInProgress = modalCurrentStep && ['profile-setup', 'intent-selection', 'agent-collection'].includes(modalCurrentStep);
+      
+      // Update signup flow state
+      setSignupFlowActive(isSignupInProgress);
+
       // Log auth state changes in development
       if (process.env.NODE_ENV === 'development' && event) {
-        console.log(`Auth: ${event}`, { hasSession: !!newSession, hasUser: !!newSession?.user });
+        console.log(`Auth: ${event}`, { 
+          hasSession: !!newSession, 
+          hasUser: !!newSession?.user,
+          signupFlowActive: isSignupInProgress,
+          modalStep: modalCurrentStep
+        });
       }
 
       setSession(newSession);
@@ -127,18 +142,29 @@ export function useAuthSession(): UseAuthSessionReturn {
         });
 
         if (event === 'SIGNED_IN') {
-          console.log("🔥 Auth useAuthSession: SIGNED_IN event triggered");
-          // Don't show toast for programmatic sign-ins (like account creation)
-          // toast.success('Signed in successfully!');
+          console.log("🔥 Auth useAuthSession: SIGNED_IN event triggered", {
+            signupFlowActive: isSignupInProgress,
+            modalStep: modalCurrentStep
+          });
+          
+          // Only show success toast if NOT in signup flow
+          if (!isSignupInProgress) {
+            // toast.success('Signed in successfully!');
+          }
         }
       } else if (event === 'SIGNED_OUT') {
+        setSignupFlowActive(false);
         batchLocalStorageOperations({
           "userId": null,
           "userEmail": null,
           "userName": null,
           "newSignUp": null,
           "emailVerified": null,
-          "verifiedEmail": null
+          "verifiedEmail": null,
+          "modalCurrentStep": null,
+          "modalInSignupFlow": null,
+          "modalForceOpen": null,
+          "modalTargetStep": null
         });
 
         if (process.env.NODE_ENV === 'development') {

@@ -51,6 +51,12 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     console.log("🧹 Cleaning up signup state");
     setSignupFlowActive(false);
     setError(null);
+    
+    // Clear localStorage markers to re-enable navigation
+    localStorage.removeItem('modalCurrentStep');
+    localStorage.removeItem('modalInSignupFlow');
+    localStorage.removeItem('modalForceOpen');
+    localStorage.removeItem('modalTargetStep');
   }, []);
 
   // **SIMPLIFIED: Step navigation with validation**
@@ -71,6 +77,10 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     if (validTransitions[currentStep]?.includes(step) || currentStep === step) {
       setCurrentStep(step);
       setSignupFlowActive(true); // Mark signup flow as active
+      
+      // Store step in localStorage to prevent external navigation interference
+      localStorage.setItem('modalCurrentStep', step);
+      localStorage.setItem('modalInSignupFlow', 'true');
       
       if (data) {
         setCollectedData(data);

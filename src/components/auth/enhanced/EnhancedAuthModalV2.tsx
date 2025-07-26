@@ -41,6 +41,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [isFlowCompleted, setIsFlowCompleted] = useState(false);
   const [collectedData, setCollectedData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isNewSignup, setIsNewSignup] = useState(false); // Flag to prevent auto-skip for fresh signups
   
   const { user } = useAuth();
   const { profile, loading, error: profileError, hasCompletedOnboarding } = useUnifiedProfile();
@@ -52,6 +53,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     setIsFlowCompleted(false);
     setError(null);
     setCollectedData(null);
+    setIsNewSignup(false);
   }, []);
 
   // Step navigation with validation
@@ -94,11 +96,15 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // Clear signup success handler
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
+    console.log("🏷️ Setting isNewSignup flag to prevent auto-skip");
+    setIsNewSignup(true); // Prevent auto-skip for fresh signups
     nextStep("profile-setup", userData);
   }, [nextStep]);
 
   const handleProfileComplete = useCallback(() => {
     console.log("✅ Profile setup complete, moving to intent selection");
+    console.log("🏷️ Clearing isNewSignup flag - user has progressed past profile setup");
+    setIsNewSignup(false); // Clear flag after profile setup
     nextStep("intent-selection");
   }, [nextStep]);
 
@@ -131,17 +137,21 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       hasCompletedOnboarding,
       currentStep,
       profileLoading: loading,
-      profileError
+      profileError,
+      isNewSignup
     });
     
-    // Only auto-skip if we have a user, profile is loaded, onboarding is completed, and we're on profile-setup
-    if (user && !loading && hasCompletedOnboarding && currentStep === "profile-setup") {
-      console.log("✅ Profile onboarding completed, auto-skipping to intent selection");
+    // Only auto-skip if we have a user, profile is loaded, onboarding is completed, 
+    // we're on profile-setup, AND this is NOT a fresh signup
+    if (user && !loading && hasCompletedOnboarding && currentStep === "profile-setup" && !isNewSignup) {
+      console.log("✅ Profile onboarding completed (existing user), auto-skipping to intent selection");
       setTimeout(() => {
         handleProfileComplete();
       }, 100);
+    } else if (isNewSignup && currentStep === "profile-setup") {
+      console.log("🚫 Fresh signup detected - preventing auto-skip, user must complete profile setup");
     }
-  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete]);
+  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete, isNewSignup]);
 
   // Error boundary and fallback mechanism
   useEffect(() => {

@@ -10,6 +10,7 @@ import { NotificationsProvider } from "./contexts/notifications/NotificationsCon
 import { EventsProvider } from "./components/gifting/events/context/EventsContext";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
 import { usePerformanceMonitor } from "./utils/performanceMonitoring";
+import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 
 // Immediate load for critical pages
 import Home from "./pages/Home";
@@ -41,6 +42,17 @@ function App() {
   useEffect(() => {
     const startTime = performance.now();
     console.log("App: Starting app initialization");
+    
+    // Initialize onboarding flow testing in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log("🧪 Onboarding Flow Tester initialized");
+      console.log("Available commands:");
+      console.log("- testOnboardingFlow() - Test complete flow");
+      console.log("- checkOnboardingState() - Check current state");
+      console.log("- clearOnboardingState() - Clear localStorage");
+      console.log("- testFlowRecovery() - Test recovery from all steps");
+      console.log("- testNicoleAI() - Test Nicole AI connection");
+    }
     
     // Preload critical resources for faster subsequent loads
     const preloadCriticalAssets = () => {

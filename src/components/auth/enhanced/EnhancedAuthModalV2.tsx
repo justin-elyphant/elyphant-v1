@@ -110,7 +110,13 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // Handle modal close with completion check
   const handleClose = useCallback(() => {
-    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted });
+    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted, isNewSignup });
+    
+    // Prevent auto-close for fresh signups going through onboarding
+    if (isNewSignup && currentStep === "profile-setup") {
+      console.log("🚫 Preventing modal close for fresh signup in profile setup");
+      return;
+    }
     
     // If flow is completed or user is in signin, handle navigation
     if (isFlowCompleted || currentStep === "sign-in") {
@@ -122,7 +128,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     
     cleanupState();
     onClose();
-  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose]);
+  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose, isNewSignup]);
 
   // Single initialization effect
   useEffect(() => {

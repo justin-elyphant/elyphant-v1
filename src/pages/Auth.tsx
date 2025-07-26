@@ -1,34 +1,21 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
-import EnhancedAuthModalV2 from "@/components/auth/enhanced/EnhancedAuthModalV2";
+import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
-  const [modalOpen, setModalOpen] = useState(true);
 
-  // Auth page never redirects authenticated users - let modal handle all navigation
+  // Redirect authenticated users to homepage
   useEffect(() => {
-    console.log("🚪 Auth page: User state", { 
-      user: !!user, 
-      isLoading,
-      modalOpen 
-    });
-  }, [user, isLoading, modalOpen]);
-
-  const handleModalClose = () => {
-    console.log("🚪 Auth page: Modal close requested");
-    setModalOpen(false);
-    
-    // Only navigate away if there's no user (user canceled/closed modal)
-    // If there's a user, the modal itself handles navigation
-    if (!user) {
+    if (user && !isLoading) {
+      console.log("🏠 User already authenticated, redirecting to homepage");
       navigate("/", { replace: true });
     }
-  };
+  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return (
@@ -46,22 +33,16 @@ const Auth = () => {
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 mb-8">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Welcome to Elyphant
+            Welcome Back
           </h1>
           <p className="text-muted-foreground">
-            Create your account to start your gifting journey
+            Sign in to continue your gifting journey
           </p>
         </div>
         
-        {/* Use simplified EnhancedAuthModalV2 for streamlined signup flow */}
-        <EnhancedAuthModalV2
-          isOpen={modalOpen}
-          onClose={handleModalClose}
-          defaultStep="unified-signup"
-          initialMode="signup"
-        />
+        <UnifiedAuthView />
       </div>
     </MainLayout>
   );

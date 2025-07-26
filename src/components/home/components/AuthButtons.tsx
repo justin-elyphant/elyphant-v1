@@ -1,76 +1,17 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
+import { useNavigate } from "react-router-dom";
 
 const AuthButtons = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"signin" | "signup">("signup");
-
-  // Debug modal state changes and check for localStorage flags
-  React.useEffect(() => {
-    console.log("🏠 AuthButtons: isModalOpen =", isModalOpen);
-    
-    // Check for forced modal state from localStorage
-    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    
-    if ((shouldForceOpen || inSignupFlow) && !isModalOpen) {
-      console.log("🏠 AuthButtons: Force opening modal due to localStorage flags", {
-        shouldForceOpen,
-        inSignupFlow
-      });
-      setIsModalOpen(true);
-    }
-  }, [isModalOpen]);
-
-  // Add signup flow recovery mechanism
-  React.useEffect(() => {
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    
-    if (inSignupFlow || shouldForceOpen) {
-      console.log("🏠 AuthButtons: Signup flow detected on mount, ensuring modal is open", {
-        inSignupFlow,
-        shouldForceOpen,
-        currentModalOpen: isModalOpen
-      });
-      
-      if (!isModalOpen) {
-        console.log("🏠 AuthButtons: Recovering interrupted signup flow");
-        setIsModalOpen(true);
-      }
-    }
-  }, []);
-
-  const handleModalClose = () => {
-    console.log("🏠 AuthButtons: handleModalClose called");
-    console.trace("AuthButtons modal close trace:");
-    
-    // Don't close if we have localStorage flags forcing it open or in signup flow
-    const shouldForceOpen = localStorage.getItem('modalForceOpen') === 'true';
-    const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    
-    if (shouldForceOpen || inSignupFlow) {
-      console.log("🏠 AuthButtons: Preventing modal close due to localStorage flags", {
-        shouldForceOpen,
-        inSignupFlow
-      });
-      return;
-    }
-    
-    console.log("🏠 AuthButtons: Modal close allowed - no blocking flags detected");
-    setIsModalOpen(false);
-  };
+  const navigate = useNavigate();
 
   const handleSignIn = () => {
-    setModalMode("signin");
-    setIsModalOpen(true);
+    navigate("/auth");
   };
 
   const handleGetStarted = () => {
-    setModalMode("signup");
-    setIsModalOpen(true);
+    navigate("/streamlined-signup");
   };
 
   return (
@@ -92,12 +33,6 @@ const AuthButtons = () => {
           Get Started
         </Button>
       </div>
-
-      <EnhancedAuthModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        initialMode={modalMode}
-      />
     </>
   );
 };

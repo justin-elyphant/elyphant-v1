@@ -1,20 +1,17 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
+import { useNavigate } from "react-router-dom";
 
 const AuthButtons = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"signin" | "signup">("signup");
+  const navigate = useNavigate();
 
   const handleSignIn = () => {
-    setModalMode("signin");
-    setIsModalOpen(true);
+    navigate("/auth");
   };
 
   const handleGetStarted = () => {
-    setModalMode("signup");
-    setIsModalOpen(true);
+    navigate("/streamlined-signup");
   };
 
   return (
@@ -36,12 +33,6 @@ const AuthButtons = () => {
           Get Started
         </Button>
       </div>
-
-      <EnhancedAuthModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialMode={modalMode}
-      />
     </>
   );
 };

@@ -34,7 +34,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   initialMode = "signup",
   suggestedIntent
 }) => {
-  // **PHASE 1.1: Single source of truth for state management**
+  // Single source of truth for state management
   const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +54,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     setCollectedData(null);
   }, []);
 
-  // **SIMPLIFIED: Step navigation with validation**
+  // Step navigation with validation
   const nextStep = useCallback((step: AuthStep, data?: any) => {
     console.log(`🔄 Enhanced Modal V2 Step transition: ${currentStep} → ${step}`, data);
     console.log(`📊 Modal Flow Progress: unified-signup → profile-setup → intent-selection → agent-collection`);
@@ -91,7 +91,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [currentStep]);
 
-  // **SIMPLIFIED: Clear signup success handler**
+  // Clear signup success handler
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
     nextStep("profile-setup", userData);
@@ -118,13 +118,13 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     onClose();
   }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose]);
 
-  // **SIMPLIFIED: Single initialization effect**
+  // Single initialization effect
   useEffect(() => {
     const initialStep = initialMode === "signin" ? "sign-in" : defaultStep;
     setCurrentStep(initialStep);
   }, []); // Empty dependency array - only run once on mount
 
-  // **PHASE 1.1: Simplified auto-skip logic - single responsibility**
+  // Simplified auto-skip logic - single responsibility
   useEffect(() => {
     console.log("🔍 Auto-skip check:", {
       hasUser: !!user,
@@ -143,7 +143,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete]);
 
-  // **PHASE 1.1: Error boundary and fallback mechanism**
+  // Error boundary and fallback mechanism
   useEffect(() => {
     if (profileError) {
       console.warn("⚠️ Profile error detected:", profileError);
@@ -151,12 +151,12 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [profileError]);
 
-  // **PHASE 3.3: Intent-based routing logic**
+  // Intent-based routing logic
   const handleIntentSelect = useCallback((intent: string) => {
     console.log("✅ Intent selected:", intent);
     
     if (intent === "quick-gift") {
-      // **PHASE 3.1: Progress to agent-collection step (stays in modal)**
+      // Progress to agent-collection step (stays in modal)
       nextStep("agent-collection");
     } else {
       // Mark flow as completed and navigate
@@ -174,7 +174,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   }, [nextStep, cleanupState, onClose, navigate]);
 
-  // **PHASE 3.2: Agent collection completion handler**
+  // Agent collection completion handler
   const handleAgentComplete = useCallback((giftData: any) => {
     console.log("✅ Agent collection complete:", giftData);
     setCollectedData(giftData);
@@ -497,7 +497,9 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           <h2 className="text-2xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Complete Your Profile
           </h2>
-          <p className="text-muted-foreground">Tell us a bit about yourself</p>
+          <p className="text-muted-foreground">
+            Tell us a bit about yourself to personalize your experience
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -509,23 +511,20 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
             className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           />
-          
           <input
-            type="text"
-            placeholder="City (Optional)"
-            value={profileData.shipping_address.city}
-            onChange={(e) => setProfileData(prev => ({ 
-              ...prev, 
-              shipping_address: { ...prev.shipping_address, city: e.target.value }
-            }))}
+            type="email"
+            placeholder="Email Address"
+            value={profileData.email}
+            onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
             className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            required
+            readOnly
           />
-          
           <textarea
-            placeholder="Bio (Optional)"
+            placeholder="Tell us about yourself (optional)"
             value={profileData.bio}
             onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             rows={3}
           />
           
@@ -534,7 +533,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             disabled={isLoading}
           >
-            {isLoading ? "Creating Profile..." : "Continue"}
+            {isLoading ? "Saving Profile..." : "Continue"}
           </Button>
         </form>
       </div>
@@ -544,10 +543,10 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   // Render current step
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case "sign-in":
-        return <SignInStep />;
       case "unified-signup":
         return <UnifiedSignupStep />;
+      case "sign-in":
+        return <SignInStep />;
       case "profile-setup":
         return <ProfileSetupStep />;
       case "intent-selection":
@@ -555,7 +554,10 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           <OnboardingIntentModal
             open={true}
             onSelect={handleIntentSelect}
-            onSkip={() => handleIntentSelect("browse-shop")}
+            onSkip={() => {
+              console.log("Intent selection skipped");
+              handleClose();
+            }}
             suggestedIntent={suggestedIntent}
           />
         );
@@ -563,7 +565,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         return (
           <AgentCollectionStep
             onComplete={handleAgentComplete}
-            suggestedIntent={suggestedIntent}
           />
         );
       default:
@@ -571,16 +572,28 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     }
   };
 
-  // Check if back button should be shown
-  const canGoBack = currentStep !== "unified-signup" && currentStep !== "sign-in";
+  // Show OnboardingIntentModal directly for intent-selection step
+  if (currentStep === "intent-selection") {
+    return (
+      <OnboardingIntentModal
+        open={isOpen}
+        onSelect={handleIntentSelect}
+        onSkip={() => {
+          console.log("Intent selection skipped");
+          handleClose();
+        }}
+        suggestedIntent={suggestedIntent}
+      />
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md mx-auto max-h-[90vh] overflow-hidden p-0">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+      <DialogContent className="sm:max-w-md mx-auto p-0 overflow-hidden">
+        {/* Header with close button */}
+        <div className="flex justify-between items-center p-4 border-b">
           <div className="flex items-center gap-2">
-            {canGoBack && (
+            {currentStep !== "unified-signup" && currentStep !== "sign-in" && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -590,9 +603,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              {currentStep === "agent-collection" ? "Gift Assistant" : "Elyphant"}
-            </h1>
           </div>
           <Button
             variant="ghost"
@@ -604,10 +614,15 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {renderCurrentStep()}
-        </div>
+        {/* Error display */}
+        {error && (
+          <div className="mx-6 mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md">
+            {error}
+          </div>
+        )}
+
+        {/* Step content */}
+        {renderCurrentStep()}
       </DialogContent>
     </Dialog>
   );

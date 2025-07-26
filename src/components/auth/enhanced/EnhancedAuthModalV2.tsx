@@ -110,11 +110,17 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // Handle modal close with completion check
   const handleClose = useCallback(() => {
-    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted, isNewSignup });
+    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted, isNewSignup, isLoading });
     
     // Prevent auto-close for fresh signups going through onboarding
     if (isNewSignup && currentStep === "profile-setup") {
       console.log("🚫 Preventing modal close for fresh signup in profile setup");
+      return;
+    }
+    
+    // Prevent close during active profile operations
+    if (isLoading && currentStep === "profile-setup") {
+      console.log("🚫 Preventing modal close during profile update operation");
       return;
     }
     
@@ -128,7 +134,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     
     cleanupState();
     onClose();
-  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose, isNewSignup]);
+  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose, isNewSignup, isLoading]);
 
   // Single initialization effect
   useEffect(() => {
@@ -486,17 +492,33 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       setIsLoading(true);
       
       try {
+        console.log("🔄 Starting profile update during onboarding");
+        
+        // Check if user is still authenticated before updating
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) {
+          console.error("❌ User not authenticated during profile update");
+          toast.error("Authentication lost. Please sign in again.");
+          return;
+        }
+        
         const result = await updateProfile({
           ...profileData,
           onboarding_completed: true
         });
         
         if (result.success) {
+          console.log("✅ Profile updated successfully during onboarding");
           toast.success("Profile created successfully!");
+          
+          // Small delay to ensure database consistency
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Clear localStorage state
           LocalStorageService.clearProfileCompletionState();
           handleProfileComplete();
         } else {
+          console.error("❌ Profile update failed:", result.error);
           toast.error(result.error || "Profile creation failed");
         }
       } catch (error) {

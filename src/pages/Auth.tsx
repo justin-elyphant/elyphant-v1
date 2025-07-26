@@ -20,13 +20,15 @@ const Auth = () => {
     // Don't redirect if modal is in signup flow - let the modal handle navigation
     const inSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
     const modalCurrentStep = localStorage.getItem('modalCurrentStep');
+    const forceModalOpen = localStorage.getItem('modalForceOpen') === 'true';
     
     console.log("🚪 Auth page: Flow state", { 
       inSignupFlow, 
-      modalCurrentStep 
+      modalCurrentStep,
+      forceModalOpen 
     });
     
-    if (!isLoading && user && !inSignupFlow) {
+    if (!isLoading && user && !inSignupFlow && !forceModalOpen) {
       console.log("🚪 Auth page: Redirecting authenticated user to dashboard");
       navigate("/dashboard", { replace: true });
     } else if (user && inSignupFlow) {

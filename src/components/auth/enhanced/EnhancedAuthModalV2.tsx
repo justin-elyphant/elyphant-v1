@@ -59,6 +59,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // **PHASE 1.1: Clean state cleanup**
   const cleanupSignupState = useCallback(() => {
+    console.log("🧹 Cleaning up signup state flags");
     localStorage.removeItem('modalCurrentStep');
     localStorage.removeItem('modalInSignupFlow');
     localStorage.removeItem('modalForceOpen');
@@ -109,13 +110,17 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const handleSignupSuccess = useCallback((userData: any) => {
     console.log("✅ Signup successful, moving to profile setup");
     
-    // Set flags BEFORE transitioning to prevent Auth page redirect
-    console.log("🔒 Pre-setting signup flow flags before profile-setup transition");
+    // Set flags IMMEDIATELY to prevent any redirects
+    console.log("🔒 Setting critical signup flow flags to prevent redirects");
     localStorage.setItem('modalInSignupFlow', 'true');
     localStorage.setItem('modalCurrentStep', 'profile-setup');
+    localStorage.setItem('modalForceOpen', 'true');
     setSignupFlowActive(true);
     
-    nextStep("profile-setup", userData);
+    // Small delay to ensure localStorage is written before navigation logic runs
+    setTimeout(() => {
+      nextStep("profile-setup", userData);
+    }, 50);
   }, [nextStep]);
 
   const handleProfileComplete = useCallback(() => {

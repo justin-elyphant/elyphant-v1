@@ -23,8 +23,11 @@ const Auth = () => {
     console.log("🚪 Auth page: Modal close requested");
     setModalOpen(false);
     
-    // Always navigate to home - let modal handle success navigation
-    navigate("/", { replace: true });
+    // Only navigate away if there's no user (user canceled/closed modal)
+    // If there's a user, the modal itself handles navigation
+    if (!user) {
+      navigate("/", { replace: true });
+    }
   };
 
   if (isLoading) {

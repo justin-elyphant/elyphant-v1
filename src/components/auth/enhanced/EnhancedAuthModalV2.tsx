@@ -38,7 +38,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [currentStep, setCurrentStep] = useState<AuthStep>(defaultStep);
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
-  const [signupFlowActive, setSignupFlowActive] = useState(false);
+  const [isFlowCompleted, setIsFlowCompleted] = useState(false);
   const [collectedData, setCollectedData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   
@@ -46,17 +46,12 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const { profile, loading, error: profileError, hasCompletedOnboarding } = useUnifiedProfile();
   const navigate = useNavigate();
 
-  // **SIMPLIFIED: Remove localStorage complexity - use modal state only**
-  const cleanupSignupState = useCallback(() => {
-    console.log("🧹 Cleaning up signup state");
-    setSignupFlowActive(false);
+  // Clean up state on modal close
+  const cleanupState = useCallback(() => {
+    console.log("🧹 Cleaning up modal state");
+    setIsFlowCompleted(false);
     setError(null);
-    
-    // Clear localStorage markers to re-enable navigation
-    localStorage.removeItem('modalCurrentStep');
-    localStorage.removeItem('modalInSignupFlow');
-    localStorage.removeItem('modalForceOpen');
-    localStorage.removeItem('modalTargetStep');
+    setCollectedData(null);
   }, []);
 
   // **SIMPLIFIED: Step navigation with validation**
@@ -76,11 +71,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     
     if (validTransitions[currentStep]?.includes(step) || currentStep === step) {
       setCurrentStep(step);
-      setSignupFlowActive(true); // Mark signup flow as active
-      
-      // Store step in localStorage to prevent external navigation interference
-      localStorage.setItem('modalCurrentStep', step);
-      localStorage.setItem('modalInSignupFlow', 'true');
       
       if (data) {
         setCollectedData(data);
@@ -112,16 +102,21 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     nextStep("intent-selection");
   }, [nextStep]);
 
-  // **PHASE 1.1: Enhanced modal close with protection**
+  // Handle modal close with completion check
   const handleClose = useCallback(() => {
-    if (signupFlowActive && (currentStep === "profile-setup" || currentStep === "intent-selection" || currentStep === "agent-collection")) {
-      console.log("🛡️ Preventing close during active signup flow");
-      return;
+    console.log("🚪 Modal close requested", { currentStep, isFlowCompleted });
+    
+    // If flow is completed or user is in signin, handle navigation
+    if (isFlowCompleted || currentStep === "sign-in") {
+      if (user && !isFlowCompleted) {
+        // User signed in successfully
+        navigate("/dashboard");
+      }
     }
     
-    cleanupSignupState();
+    cleanupState();
     onClose();
-  }, [signupFlowActive, currentStep, cleanupSignupState, onClose]);
+  }, [currentStep, isFlowCompleted, user, navigate, cleanupState, onClose]);
 
   // **SIMPLIFIED: Single initialization effect**
   useEffect(() => {
@@ -164,9 +159,8 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       // **PHASE 3.1: Progress to agent-collection step (stays in modal)**
       nextStep("agent-collection");
     } else {
-      // **PHASE 3.3: Close modal and navigate for other intents**
-      cleanupSignupState();
-      onClose();
+      // Mark flow as completed and navigate
+      setIsFlowCompleted(true);
       
       // Navigate based on intent
       if (intent === "browse-shop") {
@@ -174,17 +168,19 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       } else if (intent === "create-wishlist") {
         navigate("/wishlist");
       }
+      
+      cleanupState();
+      onClose();
     }
-  }, [nextStep, cleanupSignupState, onClose, navigate]);
+  }, [nextStep, cleanupState, onClose, navigate]);
 
   // **PHASE 3.2: Agent collection completion handler**
   const handleAgentComplete = useCallback((giftData: any) => {
     console.log("✅ Agent collection complete:", giftData);
     setCollectedData(giftData);
     
-    // **PHASE 4.2: Complete signup flow and proceed to gift search**
-    cleanupSignupState();
-    onClose();
+    // Mark flow as completed and navigate to marketplace
+    setIsFlowCompleted(true);
     
     // Navigate to marketplace with search params
     const searchParams = new URLSearchParams({
@@ -194,8 +190,11 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     });
     navigate(`/marketplace?${searchParams.toString()}`);
     
+    cleanupState();
+    onClose();
+    
     toast.success("Perfect! Let's find some great gift options for " + (giftData.recipientInfo?.name || "them"));
-  }, [cleanupSignupState, onClose, navigate]);
+  }, [cleanupState, onClose, navigate]);
 
   // Unified Signup Step Component
   const UnifiedSignupStep = () => {
@@ -353,7 +352,10 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         }
 
         toast.success("Welcome back!");
-        handleClose();
+        // Navigate to dashboard and close modal
+        navigate("/dashboard");
+        cleanupState();
+        onClose();
       } catch (error) {
         toast.error("An unexpected error occurred");
       } finally {

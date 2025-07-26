@@ -10,45 +10,21 @@ const Auth = () => {
   const { user, isLoading } = useAuth();
   const [modalOpen, setModalOpen] = useState(true);
 
+  // Auth page never redirects authenticated users - let modal handle all navigation
   useEffect(() => {
-    console.log("🚪 Auth page: useEffect triggered", { 
+    console.log("🚪 Auth page: User state", { 
       user: !!user, 
       isLoading,
       modalOpen 
     });
-
-    // Check if signup flow is active via localStorage markers
-    const modalInSignupFlow = localStorage.getItem('modalInSignupFlow') === 'true';
-    const modalCurrentStep = localStorage.getItem('modalCurrentStep');
-    
-    console.log("🚪 Auth page: Navigation check", {
-      user: !!user,
-      isLoading,
-      modalOpen,
-      modalInSignupFlow,
-      modalCurrentStep
-    });
-
-    // CRITICAL FIX: Only redirect when modal is closed, user is authenticated, 
-    // AND no signup flow is active to prevent race conditions
-    if (!isLoading && user && !modalOpen && !modalInSignupFlow) {
-      console.log("🚪 Auth page: Safe to redirect authenticated user to dashboard");
-      navigate("/dashboard", { replace: true });
-    } else if (!isLoading && user && modalInSignupFlow) {
-      console.log("🚪 Auth page: Signup flow active - preventing navigation interference");
-    }
-  }, [user, isLoading, modalOpen, navigate]);
+  }, [user, isLoading, modalOpen]);
 
   const handleModalClose = () => {
     console.log("🚪 Auth page: Modal close requested");
     setModalOpen(false);
     
-    // If user is authenticated, go to dashboard; otherwise go home
-    if (user) {
-      navigate("/dashboard", { replace: true });
-    } else {
-      navigate("/", { replace: true });
-    }
+    // Always navigate to home - let modal handle success navigation
+    navigate("/", { replace: true });
   };
 
   if (isLoading) {

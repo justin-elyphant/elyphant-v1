@@ -15,9 +15,32 @@ const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhan
 const OptimizedShoppingCartButton = React.lazy(() => import("@/components/marketplace/components/OptimizedShoppingCartButton"));
 
 const NavigationBar = () => {
-  const { user, signOut } = useAuth();
+  const authContext = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Handle case where AuthProvider context is not yet available
+  if (!authContext) {
+    return (
+      <nav className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex-shrink-0">
+              <Logo />
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="h-10 w-20 bg-muted rounded animate-pulse" />
+            </div>
+            <div className="md:hidden">
+              <div className="h-10 w-10 bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  const { user, signOut } = authContext;
 
   // Don't load heavy components on auth pages for better performance
   const isAuthPage = ['/auth', '/reset-password'].includes(location.pathname);

@@ -24,13 +24,13 @@ const StreamlinedSignUp = () => {
     name: ""
   });
 
-  // Redirect authenticated users to homepage
+  // Redirect authenticated users to homepage (but not if they just signed up)
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && !isSigningUp) {
       console.log("🏠 User already authenticated, redirecting to homepage");
       navigate("/", { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, isSigningUp]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

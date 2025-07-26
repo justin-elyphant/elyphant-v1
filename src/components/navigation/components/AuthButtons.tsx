@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
+import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
 
 const AuthButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

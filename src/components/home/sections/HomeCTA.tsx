@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, List } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
-import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
+import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";

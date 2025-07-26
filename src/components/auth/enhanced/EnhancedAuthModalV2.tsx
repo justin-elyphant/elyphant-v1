@@ -67,7 +67,9 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
 
   // **PHASE 1.2: Simplified step navigation with validation**
   const nextStep = useCallback((step: AuthStep, data?: any) => {
-    console.log("📍 Navigating to step:", step);
+    console.log(`🔄 Enhanced Modal V2 Step transition: ${currentStep} → ${step}`, data);
+    console.log(`📊 Modal Flow Progress: unified-signup → profile-setup → intent-selection → agent-collection`);
+    console.log(`📍 Current Position: ${step}`);
     
     // Validate step transition
     const validTransitions: Record<AuthStep, AuthStep[]> = {

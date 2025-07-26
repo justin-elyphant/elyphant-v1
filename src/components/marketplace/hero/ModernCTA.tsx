@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart, Users, Star, TrendingUp, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModal";
+import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
 
 const ModernCTA: React.FC = () => {
   const navigate = useNavigate();

@@ -44,7 +44,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   const [isNewSignup, setIsNewSignup] = useState(false); // Flag to prevent auto-skip for fresh signups
   
   const { user } = useAuth();
-  const { profile, loading, error: profileError, hasCompletedOnboarding } = useUnifiedProfile();
+  const { profile, loading, error: profileError, hasCompletedOnboarding, updateProfile } = useUnifiedProfile();
   const navigate = useNavigate();
 
   // Clean up state on modal close
@@ -150,8 +150,16 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       currentStep,
       profileLoading: loading,
       profileError,
-      isNewSignup
+      isNewSignup,
+      profileData: profile,
+      onboardingCompleted: profile?.onboarding_completed
     });
+    
+    // CRITICAL: Never auto-skip during fresh signup flow, regardless of profile state
+    if (isNewSignup && currentStep === "profile-setup") {
+      console.log("🚫 Fresh signup detected - BLOCKING auto-skip, user must complete full onboarding flow");
+      return; // Exit early to prevent any auto-skip logic
+    }
     
     // Only auto-skip if we have a user, profile is loaded, onboarding is completed, 
     // we're on profile-setup, AND this is NOT a fresh signup
@@ -160,10 +168,8 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       setTimeout(() => {
         handleProfileComplete();
       }, 100);
-    } else if (isNewSignup && currentStep === "profile-setup") {
-      console.log("🚫 Fresh signup detected - preventing auto-skip, user must complete profile setup");
     }
-  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete, isNewSignup]);
+  }, [user, hasCompletedOnboarding, loading, currentStep, handleProfileComplete, isNewSignup, profile]);
 
   // Error boundary and fallback mechanism
   useEffect(() => {
@@ -197,9 +203,17 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
   }, [nextStep, cleanupState, onClose, navigate]);
 
   // Agent collection completion handler
-  const handleAgentComplete = useCallback((giftData: any) => {
+  const handleAgentComplete = useCallback(async (giftData: any) => {
     console.log("✅ Agent collection complete:", giftData);
     setCollectedData(giftData);
+    
+    // Mark onboarding as truly completed in profile
+    try {
+      await updateProfile({ onboarding_completed: true });
+      console.log("✅ Onboarding marked as completed in profile");
+    } catch (error) {
+      console.error("Failed to mark onboarding complete:", error);
+    }
     
     // Mark flow as completed and navigate to marketplace
     setIsFlowCompleted(true);
@@ -216,7 +230,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
     onClose();
     
     toast.success("Perfect! Let's find some great gift options for " + (giftData.recipientInfo?.name || "them"));
-  }, [cleanupState, onClose, navigate]);
+  }, [updateProfile, cleanupState, onClose, navigate]);
 
   // Unified Signup Step Component
   const UnifiedSignupStep = () => {
@@ -502,13 +516,15 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           return;
         }
         
+        // CRITICAL: For new signups, do NOT set onboarding_completed to true
+        // This prevents auto-skip logic from triggering
         const result = await updateProfile({
           ...profileData,
-          onboarding_completed: true
+          onboarding_completed: false // Keep false during onboarding flow
         });
         
         if (result.success) {
-          console.log("✅ Profile updated successfully during onboarding");
+          console.log("✅ Profile updated successfully during onboarding (onboarding_completed: false)");
           toast.success("Profile created successfully!");
           
           // Small delay to ensure database consistency

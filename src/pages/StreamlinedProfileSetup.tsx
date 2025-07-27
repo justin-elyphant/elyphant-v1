@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import MainLayout from "@/components/layout/MainLayout";
+import { Card, CardContent } from "@/components/ui/card";
 import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
 import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 
@@ -84,16 +85,18 @@ const StreamlinedProfileSetup = () => {
       {!showIntentModal ? (
         <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
           <div className="w-full">
-            <div className="text-center space-y-4 mb-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Complete Your Profile
-              </h1>
-              <p className="text-muted-foreground">
-                Tell us about yourself to personalize your experience
-              </p>
-            </div>
-            
-            <StreamlinedProfileForm onComplete={handleProfileComplete} />
+            <Card className="w-full bg-background shadow-lg border border-border">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-semibold text-foreground">Complete Your Profile</h2>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tell us about yourself to personalize your experience
+                  </p>
+                </div>
+                
+                <StreamlinedProfileForm onComplete={handleProfileComplete} />
+              </CardContent>
+            </Card>
           </div>
         </div>
       ) : (

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Card import removed as it's now handled by parent component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,143 +196,136 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
   const fullName = `${firstName} ${lastName}`.trim();
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
-        <p className="text-muted-foreground">Just a few quick details to get you started</p>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Profile Photo Section */}
-        <div className="flex flex-col items-center space-y-4">
-          <ProfileBubble
-            imageUrl={profileImageUrl}
-            userName={fullName}
-            onImageSelect={(file) => {
-              console.log("ProfileBubble onImageSelect called with file:", file.name);
-              handleImageSelect(file);
-            }}
-            size="lg"
-          />
-          <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
-        </div>
+    <div className="space-y-6">
+      {/* Profile Photo Section */}
+      <div className="flex flex-col items-center space-y-4">
+        <ProfileBubble
+          imageUrl={profileImageUrl}
+          userName={fullName}
+          onImageSelect={(file) => {
+            console.log("ProfileBubble onImageSelect called with file:", file.name);
+            handleImageSelect(file);
+          }}
+          size="lg"
+        />
+        <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
+      </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Username */}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="username"
+              name="first_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="john.doe" {...field} />
+                    <Input placeholder="John" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Birthday */}
             <FormField
               control={form.control}
-              name="date_of_birth"
+              name="last_name"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of Birth</FormLabel>
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
                   <FormControl>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      disabled={(date) => 
-                        date > new Date() || 
-                        date < new Date(new Date().getFullYear() - 120, 0, 1)
-                      }
-                    />
+                    <Input placeholder="Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
-            {/* Address */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Your Shipping Address</Label>
-              <AddressAutocomplete
-                value={form.watch('address.street')}
-                onChange={(value) => form.setValue('address.street', value)}
-                onAddressSelect={handleAddressSelect}
+          {/* Username */}
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input placeholder="john.doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Birthday */}
+          <FormField
+            control={form.control}
+            name="date_of_birth"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date of Birth</FormLabel>
+                <FormControl>
+                  <DatePicker
+                    date={field.value}
+                    setDate={field.onChange}
+                    disabled={(date) => 
+                      date > new Date() || 
+                      date < new Date(new Date().getFullYear() - 120, 0, 1)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Address */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Your Shipping Address</Label>
+            <AddressAutocomplete
+              value={form.watch('address.street')}
+              onChange={(value) => form.setValue('address.street', value)}
+              onAddressSelect={handleAddressSelect}
+            />
+
+            <div className="grid gap-2">
+              <Label htmlFor="line2">Apartment, Suite, Unit, etc. (optional)</Label>
+              <Input
+                id="line2"
+                placeholder="Apt 2B, Suite 100, Unit 4..."
+                {...form.register('address.line2')}
               />
-
-              <div className="grid gap-2">
-                <Label htmlFor="line2">Apartment, Suite, Unit, etc. (optional)</Label>
-                <Input
-                  id="line2"
-                  placeholder="Apt 2B, Suite 100, Unit 4..."
-                  {...form.register('address.line2')}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Select value={form.watch('address.country')} onValueChange={(value) => form.setValue('address.country', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="US">United States</SelectItem>
-                      <SelectItem value="CA">Canada</SelectItem>
-                      <SelectItem value="GB">United Kingdom</SelectItem>
-                      <SelectItem value="AU">Australia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isCreating}
-            >
-              {isCreating ? "Creating Profile..." : "Complete Profile"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Select value={form.watch('address.country')} onValueChange={(value) => form.setValue('address.country', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="US">United States</SelectItem>
+                    <SelectItem value="CA">Canada</SelectItem>
+                    <SelectItem value="GB">United Kingdom</SelectItem>
+                    <SelectItem value="AU">Australia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isCreating}
+          >
+            {isCreating ? "Creating Profile..." : "Complete Profile"}
+          </Button>
+        </form>
+      </Form>
+    </div>
   );
 };
 

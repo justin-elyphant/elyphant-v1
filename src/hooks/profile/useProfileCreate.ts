@@ -40,13 +40,40 @@ export const useProfileCreate = () => {
         fullBirthdayDate = birthDate;
       }
       
+      // Generate a unique username by checking for conflicts
+      let uniqueUsername = formattedData.username || `user_${user.id.substring(0, 8)}`;
+      let usernameExists = true;
+      let attempt = 0;
+      
+      while (usernameExists && attempt < 10) {
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', uniqueUsername)
+          .single();
+        
+        if (!existingUser) {
+          usernameExists = false;
+        } else {
+          attempt++;
+          // Add a number suffix to make it unique
+          const baseUsername = formattedData.username || `user_${user.id.substring(0, 8)}`;
+          uniqueUsername = `${baseUsername}_${attempt}`;
+        }
+      }
+      
+      if (usernameExists) {
+        // Fallback to a guaranteed unique username using user ID
+        uniqueUsername = `user_${user.id.substring(0, 8)}_${Date.now()}`;
+      }
+      
       const profileRecord = {
         id: user.id,
         first_name: firstName,
         last_name: lastName,
         name: formattedData.name,
         email: formattedData.email,
-        username: formattedData.username || `user_${user.id.substring(0, 8)}`,
+        username: uniqueUsername,
         bio: formattedData.bio || "",
         profile_image: formattedData.profile_image || null,
         dob: formattedBirthday,
@@ -76,7 +103,7 @@ export const useProfileCreate = () => {
 
       console.log("Formatted profile record:", JSON.stringify(profileRecord, null, 2));
 
-      // Insert the profile record
+      // Insert the profile record with conflict resolution
       const { data, error } = await supabase
         .from('profiles')
         .upsert(profileRecord, {

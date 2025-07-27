@@ -94,11 +94,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     fetchUserProfile();
   }, [user?.id]);
 
-  useEffect(() => {
-    if (initialQuery && conversation.length === 0) {
-      handleSendMessage(initialQuery);
-    }
-  }, [initialQuery]);
+  // Remove this useEffect since it causes circular dependency
+  // We'll handle initial messages in startConversation instead
 
   const addMessage = useCallback((message: ConversationMessage) => {
     setConversation(prev => [...prev, message]);
@@ -167,42 +164,6 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       addMessage(greetingMessage);
     }
   }, [addMessage, initialContext, userProfile?.first_name]);
-
-  // Handle quick response selection
-  const handleQuickResponse = useCallback((option: string) => {
-    // Clear quick response options after selection
-    setQuickResponseOptions([]);
-    
-    // Update context with selected intent
-    let selectedIntent: "auto-gift" | "shop-solo" | "create-wishlist";
-    
-    switch (option) {
-      case "Have Elyphant pick the gift":
-        selectedIntent = "auto-gift";
-        updateContext({ 
-          selectedIntent,
-          conversationPhase: "gift-collection-setup"
-        });
-        break;
-      case "I'll shop on my own":
-        selectedIntent = "shop-solo";
-        updateContext({ selectedIntent });
-        // Navigate to marketplace
-        navigate("/marketplace");
-        onClose();
-        return;
-      case "Help me create my wishlist":
-        selectedIntent = "create-wishlist";
-        updateContext({ selectedIntent });
-        // Navigate to wishlist creation
-        navigate("/wishlists/create");
-        onClose();
-        return;
-    }
-    
-    // Send the message through normal flow for auto-gift
-    handleSendMessage(option);
-  }, [updateContext, navigate, onClose]);
 
   const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || currentMessage.trim();
@@ -282,7 +243,49 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     } finally {
       // Loading state is managed by the hook
     }
-  }, [currentMessage, addMessage, conversationHistory, context, extractContextFromMessage]);
+  }, [currentMessage, addMessage, conversationHistory, context, extractContextFromMessage, updateContext, chatWithNicole]);
+
+  // Handle quick response selection
+  const handleQuickResponse = useCallback((option: string) => {
+    // Clear quick response options after selection
+    setQuickResponseOptions([]);
+    
+    // Update context with selected intent
+    let selectedIntent: "auto-gift" | "shop-solo" | "create-wishlist";
+    
+    switch (option) {
+      case "Have Elyphant pick the gift":
+        selectedIntent = "auto-gift";
+        updateContext({ 
+          selectedIntent,
+          conversationPhase: "gift-collection-setup"
+        });
+        // Send the message through normal flow for auto-gift
+        handleSendMessage(option);
+        break;
+      case "I'll shop on my own":
+        selectedIntent = "shop-solo";
+        updateContext({ selectedIntent });
+        // Navigate to marketplace
+        navigate("/marketplace");
+        onClose();
+        break;
+      case "Help me create my wishlist":
+        selectedIntent = "create-wishlist";
+        updateContext({ selectedIntent });
+        // Navigate to wishlist creation
+        navigate("/wishlists/create");
+        onClose();
+        break;
+    }
+  }, [updateContext, navigate, onClose, handleSendMessage]);
+
+  // Handle initial query effect
+  useEffect(() => {
+    if (initialQuery && conversation.length === 0) {
+      handleSendMessage(initialQuery);
+    }
+  }, [initialQuery, conversation.length, handleSendMessage]);
 
   const handleSearchClick = useCallback(async () => {
     setIsSearching(true);
@@ -306,7 +309,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     } finally {
       setIsSearching(false);
     }
-  }, [context, navigate, onClose]);
+  }, [context, generateSearchQuery, navigate, onClose]);
 
   useEffect(() => {
     if (isOpen && conversation.length === 0 && !initialQuery) {

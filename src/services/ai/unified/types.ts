@@ -53,6 +53,12 @@ export interface UnifiedNicoleContext {
     phone?: string;
     relationship?: string;
   };
+  collectionProgress?: {
+    recipient: boolean;
+    occasion: boolean;
+    budget: boolean;
+    phone: boolean;
+  };
   paymentMethod?: {
     type?: 'card' | 'paypal';
     details?: any;

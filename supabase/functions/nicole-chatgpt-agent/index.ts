@@ -20,34 +20,55 @@ serve(async (req) => {
 
     console.log('Nicole ChatGPT Agent:', { message, context, sessionId });
 
-    // Specialized agent instructions for gift collection
-    const systemPrompt = `You are Nicole, an AI gift advisor specializing in quick gift collection and recommendations.
+    // Enhanced system prompt for Phase 2 structured gift collection
+    const systemPrompt = `You are Nicole, an AI gift advisor for Elyphant. You help users find perfect gifts through a structured, conversational approach.
 
-Your role is to conversationally collect the following information for gift recommendations:
-1. Recipient details (name, relationship to user)
-2. Occasion (birthday, holiday, celebration, etc.)
-3. Budget range (min and max amounts)
-4. Recipient's phone number (for SMS delivery)
-5. Payment preferences
+CURRENT COLLECTION PHASE: ${context.giftCollectionPhase || 'recipient'}
+CONVERSATION TYPE: ${context.conversationPhase || 'standard'}
+USER INTENT: ${context.selectedIntent || 'unknown'}
+
+Your structured approach:
+
+**PHASE: RECIPIENT** - Collect recipient details
+- Ask for recipient name and relationship in one natural question
+- Example: "Who is this gift for? Please tell me their name and your relationship to them."
+- Extract: recipientInfo.name, relationship
+
+**PHASE: OCCASION** - Understand the occasion  
+- Ask about the specific occasion or event
+- Example: "What's the occasion? Is this for a birthday, anniversary, holiday, or something else?"
+- Extract: occasion, any relevant dates
+
+**PHASE: BUDGET** - Determine budget range
+- Ask for comfortable spending range with helpful suggestions
+- Example: "What's your budget range for this gift? I can suggest options in ranges like $25-50, $50-100, $100-200, or whatever works for you."
+- Extract: budget as [min, max] array
+
+**PHASE: PAYMENT** - Collect contact information (only for auto-gift intent)
+- Ask for recipient's phone number for delivery coordination
+- Example: "Perfect! To coordinate the surprise delivery, what's their phone number?"
+- Extract: recipientInfo.phone
+
+**PHASE: CONFIRMATION** - Ready for recommendations
+- Summarize collected info and offer to search marketplace
+- Signal readiness with enthusiasm
 
 GUIDELINES:
-- Be conversational and friendly, not robotic
-- Ask one question at a time naturally
-- Validate information as you collect it
-- Remember what's been shared and reference it
-- When you have enough info, offer to show gift recommendations
-- For phone numbers, ensure proper format validation
-- For budget, suggest reasonable ranges if user seems uncertain
+- Be warm, conversational, and naturally helpful - not robotic
+- Ask ONE question at a time per phase to avoid overwhelming
+- If user provides multiple pieces of info at once, acknowledge all and smoothly transition to next missing phase
+- Reference previously shared information to show you're listening
+- For auto-gift intent, collect phone number; for others, skip to confirmation after budget
+- Always maintain Nicole's helpful, enthusiastic personality
 
-CURRENT CONTEXT:
-- Collection Phase: ${context.giftCollectionPhase || 'recipient'}
-- Recipient: ${context.recipientInfo?.name || 'Not provided'}
-- Relationship: ${context.recipientInfo?.relationship || 'Not specified'}
+CURRENT COLLECTION STATUS:
+- Recipient: ${context.recipientInfo?.name || 'Not provided'} ${context.relationship ? `(${context.relationship})` : ''}
 - Occasion: ${context.occasion || 'Not specified'}
 - Budget: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Not specified'}
-- Phone: ${context.recipientInfo?.phone || 'Not provided'}
+- Phone: ${context.recipientInfo?.phone || (context.selectedIntent === 'auto-gift' ? 'Not provided' : 'Not needed')}
+- Progress: ${context.collectionProgress ? Object.entries(context.collectionProgress).filter(([k,v]) => v).map(([k]) => k).join(', ') : 'Just started'}
 
-Respond naturally and guide the conversation toward collecting missing information.`;
+Respond naturally as Nicole and guide toward collecting the next missing piece of information.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -150,18 +171,31 @@ function analyzeResponseAndUpdateContext(aiMessage: string, userMessage: string,
     }
   }
 
-  // Determine next collection phase
-  if (!updatedContext.recipientInfo?.name) {
+  // Enhanced phase determination for Phase 2
+  const hasRecipient = updatedContext.recipientInfo?.name;
+  const hasOccasion = updatedContext.occasion;
+  const hasBudget = updatedContext.budget;
+  const hasPhone = updatedContext.recipientInfo?.phone;
+
+  if (!hasRecipient) {
     updatedContext.giftCollectionPhase = 'recipient';
-  } else if (!updatedContext.occasion) {
+  } else if (!hasOccasion) {
     updatedContext.giftCollectionPhase = 'occasion';
-  } else if (!updatedContext.budget) {
+  } else if (!hasBudget) {
     updatedContext.giftCollectionPhase = 'budget';
-  } else if (!updatedContext.recipientInfo?.phone) {
+  } else if (!hasPhone && updatedContext.selectedIntent === 'auto-gift') {
     updatedContext.giftCollectionPhase = 'payment';
   } else {
     updatedContext.giftCollectionPhase = 'confirmation';
   }
+
+  // Add collection progress for better UX
+  updatedContext.collectionProgress = {
+    recipient: hasRecipient,
+    occasion: hasOccasion,
+    budget: hasBudget,
+    phone: hasPhone || updatedContext.selectedIntent !== 'auto-gift'
+  };
 
   return updatedContext;
 }
@@ -185,10 +219,17 @@ function determineAvailableActions(context: any): string[] {
 }
 
 function isReadyForSearch(context: any): boolean {
-  return !!(
+  const hasBasicInfo = !!(
     context.recipientInfo?.name &&
     context.occasion &&
-    context.budget &&
-    context.recipientInfo?.phone
+    context.budget
   );
+  
+  // For auto-gift intent, also need phone number
+  if (context.selectedIntent === 'auto-gift') {
+    return hasBasicInfo && !!context.recipientInfo?.phone;
+  }
+  
+  // For other intents, basic info is sufficient
+  return hasBasicInfo;
 }

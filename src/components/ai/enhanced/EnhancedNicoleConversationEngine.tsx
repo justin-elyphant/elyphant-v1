@@ -245,12 +245,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     }
   }, [currentMessage, addMessage, conversationHistory, context, extractContextFromMessage, updateContext, chatWithNicole]);
 
-  // Handle quick response selection
-  const handleQuickResponse = useCallback((option: string) => {
+  // Enhanced quick response handling for Phase 2
+  const handleQuickResponse = useCallback(async (option: string) => {
     // Clear quick response options after selection
     setQuickResponseOptions([]);
     
-    // Update context with selected intent
+    // Add user's selection to conversation
+    addMessage({ type: 'user', content: option, timestamp: new Date() });
+    
+    // Update context with selected intent and enhanced gift collection setup
     let selectedIntent: "auto-gift" | "shop-solo" | "create-wishlist";
     
     switch (option) {
@@ -258,27 +261,71 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
         selectedIntent = "auto-gift";
         updateContext({ 
           selectedIntent,
-          conversationPhase: "gift-collection-setup"
+          conversationPhase: "gift_collection",
+          capability: "gift_advisor",
+          giftCollectionPhase: "recipient"
         });
-        // Send the message through normal flow for auto-gift
-        handleSendMessage(option);
+        
+        // Enhanced auto-gift flow with structured guidance
+        addMessage({ 
+          type: 'nicole', 
+          content: `Perfect! I'll help you find the perfect gift using our smart recommendation system. 
+
+To get started, I need to collect some key information:
+
+**Step 1: Who is this gift for?**
+Please tell me their name and your relationship to them (e.g., "This is for my wife Sarah" or "For my friend Mike").`,
+          timestamp: new Date()
+        });
         break;
+        
       case "I'll shop on my own":
         selectedIntent = "shop-solo";
-        updateContext({ selectedIntent });
-        // Navigate to marketplace
-        navigate("/marketplace");
-        onClose();
+        updateContext({ 
+          selectedIntent,
+          conversationPhase: "marketplace_assistant",
+          capability: "marketplace_assistant"
+        });
+        
+        // Enhanced marketplace experience with guidance
+        addMessage({ 
+          type: 'nicole', 
+          content: `Great choice! I'll take you to our marketplace where you can browse our curated selection of gifts. 
+
+I'll be available to help with recommendations, answer questions about products, or assist with finding specific items. You can always come back and chat with me!`,
+          timestamp: new Date()
+        });
+        
+        setTimeout(() => {
+          navigate("/marketplace");
+          onClose();
+        }, 2000);
         break;
+        
       case "Help me create my wishlist":
         selectedIntent = "create-wishlist";
-        updateContext({ selectedIntent });
-        // Navigate to wishlist creation
-        navigate("/wishlists/create");
-        onClose();
+        updateContext({ 
+          selectedIntent,
+          conversationPhase: "wishlist_creation",
+          capability: "wishlist_analysis"
+        });
+        
+        // Enhanced wishlist creation flow
+        addMessage({ 
+          type: 'nicole', 
+          content: `Excellent! Creating a wishlist helps your friends and family know exactly what you'd love to receive. 
+
+I'll take you to your profile settings where you can set up your wishlist. You can add items from our marketplace, or I can help suggest items based on your interests!`,
+          timestamp: new Date()
+        });
+        
+        setTimeout(() => {
+          navigate("/profile/settings");
+          onClose();
+        }, 2000);
         break;
     }
-  }, [updateContext, navigate, onClose, handleSendMessage]);
+  }, [addMessage, updateContext, navigate, onClose]);
 
   // Handle initial query effect
   useEffect(() => {

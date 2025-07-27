@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import SearchButton from "./SearchButton";
 import { useNavigate } from "react-router-dom";
 import { generateEnhancedSearchQuery } from "@/services/ai/enhancedSearchQueryGenerator";
+import QuickResponseButtons from "@/components/ai/conversation/QuickResponseButtons";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -31,6 +33,7 @@ interface EnhancedNicoleConversationProps {
   onMinimize?: () => void;
   isMinimized?: boolean;
   onMaximize?: () => void;
+  initialContext?: string; // New prop for post-auth-welcome
 }
 
 const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps> = ({
@@ -39,7 +42,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   initialQuery,
   onMinimize,
   isMinimized = false,
-  onMaximize
+  onMaximize,
+  initialContext
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +52,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   const [currentMessage, setCurrentMessage] = useState("");
   const [conversationHistory, setConversationHistory] = useState<NicoleMessage[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [quickResponseOptions, setQuickResponseOptions] = useState<string[]>([]);
   
   // Use unified Nicole AI service
   const {
@@ -60,7 +66,9 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   } = useUnifiedNicoleAI({
     sessionId: `enhanced-nicole-${user?.id || 'anonymous'}`,
     initialContext: {
-      currentUserId: user?.id
+      currentUserId: user?.id,
+      conversationPhase: initialContext || 'standard',
+      userFirstName: userProfile?.first_name
     }
   });
 
@@ -70,6 +78,21 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
+
+  // Fetch user profile for personalization
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, name')
+          .eq('id', user.id)
+          .single();
+        setUserProfile(profile);
+      }
+    };
+    fetchUserProfile();
+  }, [user?.id]);
 
   useEffect(() => {
     if (initialQuery && conversation.length === 0) {
@@ -119,13 +142,67 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   }, []);
 
   const startConversation = useCallback(() => {
-    const greetingMessage: ConversationMessage = {
-      type: "nicole",
-      content: "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. What can I help you find today?",
-      timestamp: new Date()
-    };
-    addMessage(greetingMessage);
-  }, [addMessage]);
+    // Handle post-auth welcome flow
+    if (initialContext === 'post-auth-welcome' && userProfile?.first_name) {
+      const welcomeMessage: ConversationMessage = {
+        type: "nicole",
+        content: `Hi ${userProfile.first_name}! Welcome to Elyphant! I'm Nicole, your AI gift advisor. I can help you find the perfect gift in under 60 seconds. What brings you here today?`,
+        timestamp: new Date()
+      };
+      addMessage(welcomeMessage);
+      
+      // Set quick response options for post-auth welcome
+      setQuickResponseOptions([
+        "Have Elyphant pick the gift",
+        "I'll shop on my own", 
+        "Help me create my wishlist"
+      ]);
+    } else {
+      // Standard greeting
+      const greetingMessage: ConversationMessage = {
+        type: "nicole",
+        content: "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. What can I help you find today?",
+        timestamp: new Date()
+      };
+      addMessage(greetingMessage);
+    }
+  }, [addMessage, initialContext, userProfile?.first_name]);
+
+  // Handle quick response selection
+  const handleQuickResponse = useCallback((option: string) => {
+    // Clear quick response options after selection
+    setQuickResponseOptions([]);
+    
+    // Update context with selected intent
+    let selectedIntent: "auto-gift" | "shop-solo" | "create-wishlist";
+    
+    switch (option) {
+      case "Have Elyphant pick the gift":
+        selectedIntent = "auto-gift";
+        updateContext({ 
+          selectedIntent,
+          conversationPhase: "gift-collection-setup"
+        });
+        break;
+      case "I'll shop on my own":
+        selectedIntent = "shop-solo";
+        updateContext({ selectedIntent });
+        // Navigate to marketplace
+        navigate("/marketplace");
+        onClose();
+        return;
+      case "Help me create my wishlist":
+        selectedIntent = "create-wishlist";
+        updateContext({ selectedIntent });
+        // Navigate to wishlist creation
+        navigate("/wishlists/create");
+        onClose();
+        return;
+    }
+    
+    // Send the message through normal flow for auto-gift
+    handleSendMessage(option);
+  }, [updateContext, navigate, onClose]);
 
   const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || currentMessage.trim();
@@ -235,7 +312,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     if (isOpen && conversation.length === 0 && !initialQuery) {
       startConversation();
     }
-  }, [isOpen, conversation.length, initialQuery, startConversation]);
+  }, [isOpen, conversation.length, initialQuery, startConversation, userProfile]);
 
   // Debug effect to monitor CTA button state
   useEffect(() => {
@@ -291,34 +368,42 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
             <CardContent className="flex-1 p-0">
               <ScrollArea className="h-[360px] p-4">
                 <div className="space-y-4">
-                  {conversation.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          msg.type === "user"
-                            ? "bg-purple-600 text-white"
-                            : "bg-gray-100 text-gray-900"
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {showCTAButton && (
-                    <div className="flex justify-center py-4">
-                      <SearchButton 
-                        onSearch={handleSearchClick}
-                        isLoading={isSearching}
-                      />
-                    </div>
-                  )}
+                   {conversation.map((msg, index) => (
+                     <div
+                       key={index}
+                       className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+                     >
+                       <div
+                         className={`max-w-[80%] p-3 rounded-lg ${
+                           msg.type === "user"
+                             ? "bg-purple-600 text-white"
+                             : "bg-gray-100 text-gray-900"
+                         }`}
+                       >
+                         <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                         <p className="text-xs opacity-70 mt-1">
+                           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                         </p>
+                       </div>
+                     </div>
+                   ))}
+                   
+                   {/* Quick Response Buttons for post-auth welcome */}
+                   {quickResponseOptions.length > 0 && (
+                     <QuickResponseButtons
+                       options={quickResponseOptions}
+                       onSelect={handleQuickResponse}
+                     />
+                   )}
+                   
+                   {showCTAButton && (
+                     <div className="flex justify-center py-4">
+                       <SearchButton 
+                         onSearch={handleSearchClick}
+                         isLoading={isSearching}
+                       />
+                     </div>
+                   )}
                   
                   {isGenerating && (
                     <div className="flex justify-start">

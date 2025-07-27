@@ -14,6 +14,10 @@ export interface UnifiedNicoleContext {
   conversationPhase: string;
   capability: NicoleCapability;
   
+  // Post-auth welcome context
+  selectedIntent?: "auto-gift" | "shop-solo" | "create-wishlist";
+  userFirstName?: string;
+  
   // Recipient and relationship context
   recipient?: string;
   relationship?: string;

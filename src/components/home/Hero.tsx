@@ -14,6 +14,7 @@ import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModa
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
+import EnhancedNicoleConversationEngine from "@/components/ai/enhanced/EnhancedNicoleConversationEngine";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -22,14 +23,15 @@ const Hero = () => {
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
+  const [showNicoleWelcome, setShowNicoleWelcome] = useState(false);
 
   // Enhanced handler for CTAs: sets intent and routes based on auth
   const handleCta = (intent: "giftor" | "giftee") => {
     LocalStorageService.setNicoleContext({ selectedIntent: intent, source: 'hero_cta' });
     if (user) {
-      // Authenticated user: show intent modal to choose their path
+      // Authenticated user: show Nicole welcome flow for gifting
       if (intent === "giftor") {
-        setShowIntentModal(true);
+        setShowNicoleWelcome(true);
       } else {
         navigate("/wishlists");
       }
@@ -162,6 +164,13 @@ const Hero = () => {
         open={showCreateWishlist}
         onOpenChange={setShowCreateWishlist}
         onSubmit={handleCreateWishlistSubmit}
+      />
+
+      {/* Nicole Welcome Flow for authenticated users */}
+      <EnhancedNicoleConversationEngine
+        isOpen={showNicoleWelcome}
+        onClose={() => setShowNicoleWelcome(false)}
+        initialContext="post-auth-welcome"
       />
     </FullWidthSection>
   );

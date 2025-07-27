@@ -24,28 +24,46 @@ serve(async (req) => {
     const { action, email, password, credential_name, notes, verification_code } = await req.json()
 
     if (action === 'save') {
+      console.log(`💾 Saving credentials for email: ${email}`);
+      
       // Simple encryption (in production, use proper encryption with Supabase secrets)
-      const encryptedPassword = password // TODO: Implement proper encryption
+      const encryptedPassword = password; // TODO: Implement proper encryption
+      
+      // First, deactivate all existing credentials to ensure only one active
+      const { error: deactivateError } = await supabase
+        .from('elyphant_amazon_credentials')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('is_active', true);
 
-      // Upsert the single Elyphant credential record
+      if (deactivateError) {
+        console.error('❌ Error deactivating existing credentials:', deactivateError);
+      } else {
+        console.log('✅ Successfully deactivated existing credentials');
+      }
+
+      // Now insert new credentials
       const { data, error } = await supabase
         .from('elyphant_amazon_credentials')
-        .upsert({
-          email: email,
+        .insert({
+          email,
           encrypted_password: encryptedPassword,
           credential_name: credential_name || 'Primary Amazon Business Account',
           notes: notes || 'Main Elyphant Amazon Business account for order fulfillment',
           verification_code: verification_code || null,
           is_active: true,
-          is_verified: false // Will be verified on first successful order
+          is_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
-        .single()
+        .single();
 
       if (error) {
-        throw error
+        console.error('❌ Error saving credentials:', error);
+        throw error;
       }
 
+      console.log(`✅ Successfully saved new credentials for: ${email}`);
       return new Response(
         JSON.stringify({ success: true, message: 'Elyphant Amazon credentials saved successfully' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -46,34 +46,30 @@ serve(async (req) => {
       console.log(`🐛 Full order data:`, JSON.stringify(order, null, 2));
     }
 
-    // Get Elyphant Amazon credentials (try active first, then any available)
-    let { data: credentials, error: credError } = await supabaseClient
+    // Get Amazon credentials with explicit ordering and validation
+    console.log("🔐 Fetching Amazon credentials...");
+    const { data: credentials, error: credentialsError } = await supabaseClient
       .from('elyphant_amazon_credentials')
-      .select('*')
+      .select('email, encrypted_password, credential_name, is_verified, verification_code, totp_2fa_key')
       .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .single();
 
-    // If no active credentials, get any available credentials
-    if (credError && credError.code === 'PGRST116') {
-      const { data: fallbackCreds, error: fallbackError } = await supabaseClient
-        .from('elyphant_amazon_credentials')
-        .select('*')
-        .limit(1)
-        .single();
-      
-      credentials = fallbackCreds;
-      credError = fallbackError;
+    if (credentialsError || !credentials) {
+      console.error("❌ No active Amazon credentials found:", credentialsError);
+      throw new Error('No active Amazon credentials configured');
     }
 
-    if (credError || !credentials) {
-      console.error('❌ Amazon credentials error:', credError);
-      throw new Error(`Amazon credentials not configured: ${credError?.message}`);
-    }
-
-    console.log(`🔐 Using Amazon credentials: ${credentials.email} (verified: ${credentials.is_verified})`);
+    // Validate and log credential details (without password)
+    console.log(`🔐 Using Amazon credentials: ${credentials.email} (${credentials.credential_name || 'Unknown'}), Verified: ${credentials.is_verified}`);
     
-    if (!credentials.is_verified && !isTestMode) {
-      console.warn('⚠️ Amazon credentials not verified, but proceeding with order');
+    if (!credentials.email || !credentials.encrypted_password) {
+      console.error("❌ Invalid credentials structure:", { 
+        hasEmail: !!credentials.email, 
+        hasPassword: !!credentials.encrypted_password 
+      });
+      throw new Error('Invalid Amazon credentials structure');
     }
 
     // Get default business payment method

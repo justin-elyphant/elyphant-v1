@@ -740,6 +740,7 @@ export type Database = {
           is_verified: boolean | null
           last_verified_at: string | null
           notes: string | null
+          totp_2fa_key: string | null
           updated_at: string | null
           verification_code: string | null
         }
@@ -753,6 +754,7 @@ export type Database = {
           is_verified?: boolean | null
           last_verified_at?: string | null
           notes?: string | null
+          totp_2fa_key?: string | null
           updated_at?: string | null
           verification_code?: string | null
         }
@@ -766,6 +768,7 @@ export type Database = {
           is_verified?: boolean | null
           last_verified_at?: string | null
           notes?: string | null
+          totp_2fa_key?: string | null
           updated_at?: string | null
           verification_code?: string | null
         }

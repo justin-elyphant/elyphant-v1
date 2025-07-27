@@ -82,8 +82,19 @@ const StreamlinedProfileSetup = () => {
   return (
     <MainLayout>
       {!showIntentModal ? (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <StreamlinedProfileForm onComplete={handleProfileComplete} />
+        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+          <div className="w-full">
+            <div className="text-center space-y-4 mb-8">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Complete Your Profile
+              </h1>
+              <p className="text-muted-foreground">
+                Tell us about yourself to personalize your experience
+              </p>
+            </div>
+            
+            <StreamlinedProfileForm onComplete={handleProfileComplete} />
+          </div>
         </div>
       ) : (
         <OnboardingIntentModal

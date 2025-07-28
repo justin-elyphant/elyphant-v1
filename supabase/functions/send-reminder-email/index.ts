@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "npm:resend@2.0.0";
-import { EmailTemplateService } from "../../../src/services/EmailTemplateService.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +11,113 @@ interface ReminderRequest {
   executionId: string;
   hoursRemaining: number;
   tokenId: string;
+}
+
+// Email template generation functions (self-contained within edge function)
+function generateReminderEmail(templateData: any) {
+  const { 
+    recipientName, 
+    giftDetails, 
+    deliveryDate, 
+    approveUrl, 
+    rejectUrl, 
+    reviewUrl, 
+    totalAmount, 
+    hoursRemaining 
+  } = templateData;
+
+  const subject = `🎁 Gift Approval Reminder - ${hoursRemaining} hours remaining`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Gift Approval Reminder</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }
+        .content { padding: 40px 20px; }
+        .gift-details { background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .action-buttons { text-align: center; margin: 30px 0; }
+        .btn { display: inline-block; padding: 15px 30px; margin: 10px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .btn-approve { background-color: #28a745; color: white; }
+        .btn-review { background-color: #007bff; color: white; }
+        .btn-reject { background-color: #dc3545; color: white; }
+        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .urgent { color: #dc3545; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎁 Gift Approval Reminder</h1>
+          <p>Your auto-gift needs approval!</p>
+        </div>
+        
+        <div class="content">
+          <p>Hi ${recipientName || 'there'},</p>
+          
+          <p class="urgent">⏰ Only ${hoursRemaining} hours remaining to approve your gift!</p>
+          
+          <p>Your auto-gift is ready to be sent, but we need your final approval before proceeding.</p>
+          
+          <div class="gift-details">
+            <h3>Gift Details:</h3>
+            <p><strong>Occasion:</strong> ${giftDetails?.occasion || 'Special Occasion'}</p>
+            <p><strong>Budget:</strong> $${totalAmount || '0.00'}</p>
+            <p><strong>Delivery Date:</strong> ${new Date(deliveryDate).toLocaleDateString()}</p>
+            ${giftDetails?.selectedProducts?.length ? `<p><strong>Items:</strong> ${giftDetails.selectedProducts.length} item(s) selected</p>` : ''}
+          </div>
+          
+          <p>Please choose one of the following actions:</p>
+          
+          <div class="action-buttons">
+            <a href="${approveUrl}" class="btn btn-approve">✅ Approve & Send Gift</a>
+            <a href="${reviewUrl}" class="btn btn-review">👀 Review Details</a>
+            <a href="${rejectUrl}" class="btn btn-reject">❌ Cancel Gift</a>
+          </div>
+          
+          <p><strong>Important:</strong> If no action is taken, this gift will be automatically cancelled when the approval period expires.</p>
+        </div>
+        
+        <div class="footer">
+          <p>This is an automated reminder from Elyphant Gift Assistant</p>
+          <p>If you have any questions, please contact our support team.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Gift Approval Reminder - ${hoursRemaining} hours remaining
+
+Hi ${recipientName || 'there'},
+
+Only ${hoursRemaining} hours remaining to approve your gift!
+
+Your auto-gift is ready to be sent, but we need your final approval before proceeding.
+
+Gift Details:
+- Occasion: ${giftDetails?.occasion || 'Special Occasion'}
+- Budget: $${totalAmount || '0.00'}
+- Delivery Date: ${new Date(deliveryDate).toLocaleDateString()}
+${giftDetails?.selectedProducts?.length ? `- Items: ${giftDetails.selectedProducts.length} item(s) selected` : ''}
+
+Actions:
+- Approve & Send Gift: ${approveUrl}
+- Review Details: ${reviewUrl}
+- Cancel Gift: ${rejectUrl}
+
+Important: If no action is taken, this gift will be automatically cancelled when the approval period expires.
+
+This is an automated reminder from Elyphant Gift Assistant.
+  `;
+
+  return { subject, html, text };
 }
 
 serve(async (req) => {
@@ -96,7 +202,7 @@ serve(async (req) => {
       hoursRemaining
     };
 
-    const emailTemplate = EmailTemplateService.generateReminderEmail(templateData);
+    const emailTemplate = generateReminderEmail(templateData);
 
     // Send reminder email
     const emailResponse = await resend.emails.send({

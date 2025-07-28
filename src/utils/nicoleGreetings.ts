@@ -17,8 +17,12 @@ export interface GreetingContext {
 export const getNicoleGreeting = (context: GreetingContext): string => {
   const { greeting, firstName, userProfile, friendName, activeMode } = context;
   
-  // Get the user's first name from various sources
-  const userName = firstName || userProfile?.first_name || userProfile?.display_name;
+  // Get the user's first name from multiple possible sources
+  const userName = firstName || 
+                   userProfile?.first_name || 
+                   userProfile?.user_metadata?.first_name ||
+                   (userProfile as any)?.raw_user_meta_data?.first_name ||
+                   userProfile?.display_name;
   const namePrefix = userName ? `Hey ${userName}! ` : "Hey! ";
   
   // Handle specific greeting contexts from URL parameters
@@ -61,9 +65,13 @@ export const getNicoleGreeting = (context: GreetingContext): string => {
  * Extracts greeting context from URL search parameters
  */
 export const getGreetingFromUrl = (searchParams: URLSearchParams): GreetingContext => {
+  // Handle first_name=true parameter by returning flag to fetch from user profile
+  const firstNameParam = searchParams.get('first_name');
+  const firstName = firstNameParam === 'true' ? undefined : firstNameParam;
+  
   return {
     greeting: searchParams.get('greeting') || undefined,
-    firstName: searchParams.get('first_name') === 'true' ? undefined : (searchParams.get('first_name') || undefined),
+    firstName: firstName || undefined,
     friendName: searchParams.get('name') || undefined
   };
 };

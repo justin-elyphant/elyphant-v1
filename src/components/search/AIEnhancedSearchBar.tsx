@@ -9,7 +9,7 @@ import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
 import { NicoleUnifiedInterface } from '@/components/ai/unified/NicoleUnifiedInterface';
 import SearchInput from "./components/SearchInput";
 import SearchResults from "./components/SearchResults";
-import UnifiedNicoleConversation from "./components/UnifiedNicoleConversation";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface AIEnhancedSearchBarProps {
@@ -321,25 +321,25 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         isNicoleMode={isNicoleMode}
       />
 
-      {/* Unified Nicole Interface */}
-      {showNicoleDropdown && (
-        <NicoleUnifiedInterface
-          onNavigateToResults={handleNicoleNavigateToResults}
-        />
+      {/* Unified Nicole Interface - Single point of truth for both desktop and mobile */}
+      {(showNicoleDropdown || (showMobileModal && isMobile)) && (
+        <>
+          {isMobile ? (
+            <Dialog open={showMobileModal} onOpenChange={() => setShowMobileModal(false)}>
+              <DialogContent className="p-0 w-full max-w-full h-[90vh] bg-background">
+                <NicoleUnifiedInterface
+                  onNavigateToResults={handleNicoleNavigateToResults}
+                  className="h-full border-0 shadow-none bg-transparent"
+                />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <NicoleUnifiedInterface
+              onNavigateToResults={handleNicoleNavigateToResults}
+            />
+          )}
+        </>
       )}
-
-      {/* Nicole Conversation - Mobile Modal */}
-      <Dialog open={showMobileModal && isMobile} onOpenChange={() => setShowMobileModal(false)}>
-        <DialogContent className="p-0 w-full max-w-full h-[90vh] bg-white">
-          <UnifiedNicoleConversation
-            isOpen={showMobileModal}
-            onClose={() => setShowMobileModal(false)}
-            onNavigateToResults={handleNicoleNavigateToResults}
-            initialQuery={query}
-            mobile={true}
-          />
-        </DialogContent>
-      </Dialog>
 
     </div>
   );

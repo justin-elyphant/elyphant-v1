@@ -41,13 +41,13 @@ const LegalLayout: React.FC<LegalLayoutProps> = ({
               © {new Date().getFullYear()} Elyphant. All rights reserved.
             </p>
             <div className="flex justify-center space-x-4 text-sm">
-              <a href="/privacy" className="text-primary hover:underline">
+              <a href="https://privacy.elyphant.ai" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Privacy Policy
               </a>
-              <a href="/terms" className="text-primary hover:underline">
+              <a href="https://terms.elyphant.ai" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 Terms of Service
               </a>
-              <a href="/sms-consent" className="text-primary hover:underline">
+              <a href="https://sms-consent.elyphant.ai" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 SMS Terms
               </a>
             </div>

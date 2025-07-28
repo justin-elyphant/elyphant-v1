@@ -203,32 +203,38 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
           )}
         </div>
 
-        {/* Input Area with modern styling */}
-        <div className="p-4 border-t border-purple-100/30 bg-gradient-to-r from-purple-50/30 to-indigo-50/30 rounded-b-2xl">
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const message = formData.get('message') as string;
-            handleSendMessage(message);
-            e.currentTarget.reset();
-          }}>
-            <div className="relative flex items-center">
-              <input
-                ref={inputRef}
-                name="message"
-                placeholder="Ask Nicole anything about gifts..."
-                className="flex-1 px-4 py-3 pr-12 text-sm border border-purple-200/60 rounded-full bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition-all duration-200 placeholder:text-purple-400/70"
-                disabled={loading}
-              />
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="absolute right-2 h-8 w-8 p-0 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </form>
+        {/* Input Area - Unified Modal Design */}
+        <div className="border-t border-border/20 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-md rounded-b-2xl">
+          <div className="p-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const message = formData.get('message') as string;
+              handleSendMessage(message);
+              e.currentTarget.reset();
+            }}>
+              <div className="relative flex items-center gap-3">
+                <input
+                  ref={inputRef}
+                  name="message"
+                  placeholder="Ask Nicole anything about gifts..."
+                  className="flex-1 px-4 py-3 pr-12 text-sm border border-border/30 rounded-2xl bg-card/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 focus:bg-card/70 transition-all duration-200 shadow-sm"
+                  disabled={loading}
+                />
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="absolute right-2 h-8 w-8 p-0 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </Card>

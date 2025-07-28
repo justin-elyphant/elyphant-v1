@@ -53,13 +53,13 @@ export const getNicoleGreeting = (context: GreetingContext): string => {
       return `${namePrefix}Welcome to Elyphant! 🎉 I love helping find the perfect gifts. I can help you find something amazing in like 60 seconds. What's up?`;
     
     default:
-      // Mode-specific default greetings
+      // Strategic default greeting with mini-CTAs
       if (activeMode === 'search') {
-        return `${namePrefix}I love helping find the perfect stuff! What are you hunting for?`;
+        return `${namePrefix}What brings you to Elyphant today? I can help you reach out to your loved ones and set up auto gifts, browse our marketplace for perfect finds, or help you create and manage your wishlist.`;
       } else if (activeMode === 'floating') {
-        return `${namePrefix}I love helping find perfect gifts! Who are we shopping for today?`;
+        return `${namePrefix}What brings you to Elyphant today? I can help you reach out to your loved ones and set up auto gifts, browse our marketplace for perfect finds, or help you create and manage your wishlist.`;
       } else {
-        return `${namePrefix}I love helping find perfect gifts! What can I help you find today?`;
+        return `${namePrefix}What brings you to Elyphant today? I can help you reach out to your loved ones and set up auto gifts, browse our marketplace for perfect finds, or help you create and manage your wishlist.`;
       }
   }
 };

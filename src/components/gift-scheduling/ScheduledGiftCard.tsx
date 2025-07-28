@@ -1,17 +1,28 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { User, CalendarIcon } from 'lucide-react';
+import { User, CalendarIcon, Brain, Star } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ScheduledGift } from "@/types/gift-scheduling";
 
 interface ScheduledGiftCardProps {
   gift: ScheduledGift;
   showActions?: boolean;
+  nicoleAttribution?: {
+    agent: string;
+    discovery_method?: string;
+    confidence_score: number;
+    data_sources: string[];
+  };
 }
 
-const ScheduledGiftCard: React.FC<ScheduledGiftCardProps> = ({ gift, showActions = true }) => {
+const ScheduledGiftCard: React.FC<ScheduledGiftCardProps> = ({ 
+  gift, 
+  showActions = true, 
+  nicoleAttribution 
+}) => {
   return (
     <Card key={gift.id}>
       <CardContent className="p-4 flex flex-col sm:flex-row items-center sm:items-start gap-4">
@@ -24,8 +35,16 @@ const ScheduledGiftCard: React.FC<ScheduledGiftCardProps> = ({ gift, showActions
         </div>
         
         <div className="flex-grow text-center sm:text-left">
-          <h4 className="font-medium">{gift.productName}</h4>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+            <h4 className="font-medium">{gift.productName}</h4>
+            {nicoleAttribution && (
+              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                Nicole-discovered
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground">
             <div className="flex items-center justify-center sm:justify-start">
               <User className="h-3 w-3 mr-1" /> 
               <span>To: {gift.recipientName}</span>
@@ -35,6 +54,14 @@ const ScheduledGiftCard: React.FC<ScheduledGiftCardProps> = ({ gift, showActions
               <span>{format(gift.scheduledDate, 'PPP')}</span>
             </div>
           </div>
+          {nicoleAttribution && nicoleAttribution.confidence_score > 0 && (
+            <div className="flex items-center justify-center sm:justify-start gap-1 mt-1">
+              <Star className="h-3 w-3 text-amber-500" />
+              <span className="text-xs text-muted-foreground">
+                {Math.round(nicoleAttribution.confidence_score * 100)}% confidence
+              </span>
+            </div>
+          )}
         </div>
         
         {showActions ? (

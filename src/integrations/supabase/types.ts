@@ -491,6 +491,7 @@ export type Database = {
       }
       automated_gift_executions: {
         Row: {
+          ai_agent_source: Json | null
           created_at: string | null
           error_message: string | null
           event_id: string | null
@@ -507,6 +508,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_agent_source?: Json | null
           created_at?: string | null
           error_message?: string | null
           event_id?: string | null
@@ -523,6 +525,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_agent_source?: Json | null
           created_at?: string | null
           error_message?: string | null
           event_id?: string | null
@@ -1631,6 +1634,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nicole_discovery_log: {
+        Row: {
+          completed_at: string | null
+          confidence_metrics: Json | null
+          contact_method: string | null
+          conversation_summary: string | null
+          created_at: string
+          data_collected: Json | null
+          discovery_status: string
+          discovery_trigger: string
+          id: string
+          recipient_email: string | null
+          recipient_id: string | null
+          recipient_phone: string | null
+          related_execution_id: string | null
+          related_rule_id: string | null
+          timeline_events: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence_metrics?: Json | null
+          contact_method?: string | null
+          conversation_summary?: string | null
+          created_at?: string
+          data_collected?: Json | null
+          discovery_status?: string
+          discovery_trigger: string
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          related_execution_id?: string | null
+          related_rule_id?: string | null
+          timeline_events?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          confidence_metrics?: Json | null
+          contact_method?: string | null
+          conversation_summary?: string | null
+          created_at?: string
+          data_collected?: Json | null
+          discovery_status?: string
+          discovery_trigger?: string
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          related_execution_id?: string | null
+          related_rule_id?: string | null
+          timeline_events?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       offline_message_queue: {
         Row: {

@@ -3,6 +3,7 @@ import React from "react";
 import GiftingHubCard from "./GiftingHubCard";
 import SocialHubCard from "./SocialHubCard";
 import QuickGiftCTA from "./QuickGiftCTA";
+import NicoleActivityFeed from "./nicole/NicoleActivityFeed";
 
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
@@ -18,6 +19,11 @@ const DashboardGrid = () => {
       {/* Main Gifting Hub - takes full width and includes group features */}
       <div className="w-full">
         <GiftingHubCard />
+      </div>
+
+      {/* Nicole Activity Feed */}
+      <div className="w-full">
+        <NicoleActivityFeed maxItems={3} />
       </div>
 
       {/* Secondary cards - social hub */}

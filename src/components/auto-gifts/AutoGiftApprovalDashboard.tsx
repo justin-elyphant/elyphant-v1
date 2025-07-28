@@ -18,6 +18,8 @@ import {
 import { useAutoGiftExecution } from '@/hooks/useAutoGiftExecution';
 import { UnifiedGiftExecution } from '@/services/UnifiedGiftAutomationService';
 import EmailApprovalPanel from './EmailApprovalPanel';
+import EmailPreviewPanel from './EmailPreviewPanel';
+import { EnhancedNotificationService } from '@/services/EnhancedNotificationService';
 import { toast } from 'sonner';
 
 const AutoGiftApprovalDashboard: React.FC = () => {

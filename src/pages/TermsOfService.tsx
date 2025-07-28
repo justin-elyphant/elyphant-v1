@@ -1,9 +1,9 @@
 import React from 'react';
-import MainLayout from '@/components/layout/MainLayout';
+import LegalLayout from '@/components/layout/LegalLayout';
 
 const TermsOfService = () => {
   return (
-    <MainLayout>
+    <LegalLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-foreground">Terms of Service</h1>
         <p className="text-muted-foreground mb-6">Last Updated: {new Date().toLocaleDateString()}</p>
@@ -213,14 +213,14 @@ const TermsOfService = () => {
               Questions about these Terms? Contact us:
             </p>
             <ul className="list-disc pl-6 mb-4">
-              <li>Email: legal@yourdomain.com</li>
-              <li>Address: [Your Business Address]</li>
+              <li>Email: legal@elyphant.com</li>
+              <li>Address: 422 Cribbage Ln. San Marcos, CA 92078</li>
               <li>Through our support system in the app</li>
             </ul>
           </section>
         </div>
       </div>
-    </MainLayout>
+    </LegalLayout>
   );
 };
 

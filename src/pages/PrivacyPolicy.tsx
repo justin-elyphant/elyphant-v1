@@ -1,9 +1,9 @@
 import React from 'react';
-import MainLayout from '@/components/layout/MainLayout';
+import LegalLayout from '@/components/layout/LegalLayout';
 
 const PrivacyPolicy = () => {
   return (
-    <MainLayout>
+    <LegalLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-foreground">Privacy Policy</h1>
         <p className="text-muted-foreground mb-6">Last Updated: {new Date().toLocaleDateString()}</p>
@@ -165,7 +165,7 @@ const PrivacyPolicy = () => {
           </section>
         </div>
       </div>
-    </MainLayout>
+    </LegalLayout>
   );
 };
 

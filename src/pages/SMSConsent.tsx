@@ -1,9 +1,9 @@
 import React from 'react';
-import MainLayout from '@/components/layout/MainLayout';
+import LegalLayout from '@/components/layout/LegalLayout';
 
 const SMSConsent = () => {
   return (
-    <MainLayout>
+    <LegalLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-foreground">SMS Consent & Terms</h1>
         <p className="text-muted-foreground mb-6">SMS Gift Discovery Service Agreement</p>
@@ -18,7 +18,7 @@ const SMSConsent = () => {
             <div className="bg-background/50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Required Consumer Consent Statement:</h3>
               <p className="text-sm font-medium">
-                "I consent to receive automated text messages from [Your Company Name] for gift discovery purposes. I understand that consent is not required to make a purchase and I can opt-out at any time by replying STOP. Message and data rates may apply."
+                "I consent to receive automated text messages from Elyphant for gift discovery purposes. I understand that consent is not required to make a purchase and I can opt-out at any time by replying STOP. Message and data rates may apply."
               </p>
             </div>
           </div>
@@ -111,7 +111,7 @@ const SMSConsent = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold">📧 Contact Support</h4>
-                  <p>Email us at <a href="mailto:sms-support@yourdomain.com" className="text-primary hover:underline">sms-support@yourdomain.com</a> for additional help.</p>
+                  <p>Email us at <a href="mailto:sms-support@elyphant.com" className="text-primary hover:underline">sms-support@elyphant.com</a> for additional help.</p>
                 </div>
               </div>
             </div>
@@ -172,9 +172,9 @@ const SMSConsent = () => {
             <div className="bg-card p-6 rounded-lg border">
               <h3 className="text-lg font-semibold mb-3">SMS Support</h3>
               <ul className="space-y-2">
-                <li><strong>Email:</strong> <a href="mailto:sms-support@yourdomain.com" className="text-primary hover:underline">sms-support@yourdomain.com</a></li>
+                <li><strong>Email:</strong> <a href="mailto:sms-support@elyphant.com" className="text-primary hover:underline">sms-support@elyphant.com</a></li>
                 <li><strong>Phone:</strong> 1-800-SMS-HELP (1-800-767-4357)</li>
-                <li><strong>Address:</strong> [Your Business Address]</li>
+                <li><strong>Address:</strong> 422 Cribbage Ln. San Marcos, CA 92078</li>
                 <li><strong>Hours:</strong> Monday-Friday, 9 AM - 6 PM EST</li>
               </ul>
             </div>
@@ -193,7 +193,7 @@ const SMSConsent = () => {
           </section>
         </div>
       </div>
-    </MainLayout>
+    </LegalLayout>
   );
 };
 

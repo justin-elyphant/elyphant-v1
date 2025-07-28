@@ -32,6 +32,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     activeMode: state.activeMode
   };
   
+  console.log("🎯 Nicole Interface - Greeting Context:", greetingContext);
+  
   const {
     chatWithNicole,
     loading,

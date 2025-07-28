@@ -213,6 +213,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     const modeParam = urlParams.get('mode');
     const greetingParam = urlParams.get('greeting');
     
+    console.log("🔍 Search Bar - URL Params Check:", { nicoleParam, modeParam, greetingParam });
+    
     if (nicoleParam === 'true') {
       console.log("🎯 Nicole URL trigger detected:", { mode: modeParam, greeting: greetingParam });
       

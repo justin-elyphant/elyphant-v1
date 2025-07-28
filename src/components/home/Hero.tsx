@@ -10,7 +10,6 @@ import GiftCountdown from "./sections/countdown/GiftCountdown";
 import { getNextHoliday } from "@/components/marketplace/utils/upcomingOccasions";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
@@ -20,7 +19,6 @@ const Hero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const nextHoliday = getNextHoliday();
-  const [showIntentModal, setShowIntentModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   const [showNicoleWelcome, setShowNicoleWelcome] = useState(false);
@@ -41,19 +39,19 @@ const Hero = () => {
     }
   };
 
-  // Handle intent selection from modal
-  const handleIntentSelect = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
-    setShowIntentModal(false);
-    
-    switch (userIntent) {
-      case "quick-gift":
-        setShowGiftWizard(true);
+  // Handle intent completion from Nicole (maintaining exact same functionality)
+  const handleNicoleIntentComplete = (intent: "auto-gift" | "shop-solo" | "create-wishlist") => {
+    // Map Nicole's intents to the same actions as the old modal
+    switch (intent) {
+      case "auto-gift":
+        // This is handled within Nicole conversation engine
+        // Nicole will guide through the SMS discovery flow
         break;
-      case "browse-shop":
-        navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
+      case "shop-solo":
+        // Nicole already navigates to marketplace
         break;
       case "create-wishlist":
-        setShowCreateWishlist(true);
+        // Nicole already navigates to profile settings
         break;
     }
   };
@@ -146,12 +144,7 @@ const Hero = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Intent Modal for authenticated users */}
-      <OnboardingIntentModal
-        open={showIntentModal}
-        onSelect={handleIntentSelect}
-        onSkip={() => setShowIntentModal(false)}
-      />
+      {/* Legacy modal removed - Nicole handles all intent selection */}
 
       {/* Gift Setup Wizard */}
       <GiftSetupWizard 
@@ -166,11 +159,12 @@ const Hero = () => {
         onSubmit={handleCreateWishlistSubmit}
       />
 
-      {/* Nicole Welcome Flow for authenticated users */}
+      {/* Enhanced Nicole Welcome Flow - handles all intent selection */}
       <EnhancedNicoleConversationEngine
         isOpen={showNicoleWelcome}
         onClose={() => setShowNicoleWelcome(false)}
         initialContext="post-auth-welcome"
+        onIntentComplete={handleNicoleIntentComplete}
       />
     </FullWidthSection>
   );

@@ -33,7 +33,8 @@ interface EnhancedNicoleConversationProps {
   onMinimize?: () => void;
   isMinimized?: boolean;
   onMaximize?: () => void;
-  initialContext?: string; // New prop for post-auth-welcome
+  initialContext?: string; // Context for post-auth-welcome and other flows
+  onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist") => void; // Callback for intent completion
 }
 
 const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps> = ({
@@ -43,7 +44,8 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   onMinimize,
   isMinimized = false,
   onMaximize,
-  initialContext
+  initialContext,
+  onIntentComplete
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -299,6 +301,9 @@ I'll be available to help with recommendations, answer questions about products,
           timestamp: new Date()
         });
         
+        // Notify parent component of intent completion
+        onIntentComplete?.(selectedIntent);
+        
         setTimeout(() => {
           navigate("/marketplace");
           onClose();
@@ -322,13 +327,16 @@ I'll take you to your profile settings where you can set up your wishlist. You c
           timestamp: new Date()
         });
         
+        // Notify parent component of intent completion
+        onIntentComplete?.(selectedIntent);
+        
         setTimeout(() => {
           navigate("/profile/settings");
           onClose();
         }, 2000);
         break;
     }
-  }, [addMessage, updateContext, navigate, onClose]);
+  }, [addMessage, updateContext, navigate, onClose, onIntentComplete]);
 
   // Handle initial query effect
   useEffect(() => {

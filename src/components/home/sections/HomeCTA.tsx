@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, List } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+// Legacy modal removed - using Nicole unified interface
 import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
@@ -108,12 +108,7 @@ const HomeCTA = () => {
         </div>
       </div>
 
-      {/* Intent Modal for authenticated users */}
-      <OnboardingIntentModal
-        open={showIntentModal}
-        onSelect={handleIntentSelect}
-        onSkip={() => setShowIntentModal(false)}
-      />
+      {/* Legacy intent modal removed - Nicole handles all intent selection now */}
 
       {/* Gift Setup Wizard */}
       <GiftSetupWizard 

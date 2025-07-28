@@ -12,7 +12,7 @@ import { useConnectedFriendsSpecialDates } from "@/hooks/useConnectedFriendsSpec
 import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+// Legacy modal removed - using Nicole unified interface
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
@@ -164,12 +164,7 @@ const Hero = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Intent Modal for authenticated users */}
-      <OnboardingIntentModal
-        open={showIntentModal}
-        onSelect={handleIntentSelect}
-        onSkip={() => setShowIntentModal(false)}
-      />
+      {/* Legacy intent modal removed - Nicole handles all intent selection now */}
 
       {/* Gift Setup Wizard */}
       <GiftSetupWizard 

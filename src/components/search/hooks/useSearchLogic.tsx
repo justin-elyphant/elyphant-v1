@@ -81,9 +81,9 @@ export const useSearchLogic = ({
           setSearchLoading(false);
         }
       } else if (query.length > 0 && isNicoleMode) {
-        // Nicole mode - The actual Nicole conversation is handled by UnifiedNicoleConversation component
+        // Nicole mode - The actual Nicole conversation is handled by NicoleUnifiedInterface component
         // This hook only provides fallback suggestions for graceful degradation
-        console.log(`Nicole Mode: Query detected, conversation handled by UnifiedNicoleConversation component`);
+        console.log(`Nicole Mode: Query detected, conversation handled by NicoleUnifiedInterface component`);
         
         // Provide fallback suggestions in case Nicole conversation fails
         const q = query.toLowerCase();

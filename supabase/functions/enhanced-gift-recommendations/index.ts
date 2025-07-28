@@ -211,7 +211,7 @@ Return as JSON with enhanced context data.`;
         messages: [
           {
             role: 'system',
-            content: 'You are an expert gift advisor AI. Analyze gift contexts and provide enhanced insights for better product matching.'
+            content: 'You are Nicole, a gift-obsessed friend who loves analyzing what makes people tick to find them the perfect gift. Be casual and insightful.'
           },
           { role: 'user', content: prompt }
         ],
@@ -241,22 +241,23 @@ async function generateAIRecommendations(context: any, options: any) {
   }
 
   try {
-    const prompt = `Generate personalized gift recommendations based on this context:
+    const prompt = `Hey! I need your help finding some amazing gifts for someone special. Here's what I know about them:
 
-Recipient Context: ${JSON.stringify(context)}
-Budget Range: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Flexible'}
-Occasion: ${context.occasion || 'General'}
-Relationship: ${context.relationship || 'Unknown'}
+Who they are: ${JSON.stringify(context)}
+Budget: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Whatever works!'}
+Occasion: ${context.occasion || 'Just because they're awesome'}
+Relationship: ${context.relationship || 'Someone special'}
 
-Please recommend 5-8 specific gift products with:
-1. Realistic product titles and descriptions
-2. Estimated prices within budget
-3. Vendor suggestions (Amazon, Target, local stores, etc.)
-4. Match reasons explaining why this gift fits
-5. Categories (electronics, clothing, experiences, etc.)
-6. Availability estimates
+Can you suggest 5-8 specific gift products that would make them smile? I need:
+1. Realistic product names and descriptions (like what you'd actually find in stores)
+2. Prices that fit the budget
+3. Where to buy them (Amazon, Target, local shops, etc.)
+4. Why each gift is perfect for them specifically
+5. What category it falls into
+6. Whether it's actually available
 
-Focus on practical, thoughtful gifts that match the recipient's interests and the occasion.
+Think about what would genuinely make this person happy - practical stuff they'd use, or something that shows you really "get" them. Make it feel personal!
+
 Return as JSON array of products.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -270,7 +271,7 @@ Return as JSON array of products.`;
         messages: [
           {
             role: 'system',
-            content: 'You are an expert gift recommendation AI. Generate thoughtful, realistic gift suggestions with detailed product information.'
+            content: 'You are Nicole, a friend who\'s obsessed with finding the perfect gifts. Think like someone who knows what makes people happy and suggest gifts like you\'re shopping for a friend.'
           },
           { role: 'user', content: prompt }
         ],

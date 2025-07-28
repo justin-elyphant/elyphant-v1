@@ -151,22 +151,22 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     if (initialContext === 'post-auth-welcome' && userProfile?.first_name) {
       const welcomeMessage: ConversationMessage = {
         type: "nicole",
-        content: `Hi ${userProfile.first_name}! Welcome to Elyphant! I'm Nicole, your AI gift advisor. I can help you find the perfect gift in under 60 seconds. What brings you here today?`,
+        content: `Hey ${userProfile.first_name}! Welcome to Elyphant! 🎉 I'm Nicole and I'm totally obsessed with finding the perfect gifts. I can help you find something amazing in like 60 seconds. What's up?`,
         timestamp: new Date()
       };
       addMessage(welcomeMessage);
       
       // Set quick response options for post-auth welcome
       setQuickResponseOptions([
-        "Have Elyphant pick the gift",
-        "I'll shop on my own", 
-        "Help me create my wishlist"
+        "Pick something amazing for me!",
+        "I'll browse and shop myself", 
+        "Help me make a wishlist"
       ]);
     } else {
       // Standard greeting
       const greetingMessage: ConversationMessage = {
         type: "nicole",
-        content: "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. What can I help you find today?",
+        content: "Hey there! I'm Nicole and I'm obsessed with finding perfect gifts! 🎁 What's the occasion? Who are we shopping for?",
         timestamp: new Date()
       };
       addMessage(greetingMessage);
@@ -244,7 +244,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       // Add fallback message
       const fallbackMessage: ConversationMessage = {
         type: "nicole",
-        content: "I'm having trouble connecting right now, but I'd love to help you find the perfect gift! Could you tell me a bit more about what you're looking for?",
+        content: "Ugh, tech hiccup! 🙄 But I'm still super excited to help you find something amazing! Tell me who you're shopping for?",
         timestamp: new Date()
       };
       addMessage(fallbackMessage);
@@ -265,7 +265,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
     let selectedIntent: "auto-gift" | "shop-solo" | "create-wishlist";
     
     switch (option) {
-      case "Have Elyphant pick the gift":
+      case "Pick something amazing for me!":
         selectedIntent = "auto-gift";
         updateContext({ 
           selectedIntent,
@@ -277,16 +277,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
         // Enhanced auto-gift flow with recommendations
         addMessage({ 
           type: 'nicole', 
-          content: `Perfect! I'll help you set up automated gift discovery and generate personalized recommendations. 
+          content: `Ooh, I love this! 🎉 I'm about to become your personal gift wizard!
 
-Here's how the enhanced process works:
-1. I'll collect details about the recipient
-2. Generate AI-powered gift recommendations based on their profile
-3. Optionally send them a personalized SMS to discover their preferences
-4. Use AI to recommend the perfect gift based on all available data
+Here's what we'll do:
+• I'll ask you a few quick questions about who this is for
+• I'll use AI to find some amazing options that'll make them smile
+• If you want, I can even text them to discover what they're secretly hoping for
+• Then I'll recommend the perfect gift based on everything I learn
 
-**Step 1: Who is this gift for?**
-Please tell me their name and your relationship to them (e.g., "This is for my wife Sarah" or "For my friend Mike").`,
+First things first - who's this gift for? Tell me their name and how you know them!`,
           timestamp: new Date()
         });
         
@@ -307,7 +306,7 @@ Please tell me their name and your relationship to them (e.g., "This is for my w
             
             addMessage({ 
               type: 'nicole', 
-              content: `Great! I've generated some initial personalized recommendations based on our conversation. You can review these below, or continue providing more details about the recipient for even better suggestions.`,
+              content: `Sweet! I've already started brainstorming some amazing options based on what you've told me! Check them out below, or keep chatting with me to make them even more perfect! 🎁`,
               timestamp: new Date()
             });
           } catch (error) {
@@ -319,7 +318,7 @@ Please tell me their name and your relationship to them (e.g., "This is for my w
         onIntentComplete?.(selectedIntent);
         break;
         
-      case "I'll shop on my own":
+      case "I'll browse and shop myself":
         selectedIntent = "shop-solo";
         updateContext({ 
           selectedIntent,
@@ -330,9 +329,9 @@ Please tell me their name and your relationship to them (e.g., "This is for my w
         // Enhanced marketplace experience with guidance
         addMessage({ 
           type: 'nicole', 
-          content: `Great choice! I'll take you to our marketplace where you can browse our curated selection of gifts. 
+          content: `Love that! Sometimes the best gifts come from that perfect "I saw this and thought of you" moment! 
 
-I'll be available to help with recommendations, answer questions about products, or assist with finding specific items. You can always come back and chat with me!`,
+I'm sending you to our marketplace where you can explore to your heart's content. And hey, if you need any help or want recommendations while you're browsing, just give me a shout! I'll be here! 😊`,
           timestamp: new Date()
         });
         
@@ -345,7 +344,7 @@ I'll be available to help with recommendations, answer questions about products,
         }, 2000);
         break;
         
-      case "Help me create my wishlist":
+      case "Help me make a wishlist":
         selectedIntent = "create-wishlist";
         updateContext({ 
           selectedIntent,
@@ -356,9 +355,9 @@ I'll be available to help with recommendations, answer questions about products,
         // Enhanced wishlist creation flow
         addMessage({ 
           type: 'nicole', 
-          content: `Excellent! Creating a wishlist helps your friends and family know exactly what you'd love to receive. 
+          content: `Ooh, smart move! A wishlist is like giving people a cheat sheet for making you happy! 
 
-I'll take you to your profile settings where you can set up your wishlist. You can add items from our marketplace, or I can help suggest items based on your interests!`,
+Let me take you to your profile where you can start building your wishlist. You can add stuff from our marketplace, or I can totally help you brainstorm things you'd love based on your vibe!`,
           timestamp: new Date()
         });
         

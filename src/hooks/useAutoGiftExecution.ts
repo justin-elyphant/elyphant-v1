@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { unifiedGiftAutomationService, UnifiedGiftExecution as AutoGiftExecution } from "@/services/UnifiedGiftAutomationService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useAutoGiftExecution = () => {
@@ -51,6 +52,65 @@ export const useAutoGiftExecution = () => {
     }
   };
 
+  const sendEmailApproval = async (
+    executionId: string, 
+    recipientEmail: string, 
+    recipientName: string,
+    giftDetails: {
+      occasion: string;
+      budget: number;
+      selectedProducts: Array<{
+        id: string;
+        title: string;
+        price: number;
+        image: string;
+        marketplace: string;
+      }>;
+    },
+    deliveryDate?: string
+  ) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-auto-gift-approval-email', {
+        body: {
+          executionId,
+          recipientEmail,
+          recipientName,
+          giftDetails,
+          deliveryDate
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Approval email sent successfully!");
+      await loadExecutions(); // Refresh to show email sent status
+      return data;
+    } catch (error) {
+      console.error("Error sending approval email:", error);
+      toast.error("Failed to send approval email");
+      throw error;
+    }
+  };
+
+  const getApprovalTokens = async (executionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('email_approval_tokens')
+        .select(`
+          *,
+          email_delivery_logs(*)
+        `)
+        .eq('execution_id', executionId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching approval tokens:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     loadExecutions();
   }, [user?.id]);
@@ -61,6 +121,8 @@ export const useAutoGiftExecution = () => {
     processing,
     loadExecutions,
     processPendingExecutions,
-    approveExecution
+    approveExecution,
+    sendEmailApproval,
+    getApprovalTokens
   };
 };

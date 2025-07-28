@@ -774,6 +774,91 @@ export type Database = {
         }
         Relationships: []
       }
+      email_approval_tokens: {
+        Row: {
+          approved_at: string | null
+          approved_via: string | null
+          created_at: string | null
+          email_sent_at: string | null
+          execution_id: string | null
+          expires_at: string
+          id: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_via?: string | null
+          created_at?: string | null
+          email_sent_at?: string | null
+          execution_id?: string | null
+          expires_at: string
+          id?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_via?: string | null
+          created_at?: string | null
+          email_sent_at?: string | null
+          execution_id?: string | null
+          expires_at?: string
+          id?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          token?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_approval_tokens_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_delivery_logs: {
+        Row: {
+          created_at: string | null
+          delivery_status: string
+          event_data: Json | null
+          id: string
+          token_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_status: string
+          event_data?: Json | null
+          id?: string
+          token_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_status?: string
+          event_data?: Json | null
+          id?: string
+          token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_delivery_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "email_approval_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funding_campaigns: {
         Row: {
           campaign_type: string

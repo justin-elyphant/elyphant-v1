@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
 import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
+import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();

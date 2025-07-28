@@ -81,11 +81,11 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const getTitle = () => {
     switch (state.activeMode) {
       case 'search':
-        return 'Nicole Search Assistant';
+        return 'Nicole - Your Shopping Buddy';
       case 'floating':
-        return 'Nicole Gift Advisor';
+        return 'Nicole - Gift Obsessed Friend';
       default:
-        return 'Nicole AI';
+        return 'Nicole - Your Gift Guru';
     }
   };
 
@@ -153,8 +153,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
               </div>
               <p className="text-sm">
                 {state.activeMode === 'search' 
-                  ? "Hi! I'm Nicole, your search assistant. What are you looking for?"
-                  : "Hi! I'm Nicole, your gift advisor. Who are you shopping for?"
+                  ? "Hey there! I'm Nicole and I'm obsessed with finding the perfect stuff! What are you hunting for?"
+                  : "Hey! I'm Nicole and I'm totally obsessed with gifts! Who are we shopping for today?"
                 }
               </p>
             </div>

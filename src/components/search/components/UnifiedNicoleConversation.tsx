@@ -70,7 +70,7 @@ const UnifiedNicoleConversation: React.FC<UnifiedNicoleConversationProps> = ({
     if (isOpen && conversation.length === 0 && !initialQuery) {
       const greetingMessage: ConversationMessage = {
         type: "nicole",
-        content: "Hi! I'm Nicole, your AI gift advisor. I'm here to help you find the perfect gift. What can I help you find today?",
+        content: "Hey there! I'm Nicole and I'm totally obsessed with finding perfect gifts! What's the occasion? Who are we shopping for?",
         timestamp: new Date()
       };
       setConversation([greetingMessage]);
@@ -158,7 +158,7 @@ const UnifiedNicoleConversation: React.FC<UnifiedNicoleConversationProps> = ({
             <MessageCircle className="h-5 w-5 text-purple-600" />
             <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
           </div>
-          <h3 className="font-semibold text-gray-900">Nicole - AI Gift Advisor</h3>
+          <h3 className="font-semibold text-gray-900">Nicole - Your Gift Guru</h3>
         </div>
       </CardHeader>
 

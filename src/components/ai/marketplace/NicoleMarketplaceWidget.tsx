@@ -70,7 +70,7 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
   }, []);
 
   const startConversation = useCallback(() => {
-    let greetingContent = "Hi! I'm Nicole, your marketplace shopping assistant. I can help you find specific products or refine your search. What are you looking for today?";
+    let greetingContent = "Hey! I'm Nicole and I'm obsessed with finding amazing stuff! I can help you find specific products or make your search even better. What are you hunting for?";
     
     // Customize greeting based on context
     if (searchQuery && totalResults) {

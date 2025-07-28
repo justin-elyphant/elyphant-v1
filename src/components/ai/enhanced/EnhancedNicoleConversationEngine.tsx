@@ -424,7 +424,7 @@ Let me take you to your profile where you can start building your wishlist. You 
         <CardHeader className="pb-2 border-b flex flex-row items-center justify-between">
           <div className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5 text-purple-600" />
-            <h3 className="font-semibold text-gray-900">Nicole - AI Gift Advisor</h3>
+            <h3 className="font-semibold text-gray-900">Nicole - Your Gift Guru</h3>
           </div>
           <div className="flex items-center space-x-2">
             {onMinimize && (

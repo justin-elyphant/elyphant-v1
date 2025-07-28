@@ -182,10 +182,10 @@ export const useEnhancedNicoleConversation = () => {
       await sendMessage(initialQuery);
     } else {
       // Enhanced greeting with connection awareness
-      let greetingContent = "Hi! I'm Nicole, your AI gift assistant. I'll help you find the perfect gift.";
+      let greetingContent = "Hey! I'm Nicole and I'm obsessed with finding the perfect gifts!";
       
       if (connections.length > 0) {
-        greetingContent += ` I can see you're connected to ${connections.length} people. Who are you shopping for today?`;
+        greetingContent += ` I can see you've got ${connections.length} people in your network. Who are we shopping for today?`;
       } else {
         greetingContent += " What can I help you find today?";
       }

@@ -245,7 +245,7 @@ async function generateAIRecommendations(context: any, options: any) {
 
 Who they are: ${JSON.stringify(context)}
 Budget: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Whatever works!'}
-Occasion: ${context.occasion || 'Just because they're awesome'}
+Occasion: ${context.occasion || 'Just because they are awesome'}
 Relationship: ${context.relationship || 'Someone special'}
 
 Can you suggest 5-8 specific gift products that would make them smile? I need:

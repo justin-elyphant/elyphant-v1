@@ -179,7 +179,7 @@ const AutoGiftApprovalDashboard: React.FC = () => {
     );
   };
 
-  const ExecutionDetail: React.FC<{ execution: AutoGiftExecution }> = ({ execution }) => {
+  const ExecutionDetail: React.FC<{ execution: UnifiedGiftExecution }> = ({ execution }) => {
     // Mock recipient data - in real app, this would come from the execution/rule data
     const mockRecipient = {
       email: "sarah@example.com",
@@ -249,7 +249,7 @@ const AutoGiftApprovalDashboard: React.FC = () => {
               recipientEmail={mockRecipient.email}
               recipientName={mockRecipient.name}
               giftDetails={mockGiftDetails}
-              deliveryDate={execution.execution_date}
+              deliveryDate={execution.execution_date.toISOString()}
             />
           )}
         </div>

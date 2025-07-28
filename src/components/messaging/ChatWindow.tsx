@@ -3,11 +3,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { type UnifiedMessage, type UserPresence } from "@/services/UnifiedMessagingService";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { SecurityStatus } from "@/components/security/SecurityStatus";
+import { useSecurityRateLimit } from "@/hooks/useSecurityRateLimit";
 
 interface ChatWindowProps {
   connectionId: string;
@@ -33,6 +35,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   loading = false
 }) => {
   const { user } = useAuth();
+  const { checkRateLimit, logSecurityEvent, rateLimitStatus } = useSecurityRateLimit();
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -58,15 +61,41 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     e.preventDefault();
     if (!newMessage.trim() || sending || !user) return;
 
+    // Enhanced security checks
+    if (rateLimitStatus.isLimited) {
+      logSecurityEvent('blocked_message_attempt', { 
+        userId: user.id, 
+        reason: 'rate_limited',
+        attemptedContent: newMessage.substring(0, 50) + '...' 
+      });
+      toast.error("Rate limit exceeded. Please wait before sending more messages.");
+      return;
+    }
+
+    // Check database rate limit before sending
+    const canSend = await checkRateLimit(user.id);
+    if (!canSend) {
+      return; // Rate limit check will show appropriate error
+    }
+
     setSending(true);
     try {
       const sentMessage = await onSendMessage(newMessage.trim());
       
       if (sentMessage) {
         setNewMessage("");
+        logSecurityEvent('message_sent', { 
+          userId: user.id, 
+          messageId: sentMessage.id,
+          contentLength: newMessage.length 
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      logSecurityEvent('message_send_failed', { 
+        userId: user.id, 
+        error: error instanceof Error ? error.message : 'unknown' 
+      });
       toast.error("Failed to send message");
     } finally {
       setSending(false);
@@ -126,6 +155,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Security Status */}
+      {user && (
+        <div className="flex-shrink-0 border-b">
+          <div className="px-3 py-2">
+            <SecurityStatus userId={user.id} />
+          </div>
+        </div>
+      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -188,17 +226,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={rateLimitStatus.isLimited ? "Rate limit exceeded..." : "Type a message..."}
             className="flex-1 rounded-full"
-            disabled={sending}
+            disabled={sending || rateLimitStatus.isLimited}
           />
           <Button 
             type="submit" 
             size="icon"
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim() || sending || rateLimitStatus.isLimited}
             className="rounded-full h-9 w-9"
           >
-            <Send className="h-4 w-4" />
+            {rateLimitStatus.isLimited ? <Shield className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
         </form>
       </div>

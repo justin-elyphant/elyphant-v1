@@ -142,7 +142,8 @@ class UnifiedMessagingService {
   private presenceChannels = new Map<string, any>();
   private typingChannels = new Map<string, any>();
   
-  // Rate limiting
+  
+  // Rate limiting - Enhanced with database integration
   private rateLimitMap = new Map<string, { count: number; resetTime: number }>();
   private readonly RATE_LIMIT_PER_MINUTE = 10;
   private readonly RATE_LIMIT_PER_DAY = 500;
@@ -179,22 +180,23 @@ class UnifiedMessagingService {
         return null;
       }
 
-      // Check rate limiting
-      if (!(await this.checkRateLimit())) {
-        toast.error("Rate limit exceeded. Please wait before sending more messages.");
+      // Check rate limiting - Enhanced with database security checks
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        toast.error("You must be logged in to send messages");
         return null;
       }
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in to send messages");
+      
+      const canSend = await this.checkDatabaseRateLimit(currentUser.id);
+      if (!canSend) {
+        toast.error("Rate limit exceeded. Please wait before sending more messages.");
+        this.logSecurityEvent('rate_limit_exceeded', { userId: currentUser.id, timestamp: new Date().toISOString() });
         return null;
       }
 
       // For direct messages, verify connection
       if (options.recipientId && !options.recipientId.startsWith('mock-')) {
-        const isConnected = await this.verifyConnection(user.id, options.recipientId);
+        const isConnected = await this.verifyConnection(currentUser.id, options.recipientId);
         if (!isConnected) {
           toast.error("You can only message connected users");
           return null;
@@ -218,7 +220,7 @@ class UnifiedMessagingService {
 
       // Build message object
       const messageData: any = {
-        sender_id: user.id,
+        sender_id: currentUser.id,
         content: options.content,
         message_type: options.messageType || 'text',
         delivery_status: 'sent',
@@ -649,8 +651,39 @@ class UnifiedMessagingService {
   }
 
   // =============================================================================
-  // PRIVATE HELPER METHODS
+  // SECURITY & RATE LIMITING METHODS
   // =============================================================================
+
+  // Enhanced database-backed rate limiting
+  private async checkDatabaseRateLimit(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('check_message_rate_limit', { sender_uuid: userId });
+
+      if (error) {
+        console.error('Database rate limit check failed:', error);
+        return true; // Allow message if check fails
+      }
+
+      return data as boolean;
+    } catch (error) {
+      console.error('Rate limit check error:', error);
+      return true; // Allow message if check fails
+    }
+  }
+
+  // Security event logging
+  private logSecurityEvent(eventType: string, details: any): void {
+    console.warn(`🚨 Security Event: ${eventType}`, {
+      timestamp: new Date().toISOString(),
+      eventType,
+      details,
+      userAgent: navigator.userAgent
+    });
+    
+    // In production, you might want to send this to a security monitoring service
+    // For now, we'll just log to console with clear security marking
+  }
 
   private async checkRateLimit(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -671,6 +704,10 @@ class UnifiedMessagingService {
       return true; // Allow message if check fails
     }
   }
+
+  // =============================================================================
+  // PRIVATE HELPER METHODS
+  // =============================================================================
 
   private async verifyConnection(userId: string, recipientId: string): Promise<boolean> {
     try {

@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.nicole-chatgpt-agent]
 verify_jwt = false
+
+[functions.sms-giftee-discovery]
+verify_jwt = false

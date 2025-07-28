@@ -266,12 +266,15 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
           giftCollectionPhase: "recipient"
         });
         
-        // Enhanced auto-gift flow with structured guidance
+        // Enhanced auto-gift flow with SMS discovery integration
         addMessage({ 
           type: 'nicole', 
-          content: `Perfect! I'll help you find the perfect gift using our smart recommendation system. 
+          content: `Perfect! I'll help you set up automated gift discovery using our SMS system. 
 
-To get started, I need to collect some key information:
+Here's how it works:
+1. I'll collect details about the recipient
+2. Send them a personalized SMS to discover their preferences
+3. Use AI to recommend the perfect gift based on their responses
 
 **Step 1: Who is this gift for?**
 Please tell me their name and your relationship to them (e.g., "This is for my wife Sarah" or "For my friend Mike").`,

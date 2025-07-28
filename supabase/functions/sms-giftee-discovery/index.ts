@@ -86,7 +86,7 @@ const processIncomingSMS = async (webhook: IncomingSMSWebhook) => {
     .select('*')
     .eq('phone_number', phoneNumber)
     .eq('is_completed', false)
-    .single();
+    .maybeSingle();
 
   if (!gifteeProfile) {
     // No active discovery session - could be a standalone message
@@ -119,19 +119,19 @@ const processIncomingSMS = async (webhook: IncomingSMSWebhook) => {
       break;
 
     case 'interests':
-      preferencesUpdate.interests = messageContent;
+      preferencesUpdate.interests = webhook.Body; // Store original message, not lowercased
       responseMessage = `Thanks for sharing! What's your typical budget range for ${gifteeProfile.occasion || 'gifts'} - would you prefer something under $25, $25-50, $50-100, or over $100?`;
       nextPhase = 'budget';
       break;
 
     case 'budget':
-      preferencesUpdate.budget_preference = messageContent;
+      preferencesUpdate.budget_preference = webhook.Body;
       responseMessage = `Perfect! Last question - are there any specific brands you love or any types of gifts you'd prefer to avoid?`;
       nextPhase = 'final_preferences';
       break;
 
     case 'final_preferences':
-      preferencesUpdate.brand_preferences = messageContent;
+      preferencesUpdate.brand_preferences = webhook.Body;
       responseMessage = `Thank you so much for your help! This will help ${gifteeProfile.recipient_name || 'them'} find something perfect for you. Have a wonderful day! 🎁`;
       nextPhase = 'completed';
       break;

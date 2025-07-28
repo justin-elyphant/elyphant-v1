@@ -1,27 +1,29 @@
-// Simple encryption utilities for sensitive data
-// Note: In production, you should use a more robust encryption solution
+// DEPRECATED: This file contains insecure base64 encoding
+// Use src/utils/secureEncryption.ts for proper AES encryption
+// This file is kept for backward compatibility only
 
-const ENCRYPTION_KEY = "elyphant-business-card-encryption-key-2024";
+import { encryptData as secureEncryptData, decryptData as secureDecryptData } from './secureEncryption';
 
-export const encryptData = (data: string): string => {
-  try {
-    // In a real implementation, use proper encryption like AES
-    // For now, using base64 encoding as placeholder
-    return btoa(data);
-  } catch (error) {
-    console.error('Encryption failed:', error);
-    throw new Error('Failed to encrypt data');
-  }
+console.warn('SECURITY WARNING: Using deprecated encryption utilities. Migrate to secureEncryption.ts');
+
+export const encryptData = async (data: string): Promise<string> => {
+  // Migrate to secure encryption
+  return secureEncryptData(data);
 };
 
-export const decryptData = (encryptedData: string): string => {
+export const decryptData = async (encryptedData: string): Promise<string> => {
+  // Try new encryption first, fallback to old for backward compatibility
   try {
-    // In a real implementation, use proper decryption
-    // For now, using base64 decoding as placeholder
-    return atob(encryptedData);
+    return await secureDecryptData(encryptedData);
   } catch (error) {
-    console.error('Decryption failed:', error);
-    throw new Error('Failed to decrypt data');
+    // Fallback to old base64 decoding for existing data
+    console.warn('Falling back to insecure base64 decoding. Please re-encrypt this data.');
+    try {
+      return atob(encryptedData);
+    } catch (fallbackError) {
+      console.error('Both decryption methods failed:', error, fallbackError);
+      throw new Error('Failed to decrypt data');
+    }
   }
 };
 

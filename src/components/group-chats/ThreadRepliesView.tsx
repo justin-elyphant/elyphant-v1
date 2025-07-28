@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import { supabase } from "@/integrations/supabase/client";
+import { SecureMessageContent } from "@/utils/secureMessageFormatter";
 
 interface GroupChatMember {
   id: string;
@@ -57,10 +58,7 @@ const ThreadRepliesView = ({ parentMessageId, members, currentUserId }: ThreadRe
     };
   };
 
-  const formatMessageContent = (content: string) => {
-    // Replace mention format with styled mentions
-    return content.replace(/@\[([^\]]+)\]\([^)]+\)/g, '<span class="bg-blue-100 text-blue-800 px-1 rounded text-sm font-medium">@$1</span>');
-  };
+  // formatMessageContent removed - now using SecureMessageContent component
 
   if (loading) {
     return (
@@ -106,10 +104,9 @@ const ThreadRepliesView = ({ parentMessageId, members, currentUserId }: ThreadRe
                     : "bg-muted/60"
                 )}>
                   <CardContent className="p-2">
-                    <div 
-                      className="leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: formatMessageContent(reply.content) }}
-                    />
+                    <div className="leading-relaxed">
+                      <SecureMessageContent content={reply.content} />
+                    </div>
                     <div className="text-xs opacity-70 mt-1">
                       {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
                     </div>

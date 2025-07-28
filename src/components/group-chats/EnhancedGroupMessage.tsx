@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import GiftProposalCard from "./GiftProposalCard";
 import ThreadRepliesView from "./ThreadRepliesView";
+import { SecureMessageContent } from "@/utils/secureMessageFormatter";
 
 interface GroupChatMember {
   id: string;
@@ -53,10 +54,7 @@ const EnhancedGroupMessage = ({
     return member?.profile?.profile_image;
   };
 
-  const formatMessageContent = (content: string) => {
-    // Replace mention format with styled mentions
-    return content.replace(/@\[([^\]]+)\]\([^)]+\)/g, '<span class="bg-blue-100 text-blue-800 px-1 rounded text-sm font-medium">@$1</span>');
-  };
+  // formatMessageContent removed - now using SecureMessageContent component
 
   const replyCount = message.replies?.length || 0;
   const senderName = getSenderName();
@@ -142,11 +140,8 @@ const EnhancedGroupMessage = ({
               </div>
             )}
 
-            {/* Message Content with Mentions */}
-            <div 
-              className="text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: formatMessageContent(message.content) }}
-            />
+            {/* Message Content with Mentions - Secure Rendering */}
+            <SecureMessageContent content={message.content} />
             
             {/* Message Actions */}
             <div className="flex items-center justify-between mt-2 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -119,45 +119,61 @@ CURRENT USER DATA:
 ${context?.userConnections ? `- Connections: ${context.userConnections.length} friends/family members` : '- No connection data available'}
 ${context?.userWishlists ? `- Wishlists: ${context.userWishlists.length} saved lists with items` : '- No wishlist data available'}
 
-AUTO-GIFT FLOW (PRIORITY):
+AUTO-GIFT FLOW (ABSOLUTE PRIORITY - OVERRIDE ALL OTHER FLOWS):
 When user mentions "auto gift", "set up auto", "automated gift", or similar:
-1. CHOICE: Ask "Do you want to pick the gift or have Elyphant pick it for you?"
-2. IF ELYPHANT PICKS: Ask "Great! What is their name and phone number?"
-3. CONNECTION CHECK: 
-   - If connection exists: "I see that [name] likes [preferences]. What's your budget for this gift?"
-   - If no connection: "I see that [name] doesn't have a profile in our system yet. I'll send them a text to get their preferences and come up with curated gift options to email you for your approval."
-4. IF USER PICKS: Provide marketplace handoff with link
 
-CONVERSATION FLOW GUIDELINES:
+STRICT 1-2-3 FLOW:
+1. IMMEDIATE CHOICE: Ask ONLY "Do you want to pick the gift or have Elyphant pick it for you?"
+   - DO NOT ask about recipient, occasion, interests, or budget yet
+   - WAIT for their choice before proceeding
+
+2. IF ELYPHANT PICKS: Ask ONLY "Great! What is their name and phone number?"
+   - DO NOT ask about interests, preferences, or budget yet
+   - Collect name and phone for connection lookup
+
+3. CONNECTION CHECK & RESPONSE:
+   - Check user's connections for the recipient name
+   - If connection exists: "I see that [name] likes [list their actual preferences from connections]. What's your budget for this gift?"
+   - If no connection: "I see that [name] doesn't have a profile in our system yet. I'll send them a text to get their preferences and come up with curated gift options to email you for your approval."
+
+4. IF USER PICKS: "Perfect! I'll take you to our marketplace where you can browse and select the perfect gift. [Include marketplace link]"
+
+CRITICAL AUTO-GIFT RULES:
+- NEVER ask about interests, hobbies, or preferences from the giftor in auto-gift flow
+- NEVER ask "What do they enjoy doing?" in auto-gift flow
+- The giftee provides their own preferences (either from existing connections or via SMS)
+- Keep questions to absolute minimum: choice → name/phone → budget
+- Auto-gift flow bypasses all normal gift advisor questions
+
+CONVERSATION FLOW PHASES:
 
 1. GREETING (phase: greeting)
    - Welcome warmly and ask what they're looking for
-   - If they mention a specific person, automatically extract relationship info
-   - If auto-gift mentioned, immediately go to AUTO-GIFT FLOW
+   - If auto-gift mentioned, immediately go to AUTO_GIFT_CHOICE phase
    - NO CTA BUTTON during greeting
 
 2. AUTO_GIFT_CHOICE (phase: auto_gift_choice)
-   - Ask: "Do you want to pick the gift or have Elyphant pick it for you?"
+   - Ask ONLY: "Do you want to pick the gift or have Elyphant pick it for you?"
    - Wait for their choice before proceeding
+   - NO other questions
 
 3. AUTO_GIFT_ELYPHANT_PICK (phase: auto_gift_elyphant_pick)
-   - Ask: "Great! What is their name and phone number?"
+   - Ask ONLY: "Great! What is their name and phone number?"
    - Collect recipient details for connection lookup
+   - NO other questions
 
 4. AUTO_GIFT_CONNECTION_CHECK (phase: auto_gift_connection_check)
    - Check if recipient exists in user's connections
-   - If found: "I see that [name] likes [preferences]. What's your budget for this gift?"
-   - If not found: "I see that [name] doesn't have a profile in our system yet. I'll send them a text to get their preferences and come up with curated gift options to email you for your approval."
+   - Use actual connection data if available
+   - Provide appropriate response based on connection status
 
 5. AUTO_GIFT_USER_PICK (phase: auto_gift_user_pick)
-   - Provide marketplace handoff: "Perfect! I'll take you to our marketplace where you can browse and select the perfect gift. [Marketplace Link]"
+   - Provide marketplace handoff with direct link
+   - End auto-gift flow
 
-6. GATHERING_INFO (phase: gathering_info) 
-   - SMART RELATIONSHIP DETECTION: If user says "my son", "my daughter", "my mom", "my dad", "my friend", "my wife", "my husband", etc., automatically set both recipient AND relationship
-   - NEVER ask "How are they related to you?" if the relationship is already clear from their words
-   - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
-   - If recipient/relationship is clear, move directly to occasion
-   - NO CTA BUTTON during information gathering
+6. REGULAR GIFT FLOW (phase: gathering_info) - ONLY if NOT auto-gift
+   - Normal gift advisor questions for manual gift finding
+   - Ask about recipient, interests, budget, etc.
 
 7. CLARIFYING_NEEDS (phase: clarifying_needs)
    - Ask about recipient's interests: "What does [recipient] enjoy doing?"
@@ -228,17 +244,28 @@ RESPONSE RULES:
 - Use specific terms that work well with Enhanced Zinc API
 - Focus on conversation flow, trigger CTA button when ready
 
-The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.`;
+The Enhanced Zinc API works best with specific brand names, product categories, and descriptive terms.
 
-    // Enhanced: Add connection and wishlist context to system prompt
-    if (context?.userConnections && context.userConnections.length > 0) {
-      systemPrompt += `\n\nUSER'S CONNECTIONS:
-${context.userConnections.map((conn: any, i: number) => 
-  `${i + 1}. ${conn.profiles?.name || 'Unknown'} (${conn.relationship_type})`
-).join('\n')}
+CURRENT CONTEXT FOR AUTO-GIFT FLOW:
+- Auto-Gift Flow Active: ${context?.isAutoGiftFlow ? 'YES' : 'NO'}
+- Conversation Phase: ${context?.conversationPhase || 'greeting'}
+- Recipient Name: ${context?.recipientName || 'Not provided'}
+- Recipient Phone: ${context?.recipientPhone || 'Not provided'}
+- Connection Found: ${context?.connectionFound ? 'YES' : 'NO'}
+- Connection Preferences: ${context?.connectionPreferences ? JSON.stringify(context.connectionPreferences) : 'None'}
 
-When appropriate, you can suggest gifts for these specific people or ask if they're shopping for any of them.`;
-    }
+CONNECTION DATA AVAILABLE:
+${context?.userConnections ? context.userConnections.map((conn: any, i: number) => 
+  `${i + 1}. ${conn.profiles?.name || 'Unknown'} (${conn.relationship_type}) - Interests: ${conn.profiles?.interests?.join(', ') || 'None'}`
+).join('\n') : 'No connections available'}
+
+RESPONSE RULES FOR AUTO-GIFT:
+- If auto-gift flow is active, STRICTLY follow the 1-2-3 process
+- NEVER ask giftor about recipient's interests/hobbies in auto-gift mode
+- Use connection data when available for preference information
+- If connection found, mention their actual preferences from the connection data
+- If no connection, explain SMS engagement process
+- For "pick yourself" choice, provide marketplace link immediately`;
 
     if (context?.userWishlists && context.userWishlists.length > 0) {
       systemPrompt += `\n\nUSER'S WISHLIST INSIGHTS:
@@ -299,19 +326,62 @@ You can reference their taste preferences based on their saved items when making
     // Parse budget from the current message
     const updatedBudget = parseBudgetFromMessage(message, context);
 
-    // Detect auto-gift intent
+    // Detect auto-gift intent and enforce strict flow
     const messageLower = message.toLowerCase();
     const isAutoGiftIntent = messageLower.includes('auto gift') || 
                            messageLower.includes('auto-gift') || 
                            messageLower.includes('set up auto') || 
                            messageLower.includes('automated gift') || 
-                           messageLower.includes('automatic gift');
+                           messageLower.includes('automatic gift') ||
+                           messageLower.includes('auto gifting');
 
-    // Enhanced context parsing with budget and auto-gift detection
+    // Parse recipient name and phone from user message
+    let recipientName = null;
+    let recipientPhone = null;
+    
+    if (context?.conversationPhase === 'auto_gift_elyphant_pick') {
+      // Extract name and phone from message
+      const nameMatch = message.match(/name\s+is\s+(\w+)|(\w+)\s+is\s+the\s+name|my\s+friend\s+(\w+)|(\w+)\s+(\d{10,})/i);
+      const phoneMatch = message.match(/(\d{10,})|\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+      
+      if (nameMatch) {
+        recipientName = nameMatch[1] || nameMatch[2] || nameMatch[3] || nameMatch[4];
+      }
+      if (phoneMatch) {
+        recipientPhone = phoneMatch[0];
+      }
+    }
+
+    // Check connections for the recipient
+    let connectionFound = false;
+    let connectionPreferences = null;
+    
+    if (recipientName && context?.userConnections) {
+      const connection = context.userConnections.find((conn: any) => 
+        conn.profiles?.name?.toLowerCase().includes(recipientName.toLowerCase()) ||
+        conn.profiles?.first_name?.toLowerCase() === recipientName.toLowerCase()
+      );
+      
+      if (connection) {
+        connectionFound = true;
+        connectionPreferences = {
+          name: connection.profiles?.name || recipientName,
+          interests: connection.profiles?.interests || [],
+          preferences: connection.profiles?.gift_preferences || [],
+          brands: connection.profiles?.favorite_brands || []
+        };
+      }
+    }
+
+    // Enhanced context parsing with auto-gift enforcement and connection data
     const enhancedContext = {
       ...context,
       budget: updatedBudget || context?.budget,
       isAutoGiftFlow: isAutoGiftIntent || context?.isAutoGiftFlow,
+      recipientName,
+      recipientPhone,
+      connectionFound,
+      connectionPreferences,
       conversationPhase: isAutoGiftIntent && !context?.conversationPhase ? 'auto_gift_choice' : context?.conversationPhase
     };
 

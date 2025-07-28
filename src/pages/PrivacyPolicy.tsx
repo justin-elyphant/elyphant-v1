@@ -151,8 +151,8 @@ const PrivacyPolicy = () => {
               If you have questions about this Privacy Policy or want to exercise your rights:
             </p>
             <ul className="list-disc pl-6 mb-4">
-              <li>Email: privacy@yourdomain.com</li>
-              <li>Address: [Your Business Address]</li>
+              <li>Email: privacy@elyphant.com</li>
+              <li>Address: 422 Cribbage Ln. San Marcos, CA 92078</li>
               <li>Through our support system in the app</li>
             </ul>
           </section>

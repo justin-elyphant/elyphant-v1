@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { generateEnhancedSearchQuery } from "@/services/ai/enhancedSearchQueryGenerator";
+import { useSearchParams } from "react-router-dom";
+import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -32,6 +34,7 @@ const UnifiedNicoleConversation: React.FC<UnifiedNicoleConversationProps> = ({
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use the unified Nicole AI hook - respecting protection measures
@@ -68,14 +71,21 @@ const UnifiedNicoleConversation: React.FC<UnifiedNicoleConversationProps> = ({
   // Start conversation with greeting when opened
   useEffect(() => {
     if (isOpen && conversation.length === 0 && !initialQuery) {
+      // Get greeting context from URL and user data
+      const greetingContext = {
+        ...getGreetingFromUrl(searchParams),
+        userProfile: user,
+        activeMode: 'floating'
+      };
+      
       const greetingMessage: ConversationMessage = {
         type: "nicole",
-        content: "Hey there! I'm Nicole and I'm totally obsessed with finding perfect gifts! What's the occasion? Who are we shopping for?",
+        content: getNicoleGreeting(greetingContext),
         timestamp: new Date()
       };
       setConversation([greetingMessage]);
     }
-  }, [isOpen, conversation.length, initialQuery]);
+  }, [isOpen, conversation.length, initialQuery, searchParams, user]);
 
   const addMessage = useCallback((message: ConversationMessage) => {
     setConversation(prev => [...prev, message]);

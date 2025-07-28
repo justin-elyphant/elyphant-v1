@@ -7,6 +7,8 @@ import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { NicoleMessage, NicoleContext } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useSearchParams } from "react-router-dom";
+import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -69,23 +71,36 @@ const NicoleMarketplaceWidget: React.FC<NicoleMarketplaceWidgetProps> = ({
     setConversation(prev => [...prev, message]);
   }, []);
 
+  const [searchParams] = useSearchParams();
+
   const startConversation = useCallback(() => {
-    let greetingContent = "Hey! I'm Nicole and I'm obsessed with finding amazing stuff! I can help you find specific products or make your search even better. What are you hunting for?";
+    // Get greeting context from URL and user data
+    const greetingContext = {
+      ...getGreetingFromUrl(searchParams),
+      userProfile: user,
+      activeMode: 'search'
+    };
     
-    // Customize greeting based on context
+    let greetingContent = getNicoleGreeting(greetingContext);
+    
+    // Customize greeting based on marketplace context
     if (searchQuery && totalResults) {
-      greetingContent = `Hi! I see you're searching for "${searchQuery}" and found ${totalResults} results. I can help you refine your search or find something more specific. What would you like to explore?`;
+      const userName = (user as any)?.first_name;
+      const namePrefix = userName ? `Hi ${userName}! ` : "Hi! ";
+      greetingContent = `${namePrefix}I see you're searching for "${searchQuery}" and found ${totalResults} results. I can help you refine your search or find something more specific. What would you like to explore?`;
     } else if (isFromNicole) {
-      greetingContent = "Hi again! I'm here to help you explore the marketplace. Based on our previous conversation, I can help you find the perfect products. What would you like to look for?";
+      const userName = (user as any)?.first_name;
+      const namePrefix = userName ? `Hi ${userName}! ` : "Hi again! ";
+      greetingContent = `${namePrefix}I'm here to help you explore the marketplace. Based on our previous conversation, I can help you find the perfect products. What would you like to look for?`;
     }
-    
+
     const greetingMessage: ConversationMessage = {
       type: "nicole",
       content: greetingContent,
       timestamp: new Date()
     };
     addMessage(greetingMessage);
-  }, [addMessage, searchQuery, totalResults, isFromNicole]);
+  }, [searchParams, user, addMessage, searchQuery, totalResults, isFromNicole]);
 
   const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || currentMessage.trim();

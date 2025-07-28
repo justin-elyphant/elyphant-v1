@@ -9,12 +9,13 @@ import { NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/n
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import SearchButton from "./SearchButton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { generateEnhancedSearchQuery } from "@/services/ai/enhancedSearchQueryGenerator";
 import QuickResponseButtons from "@/components/ai/conversation/QuickResponseButtons";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import EnhancedGiftRecommendations from "@/components/ai/recommendations/EnhancedGiftRecommendations";
+import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -51,6 +52,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -147,31 +149,31 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   }, []);
 
   const startConversation = useCallback(() => {
-    // Handle post-auth welcome flow
-    if (initialContext === 'post-auth-welcome' && userProfile?.first_name) {
-      const welcomeMessage: ConversationMessage = {
-        type: "nicole",
-        content: `Hey ${userProfile.first_name}! Welcome to Elyphant! 🎉 I'm Nicole and I'm totally obsessed with finding the perfect gifts. I can help you find something amazing in like 60 seconds. What's up?`,
-        timestamp: new Date()
-      };
-      addMessage(welcomeMessage);
-      
-      // Set quick response options for post-auth welcome
+    // Get greeting context from URL and user data
+    const greetingContext = {
+      ...getGreetingFromUrl(searchParams),
+      userProfile,
+      greeting: initialContext === 'post-auth-welcome' ? 'post-auth-welcome' : getGreetingFromUrl(searchParams).greeting
+    };
+    
+    const greetingContent = getNicoleGreeting(greetingContext);
+    
+    const welcomeMessage: ConversationMessage = {
+      type: "nicole",
+      content: greetingContent,
+      timestamp: new Date()
+    };
+    addMessage(welcomeMessage);
+    
+    // Set quick response options for post-auth welcome
+    if (initialContext === 'post-auth-welcome') {
       setQuickResponseOptions([
         "Pick something amazing for me!",
         "I'll browse and shop myself", 
         "Help me make a wishlist"
       ]);
-    } else {
-      // Standard greeting
-      const greetingMessage: ConversationMessage = {
-        type: "nicole",
-        content: "Hey there! I'm Nicole and I'm obsessed with finding perfect gifts! 🎁 What's the occasion? Who are we shopping for?",
-        timestamp: new Date()
-      };
-      addMessage(greetingMessage);
     }
-  }, [addMessage, initialContext, userProfile?.first_name]);
+  }, [addMessage, initialContext, userProfile, searchParams]);
 
   const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || currentMessage.trim();

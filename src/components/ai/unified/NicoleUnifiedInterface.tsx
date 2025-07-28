@@ -5,6 +5,9 @@ import { X, MessageCircle, Search, Gift } from 'lucide-react';
 import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
 import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSearchParams } from 'react-router-dom';
+import { useAuthSession } from '@/contexts/auth/useAuthSession';
+import { getNicoleGreeting, getGreetingFromUrl } from '@/utils/nicoleGreetings';
 import { cn } from '@/lib/utils';
 
 interface NicoleUnifiedInterfaceProps {
@@ -17,8 +20,17 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   className
 }) => {
   const { state, actions } = useNicoleState();
+  const { user } = useAuthSession();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Get greeting context from URL and user data
+  const greetingContext = {
+    ...getGreetingFromUrl(searchParams),
+    userProfile: user,
+    activeMode: state.activeMode
+  };
   
   const {
     chatWithNicole,
@@ -152,10 +164,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
                 {getCapabilityIcon()}
               </div>
               <p className="text-sm">
-                {state.activeMode === 'search' 
-                  ? "Hey there! I'm Nicole and I'm obsessed with finding the perfect stuff! What are you hunting for?"
-                  : "Hey! I'm Nicole and I'm totally obsessed with gifts! Who are we shopping for today?"
-                }
+                {getNicoleGreeting(greetingContext)}
               </p>
             </div>
           )}

@@ -1,9 +1,11 @@
 
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
+import { useSearchParams } from "react-router-dom";
 import { EnhancedNicoleService, EnhancedNicoleContext, WishlistRecommendation } from "@/services/ai/enhancedNicoleService";
 // ⚠️ DEPRECATED: Use useUnifiedNicoleAI instead
 import { chatWithNicole, generateSearchQuery, NicoleMessage, ConversationPhase } from "@/services/ai/nicoleAiService";
+import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
 
 export interface EnhancedConversationMessage {
   type: "nicole" | "user" | "wishlist_display" | "product_suggestions";
@@ -20,6 +22,7 @@ export type EnhancedConversationStep = "greeting" | "discovery" | "wishlist_revi
 
 export const useEnhancedNicoleConversation = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [conversation, setConversation] = useState<EnhancedConversationMessage[]>([]);
   const [currentStep, setCurrentStep] = useState<EnhancedConversationStep>("greeting");
   const [context, setContext] = useState<EnhancedNicoleContext>({});
@@ -181,13 +184,17 @@ export const useEnhancedNicoleConversation = () => {
     if (initialQuery) {
       await sendMessage(initialQuery);
     } else {
-      // Enhanced greeting with connection awareness
-      let greetingContent = "Hey! I'm Nicole and I'm obsessed with finding the perfect gifts!";
+      // Get greeting context from URL and user data
+      const greetingContext = {
+        ...getGreetingFromUrl(searchParams),
+        userProfile: user
+      };
       
+      let greetingContent = getNicoleGreeting(greetingContext);
+      
+      // Enhance with connection awareness
       if (connections.length > 0) {
-        greetingContent += ` I can see you've got ${connections.length} people in your network. Who are we shopping for today?`;
-      } else {
-        greetingContent += " What can I help you find today?";
+        greetingContent += ` I can see you've got ${connections.length} people in your network.`;
       }
 
       const greetingMessage: EnhancedConversationMessage = {

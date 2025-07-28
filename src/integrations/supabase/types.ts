@@ -2272,6 +2272,95 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_messages: {
+        Row: {
+          created_at: string | null
+          delivery_status: string | null
+          direction: string
+          id: string
+          message_content: string
+          phone_number: string
+          temporary_giftee_id: string | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_status?: string | null
+          direction: string
+          id?: string
+          message_content: string
+          phone_number: string
+          temporary_giftee_id?: string | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_status?: string | null
+          direction?: string
+          id?: string
+          message_content?: string
+          phone_number?: string
+          temporary_giftee_id?: string | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_temporary_giftee_id_fkey"
+            columns: ["temporary_giftee_id"]
+            isOneToOne: false
+            referencedRelation: "temporary_giftee_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temporary_giftee_profiles: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          gift_date: string | null
+          giftor_user_id: string
+          id: string
+          is_completed: boolean | null
+          occasion: string | null
+          phone_number: string
+          preferences_collected: Json | null
+          recipient_name: string | null
+          relationship: string | null
+          sms_conversation_state: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          gift_date?: string | null
+          giftor_user_id: string
+          id?: string
+          is_completed?: boolean | null
+          occasion?: string | null
+          phone_number: string
+          preferences_collected?: Json | null
+          recipient_name?: string | null
+          relationship?: string | null
+          sms_conversation_state?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          gift_date?: string | null
+          giftor_user_id?: string
+          id?: string
+          is_completed?: boolean | null
+          occasion?: string | null
+          phone_number?: string
+          preferences_collected?: Json | null
+          recipient_name?: string | null
+          relationship?: string | null
+          sms_conversation_state?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       typing_indicators: {
         Row: {
           chat_with_user_id: string

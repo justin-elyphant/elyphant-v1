@@ -116,10 +116,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       {
         // Mobile styling
         "inset-x-4 bottom-4 top-20": isMobile,
-        // Desktop styling - floating mode
-        "bottom-4 right-4 w-96 h-[500px]": !isMobile && state.activeMode === 'floating',
-        // Desktop styling - search mode
-        "top-16 left-1/2 -translate-x-1/2 w-[600px] h-[500px]": !isMobile && state.activeMode === 'search',
+        // Desktop styling - floating mode (compact)
+        "bottom-4 right-4 w-80 h-[400px]": !isMobile && state.activeMode === 'floating',
+        // Desktop styling - search mode (compact)
+        "top-16 left-1/2 -translate-x-1/2 w-[450px] h-[400px]": !isMobile && state.activeMode === 'search',
       },
       state.isTransitioning && "opacity-50 scale-95",
       className

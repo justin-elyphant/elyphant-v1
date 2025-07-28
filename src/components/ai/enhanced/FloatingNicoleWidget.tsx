@@ -1,77 +1,55 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, X } from "lucide-react";
-import EnhancedNicoleConversationEngine from "./EnhancedNicoleConversationEngine";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
+import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
+import { NicoleUnifiedInterface } from '@/components/ai/unified/NicoleUnifiedInterface';
 
 interface FloatingNicoleWidgetProps {
-  onNavigateToResults: (searchQuery: string) => void;
-  position?: string;
-  defaultMinimized?: boolean;
+  onNavigateToResults?: (query: string) => void;
+  position?: 'bottom-right' | 'bottom-left';
+  initialMinimized?: boolean;
 }
 
 const FloatingNicoleWidget: React.FC<FloatingNicoleWidgetProps> = ({
   onNavigateToResults,
-  position = "bottom-right",
-  defaultMinimized = true
+  position = 'bottom-right',
+  initialMinimized = true
 }) => {
-  const [isOpen, setIsOpen] = useState(!defaultMinimized);
-  const isMobile = useIsMobile();
+  const { state, actions } = useNicoleState();
   
-  // Initialize unified Nicole AI for this widget
-  const nicoleAI = useUnifiedNicoleAI({
-    sessionId: 'floating-widget',
-    initialContext: {
-      capability: 'conversation'
+  const handleOpen = () => {
+    if (actions.canActivateMode('floating')) {
+      actions.activateMode('floating');
     }
-  });
-
-  const handleClose = () => {
-    setIsOpen(false);
   };
 
-  if (!isOpen) {
+  // Show floating button when Nicole is closed or in search mode
+  if (state.activeMode === 'closed' || state.activeMode === 'search') {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200"
-          size="icon"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      </div>
+      <Button
+        onClick={handleOpen}
+        disabled={!actions.canActivateMode('floating')}
+        className={`fixed z-40 ${
+          position === 'bottom-right' ? 'bottom-6 right-6' : 'bottom-6 left-6'
+        } rounded-full h-14 w-14 shadow-lg bg-primary hover:bg-primary/90 transition-all duration-200`}
+        size="lg"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
     );
   }
 
-  return (
-    <div className={`fixed z-50 ${
-      isMobile 
-        ? "inset-0 bg-black/50 flex items-end" 
-        : "bottom-6 right-6 w-96 h-[500px]"
-    }`}>
-      {isMobile && (
-        <div 
-          className="absolute inset-0" 
-          onClick={handleClose}
-          aria-label="Close chat overlay"
-        />
-      )}
-      
-      <div className={`${
-        isMobile 
-          ? "w-full max-h-[80vh] bg-white rounded-t-xl" 
-          : "w-full h-full"
-      } relative`}>
-        <EnhancedNicoleConversationEngine
-          isOpen={true}
-          onClose={handleClose}
-        />
-      </div>
-    </div>
-  );
+  // Show unified interface when in floating mode
+  if (state.activeMode === 'floating') {
+    return (
+      <NicoleUnifiedInterface 
+        onNavigateToResults={onNavigateToResults}
+      />
+    );
+  }
+
+  return null;
 };
 
 export default FloatingNicoleWidget;

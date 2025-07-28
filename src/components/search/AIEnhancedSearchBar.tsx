@@ -5,6 +5,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchState } from "./hooks/useSearchState";
 import { useSearchLogic } from "./hooks/useSearchLogic";
 import { useSearchHandlers } from "./hooks/useSearchHandlers";
+import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
+import { NicoleUnifiedInterface } from '@/components/ai/unified/NicoleUnifiedInterface';
 import SearchInput from "./components/SearchInput";
 import SearchResults from "./components/SearchResults";
 import UnifiedNicoleConversation from "./components/UnifiedNicoleConversation";
@@ -37,8 +39,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setSuggestions,
     unifiedResults,
     setUnifiedResults,
-    showNicoleDropdown,
-    setShowNicoleDropdown,
     showMobileModal,
     setShowMobileModal,
     isListening,
@@ -55,6 +55,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     suggestionRef,
     nicoleDropdownRef
   } = useSearchState();
+
+  const { state, actions } = useNicoleState();
+  
+  // Use unified Nicole interface when in search mode
+  const showNicoleDropdown = state.activeMode === 'search';
 
   // Enhanced search logic with friends, products, and brands
   useSearchLogic({
@@ -83,7 +88,13 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     isNicoleMode,
     setQuery,
     setShowSuggestions,
-    setShowNicoleDropdown,
+    setShowNicoleDropdown: (show: boolean) => {
+      if (show && actions.canActivateMode('search')) {
+        actions.activateMode('search');
+      } else if (!show) {
+        actions.closeAllModes();
+      }
+    },
     setShowMobileModal,
     setIsListening,
     inputRef
@@ -96,7 +107,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       if (isMobile) {
         setShowMobileModal(true);
       } else {
-        setShowNicoleDropdown(true);
+        if (actions.canActivateMode('search')) {
+          actions.activateMode('search');
+        }
       }
     }
   };
@@ -113,7 +126,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const handleClear = () => {
     // Clear all search-related state
     setShowSuggestions(false);
-    setShowNicoleDropdown(false);
+    actions.closeAllModes();
     setShowMobileModal(false);
     setHasUserInteracted(false);
     
@@ -153,7 +166,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   // Clear suggestions when navigating away
   useEffect(() => {
     setShowSuggestions(false);
-    setShowNicoleDropdown(false);
+    actions.closeAllModes();
     setShowMobileModal(false);
   }, [location.pathname]);
 
@@ -175,7 +188,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       if (isMobile) {
         setShowMobileModal(true);
       } else {
-        setShowNicoleDropdown(true);
+        if (actions.canActivateMode('search')) {
+          actions.activateMode('search');
+        }
       }
       
       // Focus the input
@@ -216,7 +231,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         if (isMobile) {
           setShowMobileModal(true);
         } else {
-          setShowNicoleDropdown(true);
+          if (actions.canActivateMode('search')) {
+            actions.activateMode('search');
+          }
         }
         
         // Focus the input
@@ -243,7 +260,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       }
       if (nicoleDropdownRef.current && !nicoleDropdownRef.current.contains(event.target as Node) &&
           inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        setShowNicoleDropdown(false);
+        actions.closeAllModes();
       }
     };
 
@@ -304,20 +321,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         isNicoleMode={isNicoleMode}
       />
 
-      {/* Nicole Conversation - Desktop Dropdown */}
-      {showNicoleDropdown && !isMobile && (
-        <div 
-          ref={nicoleDropdownRef}
-          className="absolute top-full left-0 right-0 z-50 mt-2"
-        >
-          <UnifiedNicoleConversation
-            isOpen={showNicoleDropdown}
-            onClose={handleCloseNicole}
-            onNavigateToResults={handleNicoleNavigateToResults}
-            initialQuery={query}
-            mobile={false}
-          />
-        </div>
+      {/* Unified Nicole Interface */}
+      {showNicoleDropdown && (
+        <NicoleUnifiedInterface
+          onNavigateToResults={handleNicoleNavigateToResults}
+        />
       )}
 
       {/* Nicole Conversation - Mobile Modal */}

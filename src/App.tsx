@@ -9,6 +9,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
 import { EventsProvider } from "./components/gifting/events/context/EventsContext";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
+import { NicoleStateProvider } from "./contexts/nicole/NicoleStateContext";
 import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 
@@ -85,7 +86,8 @@ function App() {
               <ProductProvider>
                 <NotificationsProvider>
                   <EventsProvider>
-                    <Router>
+                    <NicoleStateProvider>
+                      <Router>
                       <div className="min-h-screen bg-background text-foreground">
                         <Suspense fallback={
                           <div className="min-h-screen flex items-center justify-center">
@@ -122,7 +124,8 @@ function App() {
                           </Routes>
                         </Suspense>
                       </div>
-                    </Router>
+                      </Router>
+                    </NicoleStateProvider>
                   </EventsProvider>
                 </NotificationsProvider>
               </ProductProvider>

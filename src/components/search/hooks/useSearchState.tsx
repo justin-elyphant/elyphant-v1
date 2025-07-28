@@ -12,7 +12,7 @@ export const useSearchState = () => {
     products: ZincProduct[];
     brands: string[];
   }>({ friends: [], products: [], brands: [] });
-  const [showNicoleDropdown, setShowNicoleDropdown] = useState(false);
+  // Note: showNicoleDropdown is now managed by NicoleStateContext
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -33,8 +33,7 @@ export const useSearchState = () => {
     setSuggestions,
     unifiedResults,
     setUnifiedResults,
-    showNicoleDropdown,
-    setShowNicoleDropdown,
+    // showNicoleDropdown managed by NicoleStateContext
     showMobileModal,
     setShowMobileModal,
     isListening,

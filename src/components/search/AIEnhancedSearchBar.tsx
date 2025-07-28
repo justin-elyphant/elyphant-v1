@@ -179,10 +179,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       // Activate Nicole mode
       setIsNicoleMode(true);
       
-      // Set initial query/greeting if provided
-      if (greeting) {
-        setQuery(greeting);
-      }
+      // DON'T set greeting as search query - let Nicole handle its own context
+      // This prevents search interference with Nicole greetings
       
       // Open Nicole interface
       if (isMobile) {
@@ -221,12 +219,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       // Activate Nicole mode
       setIsNicoleMode(true);
       
-      // Set greeting if provided
-      if (greetingParam) {
-        setQuery(decodeURIComponent(greetingParam));
-      }
+      // DON'T set greeting as search query - Nicole handles its own greeting context
+      // This prevents the search bar from showing "No results found" for Nicole greetings
       
-      // Open Nicole interface
+      // Open Nicole interface directly without setting search query
       setTimeout(() => {
         if (isMobile) {
           setShowMobileModal(true);
@@ -242,11 +238,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         }
       }, 100);
       
-      // Clean up URL
+      // Clean up URL immediately to prevent search interference
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('nicole');
       newUrl.searchParams.delete('mode');
       newUrl.searchParams.delete('greeting');
+      newUrl.searchParams.delete('first_name'); // Also clean up first_name param
       window.history.replaceState({}, '', newUrl.pathname + (newUrl.search ? newUrl.search : ''));
     }
   }, [isMobile]);
@@ -279,6 +276,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const shouldShowNoResults = query.length > 1 && 
     !searchLoading && 
     hasUserInteracted &&
+    !isNicoleMode && // Don't show "No results" when Nicole is active
     !shouldShowUnifiedSuggestions && 
     !shouldShowNicoleSuggestions && 
     unifiedResults.friends.length === 0 && 

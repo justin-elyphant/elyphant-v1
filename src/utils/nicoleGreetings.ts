@@ -21,8 +21,11 @@ export const getNicoleGreeting = (context: GreetingContext): string => {
   const userName = firstName || 
                    userProfile?.first_name || 
                    userProfile?.user_metadata?.first_name ||
+                   userProfile?.user_metadata?.full_name?.split(' ')[0] ||
                    (userProfile as any)?.raw_user_meta_data?.first_name ||
-                   userProfile?.display_name;
+                   (userProfile as any)?.raw_user_meta_data?.full_name?.split(' ')[0] ||
+                   userProfile?.display_name?.split(' ')[0] ||
+                   userProfile?.email?.split('@')[0];
   const namePrefix = userName ? `Hey ${userName}! ` : "Hey! ";
   
   // Handle specific greeting contexts from URL parameters

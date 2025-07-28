@@ -58,8 +58,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const { state, actions } = useNicoleState();
   
-  // Use unified Nicole interface when in search mode
-  const showNicoleDropdown = state.activeMode === 'search';
+  // Safely compute Nicole dropdown state after hooks are initialized
+  const showNicoleDropdown = state?.activeMode === 'search';
 
   // Enhanced search logic with friends, products, and brands
   useSearchLogic({

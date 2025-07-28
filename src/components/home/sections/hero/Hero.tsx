@@ -23,7 +23,6 @@ const Hero = () => {
   const nextHoliday = getNextHoliday();
   const { friendOccasions } = useConnectedFriendsSpecialDates();
   const { targetEvent } = useTargetEvent(user, nextHoliday, [], friendOccasions);
-  const [showIntentModal, setShowIntentModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
@@ -60,22 +59,7 @@ const Hero = () => {
     }
   };
 
-  // Handle intent selection from modal
-  const handleIntentSelect = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
-    setShowIntentModal(false);
-    
-    switch (userIntent) {
-      case "quick-gift":
-        setShowGiftWizard(true);
-        break;
-      case "browse-shop":
-        navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
-        break;
-      case "create-wishlist":
-        setShowCreateWishlist(true);
-        break;
-    }
-  };
+  // Legacy intent handlers removed - Nicole handles all intent selection now
 
   // Handle wishlist creation
   const handleCreateWishlistSubmit = async (values: any) => {

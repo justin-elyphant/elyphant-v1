@@ -13,37 +13,21 @@ import { toast } from "sonner";
 const HomeCTA = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [showIntentModal, setShowIntentModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   
   const handleStartGifting = () => {
     if (user) {
-      // Authenticated user: show intent modal to choose their path
-      setShowIntentModal(true);
+      // Authenticated user: navigate to marketplace with Nicole
+      navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
     } else {
       // Not logged in: show enhanced auth modal
       setShowAuthModal(true);
     }
   };
 
-  // Handle intent selection from modal
-  const handleIntentSelect = (userIntent: "quick-gift" | "browse-shop" | "create-wishlist") => {
-    setShowIntentModal(false);
-    
-    switch (userIntent) {
-      case "quick-gift":
-        setShowGiftWizard(true);
-        break;
-      case "browse-shop":
-        navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
-        break;
-      case "create-wishlist":
-        setShowCreateWishlist(true);
-        break;
-    }
-  };
+  // Legacy intent handlers removed - using Nicole unified interface
 
   // Handle wishlist creation
   const handleCreateWishlistSubmit = async (values: any) => {

@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+// Legacy modal removed - using Nicole unified interface
 import { Loader2 } from "lucide-react";
 import { createBirthdayImportantDate } from "@/utils/profileDataMapper";
 
@@ -15,7 +15,6 @@ const ProfileSetupWithIntent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [showIntentModal, setShowIntentModal] = useState(false);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
 
   const intentFromUrl = searchParams.get('intent');
@@ -56,10 +55,10 @@ const ProfileSetupWithIntent = () => {
       LocalStorageService.setNicoleContext({ selectedIntent: intentFromUrl });
     }
 
-    // If profile is complete and we have an intent, show the modal
+    // Legacy modal removed - Nicole handles intent selection now
     if (profile && hasIntent && !hasCompletedProfile) {
-      console.log("Showing intent modal for completed profile");
-      setShowIntentModal(true);
+      console.log("Profile complete with intent - navigating to dashboard with Nicole");
+      navigate('/dashboard?nicole=true&intent=' + (intentFromUrl || storedIntent));
     }
   }, [user, profile, intentFromUrl, navigate, hasCompletedProfile]);
 
@@ -120,11 +119,11 @@ const ProfileSetupWithIntent = () => {
       await updateProfile(profileData);
       setHasCompletedProfile(true);
 
-      // Check if we have an intent to show modal
+      // Check if we have an intent to navigate directly
       const storedIntent = LocalStorageService.getNicoleContext()?.selectedIntent;
       if (storedIntent || intentFromUrl) {
-        console.log("Profile completed, showing intent modal");
-        setShowIntentModal(true);
+        console.log("Profile completed, navigating to dashboard with Nicole");
+        navigate('/dashboard?nicole=true&intent=' + (storedIntent || intentFromUrl));
       } else {
         // No intent, go directly to dashboard
         toast.success("Profile setup completed!");
@@ -138,24 +137,7 @@ const ProfileSetupWithIntent = () => {
     }
   };
 
-  const handleIntentSelect = async (intent: string) => {
-    console.log(`Intent selected: ${intent}`);
-    LocalStorageService.setNicoleContext({ selectedIntent: intent });
-    setShowIntentModal(false);
-    
-    if (intent === 'auto-gifting') {
-      navigate('/dashboard?openGiftWizard=true');
-    } else {
-      navigate('/dashboard');
-    }
-  };
-
-  const handleIntentSkip = () => {
-    console.log("Intent skipped");
-    LocalStorageService.clearNicoleContext();
-    setShowIntentModal(false);
-    navigate('/dashboard');
-  };
+  // Legacy intent handlers removed - Nicole handles all intent selection now
 
   if (loading) {
     return (
@@ -173,11 +155,7 @@ const ProfileSetupWithIntent = () => {
         />
       )}
       
-      <OnboardingIntentModal
-        open={showIntentModal}
-        onSelect={handleIntentSelect}
-        onSkip={handleIntentSkip}
-      />
+      {/* Legacy modal removed - Nicole handles all intent selection now */}
     </div>
   );
 };

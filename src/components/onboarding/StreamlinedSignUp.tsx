@@ -5,7 +5,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { unifiedProfileService } from "@/services/profiles/UnifiedProfileService";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { toast } from "sonner";
-import OnboardingIntentModal from "@/components/auth/signup/OnboardingIntentModal";
+// Legacy modal removed - using Nicole unified interface
 import { parseBirthdayFromFormData } from "@/utils/dataFormatUtils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -42,7 +42,6 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
   });
   
   // UI state
-  const [showIntentModal, setShowIntentModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   console.log("🔄 StreamlinedSignUp initialized with user:", user?.id);
@@ -90,7 +89,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
       return;
     }
 
-    setShowIntentModal(true);
+    // Legacy modal removed - Nicole handles intent selection now
   };
 
   const handleIntentSelection = async (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
@@ -216,8 +215,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
 
       toast.success("Profile created successfully!");
       
-      // Close modal and complete onboarding
-      setShowIntentModal(false);
+      // Legacy modal functionality removed - navigate directly based on intent
       
       // Navigate based on intent
       setTimeout(() => {
@@ -287,13 +285,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
         </div>
       </div>
 
-      {showModal && (
-        <OnboardingIntentModal
-          open={showIntentModal}
-          onSelect={handleIntentSelection}
-          onSkip={() => setShowIntentModal(false)}
-        />
-      )}
+      {/* Legacy modal removed - Nicole handles all intent selection now */}
     </>
   );
 };

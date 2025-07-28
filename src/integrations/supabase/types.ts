@@ -894,6 +894,75 @@ export type Database = {
           },
         ]
       }
+      gift_recommendation_analytics: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          recommendation_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          recommendation_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          recommendation_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gift_recommendations: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          execution_id: string | null
+          id: string
+          recipient_id: string | null
+          recommendation_data: Json
+          recommendation_source: string | null
+          search_context: Json
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          execution_id?: string | null
+          id?: string
+          recipient_id?: string | null
+          recommendation_data?: Json
+          recommendation_source?: string | null
+          search_context?: Json
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          execution_id?: string | null
+          id?: string
+          recipient_id?: string | null
+          recommendation_data?: Json
+          recommendation_source?: string | null
+          search_context?: Json
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gift_searches: {
         Row: {
           budget_range: string | null
@@ -2142,6 +2211,39 @@ export type Database = {
           total_price?: number
           unit_price?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      recipient_intelligence_profiles: {
+        Row: {
+          confidence_level: number | null
+          created_at: string | null
+          data_sources: Json | null
+          id: string
+          last_updated: string | null
+          profile_data: Json
+          recipient_identifier: string
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          id?: string
+          last_updated?: string | null
+          profile_data?: Json
+          recipient_identifier: string
+          user_id: string
+        }
+        Update: {
+          confidence_level?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          id?: string
+          last_updated?: string | null
+          profile_data?: Json
+          recipient_identifier?: string
+          user_id?: string
         }
         Relationships: []
       }

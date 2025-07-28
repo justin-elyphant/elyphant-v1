@@ -13,6 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { generateEnhancedSearchQuery } from "@/services/ai/enhancedSearchQueryGenerator";
 import QuickResponseButtons from "@/components/ai/conversation/QuickResponseButtons";
 import { supabase } from "@/integrations/supabase/client";
+import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
+import EnhancedGiftRecommendations from "@/components/ai/recommendations/EnhancedGiftRecommendations";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -56,6 +58,7 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
   const [isSearching, setIsSearching] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [quickResponseOptions, setQuickResponseOptions] = useState<string[]>([]);
+  const [showEnhancedRecommendations, setShowEnhancedRecommendations] = useState(false);
   
   // Use unified Nicole AI service
   const {
@@ -73,7 +76,10 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
       userFirstName: userProfile?.first_name
     }
   });
-
+  
+  // Enhanced recommendations hook
+  const { generateRecommendations, loading: recommendationsLoading } = useEnhancedGiftRecommendations();
+  
   const [showCTAButton, setShowCTAButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -268,20 +274,49 @@ const EnhancedNicoleConversationEngine: React.FC<EnhancedNicoleConversationProps
           giftCollectionPhase: "recipient"
         });
         
-        // Enhanced auto-gift flow with SMS discovery integration
+        // Enhanced auto-gift flow with recommendations
         addMessage({ 
           type: 'nicole', 
-          content: `Perfect! I'll help you set up automated gift discovery using our SMS system. 
+          content: `Perfect! I'll help you set up automated gift discovery and generate personalized recommendations. 
 
-Here's how it works:
+Here's how the enhanced process works:
 1. I'll collect details about the recipient
-2. Send them a personalized SMS to discover their preferences
-3. Use AI to recommend the perfect gift based on their responses
+2. Generate AI-powered gift recommendations based on their profile
+3. Optionally send them a personalized SMS to discover their preferences
+4. Use AI to recommend the perfect gift based on all available data
 
 **Step 1: Who is this gift for?**
 Please tell me their name and your relationship to them (e.g., "This is for my wife Sarah" or "For my friend Mike").`,
           timestamp: new Date()
         });
+        
+        // Auto-generate recommendations after a brief delay
+        setTimeout(async () => {
+          try {
+            // Use current context for recommendations
+            const currentContext = context as any;
+            await generateRecommendations({
+              recipient: currentContext.recipient,
+              relationship: currentContext.relationship,
+              occasion: currentContext.occasion,
+              interests: currentContext.interests,
+              budget: currentContext.budget,
+              conversationHistory: conversationHistory.slice(-5) // Last 5 messages for context
+            });
+            setShowEnhancedRecommendations(true);
+            
+            addMessage({ 
+              type: 'nicole', 
+              content: `Great! I've generated some initial personalized recommendations based on our conversation. You can review these below, or continue providing more details about the recipient for even better suggestions.`,
+              timestamp: new Date()
+            });
+          } catch (error) {
+            console.error('Failed to generate initial recommendations:', error);
+          }
+        }, 2000);
+        
+        // For auto-gift, notify parent of intent completion for consistency
+        onIntentComplete?.(selectedIntent);
         break;
         
       case "I'll shop on my own":
@@ -336,7 +371,7 @@ I'll take you to your profile settings where you can set up your wishlist. You c
         }, 2000);
         break;
     }
-  }, [addMessage, updateContext, navigate, onClose, onIntentComplete]);
+  }, [addMessage, updateContext, navigate, onClose, onIntentComplete, generateRecommendations, context, conversationHistory]);
 
   // Handle initial query effect
   useEffect(() => {
@@ -455,7 +490,37 @@ I'll take you to your profile settings where you can set up your wishlist. You c
                        options={quickResponseOptions}
                        onSelect={handleQuickResponse}
                      />
-                   )}
+                    )}
+                    
+                    {/* Enhanced Gift Recommendations */}
+                    {showEnhancedRecommendations && (
+                      <div className="mt-4">
+                        <EnhancedGiftRecommendations 
+                          onRecommendationSelect={(rec) => {
+                            addMessage({
+                              type: 'user',
+                              content: `I'm interested in: ${rec.title}`,
+                              timestamp: new Date()
+                            });
+                            addMessage({
+                              type: 'nicole',
+                              content: `Great choice! "${rec.title}" is an excellent match. Would you like me to help you purchase this gift or continue exploring other options?`,
+                              timestamp: new Date()
+                            });
+                          }}
+                          onPurchaseIntent={(rec) => {
+                            addMessage({
+                              type: 'nicole',
+                              content: `Perfect! I'll help you proceed with purchasing "${rec.title}" for $${rec.price}. Let me guide you through the next steps...`,
+                              timestamp: new Date()
+                            });
+                            // Navigate to purchase flow
+                            navigate(`/marketplace/product/${rec.productId}`);
+                            onClose();
+                          }}
+                        />
+                      </div>
+                    )}
                    
                    {showCTAButton && (
                      <div className="flex justify-center py-4">

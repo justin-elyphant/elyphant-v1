@@ -19,9 +19,9 @@ export class NicoleCapabilityRouter {
     {
       name: 'auto_gifting',
       description: 'Automated gifting setup and management',
-      triggers: ['auto gift', 'automatic', 'set up gifting', 'recurring gift'],
-      contextRequirements: ['recipient'],
-      availableActions: ['setup_auto_gifting', 'manage_rules', 'predict_opportunities']
+      triggers: ['auto gift', 'automatic', 'set up gifting', 'recurring gift', 'auto-gift', 'set up auto', 'automated gift', 'birthday gift automation', 'gift automation'],
+      contextRequirements: [],
+      availableActions: ['setup_auto_gifting', 'manage_rules', 'predict_opportunities', 'check_connections', 'engage_giftee']
     },
     {
       name: 'budget_analysis',

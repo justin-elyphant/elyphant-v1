@@ -105,46 +105,73 @@ serve(async (req) => {
       return budget;
     };
 
-    // Enhanced system prompt with connection and wishlist integration
-    let systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience.
+    // Enhanced system prompt with simplified auto-gift flow
+    let systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration. Your mission is to help users find perfect gifts through intelligent conversation flow with a streamlined CTA button experience and SIMPLIFIED AUTO-GIFT setup.
 
 ENHANCED WEEK 2 CAPABILITIES:
 - Connection Integration: Access to user's friends/family for personalized recommendations
 - Wishlist Integration: Reference user's saved items and preferences
 - Real-time Data: Current user connections and wishlist insights
 - Marketplace Integration: Direct connection to Enhanced Zinc API System
+- SIMPLIFIED AUTO-GIFT FLOW: 1-2-3 process for automatic gift setup
 
 CURRENT USER DATA:
 ${context?.userConnections ? `- Connections: ${context.userConnections.length} friends/family members` : '- No connection data available'}
 ${context?.userWishlists ? `- Wishlists: ${context.userWishlists.length} saved lists with items` : '- No wishlist data available'}
+
+AUTO-GIFT FLOW (PRIORITY):
+When user mentions "auto gift", "set up auto", "automated gift", or similar:
+1. CHOICE: Ask "Do you want to pick the gift or have Elyphant pick it for you?"
+2. IF ELYPHANT PICKS: Ask "Great! What is their name and phone number?"
+3. CONNECTION CHECK: 
+   - If connection exists: "I see that [name] likes [preferences]. What's your budget for this gift?"
+   - If no connection: "I see that [name] doesn't have a profile in our system yet. I'll send them a text to get their preferences and come up with curated gift options to email you for your approval."
+4. IF USER PICKS: Provide marketplace handoff with link
 
 CONVERSATION FLOW GUIDELINES:
 
 1. GREETING (phase: greeting)
    - Welcome warmly and ask what they're looking for
    - If they mention a specific person, automatically extract relationship info
+   - If auto-gift mentioned, immediately go to AUTO-GIFT FLOW
    - NO CTA BUTTON during greeting
 
-2. GATHERING_INFO (phase: gathering_info) 
+2. AUTO_GIFT_CHOICE (phase: auto_gift_choice)
+   - Ask: "Do you want to pick the gift or have Elyphant pick it for you?"
+   - Wait for their choice before proceeding
+
+3. AUTO_GIFT_ELYPHANT_PICK (phase: auto_gift_elyphant_pick)
+   - Ask: "Great! What is their name and phone number?"
+   - Collect recipient details for connection lookup
+
+4. AUTO_GIFT_CONNECTION_CHECK (phase: auto_gift_connection_check)
+   - Check if recipient exists in user's connections
+   - If found: "I see that [name] likes [preferences]. What's your budget for this gift?"
+   - If not found: "I see that [name] doesn't have a profile in our system yet. I'll send them a text to get their preferences and come up with curated gift options to email you for your approval."
+
+5. AUTO_GIFT_USER_PICK (phase: auto_gift_user_pick)
+   - Provide marketplace handoff: "Perfect! I'll take you to our marketplace where you can browse and select the perfect gift. [Marketplace Link]"
+
+6. GATHERING_INFO (phase: gathering_info) 
    - SMART RELATIONSHIP DETECTION: If user says "my son", "my daughter", "my mom", "my dad", "my friend", "my wife", "my husband", etc., automatically set both recipient AND relationship
    - NEVER ask "How are they related to you?" if the relationship is already clear from their words
    - Ask about occasion: "What's the occasion?" (birthday, Christmas, anniversary, etc.)
    - If recipient/relationship is clear, move directly to occasion
    - NO CTA BUTTON during information gathering
 
-3. CLARIFYING_NEEDS (phase: clarifying_needs)
+7. CLARIFYING_NEEDS (phase: clarifying_needs)
    - Ask about recipient's interests: "What does [recipient] enjoy doing?"
    - Ask about budget: "What's your budget range?"
    - Listen for specific brands mentioned by user
    - NO CTA BUTTON until ready for search
 
-4. READY_FOR_SEARCH_BUTTON (phase: ready_for_search_button)
+8. READY_FOR_SEARCH_BUTTON (phase: ready_for_search_button)
    - When you have enough context (recipient + (occasion OR age) + interests + budget), SUMMARIZE everything clearly
    - Say something like: "Perfect! Let me summarize what I understand: you're looking for [summary of all context]. I'm ready to find the perfect gifts for you!"
    - SET showSearchButton: true to display the CTA button
    - DO NOT ask for confirmation - the button handles that
 
-5. GENERATING_SEARCH (phase: generating_search)
+9. GENERATING_SEARCH (phase: generating_search)
    - Only reached when user clicks the "Ready to See Gifts" button
    - Immediately generate Enhanced Zinc API search query
    - Navigate to marketplace with context
@@ -272,31 +299,57 @@ You can reference their taste preferences based on their saved items when making
     // Parse budget from the current message
     const updatedBudget = parseBudgetFromMessage(message, context);
 
-    // Enhanced context parsing with budget
+    // Detect auto-gift intent
+    const messageLower = message.toLowerCase();
+    const isAutoGiftIntent = messageLower.includes('auto gift') || 
+                           messageLower.includes('auto-gift') || 
+                           messageLower.includes('set up auto') || 
+                           messageLower.includes('automated gift') || 
+                           messageLower.includes('automatic gift');
+
+    // Enhanced context parsing with budget and auto-gift detection
     const enhancedContext = {
       ...context,
-      budget: updatedBudget || context?.budget
+      budget: updatedBudget || context?.budget,
+      isAutoGiftFlow: isAutoGiftIntent || context?.isAutoGiftFlow,
+      conversationPhase: isAutoGiftIntent && !context?.conversationPhase ? 'auto_gift_choice' : context?.conversationPhase
     };
 
-    // More flexible CTA button logic - check for minimum viable context
-    const hasRecipient = Boolean(enhancedContext?.recipient);
-    const hasOccasionOrAge = Boolean(enhancedContext?.occasion || enhancedContext?.exactAge);
-    const hasInterestsOrBrands = Boolean(
-      (enhancedContext?.interests && enhancedContext.interests.length > 0) || 
-      (enhancedContext?.detectedBrands && enhancedContext.detectedBrands.length > 0)
-    );
-    const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
+    // Auto-gift flow takes priority over regular search flow
+    let showSearchButton = false;
+    let showMarketplaceLink = false;
+    
+    if (enhancedContext?.isAutoGiftFlow) {
+      // Don't show search button for auto-gift flow
+      showSearchButton = false;
+      
+      // Check if user chose to pick the gift themselves
+      if (messageLower.includes('pick') && messageLower.includes('myself') || 
+          messageLower.includes('i want to pick') || 
+          messageLower.includes('i\'ll pick')) {
+        showMarketplaceLink = true;
+      }
+    } else {
+      // Regular gift advisor flow
+      const hasRecipient = Boolean(enhancedContext?.recipient);
+      const hasOccasionOrAge = Boolean(enhancedContext?.occasion || enhancedContext?.exactAge);
+      const hasInterestsOrBrands = Boolean(
+        (enhancedContext?.interests && enhancedContext.interests.length > 0) || 
+        (enhancedContext?.detectedBrands && enhancedContext.detectedBrands.length > 0)
+      );
+      const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
 
-    const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
+      const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
 
-    // Check if AI response indicates readiness for search
-    const aiIndicatesReady = 
-      aiResponse.toLowerCase().includes('perfect!') ||
-      aiResponse.toLowerCase().includes('ready to find') ||
-      aiResponse.toLowerCase().includes('let me summarize') ||
-      (hasMinimumContext && aiResponse.toLowerCase().includes('understand'));
+      // Check if AI response indicates readiness for search
+      const aiIndicatesReady = 
+        aiResponse.toLowerCase().includes('perfect!') ||
+        aiResponse.toLowerCase().includes('ready to find') ||
+        aiResponse.toLowerCase().includes('let me summarize') ||
+        (hasMinimumContext && aiResponse.toLowerCase().includes('understand'));
 
-    const showSearchButton = hasMinimumContext && aiIndicatesReady;
+      showSearchButton = hasMinimumContext && aiIndicatesReady;
+    }
 
     console.log('CTA Button Logic:', { 
       hasRecipient,
@@ -316,7 +369,7 @@ You can reference their taste preferences based on their saved items when making
       }
     });
 
-    // Update context with Enhanced Zinc API preservation
+    // Update context with Enhanced Zinc API preservation and auto-gift flow
     const updatedContext = { 
       ...enhancedContext,
       conversationPhase: showSearchButton ? 'ready_for_search_button' : enhancedContext?.conversationPhase || 'gathering_info'
@@ -327,11 +380,13 @@ You can reference their taste preferences based on their saved items when making
         response: aiResponse,
         message: aiResponse,
         showSearchButton,
-        conversationContinues: !showSearchButton,
-        contextualLinks: [],
+        showMarketplaceLink,
+        conversationContinues: !showSearchButton && !showMarketplaceLink,
+        contextualLinks: showMarketplaceLink ? [{ text: 'Browse Marketplace', url: '/marketplace' }] : [],
         contextEnhanced: true,
         ctaButtonSystem: true,
         enhancedZincApiIntegrated: true,
+        autoGiftFlow: enhancedContext?.isAutoGiftFlow || false,
         step: enhancedContext?.step || 'discovery',
         conversationPhase: updatedContext.conversationPhase,
         userIntent: enhancedContext?.userIntent || 'none',
@@ -341,7 +396,8 @@ You can reference their taste preferences based on their saved items when making
           connectionIntegration: Boolean(context?.userConnections),
           wishlistIntegration: Boolean(context?.userWishlists),
           realTimeData: true,
-          marketplaceIntegration: true
+          marketplaceIntegration: true,
+          autoGiftSimplification: true
         }
       }),
       { 

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, MessageCircle, Search, Gift } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { X, MessageCircle, Search, Gift, Sparkles, Send } from 'lucide-react';
 import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
 import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -109,71 +110,101 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   return (
     <Card className={cn(
-      "fixed bg-background/95 backdrop-blur-sm border shadow-lg z-50",
-      "transition-all duration-300 ease-in-out",
+      "fixed bg-background/95 backdrop-blur-xl border border-purple-200/30 shadow-xl z-50",
+      "transition-all duration-300 ease-in-out rounded-2xl",
+      "ring-1 ring-purple-100/20",
       {
         // Mobile styling
         "inset-x-4 bottom-4 top-20": isMobile,
         // Desktop styling - floating mode
         "bottom-4 right-4 w-96 h-[500px]": !isMobile && state.activeMode === 'floating',
         // Desktop styling - search mode
-        "top-16 left-1/2 -translate-x-1/2 w-[600px] h-[400px]": !isMobile && state.activeMode === 'search',
+        "top-16 left-1/2 -translate-x-1/2 w-[600px] h-[500px]": !isMobile && state.activeMode === 'search',
       },
       state.isTransitioning && "opacity-50 scale-95",
       className
     )}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          {getCapabilityIcon()}
-          <h3 className="font-semibold text-sm">{getTitle()}</h3>
+      {/* Header with gradient background */}
+      <div className="flex items-center justify-between p-4 border-b border-purple-100/30 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 rounded-t-2xl">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            {getCapabilityIcon()}
+            <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-purple-500 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              {getTitle()}
+            </h3>
+            <Badge variant="secondary" className="text-xs bg-purple-100/60 text-purple-600 border-0">
+              AI Assistant
+            </Badge>
+          </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleClose}
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 hover:bg-purple-100/60 rounded-full transition-colors duration-200"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 text-purple-600" />
         </Button>
       </div>
 
       {/* Content Area */}
       <div className="flex flex-col h-full">
         {/* Messages */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+        <div className="flex-1 p-6 overflow-y-auto space-y-4 min-h-0 bg-gradient-to-b from-purple-50/20 to-transparent">
           {lastResponse ? (
-            <div className="space-y-3">
-              <div className="bg-muted/50 p-3 rounded-lg">
-                <p className="text-sm">{lastResponse.message}</p>
+            <div className="space-y-4">
+              {/* Nicole's response bubble */}
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100/60 p-4 rounded-2xl rounded-tl-md shadow-sm">
+                    <p className="text-sm text-foreground leading-relaxed">{lastResponse.message}</p>
+                  </div>
+                </div>
               </div>
               
               {/* Search Button */}
               {isReadyToSearch() && (
-                <Button 
-                  onClick={handleSearchNow}
-                  className="w-full"
-                  disabled={loading}
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Search Now
-                </Button>
+                <div className="flex justify-center pt-2">
+                  <Button 
+                    onClick={handleSearchNow}
+                    disabled={loading}
+                    className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 rounded-full px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Search Now
+                    <Sparkles className="w-3 h-3 ml-2" />
+                  </Button>
+                </div>
               )}
             </div>
           ) : (
-            <div className="text-center text-muted-foreground">
-              <div className="mb-4">
-                {getCapabilityIcon()}
+            <div className="text-center flex flex-col items-center justify-center h-full space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                  {getCapabilityIcon()}
+                </div>
+                <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-purple-500 animate-pulse" />
               </div>
-              <p className="text-sm">
-                {getNicoleGreeting(greetingContext)}
-              </p>
+              <div className="space-y-2">
+                <h4 className="font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Hey there! 👋
+                </h4>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                  {getNicoleGreeting(greetingContext)}
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t">
+        {/* Input Area with modern styling */}
+        <div className="p-4 border-t border-purple-100/30 bg-gradient-to-r from-purple-50/30 to-indigo-50/30 rounded-b-2xl">
           <form onSubmit={(e) => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
@@ -181,20 +212,20 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
             handleSendMessage(message);
             e.currentTarget.reset();
           }}>
-            <div className="flex gap-2">
+            <div className="relative flex items-center">
               <input
                 ref={inputRef}
                 name="message"
-                placeholder="Type your message..."
-                className="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
+                placeholder="Ask Nicole anything about gifts..."
+                className="flex-1 px-4 py-3 pr-12 text-sm border border-purple-200/60 rounded-full bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition-all duration-200 placeholder:text-purple-400/70"
                 disabled={loading}
               />
               <Button 
                 type="submit" 
-                size="sm"
                 disabled={loading}
+                className="absolute right-2 h-8 w-8 p-0 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
               >
-                Send
+                <Send className="w-4 h-4" />
               </Button>
             </div>
           </form>

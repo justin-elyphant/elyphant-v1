@@ -128,7 +128,8 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                 <TableHead>Amount</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Zinc ID</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>External ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -188,9 +189,25 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="space-y-1">
+                      <Badge variant={order.order_method === 'zma' ? 'default' : 'secondary'} className="text-xs">
+                        {order.order_method === 'zma' ? 'ZMA' : 'Zinc API'}
+                      </Badge>
+                      {order.zma_account_used && (
+                        <div className="text-xs text-slate-600">
+                          {order.zma_account_used}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     {order.zinc_order_id ? (
                       <div className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
-                        {order.zinc_order_id}
+                        Zinc: {order.zinc_order_id}
+                      </div>
+                    ) : order.zma_order_id ? (
+                      <div className="font-mono text-xs bg-blue-100 px-2 py-1 rounded">
+                        ZMA: {order.zma_order_id}
                       </div>
                     ) : (
                       <span className="text-slate-400 text-xs">N/A</span>

@@ -2,7 +2,7 @@
  * Order Retry Service - Handles retrying failed orders with corrected information
  * 
  * This service allows retrying stuck orders by updating them with proper
- * billing information and resubmitting to Zinc.
+ * billing information and resubmitting to Zinc or ZMA.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +12,12 @@ export interface OrderRetryResult {
   success: boolean;
   message: string;
   zincOrderId?: string;
+  zmaOrderId?: string;
   error?: string;
 }
 
 /**
- * Retries a failed order by updating it with billing information and resubmitting to Zinc
+ * Retries a failed order by updating it with billing information and resubmitting to appropriate service
  */
 export const retryOrderWithBillingInfo = async (
   orderId: string, 
@@ -25,6 +26,20 @@ export const retryOrderWithBillingInfo = async (
 ): Promise<OrderRetryResult> => {
   try {
     console.log(`🔄 Retrying order ${orderId} with billing info:`, billingInfo);
+    
+    // First, get the order to check its method
+    const { data: orderData, error: fetchError } = await supabase
+      .from('orders')
+      .select('order_method, status')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !orderData) {
+      throw new Error(`Failed to fetch order: ${fetchError?.message || 'Order not found'}`);
+    }
+
+    const orderMethod = orderData.order_method || 'zinc_api';
+    console.log(`📋 Order method: ${orderMethod}`);
     
     // Update the order with billing information
     const { error: updateError } = await supabase
@@ -44,17 +59,21 @@ export const retryOrderWithBillingInfo = async (
 
     console.log('✅ Order updated with billing information');
 
-    // Resubmit to Zinc via the process-zinc-order function
-    const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+    // Choose the appropriate processing function based on order method
+    const functionName = orderMethod === 'zma' ? 'process-zma-order' : 'process-zinc-order';
+
+    // Resubmit via the appropriate processing function
+    const { data, error } = await supabase.functions.invoke(functionName, {
       body: { 
-        orderId, 
+        orderId,
         isTestMode: testMode,
-        debugMode: true 
+        debugMode: true,
+        retryAttempt: true
       }
     });
 
     if (error) {
-      console.error('❌ Error invoking process-zinc-order:', error);
+      console.error(`❌ Error invoking ${functionName}:`, error);
       throw new Error(`Failed to resubmit order: ${error.message}`);
     }
 
@@ -66,15 +85,16 @@ export const retryOrderWithBillingInfo = async (
         .from('order_notes')
         .insert({
           order_id: orderId,
-          note_content: `Order successfully retried with billing info. Cardholder: ${billingInfo.cardholderName}. Zinc Order ID: ${data.zincOrderId}`,
+          note_content: `Order successfully retried with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} Order ID: ${data.zincOrderId || data.zma_order_id}`,
           note_type: 'retry',
           is_internal: false
         });
 
       return {
         success: true,
-        message: 'Order successfully retried and resubmitted to Zinc',
-        zincOrderId: data.zincOrderId
+        message: `Order successfully retried and resubmitted to ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'}`,
+        zincOrderId: data.zincOrderId,
+        zmaOrderId: data.zma_order_id
       };
     } else {
       throw new Error(data.error || 'Unknown error during order retry');
@@ -119,6 +139,8 @@ export const getOrdersNeedingRetry = async () => {
       order_number,
       status,
       zinc_status,
+      order_method,
+      zma_order_id,
       created_at,
       billing_info,
       shipping_info,

@@ -18,9 +18,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { order_id, products, shipping_address } = await req.json();
+    const requestBody = await req.json();
+    const { order_id, orderId, products, shipping_address, retryAttempt } = requestBody;
+    
+    // Handle both order_id and orderId for compatibility
+    const finalOrderId = order_id || orderId;
+    
+    console.log(`🔄 Processing ZMA order ${finalOrderId}${retryAttempt ? ' (retry)' : ''}`);
 
-    console.log(`🔄 Processing ZMA order ${order_id}`);
+    // If orderId is provided without products, fetch order details from database
+    if (finalOrderId && !products) {
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            product_id,
+            quantity,
+            price
+          )
+        `)
+        .eq('id', finalOrderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error(`❌ Failed to fetch order data:`, orderError);
+        throw new Error('Order not found');
+      }
+
+      // Use order data from database
+      var order_id = finalOrderId;
+      var products = orderData.order_items?.map((item: any) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        max_price: item.price
+      })) || [];
+      var shipping_address = orderData.shipping_info;
+    } else {
+      var order_id = finalOrderId;
+    }
 
     // Get default ZMA account
     const { data: zmaAccount, error: accountError } = await supabase

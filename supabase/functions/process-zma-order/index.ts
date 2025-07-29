@@ -40,10 +40,15 @@ serve(async (req) => {
           )
         `)
         .eq('id', finalOrderId)
-        .single();
+        .maybeSingle();
 
-      if (orderError || !orderData) {
-        console.error(`❌ Failed to fetch order data:`, orderError);
+      if (orderError) {
+        console.error(`❌ Database error fetching order:`, orderError);
+        throw new Error(`Database error: ${orderError.message}`);
+      }
+
+      if (!orderData) {
+        console.error(`❌ Order not found: ${finalOrderId}`);
         throw new Error('Order not found');
       }
 
@@ -82,10 +87,15 @@ serve(async (req) => {
       .select('*')
       .eq('is_default', true)
       .eq('account_status', 'active')
-      .single();
+      .maybeSingle();
 
-    if (accountError || !zmaAccount) {
-      console.error(`❌ No active ZMA account found:`, accountError);
+    if (accountError) {
+      console.error(`❌ Error fetching ZMA account:`, accountError);
+      throw new Error(`Database error: ${accountError.message}`);
+    }
+
+    if (!zmaAccount) {
+      console.error(`❌ No active ZMA account found`);
       throw new Error('No active ZMA account available');
     }
 

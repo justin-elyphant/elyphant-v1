@@ -49,45 +49,146 @@ serve(async (req) => {
       throw new Error(`Supabase setup failed: ${supabaseError.message}`);
     }
 
-    // Step 3: Check if order exists (simple check first)
-    console.log('📥 Step 3: Checking if order exists...');
-    try {
-      const { data: orderCheck, error: checkError } = await supabase
-        .from('orders')
-        .select('id, order_number')
-        .eq('id', orderId)
-        .single();
+    // Step 3: Get full order data
+    console.log('📥 Step 3: Getting full order data...');
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
 
-      if (checkError) {
-        console.error('❌ Order check error:', checkError);
-        throw new Error(`Order lookup failed: ${checkError.message}`);
-      }
-      
-      if (!orderCheck) {
-        console.error('❌ Order not found');
-        throw new Error('Order not found');
-      }
-
-      console.log(`✅ Order exists: ${orderCheck.order_number}`);
-    } catch (orderError) {
-      console.error('❌ Order verification failed:', orderError);
-      throw new Error(`Order verification failed: ${orderError.message}`);
+    if (orderError || !orderData) {
+      console.error('❌ Order lookup error:', orderError);
+      throw new Error(`Order not found: ${orderError?.message || 'Unknown error'}`);
     }
 
-    // For now, just return success with the debug info
-    console.log('✅ All basic checks passed - returning success');
+    console.log(`✅ Order found: ${orderData.order_number}`);
+
+    // Step 4: Get order items
+    console.log('📥 Step 4: Getting order items...');
+    const { data: orderItems, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+
+    if (itemsError || !orderItems || orderItems.length === 0) {
+      console.error('❌ Order items error:', itemsError);
+      throw new Error('No order items found');
+    }
+
+    console.log(`✅ Found ${orderItems.length} order items`);
+
+    // Step 5: Get ZMA credentials
+    console.log('📥 Step 5: Getting ZMA credentials...');
+    const { data: zmaCredentials, error: credError } = await supabase
+      .from('elyphant_amazon_credentials')
+      .select('*')
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (credError || !zmaCredentials) {
+      console.error('❌ ZMA credentials error:', credError);
+      throw new Error('No active ZMA credentials found');
+    }
+
+    console.log('✅ ZMA credentials retrieved');
+
+    // Step 6: Prepare Zinc API order data
+    console.log('📥 Step 6: Preparing Zinc API request...');
+    const zincOrderData = {
+      retailer: "amazon",
+      products: orderItems.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity
+      })),
+      max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
+      shipping_address: {
+        first_name: orderData.shipping_info.name.split(' ')[0] || 'Customer',
+        last_name: orderData.shipping_info.name.split(' ').slice(1).join(' ') || 'Name',
+        address_line1: orderData.shipping_info.address,
+        address_line2: orderData.shipping_info.addressLine2 || '',
+        zip_code: orderData.shipping_info.zipCode,
+        city: orderData.shipping_info.city,
+        state: orderData.shipping_info.state,
+        country: orderData.shipping_info.country === 'United States' ? 'US' : orderData.shipping_info.country,
+        phone_number: '5551234567' // Default phone for now
+      },
+      is_gift: orderData.is_gift || false,
+      gift_message: orderData.gift_message || '',
+      retailer_credentials: {
+        email: zmaCredentials.email,
+        password: zmaCredentials.encrypted_password,
+        totp_2fa_key: zmaCredentials.totp_2fa_key || undefined
+      },
+      client_notes: {
+        our_internal_order_id: orderData.order_number,
+        supabase_order_id: orderId,
+        created_via: 'elyphant_zma_system'
+      }
+    };
+
+    console.log('✅ Zinc order data prepared');
+
+    // Step 7: Call Zinc API
+    console.log('📥 Step 7: Calling Zinc API...');
+    const zincApiKey = Deno.env.get('ZINC_API_KEY');
+    if (!zincApiKey) {
+      throw new Error('ZINC_API_KEY not configured');
+    }
+
+    const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(zincApiKey + ':')}`
+      },
+      body: JSON.stringify(zincOrderData)
+    });
+
+    const zincResult = await zincResponse.json();
+    console.log('📤 Zinc API response:', JSON.stringify(zincResult));
+
+    if (!zincResponse.ok) {
+      console.error('❌ Zinc API error:', zincResult);
+      throw new Error(`Zinc API error: ${zincResult.message || 'Unknown error'}`);
+    }
+
+    // Step 8: Update order with Zinc request ID
+    console.log('📥 Step 8: Updating order with Zinc data...');
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        zma_order_id: zincResult.request_id,
+        status: 'processing',
+        zma_account_used: zmaCredentials.email,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    if (updateError) {
+      console.error('❌ Order update error:', updateError);
+      throw new Error(`Failed to update order: ${updateError.message}`);
+    }
+
+    console.log('✅ Order successfully submitted to Zinc and updated');
     
     return new Response(JSON.stringify({
       success: true,
-      message: 'ZMA Debug: All basic checks passed!',
+      message: 'Order successfully submitted to ZMA/Zinc!',
       orderId: orderId,
-      cardholderName: cardholderName,
+      zincRequestId: zincResult.request_id,
+      zmaAccount: zmaCredentials.email,
       debug: {
         step1_parseRequest: '✅ Success',
         step2_supabaseClient: '✅ Success', 
-        step3_orderExists: '✅ Success'
+        step3_orderExists: '✅ Success',
+        step4_orderItems: '✅ Success',
+        step5_zmaCredentials: '✅ Success',
+        step6_prepareZincData: '✅ Success',
+        step7_callZincAPI: '✅ Success',
+        step8_updateOrder: '✅ Success'
       },
-      nextSteps: 'Ready to add ZMA processing logic',
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

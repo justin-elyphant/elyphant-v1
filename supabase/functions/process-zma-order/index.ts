@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🚀 ZMA Function started');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -23,7 +25,7 @@ serve(async (req) => {
       throw new Error('Order ID is required');
     }
 
-    console.log(`🚀 Processing ZMA order for order ${orderId}, test mode: ${isTestMode}, debug mode: ${debugMode}`);
+    console.log(`🔍 Processing ZMA order for order ${orderId}, test mode: ${isTestMode}`);
 
     // Get order details from database
     const { data: order, error: orderError } = await supabaseClient
@@ -41,9 +43,6 @@ serve(async (req) => {
     }
 
     console.log(`📋 Processing ZMA order for user ${order.user_id}, order ${orderId}`);
-    if (debugMode) {
-      console.log(`🐛 Full order data:`, JSON.stringify(order, null, 2));
-    }
 
     // Update billing info if provided (for retry scenarios)
     if (cardholderName) {
@@ -76,7 +75,7 @@ serve(async (req) => {
       .select('*')
       .eq('is_default', true);
 
-    console.log("🔐 ZMA query result:", { zmaAccounts, zmaError });
+    console.log("🔐 ZMA query result:", { accountCount: zmaAccounts?.length, zmaError });
 
     if (zmaError) {
       console.error("❌ ZMA query error:", zmaError);
@@ -89,28 +88,7 @@ serve(async (req) => {
     }
 
     const zmaAccount = zmaAccounts[0];
-
     console.log(`🔐 Using ZMA account: ${zmaAccount.account_name} (Balance: $${zmaAccount.account_balance})`);
-
-    // Get business payment method
-    let businessPaymentMethod = null;
-    try {
-      const { data: paymentMethodResponse, error: pmError } = await supabaseClient
-        .functions.invoke('manage-business-payment-methods', {
-          body: { action: 'getDefault' }
-        });
-
-      if (pmError) {
-        console.error('❌ Error fetching business payment method:', pmError);
-      } else if (paymentMethodResponse?.success && paymentMethodResponse?.data) {
-        businessPaymentMethod = paymentMethodResponse.data;
-        console.log(`💳 Using business payment method: ${businessPaymentMethod.name} (****${businessPaymentMethod.last_four})`);
-      } else {
-        console.warn('⚠️ No default business payment method found');
-      }
-    } catch (pmFetchError) {
-      console.error('❌ Failed to fetch business payment method:', pmFetchError);
-    }
 
     // Prepare ZMA order data
     const shippingAddress = order.shipping_info;
@@ -127,19 +105,10 @@ serve(async (req) => {
     const billingFirstName = billingNameParts[0] || "Customer";
     const billingLastName = billingNameParts.slice(1).join(" ") || "Name";
     
-    // Use billing address if provided, otherwise fall back to shipping address
-    const billingAddressData = billingInfo?.billingAddress || {
-      name: cardholderNameToUse,
-      address: shippingAddress.address || shippingAddress.address_line1,
-      city: shippingAddress.city,
-      state: shippingAddress.state,
-      zipCode: shippingAddress.zipCode || shippingAddress.zip_code,
-      country: "US"
-    };
-    
+    // Simple order payload for ZMA (PriceYak)
     const orderData = {
       retailer: "amazon",
-      products: order.order_items.map((item: any) => ({
+      products: order.order_items.map((item) => ({
         product_id: item.product_id,
         quantity: item.quantity
       })),
@@ -156,42 +125,25 @@ serve(async (req) => {
       billing_address: {
         first_name: billingFirstName,
         last_name: billingLastName,
-        address_line1: billingAddressData.address,
-        address_line2: "",
-        zip_code: billingAddressData.zipCode,
-        city: billingAddressData.city,
-        state: billingAddressData.state,
-        country: billingAddressData.country
-      },
-      payment_method: businessPaymentMethod ? {
-        name_on_card: businessPaymentMethod.name_on_card,
-        number: businessPaymentMethod.decrypted_number,
-        expiration_month: businessPaymentMethod.exp_month,
-        expiration_year: businessPaymentMethod.exp_year,
-        security_code: businessPaymentMethod.decrypted_cvv,
-        type: "card",
-        use_gift: false
-      } : {
-        name_on_card: cardholderNameToUse,
-        type: "card",
-        use_gift: false
+        address_line1: shippingAddress.address || shippingAddress.address_line1,
+        address_line2: shippingAddress.addressLine2 || shippingAddress.address_line2 || "",
+        zip_code: shippingAddress.zipCode || shippingAddress.zip_code,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        country: "US"
       },
       is_gift: order.is_gift || false,
       gift_message: order.gift_message || "",
       is_test: isTestMode
     };
 
-    if (debugMode) {
-      console.log("🐛 Complete order data being sent to ZMA:", JSON.stringify(orderData, null, 2));
-    } else {
-      console.log("📦 ZMA order data prepared:", {
-        retailer: orderData.retailer,
-        productCount: orderData.products.length,
-        isGift: orderData.is_gift,
-        isTest: orderData.is_test,
-        zmaAccount: zmaAccount.account_name
-      });
-    }
+    console.log("📦 ZMA order data prepared:", {
+      retailer: orderData.retailer,
+      productCount: orderData.products.length,
+      isGift: orderData.is_gift,
+      isTest: orderData.is_test,
+      zmaAccount: zmaAccount.account_name
+    });
 
     console.log("📡 Sending request to ZMA API...");
 
@@ -209,18 +161,10 @@ serve(async (req) => {
     const requestDuration = Date.now() - requestStartTime;
     console.log(`⏱️ ZMA API response received in ${requestDuration}ms - Status: ${zmaResponse.status} ${zmaResponse.statusText}`);
 
-    if (debugMode) {
-      console.log(`🐛 Response Headers:`, Object.fromEntries(zmaResponse.headers.entries()));
-    }
-
     if (zmaResponse.ok) {
       const zmaOrder = await zmaResponse.json();
       console.log("✅ ZMA order processed successfully:", zmaOrder.request_id || zmaOrder.id);
       
-      if (debugMode) {
-        console.log("🐛 Full ZMA response:", JSON.stringify(zmaOrder, null, 2));
-      }
-
       const zmaOrderId = zmaOrder.request_id || zmaOrder.id;
 
       // Update our order with ZMA order ID and initial status
@@ -265,10 +209,6 @@ serve(async (req) => {
       const errorResponse = await zmaResponse.text();
       console.error(`❌ ZMA API error (${zmaResponse.status}):`, errorResponse);
       
-      if (debugMode) {
-        console.log(`🐛 Full error response body:`, errorResponse);
-      }
-      
       // Log the error details
       await supabaseClient
         .from('order_notes')
@@ -293,24 +233,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('🚨 Error processing ZMA order:', error);
-    
-    // Try to log the error to the database if we have an orderId
-    const { orderId } = await req.json().catch(() => ({}));
-    if (orderId) {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-      
-      await supabaseClient
-        .from('order_notes')
-        .insert({
-          order_id: orderId,
-          note_content: `Critical error during ZMA order processing: ${error.message}`,
-          note_type: 'error',
-          is_internal: true
-        }).catch(console.error);
-    }
     
     return new Response(JSON.stringify({
       success: false,

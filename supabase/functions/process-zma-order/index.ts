@@ -71,17 +71,24 @@ serve(async (req) => {
 
     // Get default ZMA account
     console.log("🔐 Fetching ZMA account...");
-    const { data: zmaAccount, error: zmaError } = await supabaseClient
+    const { data: zmaAccounts, error: zmaError } = await supabaseClient
       .from('zma_accounts')
       .select('*')
-      .eq('is_default', true)
-      .eq('is_active', true)
-      .single();
+      .eq('is_default', true);
 
-    if (zmaError || !zmaAccount) {
-      console.error("❌ No active ZMA account found:", zmaError);
-      throw new Error('No active ZMA account configured');
+    console.log("🔐 ZMA query result:", { zmaAccounts, zmaError });
+
+    if (zmaError) {
+      console.error("❌ ZMA query error:", zmaError);
+      throw new Error(`ZMA account query failed: ${zmaError.message}`);
     }
+
+    if (!zmaAccounts || zmaAccounts.length === 0) {
+      console.error("❌ No default ZMA account found");
+      throw new Error('No default ZMA account configured');
+    }
+
+    const zmaAccount = zmaAccounts[0];
 
     console.log(`🔐 Using ZMA account: ${zmaAccount.account_name} (Balance: $${zmaAccount.account_balance})`);
 

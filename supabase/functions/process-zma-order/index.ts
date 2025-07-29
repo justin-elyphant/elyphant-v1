@@ -12,11 +12,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('🚀 Function started');
+  
   try {
+    console.log('🔧 Creating Supabase client');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    console.log('✅ Supabase client created');
+
+    console.log('📥 Parsing request body');
 
     const requestBody = await req.json();
     console.log(`🔍 Raw request body:`, JSON.stringify(requestBody, null, 2));

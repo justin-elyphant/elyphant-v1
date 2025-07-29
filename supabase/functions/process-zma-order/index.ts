@@ -24,7 +24,14 @@ serve(async (req) => {
     // Handle both order_id and orderId for compatibility
     const finalOrderId = order_id || orderId;
     
+    // Validate that we have a valid UUID
+    if (!finalOrderId || finalOrderId === 'undefined' || typeof finalOrderId !== 'string') {
+      console.error(`❌ Invalid order ID received:`, { order_id, orderId, finalOrderId });
+      throw new Error(`Invalid order ID: ${finalOrderId}`);
+    }
+    
     console.log(`🔄 Processing ZMA order ${finalOrderId}${retryAttempt ? ' (retry)' : ''}`);
+    console.log(`🔍 Request body:`, JSON.stringify(requestBody, null, 2));
 
     // If orderId is provided without products, fetch order details from database
     if (finalOrderId && !products) {

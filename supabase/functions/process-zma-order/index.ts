@@ -36,7 +36,7 @@ serve(async (req) => {
             id,
             product_id,
             quantity,
-            price
+            unit_price
           )
         `)
         .eq('id', finalOrderId)
@@ -49,11 +49,28 @@ serve(async (req) => {
 
       // Use order data from database
       var order_id = finalOrderId;
-      var products = orderData.order_items?.map((item: any) => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        max_price: item.price
-      })) || [];
+      
+      // Handle both new format (order_items) and legacy format (products in order)
+      if (orderData.order_items && orderData.order_items.length > 0) {
+        // New format: separate order_items table
+        var products = orderData.order_items.map((item: any) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          max_price: item.unit_price
+        }));
+      } else if (orderData.products && Array.isArray(orderData.products)) {
+        // Legacy format: products stored directly in orders table
+        console.log(`📦 Using legacy order format for order ${finalOrderId}`);
+        var products = orderData.products.map((item: any) => ({
+          product_id: item.product_id || item.id,
+          quantity: item.quantity || 1,
+          max_price: item.price || item.unit_price || item.max_price
+        }));
+      } else {
+        console.error(`❌ No product data found in order ${finalOrderId}`);
+        throw new Error('No product data found in order');
+      }
+      
       var shipping_address = orderData.shipping_info;
     } else {
       var order_id = finalOrderId;

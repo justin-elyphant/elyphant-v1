@@ -106,6 +106,11 @@ serve(async (req) => {
       throw updateError;
     }
 
+    // Debug: Log the data we're working with
+    console.log(`🔍 Order ID: ${order_id}`);
+    console.log(`🔍 Products:`, JSON.stringify(products, null, 2));
+    console.log(`🔍 Shipping address:`, JSON.stringify(shipping_address, null, 2));
+
     // Process order through PriceYak API (ZMA)
     const zmaOrderRequest = {
       products: products.map((product: any) => ({
@@ -114,11 +119,11 @@ serve(async (req) => {
         max_price: product.max_price
       })),
       shipping_address: {
-        first_name: shipping_address.first_name,
-        last_name: shipping_address.last_name,
-        address_line1: shipping_address.address_line1,
-        address_line2: shipping_address.address_line2 || '',
-        zip_code: shipping_address.zip_code,
+        first_name: shipping_address.first_name || shipping_address.name?.split(' ')[0] || 'Unknown',
+        last_name: shipping_address.last_name || shipping_address.name?.split(' ').slice(1).join(' ') || 'Unknown',
+        address_line1: shipping_address.address_line1 || shipping_address.address,
+        address_line2: shipping_address.address_line2 || shipping_address.addressLine2 || '',
+        zip_code: shipping_address.zip_code || shipping_address.zipCode,
         city: shipping_address.city,
         state: shipping_address.state,
         country: shipping_address.country

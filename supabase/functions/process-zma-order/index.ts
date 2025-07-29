@@ -31,19 +31,6 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log(`🔍 Raw request body:`, JSON.stringify(requestBody, null, 2));
     
-    // Quick test response to verify CORS is working
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'CORS test successful - ZMA function is reachable',
-        receivedData: requestBody
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-    
     const { order_id, orderId, products, shipping_address, retryAttempt } = requestBody;
     
     // Handle both order_id and orderId for compatibility

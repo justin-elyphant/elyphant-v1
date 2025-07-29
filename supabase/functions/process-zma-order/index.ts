@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,182 +7,103 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled');
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('🚀 ZMA Function - Full Processing Version');
+  console.log('🚀 ZMA Function - Debug Version Started');
   
   try {
-    const { orderId, cardholderName, isTestMode = false } = await req.json();
-    console.log(`📥 Processing order: ${orderId}, cardholder: ${cardholderName}`);
+    // Step 1: Parse request
+    console.log('📥 Step 1: Parsing request body...');
+    let body;
+    try {
+      body = await req.json();
+      console.log('✅ Request body parsed:', JSON.stringify(body));
+    } catch (parseError) {
+      console.error('❌ JSON parsing failed:', parseError);
+      throw new Error(`Invalid JSON: ${parseError.message}`);
+    }
+
+    const { orderId, cardholderName } = body;
     
     if (!orderId) {
+      console.log('❌ No order ID provided');
       throw new Error('Order ID is required');
     }
 
-    // Create Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    console.log(`🔍 Processing order: ${orderId}, cardholder: ${cardholderName}`);
 
-    // Get order with items
-    console.log('📋 Fetching order and items...');
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        order_items(*)
-      `)
-      .eq('id', orderId)
-      .single();
-
-    if (orderError || !order) {
-      throw new Error(`Order not found: ${orderError?.message}`);
+    // Step 2: Create Supabase client
+    console.log('📥 Step 2: Creating Supabase client...');
+    let supabase;
+    try {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.45.0');
+      supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      console.log('✅ Supabase client created');
+    } catch (supabaseError) {
+      console.error('❌ Supabase client creation failed:', supabaseError);
+      throw new Error(`Supabase setup failed: ${supabaseError.message}`);
     }
 
-    console.log(`✅ Order found: ${order.order_number} with ${order.order_items?.length || 0} items`);
-
-    // Update billing info if provided
-    if (cardholderName) {
-      console.log(`💳 Updating billing info with: ${cardholderName}`);
-      const { error: updateError } = await supabase
+    // Step 3: Check if order exists (simple check first)
+    console.log('📥 Step 3: Checking if order exists...');
+    try {
+      const { data: orderCheck, error: checkError } = await supabase
         .from('orders')
-        .update({
-          billing_info: { ...order.billing_info, cardholderName },
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
+        .select('id, order_number')
+        .eq('id', orderId)
+        .single();
 
-      if (updateError) {
-        console.error('❌ Billing update error:', updateError);
-      } else {
-        console.log('✅ Billing info updated');
-        order.billing_info = { ...order.billing_info, cardholderName };
+      if (checkError) {
+        console.error('❌ Order check error:', checkError);
+        throw new Error(`Order lookup failed: ${checkError.message}`);
       }
+      
+      if (!orderCheck) {
+        console.error('❌ Order not found');
+        throw new Error('Order not found');
+      }
+
+      console.log(`✅ Order exists: ${orderCheck.order_number}`);
+    } catch (orderError) {
+      console.error('❌ Order verification failed:', orderError);
+      throw new Error(`Order verification failed: ${orderError.message}`);
     }
 
-    // Get ZMA account
-    console.log('🔐 Fetching ZMA account...');
-    const { data: zmaAccounts, error: zmaError } = await supabase
-      .from('zma_accounts')
-      .select('*')
-      .eq('is_default', true);
-
-    if (zmaError || !zmaAccounts || zmaAccounts.length === 0) {
-      throw new Error('No default ZMA account found');
-    }
-
-    const zmaAccount = zmaAccounts[0];
-    console.log(`🔐 Using ZMA account: ${zmaAccount.account_name}`);
-
-    // Prepare order data for ZMA API
-    const shippingAddress = order.shipping_info;
-    const nameParts = (shippingAddress.name || "").split(" ");
-    const firstName = nameParts[0] || "Customer";
-    const lastName = nameParts.slice(1).join(" ") || "Name";
-
-    const orderData = {
-      retailer: "amazon",
-      products: order.order_items.map((item) => ({
-        product_id: item.product_id,
-        quantity: item.quantity
-      })),
-      shipping_address: {
-        first_name: firstName,
-        last_name: lastName,
-        address_line1: shippingAddress.address,
-        address_line2: shippingAddress.addressLine2 || "",
-        zip_code: shippingAddress.zipCode,
-        city: shippingAddress.city,
-        state: shippingAddress.state,
-        country: "US"
+    // For now, just return success with the debug info
+    console.log('✅ All basic checks passed - returning success');
+    
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'ZMA Debug: All basic checks passed!',
+      orderId: orderId,
+      cardholderName: cardholderName,
+      debug: {
+        step1_parseRequest: '✅ Success',
+        step2_supabaseClient: '✅ Success', 
+        step3_orderExists: '✅ Success'
       },
-      is_gift: order.is_gift || false,
-      gift_message: order.gift_message || "",
-      is_test: isTestMode
-    };
-
-    console.log(`📦 Prepared order for ${orderData.products.length} products`);
-
-    // Call ZMA API
-    console.log('📡 Calling ZMA API...');
-    const zmaResponse = await fetch('https://api.priceyak.com/v2/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${zmaAccount.api_key}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Elyphant-ZMA/1.0'
-      },
-      body: JSON.stringify(orderData)
+      nextSteps: 'Ready to add ZMA processing logic',
+      timestamp: new Date().toISOString()
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     });
 
-    console.log(`⏱️ ZMA API responded: ${zmaResponse.status}`);
-
-    if (zmaResponse.ok) {
-      const zmaOrder = await zmaResponse.json();
-      const zmaOrderId = zmaOrder.request_id || zmaOrder.id;
-      
-      console.log(`✅ ZMA order created: ${zmaOrderId}`);
-
-      // Update order in database
-      await supabase
-        .from('orders')
-        .update({
-          zma_order_id: zmaOrderId,
-          zma_account_used: zmaAccount.account_name,
-          status: 'processing',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-
-      // Add order note
-      await supabase
-        .from('order_notes')
-        .insert({
-          order_id: orderId,
-          note_content: `ZMA order successfully submitted. ZMA Order ID: ${zmaOrderId}. Account: ${zmaAccount.account_name}.`,
-          note_type: 'system',
-          is_internal: true
-        });
-
-      console.log('✅ Database updated successfully');
-
-      return new Response(JSON.stringify({
-        success: true,
-        zmaOrderId,
-        orderId,
-        zmaAccount: zmaAccount.account_name,
-        message: 'Order successfully submitted to ZMA'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-
-    } else {
-      const errorText = await zmaResponse.text();
-      console.error(`❌ ZMA API error: ${zmaResponse.status} - ${errorText}`);
-      
-      // Log error to database
-      await supabase
-        .from('order_notes')
-        .insert({
-          order_id: orderId,
-          note_content: `ZMA order submission failed. Status: ${zmaResponse.status}. Error: ${errorText}`,
-          note_type: 'error',
-          is_internal: true
-        });
-
-      throw new Error(`ZMA API error: ${zmaResponse.status} - ${errorText}`);
-    }
-
   } catch (error) {
-    console.error('🚨 ZMA function error:', error);
+    console.error('🚨 ZMA Debug Error:', error);
+    console.error('🚨 Error stack:', error.stack);
     
     return new Response(JSON.stringify({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      debug: 'Check the edge function logs for detailed debugging info'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

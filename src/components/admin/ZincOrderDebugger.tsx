@@ -6,12 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { orderVerificationService } from '@/services/orderVerificationService';
 
 interface ZincStatus {
   orderId: string;
   zincOrderId?: string;
+  zmaOrderId?: string;
+  orderMethod?: 'zinc_api' | 'zma';
   status?: string;
   error?: string;
   debugInfo?: any;
@@ -19,6 +22,7 @@ interface ZincStatus {
 
 const ZincOrderDebugger = () => {
   const [orderRequestId, setOrderRequestId] = useState('');
+  const [orderMethod, setOrderMethod] = useState<'zinc_api' | 'zma'>('zinc_api');
   const [loading, setLoading] = useState(false);
   const [statusResult, setStatusResult] = useState<ZincStatus | null>(null);
   const [debugLogs, setDebugLogs] = useState<string>('');
@@ -35,44 +39,74 @@ const ZincOrderDebugger = () => {
     setDebugLogs('');
 
     try {
-      console.log(`🔍 Checking order status for: ${orderRequestId}`);
+      console.log(`🔍 Checking ${orderMethod} order status for: ${orderRequestId}`);
       
-      // Call the edge function with the correct parameter name
-      const { data, error } = await supabase.functions.invoke('check-zinc-order-status', {
-        body: {
-          singleOrderId: orderRequestId, // Fixed: changed from orderRequestId to singleOrderId
-          debugMode: true
+      if (orderMethod === 'zma') {
+        // Check ZMA order status
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderRequestId)
+          .eq('order_method', 'zma')
+          .single();
+
+        if (orderError || !orderData) {
+          setDebugLogs(`Database Error: ${orderError?.message || 'Order not found'}`);
+          toast(`Order not found or not a ZMA order`);
+          return;
         }
-      });
 
-      if (error) {
-        console.error('❌ Edge function error:', error);
-        setDebugLogs(`Edge Function Error: ${error.message}\n\nContext: ${error.context || 'No additional context'}`);
-        toast(`API Error: ${error.message}`);
-        return;
-      }
-
-      console.log('✅ Edge function response:', data);
-      setDebugLogs(`API Response:\n${JSON.stringify(data, null, 2)}`);
-
-      if (data.success && data.results && data.results.length > 0) {
-        const result = data.results[0];
         setStatusResult({
           orderId: orderRequestId,
-          zincOrderId: result.zinc_order_id,
-          status: result.status,
-          error: result.error,
-          debugInfo: result
+          zmaOrderId: orderData.zma_order_id,
+          orderMethod: 'zma',
+          status: orderData.status,
+          debugInfo: orderData
         });
-        
-        toast(`Status Check Complete - Order status: ${result.status}`);
+
+        setDebugLogs(`ZMA Order Data:\n${JSON.stringify(orderData, null, 2)}`);
+        toast(`ZMA Order Status: ${orderData.status}`);
+
       } else {
-        setStatusResult({
-          orderId: orderRequestId,
-          error: data.error || 'No results returned'
+        // Check Zinc API order status
+        const { data, error } = await supabase.functions.invoke('check-zinc-order-status', {
+          body: {
+            singleOrderId: orderRequestId,
+            debugMode: true
+          }
         });
-        
-        toast(`No Results: ${data.error || 'No order data found'}`);
+
+        if (error) {
+          console.error('❌ Edge function error:', error);
+          setDebugLogs(`Edge Function Error: ${error.message}\n\nContext: ${error.context || 'No additional context'}`);
+          toast(`API Error: ${error.message}`);
+          return;
+        }
+
+        console.log('✅ Edge function response:', data);
+        setDebugLogs(`API Response:\n${JSON.stringify(data, null, 2)}`);
+
+        if (data.success && data.results && data.results.length > 0) {
+          const result = data.results[0];
+          setStatusResult({
+            orderId: orderRequestId,
+            zincOrderId: result.zinc_order_id,
+            orderMethod: 'zinc_api',
+            status: result.status,
+            error: result.error,
+            debugInfo: result
+          });
+          
+          toast(`Status Check Complete - Order status: ${result.status}`);
+        } else {
+          setStatusResult({
+            orderId: orderRequestId,
+            orderMethod: 'zinc_api',
+            error: data.error || 'No results returned'
+          });
+          
+          toast(`No Results: ${data.error || 'No order data found'}`);
+        }
       }
 
     } catch (error) {
@@ -80,6 +114,7 @@ const ZincOrderDebugger = () => {
       setDebugLogs(`Unexpected Error: ${error.message}\n\nStack trace: ${error.stack}`);
       setStatusResult({
         orderId: orderRequestId,
+        orderMethod,
         error: error.message
       });
       
@@ -142,6 +177,15 @@ const ZincOrderDebugger = () => {
               onChange={(e) => setOrderRequestId(e.target.value)}
               className="flex-1"
             />
+            <Select value={orderMethod} onValueChange={(value: 'zinc_api' | 'zma') => setOrderMethod(value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="zinc_api">Zinc API</SelectItem>
+                <SelectItem value="zma">ZMA</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex gap-2">
@@ -181,10 +225,26 @@ const ZincOrderDebugger = () => {
                 <p className="font-mono text-sm">{statusResult.orderId}</p>
               </div>
               
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Order Method</label>
+                <div className="mt-1">
+                  <Badge variant={statusResult.orderMethod === 'zma' ? 'default' : 'secondary'}>
+                    {statusResult.orderMethod === 'zma' ? 'ZMA' : 'Zinc API'}
+                  </Badge>
+                </div>
+              </div>
+              
               {statusResult.zincOrderId && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Zinc Order ID</label>
                   <p className="font-mono text-sm">{statusResult.zincOrderId}</p>
+                </div>
+              )}
+              
+              {statusResult.zmaOrderId && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">ZMA Order ID</label>
+                  <p className="font-mono text-sm">{statusResult.zmaOrderId}</p>
                 </div>
               )}
             </div>

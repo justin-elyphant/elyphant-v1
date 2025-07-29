@@ -1910,6 +1910,7 @@ export type Database = {
           id: string
           is_gift: boolean | null
           is_surprise_gift: boolean | null
+          order_method: string | null
           order_number: string
           payment_status: string | null
           scheduled_delivery_date: string | null
@@ -1926,6 +1927,8 @@ export type Database = {
           user_id: string | null
           zinc_order_id: string | null
           zinc_status: string | null
+          zma_account_used: string | null
+          zma_order_id: string | null
         }
         Insert: {
           billing_info?: Json | null
@@ -1941,6 +1944,7 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          order_method?: string | null
           order_number: string
           payment_status?: string | null
           scheduled_delivery_date?: string | null
@@ -1957,6 +1961,8 @@ export type Database = {
           user_id?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
+          zma_account_used?: string | null
+          zma_order_id?: string | null
         }
         Update: {
           billing_info?: Json | null
@@ -1972,6 +1978,7 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          order_method?: string | null
           order_number?: string
           payment_status?: string | null
           scheduled_delivery_date?: string | null
@@ -1988,6 +1995,8 @@ export type Database = {
           user_id?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
+          zma_account_used?: string | null
+          zma_order_id?: string | null
         }
         Relationships: [
           {
@@ -3058,6 +3067,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      zma_accounts: {
+        Row: {
+          account_balance: number | null
+          account_name: string
+          account_status: string | null
+          api_key: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          last_balance_check: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_balance?: number | null
+          account_name: string
+          account_status?: string | null
+          api_key: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_balance_check?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_balance?: number | null
+          account_name?: string
+          account_status?: string | null
+          api_key?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          last_balance_check?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

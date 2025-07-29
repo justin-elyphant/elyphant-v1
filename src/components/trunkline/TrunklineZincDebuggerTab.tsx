@@ -2,6 +2,7 @@
 import React from 'react';
 import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
 import OrderRetryTool from '@/components/admin/OrderRetryTool';
+import ZMAAccountManager from '@/components/admin/ZMAAccountManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -24,10 +25,11 @@ const TrunklineZincDebuggerTab = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="debugger" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="debugger">Order Debugger</TabsTrigger>
-              <TabsTrigger value="retry">Order Retry Tool</TabsTrigger>
-            </TabsList>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="debugger">Order Debugger</TabsTrigger>
+            <TabsTrigger value="retry">Order Retry Tool</TabsTrigger>
+            <TabsTrigger value="zma">ZMA Accounts</TabsTrigger>
+          </TabsList>
             <TabsContent value="debugger" className="mt-6">
               <div className="space-y-4">
                 <div>
@@ -48,6 +50,17 @@ const TrunklineZincDebuggerTab = () => {
                   </p>
                 </div>
                 <OrderRetryTool />
+              </div>
+            </TabsContent>
+            <TabsContent value="zma" className="mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">ZMA Account Management</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage Zinc Managed Accounts for reliable order processing without Amazon credential issues.
+                  </p>
+                </div>
+                <ZMAAccountManager />
               </div>
             </TabsContent>
           </Tabs>

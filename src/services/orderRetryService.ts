@@ -85,6 +85,7 @@ export const retryOrderWithBillingInfo = async (
         .from('order_notes')
         .insert({
           order_id: orderId,
+          admin_user_id: (await supabase.auth.getUser()).data.user?.id,
           note_content: `Order successfully retried with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} Order ID: ${data.zincOrderId || data.zma_order_id}`,
           note_type: 'retry',
           is_internal: false
@@ -105,10 +106,12 @@ export const retryOrderWithBillingInfo = async (
     
     // Log the failed retry
     try {
+      const user = await supabase.auth.getUser();
       await supabase
         .from('order_notes')
         .insert({
           order_id: orderId,
+          admin_user_id: user.data.user?.id,
           note_content: `Order retry failed: ${error.message}`,
           note_type: 'error',
           is_internal: false

@@ -19,6 +19,8 @@ serve(async (req) => {
     );
 
     const requestBody = await req.json();
+    console.log(`🔍 Raw request body:`, JSON.stringify(requestBody, null, 2));
+    
     const { order_id, orderId, products, shipping_address, retryAttempt } = requestBody;
     
     // Handle both order_id and orderId for compatibility
@@ -26,12 +28,23 @@ serve(async (req) => {
     
     // Validate that we have a valid UUID
     if (!finalOrderId || finalOrderId === 'undefined' || typeof finalOrderId !== 'string') {
-      console.error(`❌ Invalid order ID received:`, { order_id, orderId, finalOrderId });
+      console.error(`❌ Invalid order ID received:`, { 
+        order_id, 
+        orderId, 
+        finalOrderId, 
+        requestBody: JSON.stringify(requestBody, null, 2) 
+      });
       throw new Error(`Invalid order ID: ${finalOrderId}`);
     }
     
+    // Validate UUID format (basic check)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(finalOrderId)) {
+      console.error(`❌ Invalid UUID format:`, finalOrderId);
+      throw new Error(`Invalid UUID format: ${finalOrderId}`);
+    }
+    
     console.log(`🔄 Processing ZMA order ${finalOrderId}${retryAttempt ? ' (retry)' : ''}`);
-    console.log(`🔍 Request body:`, JSON.stringify(requestBody, null, 2));
 
     // If orderId is provided without products, fetch order details from database
     if (finalOrderId && !products) {

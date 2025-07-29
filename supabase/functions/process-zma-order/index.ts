@@ -52,6 +52,12 @@ serve(async (req) => {
     
     console.log(`🔄 Processing ZMA order ${finalOrderId}${retryAttempt ? ' (retry)' : ''}`);
 
+    // Initialize variables
+    let order_id = finalOrderId;
+    let finalProducts = products;
+    let finalShippingAddress = shipping_address;
+    let zmaAccount = null;
+
     // If orderId is provided without products, fetch order details from database
     if (finalOrderId && !products) {
       const { data: orderData, error: orderError } = await supabase
@@ -78,13 +84,100 @@ serve(async (req) => {
         throw new Error('Order not found');
       }
 
-      // Use order data from database
-      var order_id = finalOrderId;
-      
+      console.log(`📋 Order data retrieved:`, {
+        id: orderData.id,
+        status: orderData.status,
+        zma_order_id: orderData.zma_order_id,
+        hasExistingZmaId: !!orderData.zma_order_id
+      });
+
+      // Get ZMA account first for potential retry operations
+      const { data: zmaAccountData, error: accountError } = await supabase
+        .from('zma_accounts')
+        .select('*')
+        .eq('is_default', true)
+        .eq('account_status', 'active')
+        .maybeSingle();
+
+      if (accountError) {
+        console.error(`❌ Error fetching ZMA account:`, accountError);
+        throw new Error(`Database error: ${accountError.message}`);
+      }
+
+      if (!zmaAccountData) {
+        console.error(`❌ No active ZMA account found`);
+        throw new Error('No active ZMA account available');
+      }
+
+      zmaAccount = zmaAccountData;
+      console.log(`📱 Using ZMA account: ${zmaAccount.account_name}`);
+
+      // Check if this is a true retry (order already has ZMA order ID) vs reprocessing
+      if (retryAttempt && orderData.zma_order_id) {
+        console.log(`🔄 True retry detected - using Zinc retry API for ZMA order: ${orderData.zma_order_id}`);
+        
+        // For true retries, use Zinc's retry API endpoint
+        const retryResponse = await fetch(`https://api.zinc.io/v1/orders/${orderData.zma_order_id}/retry`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${btoa(zmaAccount.api_key + ':')}`
+          }
+        });
+
+        const retryResult = await retryResponse.json();
+        console.log(`🔄 Zinc retry API response:`, JSON.stringify(retryResult, null, 2));
+
+        if (!retryResponse.ok) {
+          console.error(`❌ Zinc retry failed:`, retryResult);
+          
+          await supabase
+            .from('orders')
+            .update({
+              status: 'failed',
+              notes: `Zinc retry failed: ${retryResult.message || 'Unknown error'}`
+            })
+            .eq('id', finalOrderId);
+
+          throw new Error(`Zinc retry failed: ${retryResult.message || 'Unknown error'}`);
+        }
+
+        // Update order with retry response
+        const { error: retryUpdateError } = await supabase
+          .from('orders')
+          .update({
+            status: 'processing',
+            zinc_status: 'retried',
+            notes: `Order retried successfully. New request ID: ${retryResult.request_id}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', finalOrderId);
+
+        if (retryUpdateError) {
+          console.error(`❌ Failed to update order after retry:`, retryUpdateError);
+        }
+
+        console.log(`✅ Order ${finalOrderId} retried successfully. New request ID: ${retryResult.request_id}`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            request_id: retryResult.request_id,
+            message: 'Order retried successfully via Zinc retry API',
+            retry: true
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+      }
+
+      console.log(`🆕 ${retryAttempt ? 'Reprocessing order without external ID' : 'Processing new order'}`);
+
       // Handle both new format (order_items) and legacy format (products in order)
       if (orderData.order_items && orderData.order_items.length > 0) {
         // New format: separate order_items table
-        var products = orderData.order_items.map((item: any) => ({
+        finalProducts = orderData.order_items.map((item: any) => ({
           product_id: item.product_id,
           quantity: item.quantity,
           max_price: item.unit_price
@@ -92,7 +185,7 @@ serve(async (req) => {
       } else if (orderData.products && Array.isArray(orderData.products)) {
         // Legacy format: products stored directly in orders table
         console.log(`📦 Using legacy order format for order ${finalOrderId}`);
-        var products = orderData.products.map((item: any) => ({
+        finalProducts = orderData.products.map((item: any) => ({
           product_id: item.product_id || item.id,
           quantity: item.quantity || 1,
           max_price: item.price || item.unit_price || item.max_price
@@ -102,30 +195,31 @@ serve(async (req) => {
         throw new Error('No product data found in order');
       }
       
-      var shipping_address = orderData.shipping_info;
-    } else {
-      var order_id = finalOrderId;
+      finalShippingAddress = orderData.shipping_info;
     }
 
-    // Get default ZMA account
-    const { data: zmaAccount, error: accountError } = await supabase
-      .from('zma_accounts')
-      .select('*')
-      .eq('is_default', true)
-      .eq('account_status', 'active')
-      .maybeSingle();
-
-    if (accountError) {
-      console.error(`❌ Error fetching ZMA account:`, accountError);
-      throw new Error(`Database error: ${accountError.message}`);
-    }
-
+    // Get ZMA account if not already fetched
     if (!zmaAccount) {
-      console.error(`❌ No active ZMA account found`);
-      throw new Error('No active ZMA account available');
-    }
+      const { data: zmaAccountData, error: accountError } = await supabase
+        .from('zma_accounts')
+        .select('*')
+        .eq('is_default', true)
+        .eq('account_status', 'active')
+        .maybeSingle();
 
-    console.log(`📱 Using ZMA account: ${zmaAccount.account_name}`);
+      if (accountError) {
+        console.error(`❌ Error fetching ZMA account:`, accountError);
+        throw new Error(`Database error: ${accountError.message}`);
+      }
+
+      if (!zmaAccountData) {
+        console.error(`❌ No active ZMA account found`);
+        throw new Error('No active ZMA account available');
+      }
+
+      zmaAccount = zmaAccountData;
+      console.log(`📱 Using ZMA account: ${zmaAccount.account_name}`);
+    }
 
     // Update order with ZMA method
     const { error: updateError } = await supabase
@@ -144,28 +238,28 @@ serve(async (req) => {
 
     // Debug: Log the data we're working with
     console.log(`🔍 Order ID: ${order_id}`);
-    console.log(`🔍 Products:`, JSON.stringify(products, null, 2));
-    console.log(`🔍 Shipping address:`, JSON.stringify(shipping_address, null, 2));
+    console.log(`🔍 Products:`, JSON.stringify(finalProducts, null, 2));
+    console.log(`🔍 Shipping address:`, JSON.stringify(finalShippingAddress, null, 2));
 
     // Process order through PriceYak API (ZMA)
     const zmaOrderRequest = {
-      products: products.map((product: any) => ({
+      products: finalProducts.map((product: any) => ({
         product_id: product.product_id,
         quantity: product.quantity,
         max_price: product.max_price
       })),
       shipping_address: {
-        first_name: shipping_address.first_name || shipping_address.name?.split(' ')[0] || 'Unknown',
-        last_name: shipping_address.last_name || shipping_address.name?.split(' ').slice(1).join(' ') || 'Unknown',
-        address_line1: shipping_address.address_line1 || shipping_address.address,
-        address_line2: shipping_address.address_line2 || shipping_address.addressLine2 || '',
-        zip_code: shipping_address.zip_code || shipping_address.zipCode,
-        city: shipping_address.city,
-        state: shipping_address.state,
-        country: shipping_address.country
+        first_name: finalShippingAddress.first_name || finalShippingAddress.name?.split(' ')[0] || 'Unknown',
+        last_name: finalShippingAddress.last_name || finalShippingAddress.name?.split(' ').slice(1).join(' ') || 'Unknown',
+        address_line1: finalShippingAddress.address_line1 || finalShippingAddress.address,
+        address_line2: finalShippingAddress.address_line2 || finalShippingAddress.addressLine2 || '',
+        zip_code: finalShippingAddress.zip_code || finalShippingAddress.zipCode,
+        city: finalShippingAddress.city,
+        state: finalShippingAddress.state,
+        country: finalShippingAddress.country
       },
       retailer: 'amazon',
-      max_price: products.reduce((sum: number, p: any) => sum + (p.max_price * p.quantity), 0)
+      max_price: finalProducts.reduce((sum: number, p: any) => sum + (p.max_price * p.quantity), 0)
     };
 
     console.log(`🛒 ZMA order request:`, JSON.stringify(zmaOrderRequest, null, 2));

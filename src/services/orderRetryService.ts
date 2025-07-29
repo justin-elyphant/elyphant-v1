@@ -80,21 +80,25 @@ export const retryOrderWithBillingInfo = async (
     if (data.success) {
       console.log('✅ Order retry successful:', data);
       
+      // Determine the type of operation that was performed
+      const operationType = data.retry ? 'retried via API' : 'reprocessed as new order';
+      const externalOrderId = data.request_id || data.zincOrderId || data.zma_order_id;
+      
       // Log the successful retry
       await supabase
         .from('order_notes')
         .insert({
           order_id: orderId,
           admin_user_id: (await supabase.auth.getUser()).data.user?.id,
-          note_content: `Order successfully retried with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} Order ID: ${data.zincOrderId || data.zma_order_id}`,
+          note_content: `Order successfully ${operationType} with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} ${data.retry ? 'Request' : 'Order'} ID: ${externalOrderId}`,
           note_type: 'retry',
           is_internal: false
         });
 
       return {
         success: true,
-        message: `Order successfully retried and resubmitted to ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'}`,
-        zincOrderId: data.zincOrderId,
+        message: `Order successfully ${operationType} to ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'}`,
+        zincOrderId: data.zincOrderId || data.request_id,
         zmaOrderId: data.zma_order_id
       };
     } else {

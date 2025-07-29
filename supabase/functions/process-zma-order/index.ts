@@ -150,7 +150,7 @@ serve(async (req) => {
             notes: `Order retried successfully. New request ID: ${retryResult.request_id}`,
             updated_at: new Date().toISOString()
           })
-          .eq('id', finalOrderId);
+          .eq('id', finalOrderId); // Use finalOrderId instead of order_id to ensure it's valid
 
         if (retryUpdateError) {
           console.error(`❌ Failed to update order after retry:`, retryUpdateError);
@@ -221,7 +221,7 @@ serve(async (req) => {
       console.log(`📱 Using ZMA account: ${zmaAccount.account_name}`);
     }
 
-    // Update order with ZMA method
+    // Update order with ZMA method - use finalOrderId for consistency
     const { error: updateError } = await supabase
       .from('orders')
       .update({
@@ -229,7 +229,7 @@ serve(async (req) => {
         zma_account_used: zmaAccount.account_name,
         status: 'processing'
       })
-      .eq('id', order_id);
+      .eq('id', finalOrderId);
 
     if (updateError) {
       console.error(`❌ Failed to update order:`, updateError);
@@ -237,7 +237,7 @@ serve(async (req) => {
     }
 
     // Debug: Log the data we're working with
-    console.log(`🔍 Order ID: ${order_id}`);
+    console.log(`🔍 Order ID: ${finalOrderId}`);
     console.log(`🔍 Products:`, JSON.stringify(finalProducts, null, 2));
     console.log(`🔍 Shipping address:`, JSON.stringify(finalShippingAddress, null, 2));
 
@@ -287,7 +287,7 @@ serve(async (req) => {
           status: 'failed',
           notes: `ZMA processing failed: ${zmaResult.message || 'Unknown error'}`
         })
-        .eq('id', order_id);
+        .eq('id', finalOrderId);
 
       throw new Error(`ZMA order failed: ${zmaResult.message || 'Unknown error'}`);
     }
@@ -301,13 +301,13 @@ serve(async (req) => {
         zinc_status: 'placed',
         notes: `ZMA order placed successfully. ZMA Order ID: ${zmaResult.id}`
       })
-      .eq('id', order_id);
+      .eq('id', finalOrderId);
 
     if (finalUpdateError) {
       console.error(`❌ Failed to update order with ZMA details:`, finalUpdateError);
     }
 
-    console.log(`✅ ZMA order ${order_id} processed successfully. ZMA Order ID: ${zmaResult.id}`);
+    console.log(`✅ ZMA order ${finalOrderId} processed successfully. ZMA Order ID: ${zmaResult.id}`);
 
     return new Response(
       JSON.stringify({

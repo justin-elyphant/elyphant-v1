@@ -84,16 +84,23 @@ export const retryOrderWithBillingInfo = async (
       const operationType = data.retry ? 'retried via API' : 'reprocessed as new order';
       const externalOrderId = data.request_id || data.zincOrderId || data.zma_order_id;
       
-      // Log the successful retry
-      await supabase
-        .from('order_notes')
-        .insert({
-          order_id: orderId,
-          admin_user_id: (await supabase.auth.getUser()).data.user?.id,
-          note_content: `Order successfully ${operationType} with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} ${data.retry ? 'Request' : 'Order'} ID: ${externalOrderId}`,
-          note_type: 'retry',
-          is_internal: false
-        });
+      // Log the successful retry with proper UUID validation
+      const currentUser = await supabase.auth.getUser();
+      const userId = currentUser.data.user?.id;
+      
+      if (userId && orderId) {
+        await supabase
+          .from('order_notes')
+          .insert({
+            order_id: orderId, // Ensure this is the validated UUID from parameter
+            admin_user_id: userId,
+            note_content: `Order successfully ${operationType} with billing info. Cardholder: ${billingInfo.cardholderName}. ${orderMethod === 'zma' ? 'ZMA' : 'Zinc'} ${data.retry ? 'Request' : 'Order'} ID: ${externalOrderId}`,
+            note_type: 'retry',
+            is_internal: false
+          });
+      } else {
+        console.warn('⚠️ Unable to log order note - missing user ID or order ID', { userId, orderId });
+      }
 
       return {
         success: true,

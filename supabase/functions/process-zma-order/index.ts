@@ -101,44 +101,70 @@ serve(async (req) => {
     let billingInfo = null;
     if (orderData.billing_info && typeof orderData.billing_info === 'object') {
       billingInfo = orderData.billing_info;
+      console.log('📄 Found billing info:', JSON.stringify(billingInfo, null, 2));
+    } else {
+      console.log('⚠️ No billing info found in order data');
     }
     
     // Prepare shipping address
+    if (!orderData.shipping_info) {
+      throw new Error('Missing shipping information in order');
+    }
+    
     const shippingAddress = {
-      first_name: orderData.shipping_info.name.split(' ')[0] || 'Customer',
-      last_name: orderData.shipping_info.name.split(' ').slice(1).join(' ') || 'Name',
-      address_line1: orderData.shipping_info.address,
+      first_name: orderData.shipping_info.name?.split(' ')[0] || 'Customer',
+      last_name: orderData.shipping_info.name?.split(' ').slice(1).join(' ') || 'Name',
+      address_line1: orderData.shipping_info.address || '',
       address_line2: orderData.shipping_info.addressLine2 || '',
-      zip_code: orderData.shipping_info.zipCode,
-      city: orderData.shipping_info.city,
-      state: orderData.shipping_info.state,
-      country: orderData.shipping_info.country === 'United States' ? 'US' : orderData.shipping_info.country,
-      phone_number: '5551234567' // Default phone for now
+      zip_code: orderData.shipping_info.zipCode || '',
+      city: orderData.shipping_info.city || '',
+      state: orderData.shipping_info.state || '',
+      country: orderData.shipping_info.country === 'United States' ? 'US' : (orderData.shipping_info.country || 'US'),
+      phone_number: orderData.shipping_info.phone || '5551234567' // Use order phone or default
     };
     
     // Prepare billing address - use billing info if available, otherwise fallback to shipping
-    const billingAddress = billingInfo && billingInfo.billingAddress ? {
-      first_name: billingInfo.billingAddress.name.split(' ')[0] || billingInfo.cardholderName.split(' ')[0] || shippingAddress.first_name,
-      last_name: billingInfo.billingAddress.name.split(' ').slice(1).join(' ') || billingInfo.cardholderName.split(' ').slice(1).join(' ') || shippingAddress.last_name,
-      address_line1: billingInfo.billingAddress.address || shippingAddress.address_line1,
-      address_line2: '',
-      zip_code: billingInfo.billingAddress.zipCode || shippingAddress.zip_code,
-      city: billingInfo.billingAddress.city || shippingAddress.city,
-      state: billingInfo.billingAddress.state || shippingAddress.state,
-      country: billingInfo.billingAddress.country || shippingAddress.country,
-      phone_number: shippingAddress.phone_number
-    } : {
-      // Fallback to shipping address if no billing info
-      first_name: shippingAddress.first_name,
-      last_name: shippingAddress.last_name,
-      address_line1: shippingAddress.address_line1,
-      address_line2: shippingAddress.address_line2,
-      zip_code: shippingAddress.zip_code,
-      city: shippingAddress.city,
-      state: shippingAddress.state,
-      country: shippingAddress.country,
-      phone_number: shippingAddress.phone_number
-    };
+    let billingAddress;
+    if (billingInfo && billingInfo.billingAddress) {
+      // Use the provided billing address
+      billingAddress = {
+        first_name: billingInfo.billingAddress.name?.split(' ')[0] || billingInfo.cardholderName?.split(' ')[0] || shippingAddress.first_name,
+        last_name: billingInfo.billingAddress.name?.split(' ').slice(1).join(' ') || billingInfo.cardholderName?.split(' ').slice(1).join(' ') || shippingAddress.last_name,
+        address_line1: billingInfo.billingAddress.address || shippingAddress.address_line1,
+        address_line2: '',
+        zip_code: billingInfo.billingAddress.zipCode || shippingAddress.zip_code,
+        city: billingInfo.billingAddress.city || shippingAddress.city,
+        state: billingInfo.billingAddress.state || shippingAddress.state,
+        country: billingInfo.billingAddress.country || shippingAddress.country,
+        phone_number: shippingAddress.phone_number
+      };
+    } else if (billingInfo && billingInfo.cardholderName) {
+      // Use cardholder name with shipping address
+      billingAddress = {
+        first_name: billingInfo.cardholderName.split(' ')[0] || shippingAddress.first_name,
+        last_name: billingInfo.cardholderName.split(' ').slice(1).join(' ') || shippingAddress.last_name,
+        address_line1: shippingAddress.address_line1,
+        address_line2: shippingAddress.address_line2,
+        zip_code: shippingAddress.zip_code,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        country: shippingAddress.country,
+        phone_number: shippingAddress.phone_number
+      };
+    } else {
+      // Fallback to shipping address only
+      billingAddress = {
+        first_name: shippingAddress.first_name,
+        last_name: shippingAddress.last_name,
+        address_line1: shippingAddress.address_line1,
+        address_line2: shippingAddress.address_line2,
+        zip_code: shippingAddress.zip_code,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        country: shippingAddress.country,
+        phone_number: shippingAddress.phone_number
+      };
+    }
     
     // Validate required fields before sending to Zinc
     const requiredShippingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];

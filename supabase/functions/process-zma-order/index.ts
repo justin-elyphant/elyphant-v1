@@ -80,16 +80,17 @@ serve(async (req) => {
 
     // Step 5: Get ZMA credentials
     console.log('📥 Step 5: Getting ZMA credentials...');
-    const { data: zmaCredentials, error: credError } = await supabase
-      .from('elyphant_amazon_credentials')
+    const { data: zmaAccount, error: credError } = await supabase
+      .from('zma_accounts')
       .select('*')
+      .eq('is_default', true)
       .eq('is_active', true)
       .limit(1)
       .single();
 
-    if (credError || !zmaCredentials) {
+    if (credError || !zmaAccount) {
       console.error('❌ ZMA credentials error:', credError);
-      throw new Error('No active ZMA credentials found');
+      throw new Error('No active default ZMA account found');
     }
 
     console.log('✅ ZMA credentials retrieved');
@@ -208,15 +209,11 @@ serve(async (req) => {
       },
       is_gift: orderData.is_gift || false,
       gift_message: orderData.gift_message || '',
-      retailer_credentials: {
-        email: zmaCredentials.email,
-        password: zmaCredentials.encrypted_password,
-        totp_2fa_key: zmaCredentials.totp_2fa_key || undefined
-      },
       client_notes: {
         our_internal_order_id: orderData.order_number,
         supabase_order_id: orderId,
-        created_via: 'elyphant_zma_system'
+        created_via: 'elyphant_zma_system',
+        zma_account_id: zmaAccount.account_id
       }
     };
     
@@ -228,16 +225,15 @@ serve(async (req) => {
 
     // Step 7: Call Zinc API
     console.log('📥 Step 7: Calling Zinc API...');
-    const zincApiKey = Deno.env.get('ZINC_API_KEY');
-    if (!zincApiKey) {
-      throw new Error('ZINC_API_KEY not configured');
+    if (!zmaAccount.api_key) {
+      throw new Error('ZMA account API key not configured');
     }
 
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(zincApiKey + ':')}`
+        'Authorization': `Basic ${btoa(zmaAccount.api_key + ':')}`
       },
       body: JSON.stringify(zincOrderData)
     });
@@ -284,7 +280,7 @@ serve(async (req) => {
       .update({
         zma_order_id: zincResult.request_id,
         status: 'processing',
-        zma_account_used: zmaCredentials.email,
+        zma_account_used: zmaAccount.account_id,
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
@@ -301,7 +297,7 @@ serve(async (req) => {
       message: 'Order successfully submitted to ZMA/Zinc!',
       orderId: orderId,
       zincRequestId: zincResult.request_id,
-      zmaAccount: zmaCredentials.email,
+      zmaAccount: zmaAccount.account_id,
       debug: {
         step1_parseRequest: '✅ Success',
         step2_supabaseClient: '✅ Success', 

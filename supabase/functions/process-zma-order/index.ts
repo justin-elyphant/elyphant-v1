@@ -96,6 +96,66 @@ serve(async (req) => {
 
     // Step 6: Prepare Zinc API order data
     console.log('📥 Step 6: Preparing Zinc API request...');
+    
+    // Extract billing information
+    let billingInfo = null;
+    if (orderData.billing_info && typeof orderData.billing_info === 'object') {
+      billingInfo = orderData.billing_info;
+    }
+    
+    // Prepare shipping address
+    const shippingAddress = {
+      first_name: orderData.shipping_info.name.split(' ')[0] || 'Customer',
+      last_name: orderData.shipping_info.name.split(' ').slice(1).join(' ') || 'Name',
+      address_line1: orderData.shipping_info.address,
+      address_line2: orderData.shipping_info.addressLine2 || '',
+      zip_code: orderData.shipping_info.zipCode,
+      city: orderData.shipping_info.city,
+      state: orderData.shipping_info.state,
+      country: orderData.shipping_info.country === 'United States' ? 'US' : orderData.shipping_info.country,
+      phone_number: '5551234567' // Default phone for now
+    };
+    
+    // Prepare billing address - use billing info if available, otherwise fallback to shipping
+    const billingAddress = billingInfo && billingInfo.billingAddress ? {
+      first_name: billingInfo.billingAddress.name.split(' ')[0] || billingInfo.cardholderName.split(' ')[0] || shippingAddress.first_name,
+      last_name: billingInfo.billingAddress.name.split(' ').slice(1).join(' ') || billingInfo.cardholderName.split(' ').slice(1).join(' ') || shippingAddress.last_name,
+      address_line1: billingInfo.billingAddress.address || shippingAddress.address_line1,
+      address_line2: '',
+      zip_code: billingInfo.billingAddress.zipCode || shippingAddress.zip_code,
+      city: billingInfo.billingAddress.city || shippingAddress.city,
+      state: billingInfo.billingAddress.state || shippingAddress.state,
+      country: billingInfo.billingAddress.country || shippingAddress.country,
+      phone_number: shippingAddress.phone_number
+    } : {
+      // Fallback to shipping address if no billing info
+      first_name: shippingAddress.first_name,
+      last_name: shippingAddress.last_name,
+      address_line1: shippingAddress.address_line1,
+      address_line2: shippingAddress.address_line2,
+      zip_code: shippingAddress.zip_code,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      country: shippingAddress.country,
+      phone_number: shippingAddress.phone_number
+    };
+    
+    // Validate required fields before sending to Zinc
+    const requiredShippingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];
+    const requiredBillingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];
+    
+    for (const field of requiredShippingFields) {
+      if (!shippingAddress[field]) {
+        throw new Error(`Missing required shipping field: ${field}`);
+      }
+    }
+    
+    for (const field of requiredBillingFields) {
+      if (!billingAddress[field]) {
+        throw new Error(`Missing required billing field: ${field}`);
+      }
+    }
+    
     const zincOrderData = {
       retailer: "amazon",
       products: orderItems.map(item => ({
@@ -103,17 +163,8 @@ serve(async (req) => {
         quantity: item.quantity
       })),
       max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
-      shipping_address: {
-        first_name: orderData.shipping_info.name.split(' ')[0] || 'Customer',
-        last_name: orderData.shipping_info.name.split(' ').slice(1).join(' ') || 'Name',
-        address_line1: orderData.shipping_info.address,
-        address_line2: orderData.shipping_info.addressLine2 || '',
-        zip_code: orderData.shipping_info.zipCode,
-        city: orderData.shipping_info.city,
-        state: orderData.shipping_info.state,
-        country: orderData.shipping_info.country === 'United States' ? 'US' : orderData.shipping_info.country,
-        phone_number: '5551234567' // Default phone for now
-      },
+      shipping_address: shippingAddress,
+      billing_address: billingAddress,
       is_gift: orderData.is_gift || false,
       gift_message: orderData.gift_message || '',
       retailer_credentials: {
@@ -127,6 +178,10 @@ serve(async (req) => {
         created_via: 'elyphant_zma_system'
       }
     };
+    
+    console.log('✅ Zinc order data prepared with billing address');
+    console.log('📄 Shipping Address:', JSON.stringify(shippingAddress, null, 2));
+    console.log('📄 Billing Address:', JSON.stringify(billingAddress, null, 2));
 
     console.log('✅ Zinc order data prepared');
 
@@ -149,12 +204,39 @@ serve(async (req) => {
     const zincResult = await zincResponse.json();
     console.log('📤 Zinc API response:', JSON.stringify(zincResult));
 
-    if (!zincResponse.ok) {
-      console.error('❌ Zinc API error:', zincResult);
-      throw new Error(`Zinc API error: ${zincResult.message || 'Unknown error'}`);
+    // Check for Zinc API errors (both HTTP status and response type)
+    const isZincError = !zincResponse.ok || 
+                       (zincResult._type && zincResult._type === 'error') ||
+                       (zincResult.code && zincResult.code.includes('invalid')) ||
+                       zincResult.error;
+
+    if (isZincError) {
+      console.error('❌ Zinc API rejected the order:', zincResult);
+      
+      // Update order status to failed with error details
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'failed',
+          zma_error: JSON.stringify(zincResult),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        console.error('❌ Failed to update order status to failed:', updateError);
+      }
+
+      throw new Error(`Zinc API rejected order: ${zincResult.message || zincResult.data?.validator_errors?.[0]?.message || 'Unknown validation error'}`);
     }
 
-    // Step 8: Update order with Zinc request ID
+    // Only proceed if Zinc actually accepted the order
+    if (!zincResult.request_id) {
+      console.error('❌ Zinc API response missing request_id:', zincResult);
+      throw new Error('Zinc API response missing request_id - order may not have been accepted');
+    }
+
+    // Step 8: Update order with Zinc request ID (only on success)
     console.log('📥 Step 8: Updating order with Zinc data...');
     const { error: updateError } = await supabase
       .from('orders')

@@ -159,6 +159,65 @@ const ZincOrderDebugger = () => {
     }
   };
 
+  const retryFailedOrder = async () => {
+    if (!orderRequestId.trim()) {
+      toast("Please enter an order request ID");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      console.log(`🔄 Retrying failed order: ${orderRequestId}`);
+      
+      // Clear failed zma_order_id to allow retry
+      const { error: clearError } = await supabase
+        .from('orders')
+        .update({
+          zma_order_id: null,
+          zma_error: null,
+          status: 'pending'
+        })
+        .eq('id', orderRequestId);
+        
+      if (clearError) {
+        throw new Error(`Failed to clear order for retry: ${clearError.message}`);
+      }
+      
+      // Call the ZMA processing function
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
+        body: {
+          orderId: orderRequestId,
+          isTestMode: false,
+          debugMode: true,
+          retryAttempt: true
+        }
+      });
+
+      if (error) {
+        throw new Error(`Retry failed: ${error.message}`);
+      }
+
+      setDebugLogs(`Retry Result:\n${JSON.stringify(data, null, 2)}`);
+      
+      if (data.success) {
+        toast("Order retry successful! Check Zinc dashboard.");
+        // Refresh status after retry
+        await checkOrderStatus();
+      } else {
+        toast(`Retry failed: ${data.error}`);
+      }
+      
+    } catch (error) {
+      console.error('💥 Order retry error:', error);
+      setDebugLogs(`Retry Error: ${error.message}`);
+      
+      toast(`Retry Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Input Section */}
@@ -188,11 +247,10 @@ const ZincOrderDebugger = () => {
             </Select>
           </div>
           
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button 
               onClick={checkOrderStatus} 
               disabled={loading}
-              className="flex-1"
             >
               {loading ? 'Checking...' : 'Check Status'}
             </Button>
@@ -201,9 +259,16 @@ const ZincOrderDebugger = () => {
               onClick={manualVerifyOrder} 
               disabled={loading}
               variant="outline"
-              className="flex-1"
             >
               {loading ? 'Verifying...' : 'Manual Verify'}
+            </Button>
+            
+            <Button 
+              onClick={retryFailedOrder} 
+              disabled={loading}
+              variant="destructive"
+            >
+              {loading ? 'Retrying...' : 'Retry Order'}
             </Button>
           </div>
         </CardContent>

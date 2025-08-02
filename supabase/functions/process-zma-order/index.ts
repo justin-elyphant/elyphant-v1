@@ -5,6 +5,203 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ZMA Security Validation Functions
+async function performZmaSecurityValidation(context, supabase) {
+  const result = {
+    passed: true,
+    blocked: false,
+    warnings: [],
+    errors: [],
+    metadata: {}
+  };
+
+  try {
+    console.log('🔍 Running rate limit check...');
+    // 1. Rate Limiting Check
+    const { data: canOrder } = await supabase
+      .rpc('check_zma_order_rate_limit', { user_uuid: context.userId });
+    
+    if (!canOrder) {
+      result.blocked = true;
+      result.passed = false;
+      result.errors.push('Rate limit exceeded');
+      
+      await logZmaSecurityEvent('rate_limit_exceeded', {
+        userId: context.userId,
+        orderId: context.orderId
+      }, 'warning', supabase);
+    }
+
+    console.log('🔍 Running cost limit check...');
+    // 2. Cost Limit Check
+    const { data: costData } = await supabase
+      .from('zma_cost_tracking')
+      .select('daily_total, monthly_total')
+      .eq('user_id', context.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const dailySpent = costData?.daily_total || 0;
+    const monthlySpent = costData?.monthly_total || 0;
+    const dailyLimit = 500;
+    const monthlyLimit = 2000;
+    const orderAmount = context.orderData.total_amount;
+    
+    if ((dailySpent + orderAmount) > dailyLimit || (monthlySpent + orderAmount) > monthlyLimit) {
+      result.blocked = true;
+      result.passed = false;
+      result.errors.push('Cost limit exceeded');
+      
+      await logZmaSecurityEvent('cost_limit_exceeded', {
+        userId: context.userId,
+        orderId: context.orderId,
+        orderAmount,
+        dailySpent,
+        monthlySpent
+      }, 'critical', supabase);
+    }
+
+    console.log('🔍 Running order validation...');
+    // 3. Order Validation (duplicates, suspicious patterns)
+    const orderHash = btoa(JSON.stringify({
+      products: context.orderData.products?.map(p => ({ id: p.product_id, quantity: p.quantity })),
+      shipping: context.orderData.shipping_info,
+      amount: context.orderData.total_amount
+    }));
+
+    const { data: validationResult } = await supabase
+      .rpc('validate_zma_order', {
+        user_uuid: context.userId,
+        order_hash_param: orderHash,
+        order_amount: context.orderData.total_amount
+      });
+
+    if (!validationResult?.is_valid) {
+      if (validationResult?.is_suspicious_pattern) {
+        result.blocked = true;
+        result.passed = false;
+        result.errors.push('Suspicious order pattern detected');
+      } else if (validationResult?.is_duplicate) {
+        result.warnings.push('Duplicate order detected');
+      }
+      
+      await logZmaSecurityEvent('validation_failed', {
+        userId: context.userId,
+        orderId: context.orderId,
+        validationData: validationResult
+      }, validationResult?.is_suspicious_pattern ? 'critical' : 'warning', supabase);
+    }
+
+    console.log('🔍 Running retry abuse check...');
+    // 4. Retry Abuse Check
+    if (context.isRetry) {
+      const { data: rateLimitData } = await supabase
+        .from('zma_order_rate_limits')
+        .select('consecutive_failures')
+        .eq('user_id', context.userId)
+        .maybeSingle();
+
+      const consecutiveFailures = rateLimitData?.consecutive_failures || 0;
+      const retryCount = context.retryCount || 0;
+      
+      if (retryCount > 3 || consecutiveFailures > 5) {
+        result.blocked = true;
+        result.passed = false;
+        result.errors.push('Retry abuse detected');
+        
+        await logZmaSecurityEvent('retry_abuse', {
+          userId: context.userId,
+          orderId: context.orderId,
+          retryCount,
+          consecutiveFailures
+        }, 'critical', supabase);
+      }
+    }
+
+  } catch (error) {
+    console.error('Security validation error:', error);
+    result.warnings.push('Security check system error');
+  }
+
+  return result;
+}
+
+async function logZmaSecurityEvent(eventType, eventData, severity, supabase) {
+  try {
+    await supabase
+      .from('zma_security_events')
+      .insert({
+        user_id: eventData.userId,
+        order_id: eventData.orderId || null,
+        event_type: eventType,
+        event_data: eventData,
+        severity
+      });
+
+    console.warn(`ZMA Security Event [${severity.toUpperCase()}]: ${eventType}`, eventData);
+  } catch (error) {
+    console.error('Failed to log ZMA security event:', error);
+  }
+}
+
+async function trackZmaOrderSuccess(userId, orderId, cost, supabase) {
+  try {
+    // Track the cost
+    await supabase.rpc('track_zma_cost', {
+      user_uuid: userId,
+      order_uuid: orderId,
+      cost,
+      cost_type_param: 'order'
+    });
+
+    // Reset consecutive failures on success
+    await supabase
+      .from('zma_order_rate_limits')
+      .update({ 
+        consecutive_failures: 0, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('user_id', userId);
+
+  } catch (error) {
+    console.error('Failed to track ZMA order success:', error);
+  }
+}
+
+async function trackZmaOrderFailure(userId, orderId, errorType, errorDetails, supabase) {
+  try {
+    // Increment consecutive failures
+    const { data: currentData } = await supabase
+      .from('zma_order_rate_limits')
+      .select('consecutive_failures')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const newCount = (currentData?.consecutive_failures || 0) + 1;
+    
+    await supabase
+      .from('zma_order_rate_limits')
+      .update({ 
+        consecutive_failures: newCount, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('user_id', userId);
+
+    // Log security event
+    await logZmaSecurityEvent('order_failure', {
+      userId,
+      orderId,
+      errorType,
+      errorDetails,
+      consecutiveFailures: newCount
+    }, newCount > 3 ? 'warning' : 'info', supabase);
+
+  } catch (error) {
+    console.error('Failed to track ZMA order failure:', error);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     console.log('✅ CORS preflight handled');
@@ -78,7 +275,53 @@ serve(async (req) => {
 
     console.log(`✅ Found ${orderItems.length} order items`);
 
-    // Step 5: Get ZMA credentials
+    // Step 5: ZMA Security Validation
+    console.log('🛡️ Step 5: Running ZMA security checks...');
+    
+    // Perform comprehensive security validation
+    const securityCheckResult = await performZmaSecurityValidation({
+      userId: orderData.user_id,
+      orderId: orderId,
+      orderData: {
+        ...orderData,
+        products: orderItems,
+        total_amount: orderData.total_amount
+      },
+      isRetry: retryAttempt || false,
+      retryCount: orderData.retry_count || 0
+    }, supabase);
+
+    if (securityCheckResult.blocked) {
+      console.error('🚨 Security check failed - order blocked:', securityCheckResult.errors);
+      
+      // Update order status to blocked
+      await supabase
+        .from('orders')
+        .update({
+          status: 'blocked',
+          zinc_status: 'security_blocked',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Order blocked by security checks',
+        details: securityCheckResult.errors,
+        blocked: true
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (securityCheckResult.warnings.length > 0) {
+      console.warn('⚠️ Security warnings detected:', securityCheckResult.warnings);
+    }
+
+    console.log('✅ Security checks passed');
+
+    // Step 6: Get ZMA credentials
     console.log('📥 Step 5: Getting ZMA credentials...');
     const { data: zmaAccount, error: credError } = await supabase
       .from('zma_accounts')
@@ -282,6 +525,9 @@ serve(async (req) => {
       throw new Error(`Failed to update order: ${updateError.message}`);
     }
 
+    // Track successful order for security metrics
+    await trackZmaOrderSuccess(orderData.user_id, orderId, orderData.total_amount, supabase);
+    
     console.log('✅ Order successfully submitted to Zinc and updated');
     
     return new Response(JSON.stringify({
@@ -309,6 +555,30 @@ serve(async (req) => {
   } catch (error) {
     console.error('🚨 ZMA Debug Error:', error);
     console.error('🚨 Error stack:', error.stack);
+    
+    // Track failure for security metrics (if we have order data)
+    try {
+      const orderId = req.url.includes('orderId') ? new URLSearchParams(req.url.split('?')[1])?.get('orderId') : null;
+      if (orderId) {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.45.0');
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('user_id')
+          .eq('id', orderId)
+          .single();
+        
+        if (orderData?.user_id) {
+          await trackZmaOrderFailure(orderData.user_id, orderId, 'processing_error', error.message, supabase);
+        }
+      }
+    } catch (trackingError) {
+      console.error('Failed to track order failure:', trackingError);
+    }
     
     return new Response(JSON.stringify({
       success: false,

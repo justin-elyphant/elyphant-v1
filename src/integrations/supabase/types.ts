@@ -3107,6 +3107,138 @@ export type Database = {
         }
         Relationships: []
       }
+      zma_cost_tracking: {
+        Row: {
+          cost_amount: number
+          cost_type: string
+          created_at: string | null
+          daily_total: number | null
+          id: string
+          monthly_total: number | null
+          order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_amount: number
+          cost_type?: string
+          created_at?: string | null
+          daily_total?: number | null
+          id?: string
+          monthly_total?: number | null
+          order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_amount?: number
+          cost_type?: string
+          created_at?: string | null
+          daily_total?: number | null
+          id?: string
+          monthly_total?: number | null
+          order_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zma_order_rate_limits: {
+        Row: {
+          consecutive_failures: number | null
+          created_at: string | null
+          is_rate_limited: boolean | null
+          last_order_date: string | null
+          last_order_time: string | null
+          orders_this_hour: number | null
+          orders_today: number | null
+          rate_limit_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consecutive_failures?: number | null
+          created_at?: string | null
+          is_rate_limited?: boolean | null
+          last_order_date?: string | null
+          last_order_time?: string | null
+          orders_this_hour?: number | null
+          orders_today?: number | null
+          rate_limit_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consecutive_failures?: number | null
+          created_at?: string | null
+          is_rate_limited?: boolean | null
+          last_order_date?: string | null
+          last_order_time?: string | null
+          orders_this_hour?: number | null
+          orders_today?: number | null
+          rate_limit_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zma_order_validation_cache: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          order_amount: number
+          order_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_amount: number
+          order_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_amount?: number
+          order_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zma_security_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          order_id: string | null
+          resolved_at: string | null
+          severity: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          order_id?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3136,7 +3268,15 @@ export type Database = {
         Args: { sender_uuid: string }
         Returns: boolean
       }
+      check_zma_order_rate_limit: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       cleanup_failed_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_zma_validation_cache: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
@@ -3200,6 +3340,23 @@ export type Database = {
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
+      }
+      track_zma_cost: {
+        Args: {
+          user_uuid: string
+          order_uuid: string
+          cost: number
+          cost_type_param?: string
+        }
+        Returns: undefined
+      }
+      validate_zma_order: {
+        Args: {
+          user_uuid: string
+          order_hash_param: string
+          order_amount: number
+        }
+        Returns: Json
       }
     }
     Enums: {

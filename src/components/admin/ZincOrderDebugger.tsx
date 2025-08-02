@@ -331,6 +331,17 @@ const ZincOrderDebugger = () => {
                 <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{statusResult.error}</p>
               </div>
             )}
+            
+            {statusResult.debugInfo?.zma_error && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">ZMA/Zinc Error Details</label>
+                <pre className="text-xs text-destructive bg-destructive/10 p-2 rounded overflow-auto max-h-32">
+                  {typeof statusResult.debugInfo.zma_error === 'string' 
+                    ? statusResult.debugInfo.zma_error 
+                    : JSON.stringify(statusResult.debugInfo.zma_error, null, 2)}
+                </pre>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

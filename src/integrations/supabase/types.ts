@@ -1928,6 +1928,7 @@ export type Database = {
           zinc_order_id: string | null
           zinc_status: string | null
           zma_account_used: string | null
+          zma_error: string | null
           zma_order_id: string | null
         }
         Insert: {
@@ -1962,6 +1963,7 @@ export type Database = {
           zinc_order_id?: string | null
           zinc_status?: string | null
           zma_account_used?: string | null
+          zma_error?: string | null
           zma_order_id?: string | null
         }
         Update: {
@@ -1996,6 +1998,7 @@ export type Database = {
           zinc_order_id?: string | null
           zinc_status?: string | null
           zma_account_used?: string | null
+          zma_error?: string | null
           zma_order_id?: string | null
         }
         Relationships: [

@@ -166,18 +166,25 @@ serve(async (req) => {
       };
     }
     
+    console.log('🔍 Billing address constructed:', JSON.stringify(billingAddress, null, 2));
+    
     // Validate required fields before sending to Zinc
     const requiredShippingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];
     const requiredBillingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];
     
+    console.log('🔍 Validating shipping address fields...');
     for (const field of requiredShippingFields) {
       if (!shippingAddress[field]) {
+        console.error(`❌ Missing shipping field: ${field}`, shippingAddress);
         throw new Error(`Missing required shipping field: ${field}`);
       }
     }
+    console.log('✅ Shipping address validation passed');
     
+    console.log('🔍 Validating billing address fields...');
     for (const field of requiredBillingFields) {
       if (!billingAddress[field]) {
+        console.error(`❌ Missing billing field: ${field}`, billingAddress);
         throw new Error(`Missing required billing field: ${field}`);
       }
     }

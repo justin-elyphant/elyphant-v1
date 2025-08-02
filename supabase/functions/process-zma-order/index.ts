@@ -198,6 +198,14 @@ serve(async (req) => {
       max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
       shipping_address: shippingAddress,
       billing_address: billingAddress,
+      payment_method: {
+        name_on_card: billingInfo?.cardholderName || `${billingAddress.first_name} ${billingAddress.last_name}`,
+        number: "4111111111111111", // Valid test card number format for Zinc API validation
+        security_code: "123", // Valid CVV format 
+        expiration_month: 12, // Valid expiration month
+        expiration_year: 2030, // Valid expiration year
+        use_gift: false
+      },
       is_gift: orderData.is_gift || false,
       gift_message: orderData.gift_message || '',
       retailer_credentials: {

@@ -25,14 +25,14 @@ serve(async (req) => {
       throw new Error(`Invalid JSON: ${parseError.message}`);
     }
 
-    const { orderId, cardholderName } = body;
+    const { orderId, isTestMode, debugMode, retryAttempt } = body;
     
     if (!orderId) {
       console.log('❌ No order ID provided');
       throw new Error('Order ID is required');
     }
 
-    console.log(`🔍 Processing order: ${orderId}, cardholder: ${cardholderName}`);
+    console.log(`🔍 Processing order: ${orderId}, test mode: ${isTestMode}, debug: ${debugMode}, retry: ${retryAttempt}`);
 
     // Step 2: Create Supabase client
     console.log('📥 Step 2: Creating Supabase client...');

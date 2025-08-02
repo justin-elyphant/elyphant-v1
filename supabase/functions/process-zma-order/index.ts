@@ -84,7 +84,7 @@ serve(async (req) => {
       .from('zma_accounts')
       .select('*')
       .eq('is_default', true)
-      .eq('is_active', true)
+      .eq('account_status', 'active')
       .limit(1)
       .single();
 

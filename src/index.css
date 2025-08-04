@@ -26,6 +26,29 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 221.2 83.2% 53.3%;
   --radius: 0.5rem;
+  
+  /* Enhanced order status colors */
+  --status-pending: 35 91% 65%;
+  --status-processing: 221.2 83.2% 53.3%;
+  --status-shipped: 142 76% 36%;
+  --status-delivered: 142 76% 36%;
+  --status-cancelled: 0 84.2% 60.2%;
+  --status-failed: 0 84.2% 60.2%;
+  
+  /* Progress stepper colors */
+  --stepper-active: 221.2 83.2% 53.3%;
+  --stepper-completed: 142 76% 36%;
+  --stepper-inactive: 215.4 16.3% 46.9%;
+  
+  /* Enhanced gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(221.2 83.2% 58.3%));
+  --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
+  --gradient-subtle: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
+  
+  /* Enhanced shadows */
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-floating: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .dark {
@@ -110,5 +133,96 @@ body {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+
+  /* Enhanced order page components */
+  .order-progress-stepper {
+    position: relative;
+  }
+
+  .order-progress-stepper::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: hsl(var(--border));
+    z-index: 1;
+  }
+
+  .order-progress-step {
+    position: relative;
+    z-index: 2;
+    background: hsl(var(--background));
+  }
+
+  .floating-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: hsl(var(--background));
+    box-shadow: var(--shadow-floating);
+    border-top: 1px solid hsl(var(--border));
+    z-index: 50;
+  }
+
+  .gradient-card {
+    background: var(--gradient-subtle);
+  }
+
+  .status-badge-enhanced {
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    border: none;
+  }
+
+  .tracking-progress {
+    background: var(--gradient-success);
+    border-radius: 9999px;
+    height: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .order-timeline {
+    position: relative;
+  }
+
+  .order-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: hsl(var(--border));
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-left: 60px;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    left: 11px;
+    top: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--background));
+    border: 3px solid hsl(var(--stepper-inactive));
+    z-index: 2;
+  }
+
+  .timeline-marker.completed {
+    border-color: hsl(var(--stepper-completed));
+    background: hsl(var(--stepper-completed));
+  }
+
+  .timeline-marker.active {
+    border-color: hsl(var(--stepper-active));
+    background: hsl(var(--stepper-active));
   }
 }

@@ -11,10 +11,14 @@ import { toast } from "sonner";
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
 import OrderSummaryCard from "@/components/orders/OrderSummaryCard";
 import ShippingInfoCard from "@/components/orders/ShippingInfoCard";
-import OrderItemsTable from "@/components/orders/OrderItemsTable";
+import EnhancedOrderItemsTable from "@/components/orders/EnhancedOrderItemsTable";
 import OrderNotesCard from "@/components/orders/OrderNotesCard";
 import OrderNotFound from "@/components/orders/OrderNotFound";
 import OrderSkeleton from "@/components/orders/OrderSkeleton";
+import OrderProgressStepper from "@/components/orders/OrderProgressStepper";
+import TrackingInfoCard from "@/components/orders/TrackingInfoCard";
+import MobileActionBar from "@/components/orders/MobileActionBar";
+import OrderTimeline from "@/components/orders/OrderTimeline";
 import {
   Dialog,
   DialogContent,
@@ -102,6 +106,26 @@ const OrderDetail = () => {
     setVendorMessage("");
   };
 
+  const handleReorder = (item?: any) => {
+    toast.success("Item added to cart", {
+      description: "You can review your cart and checkout when ready."
+    });
+  };
+
+  const handleReview = (item?: any) => {
+    toast.info("Review feature coming soon", {
+      description: "We'll notify you when this feature is available."
+    });
+  };
+
+  const handleTrackPackage = () => {
+    // Scroll to tracking card or open external tracking
+    const trackingCard = document.getElementById('tracking-card');
+    if (trackingCard) {
+      trackingCard.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="container max-w-6xl mx-auto py-8 px-4 flex justify-center">
@@ -123,7 +147,7 @@ const OrderDetail = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
+    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 md:pb-8">
       <div className="mb-6">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -138,7 +162,7 @@ const OrderDetail = () => {
             Placed on {new Date(order.date).toLocaleDateString()} • <OrderStatusBadge status={order.status} />
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden md:flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -170,7 +194,7 @@ const OrderDetail = () => {
           </Dialog>
           
           {order.status === "shipped" && (
-            <Button>
+            <Button onClick={handleTrackPackage}>
               <MapPin className="h-4 w-4 mr-2" />
               Track Package
             </Button>
@@ -178,14 +202,43 @@ const OrderDetail = () => {
         </div>
       </div>
 
-      {/* Order Summary and Shipping Information */}
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
-        <OrderSummaryCard order={order} />
-        <ShippingInfoCard order={order} />
-      </div>
+      {/* Order Progress Stepper */}
+      <OrderProgressStepper 
+        status={order.status} 
+        trackingNumber={order.tracking_number}
+        estimatedDelivery="Tomorrow by 8 PM"
+      />
 
-      {/* Order Items */}
-      <OrderItemsTable order={order} />
+      {/* Order Summary and Details Grid */}
+      <div className="grid gap-6 lg:grid-cols-3 mb-6">
+        <div className="lg:col-span-2 space-y-6">
+          <OrderSummaryCard order={order} />
+          
+          {/* Enhanced Order Items */}
+          <EnhancedOrderItemsTable 
+            order={order} 
+            onReorder={handleReorder}
+            onReview={handleReview}
+          />
+        </div>
+        
+        <div className="space-y-6">
+          <ShippingInfoCard order={order} />
+          
+          {/* Tracking Information */}
+          {order.tracking_number && (
+            <div id="tracking-card">
+              <TrackingInfoCard order={order} />
+            </div>
+          )}
+          
+          {/* Order Timeline */}
+          <OrderTimeline 
+            orderStatus={order.status}
+            orderDate={order.date}
+          />
+        </div>
+      </div>
       
       {/* Order Notes - For internal staff only */}
       <div className="mt-6">
@@ -199,6 +252,19 @@ const OrderDetail = () => {
           </Button>
         )}
       </div>
+
+      {/* Mobile Action Bar */}
+      <MobileActionBar 
+        order={order}
+        onTrack={handleTrackPackage}
+        onMessage={() => {
+          // Open message dialog programmatically on mobile
+          const trigger = document.querySelector('[data-state="closed"]') as HTMLElement;
+          trigger?.click();
+        }}
+        onReorder={() => handleReorder()}
+        onReview={() => handleReview()}
+      />
     </div>
   );
 };

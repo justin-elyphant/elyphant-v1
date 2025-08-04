@@ -24,6 +24,44 @@ const OrderStatusBadge = ({ status }: OrderStatusBadgeProps) => {
     }
   };
 
+  const getCustomStyle = () => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return { 
+          backgroundColor: "hsl(var(--status-delivered))", 
+          color: "white",
+          border: "none"
+        };
+      case "shipped":
+        return { 
+          backgroundColor: "hsl(var(--status-shipped))", 
+          color: "white",
+          border: "none"
+        };
+      case "processing":
+        return { 
+          backgroundColor: "hsl(var(--status-processing))", 
+          color: "white",
+          border: "none"
+        };
+      case "pending":
+        return { 
+          backgroundColor: "hsl(var(--status-pending))", 
+          color: "white",
+          border: "none"
+        };
+      case "cancelled":
+      case "failed":
+        return { 
+          backgroundColor: "hsl(var(--status-cancelled))", 
+          color: "white",
+          border: "none"
+        };
+      default:
+        return {};
+    }
+  };
+
   const getIcon = () => {
     switch (status.toLowerCase()) {
       case "delivered":
@@ -41,7 +79,11 @@ const OrderStatusBadge = ({ status }: OrderStatusBadgeProps) => {
   };
 
   return (
-    <Badge variant={getVariant()} className="flex items-center">
+    <Badge 
+      variant={getVariant()} 
+      className="flex items-center"
+      style={getCustomStyle()}
+    >
       {getIcon()}
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </Badge>

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
+import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 
 interface EnhancedOrderItemsTableProps {
   order: ZincOrder;
@@ -29,6 +30,9 @@ const EnhancedOrderItemsTable = ({
   onReorder, 
   onReview 
 }: EnhancedOrderItemsTableProps) => {
+  // Get pricing breakdown for consistent display (handles legacy orders)
+  const pricingBreakdown = getOrderPricingBreakdown(order);
+
   const handleReorder = (item: any) => {
     onReorder?.(item);
   };
@@ -131,34 +135,32 @@ const EnhancedOrderItemsTable = ({
             <div className="space-y-2">
               <div className="flex justify-between py-1">
                 <span className="text-muted-foreground">Subtotal:</span>
-                <span>${(order.subtotal || order.total)?.toFixed(2)}</span>
+                <span>${pricingBreakdown.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-muted-foreground">Shipping:</span>
-                <span className={order.shipping_cost > 0 ? "" : "text-green-600"}>
-                  {order.shipping_cost > 0 ? `$${order.shipping_cost.toFixed(2)}` : "Free"}
+                <span className={pricingBreakdown.shipping_cost > 0 ? "" : "text-green-600"}>
+                  {pricingBreakdown.shipping_cost > 0 ? `$${pricingBreakdown.shipping_cost.toFixed(2)}` : "Free"}
                 </span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-muted-foreground">Tax:</span>
-                <span>${(order.tax_amount || 0).toFixed(2)}</span>
+                <span>${pricingBreakdown.tax_amount.toFixed(2)}</span>
               </div>
-              {order.gifting_fee > 0 && (
-                <div className="flex justify-between py-1">
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground">{order.gifting_fee_name}:</span>
-                    <div className="group relative">
-                      <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        ⓘ
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-md shadow-md border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 w-64">
-                        {order.gifting_fee_description}
-                      </div>
+              <div className="flex justify-between py-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">{pricingBreakdown.gifting_fee_name}:</span>
+                  <div className="group relative">
+                    <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      ⓘ
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-xs rounded-md shadow-md border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 w-64">
+                      {pricingBreakdown.gifting_fee_description}
                     </div>
                   </div>
-                  <span>${order.gifting_fee.toFixed(2)}</span>
                 </div>
-              )}
+                <span>${pricingBreakdown.gifting_fee.toFixed(2)}</span>
+              </div>
               <div className="border-t pt-2">
                 <div className="flex justify-between py-1 text-lg font-bold">
                   <span>Total:</span>

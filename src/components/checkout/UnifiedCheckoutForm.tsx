@@ -191,12 +191,14 @@ const UnifiedCheckoutForm: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // CRITICAL: Order creation with all necessary data
+      // CRITICAL: Order creation with all necessary data including gifting fee details
       const orderData = {
         cartItems,
         subtotal,
         shippingCost,
         giftingFee,
+        giftingFeeName,
+        giftingFeeDescription,
         taxAmount,
         totalAmount,
         shippingInfo: checkoutData.shippingInfo,

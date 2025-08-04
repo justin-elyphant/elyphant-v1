@@ -508,17 +508,27 @@ class UnifiedPaymentService {
     try {
       this.isProcessing = true;
 
-      // Calculate order totals
+      // Calculate order totals including gifting fee
       const subtotal = this.getCartTotal();
       const shippingCost = this.calculateShippingCost(shippingInfo);
       const taxAmount = this.calculateTax(subtotal);
-      const totalAmount = subtotal + shippingCost + taxAmount;
+      
+      // Calculate gifting fee using pricing settings (temporary fallback for UnifiedPaymentService)
+      // TODO: Integrate with usePricingSettings hook properly
+      const giftingFee = subtotal * 0.15; // 15% default gifting fee
+      const giftingFeeName = 'Elyphant Gifting Fee';
+      const giftingFeeDescription = 'Platform service fee for streamlined delivery and customer support';
+      
+      const totalAmount = subtotal + shippingCost + taxAmount + giftingFee;
 
       // Prepare order data
       const orderData: CreateOrderData = {
         cartItems: this.cartItems,
         subtotal,
         shippingCost,
+        giftingFee,
+        giftingFeeName,
+        giftingFeeDescription,
         taxAmount,
         totalAmount,
         shippingInfo,

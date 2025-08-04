@@ -48,6 +48,9 @@ export interface CreateOrderData {
   cartItems: CartItem[];
   subtotal: number;
   shippingCost: number;
+  giftingFee: number;
+  giftingFeeName?: string;
+  giftingFeeDescription?: string;
   taxAmount: number;
   totalAmount: number;
   shippingInfo: ShippingInfo;
@@ -133,7 +136,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Creating order with data:', orderData);
 
-  // CRITICAL: Create the order with proper schema alignment
+  // CRITICAL: Create the order with proper schema alignment including gifting fee
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -141,6 +144,9 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       subtotal: orderData.subtotal,
       shipping_cost: orderData.shippingCost,
       tax_amount: orderData.taxAmount,
+      gifting_fee: orderData.giftingFee,
+      gifting_fee_name: orderData.giftingFeeName || 'Elyphant Gifting Fee',
+      gifting_fee_description: orderData.giftingFeeDescription || 'Platform service fee',
       total_amount: orderData.totalAmount,
       shipping_info: orderData.shippingInfo,
       billing_info: orderData.billingInfo || null,

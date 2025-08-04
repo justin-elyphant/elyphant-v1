@@ -1905,6 +1905,9 @@ export type Database = {
           gift_message: string | null
           gift_options: Json | null
           gift_scheduling_options: Json | null
+          gifting_fee: number | null
+          gifting_fee_description: string | null
+          gifting_fee_name: string | null
           group_gift_project_id: string | null
           has_multiple_recipients: boolean | null
           id: string
@@ -1940,6 +1943,9 @@ export type Database = {
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          gifting_fee?: number | null
+          gifting_fee_description?: string | null
+          gifting_fee_name?: string | null
           group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
           id?: string
@@ -1975,6 +1981,9 @@ export type Database = {
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
+          gifting_fee?: number | null
+          gifting_fee_description?: string | null
+          gifting_fee_name?: string | null
           group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
           id?: string

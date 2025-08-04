@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, ArrowLeft, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 
 // Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
@@ -70,12 +71,21 @@ const OrderDetail = () => {
         }
 
         if (data) {
-          // Transform the data to match the expected format
+          // Get complete pricing breakdown with backward compatibility
+          const pricingBreakdown = getOrderPricingBreakdown(data);
+          
+          // Transform the data to match the expected format with complete pricing breakdown
           const transformedOrder = {
             id: data.id,
             date: data.created_at,
             status: data.status,
             total: data.total_amount,
+            subtotal: pricingBreakdown.subtotal,
+            shipping_cost: pricingBreakdown.shipping_cost,
+            tax_amount: pricingBreakdown.tax_amount,
+            gifting_fee: pricingBreakdown.gifting_fee,
+            gifting_fee_name: pricingBreakdown.gifting_fee_name,
+            gifting_fee_description: pricingBreakdown.gifting_fee_description,
             items: data.order_items || [],
             shipping_info: data.shipping_info || {},
             customerName: data.shipping_info?.name || user?.user_metadata?.name || "Customer",

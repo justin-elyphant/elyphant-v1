@@ -93,11 +93,19 @@ const AddressSection = () => {
   const getVerificationStatus = () => {
     if (!profile?.shipping_address) return null;
     
+    const verified = profile.address_verified || false;
+    const verifiedAt = profile.address_verified_at;
+    const lastUpdated = profile.address_last_updated;
+    
+    // Check if address was updated after verification (needs re-verification)
+    const isOutdated = verified && lastUpdated && verifiedAt && new Date(lastUpdated) > new Date(verifiedAt);
+    
     return {
-      verified: profile.address_verified || false,
+      verified,
       method: profile.address_verification_method || 'pending_verification',
-      verifiedAt: profile.address_verified_at || undefined,
-      lastUpdated: profile.address_last_updated || undefined
+      verifiedAt,
+      lastUpdated,
+      needsVerification: !verified || isOutdated
     };
   };
 
@@ -241,7 +249,7 @@ const AddressSection = () => {
                 </p>
               </div>
               
-              {!verificationStatus.verified && (
+              {verificationStatus.needsVerification && (
                 <Button
                   type="button"
                   variant="outline"

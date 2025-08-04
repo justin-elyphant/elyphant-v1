@@ -55,8 +55,8 @@ class GooglePlacesService {
       return this.loadingPromise;
     }
 
-    if (this.isLoaded || (window as any).google?.maps?.places) {
-      console.log('🏗️ [GooglePlaces] Google Maps already loaded, initializing services...');
+    if (this.isLoaded && this.apiKey && !this.usingMockData && (window as any).google?.maps?.places) {
+      console.log('🏗️ [GooglePlaces] Google Maps already loaded with valid API, initializing services...');
       this.initializeServices();
       return;
     }
@@ -81,6 +81,30 @@ class GooglePlacesService {
             console.log('🏗️ [GooglePlaces] ✅ API key retrieved successfully');
             console.log('🏗️ [GooglePlaces] 🔍 API Key starts with:', this.apiKey.substring(0, 20) + '...');
             this.usingMockData = false;
+            
+            // Test the API key with a simple request before proceeding
+            console.log('🏗️ [GooglePlaces] Testing API key validity...');
+            try {
+              const testResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=test&key=${this.apiKey}`);
+              const testData = await testResponse.json();
+              if (testData.status === 'REQUEST_DENIED' || testData.status === 'INVALID_REQUEST') {
+                console.error('🏗️ [GooglePlaces] ❌ API key test failed:', testData.status, testData.error_message);
+                console.warn('🏗️ [GooglePlaces] ⚠️ API key invalid - switching to mock data mode');
+                this.usingMockData = true;
+                this.isLoaded = true;
+                resolve();
+                return;
+              } else {
+                console.log('🏗️ [GooglePlaces] ✅ API key test passed');
+              }
+            } catch (error) {
+              console.error('🏗️ [GooglePlaces] ❌ API key test error:', error);
+              console.warn('🏗️ [GooglePlaces] ⚠️ API key test failed - switching to mock data mode');
+              this.usingMockData = true;
+              this.isLoaded = true;
+              resolve();
+              return;
+            }
           }
         }
 

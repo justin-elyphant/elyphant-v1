@@ -204,9 +204,9 @@ const Cart = () => {
                           <div className="flex-shrink-0">
                             <img 
                               src={(() => {
-                                const imageUrl = item.product.image || item.product.images?.[0] || "/placeholder.svg";
+                                // Prioritize images array first, then fallback to single image property
+                                const imageUrl = (item.product.images?.length > 0 ? item.product.images[0] : item.product.image) || "/placeholder.svg";
                                 console.log(`[CART IMAGE] Product: ${item.product.title}, Image URL: ${imageUrl}`);
-                                console.log(`[CART IMAGE] Available images:`, item.product.images);
                                 return imageUrl;
                               })()} 
                               alt={item.product.name || item.product.title}

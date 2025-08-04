@@ -61,7 +61,7 @@ class GooglePlacesService {
       return;
     }
 
-    this.loadingPromise = new Promise(async (resolve, reject) => {
+    this.loadingPromise = new Promise(async (resolve) => {
       try {
         console.log('🏗️ [GooglePlaces] Starting Google Maps API loading process...');
         
@@ -81,63 +81,36 @@ class GooglePlacesService {
             console.log('🏗️ [GooglePlaces] ✅ API key retrieved successfully');
             console.log('🏗️ [GooglePlaces] 🔍 API Key starts with:', this.apiKey.substring(0, 20) + '...');
             this.usingMockData = false;
-            
-            // Test the API key with a simple request before proceeding
-            console.log('🏗️ [GooglePlaces] Testing API key validity...');
-            try {
-              const testResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=test&key=${this.apiKey}`);
-              const testData = await testResponse.json();
-              if (testData.status === 'REQUEST_DENIED' || testData.status === 'INVALID_REQUEST') {
-                console.error('🏗️ [GooglePlaces] ❌ API key test failed:', testData.status, testData.error_message);
-                console.warn('🏗️ [GooglePlaces] ⚠️ API key invalid - switching to mock data mode');
-                this.usingMockData = true;
-                this.isLoaded = true;
-                resolve();
-                return;
-              } else {
-                console.log('🏗️ [GooglePlaces] ✅ API key test passed');
-              }
-            } catch (error) {
-              console.error('🏗️ [GooglePlaces] ❌ API key test error:', error);
-              console.warn('🏗️ [GooglePlaces] ⚠️ API key test failed - switching to mock data mode');
-              this.usingMockData = true;
-              this.isLoaded = true;
-              resolve();
-              return;
-            }
           }
         }
 
-        // Load Google Maps script
+        // Check if Google Maps is already loaded
+        if ((window as any).google?.maps?.places) {
+          console.log('🏗️ [GooglePlaces] Google Maps already available, initializing services...');
+          this.isLoaded = true;
+          this.usingMockData = false;
+          this.initializeServices();
+          resolve();
+          return;
+        }
+
+        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
+
+        // Load Google Maps script with a unique callback name
+        const callbackName = 'initGooglePlaces_' + Date.now();
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=initGooglePlaces`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=${callbackName}`;
         script.async = true;
         script.defer = true;
         
         // Create global callback for Google Maps
-        (window as any).initGooglePlaces = () => {
+        (window as any)[callbackName] = () => {
           console.log('🏗️ [GooglePlaces] ✅ Google Maps script loaded successfully via callback');
           this.isLoaded = true;
           this.usingMockData = false;
           this.initializeServices();
-          delete (window as any).initGooglePlaces; // Clean up
+          delete (window as any)[callbackName]; // Clean up
           resolve();
-        };
-        
-        script.onload = () => {
-          console.log('🏗️ [GooglePlaces] ✅ Google Maps script onload fired');
-          // Callback should handle initialization, but fallback if needed
-          if ((window as any).google?.maps?.places) {
-            setTimeout(() => {
-              if (!this.autocompleteService) {
-                console.log('🏗️ [GooglePlaces] Initializing services from onload fallback');
-                this.isLoaded = true;
-                this.usingMockData = false;
-                this.initializeServices();
-                resolve();
-              }
-            }, 100);
-          }
         };
         
         script.onerror = (error) => {
@@ -145,8 +118,20 @@ class GooglePlacesService {
           console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to script load failure');
           this.usingMockData = true;
           this.isLoaded = true;
+          delete (window as any)[callbackName]; // Clean up
           resolve(); // Don't reject, use mock data
         };
+        
+        // Timeout fallback
+        setTimeout(() => {
+          if (!this.isLoaded) {
+            console.warn('🏗️ [GooglePlaces] ⚠️ Script loading timeout, switching to mock data mode');
+            this.usingMockData = true;
+            this.isLoaded = true;
+            delete (window as any)[callbackName]; // Clean up
+            resolve();
+          }
+        }, 10000); // 10 second timeout
         
         console.log('🏗️ [GooglePlaces] Adding script to document head...');
         document.head.appendChild(script);

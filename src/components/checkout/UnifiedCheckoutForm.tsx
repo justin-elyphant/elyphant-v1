@@ -59,6 +59,7 @@ import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSec
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import { createOrder } from '@/services/orderService';
 import { supabase } from '@/integrations/supabase/client';
+import { usePricingSettings } from '@/hooks/usePricingSettings';
 
 /*
  * 🎯 CORE CHECKOUT COMPONENT
@@ -91,6 +92,9 @@ const UnifiedCheckoutForm: React.FC = () => {
     saveCurrentAddressToProfile
   } = useCheckoutState();
 
+  // Pricing settings for dynamic gifting fee calculation
+  const { calculatePriceBreakdown } = usePricingSettings();
+
   // Payment processing state
   const [clientSecret, setClientSecret] = useState<string>('');
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
@@ -100,7 +104,13 @@ const UnifiedCheckoutForm: React.FC = () => {
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
-  const giftingFee = 0; // Can be calculated based on business logic
+  
+  // Dynamic gifting fee calculation using pricing settings
+  const priceBreakdown = calculatePriceBreakdown(subtotal, shippingCost);
+  const giftingFee = priceBreakdown.giftingFee;
+  const giftingFeeName = priceBreakdown.giftingFeeName;
+  const giftingFeeDescription = priceBreakdown.giftingFeeDescription;
+  
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
@@ -173,6 +183,7 @@ const UnifiedCheckoutForm: React.FC = () => {
         cartItems,
         subtotal,
         shippingCost,
+        giftingFee,
         taxAmount,
         totalAmount,
         shippingInfo: checkoutData.shippingInfo,
@@ -340,6 +351,8 @@ const UnifiedCheckoutForm: React.FC = () => {
             subtotal={subtotal}
             shippingCost={shippingCost}
             giftingFee={giftingFee}
+            giftingFeeName={giftingFeeName}
+            giftingFeeDescription={giftingFeeDescription}
             taxAmount={taxAmount}
             totalAmount={totalAmount}
           />

@@ -1,0 +1,23 @@
+-- Update the address timestamp trigger to only reset verification when content actually changes
+CREATE OR REPLACE FUNCTION public.update_address_timestamp()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+BEGIN
+  -- Only update if shipping_address content actually changed (not just a re-save of same data)
+  IF OLD.shipping_address IS DISTINCT FROM NEW.shipping_address THEN
+    NEW.address_last_updated = now();
+    -- Reset verification status when address content changes
+    NEW.address_verified = false;
+    NEW.address_verification_method = 'pending_verification';
+  ELSE
+    -- Keep existing values if address didn't actually change
+    NEW.address_last_updated = OLD.address_last_updated;
+    NEW.address_verified = OLD.address_verified;
+    NEW.address_verification_method = OLD.address_verification_method;
+  END IF;
+  RETURN NEW;
+END;
+$function$;

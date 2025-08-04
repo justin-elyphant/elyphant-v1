@@ -261,17 +261,17 @@ const UnifiedCheckoutForm: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
         <p className="text-muted-foreground">Review your order and complete payment</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Checkout Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Shipping Review Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* Main Checkout Content - Mobile: Stack vertically */}
+        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+          {/* Shipping Review Section - Mobile: Collapsible */}
           <CheckoutShippingReview shippingCost={shippingCost} />
 
-          {/* Payment Section */}
+          {/* Payment Section - Mobile: Full width */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -310,9 +310,10 @@ const UnifiedCheckoutForm: React.FC = () => {
           </Card>
         </div>
 
-        {/* Order Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <CheckoutOrderSummary
+        {/* Order Summary Sidebar - Mobile: Full width, stacked */}
+        <div className="lg:col-span-1 order-first lg:order-last">
+          <div className="lg:sticky lg:top-6">
+            <CheckoutOrderSummary
             items={cartItems}
             subtotal={subtotal}
             shippingCost={shippingCost}
@@ -321,7 +322,8 @@ const UnifiedCheckoutForm: React.FC = () => {
             giftingFeeDescription={giftingFeeDescription}
             taxAmount={taxAmount}
             totalAmount={totalAmount}
-          />
+            />
+          </div>
         </div>
       </div>
     </div>

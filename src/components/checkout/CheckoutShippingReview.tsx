@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, Package, User, AlertCircle, Edit } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { MapPin, Users, Package, User, AlertCircle, Edit, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
+import QuickEditModal from './QuickEditModal';
 
 interface CheckoutShippingReviewProps {
   shippingCost: number;
@@ -16,9 +18,10 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   shippingCost
 }) => {
   const navigate = useNavigate();
-  const { deliveryGroups, getUnassignedItems } = useCart();
+  const { deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
   const { profile } = useProfile();
   const unassignedItems = getUnassignedItems();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Check if user has a complete address
   const shippingAddress = profile?.shipping_address;
@@ -34,6 +37,33 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
 
   const totalDestinations = deliveryGroups.length + (unassignedItems.length > 0 ? 1 : 0);
 
+  // Quick edit handlers
+  const handleAddressEdit = async (groupId: string, newAddress: any) => {
+    // Update the delivery group's shipping address
+    const group = deliveryGroups.find(g => g.id === groupId);
+    if (group) {
+      // Update each item in the group with the new address
+      group.items.forEach(productId => {
+        updateRecipientAssignment(productId, {
+          shippingAddress: newAddress
+        });
+      });
+    }
+  };
+
+  const handleMessageEdit = async (groupId: string, newMessage: string) => {
+    // Update the delivery group's gift message
+    const group = deliveryGroups.find(g => g.id === groupId);
+    if (group) {
+      // Update each item in the group with the new message
+      group.items.forEach(productId => {
+        updateRecipientAssignment(productId, {
+          giftMessage: newMessage
+        });
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -45,18 +75,34 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               {totalDestinations} destination{totalDestinations > 1 ? 's' : ''}
             </Badge>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/cart')}
-            className="flex items-center gap-1"
-          >
-            <Edit className="h-4 w-4" />
-            Edit in Cart
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Mobile: Collapsible toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="sm:hidden"
+            >
+              {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/cart')}
+              className="flex items-center gap-1"
+            >
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit in Cart</span>
+              <span className="sm:hidden">Edit</span>
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      
+      {/* Mobile: Collapsible content */}
+      <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
         {hasIncompleteShipping && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -84,25 +130,69 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-medium text-green-800">{group.connectionName}</p>
-                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
-                    <Package className="h-3 w-3 mr-1" />
-                    {group.items.length} item{group.items.length > 1 ? 's' : ''}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                      <Package className="h-3 w-3 mr-1" />
+                      {group.items.length} item{group.items.length > 1 ? 's' : ''}
+                    </Badge>
+                  </div>
                 </div>
                 
                 {group.shippingAddress && (
-                  <div className="text-sm text-green-700">
-                    <p className="font-medium">{group.shippingAddress.name}</p>
-                    <p>{group.shippingAddress.address}</p>
-                    <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                  <div className="text-sm text-green-700 mb-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium">{group.shippingAddress.name}</p>
+                        <p>{group.shippingAddress.address}</p>
+                        <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                      </div>
+                      <QuickEditModal
+                        type="address"
+                        deliveryGroupId={group.id}
+                        currentData={group.shippingAddress}
+                        onSave={(newAddress) => handleAddressEdit(group.id, newAddress)}
+                      >
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-2">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      </QuickEditModal>
+                    </div>
                   </div>
                 )}
                 
                 {group.giftMessage && (
                   <div className="mt-2 p-2 bg-white rounded border border-green-200">
-                    <p className="text-xs text-green-600 font-medium mb-1">Gift Message:</p>
-                    <p className="text-sm text-green-800 italic">"{group.giftMessage}"</p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-xs text-green-600 font-medium mb-1">Gift Message:</p>
+                        <p className="text-sm text-green-800 italic">"{group.giftMessage}"</p>
+                      </div>
+                      <QuickEditModal
+                        type="message"
+                        deliveryGroupId={group.id}
+                        currentData={{ message: group.giftMessage }}
+                        onSave={(data) => handleMessageEdit(group.id, data.message)}
+                      >
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-2">
+                          <MessageSquare className="h-3 w-3" />
+                        </Button>
+                      </QuickEditModal>
+                    </div>
                   </div>
+                )}
+
+                {!group.giftMessage && (
+                  <QuickEditModal
+                    type="message"
+                    deliveryGroupId={group.id}
+                    currentData={{ message: '' }}
+                    onSave={(data) => handleMessageEdit(group.id, data.message)}
+                  >
+                    <Button variant="ghost" size="sm" className="text-xs text-green-600 mt-1 h-auto p-1">
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      Add gift message
+                    </Button>
+                  </QuickEditModal>
                 )}
               </div>
             </div>
@@ -165,8 +255,10 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
             <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No items to ship</p>
           </div>
-        )}
-      </CardContent>
+          )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 };

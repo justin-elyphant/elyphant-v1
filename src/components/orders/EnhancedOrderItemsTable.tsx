@@ -62,19 +62,22 @@ const EnhancedOrderItemsTable = ({
               <TableRow key={index}>
                 <TableCell>
                   <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                    {(item as any).image_url ? (
+                    {((item as any).product_image || (item as any).image_url || (item as any).image) ? (
                       <img 
-                        src={(item as any).image_url} 
+                        src={(item as any).product_image || (item as any).image_url || (item as any).image} 
                         alt={(item as any).product_name || item.name || "Product"}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
                       />
-                    ) : (
-                      <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
-                        <span className="text-xs text-primary font-medium">
-                          {((item as any).product_name || item.name || "P").charAt(0)}
-                        </span>
-                      </div>
-                    )}
+                    ) : null}
+                    <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                      <span className="text-xs text-primary font-medium">
+                        {((item as any).product_name || item.name || "P").charAt(0)}
+                      </span>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>

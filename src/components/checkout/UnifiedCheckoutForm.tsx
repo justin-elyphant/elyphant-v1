@@ -47,7 +47,7 @@ import { Button } from '@/components/ui/button';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, ShoppingBag, AlertCircle } from 'lucide-react';
+import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -261,8 +261,18 @@ const UnifiedCheckoutForm: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-muted-foreground">Review your order and complete payment</p>
+        <div className="flex items-center gap-3 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/cart')}
+            className="p-1 h-8 w-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
+        </div>
+        <p className="text-muted-foreground ml-11">Review your order and complete payment</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

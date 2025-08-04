@@ -5,18 +5,20 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { MapPin, CheckCircle, AlertCircle, Loader2, Bug } from "lucide-react";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { StandardizedAddress } from "@/services/googlePlacesService";
 import { unifiedLocationService } from "@/services/location/UnifiedLocationService";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { AddressVerificationBadge } from "@/components/ui/AddressVerificationBadge";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AddressSection = () => {
   const form = useFormContext();
   const { profile, updateProfile } = useUnifiedProfile();
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
     // Update all address fields when a place is selected
@@ -90,6 +92,50 @@ const AddressSection = () => {
     }
   };
 
+  const handleTestGooglePlaces = async () => {
+    setIsTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-google-places', {
+        body: { query: '422 Cribbage Lane San Marcos CA' }
+      });
+      
+      if (error) {
+        console.error('Test function error:', error);
+        toast.error('Test failed', { description: error.message });
+        return;
+      }
+      
+      console.log('Google Places API Test Results:', data);
+      
+      if (data.success) {
+        const issues = [];
+        if (data.tests.geocoding.status !== 'OK') {
+          issues.push(`Geocoding: ${data.tests.geocoding.status}`);
+        }
+        if (data.tests.placesAutocomplete.status !== 'OK') {
+          issues.push(`Places Autocomplete: ${data.tests.placesAutocomplete.status}`);
+        }
+        
+        if (issues.length > 0) {
+          toast.error('API Issues Found', { 
+            description: issues.join(', ') + '. Check console for details.' 
+          });
+        } else {
+          toast.success('Google Places API is working!', {
+            description: `Found ${data.tests.placesAutocomplete.predictionsCount} suggestions`
+          });
+        }
+      } else {
+        toast.error('API Test Failed', { description: data.error });
+      }
+    } catch (error) {
+      console.error('Test error:', error);
+      toast.error('Test failed', { description: 'See console for details' });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const getVerificationStatus = () => {
     if (!profile?.shipping_address) return null;
     
@@ -119,16 +165,38 @@ const AddressSection = () => {
             <MapPin className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-medium">My Address</h3>
           </div>
-          {verificationStatus && (
-            <AddressVerificationBadge
-              verified={verificationStatus.verified}
-              verificationMethod={verificationStatus.method}
-              verifiedAt={verificationStatus.verifiedAt}
-              lastUpdated={verificationStatus.lastUpdated}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
               size="sm"
-              showText={false}
-            />
-          )}
+              onClick={handleTestGooglePlaces}
+              disabled={isTesting}
+              className="text-xs"
+            >
+              {isTesting ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Bug className="h-3 w-3 mr-1" />
+                  Test API
+                </>
+              )}
+            </Button>
+            {verificationStatus && (
+              <AddressVerificationBadge
+                verified={verificationStatus.verified}
+                verificationMethod={verificationStatus.method}
+                verifiedAt={verificationStatus.verifiedAt}
+                lastUpdated={verificationStatus.lastUpdated}
+                size="sm"
+                showText={false}
+              />
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

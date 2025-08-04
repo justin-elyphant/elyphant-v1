@@ -115,16 +115,19 @@ export const standardizeProduct = (product: any): any => {
       normalizedPrice = 19.99; // fallback
     }
     
-    console.log(`Price conversion: ${rawPrice} -> ${normalizedPrice}`);
   }
   
   return {
+    // Spread the original product first
+    ...product,
+    
+    // Then set our standardized fields (these will override the spread)
     // Required fields with fallbacks
     product_id: product.product_id || product.id || `product-${Math.random().toString(36).substr(2, 9)}`,
     id: product.id || product.product_id || `product-${Math.random().toString(36).substr(2, 9)}`,
     title: product.title || product.name || "Unnamed Product",
     name: product.name || product.title || "Unnamed Product",
-    price: normalizedPrice,
+    price: normalizedPrice, // This must come AFTER the spread to override
     image: product.image || "/placeholder.svg",
     
     // Optional fields
@@ -156,7 +159,6 @@ export const standardizeProduct = (product: any): any => {
         return product.images.filter(img => img && typeof img === 'string');
       }
       return [product.image || "/placeholder.svg"];
-    })(),
-    ...product
+    })()
   };
 };

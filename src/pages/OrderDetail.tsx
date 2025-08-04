@@ -240,10 +240,6 @@ const OrderDetail = () => {
         </div>
       </div>
       
-      {/* Order Notes - For internal staff only */}
-      <div className="mt-6">
-        <OrderNotesCard orderId={order.id} />
-      </div>
 
       <div className="mt-6 flex justify-end">
         {order.status === "delivered" && (

@@ -203,11 +203,17 @@ const Cart = () => {
                         <div className="flex gap-4">
                           <div className="flex-shrink-0">
                             <img 
-                              src={item.product.image || item.product.images?.[0] || "/placeholder.svg"} 
+                              src={(() => {
+                                const imageUrl = item.product.image || item.product.images?.[0] || "/placeholder.svg";
+                                console.log(`[CART IMAGE] Product: ${item.product.title}, Image URL: ${imageUrl}`);
+                                console.log(`[CART IMAGE] Available images:`, item.product.images);
+                                return imageUrl;
+                              })()} 
                               alt={item.product.name || item.product.title}
                               className="w-20 h-20 object-cover rounded-md bg-gray-100"
                               loading="lazy"
                               onError={(e) => {
+                                console.log(`[CART IMAGE] Image failed to load: ${e.currentTarget.src}`);
                                 e.currentTarget.src = "/placeholder.svg";
                               }}
                             />

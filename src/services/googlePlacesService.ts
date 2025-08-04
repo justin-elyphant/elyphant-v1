@@ -108,20 +108,36 @@ class GooglePlacesService {
           }
         }
 
-        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
-
         // Load Google Maps script
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=initGooglePlaces`;
         script.async = true;
         script.defer = true;
         
-        script.onload = () => {
-          console.log('🏗️ [GooglePlaces] ✅ Google Maps script loaded successfully');
+        // Create global callback for Google Maps
+        (window as any).initGooglePlaces = () => {
+          console.log('🏗️ [GooglePlaces] ✅ Google Maps script loaded successfully via callback');
           this.isLoaded = true;
           this.usingMockData = false;
           this.initializeServices();
+          delete (window as any).initGooglePlaces; // Clean up
           resolve();
+        };
+        
+        script.onload = () => {
+          console.log('🏗️ [GooglePlaces] ✅ Google Maps script onload fired');
+          // Callback should handle initialization, but fallback if needed
+          if ((window as any).google?.maps?.places) {
+            setTimeout(() => {
+              if (!this.autocompleteService) {
+                console.log('🏗️ [GooglePlaces] Initializing services from onload fallback');
+                this.isLoaded = true;
+                this.usingMockData = false;
+                this.initializeServices();
+                resolve();
+              }
+            }, 100);
+          }
         };
         
         script.onerror = (error) => {
@@ -147,25 +163,45 @@ class GooglePlacesService {
   }
 
   private initializeServices(): void {
+    console.log('🏗️ [GooglePlaces] 🔧 Attempting to initialize services...');
     const googleMaps = (window as any).google?.maps?.places;
+    const hasGoogleMaps = !!googleMaps;
+    const hasApiKey = !!this.apiKey;
+    const notUsingMock = !this.usingMockData;
+    
+    console.log('🏗️ [GooglePlaces] 🔍 Service check - Google Maps:', hasGoogleMaps, 'API Key:', hasApiKey, 'Not Mock:', notUsingMock);
+    
     if (googleMaps && this.apiKey && !this.usingMockData) {
       try {
+        console.log('🏗️ [GooglePlaces] 🔧 Creating AutocompleteService...');
         this.autocompleteService = new googleMaps.AutocompleteService();
+        
+        console.log('🏗️ [GooglePlaces] 🔧 Creating PlacesService...');
         // Create a temporary div for PlacesService
         const div = document.createElement('div');
-        const map = new (window as any).google.maps.Map(div);
+        const map = new (window as any).google.maps.Map(div, {
+          center: { lat: 37.7749, lng: -122.4194 },
+          zoom: 10
+        });
         this.placesService = new googleMaps.PlacesService(map);
+        
         console.log('🏗️ [GooglePlaces] ✅ Google Places services initialized successfully');
+        console.log('🏗️ [GooglePlaces] 🔍 AutocompleteService:', !!this.autocompleteService);
+        console.log('🏗️ [GooglePlaces] 🔍 PlacesService:', !!this.placesService);
         this.usingMockData = false;
       } catch (error) {
         console.error('🏗️ [GooglePlaces] ❌ Failed to initialize Google Places services:', error);
         console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to service initialization failure');
         this.usingMockData = true;
+        this.autocompleteService = null;
+        this.placesService = null;
       }
     } else {
       console.warn('🏗️ [GooglePlaces] ⚠️ Google Maps Places API not available or no API key, using mock data');
-      console.log('🏗️ [GooglePlaces] 🔍 Debug - Has Google Maps:', !!googleMaps, 'Has API Key:', !!this.apiKey, 'Using Mock:', this.usingMockData);
+      console.log('🏗️ [GooglePlaces] 🔍 Debug - Has Google Maps:', hasGoogleMaps, 'Has API Key:', hasApiKey, 'Using Mock:', this.usingMockData);
       this.usingMockData = true;
+      this.autocompleteService = null;
+      this.placesService = null;
     }
   }
 

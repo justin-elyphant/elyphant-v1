@@ -27,6 +27,15 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   taxAmount,
   totalAmount
 }) => {
+  // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
+  if (process.env.NODE_ENV === 'development') {
+    if (giftingFee > 0 && giftingFeeName === 'Gifting Fee') {
+      console.warn('⚠️ ORDER SUMMARY: Using default fee name instead of dynamic pricing settings');
+    }
+    if (giftingFee > 0 && !giftingFeeDescription) {
+      console.warn('⚠️ ORDER SUMMARY: Missing fee description - check pricing_settings integration');
+    }
+  }
   return (
     <Card>
       <CardHeader>

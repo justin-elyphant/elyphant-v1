@@ -27,6 +27,7 @@ The following components are **CRITICAL** and should **NEVER** be replaced with 
 - Address service integration
 - Profile context integration
 - Cart context integration
+- **🚨 PRICING INTEGRATION**: `usePricingSettings` hook for dynamic fee calculation
 
 ## 🔧 Common Issues and Solutions
 
@@ -48,6 +49,15 @@ The following components are **CRITICAL** and should **NEVER** be replaced with 
 2. Check RLS policies on orders table
 3. Ensure user authentication
 
+### Issue: Pricing Integration Broken
+**Problem**: Gifting fee shows as $0.00 or pricing settings not loading
+**Solution**:
+1. Verify `usePricingSettings` hook is imported in UnifiedCheckoutForm.tsx
+2. Check `calculatePriceBreakdown()` is being called with correct parameters
+3. Ensure pricing_settings table exists and has active records
+4. Never hardcode `giftingFee = 0` - always use dynamic calculation
+5. Verify props are passed to CheckoutOrderSummary: giftingFeeName, giftingFeeDescription
+
 ## 🚀 Quick Restoration Steps
 
 If the checkout system is accidentally simplified/broken:
@@ -59,6 +69,25 @@ If the checkout system is accidentally simplified/broken:
    git checkout HEAD~1 -- src/components/checkout/PaymentMethodSelector.tsx
    git checkout HEAD~1 -- src/components/marketplace/checkout/useCheckoutState.tsx
    git checkout HEAD~1 -- src/services/orderService.ts
+   ```
+
+2. **Restore Pricing Integration** (if gifting fee = $0.00):
+   ```tsx
+   // In UnifiedCheckoutForm.tsx - REQUIRED IMPORTS
+   import { usePricingSettings } from '@/hooks/usePricingSettings';
+   
+   // REQUIRED HOOK USAGE
+   const { calculatePriceBreakdown } = usePricingSettings();
+   
+   // REQUIRED CALCULATION (NOT HARDCODED)
+   const priceBreakdown = calculatePriceBreakdown(subtotal, shippingCost);
+   const giftingFee = priceBreakdown.giftingFee; // NEVER = 0
+   
+   // REQUIRED PROPS TO SUMMARY
+   <CheckoutOrderSummary 
+     giftingFeeName={priceBreakdown.giftingFeeName}
+     giftingFeeDescription={priceBreakdown.giftingFeeDescription}
+   />
    ```
 
 2. **Verify Dependencies**:

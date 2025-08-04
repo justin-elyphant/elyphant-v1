@@ -105,11 +105,24 @@ const UnifiedCheckoutForm: React.FC = () => {
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingCost = getShippingCost();
   
-  // Dynamic gifting fee calculation using pricing settings
+  // 🚨 CRITICAL: Dynamic gifting fee calculation using pricing settings
+  // ⚠️  NEVER hardcode giftingFee = 0 - this breaks the business model
+  // 🔗 This integrates with Trunkline pricing controls for real-time updates
   const priceBreakdown = calculatePriceBreakdown(subtotal, shippingCost);
   const giftingFee = priceBreakdown.giftingFee;
   const giftingFeeName = priceBreakdown.giftingFeeName;
   const giftingFeeDescription = priceBreakdown.giftingFeeDescription;
+  
+  // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
+  if (process.env.NODE_ENV === 'development') {
+    if (giftingFee === 0 && subtotal > 0) {
+      console.warn('🚨 CHECKOUT WARNING: Gifting fee is $0 but should be calculated from pricing settings!');
+      console.warn('Check: usePricingSettings hook, calculatePriceBreakdown function, pricing_settings table');
+    }
+    if (!giftingFeeName || giftingFeeName === 'Gifting Fee') {
+      console.warn('⚠️ Using default gifting fee name - check pricing_settings.fee_display_name');
+    }
+  }
   
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;

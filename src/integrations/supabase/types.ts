@@ -2259,6 +2259,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_last_updated: string | null
+          address_verification_method: string | null
+          address_verified: boolean | null
+          address_verified_at: string | null
           ai_interaction_data: Json | null
           bio: string | null
           birth_year: number
@@ -2287,6 +2291,10 @@ export type Database = {
           wishlists: Json | null
         }
         Insert: {
+          address_last_updated?: string | null
+          address_verification_method?: string | null
+          address_verified?: boolean | null
+          address_verified_at?: string | null
           ai_interaction_data?: Json | null
           bio?: string | null
           birth_year: number
@@ -2315,6 +2323,10 @@ export type Database = {
           wishlists?: Json | null
         }
         Update: {
+          address_last_updated?: string | null
+          address_verification_method?: string | null
+          address_verified?: boolean | null
+          address_verified_at?: string | null
           ai_interaction_data?: Json | null
           bio?: string | null
           birth_year?: number

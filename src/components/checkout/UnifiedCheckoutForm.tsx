@@ -44,19 +44,18 @@ import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, ShoppingBag, MapPin, Check, AlertCircle } from 'lucide-react';
+import { CreditCard, ShoppingBag, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
 // CRITICAL: These imports are essential for the checkout system
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
-import UnifiedShippingForm from './UnifiedShippingForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
-import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
+import CheckoutShippingReview from './CheckoutShippingReview';
 import { createOrder } from '@/services/orderService';
 import { supabase } from '@/integrations/supabase/client';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
@@ -263,98 +262,50 @@ const UnifiedCheckoutForm: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-muted-foreground">Complete your purchase</p>
+        <p className="text-muted-foreground">Review your order and complete payment</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Checkout Form */}
-        <div className="lg:col-span-2">
+        {/* Main Checkout Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Shipping Review Section */}
+          <CheckoutShippingReview shippingCost={shippingCost} />
+
+          {/* Payment Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Complete Your Order</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* CRITICAL: Tab-based navigation system */}
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="shipping" className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Shipping
-                    {activeTab !== "shipping" && checkoutData.shippingInfo.address && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="payment" className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Payment
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* CRITICAL: Shipping Information Tab */}
-                <TabsContent value="shipping" className="space-y-6">
-                  <div className="space-y-4">
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        All items will be shipped to the address below.
-                      </AlertDescription>
-                    </Alert>
-                    
-                    {/* CRITICAL: Unified shipping form component */}
-                    <UnifiedShippingForm
-                      shippingInfo={checkoutData.shippingInfo}
-                      onUpdate={handleUpdateShippingInfo}
-                      selectedShippingMethod={checkoutData.shippingMethod}
-                      onShippingMethodChange={(method) => {
-                        // Handle shipping method change if needed
-                      }}
-                      shippingOptions={[
-                        { id: 'standard', name: 'Standard Shipping', price: shippingCost, delivery_time: '5-7 business days' }
-                      ]}
-                      isLoadingShipping={false}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={() => handleTabChange('payment')}
-                      disabled={!checkoutData.shippingInfo.address || !checkoutData.shippingInfo.city}
-                    >
-                      Continue to Payment
-                    </Button>
-                  </div>
-                </TabsContent>
-
-                {/* CRITICAL: Payment Tab */}
-                <TabsContent value="payment" className="space-y-6">
-                  {clientSecret ? (
-                    /* CRITICAL: Payment method selector component */
-                    <PaymentMethodSelector
-                      clientSecret={clientSecret}
-                      totalAmount={totalAmount}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                      isProcessingPayment={isProcessingPayment}
-                      onProcessingChange={setIsProcessingPayment}
-                      refreshKey={refreshKey}
-                      onRefreshKeyChange={setRefreshKey}
-                      shippingAddress={{
-                        name: checkoutData.shippingInfo.name,
-                        address: checkoutData.shippingInfo.address,
-                        city: checkoutData.shippingInfo.city,
-                        state: checkoutData.shippingInfo.state,
-                        zipCode: checkoutData.shippingInfo.zipCode,
-                        country: checkoutData.shippingInfo.country
-                      }}
-                    />
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Initializing payment...</p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+              {clientSecret ? (
+                /* CRITICAL: Payment method selector component */
+                <PaymentMethodSelector
+                  clientSecret={clientSecret}
+                  totalAmount={totalAmount}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                  isProcessingPayment={isProcessingPayment}
+                  onProcessingChange={setIsProcessingPayment}
+                  refreshKey={refreshKey}
+                  onRefreshKeyChange={setRefreshKey}
+                  shippingAddress={{
+                    name: checkoutData.shippingInfo.name,
+                    address: checkoutData.shippingInfo.address,
+                    city: checkoutData.shippingInfo.city,
+                    state: checkoutData.shippingInfo.state,
+                    zipCode: checkoutData.shippingInfo.zipCode,
+                    country: checkoutData.shippingInfo.country
+                  }}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Initializing payment...</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

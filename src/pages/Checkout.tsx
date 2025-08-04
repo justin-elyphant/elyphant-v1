@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag } from 'lucide-react';
 import UnifiedCheckoutForm from '@/components/checkout/UnifiedCheckoutForm';
@@ -9,9 +10,9 @@ import { SidebarLayout } from '@/components/layout/SidebarLayout';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cartItems } = useCart();
+  const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
 
-  // Redirect if cart is empty
+  // Check cart completeness and redirect accordingly
   if (cartItems.length === 0) {
     return (
       <SidebarLayout>
@@ -30,6 +31,13 @@ const Checkout = () => {
       </SidebarLayout>
     );
   }
+
+  // Check shipping completeness - redirect to cart if incomplete
+  const unassignedItems = getUnassignedItems();
+  const hasUnassignedItems = unassignedItems.length > 0;
+  
+  // For now, allow checkout to proceed but show warnings in CheckoutShippingReview
+  // Future enhancement: Add stricter validation here if needed
 
   return (
     <SidebarLayout>

@@ -12,6 +12,8 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
 import MultiDestinationSummary from "@/components/cart/MultiDestinationSummary";
+import ItemGiftMessageSection from "@/components/cart/ItemGiftMessageSection";
+import RecipientPackagePreview from "@/components/cart/RecipientPackagePreview";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -190,6 +192,22 @@ const Cart = () => {
                   onAssignAll={handleAssignAllToRecipients}
                   onAssignToMe={handleAssignAllToMe}
                 />
+
+                {/* Recipient Package Previews */}
+                {deliveryGroups.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Package Previews</h3>
+                    <div className="grid gap-4">
+                      {deliveryGroups.map(group => (
+                        <RecipientPackagePreview
+                          key={group.id}
+                          deliveryGroup={group}
+                          cartItems={cartItems}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Cart Items with Item-Level Recipient Assignment */}
                 <div className="space-y-6">
@@ -268,40 +286,61 @@ const Cart = () => {
                           </div>
                         </div>
                         
-                        {/* Recipient Assignment Section */}
-                        <div className="mt-4 pt-4 border-t">
+                        {/* Enhanced Recipient Assignment Section with Gift Messages */}
+                        <div className="mt-4 pt-4 border-t space-y-3">
                           {item.recipientAssignment ? (
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Gift className="h-4 w-4 text-green-600" />
-                                <span className="text-sm font-medium text-green-600">
-                                  Assigned to {item.recipientAssignment.connectionName}
-                                </span>
-                                {item.recipientAssignment.shippingAddress && (
-                                  <span className="text-sm text-muted-foreground">
-                                    • {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
+                            <>
+                              {/* Recipient Info */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Gift className="h-4 w-4 text-green-600" />
+                                  <span className="text-sm font-medium text-green-600">
+                                    Assigned to {item.recipientAssignment.connectionName}
                                   </span>
+                                  {item.recipientAssignment.shippingAddress && (
+                                    <span className="text-sm text-muted-foreground">
+                                      • {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleAssignRecipient(item.product.product_id)}
+                                    className="text-blue-600 hover:text-blue-700"
+                                  >
+                                    Change
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleUnassignRecipient(item.product.product_id)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Item-Level Gift Message Section */}
+                              <ItemGiftMessageSection
+                                item={item}
+                                recipientItems={cartItems.filter(
+                                  cartItem => cartItem.recipientAssignment?.connectionId === item.recipientAssignment?.connectionId
                                 )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAssignRecipient(item.product.product_id)}
-                                  className="text-blue-600 hover:text-blue-700"
-                                >
-                                  Change
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleUnassignRecipient(item.product.product_id)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
+                                onUpdateGiftMessage={(productId, message) => {
+                                  updateRecipientAssignment(productId, { giftMessage: message });
+                                }}
+                                onApplyToAllRecipientItems={(recipientId, message) => {
+                                  cartItems
+                                    .filter(cartItem => cartItem.recipientAssignment?.connectionId === recipientId)
+                                    .forEach(cartItem => {
+                                      updateRecipientAssignment(cartItem.product.product_id, { giftMessage: message });
+                                    });
+                                }}
+                              />
+                            </>
                           ) : (
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">

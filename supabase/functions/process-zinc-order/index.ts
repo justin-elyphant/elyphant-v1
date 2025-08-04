@@ -26,12 +26,15 @@ serve(async (req) => {
 
     console.log(`🚀 Processing Zinc order for order ${orderId}, test mode: ${isTestMode}, debug mode: ${debugMode}`);
 
-    // Get order details from database
+    // Get order details from database with item-level gift messages
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
       .select(`
         *,
-        order_items(*)
+        order_items(
+          *,
+          recipient_gift_message
+        )
       `)
       .eq('id', orderId)
       .single();
@@ -121,7 +124,8 @@ serve(async (req) => {
       retailer: "amazon",
       products: order.order_items.map((item: any) => ({
         product_id: item.product_id,
-        quantity: item.quantity
+        quantity: item.quantity,
+        ...(item.recipient_gift_message && { gift_message: item.recipient_gift_message })
       })),
       shipping_address: {
         first_name: shippingFirstName,

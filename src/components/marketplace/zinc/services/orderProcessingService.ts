@@ -6,10 +6,15 @@ import { toast } from "sonner";
 
 /**
  * Creates a Zinc order request with gift options, delivery scheduling, and shipping method
+ * Supports both order-level and item-level gift messages for the hybrid messaging system
  * Note: Amazon Business credentials are now handled server-side for security
  */
 export const createZincOrderRequest = (
-  products: { product_id: string; quantity: number }[],
+  products: { 
+    product_id: string; 
+    quantity: number; 
+    gift_message?: string; // Item-level gift message support
+  }[],
   shippingAddress: any,
   billingAddress: any,
   paymentMethod: any,
@@ -58,11 +63,29 @@ export const createZincOrderRequest = (
     console.log("Adding shipping method to order:", shippingMethod);
   }
 
-  if (giftOptions.isGift) {
+  // Enhanced gift processing with hybrid messaging support
+  const hasItemGiftMessages = products.some(product => product.gift_message?.trim());
+  const hasOrderGiftMessage = giftOptions.giftMessage?.trim();
+  
+  if (giftOptions.isGift || hasItemGiftMessages) {
     orderRequest.is_gift = true;
     
-    if (giftOptions.giftMessage && giftOptions.giftMessage.trim()) {
+    // Prioritize item-level messages, fallback to order-level message
+    if (hasItemGiftMessages) {
+      // Apply item-level gift messages to products
+      orderRequest.products = products.map(product => ({
+        product_id: product.product_id,
+        quantity: product.quantity,
+        ...(product.gift_message?.trim() && { 
+          gift_message: product.gift_message.substring(0, 255) 
+        })
+      }));
+      
+      console.log('Applied item-level gift messages to Zinc order');
+    } else if (hasOrderGiftMessage) {
+      // Fallback to order-level gift message
       orderRequest.gift_message = giftOptions.giftMessage.substring(0, 255);
+      console.log('Applied order-level gift message to Zinc order');
     }
     
     const deliveryInstructions = [];

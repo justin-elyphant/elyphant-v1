@@ -185,7 +185,8 @@ class UnifiedPaymentService {
         const currentVersion = parseInt(savedVersion || '0');
         
         if (currentVersion < this.CART_VERSION) {
-          console.log(`Migrating cart from version ${currentVersion} to ${this.CART_VERSION}`);
+          console.log(`[CART MIGRATION] Migrating cart from version ${currentVersion} to ${this.CART_VERSION}`);
+          console.log(`[CART MIGRATION] Original cart data:`, cartData);
           cartData = this.migrateCartData(cartData, currentVersion);
           
           // Save migrated cart and update version
@@ -318,12 +319,20 @@ class UnifiedPaymentService {
    */
   async addToCart(productId: string, quantity: number = 1): Promise<void> {
     try {
-      // CRITICAL: Use UnifiedMarketplaceService for product details
-      const product = await unifiedMarketplaceService.getProductDetails(productId);
+      console.log(`[CART DEBUG] Adding product ${productId} to cart`);
       
-      if (!product) {
+      // CRITICAL: Use UnifiedMarketplaceService for product details
+      const rawProduct = await unifiedMarketplaceService.getProductDetails(productId);
+      console.log(`[CART DEBUG] Raw product from service:`, rawProduct);
+      
+      if (!rawProduct) {
         throw new Error('Product not found');
       }
+
+      // Standardize the product to ensure correct pricing
+      const product = standardizeProduct(rawProduct);
+      console.log(`[CART DEBUG] Standardized product:`, product);
+      console.log(`[CART DEBUG] Price conversion: ${rawProduct.price} -> ${product.price}`);
 
       const existingItemIndex = this.cartItems.findIndex(
         item => item.product.product_id === productId
@@ -331,12 +340,14 @@ class UnifiedPaymentService {
 
       if (existingItemIndex >= 0) {
         this.cartItems[existingItemIndex].quantity += quantity;
+        console.log(`[CART DEBUG] Updated existing item quantity`);
       } else {
         this.cartItems.push({
           product,
           quantity,
           recipientAssignment: undefined
         });
+        console.log(`[CART DEBUG] Added new item to cart`);
       }
 
       toast.success('Added to cart', {
@@ -388,8 +399,10 @@ class UnifiedPaymentService {
    * Clear entire cart
    */
   clearCart(): void {
+    console.log(`[CART DEBUG] Clearing cart - current key: ${this.cartKey}`);
     this.cartItems = [];
     localStorage.removeItem(this.cartKey);
+    localStorage.removeItem(`${this.cartKey}_version`); // Also clear version
     toast.success('Cart cleared');
     this.notifyCartChange();
   }

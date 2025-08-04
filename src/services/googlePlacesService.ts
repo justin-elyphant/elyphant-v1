@@ -84,6 +84,15 @@ class GooglePlacesService {
           }
         }
 
+        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
+
+        // Check if script already exists to avoid duplicates
+        const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+        if (existingScript) {
+          console.log('🏗️ [GooglePlaces] Script already exists, removing it first...');
+          existingScript.remove();
+        }
+
         // Check if Google Maps is already loaded
         if ((window as any).google?.maps?.places) {
           console.log('🏗️ [GooglePlaces] Google Maps already available, initializing services...');
@@ -94,14 +103,8 @@ class GooglePlacesService {
           return;
         }
 
-        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
-
-        // Load Google Maps script with a unique callback name
+        // Load Google Maps script with direct callback
         const callbackName = 'initGooglePlaces_' + Date.now();
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=${callbackName}`;
-        script.async = true;
-        script.defer = true;
         
         // Create global callback for Google Maps
         (window as any)[callbackName] = () => {
@@ -112,9 +115,19 @@ class GooglePlacesService {
           delete (window as any)[callbackName]; // Clean up
           resolve();
         };
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=${callbackName}`;
+        script.async = true;
+        script.defer = true;
         
         script.onerror = (error) => {
           console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
+          console.error('🏗️ [GooglePlaces] ❌ This could be due to:');
+          console.error('  1. Invalid API key');
+          console.error('  2. API key restrictions (HTTP referrers, domains)');
+          console.error('  3. Places API not enabled');
+          console.error('  4. Billing/quota issues');
           console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to script load failure');
           this.usingMockData = true;
           this.isLoaded = true;
@@ -125,7 +138,7 @@ class GooglePlacesService {
         // Timeout fallback
         setTimeout(() => {
           if (!this.isLoaded) {
-            console.warn('🏗️ [GooglePlaces] ⚠️ Script loading timeout, switching to mock data mode');
+            console.warn('🏗️ [GooglePlaces] ⚠️ Script loading timeout (10s), switching to mock data mode');
             this.usingMockData = true;
             this.isLoaded = true;
             delete (window as any)[callbackName]; // Clean up
@@ -134,6 +147,7 @@ class GooglePlacesService {
         }, 10000); // 10 second timeout
         
         console.log('🏗️ [GooglePlaces] Adding script to document head...');
+        console.log('🏗️ [GooglePlaces] Script URL:', script.src);
         document.head.appendChild(script);
       } catch (error) {
         console.error('🏗️ [GooglePlaces] ❌ Error during Google Maps API loading:', error);

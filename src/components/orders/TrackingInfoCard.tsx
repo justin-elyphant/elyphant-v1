@@ -21,17 +21,48 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
   const getCarrierInfo = (trackingNumber?: string) => {
     if (!trackingNumber) return null;
     
-    // Basic carrier detection based on tracking number format
+    // Enhanced carrier detection with proper Zinc support
     if (trackingNumber.startsWith("1Z")) {
-      return { name: "UPS", logo: "🚚", url: `https://www.ups.com/track?tracknum=${trackingNumber}` };
+      return { 
+        name: "UPS", 
+        logo: "🚚", 
+        url: `https://www.ups.com/track?tracknum=${trackingNumber}`,
+        fallbackUrl: `https://t.17track.net/en#nums=${trackingNumber}`
+      };
     }
     if (trackingNumber.match(/^\d{12,14}$/)) {
-      return { name: "FedEx", logo: "📦", url: `https://www.fedex.com/apps/fedextrack/?action=track&tracknumbers=${trackingNumber}` };
+      return { 
+        name: "FedEx", 
+        logo: "📦", 
+        url: `https://www.fedex.com/apps/fedextrack/?action=track&tracknumbers=${trackingNumber}`,
+        fallbackUrl: `https://t.17track.net/en#nums=${trackingNumber}`
+      };
     }
-    if (trackingNumber.startsWith("ZPY") || trackingNumber.startsWith("TBA")) {
-      return { name: "Amazon Logistics", logo: "📋", url: `https://track.amazon.com/tracking/${trackingNumber}` };
+    // Zinc tracking numbers (ZPY prefix) - route to 17.TRACK
+    if (trackingNumber.startsWith("ZPY")) {
+      return { 
+        name: "Zinc Logistics", 
+        logo: "📋", 
+        url: `https://t.17track.net/en#nums=${trackingNumber}`,
+        fallbackUrl: `https://track.amazon.com/tracking/${trackingNumber}`
+      };
     }
-    return { name: "Carrier", logo: "🚛", url: null };
+    // Amazon TBA numbers
+    if (trackingNumber.startsWith("TBA")) {
+      return { 
+        name: "Amazon Logistics", 
+        logo: "📋", 
+        url: `https://track.amazon.com/tracking/${trackingNumber}`,
+        fallbackUrl: `https://t.17track.net/en#nums=${trackingNumber}`
+      };
+    }
+    // Universal fallback - use 17.TRACK for unknown carriers
+    return { 
+      name: "Universal Tracker", 
+      logo: "🚛", 
+      url: `https://t.17track.net/en#nums=${trackingNumber}`,
+      fallbackUrl: null
+    };
   };
 
   const carrierInfo = getCarrierInfo(order.tracking_number);
@@ -82,30 +113,46 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                if (carrierInfo?.url) {
-                  window.open(carrierInfo.url, '_blank');
-                } else {
-                  toast.info("Tracking link not available for this carrier");
-                }
-              }}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Track Package
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Simulate opening map with delivery location
-                toast.info("Opening delivery map...");
-              }}
-            >
-              <MapPin className="h-4 w-4" />
-            </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  if (carrierInfo?.url) {
+                    window.open(carrierInfo.url, '_blank');
+                  } else {
+                    toast.info("Tracking link not available for this carrier");
+                  }
+                }}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Track Package
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Simulate opening map with delivery location
+                  toast.info("Opening delivery map...");
+                }}
+              >
+                <MapPin className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Show fallback tracking option for Zinc orders */}
+            {carrierInfo?.fallbackUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+                onClick={() => {
+                  window.open(carrierInfo.fallbackUrl!, '_blank');
+                }}
+              >
+                Try Alternative Tracker
+              </Button>
+            )}
           </div>
         </div>
 

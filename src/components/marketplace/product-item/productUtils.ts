@@ -100,11 +100,21 @@ export const getProductImages = (product: Product): string[] => {
 export const standardizeProduct = (product: any): any => {
   if (!product) return {};
   
-  // Convert price from cents to dollars for Zinc API responses
+  // Smart price conversion - detect if price is in cents or dollars
   let normalizedPrice = 19.99;
   if (product.price) {
     const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
-    normalizedPrice = rawPrice > 100 ? rawPrice / 100 : rawPrice;
+    
+    // If price is suspiciously high (likely in cents), convert to dollars
+    // Common pattern: 3999 cents = $39.99, but 39.99 dollars should stay as is
+    if (rawPrice >= 1000) {
+      normalizedPrice = rawPrice / 100;
+    } else if (rawPrice > 0) {
+      normalizedPrice = rawPrice;
+    } else {
+      normalizedPrice = 19.99; // fallback
+    }
+    
     console.log(`Price conversion: ${rawPrice} -> ${normalizedPrice}`);
   }
   
@@ -141,7 +151,12 @@ export const standardizeProduct = (product: any): any => {
       }
       return extractedBrand;
     })(),
-    images: Array.isArray(product.images) ? product.images : [product.image || "/placeholder.svg"],
+    images: (() => {
+      if (Array.isArray(product.images) && product.images.length > 0) {
+        return product.images.filter(img => img && typeof img === 'string');
+      }
+      return [product.image || "/placeholder.svg"];
+    })(),
     ...product
   };
 };

@@ -203,10 +203,13 @@ const Cart = () => {
                         <div className="flex gap-4">
                           <div className="flex-shrink-0">
                             <img 
-                              src={item.product.image || "/placeholder.svg"} 
+                              src={item.product.image || item.product.images?.[0] || "/placeholder.svg"} 
                               alt={item.product.name || item.product.title}
                               className="w-20 h-20 object-cover rounded-md bg-gray-100"
                               loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.src = "/placeholder.svg";
+                              }}
                             />
                           </div>
                           

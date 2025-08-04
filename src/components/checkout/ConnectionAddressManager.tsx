@@ -10,6 +10,7 @@ import { useProfile } from '@/contexts/profile/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AddressBookSelector from './AddressBookSelector';
+import AddressVerificationBadge from '@/components/ui/AddressVerificationBadge';
 
 interface Connection {
   id: string;
@@ -19,6 +20,10 @@ interface Connection {
   email?: string;
   shipping_address?: any;
   has_address: boolean;
+  address_verified?: boolean;
+  address_verification_method?: string;
+  address_verified_at?: string;
+  address_last_updated?: string;
 }
 
 interface ConnectionAddressManagerProps {
@@ -58,7 +63,14 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
           connected_user_id,
           relationship_type,
           status,
-          profiles!user_connections_connected_user_id_fkey(name, email),
+          profiles!user_connections_connected_user_id_fkey(
+            name, 
+            email, 
+            address_verified,
+            address_verification_method,
+            address_verified_at,
+            address_last_updated
+          ),
           user_addresses!user_addresses_user_id_fkey(*)
         `)
         .eq('user_id', profile.id)
@@ -73,7 +85,11 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
         email: (conn.profiles as any)?.email,
         relationship_type: conn.relationship_type,
         shipping_address: (conn.user_addresses as any)?.[0]?.address,
-        has_address: Boolean((conn.user_addresses as any)?.length)
+        has_address: Boolean((conn.user_addresses as any)?.length),
+        address_verified: (conn.profiles as any)?.address_verified,
+        address_verification_method: (conn.profiles as any)?.address_verification_method,
+        address_verified_at: (conn.profiles as any)?.address_verified_at,
+        address_last_updated: (conn.profiles as any)?.address_last_updated
       })) || [];
 
       setConnections(formattedConnections);
@@ -172,9 +188,19 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
                           {connection.relationship_type}
                         </Badge>
                         {connection.has_address ? (
-                          <Badge variant="default" className="text-xs">
-                            Address Saved
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge variant="default" className="text-xs">
+                              Address Saved
+                            </Badge>
+                            <AddressVerificationBadge
+                              verified={connection.address_verified}
+                              verificationMethod={connection.address_verification_method}
+                              verifiedAt={connection.address_verified_at}
+                              lastUpdated={connection.address_last_updated}
+                              size="sm"
+                              showText={false}
+                            />
+                          </div>
                         ) : (
                           <Badge variant="secondary" className="text-xs">
                             No Address

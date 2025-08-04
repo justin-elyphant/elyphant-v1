@@ -29,4 +29,9 @@ export interface DeliveryGroup {
   giftMessage?: string;
   scheduledDeliveryDate?: string;
   shippingAddress?: RecipientAssignment['shippingAddress'];
+  isPrivateAddress?: boolean;
+  address_verified?: boolean;
+  address_verification_method?: string;
+  address_verified_at?: string;
+  address_last_updated?: string;
 }

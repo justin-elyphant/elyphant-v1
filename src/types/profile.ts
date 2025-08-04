@@ -21,6 +21,10 @@ export interface Profile {
   onboarding_completed?: boolean;
   updated_at?: string;
   recently_viewed?: RecentlyViewedItem[];  // Add recently_viewed field
+  address_verified?: boolean;
+  address_verification_method?: string;
+  address_verified_at?: string;
+  address_last_updated?: string;
   // New gifting properties
   gift_giving_preferences?: {
     occasions?: string[];

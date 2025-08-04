@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import QuickEditModal from './QuickEditModal';
+import AddressVerificationBadge from '@/components/ui/AddressVerificationBadge';
+import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
 
 interface CheckoutShippingReviewProps {
   shippingCost: number;
@@ -141,10 +143,43 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                 {group.shippingAddress && (
                   <div className="text-sm text-green-700 mb-2">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium">{group.shippingAddress.name}</p>
-                        <p>{group.shippingAddress.address}</p>
-                        <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                      <div className="flex-1">
+                        {group.isPrivateAddress ? (
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium flex items-center gap-2">
+                                Hidden Address
+                                <AddressVerificationBadge
+                                  verified={group.address_verified}
+                                  verificationMethod={group.address_verification_method}
+                                  verifiedAt={group.address_verified_at}
+                                  lastUpdated={group.address_last_updated}
+                                  size="sm"
+                                  showText={false}
+                                />
+                              </p>
+                              <p className="text-muted-foreground">
+                                {group.shippingAddress.city}, {group.shippingAddress.state}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="font-medium flex items-center gap-2">
+                              {group.shippingAddress.name}
+                              <AddressVerificationBadge
+                                verified={group.address_verified}
+                                verificationMethod={group.address_verification_method}
+                                verifiedAt={group.address_verified_at}
+                                lastUpdated={group.address_last_updated}
+                                size="sm"
+                                showText={false}
+                              />
+                            </p>
+                            <p>{group.shippingAddress.address}</p>
+                            <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                          </div>
+                        )}
                       </div>
                       <QuickEditModal
                         type="address"

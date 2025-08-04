@@ -54,6 +54,7 @@ import { CartItem } from "@/contexts/CartContext";
 import { RecipientAssignment, DeliveryGroup } from "@/types/recipient";
 import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
 import { toast } from "sonner";
+import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 
 // ============================================================================
 // TYPES AND INTERFACES
@@ -112,6 +113,7 @@ class UnifiedPaymentService {
   private currentUser: any = null;
   private cartKey = 'guest_cart';
   private debounceTimer: NodeJS.Timeout | null = null;
+  private readonly CART_VERSION = 2; // Increment when cart structure changes
 
   constructor() {
     // Initialize cart on service creation
@@ -168,14 +170,36 @@ class UnifiedPaymentService {
   }
 
   /**
-   * Load cart items from localStorage
+   * Load cart items from localStorage with migration support
    */
   private loadCartFromStorage(): void {
     try {
       const savedCart = localStorage.getItem(this.cartKey);
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        this.cartItems = parsedCart || [];
+        let cartData = parsedCart || [];
+        
+        // Check if cart needs migration (no version or old version)
+        const versionKey = `${this.cartKey}_version`;
+        const savedVersion = localStorage.getItem(versionKey);
+        const currentVersion = parseInt(savedVersion || '0');
+        
+        if (currentVersion < this.CART_VERSION) {
+          console.log(`Migrating cart from version ${currentVersion} to ${this.CART_VERSION}`);
+          cartData = this.migrateCartData(cartData, currentVersion);
+          
+          // Save migrated cart and update version
+          this.cartItems = cartData;
+          this.saveCartToStorage();
+          localStorage.setItem(versionKey, this.CART_VERSION.toString());
+          
+          if (cartData.length > 0) {
+            toast.success('Cart updated with improved pricing!');
+          }
+        } else {
+          this.cartItems = cartData;
+        }
+        
         this.notifyCartChange();
       } else {
         this.cartItems = [];
@@ -185,6 +209,31 @@ class UnifiedPaymentService {
       console.error('Error loading cart from storage:', error);
       this.cartItems = [];
       this.notifyCartChange();
+    }
+  }
+
+  /**
+   * Migrate cart data to fix pricing and other issues
+   */
+  private migrateCartData(cartItems: CartItem[], fromVersion: number): CartItem[] {
+    try {
+      return cartItems.map(item => {
+        // Re-standardize the product to fix pricing issues
+        const standardizedProduct = standardizeProduct(item.product);
+        
+        // Log price changes for debugging
+        if (item.product.price !== standardizedProduct.price) {
+          console.log(`Price migration: ${item.product.title} - ${item.product.price} → ${standardizedProduct.price}`);
+        }
+        
+        return {
+          ...item,
+          product: standardizedProduct
+        };
+      });
+    } catch (error) {
+      console.error('Error migrating cart data:', error);
+      return cartItems; // Return original data if migration fails
     }
   }
 

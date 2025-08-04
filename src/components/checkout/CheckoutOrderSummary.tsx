@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingBag } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
+import { getPrimaryProductImage } from '@/components/marketplace/product-item/getPrimaryProductImage';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
@@ -50,13 +51,14 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
           {items.map((item) => (
             <div key={item.product.id} className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
-                {item.product.image && (
-                  <img 
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+                <img 
+                  src={getPrimaryProductImage(item.product)}
+                  alt={item.product.name || item.product.title || 'Product'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
               </div>
               <div className="flex-grow">
                 <p className="font-medium text-sm">{item.product.name}</p>

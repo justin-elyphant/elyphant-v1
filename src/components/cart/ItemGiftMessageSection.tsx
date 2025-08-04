@@ -121,7 +121,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
             className="text-blue-600 hover:text-blue-700"
           >
             <Edit3 className="h-4 w-4 mr-1" />
-            {currentMessage ? 'Edit' : 'Add Message'}
+            {currentMessage ? 'Edit' : 'Add Gift Message'}
           </Button>
         )}
       </div>

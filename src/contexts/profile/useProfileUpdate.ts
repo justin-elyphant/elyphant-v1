@@ -48,6 +48,17 @@ export const useProfileUpdate = () => {
         }
       });
 
+      // Special logging for verification fields
+      if (updateData.address_verified !== undefined) {
+        console.log(`🔍 VERIFICATION FIELD - address_verified:`, updateData.address_verified);
+      }
+      if (updateData.address_verification_method !== undefined) {
+        console.log(`🔍 VERIFICATION FIELD - address_verification_method:`, updateData.address_verification_method);
+      }
+      if (updateData.address_verified_at !== undefined) {
+        console.log(`🔍 VERIFICATION FIELD - address_verified_at:`, updateData.address_verified_at);
+      }
+
       console.log("Update payload:", JSON.stringify(safeUpdateData, null, 2));
       
       // Use UPDATE instead of UPSERT to avoid null constraint violations

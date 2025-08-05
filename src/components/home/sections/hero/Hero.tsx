@@ -156,6 +156,29 @@ const Hero = () => {
         onOpenChange={setShowGiftWizard}
       />
 
+      {/* Nicole Auto-Gifting Test Section (Development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-8 p-4 bg-purple-100 rounded-lg border border-purple-200">
+          <h3 className="text-lg font-semibold text-purple-800 mb-2">
+            🧪 Nicole Auto-Gifting Phase 2 Testing
+          </h3>
+          <div className="flex gap-4">
+            <a 
+              href="/nicole-test" 
+              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+            >
+              Test Nicole Integration
+            </a>
+            <a 
+              href="/nicole-dashboard" 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Nicole Dashboard
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Create Wishlist Dialog */}
       <CreateWishlistDialog
         open={showCreateWishlist}

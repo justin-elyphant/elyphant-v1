@@ -38,6 +38,8 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
+const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
+const NicoleAutoGiftingDashboard = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -117,6 +119,11 @@ function App() {
                             <Route path="/privacy" element={<PrivacyPolicy />} />
                             <Route path="/terms" element={<TermsOfService />} />
                             <Route path="/sms-consent" element={<SMSConsent />} />
+                            
+                            {/* Nicole Auto-Gifting Test Routes */}
+                            <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
+                            <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
+                            
                             <Route path="/trunkline/*" element={<Trunkline />} />
                             {/* Legacy route redirects */}
                             <Route path="/signin" element={<Auth />} />

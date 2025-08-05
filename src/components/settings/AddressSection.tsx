@@ -73,7 +73,7 @@ const AddressSection = () => {
         const { data: checkData } = await supabase
           .from('profiles')
           .select('address_verified, address_verification_method, address_verified_at')
-          .eq('email', 'dua_lipa2test@gmail.com')
+          .eq('id', profile?.id)
           .single();
         
         console.log("🔍 Database verification check:", checkData);

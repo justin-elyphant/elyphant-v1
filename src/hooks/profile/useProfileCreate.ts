@@ -7,9 +7,11 @@ import { formatProfileForSubmission, formatBirthdayForStorage } from "@/utils/da
 import { ProfileData } from "@/components/profile-setup/hooks/types";
 import { unifiedLocationService } from "@/services/location/UnifiedLocationService";
 import { StandardizedAddress } from "@/services/googlePlacesService";
+import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 
 export const useProfileCreate = () => {
   const { user } = useAuth();
+  const { updateProfile } = useUnifiedProfile();
   const [isCreating, setIsCreating] = useState(false);
 
   const createProfile = async (profileData: ProfileData) => {
@@ -138,7 +140,7 @@ export const useProfileCreate = () => {
           const validation = await unifiedLocationService.validateAddressForDelivery(addressToValidate);
           
           if (validation.isValid) {
-            // Update profile with verification status
+            // Update profile with verification status using unified method
             const verificationData = {
               address_verified: true,
               address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
@@ -147,14 +149,23 @@ export const useProfileCreate = () => {
             
             console.log("🔍 Updating verification status:", verificationData);
             
-            await supabase
-              .from('profiles')
-              .update(verificationData)
-              .eq('id', user.id);
+            const verificationResult = await updateProfile(verificationData);
             
-            console.log("✅ Address verification completed successfully");
+            if (verificationResult.success) {
+              console.log("✅ Address verification completed and saved successfully");
+            } else {
+              console.error("❌ Failed to save verification status:", verificationResult.error);
+              // Still continue since profile creation succeeded
+            }
           } else {
             console.log("⚠️ Address validation failed but profile creation succeeded");
+            
+            // Save failed verification status
+            await updateProfile({
+              address_verified: false,
+              address_verification_method: 'pending_verification',
+              address_verified_at: new Date().toISOString()
+            });
           }
         } catch (verificationError) {
           console.error("❌ Address verification failed:", verificationError);

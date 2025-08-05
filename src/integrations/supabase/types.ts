@@ -255,6 +255,56 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_conversations: {
+        Row: {
+          ai_agent_source: Json
+          approval_decision: string | null
+          approval_token_id: string
+          completed_at: string | null
+          conversation_data: Json
+          created_at: string
+          execution_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_agent_source?: Json
+          approval_decision?: string | null
+          approval_token_id: string
+          completed_at?: string | null
+          conversation_data?: Json
+          created_at?: string
+          execution_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_agent_source?: Json
+          approval_decision?: string | null
+          approval_token_id?: string
+          completed_at?: string | null
+          conversation_data?: Json
+          created_at?: string
+          execution_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_conversations_approval_token_id_fkey"
+            columns: ["approval_token_id"]
+            isOneToOne: false
+            referencedRelation: "email_approval_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_gift_data_access: {
         Row: {
           access_reason: string | null

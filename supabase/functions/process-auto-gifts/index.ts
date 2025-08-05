@@ -159,6 +159,38 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
   const criteria = rule.gift_selection_criteria || {}
   const maxBudget = rule.budget_limit || 50
 
+  console.log(`🎁 Selecting gifts for execution with Nicole enhancement`)
+
+  try {
+    // Check if Nicole AI enhancement is available and enabled
+    const shouldUseNicole = true; // Can be made configurable per rule
+    
+    if (shouldUseNicole) {
+      // Try Nicole-enhanced selection first
+      const nicoleSelection = await selectGiftsWithNicoleAI(supabaseClient, rule, event)
+      if (nicoleSelection && nicoleSelection.products.length > 0) {
+        console.log(`✅ Nicole selected ${nicoleSelection.products.length} gifts with ${nicoleSelection.confidence} confidence`)
+        
+        // Update execution with Nicole attribution
+        await supabaseClient
+          .from('automated_gift_executions')
+          .update({
+            ai_agent_source: nicoleSelection.aiAttribution,
+            updated_at: new Date().toISOString()
+          })
+          .eq('event_id', event.event_id)
+          .eq('rule_id', event.rule_id)
+        
+        return nicoleSelection.products
+      }
+    }
+  } catch (nicoleError) {
+    console.error('Nicole selection failed, falling back to original system:', nicoleError)
+  }
+
+  // Fallback to original selection system
+  console.log('🔄 Using original gift selection system')
+  
   // Build search query based on event type and criteria
   let searchQuery = buildSearchQuery(criteria, event)
 
@@ -204,6 +236,139 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
   }
 
   return filterAndSelectProducts(searchResults.products, maxBudget, criteria)
+}
+
+async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {
+  try {
+    // Get recipient profile for Nicole context
+    const { data: recipientProfile } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', rule.recipient_id)
+      .single()
+
+    // Build Nicole context
+    const nicoleContext = {
+      recipientId: rule.recipient_id,
+      budget: rule.budget_limit || 50,
+      occasion: event.event_type,
+      relationshipType: rule.relationship_context?.relationshipType,
+      recipientProfile,
+      userPreferences: rule.gift_selection_criteria
+    }
+
+    // Call Nicole AI service for enhanced selection
+    const { data: nicoleResponse, error } = await supabaseClient.functions.invoke('nicole-chat', {
+      body: {
+        message: `Select thoughtful gifts for ${event.event_type} with budget $${rule.budget_limit || 50}`,
+        context: {
+          conversationPhase: 'gift_selection',
+          capability: 'gift_advisor',
+          recipient: rule.recipient_id,
+          occasion: event.event_type,
+          budget: [rule.budget_limit * 0.8, rule.budget_limit * 1.2],
+          userPreferences: nicoleContext
+        },
+        capability: 'gift_advisor',
+        sessionId: `auto-gift-${event.event_id}-${Date.now()}`
+      }
+    })
+
+    if (error) {
+      console.error('Nicole AI selection error:', error)
+      return null
+    }
+
+    // Parse Nicole's response and search for products
+    const searchQuery = nicoleResponse.searchQuery || 
+      `${event.event_type} gift ${rule.relationship_context?.relationshipType || ''} budget ${rule.budget_limit}`
+
+    console.log(`🤖 Nicole suggested search: "${searchQuery}"`)
+
+    const { data: searchResults, error: searchError } = await supabaseClient.functions.invoke('get-products', {
+      body: {
+        query: searchQuery,
+        page: 1,
+        limit: 25,
+        filters: {
+          max_price: rule.budget_limit || 50,
+          min_price: Math.max(10, (rule.budget_limit || 50) * 0.2)
+        },
+        enhanced: true,
+        nicole_enhanced: true
+      }
+    })
+
+    if (searchError || !searchResults?.products || searchResults.products.length === 0) {
+      console.log('Nicole search yielded no results')
+      return null
+    }
+
+    // Apply Nicole's ranking and selection
+    const selectedProducts = filterAndSelectProductsWithNicole(
+      searchResults.products, 
+      rule.budget_limit || 50, 
+      nicoleResponse
+    )
+
+    return {
+      products: selectedProducts,
+      confidence: nicoleResponse.metadata?.confidence || 0.75,
+      aiAttribution: {
+        agent: 'nicole',
+        confidence_score: nicoleResponse.metadata?.confidence || 0.75,
+        data_sources: ['recipient_profile', 'relationship_context', 'ai_analysis'],
+        discovery_method: 'contextual_ai_selection',
+        reasoning: nicoleResponse.message
+      }
+    }
+
+  } catch (error) {
+    console.error('Error in Nicole AI gift selection:', error)
+    return null
+  }
+}
+
+function filterAndSelectProductsWithNicole(products: any[], maxBudget: number, nicoleResponse: any): any[] {
+  console.log(`🤖 Nicole filtering ${products.length} products with budget ${maxBudget}`)
+  
+  // Filter by budget and basic criteria
+  let filteredProducts = products.filter(product => {
+    const price = parseFloat(product.price) || 0
+    return price > 0 && price <= maxBudget
+  })
+  
+  // Sort by Nicole's criteria + ratings
+  filteredProducts.sort((a: any, b: any) => {
+    const aRating = parseFloat(a.stars) || 0
+    const bRating = parseFloat(b.stars) || 0
+    const aReviews = parseInt(a.num_reviews) || 0
+    const bReviews = parseInt(b.num_reviews) || 0
+    
+    // Nicole confidence boost
+    const nicoleConfidence = nicoleResponse.metadata?.confidence || 0.5
+    const aScore = (aRating * 20) + (aReviews / 100) + (nicoleConfidence * 30)
+    const bScore = (bRating * 20) + (bReviews / 100) + (nicoleConfidence * 30)
+    
+    return bScore - aScore
+  })
+  
+  console.log(`🤖 Nicole selected ${Math.min(3, filteredProducts.length)} top products`)
+  
+  // Return top 3 products with Nicole attribution
+  return filteredProducts.slice(0, 3).map(product => ({
+    product_id: product.product_id,
+    title: product.title,
+    price: parseFloat(product.price),
+    image: product.image,
+    category: product.category,
+    retailer: product.retailer,
+    rating: parseFloat(product.stars) || 0,
+    review_count: parseInt(product.num_reviews) || 0,
+    selected: true,
+    nicole_enhanced: true,
+    ai_reasoning: `Selected by Nicole AI: ${nicoleResponse.message?.substring(0, 100)}...`
+  }))
 }
 
 function buildSearchQuery(criteria: any, event: AutoGiftEvent): string {

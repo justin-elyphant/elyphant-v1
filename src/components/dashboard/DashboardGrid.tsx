@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import GiftingHubCard from "./GiftingHubCard";
 import SocialHubCard from "./SocialHubCard";
 import QuickGiftCTA from "./QuickGiftCTA";
@@ -8,6 +8,7 @@ import NicoleActivityFeed from "./nicole/NicoleActivityFeed";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 
 const DashboardGrid = () => {
+  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Profile Data Integrity Panel - Top Priority */}

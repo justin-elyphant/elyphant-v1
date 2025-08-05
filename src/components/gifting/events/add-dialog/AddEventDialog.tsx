@@ -8,6 +8,7 @@ import { eventsService, transformExtendedEventToDatabase } from "@/services/even
 import { unifiedGiftAutomationService } from "@/services/UnifiedGiftAutomationService";
 import { supabase } from "@/integrations/supabase/client";
 import { useEvents } from "../context/EventsContext";
+import UnifiedAutoGiftEntry from "@/components/auto-gifting/UnifiedAutoGiftEntry";
 
 interface AddEventDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface AddEventDialogProps {
 const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
   const { refreshEvents } = useEvents();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
 
   const handleSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
@@ -88,7 +90,12 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
       
       toast.success(`${data.eventType} for ${data.personName} has been added!`);
       
-      onOpenChange(false);
+      // Show unified auto-gift setup if auto-gifting is enabled
+      if (data.autoGiftEnabled) {
+        setShowAutoGiftSetup(true);
+      } else {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error creating event:", error);
       toast.error("Failed to create event. Please try again.");
@@ -101,19 +108,33 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
     onOpenChange(false);
   };
 
+  const handleAutoGiftSetupComplete = () => {
+    setShowAutoGiftSetup(false);
+    onOpenChange(false);
+    toast.success("🎁 Your event and auto-gifting are fully set up!");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add New Event</DialogTitle>
-        </DialogHeader>
-        
-        <AddEventForm 
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open && !showAutoGiftSetup} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Event</DialogTitle>
+          </DialogHeader>
+          
+          <AddEventForm 
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Unified Auto-Gift Setup */}
+      <UnifiedAutoGiftEntry 
+        open={showAutoGiftSetup}
+        onOpenChange={handleAutoGiftSetupComplete}
+      />
+    </>
   );
 };
 

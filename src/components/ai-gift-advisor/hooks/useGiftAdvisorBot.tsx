@@ -6,13 +6,14 @@ import { useGiftingData } from "@/hooks/useGiftingData";
 import { toast } from "sonner";
 
 export type ConversationStep = 
-  | "welcome" 
+  | "welcome"
   | "recipient-selection" 
-  | "friend-selected" 
-  | "manual-input" 
-  | "occasion" 
-  | "budget" 
-  | "generating" 
+  | "friend-selected"
+  | "manual-input"
+  | "nicole-auto-gift"
+  | "occasion"
+  | "budget"
+  | "generating"
   | "results"
   | "results-preview"
   | "signup-prompt";

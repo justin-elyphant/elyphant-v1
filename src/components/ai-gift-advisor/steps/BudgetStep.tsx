@@ -20,9 +20,9 @@ const BudgetStep = ({ setBudget }: BudgetStepProps) => {
   return (
     <div className="flex flex-col h-full p-4 space-y-6">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold mb-2">What's your budget?</h3>
+        <h3 className="text-lg font-semibold mb-2">Perfect! What's your budget?</h3>
         <p className="text-sm text-gray-600">
-          I'll find great options within your price range.
+          I'll find amazing options that fit your budget and the occasion.
         </p>
       </div>
 

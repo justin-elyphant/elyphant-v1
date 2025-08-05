@@ -27,9 +27,14 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold mb-2">Who are you shopping for?</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          {isAuthenticated ? "Perfect! Who would you like to set up auto-gifting for?" : "Who are you shopping for?"}
+        </h3>
         <p className="text-sm text-gray-600">
-          Select a friend or choose "Someone else" to enter details manually.
+          {isAuthenticated 
+            ? "I can use your friend connections to make this super easy" 
+            : "Select a friend or choose \"Someone else\" to enter details manually"
+          }
         </p>
       </div>
 

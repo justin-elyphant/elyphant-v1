@@ -15,6 +15,7 @@ import GeneratingStep from "./steps/GeneratingStep";
 import ResultsStep from "./steps/ResultsStep";
 import ResultsPreviewStep from "./steps/ResultsPreviewStep";
 import SignUpPromptStep from "./steps/SignUpPromptStep";
+import NicoleAutoGiftStep from "./steps/NicoleAutoGiftStep";
 import ContextualLinks from "../ai/conversation/ContextualLinks";
 import { ContextualLink } from "@/services/ai/nicoleAiService";
 
@@ -101,6 +102,8 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
         return <FriendSelectedStep {...props} />;
       case "manual-input":
         return <ManualInputStep {...props} />;
+      case "nicole-auto-gift":
+        return <NicoleAutoGiftStep {...props} />;
       case "occasion":
         return <OccasionStep {...props} />;
       case "budget":

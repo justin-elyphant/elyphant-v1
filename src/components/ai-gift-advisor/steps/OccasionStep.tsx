@@ -47,7 +47,7 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold mb-2">What's the occasion?</h3>
         <p className="text-sm text-gray-600">
-          This helps me suggest more relevant gifts.
+          This helps me pick something that fits the celebration perfectly.
         </p>
       </div>
 

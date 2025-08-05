@@ -16,10 +16,10 @@ const WelcomeStep = ({ nextStep }: WelcomeStepProps) => {
       
       <div className="space-y-3">
         <h2 className="text-xl font-bold text-gray-900">
-          Welcome to AI Gift Advisor!
+          Hey there! I'm Nicole 👋
         </h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          I'll help you find the perfect gift by asking a few questions about the recipient and occasion.
+          I'll help you set up automatic gift-giving so you never miss an important celebration. Let me ask you a few quick questions to get started.
         </p>
       </div>
 
@@ -29,7 +29,7 @@ const WelcomeStep = ({ nextStep }: WelcomeStepProps) => {
           <span className="text-sm font-medium text-purple-800">Smart Suggestions</span>
         </div>
         <p className="text-xs text-purple-700">
-          I can access your friends' wishlists and preferences for personalized recommendations!
+          I'll use your connections and smart defaults to make this super easy for you!
         </p>
       </div>
 
@@ -37,7 +37,7 @@ const WelcomeStep = ({ nextStep }: WelcomeStepProps) => {
         onClick={() => nextStep("recipient-selection")}
         className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
       >
-        Get Started
+        Let's Do This!
       </Button>
     </div>
   );

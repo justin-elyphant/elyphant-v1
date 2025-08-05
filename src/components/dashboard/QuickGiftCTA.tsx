@@ -2,19 +2,19 @@
 import React, { useState } from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import UnifiedAutoGiftEntry from "@/components/auto-gifting/UnifiedAutoGiftEntry";
 
 const QuickGiftCTA = () => {
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [nicoleOpen, setNicoleOpen] = useState(false);
 
-  const handleOpenWizard = () => {
-    console.log("Opening GiftSetupWizard from QuickGiftCTA");
-    setWizardOpen(true);
+  const handleOpenNicole = () => {
+    console.log("Opening Nicole Auto-Gifting from QuickGiftCTA");
+    setNicoleOpen(true);
   };
 
-  const handleCloseWizard = (open: boolean) => {
-    console.log("Closing GiftSetupWizard, open:", open);
-    setWizardOpen(open);
+  const handleCloseNicole = (open: boolean) => {
+    console.log("Closing Nicole Auto-Gifting, open:", open);
+    setNicoleOpen(open);
   };
 
   return (
@@ -35,7 +35,7 @@ const QuickGiftCTA = () => {
             <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Our AI will pick, purchase, and deliver the perfect gift automatically</p>
           </div>
           <Button 
-            onClick={handleOpenWizard}
+            onClick={handleOpenNicole}
             className="bg-gradient-to-r from-cyan-600 to-amber-600 hover:from-cyan-700 hover:to-amber-700 text-white border-0 shadow-md h-10 sm:h-9 w-full sm:w-auto"
             size="sm"
           >
@@ -45,11 +45,10 @@ const QuickGiftCTA = () => {
         </div>
       </div>
 
-      {/* Gift Setup Wizard */}
-      <GiftSetupWizard 
-        open={wizardOpen}
-        onOpenChange={handleCloseWizard}
-        initialData={null}
+      {/* Nicole Auto-Gifting Entry */}
+      <UnifiedAutoGiftEntry 
+        open={nicoleOpen}
+        onOpenChange={handleCloseNicole}
       />
     </>
   );

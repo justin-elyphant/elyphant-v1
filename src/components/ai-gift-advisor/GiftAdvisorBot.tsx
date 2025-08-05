@@ -35,12 +35,15 @@ const GiftAdvisorBot = ({ isOpen, onClose }: GiftAdvisorBotProps) => {
       case "manual-input":
         botHook.nextStep("recipient-selection");
         break;
-      case "occasion":
+      case "nicole-auto-gift":
         if (botHook.botState.selectedFriend) {
           botHook.nextStep("friend-selected");
         } else {
           botHook.nextStep("manual-input");
         }
+        break;
+      case "occasion":
+        botHook.nextStep("nicole-auto-gift");
         break;
       case "budget":
         botHook.nextStep("occasion");

@@ -294,7 +294,7 @@ const AddressSection = () => {
           />
         </div>
 
-        {/* Address Verification Section */}
+        {/* Address Verification Status */}
         {verificationStatus && (
           <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
             <div className="flex items-center justify-between">
@@ -312,33 +312,10 @@ const AddressSection = () => {
                 <p className="text-sm text-muted-foreground">
                   {verificationStatus.verified
                     ? "Your address has been verified for delivery"
-                    : "Verify your address to ensure accurate gift deliveries"
+                    : "Use the 'Save & Verify Address' button below to save and verify your address"
                   }
                 </p>
               </div>
-              
-              {verificationStatus.needsVerification && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleVerifyAddress}
-                  disabled={isVerifying}
-                  className="shrink-0"
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Verify Address
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
           </div>
         )}

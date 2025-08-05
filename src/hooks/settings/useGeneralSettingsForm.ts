@@ -113,7 +113,7 @@ export const useGeneralSettingsForm = () => {
   }, [form, profileData]);
 
   // Handle form submission with proper error handling
-  const onSubmit = async (data: SettingsFormValues) => {
+  const onSubmit = async (data: SettingsFormValues, activeTab?: string) => {
     if (!user) {
       toast.error("You must be logged in to update your profile");
       return;
@@ -140,12 +140,21 @@ export const useGeneralSettingsForm = () => {
       setHasUnsavedChanges(false);
       console.log("🔄 Updated initial form values after save");
       
-      toast.success("Profile updated successfully");
+      // If this is the address tab, we'll handle verification in the component
+      // Just show success for the save operation
+      if (activeTab === "address") {
+        toast.success("Address saved successfully");
+      } else {
+        toast.success("Profile updated successfully");
+      }
+      
+      return { success: true, result };
     } catch (error) {
       console.error("❌ Failed to update profile:", error);
       toast.error("Failed to update profile", {
         description: error instanceof Error ? error.message : "Unknown error"
       });
+      throw error;
     } finally {
       setIsSaving(false);
     }

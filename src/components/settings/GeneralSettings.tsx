@@ -8,18 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import BasicInfoSection from "./BasicInfoSection";
 import AddressSection from "./AddressSection";
 import DataSharingSection from "./DataSharingSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
 import GiftingPreferencesSection from "./GiftingPreferencesSection";
+import { unifiedLocationService } from "@/services/location/UnifiedLocationService";
+import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
+import { StandardizedAddress } from "@/services/googlePlacesService";
+import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
 
 const GeneralSettings = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("basic");
-  
+  const { updateProfile } = useUnifiedProfile();
   
   const {
     form,
@@ -40,6 +45,65 @@ const GeneralSettings = () => {
     refetchProfile,
     dataLoadError
   } = useGeneralSettingsForm();
+
+  // Handle address verification after successful save
+  const handleAddressVerification = async (data: SettingsFormValues) => {
+    const address = data.address;
+    
+    if (!address?.street || !address?.city || !address?.state || !address?.zipCode) {
+      toast.error("Address is incomplete and cannot be verified");
+      return;
+    }
+
+    try {
+      // Prepare address for validation
+      const addressToValidate: StandardizedAddress = {
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        zipCode: address.zipCode,
+        country: address.country || 'US',
+        formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+      };
+
+      // Validate address using unified location service
+      const validation = await unifiedLocationService.validateAddressForDelivery(addressToValidate);
+      
+      if (validation.isValid) {
+        // Update profile with verification status
+        const result = await updateProfile({
+          address_verified: true,
+          address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
+          address_verified_at: new Date().toISOString()
+        });
+        
+        if (result.success) {
+          toast.success("Address verified successfully!", {
+            description: validation.confidence === 'high' 
+              ? "Your address was automatically verified with high confidence"
+              : "Your address has been confirmed"
+          });
+        } else {
+          toast.error("Failed to update verification status");
+        }
+      } else {
+        // Show validation issues but allow manual confirmation
+        const issuesList = validation.issues.join(", ");
+        toast.error("Address verification failed", {
+          description: `Issues found: ${issuesList}. Please review and correct your address.`
+        });
+        
+        if (validation.suggestions.length > 0) {
+          console.log("Address suggestions:", validation.suggestions);
+        }
+      }
+    } catch (error) {
+      console.error("Address verification error:", error);
+      toast.error("Verification failed", {
+        description: "Unable to verify address at this time. Please try again later."
+      });
+    }
+  };
 
   console.log("🔄 GeneralSettings rendered");
   console.log("📊 Form state:", { loading, isSaving, hasUnsavedChanges, dataLoadError });
@@ -121,9 +185,18 @@ const GeneralSettings = () => {
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((data) => {
+        <form onSubmit={form.handleSubmit(async (data) => {
           console.log("✅ Form submission triggered with data:", data);
-          return onSubmit(data);
+          try {
+            const saveResult = await onSubmit(data, activeTab);
+            
+            // If this is the address tab and save was successful, trigger verification
+            if (activeTab === "address" && saveResult?.success) {
+              await handleAddressVerification(data);
+            }
+          } catch (error) {
+            // Error already handled in onSubmit
+          }
         }, (errors) => {
           console.log("❌ Form validation errors:", errors);
           console.log("❌ Detailed validation errors:", JSON.stringify(errors, null, 2));
@@ -200,10 +273,10 @@ const GeneralSettings = () => {
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {activeTab === "address" ? "Saving & Verifying..." : "Saving..."}
                   </>
                 ) : (
-                  "Save Changes"
+                  activeTab === "address" ? "Save & Verify Address" : "Save Changes"
                 )}
               </Button>
             </div>

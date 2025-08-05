@@ -22,6 +22,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   const navigate = useNavigate();
   const { deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
   const { profile } = useProfile();
+  const { profile: unifiedProfile } = useUnifiedProfile();
   const unassignedItems = getUnassignedItems();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
@@ -252,7 +253,17 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                 
                 {hasCompleteAddress && shippingAddress ? (
                   <div className="text-sm text-blue-700">
-                    <p className="font-medium">{profile?.name}</p>
+                    <p className="font-medium flex items-center gap-2">
+                      {profile?.name}
+                      <AddressVerificationBadge
+                        verified={unifiedProfile?.address_verified}
+                        verificationMethod={unifiedProfile?.address_verification_method}
+                        verifiedAt={unifiedProfile?.address_verified_at}
+                        lastUpdated={unifiedProfile?.address_last_updated}
+                        size="sm"
+                        showText={false}
+                      />
+                    </p>
                     <p>{shippingAddress.address_line1 || shippingAddress.street}</p>
                     {shippingAddress.address_line2 && (
                       <p>{shippingAddress.address_line2}</p>

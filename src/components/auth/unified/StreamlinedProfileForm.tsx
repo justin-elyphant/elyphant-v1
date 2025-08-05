@@ -15,6 +15,7 @@ import { useProfileCreate } from "@/hooks/profile/useProfileCreate";
 import { toast } from "sonner";
 import ProfileBubble from "@/components/ui/profile-bubble";
 import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
+import { AddressVerificationBadge } from "@/components/ui/AddressVerificationBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
@@ -50,6 +51,7 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
   const { createProfile, isCreating } = useProfileCreate();
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -158,6 +160,7 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
       return;
     }
 
+    setIsVerifying(true);
     try {
       const profileData = {
         name: `${data.first_name} ${data.last_name}`,
@@ -190,6 +193,8 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
     } catch (error) {
       console.error('Error creating profile:', error);
       toast.error('Failed to create profile. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -299,29 +304,107 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Select value={form.watch('address.country')} onValueChange={(value) => form.setValue('address.country', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                    <SelectItem value="GB">United Kingdom</SelectItem>
-                    <SelectItem value="AU">Australia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="address.city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="San Francisco" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address.state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State/Province</FormLabel>
+                    <FormControl>
+                      <Input placeholder="California" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="address.zipCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ZIP/Postal Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="94103" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address.country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Country</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="US">United States</SelectItem>
+                          <SelectItem value="CA">Canada</SelectItem>
+                          <SelectItem value="GB">United Kingdom</SelectItem>
+                          <SelectItem value="AU">Australia</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Address confirmation display */}
+            {(form.watch('address.street') || form.watch('address.city')) && (
+              <div className="p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">Address Preview:</p>
+                  <AddressVerificationBadge
+                    verified={false}
+                    verificationMethod="pending_verification"
+                    size="sm"
+                    showText={false}
+                  />
+                </div>
+                <div className="space-y-1 text-sm">
+                  {form.watch('address.street') && <p>{form.watch('address.street')}</p>}
+                  {form.watch('address.line2') && <p>{form.watch('address.line2')}</p>}
+                  {(form.watch('address.city') || form.watch('address.state') || form.watch('address.zipCode')) && (
+                    <p>
+                      {[form.watch('address.city'), form.watch('address.state'), form.watch('address.zipCode')]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  )}
+                  {form.watch('address.country') && <p>{form.watch('address.country')}</p>}
+                </div>
+              </div>
+            )}
           </div>
 
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isCreating}
+            disabled={isCreating || isVerifying}
           >
-            {isCreating ? "Creating Profile..." : "Complete Profile"}
+            {(isCreating || isVerifying) ? "Saving & Verifying Profile..." : "Complete Profile"}
           </Button>
         </form>
       </Form>

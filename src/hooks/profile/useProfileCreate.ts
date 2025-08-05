@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { formatProfileForSubmission, formatBirthdayForStorage } from "@/utils/dataFormatUtils";
 import { ProfileData } from "@/components/profile-setup/hooks/types";
+import { unifiedLocationService } from "@/services/location/UnifiedLocationService";
+import { StandardizedAddress } from "@/services/googlePlacesService";
 
 export const useProfileCreate = () => {
   const { user } = useAuth();
@@ -118,6 +120,47 @@ export const useProfileCreate = () => {
       }
 
       console.log("Profile created successfully:", data);
+
+      // Verify address after profile creation
+      if (profileData.address?.street && profileData.address?.city && profileData.address?.state && profileData.address?.zipCode) {
+        try {
+          console.log("🔍 Verifying address for profile...");
+          
+          const addressToValidate: StandardizedAddress = {
+            street: profileData.address.street,
+            city: profileData.address.city,
+            state: profileData.address.state,
+            zipCode: profileData.address.zipCode,
+            country: profileData.address.country || 'US',
+            formatted_address: `${profileData.address.street}, ${profileData.address.city}, ${profileData.address.state} ${profileData.address.zipCode}`
+          };
+
+          const validation = await unifiedLocationService.validateAddressForDelivery(addressToValidate);
+          
+          if (validation.isValid) {
+            // Update profile with verification status
+            const verificationData = {
+              address_verified: true,
+              address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
+              address_verified_at: new Date().toISOString()
+            };
+            
+            console.log("🔍 Updating verification status:", verificationData);
+            
+            await supabase
+              .from('profiles')
+              .update(verificationData)
+              .eq('id', user.id);
+            
+            console.log("✅ Address verification completed successfully");
+          } else {
+            console.log("⚠️ Address validation failed but profile creation succeeded");
+          }
+        } catch (verificationError) {
+          console.error("❌ Address verification failed:", verificationError);
+          // Don't throw - profile creation should succeed even if verification fails
+        }
+      }
 
       // Automatically create birthday entry in user_special_dates if birthday was provided
       if (fullBirthdayDate && formattedBirthday) {

@@ -264,10 +264,32 @@ const GeneralSettings = () => {
               <Button 
                 type="submit" 
                 disabled={isSaving}
-                onClick={(e) => {
+                onClick={async (e) => {
                   console.log("🔘 Save button clicked!");
-                  console.log("🔍 Button type:", e.currentTarget.type);
-                  console.log("🔍 Form element:", e.currentTarget.closest('form'));
+                  console.log("🔍 Active tab:", activeTab);
+                  
+                  if (activeTab === "address") {
+                    e.preventDefault(); // Prevent form submission
+                    
+                    // Trigger validation and submit manually for address tab
+                    const isValid = await form.trigger();
+                    if (isValid) {
+                      const formData = form.getValues();
+                      console.log("🔄 Starting save & verify process...");
+                      
+                      // First save the form data
+                      const saveResult = await onSubmit(formData, "address");
+                      
+                      if (saveResult?.success) {
+                        console.log("✅ Form saved, now triggering verification...");
+                        // Get address data and verify
+                        const address = formData.address;
+                        if (address?.street && address?.city && address?.state && address?.zipCode) {
+                          await handleAddressVerification(formData);
+                        }
+                      }
+                    }
+                  }
                 }}
               >
                 {isSaving ? (

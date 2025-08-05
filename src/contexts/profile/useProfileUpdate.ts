@@ -39,10 +39,12 @@ export const useProfileUpdate = () => {
           : [];
       }
 
-      // Add other fields that are being updated
+      // Add other fields that are being updated (including verification fields)
       Object.keys(updateData).forEach(key => {
         if (key !== 'shipping_address' && key !== 'gift_preferences') {
-          safeUpdateData[key] = updateData[key as keyof Profile];
+          const value = updateData[key as keyof Profile];
+          console.log(`🔍 Processing field '${key}':`, value);
+          safeUpdateData[key] = value;
         }
       });
 

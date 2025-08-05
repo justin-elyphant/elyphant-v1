@@ -56,11 +56,19 @@ const AddressSection = () => {
       
       if (validation.isValid) {
         // Update profile with verification status
+        console.log("🔍 Updating verification status:", {
+          address_verified: true,
+          address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
+          address_verified_at: new Date().toISOString()
+        });
+        
         const result = await updateProfile({
           address_verified: true,
           address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
           address_verified_at: new Date().toISOString()
         });
+        
+        console.log("🔍 Verification update result:", result);
         
         if (result.success) {
           toast.success("Address verified successfully!", {
@@ -68,7 +76,11 @@ const AddressSection = () => {
               ? "Your address was automatically verified with high confidence"
               : "Your address has been confirmed"
           });
+          
+          // Force a profile refresh to update UI immediately
+          window.location.reload();
         } else {
+          console.error("❌ Failed to update verification status:", result.error);
           toast.error("Failed to update verification status");
         }
       } else {

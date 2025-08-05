@@ -140,8 +140,7 @@ export const useGeneralSettingsForm = () => {
       setHasUnsavedChanges(false);
       console.log("🔄 Updated initial form values after save");
       
-      // If this is the address tab, we'll handle verification in the component
-      // Just show success for the save operation
+      // Show appropriate success message based on active tab
       if (activeTab === "address") {
         toast.success("Address saved successfully");
       } else {

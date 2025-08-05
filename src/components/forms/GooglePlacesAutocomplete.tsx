@@ -28,6 +28,7 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   className = ""
 }) => {
   const [open, setOpen] = React.useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = React.useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -48,25 +49,31 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
           inputRef.current.setSelectionRange(length, length);
         }
       }, 50);
-    }
+    },
+    allowAutoFetch: hasUserInteracted
   });
 
   // Sync external value with internal query only when external value changes
   useEffect(() => {
     setQuery(value);
-  }, [value, setQuery]);
+    // Reset interaction state when value changes externally (e.g., form reset)
+    if (value !== query) {
+      setHasUserInteracted(false);
+    }
+  }, [value, setQuery, query]);
 
-  // Auto-open popover when predictions arrive, but don't close it immediately
+  // Auto-open popover when predictions arrive, but only if user has interacted
   useEffect(() => {
-    if (predictions.length > 0 && !isLoading && query.length >= 3) {
+    if (predictions.length > 0 && !isLoading && query.length >= 3 && hasUserInteracted) {
       setOpen(true);
     } else if (query.length < 3) {
       setOpen(false);
     }
-  }, [predictions.length, isLoading, query.length]);
+  }, [predictions.length, isLoading, query.length, hasUserInteracted]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    setHasUserInteracted(true);
     setQuery(newValue);
     onChange(newValue);
     
@@ -81,12 +88,14 @@ const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   };
 
   const handleInputClick = () => {
+    setHasUserInteracted(true);
     if (query && query.length >= 3 && predictions.length > 0 && !isLoading) {
       setOpen(true);
     }
   };
 
   const handleInputFocus = () => {
+    setHasUserInteracted(true);
     if (query.length >= 3 && predictions.length > 0 && !isLoading) {
       setOpen(true);
     }

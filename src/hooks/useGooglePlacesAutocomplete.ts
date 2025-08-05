@@ -5,11 +5,13 @@ import { googlePlacesService, GooglePlacesPrediction, StandardizedAddress } from
 interface UseGooglePlacesAutocompleteProps {
   onAddressSelect: (address: StandardizedAddress) => void;
   debounceMs?: number;
+  allowAutoFetch?: boolean;
 }
 
 export const useGooglePlacesAutocomplete = ({
   onAddressSelect,
-  debounceMs = 300
+  debounceMs = 300,
+  allowAutoFetch = true
 }: UseGooglePlacesAutocompleteProps) => {
   const [query, setQuery] = useState('');
   const [predictions, setPredictions] = useState<GooglePlacesPrediction[]>([]);
@@ -19,7 +21,7 @@ export const useGooglePlacesAutocomplete = ({
   // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (query.length >= 3) {
+      if (query.length >= 3 && allowAutoFetch) {
         setIsLoading(true);
         try {
           const results = await googlePlacesService.getAddressPredictions(query);
@@ -36,7 +38,7 @@ export const useGooglePlacesAutocomplete = ({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [query, debounceMs]);
+  }, [query, debounceMs, allowAutoFetch]);
 
   const selectPrediction = useCallback(async (prediction: GooglePlacesPrediction) => {
     setIsLoading(true);

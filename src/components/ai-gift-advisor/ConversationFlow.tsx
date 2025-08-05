@@ -16,6 +16,9 @@ import ResultsStep from "./steps/ResultsStep";
 import ResultsPreviewStep from "./steps/ResultsPreviewStep";
 import SignUpPromptStep from "./steps/SignUpPromptStep";
 import NicoleAutoGiftStep from "./steps/NicoleAutoGiftStep";
+import NicoleAutoGiftConnectionStep from "./steps/NicoleAutoGiftConnectionStep";
+import AutoGiftConfirmationStep from "./steps/AutoGiftConfirmationStep";
+import AutoGiftSuccessStep from "./steps/AutoGiftSuccessStep";
 import ContextualLinks from "../ai/conversation/ContextualLinks";
 import { ContextualLink } from "@/services/ai/nicoleAiService";
 
@@ -104,6 +107,12 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
         return <ManualInputStep {...props} />;
       case "nicole-auto-gift":
         return <NicoleAutoGiftStep {...props} />;
+      case "nicole-auto-gift-connection":
+        return <NicoleAutoGiftConnectionStep {...props} />;
+      case "auto-gift-confirmation":
+        return <AutoGiftConfirmationStep {...props} />;
+      case "auto-gift-success":
+        return <AutoGiftSuccessStep {...props} />;
       case "occasion":
         return <OccasionStep {...props} />;
       case "budget":

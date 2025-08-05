@@ -332,7 +332,41 @@ export class UnifiedNicoleAIService {
     message: string,
     context: UnifiedNicoleContext
   ): Promise<NicoleResponse> {
-    // Handle auto-gifting related conversations
+    // Enhanced auto-gifting conversation logic
+    if (context.recipient && !context.occasion) {
+      // Analyze recipient and suggest occasions
+      const response = `Perfect! I see you want to set up auto-gifting for ${context.recipient}. Based on your relationship as ${context.relationship || 'friends'}, I recommend setting up ${context.recipient}'s birthday first. Should I also add their anniversary in June if you'd like both covered?`;
+      
+      return {
+        message: response,
+        context: { ...context, conversationPhase: 'occasion_confirmation' },
+        capability: 'auto_gifting',
+        actions: ['confirm_occasion', 'setup_auto_gifting'],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: false
+      };
+    }
+    
+    if (context.recipient && context.occasion && !context.budget) {
+      // Suggest relationship-based budget
+      const relationshipMultiplier = context.relationship === 'close_friend' ? 1.1 : 
+                                   context.relationship === 'family' ? 1.2 : 1.0;
+      const suggestedMin = Math.round(50 * 0.7 * relationshipMultiplier);
+      const suggestedMax = Math.round(75 * relationshipMultiplier);
+      
+      const response = `Great! Based on your ${context.relationship || 'friendship'} with ${context.recipient}, I suggest $${suggestedMin}-${suggestedMax} for ${context.occasion} gifts. Sound good, or would you prefer a different range?`;
+      
+      return {
+        message: response,
+        context: { ...context, conversationPhase: 'budget_confirmation', budget: [suggestedMin, suggestedMax] },
+        capability: 'auto_gifting',
+        actions: ['confirm_budget', 'setup_auto_gifting'],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: false
+      };
+    }
+    
+    // Fallback to general auto-gifting conversation
     const nicoleContext: NicoleContext = {
       ...this.convertToNicoleContext(context),
       conversationPhase: 'gathering_info'

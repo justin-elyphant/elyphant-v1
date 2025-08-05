@@ -23,12 +23,8 @@ const NicoleAutoGiftStep = ({
   const handleAutoPilot = async () => {
     setSelectedPath("auto-pilot");
     
-    // Set smart defaults for auto-pilot mode
-    await setOccasion("general celebration");
-    await setBudget({ min: 25, max: 75 }); // Smart default budget
-    
-    // Move directly to generating step
-    nextStep("generating");
+    // Transition to connection selection for auto-pilot
+    nextStep("nicole-auto-gift-connection");
   };
 
   const handleCurated = () => {

@@ -78,11 +78,28 @@ export const useProfileUpdate = () => {
             .select()
             .single();
 
+          console.log("🔍 Database update response:", { data, error });
+
           if (error) {
             console.error(`Error updating profile (attempt ${attempts}):`, error);
             if (attempts === 3) throw error;
           } else {
             console.log("Profile updated successfully:", data);
+            
+            // CRITICAL CHECK: Verify the verification fields actually updated
+            if (safeUpdateData.address_verified !== undefined && data?.address_verified !== safeUpdateData.address_verified) {
+              console.error("🚨 CRITICAL: address_verified was not updated in database!", {
+                sent: safeUpdateData.address_verified,
+                received: data?.address_verified
+              });
+            }
+            if (safeUpdateData.address_verification_method !== undefined && data?.address_verification_method !== safeUpdateData.address_verification_method) {
+              console.error("🚨 CRITICAL: address_verification_method was not updated in database!", {
+                sent: safeUpdateData.address_verification_method,
+                received: data?.address_verification_method
+              });
+            }
+            
             success = true;
             result = data;
           }

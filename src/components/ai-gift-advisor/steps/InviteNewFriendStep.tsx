@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Mail, Heart, Gift, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { unifiedRecipientService } from "@/services/unifiedRecipientService";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
+import { useInvitationAnalytics } from "@/services/analytics/invitationAnalyticsService";
 
 type InviteNewFriendStepProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -19,6 +21,7 @@ const InviteNewFriendStep = ({
   botState 
 }: InviteNewFriendStepProps) => {
   const { user } = useAuth();
+  const { trackInvitationSent } = useInvitationAnalytics();
   const [formData, setFormData] = useState({
     name: botState.pendingFriendData?.name || '',
     email: botState.pendingFriendData?.email || '',
@@ -53,6 +56,18 @@ const InviteNewFriendStep = ({
         relationship_type: formData.relationship
       });
 
+      // Track invitation analytics
+      const invitationId = await trackInvitationSent({
+        recipient_email: formData.email,
+        recipient_name: formData.name,
+        relationship_type: formData.relationship,
+        occasion: formData.occasion,
+        metadata: {
+          event_date: formData.eventDate,
+          source: 'ai_gift_advisor'
+        }
+      });
+
       // Set up occasion and budget if provided
       if (formData.occasion) {
         setOccasion(formData.occasion);
@@ -67,12 +82,14 @@ const InviteNewFriendStep = ({
       }
 
       // Send invitation email
-      await sendInvitationEmail({
+      const emailResult = await sendInvitationEmail({
         recipientEmail: formData.email,
         recipientName: formData.name,
         giftorName: user.user_metadata?.name || user.email || 'Someone',
         occasion: formData.occasion,
-        eventDate: formData.eventDate
+        eventDate: formData.eventDate,
+        relationship: formData.relationship,
+        invitationId: invitationId // Pass invitation ID for tracking
       });
 
       toast.success(`Invitation sent to ${formData.name}! Auto-gifting will activate when they join.`);
@@ -101,19 +118,18 @@ const InviteNewFriendStep = ({
     giftorName: string;
     occasion?: string;
     eventDate?: string;
+    relationship?: string;
+    invitationId?: string;
   }) => {
-    // Call edge function to send personalized invitation email
-    const response = await fetch('/api/send-gift-invitation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(invitationData)
+    // Call Supabase edge function to send personalized invitation email
+    const { data, error } = await supabase.functions.invoke('send-gift-invitation', {
+      body: invitationData
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to send invitation email');
+    if (error) {
+      throw new Error(error.message || 'Failed to send invitation email');
     }
     
-    const data = await response.json();
     return data;
   };
 

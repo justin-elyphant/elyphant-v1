@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/auth";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useInvitationAnalytics } from "@/services/analytics/invitationAnalyticsService";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
@@ -18,6 +19,7 @@ const StreamlinedProfileSetup = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showNicolePopup, setShowNicolePopup] = useState(false);
   const [invitationContext, setInvitationContext] = useState<any>(null);
+  const { trackProfileSetupCompleted, trackPreferenceCollectionStarted } = useInvitationAnalytics();
   
   // Initialize Nicole AI for invitation context
   const { chatWithNicole } = useUnifiedNicoleAI({
@@ -67,8 +69,17 @@ const StreamlinedProfileSetup = () => {
     // Clear completion state
     LocalStorageService.clearProfileCompletionState();
     
+    // Track profile setup completion for invited users
+    if (invitationContext?.isInvited && user?.email) {
+      await trackProfileSetupCompleted(user.email);
+    }
+    
     // If this was an invitation, show Nicole popup for gift preference collection
     if (invitationContext?.isInvited) {
+      // Track that preference collection is starting
+      if (user?.email) {
+        await trackPreferenceCollectionStarted(user.email);
+      }
       setShowNicolePopup(true);
     } else {
       // Regular profile setup, redirect to homepage

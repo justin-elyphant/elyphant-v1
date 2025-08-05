@@ -990,6 +990,63 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_invitation_analytics: {
+        Row: {
+          auto_gift_activated_at: string | null
+          conversion_status: string
+          created_at: string
+          email_clicked_at: string | null
+          email_opened_at: string | null
+          id: string
+          invitation_sent_at: string
+          metadata: Json | null
+          occasion: string | null
+          profile_completed_at: string | null
+          recipient_email: string
+          recipient_name: string
+          relationship_type: string
+          signup_completed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_gift_activated_at?: string | null
+          conversion_status?: string
+          created_at?: string
+          email_clicked_at?: string | null
+          email_opened_at?: string | null
+          id?: string
+          invitation_sent_at?: string
+          metadata?: Json | null
+          occasion?: string | null
+          profile_completed_at?: string | null
+          recipient_email: string
+          recipient_name: string
+          relationship_type?: string
+          signup_completed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_gift_activated_at?: string | null
+          conversion_status?: string
+          created_at?: string
+          email_clicked_at?: string | null
+          email_opened_at?: string | null
+          id?: string
+          invitation_sent_at?: string
+          metadata?: Json | null
+          occasion?: string | null
+          profile_completed_at?: string | null
+          recipient_email?: string
+          recipient_name?: string
+          relationship_type?: string
+          signup_completed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gift_proposal_votes: {
         Row: {
           created_at: string | null
@@ -1494,6 +1551,88 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_conversion_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          invitation_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          invitation_id: string
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          invitation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_conversion_events_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "gift_invitation_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_rewards: {
+        Row: {
+          created_at: string
+          earned_at: string
+          expires_at: string | null
+          id: string
+          invitation_id: string
+          metadata: Json | null
+          redeemed_at: string | null
+          reward_description: string | null
+          reward_type: string
+          reward_value: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          earned_at?: string
+          expires_at?: string | null
+          id?: string
+          invitation_id: string
+          metadata?: Json | null
+          redeemed_at?: string | null
+          reward_description?: string | null
+          reward_type: string
+          reward_value?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          earned_at?: string
+          expires_at?: string | null
+          id?: string
+          invitation_id?: string
+          metadata?: Json | null
+          redeemed_at?: string | null
+          reward_description?: string | null
+          reward_type?: string
+          reward_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_rewards_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "gift_invitation_analytics"
             referencedColumns: ["id"]
           },
         ]

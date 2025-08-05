@@ -13,7 +13,7 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
-import EnhancedNicoleConversationEngine from "@/components/ai/enhanced/EnhancedNicoleConversationEngine";
+import UnifiedNicoleInterface from "@/components/ai/unified/UnifiedNicoleInterface";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -21,15 +21,15 @@ const Hero = () => {
   const nextHoliday = getNextHoliday();
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
-  const [showNicoleWelcome, setShowNicoleWelcome] = useState(false);
+  const [showUnifiedNicole, setShowUnifiedNicole] = useState(false);
 
   // Enhanced handler for CTAs: sets intent and routes based on auth
   const handleCta = (intent: "giftor" | "giftee") => {
     LocalStorageService.setNicoleContext({ selectedIntent: intent, source: 'hero_cta' });
     if (user) {
-      // Authenticated user: show Nicole welcome flow for gifting
+      // Authenticated user: show unified Nicole interface for gifting
       if (intent === "giftor") {
-        setShowNicoleWelcome(true);
+        setShowUnifiedNicole(true);
       } else {
         navigate("/wishlists");
       }
@@ -159,11 +159,11 @@ const Hero = () => {
         onSubmit={handleCreateWishlistSubmit}
       />
 
-      {/* Enhanced Nicole Welcome Flow - handles all intent selection */}
-      <EnhancedNicoleConversationEngine
-        isOpen={showNicoleWelcome}
-        onClose={() => setShowNicoleWelcome(false)}
-        initialContext="post-auth-welcome"
+      {/* Unified Nicole Interface - handles all conversation types */}
+      <UnifiedNicoleInterface
+        isOpen={showUnifiedNicole}
+        onClose={() => setShowUnifiedNicole(false)}
+        entryPoint="homepage"
         onIntentComplete={handleNicoleIntentComplete}
       />
     </FullWidthSection>

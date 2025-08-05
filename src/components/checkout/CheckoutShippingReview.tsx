@@ -158,10 +158,10 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                               <p className="font-medium flex items-center gap-2">
                                 Hidden Address
                                 <AddressVerificationBadge
-                                  verified={group.address_verified}
-                                  verificationMethod={group.address_verification_method}
-                                  verifiedAt={group.address_verified_at}
-                                  lastUpdated={group.address_last_updated}
+                                  verified={group.address_verified ?? unifiedProfile?.address_verified}
+                                  verificationMethod={group.address_verification_method ?? unifiedProfile?.address_verification_method}
+                                  verifiedAt={group.address_verified_at ?? unifiedProfile?.address_verified_at}
+                                  lastUpdated={group.address_last_updated ?? unifiedProfile?.address_last_updated}
                                   size="sm"
                                   showText={false}
                                 />
@@ -176,10 +176,10 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                             <p className="font-medium flex items-center gap-2">
                               {group.shippingAddress.name}
                               <AddressVerificationBadge
-                                verified={group.address_verified}
-                                verificationMethod={group.address_verification_method}
-                                verifiedAt={group.address_verified_at}
-                                lastUpdated={group.address_last_updated}
+                                verified={group.address_verified ?? unifiedProfile?.address_verified}
+                                verificationMethod={group.address_verification_method ?? unifiedProfile?.address_verification_method}
+                                verifiedAt={group.address_verified_at ?? unifiedProfile?.address_verified_at}
+                                lastUpdated={group.address_last_updated ?? unifiedProfile?.address_last_updated}
                                 size="sm"
                                 showText={false}
                               />

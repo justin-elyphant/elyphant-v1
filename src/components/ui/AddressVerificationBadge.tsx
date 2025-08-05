@@ -21,6 +21,13 @@ export const AddressVerificationBadge: React.FC<AddressVerificationBadgeProps> =
   size = 'default',
   showText = true
 }) => {
+  console.log(`🔍 [AddressVerificationBadge] Rendering badge:`, {
+    verified,
+    verificationMethod,
+    verifiedAt,
+    lastUpdated
+  });
+  
   const getVerificationStatus = () => {
     if (!verified) {
       return {

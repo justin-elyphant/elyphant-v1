@@ -72,12 +72,33 @@ const Cart = () => {
 
   const handleRecipientSelect = (recipient: UnifiedRecipient) => {
     if (selectedItemId) {
+      // Check if recipient is using user's address by comparing addresses
+      const userShippingAddress = unifiedProfile?.shipping_address as any;
+      const isUsingUserAddress = recipient.address && 
+        userShippingAddress &&
+        recipient.address.address === (userShippingAddress.address_line1 || userShippingAddress.street) &&
+        recipient.address.city === userShippingAddress.city &&
+        recipient.address.zipCode === (userShippingAddress.zip_code || userShippingAddress.zipCode);
+
       const recipientAssignment = {
         connectionId: recipient.id,
         connectionName: recipient.name,
         deliveryGroupId: crypto.randomUUID(),
-        shippingAddress: recipient.address
+        shippingAddress: recipient.address,
+        // Include verification data if using user's verified address
+        ...(isUsingUserAddress && {
+          address_verified: unifiedProfile?.address_verified,
+          address_verification_method: unifiedProfile?.address_verification_method,
+          address_verified_at: unifiedProfile?.address_verified_at,
+          address_last_updated: unifiedProfile?.address_last_updated
+        })
       };
+      
+      console.log(`🔍 [Cart] Assigning recipient ${recipient.name}:`, {
+        isUsingUserAddress,
+        address_verified: recipientAssignment.address_verified,
+        user_verified: unifiedProfile?.address_verified
+      });
       
       if (selectedItemId === 'bulk') {
         // Assign all unassigned items to this recipient
@@ -127,6 +148,12 @@ const Cart = () => {
         address_verified_at: unifiedProfile?.address_verified_at,
         address_last_updated: unifiedProfile?.address_last_updated
       };
+      
+      console.log(`🔍 [Cart] Assigning user address with verification:`, {
+        address_verified: unifiedProfile?.address_verified,
+        verification_method: unifiedProfile?.address_verification_method,
+        verified_at: unifiedProfile?.address_verified_at
+      });
       
       assignItemToRecipient(item.product.product_id, recipientAssignment);
     });

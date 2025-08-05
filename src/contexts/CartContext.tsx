@@ -181,7 +181,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const firstItem = items[0];
         const assignment = firstItem.recipientAssignment!;
         
-        return {
+        const deliveryGroup = {
           id: assignment.deliveryGroupId,
           connectionId,
           connectionName: assignment.connectionName,
@@ -195,6 +195,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           address_verified_at: assignment.address_verified_at,
           address_last_updated: assignment.address_last_updated
         };
+        
+        console.log(`🔍 [CartContext] Creating delivery group for ${assignment.connectionName}:`, {
+          address_verified: assignment.address_verified,
+          verification_method: assignment.address_verification_method,
+          verified_at: assignment.address_verified_at
+        });
+        
+        return deliveryGroup;
       }
     );
   }, [cartItems]);

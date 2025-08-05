@@ -124,7 +124,14 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
         )}
 
         {/* Gift Recipients (Delivery Groups) */}
-        {deliveryGroups.map((group) => (
+        {deliveryGroups.map((group) => {
+          console.log(`🔍 [CheckoutShippingReview] Rendering group ${group.connectionName}:`, {
+            address_verified: group.address_verified,
+            verification_method: group.address_verification_method,
+            verified_at: group.address_verified_at
+          });
+          
+          return (
           <div key={group.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-green-100 rounded-full">
@@ -233,7 +240,8 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {/* Your Address (Unassigned Items) */}
         {unassignedItems.length > 0 && (

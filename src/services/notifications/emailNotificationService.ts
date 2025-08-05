@@ -19,10 +19,10 @@ export interface AutoGiftApprovalData {
 }
 
 export const emailNotificationService = {
-  async sendAutoGiftApproval(data: AutoGiftApprovalData): Promise<{ success: boolean; error?: string }> {
+  async sendAutoGiftApproval(userEmail: string, data: AutoGiftApprovalData): Promise<{ success: boolean; error?: string }> {
     try {
       const emailData: EmailNotificationData = {
-        recipientEmail: data.recipientName, // This should be user's email
+        recipientEmail: userEmail, // User's email address
         subject: `Nicole found the perfect gift for ${data.recipientName}! 🎁`,
         htmlContent: this.generateAutoGiftApprovalEmail(data),
         notificationType: 'auto_gift_approval'

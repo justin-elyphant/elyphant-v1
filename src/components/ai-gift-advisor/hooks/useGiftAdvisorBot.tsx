@@ -35,6 +35,7 @@ export interface BotState {
   searchQuery?: string;
   isAuthenticated: boolean;
   showSignupPrompt: boolean;
+  pendingAction?: string;
 }
 
 export const useGiftAdvisorBot = () => {
@@ -86,13 +87,13 @@ export const useGiftAdvisorBot = () => {
   };
 
   const selectFriend = async (friend: any) => {
-    // For non-authenticated users, redirect to signup prompt
+    console.log("🎯 Friend selected:", friend);
+    
     if (!user) {
-      setBotState(prev => ({
-        ...prev,
-        step: "signup-prompt",
-        showSignupPrompt: true
-      }));
+      nextStep("signup-prompt", {
+        selectedFriend: friend,
+        pendingAction: "nicole-auto-gift"
+      });
       return;
     }
 
@@ -108,14 +109,18 @@ export const useGiftAdvisorBot = () => {
       });
     }
 
-    setBotState(prev => ({
-      ...prev,
-      selectedFriend: friend,
-      step: "friend-selected"
-    }));
+    nextStep("nicole-auto-gift", { selectedFriend: friend });
   };
 
   const setRecipientDetails = async (details: BotState['recipientDetails']) => {
+    if (!user) {
+      nextStep("signup-prompt", {
+        recipientDetails: details,
+        pendingAction: "nicole-auto-gift"
+      });
+      return;
+    }
+
     // Save recipient as a profile for future use
     if (user?.id && details) {
       await saveRecipientProfile({
@@ -130,11 +135,7 @@ export const useGiftAdvisorBot = () => {
       });
     }
 
-    setBotState(prev => ({
-      ...prev,
-      recipientDetails: details,
-      step: "occasion"
-    }));
+    nextStep("nicole-auto-gift", { recipientDetails: details });
   };
 
   const setOccasion = async (occasion: string) => {

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, UserPlus, Lock, Sparkles } from "lucide-react";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
+import { useAuth } from "@/contexts/auth";
 
 type RecipientSelectionStepProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -13,7 +14,9 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
     nextStep("manual-input");
   };
 
+  const { user } = useAuth();
   const isAuthenticated = botState.isAuthenticated;
+  const userFirstName = user?.user_metadata?.first_name;
 
   // Mock friend data for preview (when not authenticated)
   const mockFriends = [
@@ -28,7 +31,10 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
     <div className="flex flex-col h-full p-4 space-y-4">
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold mb-2">
-          {isAuthenticated ? "Perfect! Who would you like to set up auto-gifting for?" : "Who are you shopping for?"}
+          {isAuthenticated 
+            ? `Perfect${userFirstName ? `, ${userFirstName}` : ''}! Who would you like to set up auto-gifting for?`
+            : "Who are you shopping for?"
+          }
         </h3>
         <p className="text-sm text-gray-600">
           {isAuthenticated 

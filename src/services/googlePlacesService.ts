@@ -55,109 +55,23 @@ class GooglePlacesService {
       return this.loadingPromise;
     }
 
-    if (this.isLoaded && this.apiKey && !this.usingMockData && (window as any).google?.maps?.places) {
-      console.log('🏗️ [GooglePlaces] Google Maps already loaded with valid API, initializing services...');
-      this.initializeServices();
+    if (this.isLoaded) {
       return;
     }
 
     this.loadingPromise = new Promise(async (resolve) => {
-      try {
-        console.log('🏗️ [GooglePlaces] Starting Google Maps API loading process...');
-        
-        // Get API key from server - only fetch once
-        if (!this.apiKeyFetched) {
-          console.log('🏗️ [GooglePlaces] Fetching API key...');
-          this.apiKey = await getGoogleMapsApiKey();
-          this.apiKeyFetched = true;
-          
-          if (!this.apiKey) {
-            console.warn('🏗️ [GooglePlaces] ⚠️ No API key available - switching to mock data mode');
-            this.usingMockData = true;
-            this.isLoaded = true;
-            resolve();
-            return;
-          } else {
-            console.log('🏗️ [GooglePlaces] ✅ API key retrieved successfully');
-            console.log('🏗️ [GooglePlaces] 🔍 API Key starts with:', this.apiKey.substring(0, 20) + '...');
-            this.usingMockData = false;
-          }
-        }
-
-        console.log('🏗️ [GooglePlaces] Loading Google Maps script...');
-
-        // Check if script already exists to avoid duplicates
-        const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-        if (existingScript) {
-          console.log('🏗️ [GooglePlaces] Script already exists, removing it first...');
-          existingScript.remove();
-        }
-
-        // Check if Google Maps is already loaded
-        if ((window as any).google?.maps?.places) {
-          console.log('🏗️ [GooglePlaces] Google Maps already available, initializing services...');
-          this.isLoaded = true;
-          this.usingMockData = false;
-          this.initializeServices();
-          resolve();
-          return;
-        }
-
-        // Load Google Maps script with direct callback
-        const callbackName = 'initGooglePlaces_' + Date.now();
-        
-        // Create global callback for Google Maps
-        (window as any)[callbackName] = () => {
-          console.log('🏗️ [GooglePlaces] ✅ Google Maps script loaded successfully via callback');
-          this.isLoaded = true;
-          this.usingMockData = false;
-          this.initializeServices();
-          delete (window as any)[callbackName]; // Clean up
-          resolve();
-        };
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places&callback=${callbackName}`;
-        script.async = true;
-        script.defer = true;
-        
-        script.onerror = (error) => {
-          console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
-          console.error('🏗️ [GooglePlaces] ❌ Script URL was:', script.src);
-          console.error('🏗️ [GooglePlaces] ❌ This could be due to:');
-          console.error('  1. Invalid API key');
-          console.error('  2. API key restrictions (HTTP referrers, domains)');
-          console.error('  3. Places API not enabled');
-          console.error('  4. Billing/quota issues');
-          console.error('  5. Content Security Policy (CSP) blocking the script');
-          console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to script load failure');
-          this.usingMockData = true;
-          this.isLoaded = true;
-          delete (window as any)[callbackName]; // Clean up
-          resolve(); // Don't reject, use mock data
-        };
-        
-        // Timeout fallback
-        setTimeout(() => {
-          if (!this.isLoaded) {
-            console.warn('🏗️ [GooglePlaces] ⚠️ Script loading timeout (10s), switching to mock data mode');
-            this.usingMockData = true;
-            this.isLoaded = true;
-            delete (window as any)[callbackName]; // Clean up
-            resolve();
-          }
-        }, 10000); // 10 second timeout
-        
-        console.log('🏗️ [GooglePlaces] Adding script to document head...');
-        console.log('🏗️ [GooglePlaces] Script URL:', script.src);
-        document.head.appendChild(script);
-      } catch (error) {
-        console.error('🏗️ [GooglePlaces] ❌ Error during Google Maps API loading:', error);
-        console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to loading error');
-        this.usingMockData = true;
-        this.isLoaded = true;
-        resolve(); // Don't reject, use mock data
+      console.log('🏗️ [GooglePlaces] ⚠️ Client-side Google Maps blocked by CSP - using backend API calls only');
+      
+      // Get API key from server for backend calls
+      if (!this.apiKeyFetched) {
+        console.log('🏗️ [GooglePlaces] Fetching API key for backend use...');
+        this.apiKey = await getGoogleMapsApiKey();
+        this.apiKeyFetched = true;
       }
+      
+      this.usingMockData = false; // We'll use real backend calls
+      this.isLoaded = true;
+      resolve();
     });
 
     return this.loadingPromise;
@@ -244,83 +158,34 @@ class GooglePlacesService {
     console.log(`🔍 [GooglePlaces] Getting predictions for: "${input}"`);
     await this.loadGoogleMapsAPI();
 
-    // Force check if we should be using real API
-    const shouldUseRealAPI = this.autocompleteService && this.apiKey && !this.usingMockData;
-    console.log(`🔍 [GooglePlaces] API Status - Has Service: ${!!this.autocompleteService}, Has Key: ${!!this.apiKey}, Using Mock: ${this.usingMockData}, Should Use Real: ${shouldUseRealAPI}`);
-
-    // If Google Maps API is available, use it
-    if (shouldUseRealAPI) {
-      console.log('🔍 [GooglePlaces] Using real Google Places API');
-      console.log('🔍 [GooglePlaces] 🔍 API Key starts with:', this.apiKey!.substring(0, 20) + '...');
+    // Since client-side Google Maps is blocked by CSP, we'll use backend API calls
+    if (this.apiKey) {
+      console.log('🔍 [GooglePlaces] Using backend Google Places API');
       
-      // Create or reuse session token
-      if (!this.sessionToken) {
-        this.sessionToken = this.createSessionToken();
-      }
-
-      // Get user location for better results
-      const userLocation = await this.getUserLocation();
-      
-      return new Promise((resolve) => {
-        const request: any = {
-          input: input,
-          // Use 'geocode' instead of 'address' for broader results including cities, neighborhoods
-          types: ['geocode'],
-          componentRestrictions: { country: 'us' },
-          sessionToken: this.sessionToken
-        };
-
-        // Add location bias if available
-        if (userLocation) {
-          request.location = new (window as any).google.maps.LatLng(userLocation.lat, userLocation.lng);
-          request.radius = 50000; // 50km radius
-          console.log(`🔍 [GooglePlaces] Adding location bias: ${userLocation.lat}, ${userLocation.lng}`);
-        } else {
-          // Default to US center for location bias
-          request.location = new (window as any).google.maps.LatLng(39.8283, -98.5795);
-          request.radius = 2000000; // 2000km radius to cover most of US
-          console.log('🔍 [GooglePlaces] Using default US location bias');
-        }
-
-        console.log('🔍 [GooglePlaces] 📋 Request details:', {
-          input: request.input,
-          types: request.types,
-          componentRestrictions: request.componentRestrictions,
-          hasLocation: !!request.location,
-          radius: request.radius
+      try {
+        // Create a new edge function for Google Places Autocomplete
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        const { data, error } = await supabase.functions.invoke('google-places-autocomplete', {
+          body: { 
+            input: input,
+            types: ['geocode'],
+            componentRestrictions: { country: 'us' }
+          }
         });
 
-        this.autocompleteService.getPlacePredictions(
-          request,
-          (predictions: any[], status: string) => {
-            console.log(`🔍 [GooglePlaces] API Response - Status: ${status}, Predictions: ${predictions?.length || 0}`);
-            
-            if (status === 'OK' && predictions) {
-              console.log(`🔍 [GooglePlaces] ✅ Successfully got ${predictions.length} real predictions`);
-              console.log(`🔍 [GooglePlaces] 📋 First prediction:`, predictions[0]);
-              const formattedPredictions = predictions.map(prediction => ({
-                place_id: prediction.place_id,
-                description: prediction.description,
-                structured_formatting: {
-                  main_text: prediction.structured_formatting.main_text,
-                  secondary_text: prediction.structured_formatting.secondary_text
-                }
-              }));
-              resolve(formattedPredictions);
-            } else {
-              console.warn(`🔍 [GooglePlaces] ⚠️ Google Places API error: ${status}, falling back to mock data`);
-              if (status === 'REQUEST_DENIED') {
-                console.error('🔍 [GooglePlaces] ❌ REQUEST_DENIED - This usually means:');
-                console.error('  1. API key is invalid or expired');
-                console.error('  2. Places API is not enabled for this key');
-                console.error('  3. Billing is not set up');
-                console.error('  4. API key restrictions are blocking the request');
-              }
-              resolve(this.getMockPredictions(input));
-            }
-          }
-        );
-      });
+        if (error) {
+          console.error('🔍 [GooglePlaces] Backend API error:', error);
+          throw error;
+        }
+
+        if (data.predictions && data.predictions.length > 0) {
+          console.log(`🔍 [GooglePlaces] ✅ Got ${data.predictions.length} predictions from backend`);
+          return data.predictions;
+        }
+      } catch (error) {
+        console.error('🔍 [GooglePlaces] Backend API call failed:', error);
+      }
     }
 
     // Fallback to mock data
@@ -332,33 +197,38 @@ class GooglePlacesService {
     console.log(`📍 [GooglePlaces] Getting place details for: ${placeId}`);
     await this.loadGoogleMapsAPI();
 
-    // If Google Maps API is available, use it
-    if (this.placesService && this.apiKey && !placeId.startsWith('mock_') && !this.usingMockData) {
-      console.log('📍 [GooglePlaces] Using real Google Places API for details');
-      return new Promise((resolve) => {
-        this.placesService.getDetails(
-          {
+    // Skip backend call for mock place IDs
+    if (placeId.startsWith('mock_')) {
+      console.log('📍 [GooglePlaces] 🤖 Using mock place details for mock ID');
+      return this.getMockPlaceDetails(placeId);
+    }
+
+    // Use backend API call since client-side is blocked by CSP
+    if (this.apiKey) {
+      console.log('📍 [GooglePlaces] Using backend Google Places API for details');
+      
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        const { data, error } = await supabase.functions.invoke('google-place-details', {
+          body: { 
             placeId: placeId,
-            fields: ['place_id', 'formatted_address', 'address_components', 'geometry'],
-            sessionToken: this.sessionToken
-          },
-          (place: any, status: string) => {
-            console.log(`📍 [GooglePlaces] Details API Response - Status: ${status}`);
-            
-            // Clear session token after use
-            this.sessionToken = null;
-            
-            if (status === 'OK' && place) {
-              console.log('📍 [GooglePlaces] ✅ Successfully got real place details');
-              const standardizedAddress = this.parseGooglePlaceDetails(place);
-              resolve(standardizedAddress);
-            } else {
-              console.warn(`📍 [GooglePlaces] ⚠️ Google Places Details API error: ${status}, falling back to mock data`);
-              resolve(this.getMockPlaceDetails(placeId));
-            }
+            fields: ['place_id', 'formatted_address', 'address_components', 'geometry']
           }
-        );
-      });
+        });
+
+        if (error) {
+          console.error('📍 [GooglePlaces] Backend API error:', error);
+          throw error;
+        }
+
+        if (data.place) {
+          console.log('📍 [GooglePlaces] ✅ Got place details from backend');
+          return this.parseGooglePlaceDetails(data.place);
+        }
+      } catch (error) {
+        console.error('📍 [GooglePlaces] Backend API call failed:', error);
+      }
     }
 
     // Fallback to mock data

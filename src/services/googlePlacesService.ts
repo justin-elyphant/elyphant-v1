@@ -123,11 +123,13 @@ class GooglePlacesService {
         
         script.onerror = (error) => {
           console.error('🏗️ [GooglePlaces] ❌ Failed to load Google Maps script:', error);
+          console.error('🏗️ [GooglePlaces] ❌ Script URL was:', script.src);
           console.error('🏗️ [GooglePlaces] ❌ This could be due to:');
           console.error('  1. Invalid API key');
           console.error('  2. API key restrictions (HTTP referrers, domains)');
           console.error('  3. Places API not enabled');
           console.error('  4. Billing/quota issues');
+          console.error('  5. Content Security Policy (CSP) blocking the script');
           console.warn('🏗️ [GooglePlaces] ⚠️ Switching to mock data mode due to script load failure');
           this.usingMockData = true;
           this.isLoaded = true;

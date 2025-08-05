@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowLeft, Sparkles, X } from "lucide-react";
 import { useGiftAdvisorBot } from "./hooks/useGiftAdvisorBot";
 import ConversationFlow from "./ConversationFlow";
 
@@ -58,7 +59,7 @@ const GiftAdvisorBot = ({ isOpen, onClose }: GiftAdvisorBotProps) => {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md mx-auto h-[80vh] flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {canGoBack && (
               <Button
                 variant="ghost"
@@ -69,10 +70,20 @@ const GiftAdvisorBot = ({ isOpen, onClose }: GiftAdvisorBotProps) => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <DialogTitle className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              🎁 AI Gift Advisor
-            </DialogTitle>
+            <Avatar className="w-10 h-10">
+              <AvatarImage src="/nicole-avatar.png" />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                <Sparkles className="w-5 h-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <DialogTitle className="text-lg">Nicole - Your Shopping Buddy</DialogTitle>
+              <p className="text-sm text-muted-foreground">AI Gift Assistant</p>
+            </div>
           </div>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { UserPlus, Users, Mail, ArrowRight, CheckCircle, Clock } from "lucide-react";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useAuth } from "@/contexts/auth";
-import { sendConnectionRequest } from "@/services/search/friendSearchService";
+import { pendingGiftsService } from "@/services/pendingGiftsService";
 import { toast } from "sonner";
 
 interface UnifiedRecipientSelectorProps {
@@ -52,11 +52,15 @@ const UnifiedRecipientSelector = ({ value, onChange, selectedRecipient }: Unifie
     setIsSubmitting(true);
     try {
       // Create pending connection with invitation
-      const result = await sendConnectionRequest(newPersonForm.email, newPersonForm.relationshipType);
+      const result = await pendingGiftsService.createPendingConnection(
+        newPersonForm.email,
+        newPersonForm.name,
+        newPersonForm.relationshipType
+      );
       
-      if (result.success) {
+      if (result) {
         // Set this as the selected recipient
-        onChange("new-person", {
+        onChange(result.id, {
           recipientEmail: newPersonForm.email,
           recipientName: newPersonForm.name,
           relationshipType: newPersonForm.relationshipType,

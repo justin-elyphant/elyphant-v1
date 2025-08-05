@@ -282,10 +282,12 @@ const GeneralSettings = () => {
                       
                       if (saveResult?.success) {
                         console.log("✅ Form saved, now triggering verification...");
-                        // Get address data and verify
-                        const address = formData.address;
-                        if (address?.street && address?.city && address?.state && address?.zipCode) {
-                          await handleAddressVerification(formData);
+                        // Get the AddressSection component's verify function
+                        const addressSection = document.querySelector('[data-address-section]');
+                        if (addressSection) {
+                          // Trigger verification event
+                          const event = new CustomEvent('verifyAddress');
+                          addressSection.dispatchEvent(event);
                         }
                       }
                     }

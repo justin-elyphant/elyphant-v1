@@ -169,8 +169,24 @@ const AddressSection = () => {
 
   const verificationStatus = getVerificationStatus();
 
+  // Add event listener for verification trigger
+  React.useEffect(() => {
+    const handleVerificationEvent = () => {
+      console.log("🔄 Verification event triggered from save button");
+      handleVerifyAddress();
+    };
+
+    const addressSection = document.querySelector('[data-address-section]');
+    if (addressSection) {
+      addressSection.addEventListener('verifyAddress', handleVerificationEvent);
+      return () => {
+        addressSection.removeEventListener('verifyAddress', handleVerificationEvent);
+      };
+    }
+  }, []);
+
   return (
-    <Card>
+    <Card data-address-section>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

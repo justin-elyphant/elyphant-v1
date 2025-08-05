@@ -12,6 +12,9 @@ export type ConversationStep =
   | "manual-input"
   | "nicole-auto-gift"
   | "nicole-auto-gift-connection"
+  | "friend-search"
+  | "invite-new-friend"
+  | "invitation-sent"
   | "auto-gift-confirmation"
   | "auto-gift-success"
   | "occasion"
@@ -39,6 +42,17 @@ export interface BotState {
   isAuthenticated: boolean;
   showSignupPrompt: boolean;
   pendingAction?: string;
+  pendingFriendData?: {
+    name: string;
+    email: string;
+    relationship: string;
+  };
+  invitedFriend?: {
+    name: string;
+    email: string;
+    relationship: string;
+    occasion?: string;
+  };
 }
 
 export const useGiftAdvisorBot = () => {

@@ -107,12 +107,18 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
         return <ManualInputStep {...props} />;
       case "nicole-auto-gift":
         return <NicoleAutoGiftStep {...props} />;
-      case "nicole-auto-gift-connection":
-        return <NicoleAutoGiftConnectionStep {...props} />;
-      case "auto-gift-confirmation":
-        return <AutoGiftConfirmationStep {...props} />;
-      case "auto-gift-success":
-        return <AutoGiftSuccessStep {...props} />;
+    case "nicole-auto-gift-connection":
+      return <NicoleAutoGiftConnectionStep {...props} />;
+    case "friend-search":
+      return <FriendSearchStep {...props} />;
+    case "invite-new-friend":
+      return <InviteNewFriendStep {...props} />;
+    case "invitation-sent":
+      return <InvitationSentStep {...props} />;
+    case "auto-gift-confirmation":
+      return <AutoGiftConfirmationStep {...props} />;
+    case "auto-gift-success":
+      return <AutoGiftSuccessStep {...props} />;
       case "occasion":
         return <OccasionStep {...props} />;
       case "budget":

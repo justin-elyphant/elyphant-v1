@@ -192,11 +192,24 @@ const NicoleAutoGiftConnectionStep = ({
               </div>
               <h3 className="font-medium">No connections found</h3>
               <p className="text-sm text-muted-foreground">
-                Add some friends first to set up auto-gifting for them
+                You can search for existing friends or invite someone new to join Elyphant
               </p>
-              <Button variant="outline" size="sm">
-                Add Friends
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => nextStep("friend-search")}
+                >
+                  Search Friends
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => nextStep("invite-new-friend")}
+                >
+                  Invite Someone New
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

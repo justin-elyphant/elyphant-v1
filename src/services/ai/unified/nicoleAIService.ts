@@ -7,6 +7,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UnifiedNicoleContext, NicoleResponse } from "./types";
+import { unifiedNicoleAI } from "./UnifiedNicoleAIService";
 
 export interface NicoleGiftSelectionContext {
   recipientId: string;
@@ -65,19 +66,11 @@ class NicoleAIService {
       // Generate enhanced search query with Nicole's intelligence
       const prompt = this.buildGiftSelectionPrompt(context);
       
-      const { data: nicoleResponse, error } = await supabase.functions.invoke('nicole-chat', {
-        body: {
-          message: prompt,
-          context: nicoleContext,
-          capability: 'gift_advisor',
-          sessionId: `gift-selection-${context.recipientId}-${Date.now()}`
-        }
-      });
-
-      if (error) {
-        console.error('Nicole gift selection error:', error);
-        throw new Error(`Nicole gift selection failed: ${error.message}`);
-      }
+      const nicoleResponse = await unifiedNicoleAI.chat(
+        prompt,
+        nicoleContext,
+        `gift-selection-${context.recipientId}-${Date.now()}`
+      );
 
       const response = nicoleResponse as NicoleResponse;
       
@@ -158,21 +151,16 @@ class NicoleAIService {
       // Generate Nicole's initial approval message
       const initialPrompt = this.buildApprovalPrompt(context);
       
-      const { data: nicoleResponse, error: nicoleError } = await supabase.functions.invoke('nicole-chat', {
-        body: {
-          message: initialPrompt,
-          context: nicoleContext,
-          capability: 'auto_gifting',
-          sessionId: `approval-${conversation.id}`
-        }
-      });
-
-      if (nicoleError) throw nicoleError;
+      const nicoleResponse = await unifiedNicoleAI.chat(
+        initialPrompt,
+        nicoleContext,
+        `approval-${conversation.id}`
+      );
 
       return {
         conversationId: conversation.id,
         initialMessage: initialPrompt,
-        nicoleResponse: nicoleResponse as NicoleResponse
+        nicoleResponse: nicoleResponse
       };
       
     } catch (error) {
@@ -207,21 +195,16 @@ class NicoleAIService {
         currentUserId: conversation.user_id
       };
 
-      const { data: nicoleResponse, error: nicoleError } = await supabase.functions.invoke('nicole-chat', {
-        body: {
-          message: userMessage,
-          context: nicoleContext,
-          capability: 'auto_gifting',
-          sessionId: `approval-${conversationId}`
-        }
-      });
-
-      if (nicoleError) throw nicoleError;
+      const nicoleResponse = await unifiedNicoleAI.chat(
+        userMessage,
+        nicoleContext,
+        `approval-${conversationId}`
+      );
 
       // Update conversation with new message
       await this.updateConversationHistory(conversationId, userMessage, nicoleResponse);
 
-      return nicoleResponse as NicoleResponse;
+      return nicoleResponse;
       
     } catch (error) {
       console.error('Error in Nicole approval conversation:', error);
@@ -252,18 +235,13 @@ class NicoleAIService {
 
       const prompt = this.buildRuleCreationPrompt(context);
       
-      const { data: nicoleResponse, error } = await supabase.functions.invoke('nicole-chat', {
-        body: {
-          message: prompt,
-          context: nicoleContext,
-          capability: 'auto_gifting',
-          sessionId: `rule-creation-${context.userId}-${Date.now()}`
-        }
-      });
+      const nicoleResponse = await unifiedNicoleAI.chat(
+        prompt,
+        nicoleContext,
+        `rule-creation-${context.userId}-${Date.now()}`
+      );
 
-      if (error) throw error;
-
-      const response = nicoleResponse as NicoleResponse;
+      const response = nicoleResponse;
       const ruleData = this.parseRuleCreationResponse(response, context);
       
       return {
@@ -315,18 +293,13 @@ class NicoleAIService {
 
       const prompt = this.buildAnalyticsPrompt(userId, executions || []);
       
-      const { data: nicoleResponse, error } = await supabase.functions.invoke('nicole-chat', {
-        body: {
-          message: prompt,
-          context: nicoleContext,
-          capability: 'budget_analysis',
-          sessionId: `analytics-${userId}-${Date.now()}`
-        }
-      });
+      const nicoleResponse = await unifiedNicoleAI.chat(
+        prompt,
+        nicoleContext,
+        `analytics-${userId}-${Date.now()}`
+      );
 
-      if (error) throw error;
-
-      const response = nicoleResponse as NicoleResponse;
+      const response = nicoleResponse;
       const insights = this.parseAnalyticsResponse(response);
       
       return {

@@ -188,7 +188,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           items: items.map(item => item.product.product_id),
           giftMessage: assignment.giftMessage,
           scheduledDeliveryDate: assignment.scheduledDeliveryDate,
-          shippingAddress: assignment.shippingAddress
+          shippingAddress: assignment.shippingAddress,
+          // Include verification data from assignment
+          address_verified: assignment.address_verified,
+          address_verification_method: assignment.address_verification_method,
+          address_verified_at: assignment.address_verified_at,
+          address_last_updated: assignment.address_last_updated
         };
       }
     );

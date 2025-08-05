@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
@@ -21,6 +22,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 const Cart = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { profile: unifiedProfile } = useUnifiedProfile();
   const navigate = useNavigate();
   const { 
     cartItems, 
@@ -118,7 +120,12 @@ const Cart = () => {
           state: profile?.shipping_address?.state || '',
           zipCode: (profile?.shipping_address?.zip_code || profile?.shipping_address?.zipCode || ''),
           country: profile?.shipping_address?.country || 'US'
-        }
+        },
+        // Include user's verification status
+        address_verified: unifiedProfile?.address_verified,
+        address_verification_method: unifiedProfile?.address_verification_method,
+        address_verified_at: unifiedProfile?.address_verified_at,
+        address_last_updated: unifiedProfile?.address_last_updated
       };
       
       assignItemToRecipient(item.product.product_id, recipientAssignment);

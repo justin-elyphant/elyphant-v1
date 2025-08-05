@@ -13,6 +13,11 @@ export interface RecipientAssignment {
     zipCode: string;
     country: string;
   };
+  // Address verification fields
+  address_verified?: boolean;
+  address_verification_method?: string;
+  address_verified_at?: string;
+  address_last_updated?: string;
 }
 
 export interface CartItemWithRecipient {

@@ -7,8 +7,7 @@ import { Bot, Zap, Users, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import UnifiedQuickSetup from "./UnifiedQuickSetup";
-import GiftAdvisorBot from "../ai-gift-advisor/GiftAdvisorBot";
-import { useGiftAdvisorBot } from "../ai-gift-advisor/hooks/useGiftAdvisorBot";
+import NicolePopup from "../ai/NicolePopup";
 
 interface UnifiedAutoGiftEntryProps {
   open: boolean;
@@ -18,12 +17,12 @@ interface UnifiedAutoGiftEntryProps {
 const UnifiedAutoGiftEntry = ({ open, onOpenChange }: UnifiedAutoGiftEntryProps) => {
   const { user } = useAuth();
   const [selectedPath, setSelectedPath] = useState<"nicole" | "manual" | null>(null);
-  const { isOpen: isBotOpen, openBot, closeBot } = useGiftAdvisorBot();
+  const [nicoleOpen, setNicoleOpen] = useState(false);
 
   const handleNicolePath = () => {
     setSelectedPath("nicole");
     onOpenChange(false);
-    openBot();
+    setNicoleOpen(true);
     toast.success("Nicole is ready to help you set up auto-gifting!");
   };
 
@@ -182,8 +181,16 @@ const UnifiedAutoGiftEntry = ({ open, onOpenChange }: UnifiedAutoGiftEntryProps)
         </DialogContent>
       </Dialog>
 
-      {/* Nicole AI Bot Modal */}
-      <GiftAdvisorBot isOpen={isBotOpen} onClose={closeBot} />
+      {/* Nicole AI Chat Popup */}
+      <NicolePopup 
+        isOpen={nicoleOpen} 
+        onClose={() => setNicoleOpen(false)}
+        initialContext={{
+          capability: 'auto_gifting',
+          selectedIntent: 'auto-gift'
+        }}
+        welcomeMessage="Hi! I'm Nicole, your AI gift assistant. I'm here to help you set up automated gifting so you never miss an important occasion again. Let's start by learning about your gifting preferences and relationships. Who would you like to set up auto-gifting for?"
+      />
     </>
   );
 };

@@ -177,11 +177,12 @@ serve(async (req) => {
         })
         .eq("id", tokenData.id);
 
-      // Update execution status to approved
+      // Update execution status to approved with approval method tracking
       await supabase
         .from("automated_gift_executions")
         .update({
           status: 'approved',
+          approval_method: 'email',
           updated_at: new Date().toISOString()
         })
         .eq("id", execution.id);

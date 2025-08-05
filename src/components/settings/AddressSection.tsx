@@ -56,19 +56,27 @@ const AddressSection = () => {
       
       if (validation.isValid) {
         // Update profile with verification status
-        console.log("🔍 Updating verification status:", {
+        const verificationData = {
           address_verified: true,
           address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
           address_verified_at: new Date().toISOString()
-        });
+        };
         
-        const result = await updateProfile({
-          address_verified: true,
-          address_verification_method: validation.confidence === 'high' ? 'automatic' : 'user_confirmed',
-          address_verified_at: new Date().toISOString()
-        });
+        console.log("🔍 Updating verification status:", verificationData);
+        
+        const result = await updateProfile(verificationData);
         
         console.log("🔍 Verification update result:", result);
+        console.log("🔍 Making direct database check...");
+        
+        // Let's verify the update worked by checking the database directly
+        const { data: checkData } = await supabase
+          .from('profiles')
+          .select('address_verified, address_verification_method, address_verified_at')
+          .eq('email', 'dua_lipa2test@gmail.com')
+          .single();
+        
+        console.log("🔍 Database verification check:", checkData);
         
         if (result.success) {
           toast.success("Address verified successfully!", {
@@ -77,8 +85,10 @@ const AddressSection = () => {
               : "Your address has been confirmed"
           });
           
-          // Force a profile refresh to update UI immediately
-          window.location.reload();
+          // Give a moment for the database to update, then refresh
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         } else {
           console.error("❌ Failed to update verification status:", result.error);
           toast.error("Failed to update verification status");

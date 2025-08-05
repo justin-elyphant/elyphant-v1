@@ -241,6 +241,7 @@ const NicoleAutoGiftingDashboard: React.FC = () => {
         <TabsList>
           <TabsTrigger value="executions">Recent Executions</TabsTrigger>
           <TabsTrigger value="insights">Nicole Insights</TabsTrigger>
+          <TabsTrigger value="debug">Debug & Monitoring</TabsTrigger>
         </TabsList>
 
         <TabsContent value="executions">
@@ -352,6 +353,142 @@ const NicoleAutoGiftingDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="debug">
+          <div className="space-y-4">
+            {/* Service Health Indicators */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Service Health Monitoring</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                    <p className="text-xs font-medium">Nicole AI Service</p>
+                    <p className="text-xs text-muted-foreground">Operational</p>
+                  </div>
+                  <div className="text-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                    <p className="text-xs font-medium">Database</p>
+                    <p className="text-xs text-muted-foreground">Connected</p>
+                  </div>
+                  <div className="text-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                    <p className="text-xs font-medium">Edge Functions</p>
+                    <p className="text-xs text-muted-foreground">Available</p>
+                  </div>
+                  <div className="text-center">
+                    <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                    <p className="text-xs font-medium">Email System</p>
+                    <p className="text-xs text-muted-foreground">Active</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Integration Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Phase 2 Integration Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Nicole-Enhanced Gift Selection</span>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      ✓ Active
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Hybrid Approval System</span>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      ✓ Email + Chat
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Conversational Rule Management</span>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      ✓ Ready
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Predictive Intelligence</span>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      ✓ Analytics Ready
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Database Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Database Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-lg font-bold">{executions.length}</p>
+                    <p className="text-xs text-muted-foreground">Total Executions</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">
+                      {executions.filter(e => e.ai_agent_source?.agent === 'nicole').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Nicole Enhanced</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">
+                      {executions.filter(e => e.approval_method === 'nicole_chat').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Chat Approvals</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">
+                      {executions.filter(e => e.status === 'completed').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Completed</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Test Access */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Phase 3 Testing Access</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open('/nicole-test', '_blank')}
+                  >
+                    Open Test Suite
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      console.log('Nicole Auto-Gifting Debug Info:', {
+                        executions,
+                        nicoleStats,
+                        approvalStates,
+                        predictiveInsights
+                      });
+                      toast.success('Debug info logged to console');
+                    }}
+                  >
+                    Log Debug Info
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

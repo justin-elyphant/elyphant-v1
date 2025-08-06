@@ -214,7 +214,7 @@ Current context: ${JSON.stringify(context || {})}
 
 CONNECTION DATA AVAILABLE:
 ${context?.userConnections ? context.userConnections.map((conn: any, i: number) => 
-  `${i + 1}. ${conn.profiles?.name || conn.connected_user_id || 'Unknown'} (${conn.relationship_type}) - Interests: ${conn.profiles?.interests?.join(', ') || 'None'}`
+  `${i + 1}. ${conn.name || 'Unknown'} (${conn.relationship || 'Unknown'}) - Interests: ${conn.interests?.join(', ') || 'None'}`
 ).join('\n') : 'No connections available'}
 
 SOPHISTICATED AUTO-GIFT RESPONSE RULES:

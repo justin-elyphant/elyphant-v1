@@ -12,7 +12,7 @@ const QuickGiftCTA = () => {
       detail: {
         mode: 'auto-gifting',
         capability: 'auto_gifting',
-        selectedIntent: 'auto-gift'
+        selectedIntent: 'auto-gifting'
       }
     });
     window.dispatchEvent(triggerEvent);
@@ -45,7 +45,6 @@ const QuickGiftCTA = () => {
           </Button>
         </div>
       </div>
-
     </>
   );
 };

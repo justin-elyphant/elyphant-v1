@@ -1,16 +1,16 @@
+
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, User, Package, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useSearchState } from "./hooks/useSearchState";
 import { useSearchLogic } from "./hooks/useSearchLogic";
 import { useSearchHandlers } from "./hooks/useSearchHandlers";
-import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
-import { NicoleUnifiedInterface } from '@/components/ai/unified/NicoleUnifiedInterface';
-import SearchInput from "./components/SearchInput";
 import SearchResults from "./components/SearchResults";
-
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import VoiceInputButton from "./VoiceInputButton";
+import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
+import { useNicoleState } from "@/contexts/nicole/NicoleStateContext";
 
 interface AIEnhancedSearchBarProps {
   mobile?: boolean;
@@ -23,55 +23,47 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const isMobile = useIsMobile();
-  
-  const [isNicoleMode, setIsNicoleMode] = useState(false);
-  
-  // Use search state hook for centralized state management
-  const {
-    query,
-    setQuery,
-    showSuggestions,
-    setShowSuggestions,
-    suggestions,
-    setSuggestions,
-    unifiedResults,
-    setUnifiedResults,
-    showMobileModal,
-    setShowMobileModal,
-    isListening,
-    setIsListening,
-    searchLoading,
-    setSearchLoading,
-    hasUserInteracted,
-    setHasUserInteracted,
-    nicoleResponse,
-    setNicoleResponse,
-    showSearchButton,
-    setShowSearchButton,
-    inputRef,
-    suggestionRef,
-    nicoleDropdownRef
-  } = useSearchState();
-
   const { state, actions } = useNicoleState();
   
-  // Safely compute Nicole dropdown state after hooks are initialized
-  const showNicoleDropdown = state?.activeMode === 'search';
+  const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [unifiedResults, setUnifiedResults] = useState({
+    friends: [],
+    products: [],
+    brands: []
+  });
+  
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Listen for triggerNicole events from CTAs
+  useEffect(() => {
+    const handleTriggerNicole = (event: CustomEvent) => {
+      console.log('🎯 AIEnhancedSearchBar received triggerNicole event:', event.detail);
+      
+      if (actions.canActivateMode('search')) {
+        actions.activateMode('search', event.detail);
+      }
+    };
+
+    window.addEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    return () => {
+      window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    };
+  }, [actions]);
 
   // Enhanced search logic with friends, products, and brands
   useSearchLogic({
     query,
-    isNicoleMode,
+    isNicoleMode: state.activeMode === 'search',
     user,
     setSearchLoading,
     setUnifiedResults,
     setShowSuggestions,
-    setSuggestions,
-    setNicoleResponse,
-    setShowSearchButton
+    setSuggestions
   });
 
   // Search handlers for different result types
@@ -81,69 +73,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     handleFriendSelect,
     handleProductSelect,
     handleBrandSelect,
-    handleVoiceInput,
-    handleNicoleNavigateToResults,
-    handleCloseNicole
+    handleVoiceInput
   } = useSearchHandlers({
-    isNicoleMode,
+    isNicoleMode: state.activeMode === 'search',
     setQuery,
     setShowSuggestions,
-    setShowNicoleDropdown: (show: boolean) => {
-      if (show && actions.canActivateMode('search')) {
-        actions.activateMode('search');
-      } else if (!show) {
-        actions.closeAllModes();
-      }
-    },
-    setShowMobileModal,
+    setShowNicoleDropdown: () => {}, // Not used in this component
+    setShowMobileModal: () => {}, // Not used in this component
     setIsListening,
     inputRef
   });
-
-  // Handle mode toggle
-  const handleModeToggle = (checked: boolean) => {
-    setIsNicoleMode(checked);
-    if (checked && query.trim()) {
-      if (isMobile) {
-        setShowMobileModal(true);
-      } else {
-        if (actions.canActivateMode('search')) {
-          actions.activateMode('search');
-        }
-      }
-    }
-  };
-
-  // Handle user interaction for suggestions
-  const handleUserInteraction = () => {
-    setHasUserInteracted(true);
-    if (query.trim() && (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0)) {
-      setShowSuggestions(true);
-    }
-  };
-
-  // Handle clear functionality with URL management
-  const handleClear = () => {
-    // Clear all search-related state
-    setShowSuggestions(false);
-    actions.closeAllModes();
-    setShowMobileModal(false);
-    setHasUserInteracted(false);
-    
-    // If we're on the marketplace page, update the URL to remove search params
-    if (location.pathname === '/marketplace') {
-      const params = new URLSearchParams(searchParams);
-      params.delete('search');
-      params.delete('category'); // Clear category to return to general marketplace
-      // Keep other parameters like filters, etc.
-      
-      if (params.toString()) {
-        navigate(`/marketplace?${params.toString()}`, { replace: true });
-      } else {
-        navigate('/marketplace', { replace: true });
-      }
-    }
-  };
 
   // Mock send friend request function
   const handleSendFriendRequest = (friendId: string, friendName: string) => {
@@ -151,200 +90,111 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     // This would integrate with your friend request system
   };
 
-  // Initialize search term from URL on marketplace
-  useEffect(() => {
-    if (location.pathname === '/marketplace') {
-      const searchParam = searchParams.get("search");
-      if (searchParam && searchParam !== query) {
-        setQuery(searchParam);
-      } else if (!searchParam && query) {
-        setQuery("");
-      }
-    }
-  }, [searchParams, location.pathname]);
+  const handleNavigateToResults = (searchQuery: string) => {
+    // Navigate to marketplace with search query
+    const searchParams = new URLSearchParams();
+    searchParams.set("search", searchQuery);
+    navigate(`/marketplace?${searchParams.toString()}`);
+    actions.activateMode('closed');
+  };
 
-  // Clear suggestions when navigating away
   useEffect(() => {
     setShowSuggestions(false);
-    actions.closeAllModes();
-    setShowMobileModal(false);
+    setQuery("");
   }, [location.pathname]);
 
-  // Listen for Nicole trigger events from homepage CTAs
-  useEffect(() => {
-    const handleTriggerNicole = (event: CustomEvent) => {
-      console.log("🎯 Nicole trigger event received:", event.detail);
-      const eventDetail = event.detail;
-      
-      // Activate Nicole mode
-      setIsNicoleMode(true);
-      
-      // DON'T set greeting as search query - let Nicole handle its own context
-      // This prevents search interference with Nicole greetings
-      
-      // Open Nicole interface with context data
-      if (isMobile) {
-        setShowMobileModal(true);
-        // For mobile, we also need to activate the search mode with context
-        if (actions.canActivateMode('search')) {
-          actions.activateMode('search', eventDetail);
-        }
-      } else {
-        if (actions.canActivateMode('search')) {
-          actions.activateMode('search', eventDetail);
-        }
-      }
-      
-      // Focus the input
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-    };
-
-    window.addEventListener('triggerNicole', handleTriggerNicole as EventListener);
-    
-    return () => {
-      window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
-    };
-  }, [isMobile, actions]);
-
-  // Check for Nicole URL parameters on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const nicoleParam = urlParams.get('nicole');
-    const modeParam = urlParams.get('mode');
-    const greetingParam = urlParams.get('greeting');
-    
-    console.log("🔍 Search Bar - URL Params Check:", { nicoleParam, modeParam, greetingParam });
-    
-    if (nicoleParam === 'true') {
-      console.log("🎯 Nicole URL trigger detected:", { mode: modeParam, greeting: greetingParam });
-      
-      // Activate Nicole mode
-      setIsNicoleMode(true);
-      
-      // DON'T set greeting as search query - Nicole handles its own greeting context
-      // This prevents the search bar from showing "No results found" for Nicole greetings
-      
-      // Open Nicole interface directly without setting search query
-      setTimeout(() => {
-        if (isMobile) {
-          setShowMobileModal(true);
-        } else {
-          if (actions.canActivateMode('search')) {
-            actions.activateMode('search');
-          }
-        }
-        
-        // Focus the input
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-      
-      // Clean up URL immediately to prevent search interference
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('nicole');
-      newUrl.searchParams.delete('mode');
-      newUrl.searchParams.delete('greeting');
-      newUrl.searchParams.delete('first_name'); // Also clean up first_name param
-      window.history.replaceState({}, '', newUrl.pathname + (newUrl.search ? newUrl.search : ''));
-    }
-  }, [isMobile]);
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node) &&
-          inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-      if (nicoleDropdownRef.current && !nicoleDropdownRef.current.contains(event.target as Node) &&
-          inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        actions.closeAllModes();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const placeholderText = state.activeMode === 'search' 
+    ? "Ask Nicole about gifts..." 
+    : "Search friends, products, and brands...";
 
   // Determine what search results to show
   const shouldShowUnifiedSuggestions = showSuggestions && 
     (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0) &&
-    !searchLoading && !isNicoleMode && hasUserInteracted;
+    !searchLoading &&
+    state.activeMode !== 'search';
 
-  const shouldShowNicoleSuggestions = showSuggestions && suggestions.length > 0 && 
-    !searchLoading && isNicoleMode && hasUserInteracted;
+  const shouldShowNicoleSuggestions = false; // This component doesn't use Nicole mode
 
   const shouldShowNoResults = query.length > 1 && 
     !searchLoading && 
-    hasUserInteracted &&
-    !isNicoleMode && // Don't show "No results" when Nicole is active
     !shouldShowUnifiedSuggestions && 
-    !shouldShowNicoleSuggestions && 
     unifiedResults.friends.length === 0 && 
     unifiedResults.products.length === 0 && 
-    unifiedResults.brands.length === 0 && 
-    suggestions.length === 0;
+    unifiedResults.brands.length === 0 &&
+    state.activeMode !== 'search';
 
   return (
     <div className={`relative w-full ${className}`}>
       {/* Enhanced Search Bar */}
-      <SearchInput
-        query={query}
-        setQuery={setQuery}
-        isNicoleMode={isNicoleMode}
-        handleModeToggle={handleModeToggle}
-        handleSubmit={(e) => handleSubmit(e, query)}
-        handleVoiceInput={handleVoiceInput}
-        isListening={isListening}
-        mobile={mobile}
-        inputRef={inputRef}
-        onUserInteraction={handleUserInteraction}
-        onClear={handleClear}
-      />
+      <form onSubmit={(e) => handleSubmit(e, query)} className="relative flex items-center w-full" autoComplete="off">
+        <div className="relative flex-1 flex items-center">
+          <div className="absolute left-3 flex items-center">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+          
+          <Input
+            ref={inputRef}
+            type="search"
+            placeholder={placeholderText}
+            className={`pl-10 pr-20 transition-all duration-300 ${
+              mobile ? "text-base py-3 h-12" : ""
+            } rounded-full border-gray-300 focus:border-blue-500`}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onFocus={() => {
+              if (unifiedResults.friends.length > 0 || unifiedResults.products.length > 0 || unifiedResults.brands.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+          />
+
+          {/* Voice Input Button */}
+          <VoiceInputButton
+            isListening={isListening}
+            onVoiceInput={handleVoiceInput}
+            mobile={mobile}
+          />
+
+          <Button
+            type="submit"
+            className={`absolute right-2 rounded-full px-3 py-1 text-xs font-semibold h-8 transition-all duration-300 touch-manipulation ${
+              mobile ? "min-h-[44px] min-w-[44px]" : ""
+            } bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white`}
+          >
+            Search
+          </Button>
+        </div>
+      </form>
 
       {/* Search Results */}
-      <SearchResults
-        shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
-        shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
-        shouldShowNoResults={shouldShowNoResults}
-        searchLoading={searchLoading}
-        query={query}
-        unifiedResults={unifiedResults}
-        suggestions={suggestions}
-        onFriendSelect={handleFriendSelect}
-        onProductSelect={handleProductSelect}
-        onBrandSelect={handleBrandSelect}
-        onSendFriendRequest={handleSendFriendRequest}
-        onSuggestionClick={handleSuggestionClick}
-        mobile={mobile}
-        isNicoleMode={isNicoleMode}
-      />
-
-      {/* Unified Nicole Interface - Single point of truth for both desktop and mobile */}
-      {(showNicoleDropdown || (showMobileModal && isMobile)) && (
-        <>
-          {isMobile ? (
-            <Dialog open={showMobileModal} onOpenChange={() => setShowMobileModal(false)}>
-              <DialogContent className="p-0 w-full max-w-full h-[90vh] bg-background">
-                <NicoleUnifiedInterface
-                  onNavigateToResults={handleNicoleNavigateToResults}
-                  className="h-full border-0 shadow-none bg-transparent"
-                />
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <NicoleUnifiedInterface
-              onNavigateToResults={handleNicoleNavigateToResults}
-            />
-          )}
-        </>
+      {state.activeMode !== 'search' && (
+        <SearchResults
+          shouldShowUnifiedSuggestions={shouldShowUnifiedSuggestions}
+          shouldShowNicoleSuggestions={shouldShowNicoleSuggestions}
+          shouldShowNoResults={shouldShowNoResults}
+          searchLoading={searchLoading}
+          query={query}
+          unifiedResults={unifiedResults}
+          suggestions={suggestions}
+          onFriendSelect={handleFriendSelect}
+          onProductSelect={handleProductSelect}
+          onBrandSelect={handleBrandSelect}
+          onSendFriendRequest={handleSendFriendRequest}
+          onSuggestionClick={handleSuggestionClick}
+          mobile={mobile}
+          isNicoleMode={false}
+        />
       )}
 
+      {/* Nicole Unified Interface - shown when in search mode */}
+      {state.activeMode === 'search' && (
+        <div className="absolute top-full left-0 right-0 mt-2 z-50">
+          <NicoleUnifiedInterface 
+            onNavigateToResults={handleNavigateToResults}
+            className="relative w-full h-[500px] shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 };

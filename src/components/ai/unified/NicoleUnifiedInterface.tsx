@@ -38,20 +38,28 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       capability: 'conversation',
       currentUserId: user?.id,
       interests: [],
-      detectedBrands: []
+      detectedBrands: [],
+      // Include context from CTA triggers
+      ...state.contextData
     }
   });
 
   // Initialize dynamic greeting on mount (once per session)
   useEffect(() => {
-    if (user && !hasInitialized.current && state.activeMode === 'floating') {
+    if (user && !hasInitialized.current && (state.activeMode === 'floating' || state.activeMode === 'search')) {
       hasInitialized.current = true;
       
       const initializeDynamicGreeting = async () => {
-        console.log('🎯 Initializing dynamic greeting for user:', user.id);
+        console.log('🎯 Initializing dynamic greeting for user:', user.id, 'with context:', state.contextData);
         
         try {
-          const response = await chatWithNicole('__START_DYNAMIC_CHAT__');
+          // Create initial message based on context
+          let initialMessage = '__START_DYNAMIC_CHAT__';
+          if (state.contextData?.selectedIntent) {
+            initialMessage = `I want help with ${state.contextData.selectedIntent}`;
+          }
+
+          const response = await chatWithNicole(initialMessage);
           if (response?.message) {
             setMessages([{ role: 'assistant', content: response.message }]);
           }
@@ -64,7 +72,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
       initializeDynamicGreeting();
     }
-  }, [user, state.activeMode, chatWithNicole]);
+  }, [user, state.activeMode, state.contextData, chatWithNicole]);
 
   const handleSendMessage = useCallback(async (message: string) => {
     if (!message.trim() || loading) return;
@@ -103,10 +111,70 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     setIsMinimized(!isMinimized);
   }, [isMinimized]);
 
-  if (state.activeMode !== 'floating') {
+  if (state.activeMode !== 'floating' && state.activeMode !== 'search') {
     return null;
   }
 
+  // Different styling for floating vs dropdown mode
+  const isDropdownMode = state.activeMode === 'search';
+  
+  if (isDropdownMode) {
+    return (
+      <Card className={`w-full bg-white border shadow-lg ${
+        isMinimized ? 'h-16' : 'h-full'
+      } ${className}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-secondary/5">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-gray-800">Nicole - Gift Advisor</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMinimize}
+              className="h-8 w-8 p-0"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {!isMinimized && (
+          <div className="flex flex-col h-[calc(100%-65px)]">
+            {/* Conversation Display */}
+            <div className="flex-1 overflow-hidden">
+              <NicoleConversationDisplay 
+                messages={messages}
+                isLoading={loading}
+                showSearchButton={isReadyToSearch()}
+                onSearch={handleSearch}
+                context={context}
+              />
+            </div>
+
+            {/* Input Area */}
+            <NicoleInputArea 
+              onSendMessage={handleSendMessage}
+              disabled={loading}
+              placeholder="Ask Nicole about gifts..."
+            />
+          </div>
+        )}
+      </Card>
+    );
+  }
+
+  // Floating mode (original styling)
   return (
     <Card className={`fixed bottom-6 right-6 w-96 bg-white shadow-2xl border-0 z-50 transition-all duration-200 ${
       isMinimized ? 'h-16' : 'h-[500px]'

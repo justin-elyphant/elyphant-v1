@@ -410,13 +410,15 @@ You can reference their taste preferences based on their saved items when making
     );
     const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
     
+    // Define variables outside the if block so they're available for logging
+    const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
+    let aiIndicatesReady = false;
+    
     if (!enhancedContext?.isAutoGiftFlow) {
       // Regular gift advisor flow
 
-      const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
-
       // Check if AI response indicates readiness for search
-      const aiIndicatesReady = 
+      aiIndicatesReady = 
         aiResponse.toLowerCase().includes('perfect!') ||
         aiResponse.toLowerCase().includes('ready to find') ||
         aiResponse.toLowerCase().includes('let me summarize') ||

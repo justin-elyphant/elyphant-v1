@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 

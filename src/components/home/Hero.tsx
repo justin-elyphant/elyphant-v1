@@ -1,15 +1,13 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth";
-import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Hero = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [showNicole, setShowNicole] = useState(false);
 
   useEffect(() => {
     // Set Nicole context for hero interactions

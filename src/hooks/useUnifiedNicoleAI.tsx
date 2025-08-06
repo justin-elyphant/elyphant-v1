@@ -34,6 +34,7 @@ export const useUnifiedNicoleAI = ({
   // Update user ID when user changes
   useEffect(() => {
     if (user?.id && context.currentUserId !== user.id) {
+      console.log('🔄 Updating context with user ID:', user.id);
       setContext(prev => ({ ...prev, currentUserId: user.id }));
     }
   }, [user?.id, context.currentUserId]);
@@ -45,6 +46,12 @@ export const useUnifiedNicoleAI = ({
     if (!message.trim()) return null;
 
     setLoading(true);
+    console.log('🚀 Sending message to Nicole with context:', {
+      message: message.substring(0, 50) + '...',
+      userId: context.currentUserId,
+      hasUser: !!user
+    });
+
     try {
       const response = await unifiedNicoleAI.chat(message, context, currentSessionId);
       
@@ -64,7 +71,7 @@ export const useUnifiedNicoleAI = ({
     } finally {
       setLoading(false);
     }
-  }, [context, currentSessionId, onResponse, onError]);
+  }, [context, currentSessionId, onResponse, onError, user]);
 
   /**
    * Update the conversation context

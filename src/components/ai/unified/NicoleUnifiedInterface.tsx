@@ -202,22 +202,48 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-center flex flex-col items-center justify-center h-full space-y-4">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
-                  {getCapabilityIcon()}
+            // Show loading state when expecting dynamic greeting, otherwise show static welcome
+            state.contextData && (
+              state.contextData.selectedIntent || 
+              state.contextData.mode === 'auto-gifting' ||
+              getGreetingFromUrl(searchParams).greeting
+            ) ? (
+              // Loading state for dynamic greeting
+              <div className="text-center flex flex-col items-center justify-center h-full space-y-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                    <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                  <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-purple-500 animate-pulse" />
                 </div>
-                <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-purple-500 animate-pulse" />
+                <div className="space-y-2">
+                  <h4 className="font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    Getting ready...
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    Preparing your personalized experience
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h4 className="font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  Nicole - Your Gift Guru
-                </h4>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                  Ask me anything about gifts!
-                </p>
+            ) : (
+              // Static welcome for non-CTA contexts
+              <div className="text-center flex flex-col items-center justify-center h-full space-y-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+                    {getCapabilityIcon()}
+                  </div>
+                  <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-purple-500 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    Nicole - Your Gift Guru
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                    Ask me anything about gifts!
+                  </p>
+                </div>
               </div>
-            </div>
+            )
           )}
         </div>
 

@@ -122,8 +122,13 @@ ${context?.userWishlists ? `- Wishlists: ${context.userWishlists.length} saved l
 SOPHISTICATED AUTO-GIFT CONVERSATION FLOW:
 When user mentions auto-gifting intent OR when context.selectedIntent === 'auto-gift' OR context.capability === 'auto_gifting':
 
+DUPLICATE QUESTION PREVENTION:
+- Track all questions asked in conversation history
+- NEVER ask the same question twice in a single conversation
+- Check conversation history before asking key questions like "Do you want to pick the gift yourself..."
+
 PHASE 1: AUTO_GIFT_CHOICE (conversationPhase: auto_gift_choice)
-- Ask: "Do you want to pick the gift yourself or have me handle everything for you?"
+- ONLY ask if NOT already asked: "Do you want to pick the gift yourself or have me handle everything for you?"
 - Present the two distinct paths clearly
 - Wait for user's choice before proceeding
 
@@ -225,8 +230,19 @@ ${context.userWishlists.map((list: any, i: number) =>
 You can reference their taste preferences based on their saved items when making recommendations.`;
     }
 
+    // Check if key auto-gift question has already been asked
+    const hasAskedPickQuestion = conversationHistory?.some(msg => 
+      msg.content?.toLowerCase().includes('pick the gift yourself') ||
+      msg.content?.toLowerCase().includes('handle everything for you')
+    ) || false;
+
     const messages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: systemPrompt + `\n\nCONVERSATION HISTORY CONTEXT:
+- Has asked "pick yourself vs handle everything" question: ${hasAskedPickQuestion ? 'YES - DO NOT ASK AGAIN' : 'NO - can ask if appropriate'}
+- Total conversation messages: ${conversationHistory?.length || 0}
+- Last user message: ${conversationHistory?.filter(msg => msg.role === 'user').slice(-1)?.[0]?.content || 'None'}
+
+STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.` },
       ...(conversationHistory || []),
       { role: 'user', content: message }
     ];

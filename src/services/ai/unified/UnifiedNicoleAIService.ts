@@ -435,11 +435,14 @@ export class UnifiedNicoleAIService {
         selectedIntent: context.selectedIntent || 'auto-gift'
       };
 
+      // Get full conversation history from session state
+      const conversationState = this.getConversationState(sessionId);
+      
       const response = await supabase.functions.invoke('nicole-chat', {
         body: { 
           message, 
           context: agentContext,
-          conversationHistory: [],
+          conversationHistory: conversationState.conversationHistory,
           enhancedFeatures: {
             multiCategorySearch: true,
             brandCategoryMapping: true,

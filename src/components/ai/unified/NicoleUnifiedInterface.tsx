@@ -137,8 +137,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   if (!isOpen) return null;
 
-  // Always render inline when called from AIEnhancedSearchBar
-  const isInline = className.includes('relative') || className.includes('w-full');
+  // Always render inline when called from AIEnhancedSearchBar (has w-full class)
+  const isInline = className.includes('w-full') || className.includes('relative');
 
   return (
     <Card className={`${

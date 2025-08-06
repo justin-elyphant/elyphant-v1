@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Sparkles, X } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Send, Sparkles, X, ChevronDown, Bug } from "lucide-react";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { UnifiedNicoleContext } from "@/services/ai/unified/types";
 import { toast } from "sonner";
@@ -23,8 +24,9 @@ const NicolePopup = ({
 }: NicolePopupProps) => {
   const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([]);
+  const [showDebug, setShowDebug] = useState(false);
 
-  const { chatWithNicole, loading, context } = useUnifiedNicoleAI({
+  const { chatWithNicole, loading, context, lastResponse, sessionId, getConversationContext } = useUnifiedNicoleAI({
     initialContext: {
       capability: 'gift_advisor',
       ...initialContext
@@ -143,6 +145,69 @@ const NicolePopup = ({
             </div>
           )}
         </div>
+
+        {/* Debug Section */}
+        {process.env.NODE_ENV === 'development' && (
+          <Collapsible open={showDebug} onOpenChange={setShowDebug}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-between border-t pt-2">
+                <div className="flex items-center gap-2">
+                  <Bug className="w-4 h-4" />
+                  Debug Info
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showDebug ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 p-3 bg-muted/50 rounded-lg text-xs">
+              <div>
+                <h4 className="font-semibold mb-1">Session ID:</h4>
+                <p className="font-mono text-muted-foreground">{sessionId}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold mb-1">Current Context:</h4>
+                <pre className="bg-background p-2 rounded border text-xs overflow-auto max-h-24">
+                  {JSON.stringify(context, null, 2)}
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-1">Local Conversation ({conversation.length} messages):</h4>
+                <pre className="bg-background p-2 rounded border text-xs overflow-auto max-h-24">
+                  {JSON.stringify(conversation, null, 2)}
+                </pre>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-1">Service Conversation History:</h4>
+                <pre className="bg-background p-2 rounded border text-xs overflow-auto max-h-24">
+                  {JSON.stringify(getConversationContext?.() || 'Not available', null, 2)}
+                </pre>
+              </div>
+
+              {lastResponse && (
+                <div>
+                  <h4 className="font-semibold mb-1">Last Response Metadata:</h4>
+                  <pre className="bg-background p-2 rounded border text-xs overflow-auto max-h-24">
+                    {JSON.stringify(lastResponse, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setConversation([]);
+                  console.log('Cleared local conversation');
+                }}
+                className="w-full"
+              >
+                Clear Local Conversation
+              </Button>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {/* Input Area */}
         <div className="flex gap-2 pt-4 border-t">

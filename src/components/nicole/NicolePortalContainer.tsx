@@ -43,9 +43,11 @@ export const NicolePortalContainer: React.FC<NicolePortalContainerProps> = ({
   portalContainer.style.display = 'block';
 
   return createPortal(
-    <div className="w-full bg-background border-b z-40 shadow-sm max-h-[420px]">
-      <div className="container mx-auto px-4 py-2">
-        {children}
+    <div className="w-full bg-background border-b z-40 shadow-sm">
+      <div className="container mx-auto px-4 py-2 flex justify-center">
+        <div className="w-full max-w-lg">
+          {children}
+        </div>
       </div>
     </div>,
     portalContainer

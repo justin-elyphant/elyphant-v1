@@ -141,7 +141,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const isInline = true; // Always use inline positioning
 
   return (
-    <Card className={`w-full h-96 flex flex-col shadow-lg ${className}`}>
+    <Card className={`w-full h-80 md:h-72 flex flex-col shadow-lg ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="font-semibold text-sm">Chat with Nicole</h3>

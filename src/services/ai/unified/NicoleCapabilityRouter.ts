@@ -59,6 +59,23 @@ export class NicoleCapabilityRouter {
   determineCapability(message: string, context: UnifiedNicoleContext): NicoleCapability {
     const messageLower = message.toLowerCase();
     
+    // Detect recipient mentions in gift conversations
+    const giftMentions = ['gift for', 'present for', 'buy for', 'get for', 'find for'];
+    const recipientDetected = giftMentions.some(mention => messageLower.includes(mention));
+    
+    // Auto-gifting intent detection (highest priority)
+    const autoGiftTriggers = ['auto gift', 'auto-gift', 'set up auto', 'automated gift', 'automatic gift', 'auto gifting'];
+    const isAutoGiftIntent = autoGiftTriggers.some(trigger => messageLower.includes(trigger));
+    
+    if (isAutoGiftIntent || context.selectedIntent === 'auto-gift') {
+      return 'auto_gifting';
+    }
+    
+    // Gift conversation with recipient detection
+    if (recipientDetected || (messageLower.includes('gift') && this.detectRecipientInMessage(message))) {
+      return 'gift_advisor';
+    }
+    
     // Check for explicit capability triggers
     for (const capability of this.capabilities) {
       if (capability.name === 'conversation') continue; // Skip default
@@ -88,6 +105,35 @@ export class NicoleCapabilityRouter {
 
     // Default to conversation
     return 'conversation';
+  }
+
+  /**
+   * Detect recipient names in natural conversation
+   */
+  private detectRecipientInMessage(message: string): string | null {
+    const messageLower = message.toLowerCase();
+    
+    // Common relationship patterns
+    const relationshipPatterns = [
+      /(?:gift|present|buy|get|find) (?:for )?(?:my )?(\w+)/i,
+      /(\w+)(?:'s|s) (?:birthday|gift|present)/i,
+      /(?:for )?(\w+) (?:who|that)/i,
+      /(?:my )?(?:friend|buddy|pal) (\w+)/i
+    ];
+    
+    for (const pattern of relationshipPatterns) {
+      const match = message.match(pattern);
+      if (match && match[1]) {
+        const potentialName = match[1].toLowerCase();
+        // Filter out common words that aren't names
+        const excludeWords = ['him', 'her', 'them', 'someone', 'anybody', 'everyone', 'something'];
+        if (!excludeWords.includes(potentialName)) {
+          return match[1];
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**
@@ -143,6 +189,42 @@ export class NicoleCapabilityRouter {
 
     // Remove duplicates and return
     return [...new Set(suggestions)];
+  }
+
+  /**
+   * Extract recipient name from message and update context
+   */
+  extractRecipientFromMessage(message: string): { recipient?: string; relationship?: string } {
+    const messageLower = message.toLowerCase();
+    const updates: { recipient?: string; relationship?: string } = {};
+    
+    // Extract recipient name and relationship from common patterns
+    const patterns = [
+      { regex: /(?:gift|present|buy|get|find) (?:for )?my (\w+) (\w+)/i, recipientIndex: 2, relationshipIndex: 1 },
+      { regex: /(?:gift|present|buy|get|find) (?:for )?(\w+)/i, recipientIndex: 1, relationshipIndex: null },
+      { regex: /my (\w+) (\w+)/i, recipientIndex: 2, relationshipIndex: 1 },
+      { regex: /(?:for )?(\w+)(?:'s|s) (?:birthday|gift|present)/i, recipientIndex: 1, relationshipIndex: null }
+    ];
+    
+    for (const pattern of patterns) {
+      const match = message.match(pattern.regex);
+      if (match) {
+        const recipient = match[pattern.recipientIndex];
+        const relationship = pattern.relationshipIndex ? match[pattern.relationshipIndex] : null;
+        
+        // Filter out common words that aren't names
+        const excludeWords = ['him', 'her', 'them', 'someone', 'anybody', 'everyone', 'something'];
+        if (recipient && !excludeWords.includes(recipient.toLowerCase())) {
+          updates.recipient = recipient;
+          if (relationship) {
+            updates.relationship = relationship;
+          }
+          break;
+        }
+      }
+    }
+    
+    return updates;
   }
 
   private areRequirementsMet(capability: NicoleCapabilityConfig, context: UnifiedNicoleContext): boolean {

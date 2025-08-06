@@ -33,20 +33,32 @@ export class UnifiedNicoleAIService {
       // Preserve existing conversation state
       const conversationState = this.getConversationState(sessionId);
       
+      // Extract recipient info from natural conversation
+      const extractedRecipient = this.capabilityRouter.extractRecipientFromMessage(message);
+      
       // Route to appropriate capability
       const capability = this.capabilityRouter.determineCapability(message, context);
       
-      // Update context with capability
+      // Update context with capability and extracted info
       const enhancedContext = {
         ...context,
+        ...extractedRecipient,
         capability,
         conversationPhase: this.determineConversationPhase(message, context)
       };
 
       let response: NicoleResponse;
 
-      // Core Nicole conversation - preserving existing functionality
-      if (capability === 'conversation' || capability === 'search') {
+      // Route to specialized capabilities or use ChatGPT Agent for auto-gifting
+      if (capability === 'auto_gifting' || enhancedContext.selectedIntent === 'auto-gift') {
+        // Use ChatGPT Agent for auto-gifting flows
+        console.log('🎁 Routing to ChatGPT Agent for auto-gifting');
+        response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
+      } else if (capability === 'gift_advisor' && enhancedContext.recipient) {
+        // Use ChatGPT Agent for gift advisor with recipient
+        console.log('🎁 Routing to ChatGPT Agent for gift advisor');
+        response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
+      } else if (capability === 'conversation' || capability === 'search') {
         // Convert unified context to original Nicole context
         const nicoleContext: NicoleContext = this.convertToNicoleContext(enhancedContext);
         
@@ -406,6 +418,7 @@ export class UnifiedNicoleAIService {
     };
   }
 
+
   /**
    * Handle ChatGPT Agent flow for quick gift collection
    */
@@ -415,15 +428,44 @@ export class UnifiedNicoleAIService {
     sessionId: string
   ): Promise<NicoleResponse> {
     try {
-      const response = await supabase.functions.invoke('nicole-chatgpt-agent', {
-        body: { message, context, sessionId }
+      // Prepare context for ChatGPT Agent with proper structure
+      const agentContext = {
+        ...context,
+        conversationPhase: context.conversationPhase || 'initial',
+        selectedIntent: context.selectedIntent || 'auto-gift'
+      };
+
+      const response = await supabase.functions.invoke('nicole-chat', {
+        body: { 
+          message, 
+          context: agentContext,
+          conversationHistory: [],
+          enhancedFeatures: {
+            multiCategorySearch: true,
+            brandCategoryMapping: true,
+            groupedResults: true,
+            conversationEnhancement: true,
+            connectionIntegration: true,
+            wishlistIntegration: true
+          }
+        }
       });
 
       if (response.error) {
         throw new Error(response.error.message);
       }
 
-      return response.data;
+      // Convert ChatGPT Agent response to unified format
+      const agentData = response.data;
+      return {
+        message: agentData.message || agentData.response,
+        context: agentData.context || context,
+        capability: (context.selectedIntent === 'auto-gift' ? 'auto_gifting' : 'gift_advisor') as NicoleCapability,
+        actions: agentData.actions || [],
+        searchQuery: agentData.searchQuery || '',
+        showSearchButton: agentData.showSearchButton || false,
+        metadata: agentData.metadata
+      };
     } catch (error) {
       console.error('ChatGPT Agent error, falling back to original Nicole:', error);
       

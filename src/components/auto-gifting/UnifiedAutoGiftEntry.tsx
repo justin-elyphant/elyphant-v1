@@ -27,7 +27,13 @@ const UnifiedAutoGiftEntry = ({ open, onOpenChange }: UnifiedAutoGiftEntryProps)
       detail: {
         mode: 'auto-gifting',
         capability: 'auto_gifting',
-        selectedIntent: 'auto-gift'
+        selectedIntent: 'auto-gift',
+        contextData: {
+          capability: 'auto_gifting',
+          selectedIntent: 'auto-gift',
+          mode: 'auto-gifting',
+          conversationPhase: 'auto_gift_choice'
+        }
       }
     });
     window.dispatchEvent(triggerEvent);

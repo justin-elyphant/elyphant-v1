@@ -34,11 +34,18 @@ export class UnifiedNicoleAIService {
       // Preserve existing conversation state
       const conversationState = this.getConversationState(sessionId);
       
-      // Add user message to conversation history BEFORE calling API
-      const updatedHistory = [
-        ...conversationState.conversationHistory,
-        { role: 'user', content: message }
-      ];
+      // Handle special trigger messages for dynamic conversation initiation
+      const isFirstMessage = conversationState.conversationHistory.length === 0;
+      const isDynamicGreeting = message === "__START_AUTO_GIFT__" || (isFirstMessage && context.greetingContext);
+      
+      // Don't add trigger messages to conversation history
+      let updatedHistory = conversationState.conversationHistory;
+      if (!isDynamicGreeting || message !== "__START_AUTO_GIFT__") {
+        updatedHistory = [
+          ...conversationState.conversationHistory,
+          { role: 'user', content: message }
+        ];
+      }
       
       // Update the conversation state with current message
       this.updateConversationState(sessionId, {

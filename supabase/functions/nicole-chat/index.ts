@@ -243,21 +243,47 @@ ${context.userWishlists.map((list: any, i: number) =>
 You can reference their taste preferences based on their saved items when making recommendations.`;
     }
 
+    // Check for dynamic greeting trigger
+    const isDynamicGreeting = message === "__START_AUTO_GIFT__" || (context.greetingContext && (!conversationHistory || conversationHistory.length === 0));
+    
     // Check if key auto-gift question has already been asked
     const hasAskedPickQuestion = conversationHistory?.some(msg => 
       msg.content?.toLowerCase().includes('pick the gift yourself') ||
       msg.content?.toLowerCase().includes('handle everything for you')
     ) || false;
 
+    // Construct the user message with context - handle dynamic greeting
+    let userMessage;
+    if (isDynamicGreeting) {
+      if (message === "__START_AUTO_GIFT__") {
+        userMessage = `Generate a dynamic greeting to start an auto-gifting conversation. Use the greeting context to personalize the message and immediately begin helping with auto-gift setup.
+
+GREETING CONTEXT: ${JSON.stringify(context.greetingContext || {}, null, 2)}
+
+Start the conversation naturally as if responding to the user clicking "Start Auto-Gifting" button.`;
+      } else {
+        userMessage = `This is the first message in our conversation. Generate a contextual greeting based on the user's intent and the greeting context provided, then respond to their message.
+
+GREETING CONTEXT: ${JSON.stringify(context.greetingContext || {}, null, 2)}
+USER MESSAGE: ${message}
+
+Respond as Nicole with a natural greeting that leads into helping with their request.`;
+      }
+    } else {
+      userMessage = message;
+    }
+
     const messages = [
       { role: 'system', content: systemPrompt + `\n\nCONVERSATION HISTORY CONTEXT:
 - Has asked "pick yourself vs handle everything" question: ${hasAskedPickQuestion ? 'YES - DO NOT ASK AGAIN' : 'NO - can ask if appropriate'}
 - Total conversation messages: ${conversationHistory?.length || 0}
 - Last user message: ${conversationHistory?.filter(msg => msg.role === 'user').slice(-1)?.[0]?.content || 'None'}
+- Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
 
-STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.` },
+STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.
+DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a warm, personalized greeting that references the greeting context and then naturally transition into the conversation.` },
       ...(conversationHistory || []),
-      { role: 'user', content: message }
+      { role: 'user', content: userMessage }
     ];
 
     console.log('Sending Enhanced Zinc API request to OpenAI with CTA button system');

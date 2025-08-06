@@ -89,6 +89,15 @@ export interface UnifiedNicoleContext {
     price: number;
     image?: string;
   }>;
+  
+  // Dynamic greeting context
+  greetingContext?: {
+    greeting?: string;
+    firstName?: string;
+    userProfile?: any;
+    friendName?: string;
+    activeMode?: string;
+  };
 }
 
 export interface NicoleResponse {

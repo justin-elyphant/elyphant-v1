@@ -8,7 +8,7 @@ import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthSession } from '@/contexts/auth/useAuthSession';
-import { getNicoleGreeting, getGreetingFromUrl } from '@/utils/nicoleGreetings';
+import { getGreetingFromUrl } from '@/utils/nicoleGreetings';
 import { cn } from '@/lib/utils';
 import { NicoleCapability } from '@/services/ai/unified/types';
 
@@ -27,15 +27,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Get greeting context from URL and user data
-  const greetingContext = {
-    ...getGreetingFromUrl(searchParams),
-    userProfile: user,
-    activeMode: state.activeMode,
-    greeting: (state.contextData?.mode === 'auto-gifting' || state.contextData?.selectedIntent === 'auto-gift') ? 'auto-gifting' : getGreetingFromUrl(searchParams).greeting
-  };
-  
-  console.log("🎯 Nicole Interface - Greeting Context:", greetingContext);
+  console.log("🎯 Nicole Interface - State:", { activeMode: state.activeMode, contextData: state.contextData });
   
   const {
     chatWithNicole,
@@ -49,7 +41,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     initialContext: state.contextData ? {
       capability: (state.contextData.capability as NicoleCapability) || 'conversation',
       selectedIntent: (state.contextData.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist"),
-      conversationPhase: state.contextData.selectedIntent === 'auto-gift' ? 'auto_gift_choice' : 'initial'
+      conversationPhase: state.contextData.selectedIntent === 'auto-gift' ? 'auto_gift_choice' : 'initial',
+      // Pass URL greeting context for dynamic first message
+      greetingContext: {
+        ...getGreetingFromUrl(searchParams),
+        userProfile: user,
+        activeMode: state.activeMode,
+        greeting: (state.contextData?.mode === 'auto-gifting' || state.contextData?.selectedIntent === 'auto-gift') ? 'auto-gifting' : getGreetingFromUrl(searchParams).greeting
+      }
     } : undefined,
     onResponse: (response) => {
       // Handle search button logic
@@ -80,6 +79,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     if (!message.trim() || loading) return;
     await chatWithNicole(message);
   };
+
+  // Auto-initiate conversation for certain contexts
+  useEffect(() => {
+    if (!lastResponse && state.contextData?.selectedIntent === 'auto-gift') {
+      // Send a special trigger message for auto-gifting to start dynamic conversation
+      chatWithNicole("__START_AUTO_GIFT__");
+    }
+  }, [state.contextData?.selectedIntent, lastResponse, chatWithNicole]);
 
   const handleSearchNow = () => {
     const query = generateSearchQuery();
@@ -200,10 +207,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  Hey there! 👋
+                  Nicole - Your Gift Guru
                 </h4>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                  {getNicoleGreeting(greetingContext)}
+                  Ask me anything about gifts!
                 </p>
               </div>
             </div>

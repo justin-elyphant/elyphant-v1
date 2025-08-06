@@ -399,15 +399,19 @@ You can reference their taste preferences based on their saved items when making
           messageLower.includes('i\'ll pick')) {
         showMarketplaceLink = true;
       }
-    } else {
+    }
+    
+    // Regular gift advisor flow check (outside of auto-gift logic)
+    const hasRecipient = Boolean(enhancedContext?.recipient);
+    const hasOccasionOrAge = Boolean(enhancedContext?.occasion || enhancedContext?.exactAge);
+    const hasInterestsOrBrands = Boolean(
+      (enhancedContext?.interests && enhancedContext.interests.length > 0) || 
+      (enhancedContext?.detectedBrands && enhancedContext.detectedBrands.length > 0)
+    );
+    const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
+    
+    if (!enhancedContext?.isAutoGiftFlow) {
       // Regular gift advisor flow
-      const hasRecipient = Boolean(enhancedContext?.recipient);
-      const hasOccasionOrAge = Boolean(enhancedContext?.occasion || enhancedContext?.exactAge);
-      const hasInterestsOrBrands = Boolean(
-        (enhancedContext?.interests && enhancedContext.interests.length > 0) || 
-        (enhancedContext?.detectedBrands && enhancedContext.detectedBrands.length > 0)
-      );
-      const hasBudget = Boolean(enhancedContext?.budget && Array.isArray(enhancedContext.budget) && enhancedContext.budget.length === 2);
 
       const hasMinimumContext = hasRecipient && hasOccasionOrAge && hasInterestsOrBrands && hasBudget;
 

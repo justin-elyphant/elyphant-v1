@@ -1,211 +1,94 @@
-import React, { useState, useRef, useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Gift, Sparkles, Clock, Heart } from "lucide-react";
-import { useAuth } from "@/contexts/auth";
-import { useProfile } from "@/contexts/profile/ProfileContext";
-import { LocalStorageService } from "@/utils/localStorageService";
-import CountdownTimer from "./components/CountdownTimer";
-import IntentSelectionModal from "./components/IntentSelectionModal";
-import HeroBackground from "./components/HeroBackground";
-import { getPersonalizedGreeting } from "@/utils/greetingUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { UserIntent, IntentDetails } from "@/types/intents";
-import NicoleUnifiedInterface from "@/components/ai/unified/NicoleUnifiedInterface";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
-interface HeroProps {
-  className?: string;
-}
-
-const localStorageService = new LocalStorageService();
-
-const intentDetails: { [key in UserIntent]: IntentDetails } = {
-  "auto-gift": {
-    title: "Set up Auto-Gifting",
-    description: "Never miss an occasion! Automatically send gifts to your loved ones on their special days.",
-    icon: Gift,
-  },
-  "shop-solo": {
-    title: "Find the Perfect Gift",
-    description: "Explore our curated selection of unique gifts for every personality and occasion.",
-    icon: Sparkles,
-  },
-  "create-wishlist": {
-    title: "Create a Wishlist",
-    description: "Let your friends and family know exactly what you're wishing for.",
-    icon: Heart,
-  },
-};
-
-const Hero: React.FC = () => {
-  const [showCountdown, setShowCountdown] = useState(false);
-  const [userIntent, setUserIntent] = useState<UserIntent | null>(null);
-  const [isNicoleOpen, setIsNicoleOpen] = useState(false);
-  const [selectedIntent, setSelectedIntent] = useState<"auto-gift" | "shop-solo" | "create-wishlist" | null>(null);
-  const [showIntentModal, setShowIntentModal] = useState(false);
-  const [nicoleContext, setNicoleContext] = useState<any>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
+const Hero = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const [showNicole, setShowNicole] = useState(false);
 
   useEffect(() => {
-    const storedIntent = localStorageService.getItem("userIntent") as UserIntent | null;
-    if (storedIntent) {
-      setUserIntent(storedIntent);
-    }
-
-    const onboardingComplete = localStorageService.getItem("onboardingComplete") === "true";
-    setShowCountdown(!onboardingComplete);
-
-    const showingIntentModal = localStorageService.getItem("showingIntentModal") === "true";
-    if (showingIntentModal && !storedIntent) {
-      setShowIntentModal(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (heroRef.current && !heroRef.current.contains(event.target as Node)) {
-        setIsNicoleOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, []);
-
-  const handleModalClose = () => {
-    setShowIntentModal(false);
-    localStorageService.setItem("showingIntentModal", "false");
-  };
-
-  const handleIntentSelect = (intent: UserIntent) => {
-    setUserIntent(intent);
-    localStorageService.setItem("userIntent", intent);
-    localStorageService.setItem("showingIntentModal", "false");
-    setShowIntentModal(false);
-
-    if (intent === "giftor") {
-      window.location.href = "/marketplace";
-    } else if (intent === "giftee") {
-      window.location.href = "/profile-setup";
-    }
-  };
-
-  // Handle CTA clicks that should open Nicole
-  const handleCTAClick = (intent: "auto-gift" | "shop-solo" | "create-wishlist") => {
-    console.log(`Hero CTA clicked: ${intent}`);
-    
-    const greetingContext = getPersonalizedGreeting(user, profile);
-    
-    setSelectedIntent(intent);
-    setNicoleContext({
-      capability: intent === 'auto-gift' ? 'auto_gifting' : 'conversation',
-      selectedIntent: intent,
-      userFirstName: greetingContext.firstName,
-      greetingContext
+    // Set Nicole context for hero interactions
+    LocalStorageService.setNicoleContext({
+      source: 'hero_section',
+      currentPage: '/',
+      timestamp: new Date().toISOString()
     });
-    setIsNicoleOpen(true);
-  };
+  }, []);
 
-  const handleNicoleClose = () => {
-    setIsNicoleOpen(false);
-    setSelectedIntent(null);
-    setNicoleContext(null);
-  };
-
-  const handleIntentComplete = (intent: "auto-gift" | "shop-solo" | "create-wishlist") => {
-    console.log(`Intent completed: ${intent}`);
-    // Handle the completion logic here if needed
-  };
-
-  const getHeroTitle = () => {
+  const handleStartGifting = () => {
     if (user) {
-      return getPersonalizedGreeting(user, profile).fullGreeting;
+      // Trigger Nicole with gifting context
+      const event = new CustomEvent('triggerNicole', {
+        detail: { 
+          greeting: 'gift-finder',
+          context: 'hero_cta',
+          intent: 'find_gift'
+        }
+      });
+      window.dispatchEvent(event);
     } else {
-      return "Find the Perfect Gift for Every Occasion";
+      navigate('/auth');
     }
   };
 
-  const getHeroSubtitle = () => {
+  const handleAutoGifting = () => {
     if (user) {
-      return "Let us help you find the perfect gift for your loved ones.";
+      // Trigger Nicole with auto-gifting context
+      const event = new CustomEvent('triggerNicole', {
+        detail: { 
+          greeting: 'auto-gifting',
+          context: 'hero_cta',
+          intent: 'setup_auto_gifting'
+        }
+      });
+      window.dispatchEvent(event);
     } else {
-      return "Discover unique and thoughtful gifts for birthdays, holidays, and more.";
+      navigate('/auth');
     }
   };
 
   return (
-    <div ref={heroRef} className="relative min-h-screen flex flex-col">
-      <HeroBackground />
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
+      {/* Background */}
+      <div className="absolute inset-0 bg-black/20"></div>
       
-      {/* Main Hero Content */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-            {getHeroTitle()}
-          </h1>
-          <p className="text-lg md:text-xl lg:text-2xl text-white mb-8">
-            {getHeroSubtitle()}
-          </p>
-          
-          {/* Main CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-300"
-              onClick={() => handleCTAClick('auto-gift')}
-            >
-              <Gift className="mr-2 h-5 w-5" />
-              Start Auto-Gifting
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full sm:w-auto text-lg px-8 py-6 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-all duration-300"
-              onClick={() => handleCTAClick('shop-solo')}
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              Start Gifting
-            </Button>
-          </div>
+      {/* Content */}
+      <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 drop-shadow-lg">
+          Never Miss Another Special Moment
+        </h1>
+        <p className="text-lg md:text-xl lg:text-2xl mb-8 drop-shadow-md opacity-90 max-w-3xl mx-auto">
+          Discover thoughtful gifts and set up automatic gifting for birthdays, anniversaries, and holidays. 
+          Make every occasion unforgettable.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <Button 
+            size="lg" 
+            className="text-lg px-8 py-6 bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:bg-white/30 hover:border-white/50 text-white font-semibold min-w-[200px]"
+            onClick={handleStartGifting}
+          >
+            Start Gifting
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="text-lg px-8 py-6 bg-transparent border-2 border-white/50 hover:bg-white/10 text-white font-semibold min-w-[200px]"
+            onClick={handleAutoGifting}
+          >
+            Auto-Gifting
+          </Button>
+        </div>
 
-          {showCountdown && (
-            <div className="mt-12">
-              <h2 className="text-2xl text-white font-semibold mb-4">
-                Time Until the Next Special Occasion
-              </h2>
-              <div className="flex items-center justify-center">
-                <Clock className="mr-2 h-5 w-5 text-white" />
-                <p className="text-white">Don't miss out! Set up your auto-gifts now.</p>
-              </div>
-            </div>
-          )}
+        <div className="text-sm opacity-75">
+          {user ? "Ready to find the perfect gift?" : "Sign in to get started"}
         </div>
       </div>
-
-      {/* Intent Selection Modal */}
-      <IntentSelectionModal
-        isOpen={showIntentModal}
-        onClose={handleModalClose}
-        onIntentSelect={handleIntentSelect}
-        userFirstName={getPersonalizedGreeting(user, profile).firstName}
-      />
-
-      {/* Nicole AI Interface */}
-      <NicoleUnifiedInterface
-        isOpen={isNicoleOpen}
-        onClose={handleNicoleClose}
-        initialContext={nicoleContext}
-        entryPoint="hero"
-        onIntentComplete={handleIntentComplete}
-      />
-
-      {/* Countdown Timer */}
-      <CountdownTimer />
     </div>
   );
 };

@@ -22,15 +22,8 @@ const Hero = () => {
 
   const handleStartGifting = () => {
     if (user) {
-      // Trigger Nicole with gifting context
-      const event = new CustomEvent('triggerNicole', {
-        detail: { 
-          greeting: 'gift-finder',
-          context: 'hero_cta',
-          intent: 'find_gift'
-        }
-      });
-      window.dispatchEvent(event);
+      // Navigate to homepage with Nicole mode to use inline interface only
+      navigate('/?mode=nicole');
     } else {
       navigate('/auth');
     }
@@ -38,15 +31,8 @@ const Hero = () => {
 
   const handleAutoGifting = () => {
     if (user) {
-      // Trigger Nicole with auto-gifting context
-      const event = new CustomEvent('triggerNicole', {
-        detail: { 
-          greeting: 'auto-gifting',
-          context: 'hero_cta',
-          intent: 'setup_auto_gifting'
-        }
-      });
-      window.dispatchEvent(event);
+      // Navigate to homepage with Nicole mode to use inline interface only
+      navigate('/?mode=nicole');
     } else {
       navigate('/auth');
     }

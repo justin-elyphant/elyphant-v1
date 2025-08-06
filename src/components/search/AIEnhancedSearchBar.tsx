@@ -27,30 +27,20 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const navigate = useNavigate();
   const { isNicoleMode, setMode } = useSearchMode();
 
-  // Listen for global Nicole trigger events
+  // Open Nicole interface when mode becomes nicole (from URL or mode toggle)
   useEffect(() => {
-    const handleTriggerNicole = (event: CustomEvent) => {
-      const { capability, context } = event.detail;
-      
-      // Switch to Nicole mode and open interface
-      setMode("nicole");
-      setNicoleContext({
-        capability,
-        ...context
-      });
+    if (isNicoleMode && !isNicoleOpen) {
       setIsNicoleOpen(true);
+      setNicoleContext({
+        capability: 'gift_advisor',
+        conversationPhase: 'greeting'
+      });
       
       toast.success("Nicole is ready to help!", {
         description: "Ask me anything about finding the perfect gift"
       });
-    };
-
-    window.addEventListener('triggerNicole', handleTriggerNicole as EventListener);
-    
-    return () => {
-      window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
-    };
-  }, [setMode]);
+    }
+  }, [isNicoleMode, isNicoleOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -204,43 +204,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         </div>
       )}
 
-      {/* Quick Examples - Only show in search mode when no query */}
-      {!isNicoleMode && !query && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setQuery("birthday gifts")}
-            className="h-7 text-xs"
-          >
-            Birthday gifts
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setQuery("tech gadgets")}
-            className="h-7 text-xs"
-          >
-            Tech gadgets
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setMode("nicole");
-              setNicoleContext({
-                capability: 'search',
-                conversationPhase: 'greeting'
-              });
-              setIsNicoleOpen(true);
-            }}
-            className="h-7 text-xs bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200"
-          >
-            <Sparkles className="h-2.5 w-2.5 mr-1" />
-            Ask Nicole for ideas
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

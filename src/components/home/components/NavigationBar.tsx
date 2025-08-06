@@ -74,7 +74,7 @@ const NavigationBar = () => {
 
           {/* Desktop Search Bar */}
           {shouldShowSearch && (
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <div className="hidden md:flex flex-1 justify-center max-w-3xl mx-4">
               <React.Suspense fallback={<div className="h-10 bg-muted rounded animate-pulse flex-1" />}>
                 <AIEnhancedSearchBar />
               </React.Suspense>

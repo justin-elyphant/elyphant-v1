@@ -244,7 +244,7 @@ You can reference their taste preferences based on their saved items when making
     }
 
     // Check for dynamic greeting trigger
-    const isDynamicGreeting = message === "__START_AUTO_GIFT__" || (context.greetingContext && (!conversationHistory || conversationHistory.length === 0));
+    const isDynamicGreeting = message === "__START_DYNAMIC_CHAT__" || message === "__START_AUTO_GIFT__" || (context.greetingContext && (!conversationHistory || conversationHistory.length === 0));
     
     // Check if key auto-gift question has already been asked
     const hasAskedPickQuestion = conversationHistory?.some(msg => 
@@ -261,6 +261,12 @@ You can reference their taste preferences based on their saved items when making
 GREETING CONTEXT: ${JSON.stringify(context.greetingContext || {}, null, 2)}
 
 Start the conversation naturally as if responding to the user clicking "Start Auto-Gifting" button.`;
+      } else if (message === "__START_DYNAMIC_CHAT__") {
+        userMessage = `Generate a dynamic greeting to start a conversation. Use the greeting context to personalize the message based on the user's intent and how they arrived here.
+
+GREETING CONTEXT: ${JSON.stringify(context.greetingContext || {}, null, 2)}
+
+Start the conversation naturally as if responding to the user's action (button click, CTA interaction, etc).`;
       } else {
         userMessage = `This is the first message in our conversation. Generate a contextual greeting based on the user's intent and the greeting context provided, then respond to their message.
 

@@ -80,13 +80,17 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     await chatWithNicole(message);
   };
 
-  // Auto-initiate conversation for certain contexts
+  // Auto-initiate conversation for any CTA context
   useEffect(() => {
-    if (!lastResponse && state.contextData?.selectedIntent === 'auto-gift') {
-      // Send a special trigger message for auto-gifting to start dynamic conversation
-      chatWithNicole("__START_AUTO_GIFT__");
+    if (!lastResponse && state.contextData && (
+      state.contextData.selectedIntent || 
+      state.contextData.mode === 'auto-gifting' ||
+      getGreetingFromUrl(searchParams).greeting
+    )) {
+      // Send a special trigger message to start dynamic conversation
+      chatWithNicole("__START_DYNAMIC_CHAT__");
     }
-  }, [state.contextData?.selectedIntent, lastResponse, chatWithNicole]);
+  }, [state.contextData, lastResponse, chatWithNicole, searchParams]);
 
   const handleSearchNow = () => {
     const query = generateSearchQuery();

@@ -440,11 +440,46 @@ export class UnifiedNicoleAIService {
     sessionId: string
   ): Promise<NicoleResponse> {
     try {
+      // Fetch user connections to provide to the AI
+      let userConnections: any[] = [];
+      if (context.currentUserId) {
+        try {
+          const { data: connectionsData, error } = await supabase
+            .from('user_connections')
+            .select(`
+              *,
+              profiles!user_connections_connected_user_id_fkey (
+                id,
+                display_name,
+                username,
+                avatar_url,
+                interests
+              )
+            `)
+            .eq('user_id', context.currentUserId)
+            .eq('status', 'accepted');
+          
+          if (!error && connectionsData) {
+            userConnections = connectionsData.map(conn => ({
+              id: conn.connected_user_id,
+              name: conn.profiles?.display_name || conn.profiles?.username || 'Unknown',
+              relationship: conn.relationship_type,
+              interests: conn.profiles?.interests || []
+            }));
+          }
+          
+          console.log(`Found ${userConnections.length} connections for user ${context.currentUserId}`);
+        } catch (connError) {
+          console.error('Error fetching user connections:', connError);
+        }
+      }
+
       // Prepare context for ChatGPT Agent with proper structure
       const agentContext = {
         ...context,
         conversationPhase: context.conversationPhase || 'initial',
-        selectedIntent: context.selectedIntent || 'auto-gift'
+        selectedIntent: context.selectedIntent || 'auto-gift',
+        userConnections // Include real connection data
       };
 
       // Get current conversation history (already includes the user message)
@@ -462,7 +497,9 @@ export class UnifiedNicoleAIService {
             conversationEnhancement: true,
             connectionIntegration: true,
             wishlistIntegration: true
-          }
+          },
+          hasConnections: userConnections.length > 0,
+          hasWishlists: false // We can add wishlist support later
         }
       });
 

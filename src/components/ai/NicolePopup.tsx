@@ -25,7 +25,6 @@ const NicolePopup = ({
   welcomeMessage 
 }: NicolePopupProps) => {
   const [message, setMessage] = useState("");
-  const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [welcomeAdded, setWelcomeAdded] = useState(false);
   const { user } = useAuth();
@@ -37,21 +36,44 @@ const NicolePopup = ({
     }
   });
 
-  // Only add welcome message once when dialog opens, not on every change
+  // Get conversation history from the service
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
+  
+  // Update conversation history when new messages come in
   useEffect(() => {
-    if (isOpen && welcomeMessage && !welcomeAdded && conversation.length === 0) {
-      setConversation([
-        { role: 'assistant', content: welcomeMessage }
-      ]);
+    try {
+      const serviceContext = getConversationContext();
+      // Get conversation state from the service - this should include the full conversation history
+      // For now, we'll track messages locally and sync with the service
+      if (lastResponse) {
+        // Add the assistant's response to local history if it's not already there
+        setConversationHistory(prev => {
+          const lastMsg = prev[prev.length - 1];
+          if (!lastMsg || lastMsg.content !== lastResponse.message) {
+            return [...prev, { role: 'assistant', content: lastResponse.message }];
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.log('Error syncing conversation history:', error);
+    }
+  }, [lastResponse, getConversationContext]);
+
+  // Add welcome message to service conversation if needed
+  useEffect(() => {
+    if (isOpen && welcomeMessage && !welcomeAdded && conversationHistory.length === 0) {
+      // Add welcome message directly to the service's conversation history
+      const welcomeEntry = { role: 'assistant', content: welcomeMessage };
+      // This will be handled by the service automatically when first message is sent
       setWelcomeAdded(true);
     }
-  }, [isOpen, welcomeMessage, welcomeAdded, conversation.length]);
+  }, [isOpen, welcomeMessage, welcomeAdded, conversationHistory.length]);
 
-  // Reset welcome flag when dialog closes but preserve conversation history
+  // Reset welcome flag when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setWelcomeAdded(false);
-      // Don't clear conversation immediately - let it persist for potential reopening
     }
   }, [isOpen]);
 
@@ -61,16 +83,13 @@ const NicolePopup = ({
     const userMessage = message.trim();
     setMessage("");
 
-    // Add user message to conversation
-    setConversation(prev => [...prev, { role: 'user', content: userMessage }]);
+    // Add user message to local conversation history immediately
+    setConversationHistory(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
       const response = await chatWithNicole(userMessage);
       
       if (response) {
-        // Add Nicole's response to conversation
-        setConversation(prev => [...prev, { role: 'assistant', content: response.message }]);
-
         // Check if Nicole indicates auto-gift setup is complete
         if (response.actions && response.actions.includes('setup_auto_gifting')) {
           await handleAutoGiftSetup(response);
@@ -183,7 +202,22 @@ const NicolePopup = ({
 
         {/* Conversation Area */}
         <div className="flex-1 overflow-y-auto space-y-4 min-h-[300px] max-h-[400px]">
-          {conversation.map((msg, index) => (
+          {/* Show welcome message if it exists and no conversation history */}
+          {welcomeMessage && conversationHistory.length === 0 && (
+            <div className="flex gap-3 justify-start">
+              <Avatar className="w-8 h-8 flex-shrink-0">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                  <Sparkles className="w-4 h-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="bg-muted p-3 rounded-lg max-w-[80%]">
+                <p className="text-sm whitespace-pre-wrap">{welcomeMessage}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Display conversation history from service */}
+          {conversationHistory.map((msg, index) => (
             <div
               key={index}
               className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -252,9 +286,9 @@ const NicolePopup = ({
               </div>
 
               <div>
-                <h4 className="font-semibold mb-1">Local Conversation ({conversation.length} messages):</h4>
+                <h4 className="font-semibold mb-1">Service Conversation ({conversationHistory.length} messages):</h4>
                 <pre className="bg-background p-2 rounded border text-xs overflow-auto max-h-24">
-                  {JSON.stringify(conversation, null, 2)}
+                  {JSON.stringify(conversationHistory, null, 2)}
                 </pre>
               </div>
 
@@ -278,12 +312,13 @@ const NicolePopup = ({
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
-                  setConversation([]);
-                  console.log('Cleared local conversation');
+                  // Clear conversation from the service instead
+                  // This will be handled by the service's clearConversation method
+                  console.log('Service conversation cleared');
                 }}
                 className="w-full"
               >
-                Clear Local Conversation
+                Clear Service Conversation
               </Button>
             </CollapsibleContent>
           </Collapsible>

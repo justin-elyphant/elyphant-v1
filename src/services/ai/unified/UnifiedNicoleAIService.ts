@@ -33,6 +33,18 @@ export class UnifiedNicoleAIService {
       // Preserve existing conversation state
       const conversationState = this.getConversationState(sessionId);
       
+      // Add user message to conversation history BEFORE calling API
+      const updatedHistory = [
+        ...conversationState.conversationHistory,
+        { role: 'user', content: message }
+      ];
+      
+      // Update the conversation state with current message
+      this.updateConversationState(sessionId, {
+        conversationHistory: updatedHistory,
+        lastMessage: message
+      });
+      
       // Extract recipient info from natural conversation
       const extractedRecipient = this.capabilityRouter.extractRecipientFromMessage(message);
       
@@ -78,16 +90,16 @@ export class UnifiedNicoleAIService {
         response = await this.handleSpecializedCapability(message, enhancedContext, capability);
       }
 
-      // Update conversation state
+      // Update conversation state with assistant response
+      const finalHistory = [
+        ...this.getConversationState(sessionId).conversationHistory,
+        { role: 'assistant', content: response.message }
+      ];
+      
       this.updateConversationState(sessionId, {
-        lastMessage: message,
         lastResponse: response,
         context: enhancedContext,
-        conversationHistory: [
-          ...conversationState.conversationHistory,
-          { role: 'user', content: message },
-          { role: 'assistant', content: response.message }
-        ]
+        conversationHistory: finalHistory
       });
 
       return response;
@@ -435,7 +447,7 @@ export class UnifiedNicoleAIService {
         selectedIntent: context.selectedIntent || 'auto-gift'
       };
 
-      // Get full conversation history from session state
+      // Get current conversation history (already includes the user message)
       const conversationState = this.getConversationState(sessionId);
       
       const response = await supabase.functions.invoke('nicole-chat', {

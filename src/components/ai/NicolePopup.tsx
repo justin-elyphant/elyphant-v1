@@ -44,11 +44,11 @@ const NicolePopup = ({
     }
   }, [isOpen, welcomeMessage, welcomeAdded, conversation.length]);
 
-  // Reset welcome flag when dialog closes
+  // Reset welcome flag when dialog closes but preserve conversation history
   useEffect(() => {
     if (!isOpen) {
       setWelcomeAdded(false);
-      setConversation([]);
+      // Don't clear conversation immediately - let it persist for potential reopening
     }
   }, [isOpen]);
 

@@ -157,10 +157,12 @@ PHASE 3: CONNECTION_ANALYSIS (after receiving recipient name)
   * Use actual connection data (interests, preferences, relationship_type)
   * "I found [name] in your connections! I see they like [actual interests from connection]. What's your budget for this gift?"
 - If no connection found in userConnections array:
-  * "I don't see [name] in your connections yet. I'll send them a text to gather their preferences and provide you with personalized gift recommendations for approval."
-  * NEVER claim to have found someone who isn't in the connections data
-  * Ask for phone number if needed
-- Move to BUDGET_CONFIRMATION or INVITATION_FLOW
+  * SMART SEARCH: Check if they exist on the platform but aren't connected yet
+  * Search context.searchResults for matching names if available
+  * If found on platform: "I found [name] on Elyphant! Should I send them a connection request so we can set up auto-gifting?"
+  * If not found: "I don't see [name] yet. I can invite them to join so you can set up auto-gifting!"
+  * Provide appropriate buttons: "Connect & Setup" or "Invite to Elyphant"
+- Move to BUDGET_CONFIRMATION or CONNECTION_REQUEST or INVITATION_FLOW
 
 PHASE 4: BUDGET_CONFIRMATION (when connection exists)
 - Use relationship intelligence for budget suggestions
@@ -351,9 +353,11 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
       }
     }
 
-    // Check connections for the recipient
+    // Check connections for the recipient first
     let connectionFound = false;
     let connectionPreferences = null;
+    let platformUserFound = false;
+    let platformUserData = null;
     
     if (recipientName && context?.userConnections) {
       const connection = context.userConnections.find((conn: any) => 
@@ -369,6 +373,27 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
           preferences: connection.profiles?.gift_preferences || [],
           brands: connection.profiles?.favorite_brands || []
         };
+      }
+    }
+    
+    // If no connection found, search for the user on the platform
+    if (!connectionFound && recipientName) {
+      try {
+        const { data: searchResults } = await supabase
+          .from('profiles')
+          .select('id, name, username, email')
+          .or(`name.ilike.%${recipientName}%,username.ilike.%${recipientName}%`)
+          .limit(3);
+        
+        if (searchResults && searchResults.length > 0) {
+          platformUserFound = true;
+          platformUserData = searchResults[0]; // Take the first match
+          console.log(`✅ Found platform user: ${recipientName}`, platformUserData);
+        } else {
+          console.log(`❌ No platform user found for: ${recipientName}`);
+        }
+      } catch (searchError) {
+        console.error('Error searching for platform users:', searchError);
       }
     }
 
@@ -410,6 +435,8 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
       recipientPhone,
       connectionFound,
       connectionPreferences,
+      platformUserFound,
+      platformUserData,
       conversationPhase: newConversationPhase
     };
 

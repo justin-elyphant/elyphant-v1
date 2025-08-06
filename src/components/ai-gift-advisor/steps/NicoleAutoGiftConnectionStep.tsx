@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Calendar, Gift, Sparkles, ArrowRight, CheckCircle2, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Heart, Calendar, Gift, Sparkles, ArrowRight, CheckCircle2, Users, Search, UserPlus, Mail } from "lucide-react";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
 import { useConnections } from "@/hooks/profile/useConnections";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useFriendSearch } from "@/hooks/useFriendSearch";
+import { toast } from "sonner";
 
 type NicoleAutoGiftConnectionStepProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -20,9 +23,12 @@ const NicoleAutoGiftConnectionStep = ({
   const { connections } = useConnections();
   const [selectedConnection, setSelectedConnection] = useState<any>(null);
   const [loadingSetup, setLoadingSetup] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const { chatWithNicole } = useUnifiedNicoleAI({
     initialContext: { capability: 'auto_gifting' }
   });
+  const { results: searchResults, isLoading: searchLoading, searchForFriends, sendFriendRequest } = useFriendSearch();
 
   // Enhanced connections with upcoming events and relationship data
   const enhancedConnections = connections.map(conn => {
@@ -78,6 +84,54 @@ const NicoleAutoGiftConnectionStep = ({
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchTerm(query);
+    if (query.length >= 2) {
+      searchForFriends(query);
+    }
+  };
+
+  const handleConnectAndSelect = async (friend: any) => {
+    if (friend.connectionStatus === 'connected') {
+      // Already connected, proceed with selection
+      await selectFriend({
+        id: friend.id,
+        connected_user_id: friend.name,
+        relationship_type: 'friend',
+        name: friend.name,
+        email: friend.email
+      });
+      setShowSearch(false);
+      return;
+    }
+
+    if (friend.connectionStatus === 'none') {
+      // Send connection request and then select
+      const success = await sendFriendRequest(friend.id, friend.name);
+      if (success) {
+        await selectFriend({
+          id: friend.id,
+          connected_user_id: friend.name,
+          relationship_type: 'friend',
+          name: friend.name,
+          email: friend.email,
+          status: 'pending'
+        });
+        setShowSearch(false);
+      }
+    }
+  };
+
+  const handleInviteNew = () => {
+    nextStep("invite-new-friend", {
+      pendingFriendData: {
+        name: searchTerm.includes('@') ? '' : searchTerm,
+        email: searchTerm.includes('@') ? searchTerm : '',
+        relationship: 'friend'
+      }
+    });
+  };
+
   if (loadingSetup) {
     return (
       <div className="space-y-6 text-center">
@@ -118,8 +172,128 @@ const NicoleAutoGiftConnectionStep = ({
         </p>
       </div>
 
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        {enhancedConnections.map((connection) => (
+      {/* Search Toggle */}
+      {!showSearch && enhancedConnections.length > 0 && (
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowSearch(true)}
+            className="gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Search for someone else
+          </Button>
+        </div>
+      )}
+
+      {/* Search Interface */}
+      {(showSearch || enhancedConnections.length === 0) && (
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search by name, username, or email..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-medium text-sm text-muted-foreground">Found Users</h3>
+              {searchResults.map((friend) => (
+                <Card 
+                  key={friend.id} 
+                  className="hover:shadow-md transition-all cursor-pointer border-2 hover:border-primary/20"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={friend.profile_image} />
+                          <AvatarFallback>
+                            {friend.name?.substring(0, 2).toUpperCase() || 'UN'}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium truncate">{friend.name}</h3>
+                            <Badge 
+                              variant={friend.connectionStatus === 'connected' ? 'default' : 'secondary'} 
+                              className="text-xs"
+                            >
+                              {friend.connectionStatus === 'connected' ? 'Connected' : 
+                               friend.connectionStatus === 'pending' ? 'Request Sent' : 'Not Connected'}
+                            </Badge>
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground">
+                            {friend.username || friend.email}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        onClick={() => handleConnectAndSelect(friend)}
+                        size="sm"
+                        variant={friend.connectionStatus === 'connected' ? 'default' : 'outline'}
+                      >
+                        {friend.connectionStatus === 'connected' ? 'Select' : 
+                         friend.connectionStatus === 'pending' ? 'Select (Pending)' : 'Connect & Select'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* No Results - Invite Option */}
+          {searchTerm.length >= 2 && !searchLoading && searchResults.length === 0 && (
+            <Card className="border-dashed border-2 border-muted">
+              <CardContent className="p-6 text-center">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 mx-auto bg-muted rounded-full flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-medium">No users found for "{searchTerm}"</h3>
+                  <p className="text-sm text-muted-foreground">
+                    They might not be on Elyphant yet. Would you like to invite them?
+                  </p>
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={handleInviteNew}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Invite "{searchTerm}" to Elyphant
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {showSearch && enhancedConnections.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowSearch(false)}
+              className="w-full"
+            >
+              ← Back to your connections
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Existing Connections */}
+      {!showSearch && (
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {enhancedConnections.map((connection) => (
           <Card 
             key={connection.id} 
             className="hover:shadow-md transition-all cursor-pointer border-2 hover:border-primary/20"
@@ -180,10 +354,11 @@ const NicoleAutoGiftConnectionStep = ({
               )}
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {enhancedConnections.length === 0 && (
+      {enhancedConnections.length === 0 && !showSearch && (
         <Card className="border-dashed border-2 border-muted">
           <CardContent className="p-8 text-center">
             <div className="space-y-3">
@@ -198,7 +373,7 @@ const NicoleAutoGiftConnectionStep = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => nextStep("friend-search")}
+                  onClick={() => setShowSearch(true)}
                 >
                   Search Friends
                 </Button>

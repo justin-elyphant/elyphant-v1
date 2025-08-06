@@ -7,6 +7,10 @@ interface UnifiedNicoleInterfaceProps {
   onClose: () => void;
   initialContext?: any;
   className?: string;
+  // Additional props for backward compatibility
+  entryPoint?: string;
+  onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist") => void;
+  onNavigateToResults?: (searchQuery: string) => void;
 }
 
 /**

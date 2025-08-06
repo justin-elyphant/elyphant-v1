@@ -1,231 +1,138 @@
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, X, Minimize2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
-import { useAuthSession } from '@/contexts/auth/useAuthSession';
 import { NicoleConversationDisplay } from './NicoleConversationDisplay';
 import { NicoleInputArea } from './NicoleInputArea';
-import { useNicoleState } from '@/contexts/nicole/NicoleStateContext';
+import { NicoleCapability } from '@/services/ai/unified/types';
 
 interface NicoleUnifiedInterfaceProps {
-  onNavigateToResults?: (query: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  initialContext?: {
+    capability?: string;
+    selectedIntent?: string;
+    userFirstName?: string;
+    greetingContext?: any;
+  };
   className?: string;
 }
 
+interface Message {
+  role: string;
+  content: string;
+}
+
 export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
-  onNavigateToResults,
+  isOpen,
+  onClose,
+  initialContext,
   className = ""
 }) => {
-  const { user } = useAuthSession();
-  const { state, actions } = useNicoleState();
-  const [messages, setMessages] = useState<Array<{role: string, content: string}>>([]);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const hasInitialized = useRef(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Convert string capability to proper NicoleCapability type
+  const getCapabilityFromString = (capabilityString?: string): NicoleCapability => {
+    switch (capabilityString) {
+      case 'auto_gifting':
+      case 'auto-gifting':
+        return 'auto_gifting';
+      case 'gift_advisor':
+      case 'gift-advisor':
+        return 'gift_advisor';
+      case 'search':
+        return 'search';
+      case 'marketplace_assistant':
+      case 'marketplace-assistant':
+        return 'marketplace_assistant';
+      default:
+        return 'conversation';
+    }
+  };
 
-  const { 
-    chatWithNicole, 
-    loading, 
-    isReadyToSearch,
-    generateSearchQuery,
+  const {
+    chatWithNicole,
+    loading,
     lastResponse,
-    context
+    clearConversation,
+    isReadyToSearch
   } = useUnifiedNicoleAI({
-    sessionId: `nicole-unified-${Date.now()}`,
     initialContext: {
-      conversationPhase: 'greeting',
-      capability: 'conversation',
-      currentUserId: user?.id,
-      interests: [],
-      detectedBrands: [],
-      // Include context from CTA triggers
-      ...state.contextData
+      capability: getCapabilityFromString(initialContext?.capability),
+      selectedIntent: initialContext?.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist" | undefined,
+      userFirstName: initialContext?.userFirstName,
+      greetingContext: initialContext?.greetingContext,
+      conversationPhase: 'greeting'
+    },
+    onResponse: (response) => {
+      setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
     }
   });
 
-  // Initialize dynamic greeting on mount (once per session)
+  // Send initial greeting when component opens
   useEffect(() => {
-    if (user && !hasInitialized.current && (state.activeMode === 'floating' || state.activeMode === 'search')) {
-      hasInitialized.current = true;
+    if (isOpen && messages.length === 0) {
+      const greetingMessage = initialContext?.selectedIntent === 'auto-gift' 
+        ? "I'd like to set up auto-gifting"
+        : "Hello Nicole";
       
-      const initializeDynamicGreeting = async () => {
-        console.log('🎯 Initializing dynamic greeting for user:', user.id, 'with context:', state.contextData);
-        
-        try {
-          // Create initial message based on context
-          let initialMessage = '__START_DYNAMIC_CHAT__';
-          if (state.contextData?.selectedIntent) {
-            initialMessage = `I want help with ${state.contextData.selectedIntent}`;
-          }
-
-          const response = await chatWithNicole(initialMessage);
-          if (response?.message) {
-            setMessages([{ role: 'assistant', content: response.message }]);
-          }
-        } catch (error) {
-          console.error('❌ Error initializing dynamic greeting:', error);
-          // Fallback to a basic greeting if the AI fails
-          setMessages([{ role: 'assistant', content: 'Hi! I\'m Nicole, your gift advisor. How can I help you find the perfect gift today?' }]);
-        }
-      };
-
-      initializeDynamicGreeting();
+      handleSendMessage(greetingMessage);
     }
-  }, [user, state.activeMode, state.contextData, chatWithNicole]);
+  }, [isOpen, initialContext]);
 
-  const handleSendMessage = useCallback(async (message: string) => {
-    if (!message.trim() || loading) return;
-
-    // Add user message immediately
+  const handleSendMessage = async (message: string) => {
+    // Add user message to display
     setMessages(prev => [...prev, { role: 'user', content: message }]);
+    
+    // Send to Nicole AI
+    await chatWithNicole(message);
+  };
 
-    try {
-      const response = await chatWithNicole(message);
-      if (response?.message) {
-        setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please try again!' 
-      }]);
-    }
-  }, [chatWithNicole, loading]);
+  const handleSearch = () => {
+    // This would trigger marketplace search with Nicole's context
+    console.log('Triggering marketplace search with Nicole context');
+    onClose();
+    // Navigate to marketplace with search query
+    window.dispatchEvent(new CustomEvent('nicole-search', {
+      detail: { query: lastResponse?.searchQuery || '' }
+    }));
+  };
 
-  const handleSearch = useCallback(() => {
-    if (isReadyToSearch() && onNavigateToResults) {
-      const query = generateSearchQuery();
-      onNavigateToResults(query);
-    }
-  }, [isReadyToSearch, generateSearchQuery, onNavigateToResults]);
+  if (!isOpen) return null;
 
-  const handleClose = useCallback(() => {
-    actions.activateMode('closed');
-    setMessages([]);
-    hasInitialized.current = false;
-  }, [actions]);
-
-  const handleMinimize = useCallback(() => {
-    setIsMinimized(!isMinimized);
-  }, [isMinimized]);
-
-  if (state.activeMode !== 'floating' && state.activeMode !== 'search') {
-    return null;
-  }
-
-  // Different styling for floating vs dropdown mode
-  const isDropdownMode = state.activeMode === 'search';
-  
-  if (isDropdownMode) {
-    return (
-      <Card className={`w-full bg-white border shadow-lg ${
-        isMinimized ? 'h-16' : 'h-full'
-      } ${className}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-secondary/5">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-gray-800">Nicole - Gift Advisor</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMinimize}
-              className="h-8 w-8 p-0"
-            >
-              <Minimize2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="h-8 w-8 p-0"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {!isMinimized && (
-          <div className="flex flex-col h-[calc(100%-65px)]">
-            {/* Conversation Display */}
-            <div className="flex-1 overflow-hidden">
-              <NicoleConversationDisplay 
-                messages={messages}
-                isLoading={loading}
-                showSearchButton={isReadyToSearch()}
-                onSearch={handleSearch}
-                context={context}
-              />
-            </div>
-
-            {/* Input Area */}
-            <NicoleInputArea 
-              onSendMessage={handleSendMessage}
-              disabled={loading}
-              placeholder="Ask Nicole about gifts..."
-            />
-          </div>
-        )}
-      </Card>
-    );
-  }
-
-  // Floating mode (original styling)
   return (
-    <Card className={`fixed bottom-6 right-6 w-96 bg-white shadow-2xl border-0 z-50 transition-all duration-200 ${
-      isMinimized ? 'h-16' : 'h-[500px]'
-    } ${className}`}>
+    <Card className={`fixed top-16 right-4 w-80 h-96 z-50 flex flex-col shadow-lg ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-secondary/5">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-gray-800">Nicole - Gift Advisor</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMinimize}
-            className="h-8 w-8 p-0"
-          >
-            <Minimize2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="h-8 w-8 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-between p-4 border-b">
+        <h3 className="font-semibold text-sm">Chat with Nicole</h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="h-6 w-6"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
-      {!isMinimized && (
-        <div className="flex flex-col h-[calc(100%-65px)]">
-          {/* Conversation Display */}
-          <div className="flex-1 overflow-hidden">
-            <NicoleConversationDisplay 
-              messages={messages}
-              isLoading={loading}
-              showSearchButton={isReadyToSearch()}
-              onSearch={handleSearch}
-              context={context}
-            />
-          </div>
+      {/* Conversation Display */}
+      <NicoleConversationDisplay
+        messages={messages}
+        isLoading={loading}
+        showSearchButton={isReadyToSearch()}
+        onSearch={handleSearch}
+      />
 
-          {/* Input Area */}
-          <NicoleInputArea 
-            onSendMessage={handleSendMessage}
-            disabled={loading}
-            placeholder="Ask Nicole about gifts..."
-          />
-        </div>
-      )}
+      {/* Input Area */}
+      <NicoleInputArea
+        onSendMessage={handleSendMessage}
+        disabled={loading}
+        placeholder="Type your message..."
+      />
     </Card>
   );
 };
+
+export default NicoleUnifiedInterface;

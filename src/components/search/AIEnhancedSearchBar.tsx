@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -135,7 +136,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         </div>
       </form>
 
-      {/* Nicole AI Interface */}
+      {/* Nicole AI Interface - Direct usage of NicoleUnifiedInterface */}
       <NicoleUnifiedInterface
         isOpen={isNicoleOpen}
         onClose={handleNicoleClose}

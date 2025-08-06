@@ -4,6 +4,7 @@ import { EnhancedNicoleService } from "../enhancedNicoleService";
 import { generateEnhancedSearchQuery } from "../enhancedSearchQueryGenerator";
 import { UnifiedNicoleContext, NicoleCapability, NicoleConversationState, NicoleResponse } from "./types";
 import { NicoleCapabilityRouter } from "./NicoleCapabilityRouter";
+import { autoGiftIntelligenceService } from "../AutoGiftIntelligenceService";
 
 export class UnifiedNicoleAIService {
   private static instance: UnifiedNicoleAIService;
@@ -51,12 +52,43 @@ export class UnifiedNicoleAIService {
       // Route to appropriate capability
       const capability = this.capabilityRouter.determineCapability(message, context);
       
+      // Pre-load auto-gift intelligence for auto-gifting flows
+      let intelligenceContext = context;
+      if (capability === 'auto_gifting' && context.currentUserId && !context.autoGiftIntelligence) {
+        try {
+          const intelligence = await autoGiftIntelligenceService.analyzeUserAutoGiftOpportunities(context.currentUserId);
+          intelligenceContext = {
+            ...context,
+            autoGiftIntelligence: {
+              hasIntelligence: intelligence.primaryRecommendation !== null,
+              primaryRecommendation: intelligence.primaryRecommendation ? {
+                recipientName: intelligence.primaryRecommendation.recipient.name,
+                recipientId: intelligence.primaryRecommendation.recipient.id,
+                occasionType: intelligence.primaryRecommendation.occasion.type,
+                occasionDate: intelligence.primaryRecommendation.occasion.date,
+                budgetRange: [intelligence.primaryRecommendation.budget.min, intelligence.primaryRecommendation.budget.max],
+                confidence: intelligence.primaryRecommendation.confidence
+              } : undefined,
+              alternativeOptions: intelligence.alternativeOptions.map(alt => ({
+                recipientName: alt.recipient.name,
+                occasionType: alt.occasion.type,
+                occasionDate: alt.occasion.date
+              })),
+              canUseOptimalFlow: autoGiftIntelligenceService.canUseOptimalFlow(intelligence)
+            }
+          };
+        } catch (error) {
+          console.error('Failed to load auto-gift intelligence:', error);
+          // Continue without intelligence
+        }
+      }
+      
       // Update context with capability and extracted info
       const enhancedContext = {
-        ...context,
+        ...intelligenceContext,
         ...extractedRecipient,
         capability,
-        conversationPhase: this.determineConversationPhase(message, context)
+        conversationPhase: this.determineConversationPhase(message, intelligenceContext)
       };
 
       let response: NicoleResponse;
@@ -216,8 +248,24 @@ export class UnifiedNicoleAIService {
   }
 
   private determineConversationPhase(message: string, context: UnifiedNicoleContext): string {
-    // Simple phase detection - can be enhanced
-    if (!context.recipient && message.toLowerCase().includes('gift')) {
+    // Enhanced phase detection with 2-question flow support
+    const messageLower = message.toLowerCase();
+    
+    // Auto-gift optimal flow phases
+    if (context.capability === 'auto_gifting' && context.autoGiftIntelligence?.canUseOptimalFlow) {
+      if (!context.recipient && !context.occasion) {
+        return 'smart_recipient_occasion_confirmation';
+      }
+      if (context.recipient && context.occasion && !context.budget) {
+        return 'intelligent_budget_confirmation';
+      }
+      if (context.recipient && context.occasion && context.budget) {
+        return 'auto_gift_setup_complete';
+      }
+    }
+    
+    // Traditional 3-question fallback flow
+    if (!context.recipient && messageLower.includes('gift')) {
       return 'recipient_identification';
     }
     if (context.recipient && !context.occasion) {
@@ -353,6 +401,116 @@ export class UnifiedNicoleAIService {
   }
 
   private async handleAutoGiftingCapability(
+    message: string,
+    context: UnifiedNicoleContext
+  ): Promise<NicoleResponse> {
+    // Optimal 2-question flow with intelligence
+    if (context.autoGiftIntelligence?.canUseOptimalFlow) {
+      return this.handleOptimalAutoGiftFlow(message, context);
+    }
+    
+    // Traditional 3-question fallback flow
+    return this.handleTraditionalAutoGiftFlow(message, context);
+  }
+
+  /**
+   * Handle optimal 2-question auto-gift flow
+   */
+  private async handleOptimalAutoGiftFlow(
+    message: string,
+    context: UnifiedNicoleContext
+  ): Promise<NicoleResponse> {
+    const intelligence = context.autoGiftIntelligence!;
+    
+    // Question 1: Smart recipient + occasion confirmation
+    if (context.conversationPhase === 'smart_recipient_occasion_confirmation') {
+      const smartQuestion1 = autoGiftIntelligenceService.generateSmartQuestion1({
+        primaryRecommendation: intelligence.primaryRecommendation ? {
+          recipient: { 
+            name: intelligence.primaryRecommendation.recipientName,
+            id: intelligence.primaryRecommendation.recipientId
+          } as any,
+          occasion: {
+            type: intelligence.primaryRecommendation.occasionType,
+            date: intelligence.primaryRecommendation.occasionDate
+          } as any,
+          budget: null as any,
+          confidence: intelligence.primaryRecommendation.confidence
+        } : null,
+        alternativeOptions: intelligence.alternativeOptions.map(alt => ({
+          recipient: { name: alt.recipientName } as any,
+          occasion: { type: alt.occasionType, date: alt.occasionDate } as any,
+          budget: null as any
+        })),
+        smartDefaults: {
+          hasConnectionsToAnalyze: true,
+          canPredictOccasions: true,
+          hasBudgetIntelligence: true
+        }
+      });
+
+      return {
+        message: smartQuestion1,
+        context: { 
+          ...context, 
+          conversationPhase: 'smart_recipient_occasion_confirmation',
+          recipient: intelligence.primaryRecommendation?.recipientName,
+          occasion: intelligence.primaryRecommendation?.occasionType
+        },
+        capability: 'auto_gifting',
+        actions: ['smart_recipient_occasion_confirmation'],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: false
+      };
+    }
+
+    // Question 2: Intelligent budget confirmation
+    if (context.conversationPhase === 'intelligent_budget_confirmation' && intelligence.primaryRecommendation) {
+      const smartQuestion2 = autoGiftIntelligenceService.generateSmartQuestion2({
+        name: intelligence.primaryRecommendation.recipientName,
+        relationship: context.relationship || 'friend',
+        suggestedBudget: {
+          min: intelligence.primaryRecommendation.budgetRange[0],
+          max: intelligence.primaryRecommendation.budgetRange[1],
+          recommended: Math.round((intelligence.primaryRecommendation.budgetRange[0] + intelligence.primaryRecommendation.budgetRange[1]) / 2),
+          reasoning: `This range works well for ${context.relationship || 'friend'} relationships.`
+        }
+      } as any);
+
+      return {
+        message: smartQuestion2,
+        context: { 
+          ...context, 
+          conversationPhase: 'intelligent_budget_confirmation',
+          budget: intelligence.primaryRecommendation.budgetRange
+        },
+        capability: 'auto_gifting',
+        actions: ['intelligent_budget_confirmation', 'setup_auto_gifting'],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: false
+      };
+    }
+
+    // Setup complete
+    if (context.conversationPhase === 'auto_gift_setup_complete') {
+      return {
+        message: `Perfect! I've set up auto-gifting for ${context.recipient}'s ${context.occasion} with a $${context.budget?.[0]}-${context.budget?.[1]} budget. You'll get a notification a few days before the event so you can review and approve the gift selection.`,
+        context: { ...context, conversationPhase: 'auto_gift_setup_complete' },
+        capability: 'auto_gifting',
+        actions: ['setup_auto_gifting'],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: false
+      };
+    }
+
+    // Fallback to traditional flow
+    return this.handleTraditionalAutoGiftFlow(message, context);
+  }
+
+  /**
+   * Handle traditional 3-question auto-gift flow
+   */
+  private async handleTraditionalAutoGiftFlow(
     message: string,
     context: UnifiedNicoleContext
   ): Promise<NicoleResponse> {

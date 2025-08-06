@@ -5,6 +5,7 @@ export type NicoleCapability =
   | 'search'
   | 'gift_advisor'
   | 'auto_gifting'
+  | 'auto_gift_analysis'
   | 'budget_analysis'
   | 'wishlist_analysis'
   | 'marketplace_assistant';
@@ -13,6 +14,25 @@ export interface UnifiedNicoleContext {
   // Core conversation context
   conversationPhase: string;
   capability: NicoleCapability;
+  
+  // Auto-gift intelligence context
+  autoGiftIntelligence?: {
+    hasIntelligence: boolean;
+    primaryRecommendation?: {
+      recipientName: string;
+      recipientId: string;
+      occasionType: string;
+      occasionDate: string;
+      budgetRange: [number, number];
+      confidence: number;
+    };
+    alternativeOptions?: Array<{
+      recipientName: string;
+      occasionType: string;
+      occasionDate: string;
+    }>;
+    canUseOptimalFlow: boolean;
+  };
   
   // Post-auth welcome context
   selectedIntent?: "auto-gift" | "shop-solo" | "create-wishlist";

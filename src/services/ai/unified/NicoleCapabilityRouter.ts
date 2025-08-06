@@ -3,6 +3,13 @@ import { NicoleCapability, UnifiedNicoleContext, NicoleCapabilityConfig } from "
 export class NicoleCapabilityRouter {
   private capabilities: NicoleCapabilityConfig[] = [
     {
+      name: 'auto_gift_analysis',
+      description: 'Pre-conversation intelligence analysis for auto-gifting',
+      triggers: ['analyze auto gift opportunities', 'pre-analyze connections'],
+      contextRequirements: [],
+      availableActions: ['analyze_connections', 'predict_events', 'calculate_budgets', 'generate_smart_defaults']
+    },
+    {
       name: 'gift_advisor',
       description: 'Comprehensive gift recommendation and advisory',
       triggers: ['gift advisor', 'help me find', 'recommend', 'suggest gift', 'gift idea', 'quick gift', 'quick-gift'],
@@ -21,7 +28,7 @@ export class NicoleCapabilityRouter {
       description: 'Automated gifting setup and management',
       triggers: ['auto gift', 'automatic', 'set up gifting', 'recurring gift', 'auto-gift', 'set up auto', 'automated gift', 'birthday gift automation', 'gift automation'],
       contextRequirements: [],
-      availableActions: ['setup_auto_gifting', 'manage_rules', 'predict_opportunities', 'check_connections', 'engage_giftee']
+      availableActions: ['setup_auto_gifting', 'manage_rules', 'predict_opportunities', 'check_connections', 'engage_giftee', 'smart_recipient_occasion_confirmation', 'intelligent_budget_confirmation']
     },
     {
       name: 'budget_analysis',

@@ -52,8 +52,8 @@ const NicoleAutoGiftConnectionStep = ({
     setLoadingSetup(true);
 
     try {
-      // Step 1: Nicole analyzes the connection and identifies occasions
-      const analysisMessage = `I want to set up auto-gifting for ${connection.connected_user_id}. They're marked as my ${connection.relationshipStrength}. Can you analyze their upcoming events and recommend setup?`;
+      // Step 1: Use optimal 2-question flow - Nicole intelligently pre-analyzes
+      const analysisMessage = `Set up auto-gifting for ${connection.connected_user_id}`;
       
       const nicoleResponse = await chatWithNicole(analysisMessage);
       

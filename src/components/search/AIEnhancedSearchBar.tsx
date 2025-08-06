@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Sparkles, X } from "lucide-react";
+import { Search, Sparkles, X, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
+import { IOSSwitch } from "@/components/ui/ios-switch";
+import { useSearchMode } from "@/hooks/useSearchMode";
 
 interface AIEnhancedSearchBarProps {
   onNavigateToResults?: (searchQuery: string) => void;
@@ -23,12 +25,15 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const [isNicoleOpen, setIsNicoleOpen] = useState(false);
   const [nicoleContext, setNicoleContext] = useState<any>(null);
   const navigate = useNavigate();
+  const { isNicoleMode, setMode } = useSearchMode();
 
   // Listen for global Nicole trigger events
   useEffect(() => {
     const handleTriggerNicole = (event: CustomEvent) => {
       const { capability, context } = event.detail;
       
+      // Switch to Nicole mode and open interface
+      setMode("nicole");
       setNicoleContext({
         capability,
         ...context
@@ -45,28 +50,35 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     return () => {
       window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
     };
-  }, []);
+  }, [setMode]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      if (onNavigateToResults) {
-        onNavigateToResults(query.trim());
+      if (isNicoleMode) {
+        // In Nicole mode, open the conversation
+        setNicoleContext({
+          capability: 'search',
+          conversationPhase: 'greeting'
+        });
+        setIsNicoleOpen(true);
       } else {
-        navigate(`/marketplace?search=${encodeURIComponent(query.trim())}`);
+        // In search mode, navigate to results
+        if (onNavigateToResults) {
+          onNavigateToResults(query.trim());
+        } else {
+          navigate(`/marketplace?search=${encodeURIComponent(query.trim())}`);
+        }
       }
     }
   };
 
-  const handleNicoleClick = () => {
-    setNicoleContext({
-      capability: 'search',
-      conversationPhase: 'greeting'
-    });
-    setIsNicoleOpen(true);
-    toast.success("Nicole is ready to help!", {
-      description: "Ask me anything about finding the perfect gift"
-    });
+  const handleModeToggle = (checked: boolean) => {
+    setMode(checked ? "nicole" : "search");
+    if (!checked) {
+      setIsNicoleOpen(false);
+      setNicoleContext(null);
+    }
   };
 
   const handleNicoleClose = () => {
@@ -80,99 +92,155 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     } else {
       navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
     }
+    setIsNicoleOpen(false);
   };
+
+  const placeholderText = isNicoleMode 
+    ? "Ask Nicole anything about gifts..." 
+    : "Search products or browse marketplace...";
 
   return (
     <div className={`relative w-full ${className}`}>
-      {/* Enhanced Search Bar */}
+      {/* Enhanced Search Bar with Toggle */}
       <form onSubmit={handleSearch} className="relative">
-        <div className="relative flex items-center">
-          <div className="absolute left-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-muted-foreground" />
+        <div className={`relative flex items-center transition-all duration-300 ${
+          isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
+        }`}>
+          {/* Mode Toggle */}
+          <div className="absolute left-3 flex items-center gap-2 z-10">
+            <Search className={`h-4 w-4 transition-colors duration-200 ${
+              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+            }`} />
+            <IOSSwitch
+              size="sm"
+              checked={isNicoleMode}
+              onCheckedChange={handleModeToggle}
+              className="touch-manipulation"
+            />
+            <Bot className={`h-4 w-4 transition-colors duration-200 ${
+              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+            }`} />
+            {isNicoleMode && (
+              <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
+            )}
           </div>
           
           <Input
             type="search"
-            placeholder="Search products or ask Nicole for gift recommendations..."
+            placeholder={placeholderText}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className={`pl-10 pr-32 ${
+            className={`pl-32 pr-32 transition-all duration-300 ${
               mobile 
                 ? "text-base py-3 h-12 rounded-lg" 
                 : "h-12 text-base"
-            } border-2 border-border focus:border-primary transition-colors`}
+            } border-2 ${
+              isNicoleMode 
+                ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
+                : 'border-border focus:border-primary'
+            }`}
           />
           
           <div className="absolute right-2 flex items-center space-x-2">
-            {/* Nicole AI Button */}
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={handleNicoleClick}
-              className="h-8 px-3 bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
-            >
-              <Sparkles className="h-3 w-3 mr-1" />
-              Ask Nicole
-            </Button>
+            {/* Clear Button */}
+            {query && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setQuery("")}
+                className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </Button>
+            )}
             
-            {/* Search Button */}
+            {/* Search/Ask Button */}
             <Button 
               type="submit" 
               size="sm" 
-              className="h-8 px-3 bg-primary hover:bg-primary/90"
+              className={`h-8 px-3 transition-all duration-300 ${
+                isNicoleMode
+                  ? "bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
+                  : "bg-primary hover:bg-primary/90"
+              }`}
             >
-              <Search className="h-3 w-3" />
+              {isNicoleMode ? (
+                <>
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Ask Nicole
+                </>
+              ) : (
+                <>
+                  <Search className="h-3 w-3 mr-1" />
+                  Search
+                </>
+              )}
             </Button>
           </div>
         </div>
         
         {/* AI Enhancement Badge */}
-        <div className="absolute -top-2 left-10">
-          <Badge variant="secondary" className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200">
-            <Sparkles className="h-2.5 w-2.5 mr-1" />
-            AI Enhanced
-          </Badge>
-        </div>
+        {isNicoleMode && (
+          <div className="absolute -top-2 left-32">
+            <Badge variant="secondary" className="text-xs bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200">
+              <Sparkles className="h-2.5 w-2.5 mr-1" />
+              AI Enhanced
+            </Badge>
+          </div>
+        )}
       </form>
 
-      {/* Nicole AI Interface - Direct usage of NicoleUnifiedInterface */}
-      <NicoleUnifiedInterface
-        isOpen={isNicoleOpen}
-        onClose={handleNicoleClose}
-        onNavigateToResults={handleNicoleNavigate}
-        initialContext={nicoleContext}
-        className="mt-2"
-      />
+      {/* Inline Nicole Interface - Only show in Nicole mode */}
+      {isNicoleMode && (
+        <div className="mt-2">
+          <NicoleUnifiedInterface
+            isOpen={isNicoleOpen}
+            onClose={handleNicoleClose}
+            onNavigateToResults={handleNicoleNavigate}
+            initialContext={nicoleContext}
+            className="relative w-full shadow-lg border border-purple-200 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 backdrop-blur-sm"
+          />
+        </div>
+      )}
 
-      {/* Quick Examples */}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setQuery("birthday gifts")}
-          className="h-7 text-xs"
-        >
-          Birthday gifts
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setQuery("tech gadgets")}
-          className="h-7 text-xs"
-        >
-          Tech gadgets
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleNicoleClick}
-          className="h-7 text-xs bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200"
-        >
-          <Sparkles className="h-2.5 w-2.5 mr-1" />
-          Ask Nicole for ideas
-        </Button>
-      </div>
+      {/* Quick Examples - Only show in search mode when no query */}
+      {!isNicoleMode && !query && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQuery("birthday gifts")}
+            className="h-7 text-xs"
+          >
+            Birthday gifts
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQuery("tech gadgets")}
+            className="h-7 text-xs"
+          >
+            Tech gadgets
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setMode("nicole");
+              setNicoleContext({
+                capability: 'search',
+                conversationPhase: 'greeting'
+              });
+              setIsNicoleOpen(true);
+            }}
+            className="h-7 text-xs bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200"
+          >
+            <Sparkles className="h-2.5 w-2.5 mr-1" />
+            Ask Nicole for ideas
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

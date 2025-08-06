@@ -52,6 +52,9 @@ export const getNicoleGreeting = (context: GreetingContext): string => {
     case 'post-auth-welcome':
       return `${namePrefix}Welcome to Elyphant! 🎉 I love helping find the perfect gifts. I can help you find something amazing in like 60 seconds. What's up?`;
     
+    case 'auto-gifting':
+      return `${namePrefix}I'm excited to help you set up auto-gifting! This means you'll never miss important occasions again. Who would you like to set up automatic gifts for first?`;
+    
     default:
       // Strategic default greeting with mini-CTAs
       if (activeMode === 'search') {

@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuthSession } from '@/contexts/auth/useAuthSession';
 import { getNicoleGreeting, getGreetingFromUrl } from '@/utils/nicoleGreetings';
 import { cn } from '@/lib/utils';
+import { NicoleCapability } from '@/services/ai/unified/types';
 
 interface NicoleUnifiedInterfaceProps {
   onNavigateToResults?: (query: string) => void;
@@ -30,7 +31,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const greetingContext = {
     ...getGreetingFromUrl(searchParams),
     userProfile: user,
-    activeMode: state.activeMode
+    activeMode: state.activeMode,
+    greeting: state.contextData?.mode === 'auto-gifting' ? 'auto-gifting' : getGreetingFromUrl(searchParams).greeting
   };
   
   console.log("🎯 Nicole Interface - Greeting Context:", greetingContext);
@@ -44,6 +46,11 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     clearConversation
   } = useUnifiedNicoleAI({
     sessionId: state.sessionId,
+    initialContext: state.contextData ? {
+      capability: (state.contextData.capability as NicoleCapability) || 'auto_gifting',
+      selectedIntent: (state.contextData.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist") || 'auto-gift',
+      conversationPhase: 'initial'
+    } : undefined,
     onResponse: (response) => {
       // Handle search button logic
       if (response.showSearchButton && onNavigateToResults) {

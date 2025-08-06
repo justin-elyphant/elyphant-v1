@@ -174,7 +174,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   useEffect(() => {
     const handleTriggerNicole = (event: CustomEvent) => {
       console.log("🎯 Nicole trigger event received:", event.detail);
-      const { mode, greeting } = event.detail;
+      const eventDetail = event.detail;
       
       // Activate Nicole mode
       setIsNicoleMode(true);
@@ -182,12 +182,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       // DON'T set greeting as search query - let Nicole handle its own context
       // This prevents search interference with Nicole greetings
       
-      // Open Nicole interface
+      // Open Nicole interface with context data
       if (isMobile) {
         setShowMobileModal(true);
       } else {
         if (actions.canActivateMode('search')) {
-          actions.activateMode('search');
+          actions.activateMode('search', eventDetail);
         }
       }
       
@@ -204,7 +204,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     return () => {
       window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
     };
-  }, [isMobile]);
+  }, [isMobile, actions]);
 
   // Check for Nicole URL parameters on mount
   useEffect(() => {

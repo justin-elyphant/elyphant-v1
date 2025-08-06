@@ -6,12 +6,17 @@ interface NicoleState {
   activeMode: NicoleUIMode;
   sessionId: string;
   isTransitioning: boolean;
+  contextData?: {
+    mode?: string;
+    capability?: string;
+    selectedIntent?: string;
+  };
 }
 
 interface NicoleStateContextType {
   state: NicoleState;
   actions: {
-    activateMode: (mode: NicoleUIMode) => void;
+    activateMode: (mode: NicoleUIMode, contextData?: any) => void;
     closeAllModes: () => void;
     setTransitioning: (transitioning: boolean) => void;
     canActivateMode: (mode: NicoleUIMode) => boolean;
@@ -28,10 +33,11 @@ export const NicoleStateProvider: React.FC<NicoleStateProviderProps> = ({ childr
   const [state, setState] = useState<NicoleState>({
     activeMode: 'closed',
     sessionId: `nicole-unified-${Date.now()}`,
-    isTransitioning: false
+    isTransitioning: false,
+    contextData: undefined
   });
 
-  const activateMode = useCallback((mode: NicoleUIMode) => {
+  const activateMode = useCallback((mode: NicoleUIMode, contextData?: any) => {
     setState(prev => {
       // If trying to activate the same mode, do nothing
       if (prev.activeMode === mode) return prev;
@@ -42,7 +48,8 @@ export const NicoleStateProvider: React.FC<NicoleStateProviderProps> = ({ childr
       return {
         ...prev,
         activeMode: mode,
-        isTransitioning: true
+        isTransitioning: true,
+        contextData: contextData || undefined
       };
     });
 
@@ -56,7 +63,8 @@ export const NicoleStateProvider: React.FC<NicoleStateProviderProps> = ({ childr
     setState(prev => ({
       ...prev,
       activeMode: 'closed',
-      isTransitioning: false
+      isTransitioning: false,
+      contextData: undefined
     }));
   }, []);
 

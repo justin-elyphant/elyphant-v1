@@ -9,7 +9,17 @@ const QuickGiftCTA = () => {
 
   const handleOpenNicole = () => {
     console.log("Opening Nicole Auto-Gifting from QuickGiftCTA");
-    setNicoleOpen(true);
+    setNicoleOpen(false);
+    
+    // Trigger the unified header Nicole system with auto-gifting context
+    const triggerEvent = new CustomEvent('triggerNicole', {
+      detail: {
+        mode: 'auto-gifting',
+        capability: 'auto_gifting',
+        selectedIntent: 'auto-gift'
+      }
+    });
+    window.dispatchEvent(triggerEvent);
   };
 
   const handleCloseNicole = (open: boolean) => {
@@ -45,11 +55,6 @@ const QuickGiftCTA = () => {
         </div>
       </div>
 
-      {/* Nicole Auto-Gifting Entry */}
-      <UnifiedAutoGiftEntry 
-        open={nicoleOpen}
-        onOpenChange={handleCloseNicole}
-      />
     </>
   );
 };

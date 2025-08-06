@@ -137,15 +137,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   if (!isOpen) return null;
 
-  // Determine positioning based on className
-  const isInline = className.includes('relative');
-  const isFixed = !isInline;
+  // Always render inline when called from AIEnhancedSearchBar
+  const isInline = className.includes('relative') || className.includes('w-full');
 
   return (
     <Card className={`${
-      isFixed 
-        ? 'fixed top-16 right-4 w-80 h-96 z-50' 
-        : 'w-full h-96'
+      isInline 
+        ? 'w-full h-96' 
+        : 'fixed top-16 right-4 w-80 h-96 z-50'
     } flex flex-col shadow-lg ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">

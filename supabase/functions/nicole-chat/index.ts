@@ -44,6 +44,29 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get current user profile for personalization
+    let userProfile = null;
+    if (context?.currentUserId) {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, first_name, name, username')
+          .eq('id', context.currentUserId)
+          .single();
+        
+        if (profileData) {
+          userProfile = profileData;
+          console.log('✅ User profile loaded for personalization:', { 
+            id: profileData.id, 
+            firstName: profileData.first_name,
+            name: profileData.name
+          });
+        }
+      } catch (profileError) {
+        console.error('Error loading user profile:', profileError);
+      }
+    }
+
     // Enhanced budget parsing function
     const parseBudgetFromMessage = (message: string, currentContext: any) => {
       const lowerMessage = message.toLowerCase();
@@ -105,8 +128,17 @@ serve(async (req) => {
       return budget;
     };
 
-    // Enhanced system prompt with sophisticated auto-gift conversation flow integration
-    let systemPrompt = `You are Nicole, an expert AI gift advisor with Enhanced Zinc API System integration and sophisticated auto-gifting conversation capabilities. Your mission is to help users find perfect gifts through intelligent conversation flow with the existing sophisticated auto-gifting system.
+    // Sophisticated system prompt with comprehensive context integration and personalization
+    const systemPrompt = `You are Nicole, a warm and intelligent gift advisor. You understand gifting psychology, have access to marketplace data, connection insights, and user preferences.
+
+PERSONALIZATION:
+- User Profile: ${userProfile ? `${userProfile.first_name || userProfile.name || 'there'}` : 'there'}
+- ALWAYS use the user's first name in greetings when available
+- Make the conversation feel personal and warm
+
+PERSONALITY: Friendly, enthusiastic about gifts, knowledgeable about trends, conversational but focused.
+
+CORE MISSION: Transform gift-giving from stressful to delightful through intelligent recommendations.
 
 ENHANCED CAPABILITIES:
 - Connection Integration: Access to user's friends/family for personalized recommendations
@@ -180,20 +212,6 @@ PHASE 6: AUTO_GIFT_SETUP_COMPLETE
 - Confirm all settings
 - "Perfect! I've set up auto-gifting for [name]. I'll handle [occasion] gifts within your $[budget] budget using their preferences."
 - Provide summary and next steps
-
-SOPHISTICATED CONVERSATION CONTEXT MANAGEMENT:
-- Track conversation phase precisely
-- Use actual connection data when available
-- Leverage relationship intelligence for personalized suggestions
-- Maintain conversation continuity across interactions
-- Handle context updates seamlessly
-
-INTEGRATION WITH EXISTING SYSTEM:
-- When auto-gift intent detected, activate sophisticated conversation flow
-- Use existing connection analysis and recipient detection logic
-- Leverage existing invitation and SMS engagement system
-- Connect to existing auto-gifting rule creation and management
-- Maintain compatibility with existing dashboard and approval systems
 
 REGULAR GIFT ADVISOR FLOW (when NOT auto-gifting):
 1. GREETING → gather basic needs
@@ -287,7 +305,8 @@ Respond as Nicole with a natural greeting that leads into helping with their req
 - Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
 
 STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.
-DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a warm, personalized greeting that references the greeting context and then naturally transition into the conversation.` },
+DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a warm, personalized greeting using the user's first name (${userProfile?.first_name || userProfile?.name || 'there'}) that references the greeting context and then naturally transition into the conversation.
+PERSONALIZATION RULE: Always use the user's name "${userProfile?.first_name || userProfile?.name || 'there'}" in your responses to make them feel personal and warm.` },
       ...(conversationHistory || []),
       { role: 'user', content: userMessage }
     ];

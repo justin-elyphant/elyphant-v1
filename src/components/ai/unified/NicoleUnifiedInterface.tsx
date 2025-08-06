@@ -18,6 +18,10 @@ interface NicoleUnifiedInterfaceProps {
     greetingContext?: any;
   };
   className?: string;
+  // Additional props for backward compatibility
+  entryPoint?: string;
+  onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist") => void;
+  onNavigateToResults?: (searchQuery: string) => void;
 }
 
 interface Message {
@@ -29,7 +33,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   isOpen,
   onClose,
   initialContext,
-  className = ""
+  className = "",
+  entryPoint,
+  onIntentComplete,
+  onNavigateToResults
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -52,6 +59,27 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }
   };
 
+  // Build enhanced initial context from props
+  const buildInitialContext = () => {
+    const baseContext = {
+      capability: getCapabilityFromString(initialContext?.capability),
+      selectedIntent: initialContext?.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist" | undefined,
+      userFirstName: initialContext?.userFirstName,
+      greetingContext: initialContext?.greetingContext,
+      conversationPhase: 'greeting' as const
+    };
+
+    // Add entry point context for Hero component compatibility
+    if (entryPoint) {
+      baseContext.greetingContext = {
+        ...baseContext.greetingContext,
+        entryPoint
+      };
+    }
+
+    return baseContext;
+  };
+
   const {
     chatWithNicole,
     loading,
@@ -59,15 +87,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     clearConversation,
     isReadyToSearch
   } = useUnifiedNicoleAI({
-    initialContext: {
-      capability: getCapabilityFromString(initialContext?.capability),
-      selectedIntent: initialContext?.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist" | undefined,
-      userFirstName: initialContext?.userFirstName,
-      greetingContext: initialContext?.greetingContext,
-      conversationPhase: 'greeting'
-    },
+    initialContext: buildInitialContext(),
     onResponse: (response) => {
       setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
+      
+      // Handle intent completion callback for Hero component
+      if (onIntentComplete && response.metadata?.contextUpdates?.selectedIntent) {
+        onIntentComplete(response.metadata.contextUpdates.selectedIntent);
+      }
     }
   });
 
@@ -91,12 +118,20 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   };
 
   const handleSearch = () => {
-    // This would trigger marketplace search with Nicole's context
+    const searchQuery = lastResponse?.searchQuery || '';
+    
+    // Use onNavigateToResults callback if provided (for AIEnhancedSearchBar)
+    if (onNavigateToResults) {
+      onNavigateToResults(searchQuery);
+      onClose();
+      return;
+    }
+    
+    // Default behavior: dispatch custom event
     console.log('Triggering marketplace search with Nicole context');
     onClose();
-    // Navigate to marketplace with search query
     window.dispatchEvent(new CustomEvent('nicole-search', {
-      detail: { query: lastResponse?.searchQuery || '' }
+      detail: { query: searchQuery }
     }));
   };
 

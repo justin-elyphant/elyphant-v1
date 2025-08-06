@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -11,11 +10,13 @@ import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInt
 interface AIEnhancedSearchBarProps {
   onNavigateToResults?: (searchQuery: string) => void;
   className?: string;
+  mobile?: boolean;
 }
 
 const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({ 
   onNavigateToResults, 
-  className = "" 
+  className = "",
+  mobile = false
 }) => {
   const [query, setQuery] = useState("");
   const [isNicoleOpen, setIsNicoleOpen] = useState(false);
@@ -94,7 +95,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             placeholder="Search products or ask Nicole for gift recommendations..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 pr-32 h-12 text-base border-2 border-border focus:border-primary transition-colors"
+            className={`pl-10 pr-32 ${
+              mobile 
+                ? "text-base py-3 h-12 rounded-lg" 
+                : "h-12 text-base"
+            } border-2 border-border focus:border-primary transition-colors`}
           />
           
           <div className="absolute right-2 flex items-center space-x-2">

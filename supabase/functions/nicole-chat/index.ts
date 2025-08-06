@@ -462,6 +462,15 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
       }
     });
 
+    // Check if auto-gift setup should be triggered
+    let actions = [];
+    if (enhancedContext?.isAutoGiftFlow && 
+        (newConversationPhase === 'auto_gift_setup_complete' || 
+         aiResponse.toLowerCase().includes("i've set up auto-gifting") ||
+         aiResponse.toLowerCase().includes("auto-gifting is now set up"))) {
+      actions.push('setup_auto_gifting');
+    }
+
     // Update context with Enhanced Zinc API preservation and auto-gift flow
     const updatedContext = { 
       ...enhancedContext,
@@ -472,6 +481,7 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
       JSON.stringify({ 
         response: aiResponse,
         message: aiResponse,
+        actions: actions,
         showSearchButton,
         showMarketplaceLink,
         conversationContinues: !showSearchButton && !showMarketplaceLink,

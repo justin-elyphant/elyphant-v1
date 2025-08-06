@@ -8,6 +8,8 @@ import { Send, Sparkles, X, ChevronDown, Bug } from "lucide-react";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { UnifiedNicoleContext } from "@/services/ai/unified/types";
 import { toast } from "sonner";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
+import { useAuth } from "@/contexts/auth";
 
 interface NicolePopupProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ const NicolePopup = ({
   const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [welcomeAdded, setWelcomeAdded] = useState(false);
+  const { user } = useAuth();
 
   const { chatWithNicole, loading, context, lastResponse, sessionId, getConversationContext } = useUnifiedNicoleAI({
     initialContext: {
@@ -68,6 +71,11 @@ const NicolePopup = ({
         // Add Nicole's response to conversation
         setConversation(prev => [...prev, { role: 'assistant', content: response.message }]);
 
+        // Check if Nicole indicates auto-gift setup is complete
+        if (response.actions && response.actions.includes('setup_auto_gifting')) {
+          await handleAutoGiftSetup(response);
+        }
+
         // Check if we should auto-close after collecting preferences
         if (context.conversationPhase === 'giftee_preference_collection' && 
             userMessage.length > 20) { // Basic check for substantial input
@@ -81,6 +89,67 @@ const NicolePopup = ({
     } catch (error) {
       console.error('Error chatting with Nicole:', error);
       toast.error("Sorry, I'm having trouble right now. Please try again.");
+    }
+  };
+
+  const handleAutoGiftSetup = async (response: any) => {
+    if (!user?.id) {
+      toast.error("Please log in to set up auto-gifting");
+      return;
+    }
+
+    try {
+      const ctx = response.context || context;
+      
+      // Extract auto-gifting information from context
+      const recipientName = ctx.recipientName || ctx.recipient;
+      const budget = ctx.budget || [25, 50];
+      const relationship = ctx.relationship || 'friend';
+      
+      if (!recipientName) {
+        toast.error("Recipient information missing for auto-gift setup");
+        return;
+      }
+
+      // Create auto-gifting rule
+      const ruleData = {
+        user_id: user.id,
+        recipient_id: null, // Will be set when connection is established
+        pending_recipient_email: null, // Will be set if needed
+        date_type: 'birthday', // Default to birthday
+        is_active: true,
+        budget_limit: Array.isArray(budget) ? budget[1] : budget,
+        notification_preferences: {
+          enabled: true,
+          days_before: [7, 3, 1],
+          email: true,
+          push: false
+        },
+        gift_selection_criteria: {
+          source: 'wishlist' as const,
+          categories: [],
+          exclude_items: []
+        },
+        relationship_context: {
+          closeness_level: 5,
+          relationship_type: relationship,
+          recipient_name: recipientName
+        }
+      };
+
+      const newRule = await unifiedGiftManagementService.createRule(ruleData);
+      
+      if (newRule) {
+        toast.success(`Auto-gifting set up for ${recipientName}! I'll handle their gifts automatically.`);
+        
+        // Close dialog after success
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error setting up auto-gifting:', error);
+      toast.error("Failed to set up auto-gifting. Please try again.");
     }
   };
 

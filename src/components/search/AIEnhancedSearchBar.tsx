@@ -185,6 +185,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       // Open Nicole interface with context data
       if (isMobile) {
         setShowMobileModal(true);
+        // For mobile, we also need to activate the search mode with context
+        if (actions.canActivateMode('search')) {
+          actions.activateMode('search', eventDetail);
+        }
       } else {
         if (actions.canActivateMode('search')) {
           actions.activateMode('search', eventDetail);

@@ -1,15 +1,11 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import UnifiedAutoGiftEntry from "@/components/auto-gifting/UnifiedAutoGiftEntry";
 
 const QuickGiftCTA = () => {
-  const [nicoleOpen, setNicoleOpen] = useState(false);
-
   const handleOpenNicole = () => {
     console.log("Opening Nicole Auto-Gifting from QuickGiftCTA");
-    setNicoleOpen(false);
     
     // Trigger the unified header Nicole system with auto-gifting context
     const triggerEvent = new CustomEvent('triggerNicole', {
@@ -20,11 +16,6 @@ const QuickGiftCTA = () => {
       }
     });
     window.dispatchEvent(triggerEvent);
-  };
-
-  const handleCloseNicole = (open: boolean) => {
-    console.log("Closing Nicole Auto-Gifting, open:", open);
-    setNicoleOpen(open);
   };
 
   return (

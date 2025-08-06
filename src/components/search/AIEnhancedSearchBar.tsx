@@ -39,16 +39,22 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   // Open Nicole interface when mode becomes nicole (from URL or mode toggle)
   useEffect(() => {
-    if (isNicoleMode && !isNicoleOpen && globalNicoleState.currentInstance === instanceId) {
-      setIsNicoleOpen(true);
-      setNicoleContext({
-        capability: 'gift_advisor',
-        conversationPhase: 'greeting'
-      });
-      
-      toast.success("Nicole is ready to help!", {
-        description: "Ask me anything about finding the perfect gift"
-      });
+    if (isNicoleMode && !isNicoleOpen) {
+      // Only open if no other instance is active, or if this instance should take over
+      if (!globalNicoleState.isOpen || globalNicoleState.currentInstance === instanceId) {
+        globalNicoleState.isOpen = true;
+        globalNicoleState.currentInstance = instanceId;
+        
+        setIsNicoleOpen(true);
+        setNicoleContext({
+          capability: 'gift_advisor',
+          conversationPhase: 'greeting'
+        });
+        
+        toast.success("Nicole is ready to help!", {
+          description: "Ask me anything about finding the perfect gift"
+        });
+      }
     }
   }, [isNicoleMode, isNicoleOpen, instanceId]);
 
@@ -78,25 +84,34 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     if (checked) {
       // Close any existing Nicole interface before opening this one
       if (globalNicoleState.isOpen && globalNicoleState.currentInstance !== instanceId) {
+        // Close other instances by resetting global state
         globalNicoleState.isOpen = false;
         globalNicoleState.currentInstance = null;
       }
       
+      // Set this instance as the active one
       globalNicoleState.isOpen = true;
       globalNicoleState.currentInstance = instanceId;
     } else {
-      globalNicoleState.isOpen = false;
-      globalNicoleState.currentInstance = null;
+      // Only reset global state if this instance was the active one
+      if (globalNicoleState.currentInstance === instanceId) {
+        globalNicoleState.isOpen = false;
+        globalNicoleState.currentInstance = null;
+      }
       setIsNicoleOpen(false);
       setNicoleContext(null);
     }
   };
 
   const handleNicoleClose = () => {
-    globalNicoleState.isOpen = false;
-    globalNicoleState.currentInstance = null;
+    // Only reset global state if this instance was the active one
+    if (globalNicoleState.currentInstance === instanceId) {
+      globalNicoleState.isOpen = false;
+      globalNicoleState.currentInstance = null;
+    }
     setIsNicoleOpen(false);
     setNicoleContext(null);
+    setMode("search"); // Reset to search mode when closing
   };
 
   const handleNicoleNavigate = (searchQuery: string) => {

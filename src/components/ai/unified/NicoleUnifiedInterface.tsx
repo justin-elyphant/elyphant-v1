@@ -26,6 +26,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasInitialized = useRef(false);
   
   console.log("🎯 Nicole Interface - State:", { activeMode: state.activeMode, contextData: state.contextData });
   
@@ -80,17 +81,30 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     await chatWithNicole(message);
   };
 
-  // Auto-initiate conversation for any CTA context
+  // Auto-initiate conversation for any CTA context (only once per session)
   useEffect(() => {
-    if (!lastResponse && state.contextData && (
-      state.contextData.selectedIntent || 
-      state.contextData.mode === 'auto-gifting' ||
-      getGreetingFromUrl(searchParams).greeting
-    )) {
+    const shouldInitiateDynamicChat = !lastResponse && 
+      !hasInitialized.current &&
+      !loading &&
+      state.contextData && (
+        state.contextData.selectedIntent || 
+        state.contextData.mode === 'auto-gifting' ||
+        getGreetingFromUrl(searchParams).greeting
+      );
+
+    if (shouldInitiateDynamicChat) {
+      hasInitialized.current = true;
       // Send a special trigger message to start dynamic conversation
       chatWithNicole("__START_DYNAMIC_CHAT__");
     }
-  }, [state.contextData, lastResponse, chatWithNicole, searchParams]);
+  }, [state.contextData, lastResponse, chatWithNicole, searchParams, loading]);
+
+  // Reset initialization when context changes significantly or component unmounts
+  useEffect(() => {
+    return () => {
+      hasInitialized.current = false;
+    };
+  }, [state.sessionId]);
 
   const handleSearchNow = () => {
     const query = generateSearchQuery();

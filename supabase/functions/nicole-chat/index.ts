@@ -502,11 +502,28 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
 
     // Check if auto-gift setup should be triggered
     let actions = [];
+    let ctaButtons = [];
+    
     if (enhancedContext?.isAutoGiftFlow && 
         (newConversationPhase === 'auto_gift_setup_complete' || 
          aiResponse.toLowerCase().includes("i've set up auto-gifting") ||
          aiResponse.toLowerCase().includes("auto-gifting is now set up"))) {
       actions.push('setup_auto_gifting');
+    }
+    
+    // Add CTA buttons for connection/invitation scenarios
+    if (enhancedContext?.platformUserFound && !enhancedContext?.connectionFound) {
+      ctaButtons.push({
+        text: "Connect & Setup Auto-Gifting",
+        action: "connect_and_setup",
+        variant: "default"
+      });
+    } else if (!enhancedContext?.connectionFound && !enhancedContext?.platformUserFound && enhancedContext?.recipientName) {
+      ctaButtons.push({
+        text: "Invite to Elyphant",
+        action: "invite_to_elyphant",
+        variant: "default"
+      });
     }
 
     // Update context with Enhanced Zinc API preservation and auto-gift flow
@@ -520,6 +537,7 @@ STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts your
         response: aiResponse,
         message: aiResponse,
         actions: actions,
+        ctaButtons: ctaButtons,
         showSearchButton,
         showMarketplaceLink,
         conversationContinues: !showSearchButton && !showMarketplaceLink,

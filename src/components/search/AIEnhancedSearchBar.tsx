@@ -11,6 +11,12 @@ import { NicolePortalContainer } from "@/components/nicole/NicolePortalContainer
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
 
+// Global state to prevent duplicate Nicole interfaces
+let globalNicoleState = {
+  isOpen: false,
+  currentInstance: null as string | null
+};
+
 interface AIEnhancedSearchBarProps {
   onNavigateToResults?: (searchQuery: string) => void;
   className?: string;
@@ -27,10 +33,13 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const [nicoleContext, setNicoleContext] = useState<any>(null);
   const navigate = useNavigate();
   const { isNicoleMode, setMode } = useSearchMode();
+  
+  // Create unique instance ID for this search bar
+  const instanceId = React.useMemo(() => `${mobile ? 'mobile' : 'desktop'}-${Math.random()}`, [mobile]);
 
   // Open Nicole interface when mode becomes nicole (from URL or mode toggle)
   useEffect(() => {
-    if (isNicoleMode && !isNicoleOpen) {
+    if (isNicoleMode && !isNicoleOpen && globalNicoleState.currentInstance === instanceId) {
       setIsNicoleOpen(true);
       setNicoleContext({
         capability: 'gift_advisor',
@@ -41,7 +50,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         description: "Ask me anything about finding the perfect gift"
       });
     }
-  }, [isNicoleMode, isNicoleOpen]);
+  }, [isNicoleMode, isNicoleOpen, instanceId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,13 +75,26 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const handleModeToggle = (checked: boolean) => {
     setMode(checked ? "nicole" : "search");
-    if (!checked) {
+    if (checked) {
+      // Close any existing Nicole interface before opening this one
+      if (globalNicoleState.isOpen && globalNicoleState.currentInstance !== instanceId) {
+        globalNicoleState.isOpen = false;
+        globalNicoleState.currentInstance = null;
+      }
+      
+      globalNicoleState.isOpen = true;
+      globalNicoleState.currentInstance = instanceId;
+    } else {
+      globalNicoleState.isOpen = false;
+      globalNicoleState.currentInstance = null;
       setIsNicoleOpen(false);
       setNicoleContext(null);
     }
   };
 
   const handleNicoleClose = () => {
+    globalNicoleState.isOpen = false;
+    globalNicoleState.currentInstance = null;
     setIsNicoleOpen(false);
     setNicoleContext(null);
   };
@@ -182,16 +204,18 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         )}
       </form>
 
-      {/* Nicole Interface - Rendered in portal below header */}
-      <NicolePortalContainer isVisible={isNicoleMode && isNicoleOpen}>
-        <NicoleUnifiedInterface
-          isOpen={isNicoleOpen}
-          onClose={handleNicoleClose}
-          onNavigateToResults={handleNicoleNavigate}
-          initialContext={nicoleContext}
-          className="w-full"
-        />
-      </NicolePortalContainer>
+      {/* Nicole Interface - Only render if this instance owns the global state */}
+      {isNicoleMode && isNicoleOpen && globalNicoleState.currentInstance === instanceId && (
+        <NicolePortalContainer isVisible={true}>
+          <NicoleUnifiedInterface
+            isOpen={isNicoleOpen}
+            onClose={handleNicoleClose}
+            onNavigateToResults={handleNicoleNavigate}
+            initialContext={nicoleContext}
+            className="w-full"
+          />
+        </NicolePortalContainer>
+      )}
 
     </div>
   );

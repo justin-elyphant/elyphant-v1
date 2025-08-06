@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Sparkles, X, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
+import { NicolePortalContainer } from "@/components/nicole/NicolePortalContainer";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
 
@@ -181,18 +182,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         )}
       </form>
 
-      {/* Inline Nicole Interface - Only show in Nicole mode */}
-      {isNicoleMode && (
-        <div className="mt-2">
-          <NicoleUnifiedInterface
-            isOpen={isNicoleOpen}
-            onClose={handleNicoleClose}
-            onNavigateToResults={handleNicoleNavigate}
-            initialContext={nicoleContext}
-            className="relative w-full shadow-lg border border-purple-200 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 backdrop-blur-sm"
-          />
-        </div>
-      )}
+      {/* Nicole Interface - Rendered in portal below header */}
+      <NicolePortalContainer isVisible={isNicoleMode && isNicoleOpen}>
+        <NicoleUnifiedInterface
+          isOpen={isNicoleOpen}
+          onClose={handleNicoleClose}
+          onNavigateToResults={handleNicoleNavigate}
+          initialContext={nicoleContext}
+          className="w-full"
+        />
+      </NicolePortalContainer>
 
     </div>
   );

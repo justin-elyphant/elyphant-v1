@@ -25,6 +25,7 @@ const NicolePopup = ({
   const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([]);
   const [showDebug, setShowDebug] = useState(false);
+  const [welcomeAdded, setWelcomeAdded] = useState(false);
 
   const { chatWithNicole, loading, context, lastResponse, sessionId, getConversationContext } = useUnifiedNicoleAI({
     initialContext: {
@@ -33,13 +34,23 @@ const NicolePopup = ({
     }
   });
 
+  // Only add welcome message once when dialog opens, not on every change
   useEffect(() => {
-    if (isOpen && welcomeMessage) {
+    if (isOpen && welcomeMessage && !welcomeAdded && conversation.length === 0) {
       setConversation([
         { role: 'assistant', content: welcomeMessage }
       ]);
+      setWelcomeAdded(true);
     }
-  }, [isOpen, welcomeMessage]);
+  }, [isOpen, welcomeMessage, welcomeAdded, conversation.length]);
+
+  // Reset welcome flag when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setWelcomeAdded(false);
+      setConversation([]);
+    }
+  }, [isOpen]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || loading) return;

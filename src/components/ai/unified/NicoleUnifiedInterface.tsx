@@ -137,15 +137,11 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   if (!isOpen) return null;
 
-  // Always render inline when called from AIEnhancedSearchBar (has w-full class)
-  const isInline = className.includes('w-full') || className.includes('relative');
+  // Force inline positioning for all instances to appear below search bar
+  const isInline = true; // Always use inline positioning
 
   return (
-    <Card className={`${
-      isInline 
-        ? 'w-full h-96' 
-        : 'fixed top-16 right-4 w-80 h-96 z-50'
-    } flex flex-col shadow-lg ${className}`}>
+    <Card className={`w-full h-96 flex flex-col shadow-lg ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="font-semibold text-sm">Chat with Nicole</h3>

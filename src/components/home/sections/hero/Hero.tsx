@@ -30,16 +30,16 @@ const Hero = () => {
   const handleStartGifting = () => {
     LocalStorageService.setNicoleContext({ selectedIntent: "giftor", source: 'hero_cta' });
     if (user) {
-      // Authenticated user: trigger Nicole AI search bar
-      navigate("/?nicole=true&mode=giftor&greeting=Welcome back! Let's find the perfect gift. Who are you shopping for?");
+      // Authenticated user: switch to Nicole mode and trigger it
+      navigate("/?mode=nicole");
       
       // If we're already on homepage, trigger Nicole directly
       if (window.location.pathname === '/') {
         // Dispatch a custom event to trigger Nicole
         window.dispatchEvent(new CustomEvent('triggerNicole', { 
           detail: { 
-            mode: 'giftor',
-            greeting: "Welcome back! Let's find the perfect gift. Who are you shopping for?"
+            capability: 'auto_gifting',
+            conversationPhase: 'greeting'
           }
         }));
       }

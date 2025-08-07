@@ -10,6 +10,7 @@ import { UnifiedNicoleContext } from "@/services/ai/unified/types";
 import { toast } from "sonner";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NicolePopupProps {
   isOpen: boolean;
@@ -119,33 +120,88 @@ const NicolePopup = ({
 
     try {
       const ctx = response.context || context;
-      
-      // Extract auto-gifting information from context
-      const recipientName = ctx.recipientName || ctx.recipient;
-      const budget = ctx.budget || [25, 50];
-      const relationship = ctx.relationship || 'friend';
-      
+
+      // Extract context
+      const recipientName: string | undefined = ctx.recipientName || ctx.recipient;
+      const rawBudget: number | [number, number] | undefined = ctx.budget;
+      const relationship: string = ctx.relationship || 'friend';
+      const rawOccasion: string = (ctx.occasion || '').toString().toLowerCase();
+
       if (!recipientName) {
         toast.error("Recipient information missing for auto-gift setup");
         return;
       }
 
-      // Create auto-gifting rule
+      // Resolve date_type
+      let dateType: string = 'birthday';
+      if (rawOccasion.includes('anniver')) dateType = 'anniversary';
+      else if (rawOccasion.includes('holiday')) dateType = 'holiday';
+      else if (rawOccasion) dateType = rawOccasion;
+
+      // Fetch user settings for defaults & protections
+      const settings = await unifiedGiftManagementService.getSettings(user.id);
+
+      // Normalize budget using settings fallback
+      const parsedBudget = Array.isArray(rawBudget)
+        ? Number(rawBudget[1] ?? rawBudget[0])
+        : Number(rawBudget);
+      const budgetLimit = !isNaN(parsedBudget) && parsedBudget > 0
+        ? parsedBudget
+        : (settings?.default_budget_limit ?? 50);
+
+      // Try to resolve recipient_id from accepted connections
+      const { data: connections, error: connErr } = await supabase
+        .from('user_connections')
+        .select(`
+          *,
+          connected_profile:profiles!user_connections_connected_user_id_fkey(id,name,username),
+          requester_profile:profiles!user_connections_user_id_fkey(id,name,username)
+        `)
+        .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+
+      if (connErr) {
+        console.error('Failed to load connections', connErr);
+      }
+
+      const normalize = (s?: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const target = normalize(recipientName);
+
+      let recipientId: string | null = null;
+      (connections || []).some((conn: any) => {
+        const otherIsRequester = conn.connected_user_id === user.id;
+        const otherProfile = otherIsRequester ? conn.requester_profile : conn.connected_profile;
+        const otherId = otherIsRequester ? conn.user_id : conn.connected_user_id;
+        const name = normalize(otherProfile?.name);
+        const uname = normalize(otherProfile?.username);
+        if (name === target || uname === target || name.includes(target) || target.includes(name)) {
+          recipientId = otherId;
+          return true;
+        }
+        return false;
+      });
+
+      if (!recipientId) {
+        toast.error("Couldn't match the recipient to one of your connections. Please select them in the setup.");
+        return;
+      }
+
+      // Build rule using unified defaults and protections
       const ruleData = {
         user_id: user.id,
-        recipient_id: null, // Will be set when connection is established
-        pending_recipient_email: null, // Will be set if needed
-        date_type: 'birthday', // Default to birthday
+        recipient_id: recipientId,
+        pending_recipient_email: null as string | null,
+        date_type: dateType,
         is_active: true,
-        budget_limit: Array.isArray(budget) ? budget[1] : budget,
+        budget_limit: budgetLimit,
         notification_preferences: {
           enabled: true,
-          days_before: [7, 3, 1],
-          email: true,
-          push: false
+          days_before: settings?.default_notification_days ?? [7, 3, 1],
+          email: settings?.email_notifications ?? true,
+          push: settings?.push_notifications ?? false,
         },
         gift_selection_criteria: {
-          source: 'wishlist' as const,
+          source: (settings?.default_gift_source || 'wishlist') as 'wishlist' | 'ai' | 'both' | 'specific',
           categories: [],
           exclude_items: []
         },
@@ -154,17 +210,13 @@ const NicolePopup = ({
           relationship_type: relationship,
           recipient_name: recipientName
         }
-      };
+      } as const;
 
-      const newRule = await unifiedGiftManagementService.createRule(ruleData);
-      
+      const newRule = await unifiedGiftManagementService.createRule(ruleData as any);
+
       if (newRule) {
         toast.success(`Auto-gifting set up for ${recipientName}! I'll handle their gifts automatically.`);
-        
-        // Close dialog after success
-        setTimeout(() => {
-          onClose();
-        }, 2000);
+        setTimeout(() => onClose(), 2000);
       }
     } catch (error) {
       console.error('Error setting up auto-gifting:', error);

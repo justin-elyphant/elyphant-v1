@@ -72,6 +72,81 @@ serve(async (req) => {
       console.log('⚠️ No currentUserId provided in context');
     }
 
+    // Build enriched context with user connections awareness
+    let enrichedContext = { ...(context || {}) } as any;
+    try {
+      if (enrichedContext.currentUserId) {
+        const uid = enrichedContext.currentUserId as string;
+        console.log(`🔗 Fetching connections for user: ${uid}`);
+        const { data: connections, error: connError } = await supabase
+          .from('user_connections')
+          .select('id, user_id, connected_user_id, status, relationship_type')
+          .or(`user_id.eq.${uid},connected_user_id.eq.${uid}`)
+          .eq('status', 'accepted');
+
+        if (connError) {
+          console.error('❌ Error loading connections:', connError);
+        }
+
+        const otherIds = Array.from(new Set((connections || []).map((c: any) => c.user_id === uid ? c.connected_user_id : c.user_id)));
+
+        const profilesMap = new Map<string, any>();
+        if (otherIds.length) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name, username')
+            .in('id', otherIds);
+          if (profilesError) {
+            console.error('❌ Error loading profiles for connections:', profilesError);
+          } else {
+            profiles?.forEach((p: any) => profilesMap.set(p.id, p));
+          }
+        }
+
+        const userConnections = (connections || []).map((c: any) => {
+          const otherId = c.user_id === uid ? c.connected_user_id : c.user_id;
+          const p = profilesMap.get(otherId);
+          return {
+            userId: otherId,
+            name: p?.name || null,
+            username: p?.username || null,
+            relationshipType: c.relationship_type,
+            status: c.status
+          };
+        });
+
+        enrichedContext.userConnections = userConnections;
+        enrichedContext.hasConnections = userConnections.length > 0;
+
+        // Try to detect if the message mentions one of the connections by name
+        const candidates: string[] = [];
+        if (typeof enrichedContext.recipient === 'string') candidates.push(enrichedContext.recipient);
+        const msgNameMatch = message.match(/friend\s+([A-Za-z][A-Za-z'-]+)/i) || message.match(/\bfor\s+([A-Z][a-zA-Z'-]+)/);
+        if (msgNameMatch?.[1]) candidates.push(msgNameMatch[1]);
+
+        const normalize = (s: string) => s.toLowerCase().trim();
+        const detectedMatches = userConnections.filter((uc: any) => {
+          const full = uc.name || '';
+          const first = full.split(' ')[0] || '';
+          const uname = uc.username || '';
+          return candidates.some(c => {
+            const n = normalize(c);
+            return (normalize(first) === n) || normalize(full).includes(n) || normalize(uname).includes(n);
+          });
+        });
+
+        if (detectedMatches.length) {
+          enrichedContext.mentionedConnection = detectedMatches[0];
+          enrichedContext.detectedConnections = detectedMatches;
+          console.log('✅ Detected mentioned connection:', enrichedContext.mentionedConnection);
+        } else {
+          console.log('ℹ️ No direct connection match detected from message.');
+        }
+      }
+    } catch (e) {
+      console.error('❌ Exception while enriching context with connections:', e);
+    }
+
     // Extract user's first name for personalization
     const userFirstName = userProfile?.name?.split(' ')[0] || null;
     console.log(`👋 User first name for greeting: ${userFirstName || 'not found'}`);
@@ -200,16 +275,17 @@ CONVERSATION CONTEXT TRACKING:
 - Timeline: urgency affects recommendations
 
 SOPHISTICATED CONTEXT VARIABLES:
-${context ? `
-- Current recipient: ${context.recipient || 'Not specified'}
-- Current occasion: ${context.occasion || 'Not specified'}  
-- Current interests: ${JSON.stringify(context.interests || [])}
-- Current brands mentioned: ${JSON.stringify(context.detectedBrands || [])}
-- Current budget: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Not specified'}
-- Previous conversation context: ${context.previousContext || 'None'}
-- User connections available: ${context.userConnections?.length || 0}
-- User wishlists available: ${context.userWishlists?.length || 0}
-` : 'No context provided'}
+    ${enrichedContext ? `
+- Current recipient: ${enrichedContext.recipient || 'Not specified'}
+- Current occasion: ${enrichedContext.occasion || 'Not specified'}  
+- Current interests: ${JSON.stringify(enrichedContext.interests || [])}
+- Current brands mentioned: ${JSON.stringify(enrichedContext.detectedBrands || [])}
+- Current budget: ${enrichedContext.budget ? `$${enrichedContext.budget[0]}-${enrichedContext.budget[1]}` : 'Not specified'}
+- Previous conversation context: ${enrichedContext.previousContext || 'None'}
+- User connections available: ${enrichedContext.userConnections?.length || 0}
+- User wishlists available: ${enrichedContext.userWishlists?.length || 0}
+- Detected connection match: ${enrichedContext.mentionedConnection?.name || 'None'}
+    ` : 'No context provided'}
 
 SOPHISTICATED RESPONSE GUIDELINES:
 1. Always be warm, helpful, and enthusiastic about gift-giving
@@ -235,9 +311,9 @@ CONVERSATION STATE MANAGEMENT:
 - Gradually build more sophisticated recipient profiles
 
 ADVANCED INTELLIGENCE INTEGRATION:
-- Connection data: "${context?.userConnections ? `User has ${context.userConnections.length} connections` : 'No connection data'}"
-- Wishlist insights: "${context?.userWishlists ? `User has ${context.userWishlists.length} wishlists` : 'No wishlist data'}"
-- Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
+    - Connection data: "${enrichedContext?.userConnections ? `User has ${enrichedContext.userConnections.length} connections` : 'No connection data'}"
+    - Wishlist insights: "${enrichedContext?.userWishlists ? `User has ${enrichedContext.userWishlists.length} wishlists` : 'No wishlist data'}"
+    - Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
 
 STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.
 DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a casual, friendly greeting using "${userFirstName ? `Hey ${userFirstName}!` : 'Hey there!'}" and naturally transition into conversation. NEVER use formal phrases like "Hello there! I'm so excited..." - always be casual and natural.
@@ -256,7 +332,7 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
     const messages = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: isDynamicGreeting ? `Start a casual, friendly greeting conversation. ${userFirstName ? `The user's first name is "${userFirstName}" - greet them with "Hey ${userFirstName}!"` : 'No first name available - use "Hey there!" as greeting'}. ${context?.selectedIntent === 'giftor' ? `IMPORTANT: The user clicked "Start Gifting" so acknowledge this with something like "I see you want to start gifting! Who are you shopping for?" after the greeting.` : ''} Be casual and natural, never formal.` : message }
+      { role: 'user', content: isDynamicGreeting ? `Start a casual, friendly greeting conversation. ${userFirstName ? `The user's first name is "${userFirstName}" - greet them with "Hey ${userFirstName}!"` : 'No first name available - use "Hey there!" as greeting'}. ${enrichedContext?.selectedIntent === 'giftor' ? `IMPORTANT: The user clicked "Start Gifting" so acknowledge this with something like "I see you want to start gifting! Who are you shopping for?" after the greeting.` : ''} Be casual and natural, never formal.` : message }
     ];
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -290,17 +366,17 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
 
     // Enhanced context parsing with sophisticated intelligence
     const updatedContext = {
-      ...context,
-      currentUserId: context?.currentUserId,
-      conversationPhase: isDynamicGreeting ? 'greeting_completed' : (context?.conversationPhase || 'active'),
-      capability: context?.capability || 'conversation'
+      ...enrichedContext,
+      currentUserId: enrichedContext?.currentUserId,
+      conversationPhase: isDynamicGreeting ? 'greeting_completed' : (enrichedContext?.conversationPhase || 'active'),
+      capability: enrichedContext?.capability || 'conversation'
     };
 
     // Parse and extract context from AI message and user message
     const combinedMessage = `${message} ${aiMessage}`.toLowerCase();
     
     // Enhanced budget parsing
-    updatedContext.budget = parseBudgetFromMessage(combinedMessage, context);
+    updatedContext.budget = parseBudgetFromMessage(combinedMessage, enrichedContext);
 
     // Enhanced recipient parsing
     if (!updatedContext.recipient) {
@@ -407,17 +483,32 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
       }
     });
 
+    const actions: string[] = ['chat'];
+    if (showSearchButton) actions.push('search');
+    if (updatedContext?.mentionedConnection) {
+      actions.push('find_gifts_for_connection', 'setup_auto_gifting', 'view_wishlist');
+    }
+
     const responsePayload = {
       message: aiMessage,
       context: updatedContext,
       capability: updatedContext.capability,
-      actions: ['chat', 'search'],
-      showSearchButton: showSearchButton,
+      actions,
+      showSearchButton,
       metadata: {
         confidence: showSearchButton ? 0.8 : 0.4,
         suggestedFollowups: showSearchButton ? 
-          ["Let's find some products!", "Show me gift options", "Search for gifts"] :
-          ["Tell me more about the recipient", "What's the occasion?", "What's your budget?"]
+          [
+            `Find gifts for ${updatedContext?.mentionedConnection?.name || 'them'}`,
+            'Set up auto-gifting',
+            'Show me gift options'
+          ] :
+          [
+            "Tell me more about the recipient",
+            "What's the occasion?",
+            "What's your budget?"
+          ],
+        connectionMatch: updatedContext?.mentionedConnection || null
       }
     };
 

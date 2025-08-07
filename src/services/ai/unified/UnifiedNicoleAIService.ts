@@ -36,11 +36,11 @@ export class UnifiedNicoleAIService {
       
       // Handle special trigger messages for dynamic conversation initiation
       const isFirstMessage = conversationState.conversationHistory.length === 0;
-      const isDynamicGreeting = message === "__START_AUTO_GIFT__" || (isFirstMessage && context.greetingContext);
+      const isDynamicGreeting = message === "__START_AUTO_GIFT__" || message === "__START_DYNAMIC_CHAT__" || (isFirstMessage && context.greetingContext);
       
       // Don't add trigger messages to conversation history
       let updatedHistory = conversationState.conversationHistory;
-      if (!isDynamicGreeting || message !== "__START_AUTO_GIFT__") {
+      if (!isDynamicGreeting) {
         updatedHistory = [
           ...conversationState.conversationHistory,
           { role: 'user', content: message }
@@ -100,7 +100,7 @@ export class UnifiedNicoleAIService {
 
       let response: NicoleResponse;
 
-      // Route to specialized capabilities or use ChatGPT Agent for auto-gifting
+      // Route to specialized capabilities or use ChatGPT Agent 
       if (capability === 'auto_gifting' || enhancedContext.selectedIntent === 'auto-gift') {
         // Use ChatGPT Agent for auto-gifting flows
         console.log('🎁 Routing to ChatGPT Agent for auto-gifting');
@@ -109,21 +109,10 @@ export class UnifiedNicoleAIService {
         // Use ChatGPT Agent for gift advisor with recipient
         console.log('🎁 Routing to ChatGPT Agent for gift advisor');
         response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
-      } else if (capability === 'conversation' || capability === 'search') {
-        // Convert unified context to original Nicole context
-        const nicoleContext: NicoleContext = this.convertToNicoleContext(enhancedContext);
-        
-        // Use existing chatWithNicole service to preserve functionality
-        const nicoleResponse = await chatWithNicole(message, nicoleContext);
-        
-        response = {
-          message: nicoleResponse.message,
-          context: enhancedContext,
-          capability,
-          actions: this.extractActions(nicoleResponse),
-          searchQuery: this.generateSearchQuery(enhancedContext),
-          showSearchButton: nicoleResponse.showSearchButton || false
-        };
+      } else if (isDynamicGreeting || capability === 'conversation' || capability === 'search') {
+        // Use ChatGPT Agent for dynamic greetings and general conversation
+        console.log('💬 Routing to ChatGPT Agent for conversation');
+        response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
       } else {
         // Route to specialized capabilities
         response = await this.handleSpecializedCapability(message, enhancedContext, capability);

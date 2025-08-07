@@ -20,11 +20,30 @@ const BotButton: React.FC<BotButtonProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  const handleClick = () => {
+    console.log("BotButton clicked - triggering Nicole with auto-greeting");
+    // Dispatch custom event for immediate Nicole activation with auto-greeting
+    window.dispatchEvent(new CustomEvent('triggerNicole', {
+      detail: {
+        capability: 'conversation',
+        source: 'bot-button',
+        autoGreeting: true,
+        greetingContext: {
+          greeting: 'general-welcome',
+          activeMode: 'gift-advisor'
+        }
+      }
+    }));
+    
+    // Call the original onClick handler
+    onClick();
+  };
+
   return (
     <Button
       variant={variant}
       size={isMobile ? "icon" : size}
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "relative transition-all duration-200 hover:scale-105 touch-manipulation",
         "bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0",

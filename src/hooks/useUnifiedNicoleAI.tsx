@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuthSession } from "@/contexts/auth/useAuthSession";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { unifiedNicoleAI } from "@/services/ai/unified/UnifiedNicoleAIService";
 import { UnifiedNicoleContext, NicoleResponse, NicoleCapability } from "@/services/ai/unified/types";
 
@@ -17,9 +18,13 @@ export const useUnifiedNicoleAI = ({
   onError
 }: UseUnifiedNicoleAIProps = {}) => {
   const { user } = useAuthSession();
+  const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<NicoleResponse | null>(null);
   const [currentSessionId] = useState(sessionId || `nicole-${Date.now()}`);
+  
+  // Extract user's first name from profile (using name field since first_name doesn't exist in type)
+  const userFirstName = profile?.name?.split(' ')[0] || null;
   
   // Initialize context with user data and defaults
   const [context, setContext] = useState<UnifiedNicoleContext>(() => ({
@@ -28,16 +33,31 @@ export const useUnifiedNicoleAI = ({
     interests: [],
     detectedBrands: [],
     currentUserId: user?.id,
+    userFirstName,
     ...initialContext
   }));
 
-  // Update user ID when user changes
+  // Update user context when user or profile changes
   useEffect(() => {
+    const updates: Partial<UnifiedNicoleContext> = {};
+    let needsUpdate = false;
+
     if (user?.id && context.currentUserId !== user.id) {
       console.log('🔄 Updating context with user ID:', user.id);
-      setContext(prev => ({ ...prev, currentUserId: user.id }));
+      updates.currentUserId = user.id;
+      needsUpdate = true;
     }
-  }, [user?.id, context.currentUserId]);
+
+    if (userFirstName && context.userFirstName !== userFirstName) {
+      console.log('🔄 Updating context with user first name:', userFirstName);
+      updates.userFirstName = userFirstName;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      setContext(prev => ({ ...prev, ...updates }));
+    }
+  }, [user?.id, userFirstName, context.currentUserId, context.userFirstName]);
 
   /**
    * Send a message to Nicole AI

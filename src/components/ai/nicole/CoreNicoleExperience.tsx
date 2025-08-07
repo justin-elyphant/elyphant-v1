@@ -23,11 +23,24 @@ const CoreNicoleExperience: React.FC<CoreNicoleExperienceProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const handleStartChat = () => {
+    console.log("Core Nicole Experience - opening Nicole with auto-greeting");
+    // Dispatch custom event for immediate Nicole activation with auto-greeting
+    window.dispatchEvent(new CustomEvent('triggerNicole', {
+      detail: {
+        capability: 'conversation',
+        source: triggerSource || 'core-experience',
+        autoGreeting: true,
+        greetingContext: {
+          greeting: 'general-welcome',
+          activeMode: 'gift-advisor'
+        }
+      }
+    }));
+    
+    // Navigate to marketplace with Nicole mode
     const params = new URLSearchParams({
       mode: 'nicole',
-      open: 'true',
-      greeting: 'core_experience',
-      source: triggerSource
+      source: triggerSource || 'core-experience'
     });
     
     navigate(`/marketplace?${params.toString()}`);

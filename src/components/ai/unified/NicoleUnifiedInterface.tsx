@@ -98,23 +98,58 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }
   });
 
-  // Send initial greeting when component opens
+  // Send auto-greeting when interface opens (no manual trigger needed)
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      const greetingMessage = initialContext?.selectedIntent === 'auto-gift' 
-        ? "I'd like to set up auto-gifting"
-        : "Hello Nicole";
+    if (isOpen && messages.length === 0 && !loading) {
+      console.log('🚀 Starting auto-greeting with Nicole');
+      const autoGreeting = async () => {
+        try {
+          // Use special trigger to get personalized auto-greeting
+          const response = await chatWithNicole("__START_DYNAMIC_CHAT__");
+          if (response) {
+            setMessages([
+              { role: 'assistant', content: response.message }
+            ]);
+          }
+        } catch (error) {
+          console.error('Failed to send auto-greeting:', error);
+          // Fallback with personalized greeting
+          const fallbackMessage = initialContext?.selectedIntent === 'auto-gift' 
+            ? "Hey there! Ready to set up some auto-gifting magic? I'll help you never miss an important occasion again!"
+            : "Hey there! I'm Nicole, your gift guru. What can I help you with today?";
+          
+          setMessages([
+            { role: 'assistant', content: fallbackMessage }
+          ]);
+        }
+      };
       
-      handleSendMessage(greetingMessage);
+      autoGreeting();
     }
-  }, [isOpen, initialContext]);
+  }, [isOpen, messages.length, loading, chatWithNicole, initialContext]);
 
   const handleSendMessage = async (message: string) => {
-    // Add user message to display
-    setMessages(prev => [...prev, { role: 'user', content: message }]);
+    if (!message.trim()) return;
+
+    // Don't add auto-greeting triggers to message display
+    if (message !== "__START_DYNAMIC_CHAT__") {
+      // Add user message to display
+      setMessages(prev => [...prev, { role: 'user', content: message }]);
+    }
+
+    // Send to Nicole and get response
+    const response = await chatWithNicole(message);
     
-    // Send to Nicole AI
-    await chatWithNicole(message);
+    if (response) {
+      // Add Nicole's response to display (only if not already added by auto-greeting)
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === 'assistant' && lastMessage?.content === response.message) {
+          return prev; // Don't duplicate
+        }
+        return [...prev, { role: 'assistant', content: response.message }];
+      });
+    }
   };
 
   const handleSearch = () => {

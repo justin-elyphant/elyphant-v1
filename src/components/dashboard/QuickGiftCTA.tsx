@@ -5,17 +5,20 @@ import { Button } from "@/components/ui/button";
 
 const QuickGiftCTA = () => {
   const handleOpenNicole = () => {
-    console.log("Opening Nicole Auto-Gifting from QuickGiftCTA");
-    
-    // Trigger the unified header Nicole system with auto-gifting context
-    const triggerEvent = new CustomEvent('triggerNicole', {
+    console.log("Auto-gifting CTA clicked - opening Nicole with auto-greeting");
+    // Dispatch custom event to trigger Nicole with auto-gifting context and auto-greeting
+    window.dispatchEvent(new CustomEvent('triggerNicole', {
       detail: {
-        mode: 'auto-gifting',
         capability: 'auto_gifting',
-        selectedIntent: 'auto-gifting'
+        selectedIntent: 'auto-gift',
+        source: 'dashboard-quick-gift',
+        autoGreeting: true,
+        greetingContext: {
+          greeting: 'auto-gifting-welcome',
+          activeMode: 'auto-gifting'
+        }
       }
-    });
-    window.dispatchEvent(triggerEvent);
+    }));
   };
 
   return (

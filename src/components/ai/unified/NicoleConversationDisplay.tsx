@@ -2,7 +2,9 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Search, Loader2, Sparkles } from 'lucide-react';
+import TypingIndicator from '@/components/messaging/TypingIndicator';
 
 interface Message {
   role: string;
@@ -24,42 +26,94 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   onSearch,
   context
 }) => {
+  // Quick reply suggestions for ecommerce
+  const quickReplies = [
+    "Find gifts under $50",
+    "Show trending items", 
+    "Help me create a wishlist",
+    "What's popular for holidays?"
+  ];
+
   return (
     <ScrollArea className="flex-1 p-4 bg-transparent">
       <div className="space-y-4">
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex items-end gap-3 animate-in slide-in-from-bottom-2 duration-300 ${
+              message.role === 'user' ? 'justify-end' : 'justify-start'
+            }`}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
+            {/* Avatar for assistant messages */}
+            {message.role === 'assistant' && (
+              <Avatar className="w-6 h-6 flex-shrink-0">
+                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-medium">
+                  N
+                </AvatarFallback>
+              </Avatar>
+            )}
+            
             <div
-              className={`max-w-[80%] px-4 py-2 rounded-lg backdrop-blur-sm ${
+              className={`max-w-[80%] px-4 py-3 rounded-2xl backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] ${
                 message.role === 'user'
-                  ? 'bg-blue-500/30 text-gray-800 border border-blue-400/20'
-                  : 'bg-white/40 text-gray-800 border border-white/20'
+                  ? 'bg-gradient-to-br from-purple-500/30 to-indigo-500/30 text-gray-800 border border-purple-400/30 rounded-br-md'
+                  : 'bg-white/50 text-gray-800 border border-white/30 rounded-bl-md shadow-sm'
               }`}
             >
-              <p className="text-sm font-medium">{message.content}</p>
+              <p className="text-sm leading-relaxed">{message.content}</p>
             </div>
+
+            {/* Avatar for user messages */}
+            {message.role === 'user' && (
+              <Avatar className="w-6 h-6 flex-shrink-0">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
+                  U
+                </AvatarFallback>
+              </Avatar>
+            )}
           </div>
         ))}
         
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white/40 text-gray-800 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm font-medium">Nicole is thinking...</span>
-              </div>
+          <div className="flex items-end gap-3 animate-in slide-in-from-bottom-2">
+            <Avatar className="w-6 h-6 flex-shrink-0">
+              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-medium">
+                N
+              </AvatarFallback>
+            </Avatar>
+            <div className="bg-white/50 text-gray-800 px-4 py-3 rounded-2xl rounded-bl-md backdrop-blur-sm border border-white/30">
+              <TypingIndicator userName="Nicole" />
             </div>
           </div>
         )}
         
+        {/* Quick Replies - Show after first message */}
+        {messages.length > 0 && messages.length % 2 === 0 && !isLoading && (
+          <div className="flex flex-wrap gap-2 justify-center mt-6 animate-in fade-in-50 duration-500">
+            {quickReplies.map((reply, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={() => onSearch && onSearch()}
+                className="bg-white/30 backdrop-blur-sm border-purple-200/50 hover:bg-purple-50/50 hover:border-purple-300/50 text-purple-700 hover:text-purple-800 text-xs px-3 py-1 rounded-full transition-all duration-200"
+              >
+                {reply}
+              </Button>
+            ))}
+          </div>
+        )}
+        
         {showSearchButton && (
-          <div className="flex justify-center mt-4">
-            <Button onClick={onSearch} className="bg-primary hover:bg-primary/90">
+          <div className="flex justify-center mt-6 animate-in slide-in-from-bottom-2 duration-300">
+            <Button 
+              onClick={onSearch} 
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full px-6"
+            >
               <Search className="w-4 h-4 mr-2" />
               Search Products
+              <Sparkles className="w-3 w-3 ml-2" />
             </Button>
           </div>
         )}

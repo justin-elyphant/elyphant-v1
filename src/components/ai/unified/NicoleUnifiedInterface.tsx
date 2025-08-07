@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { NicoleConversationDisplay } from './NicoleConversationDisplay';
 import { NicoleInputArea } from './NicoleInputArea';
@@ -141,18 +141,35 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const isInline = true; // Always use inline positioning
 
   return (
-    <div className={`w-full h-80 md:h-72 flex flex-col rounded-3xl shadow-lg border border-white/20 bg-white/60 backdrop-blur-md ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <h3 className="font-semibold text-sm text-gray-800">Chat with Nicole</h3>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="h-6 w-6 hover:bg-white/20"
-        >
-          <X className="h-4 w-4 text-gray-700" />
-        </Button>
+    <div className={`relative w-full h-80 md:h-72 flex flex-col rounded-3xl shadow-lg border border-white/20 bg-white/60 backdrop-blur-md ${className}`}>
+      {/* Visual Connection Line to Search Bar */}
+      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-px h-4 bg-gradient-to-b from-purple-400 to-transparent opacity-60"></div>
+      
+      {/* Enhanced Header with Gradient */}
+      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-t-3xl p-4 border-b border-purple-400/20 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                <span className="text-white font-medium text-sm">N</span>
+              </div>
+              {/* Online Status Indicator */}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm text-white">Chat with Nicole</h3>
+              <Sparkles className="h-3 w-3 text-purple-200 animate-pulse" />
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 hover:bg-white/20 text-white/80 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Conversation Display */}

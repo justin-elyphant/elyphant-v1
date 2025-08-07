@@ -15,8 +15,10 @@ import {
   Heart
 } from "lucide-react";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
-import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { toast } from "sonner";
+import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useAuth } from "@/contexts/auth";
+import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
 
 type AutoGiftConfirmationStepProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -26,7 +28,8 @@ const AutoGiftConfirmationStep = ({
   resetBot
 }: AutoGiftConfirmationStepProps) => {
   const [isCreating, setIsCreating] = useState(false);
-  const { createRule } = useAutoGifting();
+  const { user } = useAuth();
+  const { chatWithNicole } = useUnifiedNicoleAI({ initialContext: { capability: 'auto_gifting' } });
 
   const recipient = botState.selectedFriend;
   const occasion = botState.occasion || 'birthday';
@@ -36,26 +39,27 @@ const AutoGiftConfirmationStep = ({
     setIsCreating(true);
     
     try {
-      // Create the auto-gifting rule
-      await createRule({
-        recipient_id: recipient.connected_user_id || recipient.id,
-        date_type: occasion,
-        budget_limit: budget.max,
-        is_active: true,
-        notification_preferences: {
-          enabled: true,
-          days_before: [7, 3, 1],
-          email: true,
-          push: true
-        },
-        gift_selection_criteria: {
-          source: "wishlist",
-          max_price: budget.max,
-          min_price: budget.min,
-          categories: [],
-          exclude_items: [],
-          preferred_brands: []
-        }
+      if (!user?.id) {
+        toast.error("Please log in to set up auto-gifting");
+        return;
+      }
+
+      const recipientId = recipient?.connected_user_id || recipient?.id || null;
+      const recipientName = recipient?.name || recipient?.connected_user_id || 'Unknown User';
+
+      // Let Nicole know (keeps flow under unified nicole-chat)
+      await chatWithNicole(
+        `Please set up auto-gifting for ${recipientName} (${occasion}) with a $${budget.min}-${budget.max} budget.`
+      );
+
+      // Create rule via unified service with protections
+      await setupAutoGiftWithUnifiedSystems({
+        userId: user.id,
+        recipientId,
+        recipientName,
+        occasion,
+        budget,
+        relationship: recipient?.relationshipStrength || recipient?.relationship_type || 'friend'
       });
 
       toast.success("Auto-gifting set up successfully!");

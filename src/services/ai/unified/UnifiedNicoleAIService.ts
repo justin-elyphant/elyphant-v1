@@ -632,8 +632,17 @@ export class UnifiedNicoleAIService {
         ...context,
         conversationPhase: context.conversationPhase || 'initial',
         selectedIntent: context.selectedIntent || 'auto-gift',
-        userConnections // Include real connection data
+        userConnections, // Include real connection data
+        // Ensure currentUserId and userFirstName are properly passed
+        currentUserId: context.currentUserId,
+        userFirstName: context.userFirstName
       };
+
+      console.log('🚀 Sending context to ChatGPT Agent:', {
+        hasUserId: !!agentContext.currentUserId,
+        hasFirstName: !!agentContext.userFirstName,
+        firstName: agentContext.userFirstName
+      });
 
       // Get current conversation history (already includes the user message)
       const conversationState = this.getConversationState(sessionId);

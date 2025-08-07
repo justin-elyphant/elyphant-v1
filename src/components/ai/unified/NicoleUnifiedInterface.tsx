@@ -98,11 +98,13 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }
   });
 
-  // Send auto-greeting when interface opens (no manual trigger needed)
+  // Send auto-greeting when interface opens (wait for context to be ready)
   useEffect(() => {
     if (isOpen && messages.length === 0 && !loading) {
       console.log('🚀 Starting auto-greeting with Nicole');
-      const autoGreeting = async () => {
+      
+      // Small delay to ensure user context is loaded
+      const timer = setTimeout(async () => {
         try {
           // Use special trigger to get personalized auto-greeting
           const response = await chatWithNicole("__START_DYNAMIC_CHAT__");
@@ -122,9 +124,9 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
             { role: 'assistant', content: fallbackMessage }
           ]);
         }
-      };
+      }, 500); // Wait 500ms for context to load
       
-      autoGreeting();
+      return () => clearTimeout(timer);
     }
   }, [isOpen, messages.length, loading, chatWithNicole, initialContext]);
 

@@ -147,6 +147,115 @@ serve(async (req) => {
       console.error('❌ Exception while enriching context with connections:', e);
     }
 
+    // Early: handle privacy-aware birthday questions directly (skip OpenAI)
+    const lowerMsg = (message || '').toLowerCase();
+    const mentionsBirthday = /\bbirthday\b/.test(lowerMsg);
+
+    // Resolve target connection if birthday is asked
+    if (mentionsBirthday) {
+      console.log('🎯 Special date intent detected: birthday');
+      let target = (enrichedContext as any)?.mentionedConnection || (enrichedContext as any)?.detectedConnections?.[0] || null;
+
+      // Fallback: try to parse "<name>'s birthday" or "birthday of <name>"
+      if (!target && Array.isArray((enrichedContext as any)?.userConnections)) {
+        const possessive = message.match(/([A-Za-z][A-Za-z'-]+)\s*'s\s+birthday/i);
+        const ofForm = message.match(/birthday\s+of\s+([A-Za-z][A-Za-z'-]+)/i);
+        const rawName = (possessive?.[1] || ofForm?.[1])?.toLowerCase();
+        if (rawName) {
+          const match = (enrichedContext as any).userConnections.find((uc: any) => {
+            const full = (uc.name || '').toLowerCase();
+            const first = full.split(' ')[0] || '';
+            const uname = (uc.username || '').toLowerCase();
+            return first === rawName || full.includes(rawName) || uname === rawName;
+          });
+          if (match) target = match;
+        }
+      }
+
+      if (target?.userId && (enrichedContext as any)?.currentUserId) {
+        // Fetch target profile
+        const { data: targetProfile, error: targetErr } = await supabase
+          .from('profiles')
+          .select('id, name, dob, data_sharing_settings')
+          .eq('id', target.userId)
+          .maybeSingle();
+
+        if (targetErr) {
+          console.error('❌ Error loading target profile for birthday:', targetErr);
+        }
+
+        const viewerId = (enrichedContext as any).currentUserId as string;
+        const privacy = (targetProfile as any)?.data_sharing_settings?.dob || 'friends';
+
+        // Privacy check helper
+        let allowed = false;
+        if (targetProfile?.id === viewerId) {
+          allowed = true;
+        } else if (privacy === 'public') {
+          allowed = true;
+        } else if (privacy === 'friends') {
+          const { data: connRes, error: connErr } = await supabase
+            .rpc('are_users_connected', { user_id_1: viewerId, user_id_2: targetProfile?.id });
+          if (connErr) {
+            console.error('❌ Error checking connection status:', connErr);
+          }
+          allowed = Boolean(connRes);
+        } else {
+          // 'private' or unknown
+          allowed = false;
+        }
+
+        // Format dob as "Month Day"
+        const formatMonthDay = (dob?: string | null) => {
+          if (!dob) return null;
+          try {
+            // Expecting YYYY-MM-DD
+            const [y, m, d] = dob.split('-').map((v) => parseInt(v, 10));
+            if (!m || !d) return null;
+            const date = new Date(y || 2000, (m - 1), d);
+            return date.toLocaleString('en-US', { month: 'long', day: 'numeric' });
+          } catch (_) {
+            return null;
+          }
+        };
+
+        let reply: string;
+        if (allowed && targetProfile?.dob) {
+          const pretty = formatMonthDay(targetProfile.dob);
+          if (pretty) {
+            reply = `${target?.name || 'Your connection'}'s birthday is ${pretty}.`;
+            console.log('🎉 Birthday found and shareable:', { targetId: targetProfile.id, pretty });
+          } else {
+            reply = `I couldn't parse ${target?.name ? target.name + "'s" : 'their'} birthday.`;
+            console.log('⚠️ Unable to format DOB string:', targetProfile?.dob);
+          }
+        } else if (!allowed) {
+          reply = "I can’t share that due to privacy settings.";
+          console.log('🔒 Privacy check: blocked');
+        } else {
+          reply = `I don’t have a birthday on file for ${target?.name || 'that person'}.`;
+          console.log('ℹ️ No birthday on file');
+        }
+
+        const directPayload = {
+          message: reply,
+          context: { ...(enrichedContext as any) },
+          capability: (enrichedContext as any)?.capability || 'conversation',
+          actions: ['chat'],
+          showSearchButton: false,
+          metadata: {
+            confidence: 0.95,
+            suggestedFollowups: [],
+            connectionMatch: target || null
+          }
+        };
+
+        return new Response(JSON.stringify(directPayload), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Extract user's first name for personalization
     const userFirstName = userProfile?.name?.split(' ')[0] || null;
     console.log(`👋 User first name for greeting: ${userFirstName || 'not found'}`);
@@ -385,12 +494,18 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
         /(?:giving|buying|getting) (?:(?:my|a) )?(\w+) (?:a|an|some)/i,
         /(\w+)'s (?:birthday|anniversary|graduation)/i
       ];
+      const stopwords = new Set([
+        'gift','present','something','anything',
+        'his','her','their','them','him','she','he','someone','anyone',
+        'hi','hey'
+      ]);
       
       for (const pattern of recipientPatterns) {
         const match = combinedMessage.match(pattern);
         if (match && match[1]) {
           const recipient = match[1].trim();
-          if (!['gift', 'present', 'something', 'anything'].includes(recipient)) {
+          const candidate = recipient.toLowerCase();
+          if (!stopwords.has(candidate) && candidate.length > 2) {
             updatedContext.recipient = recipient;
             break;
           }

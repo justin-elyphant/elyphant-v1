@@ -32,7 +32,7 @@ export const NicoleInputArea: React.FC<NicoleInputAreaProps> = ({
   };
 
   return (
-    <div className="border-t p-4">
+    <div className="border-t border-white/10 p-4">
       <div className="flex gap-2">
         <Input
           value={message}
@@ -40,14 +40,15 @@ export const NicoleInputArea: React.FC<NicoleInputAreaProps> = ({
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           disabled={disabled}
-          className="flex-1"
+          className="flex-1 bg-white/30 border-white/20 backdrop-blur-sm text-gray-800 placeholder:text-gray-600"
         />
         <Button
           onClick={handleSend}
           disabled={disabled || !message.trim()}
           size="icon"
+          className="bg-blue-500/40 hover:bg-blue-500/60 border border-blue-400/20 backdrop-blur-sm"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4 text-gray-800" />
         </Button>
       </div>
     </div>

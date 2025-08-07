@@ -143,15 +143,15 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   return (
     <div className={`w-full h-80 md:h-72 flex flex-col rounded-3xl shadow-lg border border-white/20 bg-white/60 backdrop-blur-md ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold text-sm">Chat with Nicole</h3>
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <h3 className="font-semibold text-sm text-gray-800">Chat with Nicole</h3>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="h-6 w-6"
+          className="h-6 w-6 hover:bg-white/20"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 text-gray-700" />
         </Button>
       </div>
 

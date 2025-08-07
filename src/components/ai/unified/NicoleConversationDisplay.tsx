@@ -25,7 +25,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   context
 }) => {
   return (
-    <ScrollArea className="flex-1 p-4">
+    <ScrollArea className="flex-1 p-4 bg-transparent">
       <div className="space-y-4">
         {messages.map((message, index) => (
           <div
@@ -33,23 +33,23 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] px-4 py-2 rounded-lg ${
+              className={`max-w-[80%] px-4 py-2 rounded-lg backdrop-blur-sm ${
                 message.role === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-blue-500/30 text-gray-800 border border-blue-400/20'
+                  : 'bg-white/40 text-gray-800 border border-white/20'
               }`}
             >
-              <p className="text-sm">{message.content}</p>
+              <p className="text-sm font-medium">{message.content}</p>
             </div>
           </div>
         ))}
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-muted text-muted-foreground px-4 py-2 rounded-lg">
+            <div className="bg-white/40 text-gray-800 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Nicole is thinking...</span>
+                <span className="text-sm font-medium">Nicole is thinking...</span>
               </div>
             </div>
           </div>

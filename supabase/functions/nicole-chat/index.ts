@@ -49,7 +49,7 @@ serve(async (req) => {
         console.log(`🔍 Looking up user profile for ID: ${context.currentUserId}`);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, first_name, name, username')
+          .select('id, name, username')
           .eq('id', context.currentUserId)
           .single();
         
@@ -59,7 +59,6 @@ serve(async (req) => {
           userProfile = profileData;
           console.log('✅ User profile loaded for personalization:', { 
             id: profileData.id, 
-            firstName: profileData.first_name,
             name: profileData.name,
             username: profileData.username
           });
@@ -74,7 +73,7 @@ serve(async (req) => {
     }
 
     // Extract user's first name for personalization
-    const userFirstName = userProfile?.first_name || userProfile?.name?.split(' ')[0] || null;
+    const userFirstName = userProfile?.name?.split(' ')[0] || null;
     console.log(`👋 User first name for greeting: ${userFirstName || 'not found'}`);
 
     // Enhanced budget parsing function

@@ -58,6 +58,37 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     }
   }, [isNicoleMode, isNicoleOpen, instanceId]);
 
+  // Listen for triggerNicole events for auto-greeting functionality
+  useEffect(() => {
+    const handleTriggerNicole = (event: CustomEvent) => {
+      console.log('🎯 AIEnhancedSearchBar received triggerNicole event:', event.detail);
+      
+      // Only handle if no other instance is active, or if this should take over
+      if (!globalNicoleState.isOpen || event.detail.source) {
+        globalNicoleState.isOpen = true;
+        globalNicoleState.currentInstance = instanceId;
+        
+        // Set Nicole context based on event detail
+        setNicoleContext({
+          capability: event.detail.capability || 'conversation',
+          selectedIntent: event.detail.selectedIntent,
+          greetingContext: event.detail.greetingContext,
+          autoGreeting: event.detail.autoGreeting,
+          conversationPhase: 'greeting'
+        });
+        
+        // Open Nicole interface
+        setIsNicoleOpen(true);
+        setMode("nicole");
+      }
+    };
+
+    window.addEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    return () => {
+      window.removeEventListener('triggerNicole', handleTriggerNicole as EventListener);
+    };
+  }, [instanceId, setMode]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {

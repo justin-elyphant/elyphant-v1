@@ -52,7 +52,7 @@ export const NicolePortalContainer: React.FC<NicolePortalContainerProps> = ({
       
       {/* Chat Window Overlay */}
       <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-lg px-4">
-        <div className="bg-background border border-border rounded-lg shadow-2xl">
+        <div className="rounded-lg shadow-2xl">
           {children}
         </div>
       </div>

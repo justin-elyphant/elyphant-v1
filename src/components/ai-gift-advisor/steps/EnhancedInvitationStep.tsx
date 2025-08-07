@@ -46,21 +46,19 @@ const EnhancedInvitationStep = ({
     setIsLoading(true);
 
     try {
-      // Enhanced invitation creation with Nicole's casual tone
-      const invitationData = {
-        recipientName: formData.name,
-        recipientEmail: formData.email,
-        relationship: formData.relationship,
-        occasion: formData.occasion,
-        personalMessage: formData.personalMessage || `Hey ${formData.name}! I want to get you an amazing gift for your ${formData.occasion}. Join me on Elyphant and tell me what you'd love!`,
-        giftorName: firstName,
-        invitationType: 'auto_gifting'
-      };
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          recipientName: formData.name,
+          recipientEmail: formData.email,
+          relationship: formData.relationship,
+          occasion: formData.occasion,
+          personalMessage: formData.personalMessage,
+        }
+      });
 
-      // Simulate invitation sending (integrate with your backend)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (error) throw error;
 
-      // Update bot state with invitation data
       nextStep("invitation-sent", {
         invitedFriend: {
           name: formData.name,
@@ -70,12 +68,11 @@ const EnhancedInvitationStep = ({
         }
       });
 
-      // Set up auto-gifting context
       setOccasion(formData.occasion);
-      setBudget({ min: 50, max: 100 }); // Default budget for invitations
+      setBudget({ min: 50, max: 100 });
 
-      toast.success(`Perfect! Invitation sent to ${formData.name}. They'll love being part of this!`);
-      
+      toast.success(`Invitation sent to ${formData.name}`);
+
       nextStep("invitation-sent");
     } catch (error) {
       console.error('Invitation sending error:', error);

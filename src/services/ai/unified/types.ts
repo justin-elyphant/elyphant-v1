@@ -34,8 +34,11 @@ export interface UnifiedNicoleContext {
     canUseOptimalFlow: boolean;
   };
   
-  // Post-auth welcome context
-  selectedIntent?: "auto-gift" | "shop-solo" | "create-wishlist";
+  // CTA Context Awareness
+  selectedIntent?: "auto-gift" | "shop-solo" | "create-wishlist" | "giftor";
+  source?: string;
+  
+  // Post-auth welcome context  
   userFirstName?: string;
   
   // Recipient and relationship context

@@ -3,6 +3,7 @@ import { useAuthSession } from "@/contexts/auth/useAuthSession";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { unifiedNicoleAI } from "@/services/ai/unified/UnifiedNicoleAIService";
 import { UnifiedNicoleContext, NicoleResponse, NicoleCapability } from "@/services/ai/unified/types";
+import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 interface UseUnifiedNicoleAIProps {
   sessionId?: string;
@@ -26,16 +27,35 @@ export const useUnifiedNicoleAI = ({
   // Extract user's first name from profile (using name field since first_name doesn't exist in type)
   const userFirstName = profile?.name?.split(' ')[0] || null;
   
-  // Initialize context with user data and defaults
-  const [context, setContext] = useState<UnifiedNicoleContext>(() => ({
-    conversationPhase: 'greeting',
-    capability: 'conversation',
-    interests: [],
-    detectedBrands: [],
-    currentUserId: user?.id || undefined,
-    userFirstName: userFirstName || undefined,
-    ...initialContext
-  }));
+  // Read CTA context from localStorage for context awareness
+  const readLocalStorageContext = useCallback((): Partial<UnifiedNicoleContext> => {
+    const nicoleContext = LocalStorageService.getNicoleContext();
+    if (nicoleContext) {
+      console.log('📋 Reading CTA context from localStorage:', nicoleContext);
+      // Clear after reading to avoid stale data
+      LocalStorageService.clearNicoleContext();
+      return {
+        selectedIntent: nicoleContext.selectedIntent as UnifiedNicoleContext['selectedIntent'],
+        source: nicoleContext.source
+      };
+    }
+    return {};
+  }, []);
+
+  // Initialize context with user data, localStorage context, and defaults
+  const [context, setContext] = useState<UnifiedNicoleContext>(() => {
+    const localStorageContext = readLocalStorageContext();
+    return {
+      conversationPhase: 'greeting',
+      capability: 'conversation',
+      interests: [],
+      detectedBrands: [],
+      currentUserId: user?.id || undefined,
+      userFirstName: userFirstName || undefined,
+      ...localStorageContext,
+      ...initialContext
+    };
+  });
 
   // Update user context when user or profile changes
   useEffect(() => {

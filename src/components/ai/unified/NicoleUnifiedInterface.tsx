@@ -20,7 +20,7 @@ interface NicoleUnifiedInterfaceProps {
   className?: string;
   // Additional props for backward compatibility
   entryPoint?: string;
-  onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist") => void;
+  onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist" | "giftor") => void;
   onNavigateToResults?: (searchQuery: string) => void;
 }
 
@@ -63,7 +63,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const buildInitialContext = () => {
     const baseContext = {
       capability: getCapabilityFromString(initialContext?.capability),
-      selectedIntent: initialContext?.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist" | undefined,
+      selectedIntent: initialContext?.selectedIntent as "auto-gift" | "shop-solo" | "create-wishlist" | "giftor" | undefined,
       userFirstName: initialContext?.userFirstName,
       greetingContext: initialContext?.greetingContext,
       conversationPhase: 'greeting' as const

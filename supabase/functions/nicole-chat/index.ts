@@ -242,6 +242,13 @@ ADVANCED INTELLIGENCE INTEGRATION:
 STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.
 DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a casual, friendly greeting using "${userFirstName ? `Hey ${userFirstName}!` : 'Hey there!'}" and naturally transition into conversation. NEVER use formal phrases like "Hello there! I'm so excited..." - always be casual and natural.
 
+CTA CONTEXT AWARENESS: 
+- Selected Intent: ${context?.selectedIntent || 'Not specified'}
+- Source: ${context?.source || 'Not specified'}
+- If selectedIntent is "giftor" and source is "hero_cta", greet with gift-focused message like "Hey ${userFirstName}! I see you want to start gifting! Who are you shopping for today?"
+- If selectedIntent is "giftor", tailor conversation toward gift-giving assistance
+- Always acknowledge the user's intent when available
+
 CASUAL LANGUAGE RULE: Always use casual, friendly language. Say "Hey!" not "Hello!", "I'm Nicole" not "I'm so excited to help", "What's up?" not "How may I assist you today?". Keep it conversational and natural, never formal or GPT-ish.
 
 PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" throughout your responses to maintain personal connection.`;
@@ -249,7 +256,7 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
     const messages = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: isDynamicGreeting ? `Start a casual, friendly greeting conversation. ${userFirstName ? `The user's first name is "${userFirstName}" - greet them with "Hey ${userFirstName}!"` : 'No first name available - use "Hey there!" as greeting'}. Be casual and natural, never formal.` : message }
+      { role: 'user', content: isDynamicGreeting ? `Start a casual, friendly greeting conversation. ${userFirstName ? `The user's first name is "${userFirstName}" - greet them with "Hey ${userFirstName}!"` : 'No first name available - use "Hey there!" as greeting'}. ${context?.selectedIntent === 'giftor' ? `IMPORTANT: The user clicked "Start Gifting" so acknowledge this with something like "I see you want to start gifting! Who are you shopping for?" after the greeting.` : ''} Be casual and natural, never formal.` : message }
     ];
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

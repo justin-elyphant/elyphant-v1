@@ -47,12 +47,12 @@ const AutoGiftConfirmationStep = ({
       const recipientId = recipient?.connected_user_id || recipient?.id || null;
       const recipientName = recipient?.name || recipient?.connected_user_id || 'Unknown User';
 
-      // Let Nicole know (keeps flow under unified nicole-chat)
+      // Let Nicole know (keeps flow under unified nicole-chat with safe context)
       await chatWithNicole(
         `Please set up auto-gifting for ${recipientName} (${occasion}) with a $${budget.min}-${budget.max} budget.`
       );
 
-      // Create rule via unified service with protections
+      // Create rule via unified service with protections and RLS-safe services
       await setupAutoGiftWithUnifiedSystems({
         userId: user.id,
         recipientId,

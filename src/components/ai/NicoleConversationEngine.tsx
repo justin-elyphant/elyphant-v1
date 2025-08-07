@@ -11,6 +11,9 @@ import { useSmartCTALogic } from "@/components/ai/enhanced/hooks/useSmartCTALogi
 import GroupedSearchResultsComponent from "./GroupedSearchResults";
 import type { GroupedSearchResults } from "@/services/ai/multiCategorySearchService";
 import { ConversationEnhancementService } from "@/services/ai/conversationEnhancementService";
+import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
+import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
+import { toast } from "sonner";
 
 interface NicoleConversationEngineProps {
   isOpen: boolean;
@@ -188,6 +191,49 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   };
 
+  // Smart Auto-Gift CTA logic
+  const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
+  const canOfferAutoGift = Boolean(
+    context?.recipient && context?.occasion && context?.capability !== 'auto_gifting'
+  );
+
+  const handleOfferAutoGift = async () => {
+    if (!user?.id) {
+      toast.error("Please log in to set up auto-gifting");
+      return;
+    }
+    try {
+      setIsSettingUpAutoGift(true);
+      // If we already have a budget range, go straight to creating the rule
+      const budget = Array.isArray(context?.budget) && context.budget.length === 2
+        ? { min: Number(context.budget[0]), max: Number(context.budget[1]) }
+        : undefined;
+
+      if (budget) {
+        await setupAutoGiftWithUnifiedSystems({
+          userId: user.id,
+          recipientName: String(context.recipient),
+          occasion: String(context.occasion),
+          budget,
+          relationship: (context as any).relationship || 'friend'
+        });
+        toast.success("Auto-gifting set up successfully");
+        await chatWithNicole(
+          `Please confirm we've set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)} with a $${budget.min}-$${budget.max} budget.`
+        );
+      } else {
+        // Otherwise, transition the conversation into auto-gifting flow to capture budget
+        await chatWithNicole(
+          `Let's set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)}.`
+        );
+      }
+    } catch (e) {
+      console.error('Auto-gift setup error', e);
+      toast.error("Couldn't set up auto-gifting right now");
+    } finally {
+      setIsSettingUpAutoGift(false);
+    }
+  };
   const handleSendMessage = async (messageText?: string) => {
     const messageToSend = messageText || currentMessage.trim();
     
@@ -355,6 +401,18 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
             <Sparkles className="w-5 h-5 mr-2" />
             Ready to See Your Gifts!
           </Button>
+        </div>
+      )}
+
+      {/* Smart Auto-Gift Offer */}
+      {canOfferAutoGift && (
+        <div className="p-4 border-t bg-white flex-shrink-0">
+          <SmartAutoGiftCTA
+            recipientName={String(context.recipient)}
+            occasion={String(context.occasion)}
+            loading={isSettingUpAutoGift}
+            onConfirm={handleOfferAutoGift}
+          />
         </div>
       )}
 

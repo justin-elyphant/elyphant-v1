@@ -16,6 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import EnhancedGiftRecommendations from "@/components/ai/recommendations/EnhancedGiftRecommendations";
 import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
+import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
+import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
+import { toast } from "sonner";
 
 interface ConversationMessage {
   type: "nicole" | "user";
@@ -416,6 +419,47 @@ Let me take you to your profile where you can start building your wishlist. You 
     console.log('🎯 CTA Button State Changed:', showCTAButton);
   }, [showCTAButton]);
 
+  // Smart Auto-Gift CTA logic
+  const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
+  const canOfferAutoGift = Boolean(
+    (context as any)?.recipient && (context as any)?.occasion && (context as any)?.capability !== 'auto_gifting'
+  );
+
+  const handleOfferAutoGift = async () => {
+    if (!user?.id) {
+      toast.error("Please log in to set up auto-gifting");
+      return;
+    }
+    try {
+      setIsSettingUpAutoGift(true);
+      const budget = Array.isArray((context as any)?.budget) && (context as any).budget.length === 2
+        ? { min: Number((context as any).budget[0]), max: Number((context as any).budget[1]) }
+        : undefined;
+
+      if (budget) {
+        await setupAutoGiftWithUnifiedSystems({
+          userId: user.id,
+          recipientName: String((context as any).recipient),
+          occasion: String((context as any).occasion),
+          budget,
+          relationship: (context as any).relationship || 'friend'
+        });
+        toast.success("Auto-gifting set up successfully");
+        await chatWithNicole(
+          `Please confirm we've set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)} with a $${budget.min}-$${budget.max} budget.`
+        );
+      } else {
+        await chatWithNicole(
+          `Let's set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)}.`
+        );
+      }
+    } catch (e) {
+      console.error('Auto-gift setup error', e);
+      toast.error("Couldn't set up auto-gifting right now");
+    } finally {
+      setIsSettingUpAutoGift(false);
+    }
+  };
   if (!isOpen) return null;
 
   return (
@@ -546,6 +590,17 @@ Let me take you to your profile where you can start building your wishlist. You 
                 <div ref={messagesEndRef} />
               </ScrollArea>
             </CardContent>
+
+            {canOfferAutoGift && (
+              <div className="px-4 pb-2">
+                <SmartAutoGiftCTA
+                  recipientName={String((context as any).recipient)}
+                  occasion={String((context as any).occasion)}
+                  loading={isSettingUpAutoGift}
+                  onConfirm={handleOfferAutoGift}
+                />
+              </div>
+            )}
 
             <div className="p-4 border-t">
               <div className="flex items-center space-x-2">

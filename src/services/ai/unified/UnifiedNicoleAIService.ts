@@ -671,11 +671,19 @@ export class UnifiedNicoleAIService {
 
       // Convert ChatGPT Agent response to unified format
       const agentData = response.data;
+      const actionsFromAgent = agentData.actions || [];
+
+      // Proactively offer auto-gifting when recipient and occasion are present
+      const shouldOfferAutoGifting = Boolean((agentData.context || context)?.recipient && (agentData.context || context)?.occasion);
+      const mergedActions = shouldOfferAutoGifting && !actionsFromAgent.includes('offer_auto_gifting')
+        ? [...actionsFromAgent, 'offer_auto_gifting']
+        : actionsFromAgent;
+
       return {
         message: agentData.message || agentData.response,
         context: agentData.context || context,
         capability: (context.selectedIntent === 'auto-gift' ? 'auto_gifting' : 'gift_advisor') as NicoleCapability,
-        actions: agentData.actions || [],
+        actions: mergedActions,
         searchQuery: agentData.searchQuery || '',
         showSearchButton: agentData.showSearchButton || false,
         metadata: agentData.metadata

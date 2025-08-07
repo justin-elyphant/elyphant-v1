@@ -2,9 +2,11 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Loader2, Sparkles } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Search, Loader2, Sparkles, Bot } from 'lucide-react';
 import TypingIndicator from '@/components/messaging/TypingIndicator';
+import { useProfile } from '@/contexts/profile/ProfileContext';
+import { Profile } from '@/types/profile';
 
 interface Message {
   role: string;
@@ -26,6 +28,19 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   onSearch,
   context
 }) => {
+  const { profile } = useProfile();
+  
+  // Get user initials for fallback
+  const getUserInitials = () => {
+    if (profile?.name) {
+      const nameParts = profile.name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      }
+      return nameParts[0][0].toUpperCase();
+    }
+    return 'U';
+  };
   // Quick reply suggestions for ecommerce
   const quickReplies = [
     "Find gifts under $50",
@@ -49,7 +64,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
             {message.role === 'assistant' && (
               <Avatar className="w-6 h-6 flex-shrink-0">
                 <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-medium">
-                  N
+                  <Bot className="w-3 h-3" />
                 </AvatarFallback>
               </Avatar>
             )}
@@ -67,8 +82,11 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
             {/* Avatar for user messages */}
             {message.role === 'user' && (
               <Avatar className="w-6 h-6 flex-shrink-0">
+                {profile?.profile_image && (
+                  <AvatarImage src={profile.profile_image} alt="User avatar" />
+                )}
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-medium">
-                  U
+                  {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
             )}
@@ -79,7 +97,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
           <div className="flex items-end gap-3 animate-in slide-in-from-bottom-2">
             <Avatar className="w-6 h-6 flex-shrink-0">
               <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs font-medium">
-                N
+                <Bot className="w-3 h-3" />
               </AvatarFallback>
             </Avatar>
             <div className="bg-white/50 text-gray-800 px-4 py-3 rounded-2xl rounded-bl-md backdrop-blur-sm border border-white/30">

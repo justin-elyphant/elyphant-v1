@@ -32,8 +32,8 @@ export const useUnifiedNicoleAI = ({
     capability: 'conversation',
     interests: [],
     detectedBrands: [],
-    currentUserId: user?.id,
-    userFirstName,
+    currentUserId: user?.id || undefined,
+    userFirstName: userFirstName || undefined,
     ...initialContext
   }));
 
@@ -48,7 +48,8 @@ export const useUnifiedNicoleAI = ({
       needsUpdate = true;
     }
 
-    if (userFirstName && context.userFirstName !== userFirstName) {
+    // Always update first name when it becomes available or changes
+    if (userFirstName !== context.userFirstName) {
       console.log('🔄 Updating context with user first name:', userFirstName);
       updates.userFirstName = userFirstName;
       needsUpdate = true;

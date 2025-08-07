@@ -93,7 +93,8 @@ const NicoleAutoGiftConnectionStep = ({
 
   const handleConnectAndSelect = async (friend: any) => {
     if (friend.connectionStatus === 'connected') {
-      // Already connected, proceed with selection
+      // Path A: Already connected, proceed with selection  
+      toast.success(`Perfect! I found ${friend.name} in your connections.`);
       await selectFriend({
         id: friend.id,
         connected_user_id: friend.name,
@@ -106,7 +107,8 @@ const NicoleAutoGiftConnectionStep = ({
     }
 
     if (friend.connectionStatus === 'none') {
-      // Send connection request and then select
+      // Path A: Found user, quick connect with context
+      toast.success(`Great! I found ${friend.name} on Elyphant. Sending them a connection request...`);
       const success = await sendFriendRequest(friend.id, friend.name);
       if (success) {
         await selectFriend({
@@ -118,15 +120,22 @@ const NicoleAutoGiftConnectionStep = ({
           status: 'pending'
         });
         setShowSearch(false);
+        toast.success(`Connection request sent! Once ${friend.name} accepts, auto-gifting will be ready.`);
       }
     }
   };
 
   const handleInviteNew = () => {
+    // Path B: User not found, invitation flow
+    const userName = searchTerm.includes('@') ? '' : searchTerm;
+    const userEmail = searchTerm.includes('@') ? searchTerm : '';
+    
+    toast.success(`I don't see ${userName || userEmail} on Elyphant yet. Let's invite them to join!`);
+    
     nextStep("invite-new-friend", {
       pendingFriendData: {
-        name: searchTerm.includes('@') ? '' : searchTerm,
-        email: searchTerm.includes('@') ? searchTerm : '',
+        name: userName,
+        email: userEmail,
         relationship: 'friend'
       }
     });
@@ -166,9 +175,9 @@ const NicoleAutoGiftConnectionStep = ({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold">Choose who to set up auto-gifting for</h2>
+        <h2 className="text-xl font-semibold">Hey! Who should I help you set up auto-gifting for?</h2>
         <p className="text-muted-foreground">
-          Nicole will analyze their preferences and upcoming events to create the perfect auto-gifting experience
+          I'll search for them and handle the rest - whether they're already connected or need an invitation to join!
         </p>
       </div>
 
@@ -237,13 +246,28 @@ const NicoleAutoGiftConnectionStep = ({
                         </div>
                       </div>
                       
-                      <Button
+                       <Button
                         onClick={() => handleConnectAndSelect(friend)}
                         size="sm"
                         variant={friend.connectionStatus === 'connected' ? 'default' : 'outline'}
+                        className="gap-2"
                       >
-                        {friend.connectionStatus === 'connected' ? 'Select' : 
-                         friend.connectionStatus === 'pending' ? 'Select (Pending)' : 'Connect & Select'}
+                        {friend.connectionStatus === 'connected' ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            Choose Them
+                          </>
+                        ) : friend.connectionStatus === 'pending' ? (
+                          <>
+                            <Users className="w-4 h-4" />
+                            Choose (Pending)
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4" />
+                            Connect & Choose
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -252,24 +276,25 @@ const NicoleAutoGiftConnectionStep = ({
             </div>
           )}
 
-          {/* No Results - Invite Option */}
+          {/* Path B: No Results - Invitation Flow */}
           {searchTerm.length >= 2 && !searchLoading && searchResults.length === 0 && (
-            <Card className="border-dashed border-2 border-muted">
+            <Card className="border-dashed border-2 border-primary/20 bg-gradient-to-br from-purple-50 to-indigo-50">
               <CardContent className="p-6 text-center">
                 <div className="space-y-3">
-                  <div className="w-12 h-12 mx-auto bg-muted rounded-full flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-muted-foreground" />
+                  <div className="w-12 h-12 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-medium">No users found for "{searchTerm}"</h3>
+                  <h3 className="font-medium">I don't see "{searchTerm}" on Elyphant yet</h3>
                   <p className="text-sm text-muted-foreground">
-                    They might not be on Elyphant yet. Would you like to invite them?
+                    No worries! I can invite them to join so you can set up auto-gifting together.
                   </p>
                   <Button 
                     variant="default" 
                     size="sm"
                     onClick={handleInviteNew}
+                    className="gap-2"
                   >
-                    <UserPlus className="w-4 h-4 mr-2" />
+                    <UserPlus className="w-4 h-4" />
                     Invite "{searchTerm}" to Elyphant
                   </Button>
                 </div>

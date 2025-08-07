@@ -74,12 +74,14 @@ const StreamlinedProfileSetup = () => {
       await trackProfileSetupCompleted(user.email);
     }
     
-    // If this was an invitation, show Nicole popup for gift preference collection
+    // Enhanced invitation context handling with Nicole auto-popup
     if (invitationContext?.isInvited) {
       // Track that preference collection is starting
       if (user?.email) {
         await trackPreferenceCollectionStarted(user.email);
       }
+      
+      // Auto-trigger Nicole popup with invitation context
       setShowNicolePopup(true);
     } else {
       // Regular profile setup, redirect to homepage
@@ -126,7 +128,7 @@ const StreamlinedProfileSetup = () => {
         </div>
       </div>
       
-      {/* Nicole Popup for Invited Users */}
+      {/* Enhanced Nicole Popup for Invited Users with Casual Welcome */}
       {showNicolePopup && invitationContext?.isInvited && (
         <NicolePopup
           isOpen={showNicolePopup}
@@ -134,12 +136,17 @@ const StreamlinedProfileSetup = () => {
           initialContext={{
             capability: 'gift_advisor',
             conversationPhase: 'giftee_preference_collection',
-            userFirstName: user?.user_metadata?.name || user?.email?.split('@')[0] || 'there',
+            userFirstName: user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there',
             recipient: invitationContext.giftorName,
             occasion: invitationContext.occasion,
-            relationship: invitationContext.relationship
+            relationship: invitationContext.relationship,
+            greetingContext: {
+              firstName: user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there',
+              giftorName: invitationContext.giftorName,
+              occasion: invitationContext.occasion
+            }
           }}
-          welcomeMessage={`Hey ${user?.user_metadata?.name || 'there'}! 👋 Welcome to Elyphant. As mentioned, ${invitationContext.giftorName} wants to get you a gift${invitationContext.occasion ? ` for your upcoming ${invitationContext.occasion}` : ''}. Briefly tell me about brands you like, hobbies, sizes, or anything that would help ${invitationContext.giftorName} get you the best gift possible!`}
+          welcomeMessage={`Hey ${user?.user_metadata?.name?.split(' ')[0] || 'there'}! 🎉 Welcome to Elyphant! ${invitationContext.giftorName} invited you because they want to get you an amazing gift${invitationContext.occasion ? ` for your ${invitationContext.occasion}` : ''}. Tell me about brands you love, hobbies, sizes, or anything that'll help them pick perfectly!`}
         />
       )}
     </MainLayout>

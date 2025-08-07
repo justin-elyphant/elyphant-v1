@@ -97,6 +97,8 @@ export interface UnifiedNicoleContext {
     userProfile?: any;
     friendName?: string;
     activeMode?: string;
+    giftorName?: string;
+    occasion?: string;
   };
 }
 

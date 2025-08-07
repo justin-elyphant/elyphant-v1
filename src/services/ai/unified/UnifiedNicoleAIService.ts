@@ -421,48 +421,39 @@ export class UnifiedNicoleAIService {
   }
 
   /**
-   * Handle optimal 2-question auto-gift flow
+   * Handle optimal 2-question auto-gift flow with casual, first-name conversation
    */
   private async handleOptimalAutoGiftFlow(
     message: string,
     context: UnifiedNicoleContext
   ): Promise<NicoleResponse> {
     const intelligence = context.autoGiftIntelligence!;
+    const firstName = context.userFirstName || context.greetingContext?.firstName || 'there';
     
-    // Question 1: Smart recipient + occasion confirmation
+    // Question 1: Smart recipient + occasion confirmation (casual style)
     if (context.conversationPhase === 'smart_recipient_occasion_confirmation') {
-      const smartQuestion1 = autoGiftIntelligenceService.generateSmartQuestion1({
-        primaryRecommendation: intelligence.primaryRecommendation ? {
-          recipient: { 
-            name: intelligence.primaryRecommendation.recipientName,
-            id: intelligence.primaryRecommendation.recipientId
-          } as any,
-          occasion: {
-            type: intelligence.primaryRecommendation.occasionType,
-            date: intelligence.primaryRecommendation.occasionDate
-          } as any,
-          budget: null as any,
-          confidence: intelligence.primaryRecommendation.confidence
-        } : null,
-        alternativeOptions: intelligence.alternativeOptions.map(alt => ({
-          recipient: { name: alt.recipientName } as any,
-          occasion: { type: alt.occasionType, date: alt.occasionDate } as any,
-          budget: null as any
-        })),
-        smartDefaults: {
-          hasConnectionsToAnalyze: true,
-          canPredictOccasions: true,
-          hasBudgetIntelligence: true
+      const primaryRec = intelligence.primaryRecommendation;
+      let smartQuestion1 = `Hey ${firstName}! `;
+      
+      if (primaryRec) {
+        smartQuestion1 += `I see ${primaryRec.recipientName}'s ${primaryRec.occasionType} is coming up on ${primaryRec.occasionDate}. Want me to set up automatic gifting for their ${primaryRec.occasionType}?`;
+        
+        if (intelligence.alternativeOptions.length > 0) {
+          const altOption = intelligence.alternativeOptions[0];
+          smartQuestion1 += ` I could also add ${altOption.recipientName}'s ${altOption.occasionType} if you'd like both covered.`;
         }
-      });
+      } else {
+        smartQuestion1 += `I found some great auto-gifting opportunities for you! Who should I help you set up gifting for first?`;
+      }
 
       return {
         message: smartQuestion1,
         context: { 
           ...context, 
-          conversationPhase: 'smart_recipient_occasion_confirmation',
-          recipient: intelligence.primaryRecommendation?.recipientName,
-          occasion: intelligence.primaryRecommendation?.occasionType
+          conversationPhase: 'intelligent_budget_confirmation',
+          recipient: primaryRec?.recipientName,
+          occasion: primaryRec?.occasionType,
+          userFirstName: firstName
         },
         capability: 'auto_gifting',
         actions: ['smart_recipient_occasion_confirmation'],
@@ -515,45 +506,53 @@ export class UnifiedNicoleAIService {
   }
 
   /**
-   * Handle traditional 3-question auto-gift flow
+   * Handle traditional 3-question fallback flow with casual conversation
    */
   private async handleTraditionalAutoGiftFlow(
     message: string,
     context: UnifiedNicoleContext
   ): Promise<NicoleResponse> {
-    // Enhanced auto-gifting conversation logic
-    if (context.recipient && !context.occasion) {
-      // Analyze recipient and suggest occasions
-      const response = `Perfect! I see you want to set up auto-gifting for ${context.recipient}. Based on your relationship as ${context.relationship || 'friends'}, I recommend setting up ${context.recipient}'s birthday first. Should I also add their anniversary in June if you'd like both covered?`;
-      
+    const firstName = context.userFirstName || context.greetingContext?.firstName || 'there';
+    
+    // Traditional fallback for when intelligence isn't available
+    if (!context.recipient) {
       return {
-        message: response,
-        context: { ...context, conversationPhase: 'occasion_confirmation' },
+        message: `Hey ${firstName}! Who should I help you set up auto-gifting for? I can find perfect gifts for anyone special to you.`,
+        context: { ...context, conversationPhase: 'recipient_identification', userFirstName: firstName },
         capability: 'auto_gifting',
-        actions: ['confirm_occasion', 'setup_auto_gifting'],
-        searchQuery: this.generateSearchQuery(context),
+        actions: ['identify_recipient'],
         showSearchButton: false
       };
     }
     
-    if (context.recipient && context.occasion && !context.budget) {
-      // Suggest relationship-based budget
-      const relationshipMultiplier = context.relationship === 'close_friend' ? 1.1 : 
-                                   context.relationship === 'family' ? 1.2 : 1.0;
-      const suggestedMin = Math.round(50 * 0.7 * relationshipMultiplier);
-      const suggestedMax = Math.round(75 * relationshipMultiplier);
-      
-      const response = `Great! Based on your ${context.relationship || 'friendship'} with ${context.recipient}, I suggest $${suggestedMin}-${suggestedMax} for ${context.occasion} gifts. Sound good, or would you prefer a different range?`;
-      
+    if (!context.occasion) {
       return {
-        message: response,
-        context: { ...context, conversationPhase: 'budget_confirmation', budget: [suggestedMin, suggestedMax] },
+        message: `Great choice with ${context.recipient}! What occasion should I set up auto-gifting for?`,
+        context: { ...context, conversationPhase: 'occasion_identification', userFirstName: firstName },
         capability: 'auto_gifting',
-        actions: ['confirm_budget', 'setup_auto_gifting'],
-        searchQuery: this.generateSearchQuery(context),
+        actions: ['identify_occasion'],
         showSearchButton: false
       };
     }
+    
+    if (!context.budget) {
+      const relationship = context.relationship || 'friend';
+      return {
+        message: `Perfect! For ${context.recipient}'s ${context.occasion}, what budget range works for you? Since they're a ${relationship}, I can suggest a range if you'd like.`,
+        context: { ...context, conversationPhase: 'budget_discussion', userFirstName: firstName },
+        capability: 'auto_gifting',
+        actions: ['set_budget'],
+        showSearchButton: false
+      };
+    }
+    
+    return {
+      message: `Awesome! I've set up auto-gifting for ${context.recipient}'s ${context.occasion} with your $${context.budget?.[0]}-${context.budget?.[1]} budget. I'll find amazing gifts that fit perfectly!`,
+      context: { ...context, conversationPhase: 'auto_gift_setup_complete', userFirstName: firstName },
+      capability: 'auto_gifting',
+      actions: ['setup_complete'],
+      showSearchButton: true
+    };
     
     // Fallback to general auto-gifting conversation
     const nicoleContext: NicoleContext = {

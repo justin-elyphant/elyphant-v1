@@ -118,11 +118,18 @@ serve(async (req) => {
         enrichedContext.userConnections = userConnections;
         enrichedContext.hasConnections = userConnections.length > 0;
 
-        // Try to detect if the message mentions one of the connections by name
+        // Try to detect if the message mentions one of the connections by name (avoid pronoun false-positives)
+        const PRONOUN_STOPWORDS = new Set(['his','her','their','them','him','she','he','theirs','hers','herself','himself','someone','anyone','they']);
         const candidates: string[] = [];
-        if (typeof enrichedContext.recipient === 'string') candidates.push(enrichedContext.recipient);
+        if (typeof enrichedContext.recipient === 'string') {
+          const r = String(enrichedContext.recipient).toLowerCase().trim();
+          if (r && !PRONOUN_STOPWORDS.has(r)) candidates.push(enrichedContext.recipient);
+        }
         const msgNameMatch = message.match(/friend\s+([A-Za-z][A-Za-z'-]+)/i) || message.match(/\bfor\s+([A-Z][a-zA-Z'-]+)/);
-        if (msgNameMatch?.[1]) candidates.push(msgNameMatch[1]);
+        if (msgNameMatch?.[1]) {
+          const n = msgNameMatch[1].toLowerCase();
+          if (!PRONOUN_STOPWORDS.has(n)) candidates.push(msgNameMatch[1]);
+        }
 
         const normalize = (s: string) => s.toLowerCase().trim();
         const detectedMatches = userConnections.filter((uc: any) => {
@@ -149,7 +156,41 @@ serve(async (req) => {
 
     // Early: handle privacy-aware birthday questions directly (skip OpenAI)
     const lowerMsg = (message || '').toLowerCase();
-    const mentionsBirthday = /\bbirthday\b/.test(lowerMsg);
+
+    const levenshtein = (a: string, b: string) => {
+      const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+      for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return dp[a.length][b.length];
+    };
+
+    const isBirthdayIntent = (text: string) => {
+      if (!text) return false;
+      // Fast paths for common variants and synonyms
+      if (/\b(birthday|bday|b-day|dob|date of birth|born day)\b/i.test(text)) return true;
+      // Fuzzy tolerance for misspellings like "brithday"
+      const tokens = text.split(/[^a-z]+/i).filter(Boolean);
+      for (const t of tokens) {
+        const w = t.toLowerCase();
+        if (w.length >= 5) {
+          const d = levenshtein(w, 'birthday');
+          if (d <= 2) return true;
+        }
+      }
+      return false;
+    };
+
+    const mentionsBirthday = isBirthdayIntent(lowerMsg);
 
     // Resolve target connection if birthday is asked
     if (mentionsBirthday) {

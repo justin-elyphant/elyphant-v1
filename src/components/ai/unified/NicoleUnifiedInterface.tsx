@@ -141,7 +141,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const isInline = true; // Always use inline positioning
 
   return (
-    <Card className={`w-full h-80 md:h-72 flex flex-col shadow-lg ${className}`}>
+    <div className={`w-full h-80 md:h-72 flex flex-col rounded-3xl shadow-lg border border-white/20 bg-white/60 backdrop-blur-md ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="font-semibold text-sm">Chat with Nicole</h3>
@@ -169,7 +169,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         disabled={loading}
         placeholder="Type your message..."
       />
-    </Card>
+    </div>
   );
 };
 

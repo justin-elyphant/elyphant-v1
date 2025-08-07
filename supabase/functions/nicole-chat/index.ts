@@ -246,15 +246,100 @@ serve(async (req) => {
           allowed = false;
         }
 
-        // Format dob as "Month Day"
-        const formatMonthDay = (dob?: string | null) => {
+        // Format dob as "Month Day" with robust parsing
+        const formatMonthDay = (dob?: string | null): string | null => {
           if (!dob) return null;
           try {
-            // Expecting YYYY-MM-DD
-            const [y, m, d] = dob.split('-').map((v) => parseInt(v, 10));
-            if (!m || !d) return null;
-            const date = new Date(y || 2000, (m - 1), d);
-            return date.toLocaleString('en-US', { month: 'long', day: 'numeric' });
+            const raw = String(dob).trim();
+            console.log(`📅 Formatting DOB raw: ${raw}`);
+            if (!raw) return null;
+
+            const months = [
+              'January','February','March','April','May','June',
+              'July','August','September','October','November','December'
+            ];
+            const monthMap: Record<string, number> = {
+              jan:1, january:1,
+              feb:2, february:2,
+              mar:3, march:3,
+              apr:4, april:4,
+              may:5,
+              jun:6, june:6,
+              jul:7, july:7,
+              aug:8, august:8,
+              sep:9, sept:9, september:9,
+              oct:10, october:10,
+              nov:11, november:11,
+              dec:12, december:12
+            };
+
+            let s = raw;
+            const tIndex = s.indexOf('T');
+            if (tIndex > 0) s = s.slice(0, tIndex);
+
+            let m: number | null = null;
+            let d: number | null = null;
+
+            // Word month forms: "Feb 19" / "February 19" or "19 Feb"
+            const word = s.replace(',', '').trim();
+            let match = word.match(/^(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})$/i);
+            if (!match) {
+              match = word.match(/^(\d{1,2})\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)$/i);
+              if (match) {
+                const dd = parseInt(match[1], 10);
+                const mm = monthMap[match[2].toLowerCase() as keyof typeof monthMap];
+                d = isNaN(dd) ? null : dd;
+                m = mm || null;
+              }
+            } else {
+              const mm = monthMap[match[1].toLowerCase() as keyof typeof monthMap];
+              const dd = parseInt(match[2], 10);
+              m = mm || null;
+              d = isNaN(dd) ? null : dd;
+            }
+
+            // Delimited numeric forms: "MM-DD", "MM/DD", "YYYY-MM-DD", "YYYY/MM/DD"
+            if (m === null || d === null) {
+              const parts = s.split(/[-\/]/).filter(Boolean);
+              if (parts.length === 2) {
+                const mm = parseInt(parts[0], 10);
+                const dd = parseInt(parts[1], 10);
+                m = isNaN(mm) ? null : mm;
+                d = isNaN(dd) ? null : dd;
+              } else if (parts.length === 3) {
+                if (/^\d{4}$/.test(parts[0])) {
+                  const mm = parseInt(parts[1], 10);
+                  const dd = parseInt(parts[2], 10);
+                  m = isNaN(mm) ? null : mm;
+                  d = isNaN(dd) ? null : dd;
+                } else {
+                  const mm = parseInt(parts[0], 10);
+                  const dd = parseInt(parts[1], 10);
+                  m = isNaN(mm) ? null : mm;
+                  d = isNaN(dd) ? null : dd;
+                }
+              }
+            }
+
+            // Compact numeric forms: "YYYYMMDD" or "MMDD"
+            if (m === null || d === null) {
+              if (/^\d{8}$/.test(s)) {
+                const mm = parseInt(s.slice(4, 6), 10);
+                const dd = parseInt(s.slice(6, 8), 10);
+                m = isNaN(mm) ? null : mm;
+                d = isNaN(dd) ? null : dd;
+              } else if (/^\d{4}$/.test(s)) {
+                const mm = parseInt(s.slice(0, 2), 10);
+                const dd = parseInt(s.slice(2, 4), 10);
+                m = isNaN(mm) ? null : mm;
+                d = isNaN(dd) ? null : dd;
+              }
+            }
+
+            if (m && d && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+              return `${months[m - 1]} ${d}`;
+            }
+            return null;
           } catch (_) {
             return null;
           }

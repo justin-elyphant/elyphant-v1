@@ -325,7 +325,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -440,8 +440,8 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
           <Input
             ref={inputRef}
             value={currentMessage}
-            onChange={(e) => setCurrentMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+             onChange={(e) => setCurrentMessage(e.target.value)}
+             onKeyDown={handleKeyDown}
             placeholder="Tell me about the gift you're looking for..."
             disabled={isLoading}
             className="flex-1"

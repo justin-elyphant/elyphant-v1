@@ -474,6 +474,15 @@ Let me take you to your profile where you can start building your wishlist. You 
     } catch (e) {
       console.error('Auto-gift setup error', e);
       toast.error("Couldn't set up auto-gifting right now");
+      // Keep the conversation going even on failure
+      try {
+        const res = await chatWithNicole(
+          `I couldn't set up auto-gifting just now. Let's keep going—what budget should we use for ${String((context as any).recipient)}'s ${String((context as any).occasion)}?`
+        );
+        if (res?.message) {
+          addMessage({ type: 'nicole', content: res.message, timestamp: new Date() });
+        }
+      } catch {}
     } finally {
       setIsSettingUpAutoGift(false);
     }
@@ -627,7 +636,7 @@ Let me take you to your profile where you can start building your wishlist. You 
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   placeholder="Tell me about your gift recipient..."
                   className="flex-1"
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSendMessage();

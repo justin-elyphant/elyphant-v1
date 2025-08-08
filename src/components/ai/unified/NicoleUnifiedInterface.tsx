@@ -209,6 +209,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     } catch (e) {
       console.error('Auto-gift setup error', e);
       toast.error("Couldn't set up auto-gifting right now");
+      // Keep the conversation going even on failure
+      try {
+        await chatWithNicole(`I couldn't set up auto-gifting just now. Let's keep going—what budget should we use for ${String(ctx.recipient)}'s ${String(ctx.occasion)}?`);
+      } catch {}
     } finally {
       setIsSettingUpAutoGift(false);
     }

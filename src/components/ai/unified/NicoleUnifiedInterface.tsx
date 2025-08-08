@@ -90,7 +90,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     lastResponse,
     clearConversation,
     isReadyToSearch,
-    getConversationContext
+    getConversationContext,
+    updateContext
   } = useUnifiedNicoleAI({
     initialContext: buildInitialContext(),
     onResponse: (response) => {
@@ -143,6 +144,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       // Add user message to display
       setMessages(prev => [...prev, { role: 'user', content: message }]);
     }
+
+    // Lightweight context extraction (helps trigger CTA if backend didn't tag it)
+    const lower = message.toLowerCase();
+    const occ = lower.includes('birthday') ? 'birthday'
+      : lower.includes('anniversary') ? 'anniversary'
+      : lower.includes('christmas') ? 'christmas'
+      : undefined;
+    if (occ) { try { updateContext({ occasion: occ } as any); } catch {} }
 
     // Send to Nicole and get response
     const response = await chatWithNicole(message);
@@ -266,7 +275,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       {/* Smart Auto-Gift CTA (proactive) */}
       {(() => {
         const ctx = getConversationContext() as any;
-        const canOffer = Boolean(ctx?.recipient && ctx?.occasion && ctx?.capability !== 'auto_gifting');
+        const canOffer = Boolean(ctx?.recipient && ctx?.occasion);
         return canOffer ? (
           <div className="px-4 pt-2">
             <SmartAutoGiftCTA

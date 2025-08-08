@@ -194,7 +194,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   // Smart Auto-Gift CTA logic
   const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
   const canOfferAutoGift = Boolean(
-    context?.recipient && context?.occasion && context?.capability !== 'auto_gifting'
+    context?.recipient && context?.occasion
   );
 
   const handleOfferAutoGift = async () => {

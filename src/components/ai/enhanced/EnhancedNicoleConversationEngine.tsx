@@ -422,7 +422,7 @@ Let me take you to your profile where you can start building your wishlist. You 
   // Smart Auto-Gift CTA logic
   const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
   const canOfferAutoGift = Boolean(
-    (context as any)?.recipient && (context as any)?.occasion && (context as any)?.capability !== 'auto_gifting'
+    (context as any)?.recipient && (context as any)?.occasion
   );
 
   const handleOfferAutoGift = async () => {

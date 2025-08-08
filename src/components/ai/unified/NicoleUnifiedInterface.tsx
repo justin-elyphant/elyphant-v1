@@ -11,6 +11,7 @@ import SmartAutoGiftCTA from '@/components/ai/ctas/SmartAutoGiftCTA';
 import { setupAutoGiftWithUnifiedSystems } from '@/services/ai/unified/autoGiftSetupHelper';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
+import { useEnhancedGiftRecommendations } from '@/hooks/useEnhancedGiftRecommendations';
 
 interface NicoleUnifiedInterfaceProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ interface NicoleUnifiedInterfaceProps {
 
 interface Message {
   role: string;
-  content: string;
+  content?: string;
+  type?: 'text' | 'recommendations';
+  payload?: any;
 }
 
 export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
@@ -44,6 +47,17 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   
+  // Curated flow state
+  const [curatedActive, setCuratedActive] = useState(false);
+  const [curatedFlow, setCuratedFlow] = useState<{
+    status: 'idle' | 'collecting' | 'ready_to_search' | 'showing_recs';
+    budget?: [number, number];
+    preferences: string[];
+    hint?: string;
+  }>({ status: 'idle', preferences: [] });
+
+  // Recommendations hook
+  const { generateRecommendations, trackRecommendationEvent, lastResponse: recLastResponse } = useEnhancedGiftRecommendations();
   // Convert string capability to proper NicoleCapability type
   const getCapabilityFromString = (capabilityString?: string): NicoleCapability => {
     switch (capabilityString) {
@@ -135,6 +149,125 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isOpen, messages.length, loading, chatWithNicole, initialContext]);
+
+  // --- Curated flow helpers ---
+  const clamp = (n: number, min = 5, max = 5000) => Math.max(min, Math.min(max, n));
+  const extractBudget = (text: string): [number, number] | undefined => {
+    const t = text.toLowerCase();
+    const rangeMatch = t.match(/\$?\s*(\d{1,5})\s*[-to]+\s*\$?\s*(\d{1,5})/);
+    if (rangeMatch) {
+      const a = clamp(parseInt(rangeMatch[1], 10));
+      const b = clamp(parseInt(rangeMatch[2], 10));
+      return [Math.min(a, b), Math.max(a, b)];
+    }
+    const underMatch = t.match(/(under|below)\s*\$?\s*(\d{1,5})/);
+    if (underMatch) {
+      const b = clamp(parseInt(underMatch[2], 10));
+      return [5, b];
+    }
+    const aroundMatch = t.match(/(around|about|~)\s*\$?\s*(\d{1,5})/);
+    if (aroundMatch) {
+      const n = clamp(parseInt(aroundMatch[2], 10));
+      return [clamp(Math.floor(n * 0.8)), clamp(Math.ceil(n * 1.2))];
+    }
+    const single = t.match(/\$?\s*(\d{1,5})/);
+    if (single) {
+      const n = clamp(parseInt(single[1], 10));
+      return [clamp(Math.floor(n * 0.8)), clamp(Math.ceil(n * 1.2))];
+    }
+    return undefined;
+  };
+
+  const extractPreferences = (text: string): string[] => {
+    return text
+      .toLowerCase()
+      .split(/,| and | & |\n|\r/g)
+      .map(s => s.trim())
+      .filter(s => s.length > 2 && !s.match(/^\$?\d+/));
+  };
+
+  const computeScheduleDate = (ctx: any, daysBefore = 7): string => {
+    try {
+      let target = new Date();
+      if (ctx?.eventDate) {
+        const d = new Date(ctx.eventDate);
+        if (!isNaN(d.getTime())) {
+          d.setDate(d.getDate() - daysBefore);
+          target = d;
+        }
+      } else {
+        target.setDate(target.getDate() + 7);
+      }
+      const minDate = new Date();
+      minDate.setDate(minDate.getDate() + 2);
+      if (target < minDate) target = minDate;
+      return target.toISOString();
+    } catch {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString();
+    }
+  };
+
+  const mapToWishlistRecs = (prods: any[], budget?: [number, number]) => {
+    return (prods || []).map((p: any) => {
+      const inBudget = budget ? (p.price >= budget[0] && p.price <= budget[1]) : false;
+      const priority = p.matchScore >= 0.8 ? 'high' : p.matchScore >= 0.6 ? 'medium' : 'low';
+      return {
+        item: {
+          id: p.productId,
+          title: p.title,
+          name: p.title,
+          price: p.price,
+          image_url: p.imageUrl,
+          brand: p.vendor,
+          url: p.purchaseUrl
+        },
+        inBudget,
+        priority,
+        reasoning: Array.isArray(p.matchReasons) ? p.matchReasons.join(' • ') : (p.description || '')
+      } as any;
+    });
+  };
+
+  const showRecommendations = async (budget: [number, number] | undefined, prefs: string[]) => {
+    const ctx = getConversationContext() as any;
+    try {
+      const response = await generateRecommendations(
+        {
+          recipient: ctx.recipient,
+          relationship: ctx.relationship,
+          occasion: ctx.occasion,
+          budget: budget as any,
+          interests: prefs,
+          giftType: 'wishlist_based'
+        },
+        ctx.recipient_id || ctx.recipient,
+        undefined,
+        { maxRecommendations: 8, includeExplanations: true, fallbackToGeneric: true }
+      );
+
+      const mapped = mapToWishlistRecs(response?.recommendations || [], budget);
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', type: 'recommendations', payload: { recommendations: mapped, userBudget: budget } }
+      ]);
+
+      try {
+        const recId = (recLastResponse as any)?.analytics?.recommendationId;
+        if (recId) {
+          for (const m of mapped.slice(0, 5)) {
+            await trackRecommendationEvent(recId, 'viewed', { productId: m.item?.id });
+          }
+        }
+      } catch {}
+
+      setCuratedFlow(prev => ({ ...prev, status: 'showing_recs' }));
+    } catch (e) {
+      console.error('Failed to generate recommendations', e);
+      toast.error('Could not fetch ideas right now');
+    }
+  };
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;

@@ -7,6 +7,10 @@ import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { NicoleConversationDisplay } from './NicoleConversationDisplay';
 import { NicoleInputArea } from './NicoleInputArea';
 import { NicoleCapability } from '@/services/ai/unified/types';
+import SmartAutoGiftCTA from '@/components/ai/ctas/SmartAutoGiftCTA';
+import { setupAutoGiftWithUnifiedSystems } from '@/services/ai/unified/autoGiftSetupHelper';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth';
 
 interface NicoleUnifiedInterfaceProps {
   isOpen: boolean;
@@ -85,7 +89,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     loading,
     lastResponse,
     clearConversation,
-    isReadyToSearch
+    isReadyToSearch,
+    getConversationContext
   } = useUnifiedNicoleAI({
     initialContext: buildInitialContext(),
     onResponse: (response) => {
@@ -172,6 +177,43 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }));
   };
 
+  // Smart Auto-Gift CTA state and handler
+  const { user } = useAuth();
+  const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
+
+  const handleOfferAutoGift = async () => {
+    const ctx = getConversationContext() as any;
+    if (!user?.id) {
+      toast.error("Please log in to set up auto-gifting");
+      return;
+    }
+    try {
+      setIsSettingUpAutoGift(true);
+      const budget = Array.isArray(ctx?.budget) && ctx.budget.length === 2
+        ? { min: Number(ctx.budget[0]), max: Number(ctx.budget[1]) }
+        : undefined;
+
+      if (budget) {
+        await setupAutoGiftWithUnifiedSystems({
+          userId: user.id,
+          recipientName: String(ctx.recipient),
+          occasion: String(ctx.occasion),
+          budget,
+          relationship: ctx.relationship || 'friend'
+        });
+        toast.success("Auto-gifting set up successfully");
+        await chatWithNicole(`Please confirm we've set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)} with a $${budget.min}-$${budget.max} budget.`);
+      } else {
+        await chatWithNicole(`Let's set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}.`);
+      }
+    } catch (e) {
+      console.error('Auto-gift setup error', e);
+      toast.error("Couldn't set up auto-gifting right now");
+    } finally {
+      setIsSettingUpAutoGift(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   // Force inline positioning for all instances to appear below search bar
@@ -216,6 +258,22 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         showSearchButton={isReadyToSearch()}
         onSearch={handleSearch}
       />
+
+      {/* Smart Auto-Gift CTA (proactive) */}
+      {(() => {
+        const ctx = getConversationContext() as any;
+        const canOffer = Boolean(ctx?.recipient && ctx?.occasion && ctx?.capability !== 'auto_gifting');
+        return canOffer ? (
+          <div className="px-4 pt-2">
+            <SmartAutoGiftCTA
+              recipientName={String(ctx.recipient)}
+              occasion={String(ctx.occasion)}
+              loading={isSettingUpAutoGift}
+              onConfirm={handleOfferAutoGift}
+            />
+          </div>
+        ) : null;
+      })()}
 
       {/* Input Area */}
       <NicoleInputArea

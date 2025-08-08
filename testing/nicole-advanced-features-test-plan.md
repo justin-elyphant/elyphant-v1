@@ -6,6 +6,10 @@
 - Invitation Email System (`send-invitation-email` Edge Function)
 - Product Curation (`useNicoleProductCuration`)
 - Enhanced Invitation Flow
+- Smart Auto-Gift CTA & Rules (`setupAutoGiftWithUnifiedSystems`)
+- Curated Gift Flow (`useEnhancedGiftRecommendations`)
+- Unified Nicole Conversation Continuity (`useUnifiedNicoleAI`)
+- Analytics Tracking (recommendation events)
 
 ---
 
@@ -22,6 +26,8 @@
 | FS005 | Search with minimum query length | 1. Enter 1-2 characters<br>2. Attempt search | No search executed (minimum length validation) | Medium | |
 | FS006 | Search error handling | 1. Disconnect network<br>2. Attempt search | Error message displayed gracefully | Medium | |
 | FS007 | Privacy settings impact | 1. Search for user with private profile<br>2. Verify results | Respects privacy settings (limited info shown) | High | |
+| FS008 | Realtime pending count updates | 1. Trigger a connection request from another session<br>2. Observe Social Hub badge/count | Pending count updates via realtime without refresh | Medium | |
+| FS009 | Mixed status badges | 1. Search where results include Connected/Pending/Invite<br>2. Verify each badge | Correct statuses shown with proper actions | Medium | |
 
 ### 2. Invitation Email System
 
@@ -55,7 +61,46 @@
 | IT003 | Connection to auto-gifting | 1. Connect with user<br>2. Set up auto-gifting | Connected users available in auto-gift setup | High | |
 | IT004 | Mobile responsiveness | 1. Test all flows on mobile<br>2. Verify usability | All interfaces work properly on mobile | Medium | |
 
-### 5. Edge Cases & Error Scenarios
+### 5. Smart Auto-Gift CTA (Hands‑Free)
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| HF001 | CTA appears when recipient+occasion known | 1. Progress chat until both are set | CTA shown with two options | High | |
+| HF002 | Let Nicole handle it -> rule created | 1. Click hands‑free option | Auto-gift rule created; success message; ruleId stored | High | |
+| HF003 | Budget fallback | 1. Omit budget<br>2. Choose hands‑free | Sensible default budget applied; rule created | Medium | |
+| HF004 | Error fallback | 1. Force rule creation failure | Nicole apologizes and suggests curated flow | Medium | |
+| HF005 | Scheduling default | 1. Choose hands‑free | Schedule set N days before event | Medium | |
+
+### 6. Curated Recommendations Flow
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| CQ001 | Start curated flow | 1. Click “Let’s curate together” | Bot asks for interests/budget | High | |
+| CQ002 | Generate ideas | 1. Provide brief prefs<br>2. Say “show ideas” | 3–5 recs rendered in chat | High | |
+| CQ003 | Tracking views | 1. Open ideas | 'viewed' events recorded for top items | Medium | |
+| CQ004 | Select gift | 1. Click “Select This Gift” on a card | Rule created with selected_product; toast + confirmation | High | |
+| CQ005 | Track click | 1. Select gift | 'clicked' event recorded with productId/price | Medium | |
+| CQ006 | Dismiss recommendation | 1. Dismiss one card | 'dismissed' event recorded; card removed | Low | |
+| CQ007 | Recommendation failure | 1. Simulate API error | Graceful error + optional QuickGiftIdeas fallback | Medium | |
+| CQ008 | Budget respect | 1. Set budget range | Shown items mostly within range | Medium | |
+
+### 7. Conversation Context & Continuity
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| CC001 | Context merge after rule creation | 1. Create rule | Context includes ruleId, mode, scheduleDate | High | |
+| CC002 | Continue dialog after actions | 1. Complete hands‑free or selection | Assistant follows up with next helpful options | Medium | |
+| CC003 | Persist context across refresh | 1. Refresh mid-flow | Context restored; CTA logic consistent | Medium | |
+
+### 8. Analytics & Event Tracking
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| AN001 | Recommendation analytics record | 1. Generate ideas | recommendationId present; events attach to it | High | |
+| AN002 | Purchase/selection tracking | 1. Select gift | 'clicked' then rule created; analytics updated | High | |
+| AN003 | Error logging visibility | 1. Simulate failures | Errors logged to console & edge logs | Medium | |
+
+### 9. Edge Cases & Error Scenarios
 
 | Test ID | Test Case | Steps | Expected Result | Priority | Status |
 |---------|-----------|-------|-----------------|----------|--------|

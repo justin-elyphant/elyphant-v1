@@ -218,14 +218,32 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
           relationship: (context as any).relationship || 'friend'
         });
         toast.success("Auto-gifting set up successfully");
-        await chatWithNicole(
+        const res = await chatWithNicole(
           `Please confirm we've set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)} with a $${budget.min}-$${budget.max} budget.`
         );
+        if (res?.message) {
+          setMessages(prev => [...prev, { role: 'assistant', content: res.message }]);
+        }
+        if (res?.metadata?.contextUpdates) {
+          updateContext(res.metadata.contextUpdates);
+        }
+        if (res?.showSearchButton) {
+          setShowSearchButton(true);
+        }
       } else {
         // Otherwise, transition the conversation into auto-gifting flow to capture budget
-        await chatWithNicole(
+        const res = await chatWithNicole(
           `Let's set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)}.`
         );
+        if (res?.message) {
+          setMessages(prev => [...prev, { role: 'assistant', content: res.message }]);
+        }
+        if (res?.metadata?.contextUpdates) {
+          updateContext(res.metadata.contextUpdates);
+        }
+        if (res?.showSearchButton) {
+          setShowSearchButton(true);
+        }
       }
     } catch (e) {
       console.error('Auto-gift setup error', e);

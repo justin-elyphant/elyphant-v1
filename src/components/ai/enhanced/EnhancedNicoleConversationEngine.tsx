@@ -445,13 +445,31 @@ Let me take you to your profile where you can start building your wishlist. You 
           relationship: (context as any).relationship || 'friend'
         });
         toast.success("Auto-gifting set up successfully");
-        await chatWithNicole(
+        const res = await chatWithNicole(
           `Please confirm we've set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)} with a $${budget.min}-$${budget.max} budget.`
         );
+        if (res?.message) {
+          addMessage({ type: 'nicole', content: res.message, timestamp: new Date() });
+        }
+        if (res?.metadata?.contextUpdates) {
+          updateContext(res.metadata.contextUpdates);
+        }
+        if (res?.showSearchButton) {
+          setShowCTAButton(true);
+        }
       } else {
-        await chatWithNicole(
+        const res = await chatWithNicole(
           `Let's set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)}.`
         );
+        if (res?.message) {
+          addMessage({ type: 'nicole', content: res.message, timestamp: new Date() });
+        }
+        if (res?.metadata?.contextUpdates) {
+          updateContext(res.metadata.contextUpdates);
+        }
+        if (res?.showSearchButton) {
+          setShowCTAButton(true);
+        }
       }
     } catch (e) {
       console.error('Auto-gift setup error', e);

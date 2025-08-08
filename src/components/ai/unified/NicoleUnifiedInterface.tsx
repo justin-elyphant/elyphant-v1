@@ -254,7 +254,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       ]);
 
       try {
-        const recId = (recLastResponse as any)?.analytics?.recommendationId;
+        const recId = (response as any)?.analytics?.recommendationId;
         if (recId) {
           for (const m of mapped.slice(0, 5)) {
             await trackRecommendationEvent(recId, 'viewed', { productId: m.item?.id });
@@ -266,6 +266,64 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     } catch (e) {
       console.error('Failed to generate recommendations', e);
       toast.error('Could not fetch ideas right now');
+    }
+  };
+
+  const handleSelectFromWidget = async (rec: any) => {
+    const ctx = getConversationContext() as any;
+    if (!user?.id) {
+      toast.error("Please log in to schedule a gift");
+      return;
+    }
+
+    // Track click
+    try {
+      const recId = (recLastResponse as any)?.analytics?.recommendationId;
+      if (recId) {
+        await trackRecommendationEvent(recId, 'clicked', {
+          productId: rec?.item?.id,
+          price: rec?.item?.price,
+        });
+      }
+    } catch {}
+
+    const scheduleDate = computeScheduleDate(ctx, 7);
+    const budgetObj = curatedFlow.budget
+      ? { min: curatedFlow.budget[0], max: curatedFlow.budget[1] }
+      : (Array.isArray(ctx?.budget) && ctx.budget.length === 2
+        ? { min: Number(ctx.budget[0]), max: Number(ctx.budget[1]) }
+        : {});
+
+    try {
+      const rule: any = await setupAutoGiftWithUnifiedSystems({
+        userId: user.id,
+        recipientId: ctx.recipient_id || undefined,
+        recipientName: String(ctx.recipient),
+        occasion: String(ctx.occasion),
+        budget: budgetObj as any,
+        relationship: ctx.relationship || 'friend',
+        selected_product: {
+          id: String(rec?.item?.id),
+          title: rec?.item?.title || rec?.item?.name,
+          price: rec?.item?.price ? Number(rec?.item?.price) : undefined,
+          image_url: rec?.item?.image_url,
+          url: rec?.item?.url,
+          source: 'ai_selected'
+        },
+        scheduleDate
+      });
+
+      toast.success('Gift scheduled');
+      setMessages(prev => [...prev, { role: 'assistant', content: `Done! I’ll order ${rec?.item?.title || rec?.item?.name} ahead of ${String(ctx.recipient)}'s ${String(ctx.occasion)}. You’ll get a heads-up before it goes through.` }]);
+      try {
+        updateContext({ ruleId: rule?.id, mode: 'curated', selectedProduct: rec?.item, scheduleDate } as any);
+      } catch {}
+      setCuratedActive(false);
+      setCuratedFlow({ status: 'idle', preferences: [] });
+    } catch (e) {
+      console.error('Rule creation failed', e);
+      toast.error("Couldn't schedule that gift");
+      setMessages(prev => [...prev, { role: 'assistant', content: "I couldn't schedule that just now. Want me to enable hands‑free auto‑gift instead or try different ideas?" }]);
     }
   };
 
@@ -373,6 +431,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   const handleCurated = async () => {
     setShowAutoGiftChoice(false);
     try {
+      setCuratedActive(true);
+      setCuratedFlow({ status: 'collecting', preferences: [] });
       updateContext?.({ capability: 'gift_advisor' } as any);
       await chatWithNicole("Great — let's curate together. Tell me 1-2 interests or brands they love, and your target price range. You can also say 'show ideas' to skip.");
     } catch {}
@@ -421,6 +481,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         isLoading={loading}
         showSearchButton={isReadyToSearch()}
         onSearch={handleSearch}
+        onSelectRecommendation={(item) => handleSelectFromWidget(item)}
       />
 
       {/* Smart Auto-Gift CTA (proactive) */}

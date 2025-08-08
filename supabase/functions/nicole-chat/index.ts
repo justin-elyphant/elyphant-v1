@@ -602,7 +602,24 @@ CTA CONTEXT AWARENESS:
 
 CASUAL LANGUAGE RULE: Always use casual, friendly language. Say "Hey!" not "Hello!", "I'm Nicole" not "I'm so excited to help", "What's up?" not "How may I assist you today?". Keep it conversational and natural, never formal or GPT-ish.
 
-PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" throughout your responses to maintain personal connection.`;
+PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" throughout your responses to maintain personal connection.
+
+CONTEXT-AWARE ACTION PROMPTS:
+${updatedContext?.suggestedAction?.shouldSuggestAction ? `
+IMPORTANT: Include this proactive action prompt in your response:
+Action Type: ${updatedContext.suggestedAction.actionType}
+Suggested Prompt: "${updatedContext.suggestedAction.actionPrompt}"
+Next Steps: ${JSON.stringify(updatedContext.suggestedAction.nextSteps)}
+
+Integrate this naturally into your response to guide the user toward the next logical step in their gift-giving journey.
+` : 'No specific action prompts needed for this response.'}
+
+PROACTIVE ENGAGEMENT RULES:
+- When birthday information is shared, immediately suggest scheduling or auto-gifting
+- After interests are discovered, suggest search or budget setting
+- When full context is gathered, suggest starting the search
+- When connections are mentioned, offer gift exploration or auto-gifting setup
+- Always provide clear next steps rather than leaving conversations hanging`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -639,6 +656,58 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
 
     console.log("✅ AI Response generated:", aiMessage.substring(0, 100) + "...");
 
+    // Context completion analysis for proactive action suggestions
+    const analyzeContextCompletion = (context: any, userMessage: string) => {
+      const hasRecipient = Boolean(context.recipient || context.mentionedConnection?.name);
+      const hasOccasion = Boolean(context.occasion);
+      const hasInterests = Boolean(context.interests?.length > 0);
+      const hasBudget = Boolean(context.budget);
+      const hasBirthday = /birthday/i.test(userMessage) || context.occasion === 'birthday';
+      const hasConnectionInfo = Boolean(context.mentionedConnection);
+
+      // Birthday context completion - suggest scheduling after birthday is shared
+      if (hasBirthday && hasRecipient && !context.actionSuggested) {
+        return {
+          shouldSuggestAction: true,
+          actionType: 'birthday_scheduling',
+          actionPrompt: `Perfect! Now that I know when ${context.mentionedConnection?.name || context.recipient || 'their'} birthday is, would you like me to help you schedule a gift for them? I can either help you pick something specific, or set up auto-gifting so I handle everything for you each year!`,
+          nextSteps: ['schedule_gift', 'setup_auto_gifting', 'pick_specific_gift']
+        };
+      }
+
+      // Interest discovery completion - suggest search when enough context gathered
+      if (hasRecipient && hasInterests && !hasBudget && !context.actionSuggested) {
+        return {
+          shouldSuggestAction: true,
+          actionType: 'interest_discovery',
+          actionPrompt: `Great! Based on their interests in ${context.interests?.slice(0, 2).join(' and ')}, I can find some perfect gift options. What's your budget range so I can show you the best matches?`,
+          nextSteps: ['set_budget', 'show_options_anyway']
+        };
+      }
+
+      // Full context completion - ready to search
+      if (hasRecipient && (hasOccasion || hasInterests) && hasBudget && !context.actionSuggested) {
+        return {
+          shouldSuggestAction: true,
+          actionType: 'full_context',
+          actionPrompt: `Perfect! I have everything I need - recipient, ${hasOccasion ? 'occasion' : 'interests'}, and budget. Ready to find the perfect gift?`,
+          nextSteps: ['start_search', 'refine_context']
+        };
+      }
+
+      // Connection discovery completion - suggest gift exploration
+      if (hasConnectionInfo && !context.actionSuggested) {
+        return {
+          shouldSuggestAction: true,
+          actionType: 'connection_discovery',
+          actionPrompt: `Since you're connected to ${context.mentionedConnection.name}, I can help you find a gift for them! What's the occasion, or should I help you set up auto-gifting for their upcoming events?`,
+          nextSteps: ['find_occasion', 'setup_auto_gifting', 'browse_interests']
+        };
+      }
+
+      return { shouldSuggestAction: false };
+    };
+
     // Enhanced context parsing with sophisticated intelligence
     const updatedContext = {
       ...enrichedContext,
@@ -646,6 +715,13 @@ PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" t
       conversationPhase: isDynamicGreeting ? 'greeting_completed' : (enrichedContext?.conversationPhase || 'active'),
       capability: enrichedContext?.capability || 'conversation'
     };
+
+    // Apply context completion analysis
+    const contextAnalysis = analyzeContextCompletion(updatedContext, message);
+    if (contextAnalysis.shouldSuggestAction) {
+      updatedContext.actionSuggested = true;
+      updatedContext.suggestedAction = contextAnalysis;
+    }
 
     // Parse and extract context from AI message and user message
     const combinedMessage = `${message} ${aiMessage}`.toLowerCase();

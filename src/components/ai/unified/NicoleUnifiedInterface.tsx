@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Sparkles, Bot } from 'lucide-react';
 import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { NicoleConversationDisplay } from './NicoleConversationDisplay';
@@ -189,8 +189,13 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   // Smart Auto-Gift CTA state and handler
   const { user } = useAuth();
   const [isSettingUpAutoGift, setIsSettingUpAutoGift] = useState(false);
+  const [showAutoGiftChoice, setShowAutoGiftChoice] = useState(false);
 
-  const handleOfferAutoGift = async () => {
+  const handleOfferAutoGift = () => {
+    setShowAutoGiftChoice(true);
+  };
+
+  const setupAutoGiftFromContext = async () => {
     const ctx = getConversationContext() as any;
     if (!user?.id) {
       toast.error("Please log in to set up auto-gifting");
@@ -200,31 +205,44 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       setIsSettingUpAutoGift(true);
       const budget = Array.isArray(ctx?.budget) && ctx.budget.length === 2
         ? { min: Number(ctx.budget[0]), max: Number(ctx.budget[1]) }
-        : undefined;
+        : {};
 
-      if (budget) {
-        await setupAutoGiftWithUnifiedSystems({
-          userId: user.id,
-          recipientName: String(ctx.recipient),
-          occasion: String(ctx.occasion),
-          budget,
-          relationship: ctx.relationship || 'friend'
-        });
-        toast.success("Auto-gifting set up successfully");
-        await chatWithNicole(`Please confirm we've set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)} with a $${budget.min}-$${budget.max} budget.`);
-      } else {
-        await chatWithNicole(`Let's set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}.`);
-      }
+      await setupAutoGiftWithUnifiedSystems({
+        userId: user.id,
+        recipientId: ctx.recipient_id || undefined,
+        recipientName: String(ctx.recipient),
+        occasion: String(ctx.occasion),
+        budget,
+        relationship: ctx.relationship || 'friend'
+      });
+
+      toast.success("Auto-gifting set up successfully");
+      try {
+        await chatWithNicole(`All set! I've enabled auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}. I'll handle reminders and picks within your preferences.`);
+      } catch {}
     } catch (e) {
       console.error('Auto-gift setup error', e);
       toast.error("Couldn't set up auto-gifting right now");
       // Keep the conversation going even on failure
       try {
-        await chatWithNicole(`I couldn't set up auto-gifting just now. Let's keep going—what budget should we use for ${String(ctx.recipient)}'s ${String(ctx.occasion)}?`);
+        await chatWithNicole(`I couldn't set up auto-gifting just now. What budget should we use for ${String(ctx.recipient)}'s ${String(ctx.occasion)} so I can try again?`);
       } catch {}
     } finally {
       setIsSettingUpAutoGift(false);
     }
+  };
+
+  const handleHandsFree = async () => {
+    setShowAutoGiftChoice(false);
+    await setupAutoGiftFromContext();
+  };
+
+  const handleCurated = async () => {
+    setShowAutoGiftChoice(false);
+    try {
+      updateContext?.({ capability: 'gift_advisor' } as any);
+      await chatWithNicole("Great — let's curate together. Tell me 1-2 interests or brands they love, and your target price range. You can also say 'show ideas' to skip.");
+    } catch {}
   };
 
   if (!isOpen) return null;
@@ -287,6 +305,24 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
           </div>
         ) : null;
       })()}
+
+      {/* Auto-Gift choice dialog */}
+      <Dialog open={showAutoGiftChoice} onOpenChange={setShowAutoGiftChoice}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>How should we handle this gift?</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Button onClick={handleHandsFree} disabled={isSettingUpAutoGift}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Let Nicole handle it (hands-free)
+            </Button>
+            <Button variant="outline" onClick={handleCurated} disabled={isSettingUpAutoGift}>
+              Let's curate together
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Input Area */}
       <NicoleInputArea

@@ -7,10 +7,13 @@ import { Search, Loader2, Sparkles, Bot } from 'lucide-react';
 import TypingIndicator from '@/components/messaging/TypingIndicator';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Profile } from '@/types/profile';
+import WishlistRecommendations from '@/components/ai/enhanced/WishlistRecommendations';
 
 interface Message {
   role: string;
-  content: string;
+  content?: string;
+  type?: 'text' | 'recommendations';
+  payload?: any;
 }
 
 interface NicoleConversationDisplayProps {
@@ -19,6 +22,7 @@ interface NicoleConversationDisplayProps {
   showSearchButton?: boolean;
   onSearch?: () => void;
   context?: any;
+  onSelectRecommendation?: (item: any) => void;
 }
 
 export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps> = ({
@@ -26,7 +30,8 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   isLoading = false,
   showSearchButton = false,
   onSearch,
-  context
+  context,
+  onSelectRecommendation,
 }) => {
   const { profile } = useProfile();
   
@@ -76,7 +81,17 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
                   : 'bg-white/50 text-gray-800 border border-white/30 rounded-bl-md shadow-sm'
               }`}
             >
-              <p className="text-sm leading-relaxed">{message.content}</p>
+              {message.type === 'recommendations' ? (
+                <div className="-mx-2">
+                  <WishlistRecommendations
+                    recommendations={message.payload?.recommendations || []}
+                    userBudget={message.payload?.userBudget}
+                    onSelectItem={(item) => onSelectRecommendation?.(item)}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed">{message.content}</p>
+              )}
             </div>
 
             {/* Avatar for user messages */}

@@ -9,6 +9,15 @@ export interface AutoGiftSetupParams {
   occasion: string; // e.g., 'birthday', 'anniversary'
   budget: { min?: number; max?: number } | number;
   relationship?: string; // e.g., 'friend'
+  selected_product?: {
+    id: string;
+    title?: string;
+    price?: number;
+    image_url?: string;
+    url?: string;
+    source?: string;
+  };
+  scheduleDate?: string; // ISO timestamp when we plan to order
 }
 
 function normalizeOccasion(rawOccasion?: string): string {
@@ -63,7 +72,7 @@ async function resolveRecipientIdFromName(userId: string, recipientName?: string
 }
 
 export async function setupAutoGiftWithUnifiedSystems(params: AutoGiftSetupParams) {
-  const { userId, recipientId: rawRecipientId, recipientName, occasion, budget, relationship = 'friend' } = params;
+  const { userId, recipientId: rawRecipientId, recipientName, occasion, budget, relationship = 'friend', selected_product, scheduleDate } = params;
 
   // Load user settings for defaults and protections
   const settings = await unifiedGiftManagementService.getSettings(userId);
@@ -79,7 +88,7 @@ export async function setupAutoGiftWithUnifiedSystems(params: AutoGiftSetupParam
     throw new Error("Recipient could not be resolved from connections");
   }
 
-  const ruleData = {
+  const ruleData: any = {
     user_id: userId,
     recipient_id: recipientId,
     pending_recipient_email: null as string | null,
@@ -95,15 +104,25 @@ export async function setupAutoGiftWithUnifiedSystems(params: AutoGiftSetupParam
     gift_selection_criteria: {
       source: (settings?.default_gift_source || 'wishlist') as 'wishlist' | 'ai' | 'both' | 'specific',
       categories: [],
-      exclude_items: []
+      exclude_items: [],
     },
     relationship_context: {
       closeness_level: 5,
       relationship_type: relationship,
       recipient_name: recipientName || undefined
     }
-  } as const;
+  };
 
-  const newRule = await unifiedGiftManagementService.createRule(ruleData as any);
+  if (selected_product) {
+    ruleData.gift_selection_criteria.selected_product = selected_product;
+    ruleData.gift_selection_criteria.selection_strategies = ['explicit_selection','wishlist_preference','interest_match'];
+    ruleData.gift_selection_criteria.source = 'specific';
+  }
+
+  if (scheduleDate) {
+    ruleData.scheduled_date = scheduleDate;
+  }
+
+  const newRule = await unifiedGiftManagementService.createRule(ruleData);
   return newRule;
 }

@@ -125,10 +125,25 @@ serve(async (req) => {
           const r = String(enrichedContext.recipient).toLowerCase().trim();
           if (r && !PRONOUN_STOPWORDS.has(r)) candidates.push(enrichedContext.recipient);
         }
-        const msgNameMatch = message.match(/friend\s+([A-Za-z][A-Za-z'-]+)/i) || message.match(/\bfor\s+([A-Z][a-zA-Z'-]+)/);
-        if (msgNameMatch?.[1]) {
-          const n = msgNameMatch[1].toLowerCase();
-          if (!PRONOUN_STOPWORDS.has(n)) candidates.push(msgNameMatch[1]);
+        
+        // Enhanced pattern matching for connection detection including connection status queries
+        const nameMatches = [
+          message.match(/friend\s+([A-Za-z][A-Za-z'-]+)/i),
+          message.match(/\bfor\s+([A-Z][a-zA-Z'-]+)/),
+          // New patterns for connection status queries
+          message.match(/connected\s+to\s+([A-Za-z][A-Za-z'\s-]+?)(?:\s|$|\?)/i),
+          message.match(/connection\s+(?:with|to)\s+([A-Za-z][A-Za-z'\s-]+?)(?:\s|$|\?)/i),
+          message.match(/(?:am\s+I|I'm)\s+connected\s+to\s+([A-Za-z][A-Za-z'\s-]+?)(?:\s|$|\?)/i),
+          message.match(/check\s+connection\s+(?:with|to)?\s*([A-Za-z][A-Za-z'\s-]+?)(?:\s|$|\?)/i),
+          message.match(/see\s+if.*connected.*to\s+([A-Za-z][A-Za-z'\s-]+?)(?:\s|$|\?)/i)
+        ];
+        
+        for (const match of nameMatches) {
+          if (match?.[1]) {
+            const extractedName = match[1].trim();
+            const n = extractedName.toLowerCase();
+            if (!PRONOUN_STOPWORDS.has(n)) candidates.push(extractedName);
+          }
         }
 
         const normalize = (s: string) => s.toLowerCase().trim();
@@ -142,12 +157,27 @@ serve(async (req) => {
           });
         });
 
+        // Check if this is a connection status query
+        const isConnectionQuery = /\b(connected|connection)\b/i.test(message) && 
+                                 /(see if|check|am I|I'm|status|with|to)\b/i.test(message);
+        
         if (detectedMatches.length) {
           enrichedContext.mentionedConnection = detectedMatches[0];
           enrichedContext.detectedConnections = detectedMatches;
+          enrichedContext.isConnectionStatusQuery = isConnectionQuery;
           console.log('✅ Detected mentioned connection:', enrichedContext.mentionedConnection);
+          if (isConnectionQuery) {
+            console.log('🔍 Connection status query detected for:', enrichedContext.mentionedConnection.name);
+          }
         } else {
           console.log('ℹ️ No direct connection match detected from message.');
+          
+          // If it's a connection query but no match found, check for name extraction from candidates
+          if (isConnectionQuery && candidates.length > 0) {
+            enrichedContext.isConnectionStatusQuery = true;
+            enrichedContext.queryTargetName = candidates[0];
+            console.log('🔍 Connection status query detected for unconnected user:', candidates[0]);
+          }
         }
       }
     } catch (e) {
@@ -444,6 +474,7 @@ CORE MISSION: Transform gift-giving from stressful to delightful through intelli
 
 ENHANCED CAPABILITIES:
 - Connection Integration: Access to user's friends/family for personalized recommendations
+- Connection Status Queries: Can check if user is connected to specific people
 - Wishlist Analysis: Deep insights into recipient preferences and interests
 - Multi-category Search: Sophisticated product discovery across categories
 - Auto-gifting Intelligence: Proactive gift suggestions with timing optimization
@@ -454,6 +485,15 @@ CONVERSATION INTELLIGENCE:
 - Understand relationship contexts and gift appropriateness
 - Recognize occasions and timing preferences
 - Build comprehensive recipient profiles through conversation
+- Handle connection status queries with clear responses
+
+CONNECTION STATUS QUERIES:
+When user asks about connections (e.g. "Can you see if I'm connected to [Name]?"):
+- Check user's connections for exact or partial name matches
+- If connected: "Yes! You're connected to [Name]. Would you like me to help you find a gift for them?"
+- If not connected: "I don't see [Name] in your connections. You can search for them in the Social Hub to send a connection request, or I can help you find gifts for them anyway!"
+- Always offer to help with gift-giving regardless of connection status
+- Be helpful and positive, never just give a yes/no answer
 
 AUTO-GIFT CONVERSATION FLOW (when auto-gifting intent detected):
 1. GREETING → assess auto-gifting vs one-time gift intent

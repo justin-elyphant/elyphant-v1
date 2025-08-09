@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,6 +34,34 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   onSelectRecommendation,
 }) => {
   const { profile } = useProfile();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastScrollTop = useRef<number>(0);
+  
+  // Auto-scroll to bottom when messages change or loading state changes
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+        if (scrollContainer) {
+          const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+          const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+          
+          // Only auto-scroll if user is near bottom or it's the first message
+          if (isNearBottom || messages.length <= 1) {
+            scrollContainer.scrollTo({
+              top: scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+          lastScrollTop.current = scrollTop;
+        }
+      }
+    };
+    
+    // Small delay to ensure DOM is updated
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages.length, isLoading]);
   
   // Get user initials for fallback
   const getUserInitials = () => {
@@ -55,7 +83,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   ];
 
   return (
-    <ScrollArea className="flex-1 p-4 bg-transparent">
+    <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-transparent">
       <div className="space-y-4">
         {messages.map((message, index) => (
           <div

@@ -228,7 +228,7 @@ serve(async (req) => {
             const { data: recipientProfile, error: recipientError } = await supabase
               .from('profiles')
               .select(`
-                id, name, username, gift_preferences, data_sharing_settings,
+                id, name, username, gift_preferences, data_sharing_settings, interests,
                 wishlists:wishlists(id, title, is_public, items:wishlist_items(id, product_id, title)),
                 special_dates:user_special_dates(id, date, date_type)
               `)

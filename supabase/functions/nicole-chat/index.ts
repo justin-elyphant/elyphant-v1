@@ -247,17 +247,30 @@ serve(async (req) => {
                 hasProfile: true
               };
 
-              // Extract interests based on privacy settings
-              if (recipientProfile.gift_preferences && recipientProfile.data_sharing_settings?.gift_preferences) {
+              // Extract interests from both interests field and gift_preferences based on privacy settings
+              let extractedInterests: string[] = [];
+              
+              // First check the interests field directly
+              if (recipientProfile.interests && Array.isArray(recipientProfile.interests)) {
+                extractedInterests = recipientProfile.interests;
+                console.log('✅ Recipient interests loaded from interests field:', extractedInterests);
+              }
+              
+              // Also check gift_preferences if available and no direct interests
+              if (extractedInterests.length === 0 && recipientProfile.gift_preferences && recipientProfile.data_sharing_settings?.gift_preferences) {
                 const sharingLevel = recipientProfile.data_sharing_settings.gift_preferences;
                 if (sharingLevel === 'public' || sharingLevel === 'friends') {
-                  recipientContext.interests = recipientProfile.gift_preferences.map((pref: any) => {
+                  extractedInterests = recipientProfile.gift_preferences.map((pref: any) => {
                     if (typeof pref === 'string') return pref;
                     if (typeof pref === 'object' && pref.category) return pref.category;
                     return '';
                   }).filter(Boolean);
-                  console.log('✅ Recipient interests loaded:', recipientContext.interests);
+                  console.log('✅ Recipient interests loaded from gift_preferences:', extractedInterests);
                 }
+              }
+              
+              if (extractedInterests.length > 0) {
+                recipientContext.interests = extractedInterests;
               }
 
               // Extract wishlist data based on privacy

@@ -604,15 +604,11 @@ CASUAL LANGUAGE RULE: Always use casual, friendly language. Say "Hey!" not "Hell
 
 PERSONALIZATION RULE: Always use the user's name "${userFirstName || 'there'}" throughout your responses to maintain personal connection.
 
-CONTEXT-AWARE ACTION PROMPTS:
-${updatedContext?.suggestedAction?.shouldSuggestAction ? `
-IMPORTANT: Include this proactive action prompt in your response:
-Action Type: ${updatedContext.suggestedAction.actionType}
-Suggested Prompt: "${updatedContext.suggestedAction.actionPrompt}"
-Next Steps: ${JSON.stringify(updatedContext.suggestedAction.nextSteps)}
-
-Integrate this naturally into your response to guide the user toward the next logical step in their gift-giving journey.
-` : 'No specific action prompts needed for this response.'}
+PROACTIVE ENGAGEMENT GUIDELINES:
+- When birthday information is shared, suggest scheduling or auto-gifting
+- After interests are discovered, suggest search or budget setting  
+- When full context is gathered, suggest starting the search
+- Always guide users toward the next logical step in their gift-giving journey
 
 PROACTIVE ENGAGEMENT RULES:
 - When birthday information is shared, immediately suggest scheduling or auto-gifting
@@ -846,8 +842,15 @@ PROACTIVE ENGAGEMENT RULES:
       actions.push('find_gifts_for_connection', 'setup_auto_gifting', 'view_wishlist');
     }
 
+    // Apply context-aware action prompts to the final response
+    let finalMessage = aiMessage;
+    if (contextAnalysis.shouldSuggestAction) {
+      // Append the action prompt naturally to the AI response
+      finalMessage += `\n\n${contextAnalysis.actionPrompt}`;
+    }
+
     const responsePayload = {
-      message: aiMessage,
+      message: finalMessage,
       context: updatedContext,
       capability: updatedContext.capability,
       actions,
@@ -860,12 +863,15 @@ PROACTIVE ENGAGEMENT RULES:
             'Set up auto-gifting',
             'Show me gift options'
           ] :
-          [
-            "Tell me more about the recipient",
-            "What's the occasion?",
-            "What's your budget?"
-          ],
-        connectionMatch: updatedContext?.mentionedConnection || null
+          contextAnalysis.shouldSuggestAction ?
+            contextAnalysis.nextSteps.map(step => step.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())) :
+            [
+              "Tell me more about the recipient",
+              "What's the occasion?",
+              "What's your budget?"
+            ],
+        connectionMatch: updatedContext?.mentionedConnection || null,
+        suggestedAction: contextAnalysis.shouldSuggestAction ? contextAnalysis : null
       }
     };
 

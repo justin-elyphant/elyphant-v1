@@ -109,18 +109,29 @@
 | WC001 | Nicole accesses user wishlists | 1. User with existing wishlists chats with Nicole<br>2. Ask for gift suggestions | Nicole references user's existing wishlists in recommendations | High | |
 | WC002 | Wishlist privacy compliance | 1. Set wishlist sharing to private<br>2. Chat with Nicole | Nicole respects privacy settings for wishlist data | High | |
 | WC003 | Empty wishlist handling | 1. User with no wishlists chats with Nicole<br>2. Ask for gift recommendations | Nicole gracefully handles empty wishlist state | Medium | |
-| WC004 | Wishlist item suggestions | 1. User asks about gifts for someone<br>2. Target has wishlisted items | Nicole suggests items from target's wishlist | High | |
-| WC005 | Cross-reference recipient wishlists | 1. Chat about gifting to a connection<br>2. Connection has public wishlists | Nicole incorporates recipient's wishlist data | High | |
+| WC004 | Recipient wishlist access | 1. Chat about gifting to connection<br>2. Connection has accessible wishlists | Nicole fetches and references recipient's wishlist data | High | |
+| WC005 | Recipient wishlist suggestions | 1. Ask about what Justin likes<br>2. Justin has wishlists in profile | Nicole says "I see Justin has wishlists for [categories]" | High | |
 
 ### 10. Nicole Interest-Based Recommendations
 
 | Test ID | Test Case | Steps | Expected Result | Priority | Status |
 |---------|-----------|-------|-----------------|----------|--------|
 | IB001 | User interest integration | 1. User with profile interests chats with Nicole<br>2. Ask for gift suggestions | Nicole considers user's interests in recommendations | High | |
-| IB002 | Recipient interest matching | 1. Chat about gifting to connection with known interests<br>2. Request recommendations | Nicole matches gifts to recipient's interests | High | |
+| IB002 | Recipient interest matching | 1. Chat about gifting to connection with known interests<br>2. Ask "what does [name] like?" | Nicole references recipient's stored profile interests | High | |
 | IB003 | Interest-category alignment | 1. User has specific interests (e.g., tech, books)<br>2. Ask for gift ideas | Nicole suggests gifts aligned with interest categories | High | |
 | IB004 | Combined interest-wishlist logic | 1. User with both interests and wishlists active<br>2. Request gift recommendations | Nicole intelligently combines both data sources | High | |
 | IB005 | Missing interest graceful handling | 1. User with minimal profile interests<br>2. Chat with Nicole | Nicole gracefully handles sparse interest data | Medium | |
+
+### 11. Nicole Recipient Profile Context Awareness
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| RPC001 | Connection profile data retrieval | 1. Mention a connection (e.g., "Can you locate Justin Meeks?")<br>2. Ask about their interests | Nicole fetches and stores full recipient profile data including interests, wishlists, special dates | High | |
+| RPC002 | Contextual interest responses | 1. Connected to someone with profile interests<br>2. Ask "what are some things he likes?" | Nicole responds with specific interests from recipient's profile: "I see Justin likes [specific interests]" | High | |
+| RPC003 | Wishlist context awareness | 1. Connected to someone with wishlists<br>2. Ask about gift suggestions for them | Nicole mentions recipient's wishlist categories and suggests browsing them | High | |
+| RPC004 | Privacy-compliant data access | 1. Connection has private interests/wishlists<br>2. Ask about their preferences | Nicole respects privacy settings and doesn't access restricted data | High | |
+| RPC005 | Special dates integration | 1. Connection has birthday in profile<br>2. Ask about their birthday | Nicole uses fetched special dates data for occasion-based recommendations | Medium | |
+| RPC006 | No concatenated responses | 1. Any chat with Nicole after connection detection<br>2. Observe response format | Nicole provides clean, single responses without duplicated action prompts | High | |
 
 ### 11. Edge Cases & Error Scenarios
 

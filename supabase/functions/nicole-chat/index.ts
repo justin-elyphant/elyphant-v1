@@ -219,6 +219,81 @@ serve(async (req) => {
           enrichedContext.detectedConnections = detectedMatches;
           enrichedContext.isConnectionStatusQuery = isConnectionQuery;
           console.log('✅ Detected mentioned connection:', enrichedContext.mentionedConnection);
+          
+          // Fetch full recipient profile data for context awareness
+          try {
+            const recipientUserId = detectedMatches[0].userId;
+            console.log(`🔍 Fetching recipient profile data for: ${detectedMatches[0].name} (${recipientUserId})`);
+            
+            const { data: recipientProfile, error: recipientError } = await supabase
+              .from('profiles')
+              .select(`
+                id, name, username, gift_preferences, data_sharing_settings,
+                wishlists:wishlists(id, title, is_public, items:wishlist_items(id, product_id, product_name)),
+                special_dates:user_special_dates(id, date, date_type)
+              `)
+              .eq('id', recipientUserId)
+              .single();
+
+            if (recipientError) {
+              console.error('❌ Error fetching recipient profile:', recipientError);
+            } else if (recipientProfile) {
+              console.log('✅ Recipient profile loaded for context awareness');
+              
+              // Check privacy settings and extract available data
+              const recipientContext: any = {
+                name: recipientProfile.name,
+                username: recipientProfile.username,
+                hasProfile: true
+              };
+
+              // Extract interests based on privacy settings
+              if (recipientProfile.gift_preferences && recipientProfile.data_sharing_settings?.gift_preferences) {
+                const sharingLevel = recipientProfile.data_sharing_settings.gift_preferences;
+                if (sharingLevel === 'public' || sharingLevel === 'friends') {
+                  recipientContext.interests = recipientProfile.gift_preferences.map((pref: any) => {
+                    if (typeof pref === 'string') return pref;
+                    if (typeof pref === 'object' && pref.category) return pref.category;
+                    return '';
+                  }).filter(Boolean);
+                  console.log('✅ Recipient interests loaded:', recipientContext.interests);
+                }
+              }
+
+              // Extract wishlist data based on privacy
+              if (recipientProfile.wishlists?.length > 0) {
+                const publicWishlists = recipientProfile.wishlists.filter((w: any) => w.is_public);
+                const friendsWishlists = recipientProfile.wishlists; // Connected users can see all wishlists
+                
+                // Use appropriate wishlist set based on connection
+                const availableWishlists = friendsWishlists; // Since they're connected
+                if (availableWishlists.length > 0) {
+                  recipientContext.wishlists = availableWishlists.map((w: any) => ({
+                    id: w.id,
+                    title: w.title || 'Untitled Wishlist',
+                    itemCount: w.items?.length || 0,
+                    isPublic: w.is_public
+                  }));
+                  console.log('✅ Recipient wishlists loaded:', recipientContext.wishlists);
+                }
+              }
+
+              // Extract special dates (birthdays, etc.)
+              if (recipientProfile.special_dates?.length > 0) {
+                recipientContext.specialDates = recipientProfile.special_dates.map((date: any) => ({
+                  type: date.date_type,
+                  date: date.date
+                }));
+                console.log('✅ Recipient special dates loaded:', recipientContext.specialDates);
+              }
+
+              // Store the enriched recipient profile data
+              enrichedContext.recipientProfile = recipientContext;
+            }
+          } catch (error) {
+            console.error('❌ Exception fetching recipient profile data:', error);
+          }
+          
           if (isConnectionQuery) {
             console.log('🔍 Connection status query detected for:', enrichedContext.mentionedConnection.name);
           }
@@ -618,6 +693,26 @@ ${enrichedContext?.userWishlists?.length > 0 ? `
 - If user has empty wishlists, acknowledge and offer to help populate them
 ` : '- No wishlists available from user profile (privacy restricted or empty)'}
 
+RECIPIENT PROFILE CONTEXT AWARENESS:
+${enrichedContext?.recipientProfile ? `
+- Recipient Profile: ${enrichedContext.recipientProfile.name} (@${enrichedContext.recipientProfile.username})
+- IMPORTANT: When user asks about recipient's interests or preferences, reference this data
+${enrichedContext.recipientProfile.interests?.length > 0 ? `
+- Recipient's Known Interests: ${JSON.stringify(enrichedContext.recipientProfile.interests)}
+- Use these interests to make contextually aware gift suggestions
+- Reference specific interests when explaining recommendations
+` : '- No known interests for recipient (privacy restricted or not shared)'}
+${enrichedContext.recipientProfile.wishlists?.length > 0 ? `
+- Recipient's Wishlists: ${JSON.stringify(enrichedContext.recipientProfile.wishlists)}
+- IMPORTANT: When suggesting gifts, mention if items align with their wishlist categories
+- Can suggest browsing their wishlist for specific ideas
+` : '- No accessible wishlists for recipient (privacy restricted or empty)'}
+${enrichedContext.recipientProfile.specialDates?.length > 0 ? `
+- Recipient's Special Dates: ${JSON.stringify(enrichedContext.recipientProfile.specialDates)}
+- Use this information for occasion-based recommendations and timing
+` : '- No special dates available for recipient'}
+` : '- No recipient profile data available (no connection mentioned or privacy restricted)'}
+
 SOPHISTICATED CONTEXT VARIABLES:
     ${enrichedContext ? `
 - Current recipient: ${enrichedContext.recipient || 'Not specified'}
@@ -915,12 +1010,9 @@ PROACTIVE ENGAGEMENT RULES:
       actions.push('find_gifts_for_connection', 'setup_auto_gifting', 'view_wishlist');
     }
 
-    // Apply context-aware action prompts to the final response
+    // Remove automatic action prompt appending to prevent concatenated responses
+    // Let Nicole handle follow-up suggestions naturally in her AI-generated response
     let finalMessage = aiMessage;
-    if (contextAnalysis.shouldSuggestAction) {
-      // Append the action prompt naturally to the AI response
-      finalMessage += `\n\n${contextAnalysis.actionPrompt}`;
-    }
 
     const responsePayload = {
       message: finalMessage,

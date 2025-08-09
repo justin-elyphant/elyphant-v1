@@ -229,7 +229,7 @@ serve(async (req) => {
               .from('profiles')
               .select(`
                 id, name, username, gift_preferences, data_sharing_settings,
-                wishlists:wishlists(id, title, is_public, items:wishlist_items(id, product_id, product_name)),
+                wishlists:wishlists(id, title, is_public, items:wishlist_items(id, product_id, title)),
                 special_dates:user_special_dates(id, date, date_type)
               `)
               .eq('id', recipientUserId)

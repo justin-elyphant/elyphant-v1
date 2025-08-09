@@ -49,7 +49,7 @@ serve(async (req) => {
         console.log(`🔍 Looking up user profile for ID: ${context.currentUserId}`);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, username, gift_preferences, data_sharing_settings')
+          .select('id, name, username, gift_preferences, data_sharing_settings, wishlists')
           .eq('id', context.currentUserId)
           .single();
         
@@ -61,10 +61,11 @@ serve(async (req) => {
             id: profileData.id, 
             name: profileData.name,
             username: profileData.username,
-            hasInterests: !!profileData.gift_preferences && profileData.gift_preferences.length > 0
+            hasInterests: !!profileData.gift_preferences && profileData.gift_preferences.length > 0,
+            hasWishlists: !!profileData.wishlists && profileData.wishlists.length > 0
           });
           
-          // Store profile data for later interest extraction
+          // Store profile data for later interest and wishlist extraction
           if (profileData.gift_preferences && profileData.data_sharing_settings) {
             userProfile.storedInterests = profileData.gift_preferences.map((pref: any) => {
               if (typeof pref === 'string') return pref;
@@ -72,6 +73,12 @@ serve(async (req) => {
               return '';
             }).filter(Boolean);
             userProfile.giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
+          }
+
+          // Store wishlist data for later extraction
+          if (profileData.wishlists && profileData.data_sharing_settings) {
+            userProfile.storedWishlists = profileData.wishlists;
+            userProfile.wishlistsSharing = profileData.data_sharing_settings?.gift_preferences; // Using gift_preferences privacy for wishlists
           }
         } else {
           console.log('⚠️ No profile data found for user ID:', context.currentUserId);
@@ -140,6 +147,27 @@ serve(async (req) => {
             }
           } else {
             console.log('🔒 User interests access restricted by privacy settings');
+          }
+        }
+
+        // Extract user wishlists if privacy allows
+        if (userProfile?.storedWishlists && userProfile?.wishlistsSharing) {
+          const wishlistsSharing = userProfile.wishlistsSharing;
+          // Allow access to wishlists if sharing is public or friends (Nicole is acting as user's assistant)
+          if (wishlistsSharing === 'public' || wishlistsSharing === 'friends') {
+            if (userProfile.storedWishlists.length > 0) {
+              const wishlistSummary = userProfile.storedWishlists.map((wishlist: any) => ({
+                id: wishlist.id,
+                title: wishlist.title || 'Untitled Wishlist',
+                itemCount: wishlist.items?.length || 0,
+                isPublic: wishlist.is_public || false
+              }));
+              enrichedContext.userWishlists = wishlistSummary;
+              enrichedContext.hasWishlists = true;
+              console.log('✅ User wishlists loaded:', wishlistSummary);
+            }
+          } else {
+            console.log('🔒 User wishlists access restricted by privacy settings');
           }
         }
 
@@ -574,13 +602,21 @@ CONVERSATION CONTEXT TRACKING:
 - Relationship: closeness level affects appropriateness
 - Timeline: urgency affects recommendations
 
-USER STORED INTERESTS & CONTEXT AWARENESS:
+USER STORED INTERESTS & WISHLIST CONTEXT AWARENESS:
 ${enrichedContext?.userStoredInterests?.length > 0 ? `
 - User's stored interests from profile: ${JSON.stringify(enrichedContext.userStoredInterests)}
 - IMPORTANT: Use these stored interests for personalized suggestions and reference them when making recommendations
 - Cross-reference stored interests with conversation mentions for better context
 - If no interests mentioned in conversation, proactively suggest based on stored interests
 ` : '- No stored interests available from user profile (privacy restricted or empty)'}
+
+${enrichedContext?.userWishlists?.length > 0 ? `
+- User's existing wishlists: ${JSON.stringify(enrichedContext.userWishlists)}
+- IMPORTANT: Reference user's existing wishlists when making suggestions
+- Can suggest adding items to specific wishlists by name
+- Use wishlist data to understand user's gifting patterns and preferences
+- If user has empty wishlists, acknowledge and offer to help populate them
+` : '- No wishlists available from user profile (privacy restricted or empty)'}
 
 SOPHISTICATED CONTEXT VARIABLES:
     ${enrichedContext ? `
@@ -593,6 +629,8 @@ SOPHISTICATED CONTEXT VARIABLES:
 - Previous conversation context: ${enrichedContext.previousContext || 'None'}
 - User connections available: ${enrichedContext.userConnections?.length || 0}
 - User wishlists available: ${enrichedContext.userWishlists?.length || 0}
+- User has wishlists: ${enrichedContext.hasWishlists || false}
+- User wishlist details: ${enrichedContext.userWishlists ? JSON.stringify(enrichedContext.userWishlists) : 'None'}
 - Detected connection match: ${enrichedContext.mentionedConnection?.name || 'None'}
     ` : 'No context provided'}
 
@@ -621,7 +659,8 @@ CONVERSATION STATE MANAGEMENT:
 
 ADVANCED INTELLIGENCE INTEGRATION:
     - Connection data: "${enrichedContext?.userConnections ? `User has ${enrichedContext.userConnections.length} connections` : 'No connection data'}"
-    - Wishlist insights: "${enrichedContext?.userWishlists ? `User has ${enrichedContext.userWishlists.length} wishlists` : 'No wishlist data'}"
+    - Wishlist insights: "${enrichedContext?.userWishlists ? `User has ${enrichedContext.userWishlists.length} wishlists: ${enrichedContext.userWishlists.map(w => `"${w.title}" (${w.itemCount} items)`).join(', ')}` : 'No wishlist data'}"
+    - Wishlist engagement: "${enrichedContext?.hasWishlists ? 'User actively creates wishlists - can reference and suggest adding items' : 'User has no wishlists - offer to help create or populate wishlists'}"
     - Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
 
 STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.

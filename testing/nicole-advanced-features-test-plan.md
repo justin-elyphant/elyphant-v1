@@ -9,6 +9,8 @@
 - Smart Auto-Gift CTA & Rules (`setupAutoGiftWithUnifiedSystems`)
 - Curated Gift Flow (`useEnhancedGiftRecommendations`)
 - Unified Nicole Conversation Continuity (`useUnifiedNicoleAI`)
+- Nicole Wishlist Contextual Awareness (wishlist integration)
+- Nicole Interest-Based Recommendations (user interests integration)
 - Analytics Tracking (recommendation events)
 
 ---
@@ -100,7 +102,27 @@
 | AN002 | Purchase/selection tracking | 1. Select gift | 'clicked' then rule created; analytics updated | High | |
 | AN003 | Error logging visibility | 1. Simulate failures | Errors logged to console & edge logs | Medium | |
 
-### 9. Edge Cases & Error Scenarios
+### 9. Nicole Wishlist Contextual Awareness
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| WC001 | Nicole accesses user wishlists | 1. User with existing wishlists chats with Nicole<br>2. Ask for gift suggestions | Nicole references user's existing wishlists in recommendations | High | |
+| WC002 | Wishlist privacy compliance | 1. Set wishlist sharing to private<br>2. Chat with Nicole | Nicole respects privacy settings for wishlist data | High | |
+| WC003 | Empty wishlist handling | 1. User with no wishlists chats with Nicole<br>2. Ask for gift recommendations | Nicole gracefully handles empty wishlist state | Medium | |
+| WC004 | Wishlist item suggestions | 1. User asks about gifts for someone<br>2. Target has wishlisted items | Nicole suggests items from target's wishlist | High | |
+| WC005 | Cross-reference recipient wishlists | 1. Chat about gifting to a connection<br>2. Connection has public wishlists | Nicole incorporates recipient's wishlist data | High | |
+
+### 10. Nicole Interest-Based Recommendations
+
+| Test ID | Test Case | Steps | Expected Result | Priority | Status |
+|---------|-----------|-------|-----------------|----------|--------|
+| IB001 | User interest integration | 1. User with profile interests chats with Nicole<br>2. Ask for gift suggestions | Nicole considers user's interests in recommendations | High | |
+| IB002 | Recipient interest matching | 1. Chat about gifting to connection with known interests<br>2. Request recommendations | Nicole matches gifts to recipient's interests | High | |
+| IB003 | Interest-category alignment | 1. User has specific interests (e.g., tech, books)<br>2. Ask for gift ideas | Nicole suggests gifts aligned with interest categories | High | |
+| IB004 | Combined interest-wishlist logic | 1. User with both interests and wishlists active<br>2. Request gift recommendations | Nicole intelligently combines both data sources | High | |
+| IB005 | Missing interest graceful handling | 1. User with minimal profile interests<br>2. Chat with Nicole | Nicole gracefully handles sparse interest data | Medium | |
+
+### 11. Edge Cases & Error Scenarios
 
 | Test ID | Test Case | Steps | Expected Result | Priority | Status |
 |---------|-----------|-------|-----------------|----------|--------|

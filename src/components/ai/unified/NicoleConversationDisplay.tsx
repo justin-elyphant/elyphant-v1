@@ -8,11 +8,12 @@ import TypingIndicator from '@/components/messaging/TypingIndicator';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Profile } from '@/types/profile';
 import WishlistRecommendations from '@/components/ai/enhanced/WishlistRecommendations';
+import ProductTilesDisplay from '@/components/ai/enhanced/ProductTilesDisplay';
 
 interface Message {
   role: string;
   content?: string;
-  type?: 'text' | 'recommendations';
+  type?: 'text' | 'recommendations' | 'product_tiles';
   payload?: any;
 }
 
@@ -23,6 +24,7 @@ interface NicoleConversationDisplayProps {
   onSearch?: () => void;
   context?: any;
   onSelectRecommendation?: (item: any) => void;
+  onProductTileAction?: (action: 'wishlist' | 'gift' | 'details', product: any) => void;
 }
 
 export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps> = ({
@@ -32,6 +34,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   onSearch,
   context,
   onSelectRecommendation,
+  onProductTileAction,
 }) => {
   const { profile } = useProfile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -115,6 +118,15 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
                     recommendations={message.payload?.recommendations || []}
                     userBudget={message.payload?.userBudget}
                     onSelectItem={(item) => onSelectRecommendation?.(item)}
+                  />
+                </div>
+              ) : message.type === 'product_tiles' ? (
+                <div className="-mx-2">
+                  <ProductTilesDisplay
+                    products={message.payload?.products || []}
+                    onAddToWishlist={(product) => onProductTileAction?.('wishlist', product)}
+                    onSendGift={(product) => onProductTileAction?.('gift', product)}
+                    onViewDetails={(product) => onProductTileAction?.('details', product)}
                   />
                 </div>
               ) : (

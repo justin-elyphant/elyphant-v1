@@ -122,6 +122,7 @@ export interface NicoleResponse {
   actions: string[];
   searchQuery?: string;
   showSearchButton: boolean;
+  showProductTiles?: boolean;
   metadata?: {
     confidence?: number;
     suggestedFollowups?: string[];

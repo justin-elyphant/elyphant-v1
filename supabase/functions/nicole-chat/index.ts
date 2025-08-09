@@ -540,6 +540,7 @@ serve(async (req) => {
           capability: (enrichedContext as any)?.capability || 'conversation',
           actions: ['chat'],
           showSearchButton: false,
+          showProductTiles: false,
           metadata: {
             confidence: 0.95,
             suggestedFollowups: [],
@@ -997,7 +998,11 @@ PROACTIVE ENGAGEMENT RULES:
     // Check if AI indicates readiness for search
     const aiIndicatesReady = /(?:ready to search|find (?:products|gifts)|search for|look for items|browse (?:products|gifts)|show (?:me )?(?:some )?(?:options|products|gifts))/i.test(aiMessage);
     
+    // Check if user wants to see product suggestions after interests discussion
+    const wantsProductSuggestions = /(?:yes.*show.*suggestions|show.*me.*suggestions|see.*suggestions|view.*suggestions|display.*products|show.*products)/i.test(userMessage);
+    
     const showSearchButton = hasMinimumContext || (hasBudget && hasInterestsOrBrands) || aiIndicatesReady;
+    const showProductTiles = wantsProductSuggestions && hasInterestsOrBrands;
 
     console.log("CTA Button Logic:", {
       hasRecipient,
@@ -1006,7 +1011,9 @@ PROACTIVE ENGAGEMENT RULES:
       hasBudget,
       hasMinimumContext,
       aiIndicatesReady,
+      wantsProductSuggestions,
       showSearchButton,
+      showProductTiles,
       context: {
         recipient: updatedContext.recipient,
         occasion: updatedContext.occasion,
@@ -1027,12 +1034,22 @@ PROACTIVE ENGAGEMENT RULES:
     // Let Nicole handle follow-up suggestions naturally in her AI-generated response
     let finalMessage = aiMessage;
 
+    // Generate search query for product tiles if needed
+    let searchQuery;
+    if (showProductTiles && updatedContext.interests) {
+      searchQuery = updatedContext.interests.join(' ') + 
+        (updatedContext.detectedBrands ? ' ' + updatedContext.detectedBrands.join(' ') : '') +
+        (updatedContext.recipient ? ` gifts for ${updatedContext.recipient}` : '');
+    }
+
     const responsePayload = {
       message: finalMessage,
       context: updatedContext,
       capability: updatedContext.capability,
       actions,
       showSearchButton,
+      showProductTiles,
+      searchQuery,
       metadata: {
         confidence: showSearchButton ? 0.8 : 0.4,
         suggestedFollowups: showSearchButton ? 
@@ -1065,7 +1082,8 @@ PROACTIVE ENGAGEMENT RULES:
       error: error.message,
       message: "I'm sorry, I encountered an error. Please try again!",
       context: {},
-      showSearchButton: false 
+      showSearchButton: false,
+      showProductTiles: false
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

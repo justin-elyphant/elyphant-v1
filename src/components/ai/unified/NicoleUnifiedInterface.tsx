@@ -12,6 +12,8 @@ import { setupAutoGiftWithUnifiedSystems } from '@/services/ai/unified/autoGiftS
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { useEnhancedGiftRecommendations } from '@/hooks/useEnhancedGiftRecommendations';
+import { useUnifiedSearch } from '@/hooks/useUnifiedSearch';
+import { Product } from '@/types/product';
 
 interface NicoleUnifiedInterfaceProps {
   isOpen: boolean;
@@ -32,7 +34,7 @@ interface NicoleUnifiedInterfaceProps {
 interface Message {
   role: string;
   content?: string;
-  type?: 'text' | 'recommendations';
+  type?: 'text' | 'recommendations' | 'product_tiles';
   payload?: any;
 }
 
@@ -58,6 +60,9 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   // Recommendations hook
   const { generateRecommendations, trackRecommendationEvent, lastResponse: recLastResponse } = useEnhancedGiftRecommendations();
+  
+  // Search hook for product tiles
+  const { searchProducts } = useUnifiedSearch({ maxResults: 12 });
   // Convert string capability to proper NicoleCapability type
   const getCapabilityFromString = (capabilityString?: string): NicoleCapability => {
     switch (capabilityString) {
@@ -108,8 +113,24 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     updateContext
   } = useUnifiedNicoleAI({
     initialContext: buildInitialContext(),
-    onResponse: (response) => {
+    onResponse: async (response) => {
       setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
+      
+      // Handle product tiles display when Nicole provides search context
+      if (response.showProductTiles && response.searchQuery) {
+        try {
+          const products = await searchProducts(response.searchQuery, { maxResults: 12 });
+          if (products.length > 0) {
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              type: 'product_tiles',
+              payload: { products }
+            }]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch products for tiles:', error);
+        }
+      }
       
       // Handle intent completion callback for Hero component
       if (onIntentComplete && response.metadata?.contextUpdates?.selectedIntent) {
@@ -356,6 +377,32 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         }
         return [...prev, { role: 'assistant', content: response.message }];
       });
+    }
+  };
+
+  const handleProductTileAction = async (action: 'wishlist' | 'gift' | 'details', product: Product) => {
+    console.log(`Product tile ${action}:`, product);
+    
+    switch (action) {
+      case 'wishlist':
+        toast.success(`${product.title || product.name} added to wishlist`);
+        break;
+      case 'gift':
+        const ctx = getConversationContext() as any;
+        if (ctx.recipient) {
+          toast.success(`Gift scheduled for ${ctx.recipient}`);
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: `Perfect! I'll schedule ${product.title || product.name} for ${ctx.recipient}. You'll get a notification before it's sent.` 
+          }]);
+        } else {
+          toast.info('Please specify who this gift is for');
+        }
+        break;
+      case 'details':
+        // You could navigate to product details page here
+        toast.info('Product details coming soon');
+        break;
     }
   };
 

@@ -605,9 +605,9 @@ export class UnifiedNicoleAIService {
               *,
               profiles!user_connections_connected_user_id_fkey (
                 id,
-                display_name,
+                name,
                 username,
-                avatar_url,
+                profile_image,
                 interests
               )
             `)
@@ -617,7 +617,7 @@ export class UnifiedNicoleAIService {
           if (!error && connectionsData) {
             userConnections = connectionsData.map(conn => ({
               id: conn.connected_user_id,
-              name: conn.profiles?.display_name || conn.profiles?.username || 'Unknown',
+              name: conn.profiles?.name || conn.profiles?.username || 'Unknown',
               relationship: conn.relationship_type,
               interests: conn.profiles?.interests || []
             }));

@@ -64,24 +64,14 @@ serve(async (req) => {
             hasInterests: !!profileData.gift_preferences && profileData.gift_preferences.length > 0
           });
           
-          // Extract interests from gift preferences if privacy allows
+          // Store profile data for later interest extraction
           if (profileData.gift_preferences && profileData.data_sharing_settings) {
-            const giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
-            // Allow access to interests if sharing is public or friends (Nicole is acting as user's assistant)
-            if (giftPrefsSharing === 'public' || giftPrefsSharing === 'friends') {
-              const interests = profileData.gift_preferences.map((pref: any) => {
-                if (typeof pref === 'string') return pref;
-                if (typeof pref === 'object' && pref.category) return pref.category;
-                return '';
-              }).filter(Boolean);
-              
-              if (interests.length > 0) {
-                enrichedContext.userStoredInterests = interests;
-                console.log('✅ User stored interests loaded:', interests);
-              }
-            } else {
-              console.log('🔒 User interests access restricted by privacy settings');
-            }
+            userProfile.storedInterests = profileData.gift_preferences.map((pref: any) => {
+              if (typeof pref === 'string') return pref;
+              if (typeof pref === 'object' && pref.category) return pref.category;
+              return '';
+            }).filter(Boolean);
+            userProfile.giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
           }
         } else {
           console.log('⚠️ No profile data found for user ID:', context.currentUserId);
@@ -138,6 +128,20 @@ serve(async (req) => {
 
         enrichedContext.userConnections = userConnections;
         enrichedContext.hasConnections = userConnections.length > 0;
+
+        // Extract user stored interests if privacy allows
+        if (userProfile?.storedInterests && userProfile?.giftPrefsSharing) {
+          const giftPrefsSharing = userProfile.giftPrefsSharing;
+          // Allow access to interests if sharing is public or friends (Nicole is acting as user's assistant)
+          if (giftPrefsSharing === 'public' || giftPrefsSharing === 'friends') {
+            if (userProfile.storedInterests.length > 0) {
+              enrichedContext.userStoredInterests = userProfile.storedInterests;
+              console.log('✅ User stored interests loaded:', userProfile.storedInterests);
+            }
+          } else {
+            console.log('🔒 User interests access restricted by privacy settings');
+          }
+        }
 
         // Try to detect if the message mentions one of the connections by name (avoid pronoun false-positives)
         const PRONOUN_STOPWORDS = new Set(['his','her','their','them','him','she','he','theirs','hers','herself','himself','someone','anyone','they']);

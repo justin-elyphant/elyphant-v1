@@ -49,7 +49,7 @@ serve(async (req) => {
         console.log(`🔍 Looking up user profile for ID: ${context.currentUserId}`);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, username')
+          .select('id, name, username, gift_preferences, data_sharing_settings')
           .eq('id', context.currentUserId)
           .single();
         
@@ -60,8 +60,29 @@ serve(async (req) => {
           console.log('✅ User profile loaded for personalization:', { 
             id: profileData.id, 
             name: profileData.name,
-            username: profileData.username
+            username: profileData.username,
+            hasInterests: !!profileData.gift_preferences && profileData.gift_preferences.length > 0
           });
+          
+          // Extract interests from gift preferences if privacy allows
+          if (profileData.gift_preferences && profileData.data_sharing_settings) {
+            const giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
+            // Allow access to interests if sharing is public or friends (Nicole is acting as user's assistant)
+            if (giftPrefsSharing === 'public' || giftPrefsSharing === 'friends') {
+              const interests = profileData.gift_preferences.map((pref: any) => {
+                if (typeof pref === 'string') return pref;
+                if (typeof pref === 'object' && pref.category) return pref.category;
+                return '';
+              }).filter(Boolean);
+              
+              if (interests.length > 0) {
+                enrichedContext.userStoredInterests = interests;
+                console.log('✅ User stored interests loaded:', interests);
+              }
+            } else {
+              console.log('🔒 User interests access restricted by privacy settings');
+            }
+          }
         } else {
           console.log('⚠️ No profile data found for user ID:', context.currentUserId);
         }
@@ -549,11 +570,20 @@ CONVERSATION CONTEXT TRACKING:
 - Relationship: closeness level affects appropriateness
 - Timeline: urgency affects recommendations
 
+USER STORED INTERESTS & CONTEXT AWARENESS:
+${enrichedContext?.userStoredInterests?.length > 0 ? `
+- User's stored interests from profile: ${JSON.stringify(enrichedContext.userStoredInterests)}
+- IMPORTANT: Use these stored interests for personalized suggestions and reference them when making recommendations
+- Cross-reference stored interests with conversation mentions for better context
+- If no interests mentioned in conversation, proactively suggest based on stored interests
+` : '- No stored interests available from user profile (privacy restricted or empty)'}
+
 SOPHISTICATED CONTEXT VARIABLES:
     ${enrichedContext ? `
 - Current recipient: ${enrichedContext.recipient || 'Not specified'}
 - Current occasion: ${enrichedContext.occasion || 'Not specified'}  
 - Current interests: ${JSON.stringify(enrichedContext.interests || [])}
+- User's stored interests: ${JSON.stringify(enrichedContext.userStoredInterests || [])}
 - Current brands mentioned: ${JSON.stringify(enrichedContext.detectedBrands || [])}
 - Current budget: ${enrichedContext.budget ? `$${enrichedContext.budget[0]}-${enrichedContext.budget[1]}` : 'Not specified'}
 - Previous conversation context: ${enrichedContext.previousContext || 'None'}

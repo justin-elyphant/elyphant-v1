@@ -52,6 +52,8 @@ export const useUnifiedNicoleAI = ({
       detectedBrands: [],
       currentUserId: user?.id || undefined,
       userFirstName: userFirstName || undefined,
+      mentionedConnection: undefined,
+      lastMentionedRecipient: undefined,
       ...localStorageContext,
       ...initialContext
     };
@@ -146,7 +148,9 @@ export const useUnifiedNicoleAI = ({
       capability: 'conversation',
       interests: [],
       detectedBrands: [],
-      currentUserId: user?.id
+      currentUserId: user?.id,
+      mentionedConnection: undefined,
+      lastMentionedRecipient: undefined
     });
     setLastResponse(null);
   }, [currentSessionId, user?.id]);

@@ -53,8 +53,8 @@ export class UnifiedNicoleAIService {
         lastMessage: message
       });
       
-      // Extract recipient info from natural conversation
-      const extractedRecipient = this.capabilityRouter.extractRecipientFromMessage(message);
+      // Extract recipient info from natural conversation with context awareness
+      const extractedRecipient = this.capabilityRouter.extractRecipientFromMessage(message, context);
       
       // Route to appropriate capability
       const capability = this.capabilityRouter.determineCapability(message, context);
@@ -95,7 +95,9 @@ export class UnifiedNicoleAIService {
         ...intelligenceContext,
         ...extractedRecipient,
         capability,
-        conversationPhase: this.determineConversationPhase(message, intelligenceContext)
+        conversationPhase: this.determineConversationPhase(message, intelligenceContext),
+        // Update lastMentionedRecipient for pronoun resolution
+        lastMentionedRecipient: extractedRecipient.recipient || intelligenceContext.lastMentionedRecipient
       };
 
       let response: NicoleResponse;

@@ -15,6 +15,16 @@ export interface UnifiedNicoleContext {
   conversationPhase: string;
   capability: NicoleCapability;
   
+  // Connection memory for pronoun resolution
+  mentionedConnection?: {
+    userId: string;
+    name: string;
+    username: string;
+    relationshipType: string;
+    status: string;
+  };
+  lastMentionedRecipient?: string;
+  
   // Auto-gift intelligence context
   autoGiftIntelligence?: {
     hasIntelligence: boolean;

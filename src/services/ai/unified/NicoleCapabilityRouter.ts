@@ -201,9 +201,40 @@ export class NicoleCapabilityRouter {
   /**
    * Extract recipient name from message and update context
    */
-  extractRecipientFromMessage(message: string): { recipient?: string; relationship?: string } {
+  extractRecipientFromMessage(message: string, context?: UnifiedNicoleContext): { recipient?: string; relationship?: string; mentionedConnection?: any } {
     const messageLower = message.toLowerCase();
-    const updates: { recipient?: string; relationship?: string } = {};
+    const updates: { recipient?: string; relationship?: string; mentionedConnection?: any } = {};
+    
+    // First check if this is a pronoun reference to a previously mentioned connection
+    if (context?.mentionedConnection) {
+      const pronounPatterns = [
+        /\b(he|his|him)\b/i,
+        /\b(she|her|hers)\b/i,
+        /\b(they|their|theirs|them)\b/i
+      ];
+      
+      const hasPronoun = pronounPatterns.some(pattern => pattern.test(message));
+      if (hasPronoun) {
+        // Reference the previously mentioned connection
+        updates.recipient = context.mentionedConnection.name;
+        updates.relationship = context.mentionedConnection.relationshipType;
+        updates.mentionedConnection = context.mentionedConnection;
+        return updates;
+      }
+    }
+    
+    // Check if this references the last mentioned recipient by name
+    if (context?.lastMentionedRecipient) {
+      const lastRecipientPattern = new RegExp(`\\b${context.lastMentionedRecipient.toLowerCase()}\\b`, 'i');
+      if (lastRecipientPattern.test(message)) {
+        updates.recipient = context.lastMentionedRecipient;
+        if (context.mentionedConnection) {
+          updates.mentionedConnection = context.mentionedConnection;
+          updates.relationship = context.mentionedConnection.relationshipType;
+        }
+        return updates;
+      }
+    }
     
     // Extract recipient name and relationship from common patterns
     const patterns = [

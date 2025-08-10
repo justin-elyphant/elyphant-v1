@@ -999,7 +999,7 @@ PROACTIVE ENGAGEMENT RULES:
     const aiIndicatesReady = /(?:ready to search|find (?:products|gifts)|search for|look for items|browse (?:products|gifts)|show (?:me )?(?:some )?(?:options|products|gifts))/i.test(aiMessage);
     
     // Check if user wants to see product suggestions after interests discussion
-    const wantsProductSuggestions = /(?:yes.*show.*suggestions|show.*me.*suggestions|see.*suggestions|view.*suggestions|display.*products|show.*products)/i.test(userMessage);
+    const wantsProductSuggestions = /(?:yes.*show.*suggestions|show.*me.*suggestions|see.*suggestions|view.*suggestions|display.*products|show.*products)/i.test(message);
     
     const showSearchButton = hasMinimumContext || (hasBudget && hasInterestsOrBrands) || aiIndicatesReady;
     const showProductTiles = wantsProductSuggestions && hasInterestsOrBrands;

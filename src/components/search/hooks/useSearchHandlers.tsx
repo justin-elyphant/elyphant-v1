@@ -118,8 +118,14 @@ export const useSearchHandlers = ({
       budgetLength: nicoleContext?.budget?.length,
       autoGiftBudget: nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
       allContextKeys: nicoleContext ? Object.keys(nicoleContext) : [],
-      fullContext: JSON.stringify(nicoleContext, null, 2)
+      fullContext: nicoleContext
     });
+    
+    console.log('🎯 BUDGET EXTRACTION FLOW:');
+    console.log('  1. Direct budget check:', nicoleContext?.budget);
+    console.log('  2. AutoGift budget check:', nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange);
+    console.log('  3. Interests check:', nicoleContext?.interests);
+    console.log('  4. Recipient check:', nicoleContext?.recipient);
     
     // Build marketplace URL with Nicole context
     const marketplaceUrl = new URL('/marketplace', window.location.origin);
@@ -129,16 +135,24 @@ export const useSearchHandlers = ({
     // Include budget information from multiple possible sources
     let minPrice, maxPrice;
     
+    // CRITICAL: Extract budget with enhanced debugging
+    console.log('🎯 BUDGET EXTRACTION ATTEMPT 1: context.budget');
     if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
       [minPrice, maxPrice] = nicoleContext.budget;
-      console.log('🎯 Budget extracted from context.budget array:', { minPrice, maxPrice });
-    } else if (nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
+      console.log('🎯 ✅ SUCCESS: Budget extracted from context.budget array:', { minPrice, maxPrice });
+    } 
+    
+    console.log('🎯 BUDGET EXTRACTION ATTEMPT 2: autoGiftIntelligence');
+    if (!minPrice && !maxPrice && nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
       [minPrice, maxPrice] = nicoleContext.autoGiftIntelligence.primaryRecommendation.budgetRange;
-      console.log('🎯 Budget extracted from autoGiftIntelligence:', { minPrice, maxPrice });
-    } else if (nicoleContext?.minPrice && nicoleContext?.maxPrice) {
+      console.log('🎯 ✅ SUCCESS: Budget extracted from autoGiftIntelligence:', { minPrice, maxPrice });
+    } 
+    
+    console.log('🎯 BUDGET EXTRACTION ATTEMPT 3: direct properties');
+    if (!minPrice && !maxPrice && nicoleContext?.minPrice && nicoleContext?.maxPrice) {
       minPrice = nicoleContext.minPrice;
       maxPrice = nicoleContext.maxPrice;
-      console.log('🎯 Budget extracted from direct minPrice/maxPrice:', { minPrice, maxPrice });
+      console.log('🎯 ✅ SUCCESS: Budget extracted from direct minPrice/maxPrice:', { minPrice, maxPrice });
     }
     
     if (minPrice !== undefined && maxPrice !== undefined) {

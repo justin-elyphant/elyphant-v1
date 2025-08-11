@@ -14,6 +14,7 @@ import { ConversationEnhancementService } from "@/services/ai/conversationEnhanc
 import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
 import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
 import { toast } from "sonner";
+import { NicoleBudgetDebugger } from "@/components/debug/NicoleBudgetDebugger";
 
 interface NicoleConversationEngineProps {
   isOpen: boolean;
@@ -194,33 +195,52 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   };
 
   const handleSearchInMarketplace = () => {
-    console.log('🎯 Search button clicked - navigating to marketplace');
-    console.log('🔍 onNavigateToMarketplace prop:', onNavigateToMarketplace);
-    console.log('🔍 Current context (full):', JSON.stringify(context, null, 2));
+    console.log('🔍 Nicole conversation navigate to marketplace triggered');
+    console.log('🔍 CURRENT CONTEXT DEBUG:', {
+      hasContext: !!context,
+      contextBudget: context?.budget,
+      contextBudgetType: typeof context?.budget,
+      contextBudgetArray: Array.isArray(context?.budget),
+      autoGiftBudget: context?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+      interests: context?.interests,
+      recipient: context?.recipient,
+      allContextKeys: context ? Object.keys(context) : []
+    });
     
     if (onNavigateToMarketplace) {
       try {
         const searchQuery = generateSearchQuery();
         console.log('🔍 Generated search query:', searchQuery);
         
-        // Create enhanced context with all budget sources
+        // Extract budget from context with priority order
+        let budgetArray: [number, number] | undefined = undefined;
+        
+        // 1. Check direct budget array
+        if (context.budget && Array.isArray(context.budget) && context.budget.length === 2) {
+          budgetArray = context.budget as [number, number];
+          console.log('🔍 Found budget in context.budget:', budgetArray);
+        }
+        // 2. Check autoGiftIntelligence budget
+        else if (context.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
+          budgetArray = context.autoGiftIntelligence.primaryRecommendation.budgetRange;
+          console.log('🔍 Found budget in autoGiftIntelligence:', budgetArray);
+        }
+        
+        // Create enhanced context with extracted budget
         const enhancedContext = {
           ...context,
-          // Ensure budget is available from any possible source
-          budget: context.budget || 
-                  (context.autoGiftIntelligence?.primaryRecommendation?.budgetRange) ||
-                  undefined
+          budget: budgetArray
         };
         
-        console.log('🔍 Enhanced context with budget:', {
-          originalBudget: context.budget,
-          autoGiftBudget: context.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
-          finalBudget: enhancedContext.budget,
+        console.log('🔍 FINAL CONTEXT TO PASS:', {
+          searchQuery,
+          budget: enhancedContext.budget,
+          budgetIsArray: Array.isArray(enhancedContext.budget),
+          recipient: enhancedContext.recipient,
           interests: enhancedContext.interests,
           detectedBrands: enhancedContext.detectedBrands
         });
         
-        console.log('🔍 CRITICAL: Passing enhanced context to navigation with budget array:', enhancedContext.budget);
         onNavigateToMarketplace(searchQuery, enhancedContext);
         onClose();
       } catch (error) {
@@ -357,15 +377,32 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
 
   const handleCategoryExpand = (categoryName: string) => {
     if (onNavigateToMarketplace) {
-      // Update context with category interest and generate search
-      const updatedContext = { ...context, interests: [categoryName] };
+      // Extract budget with same logic as main navigation
+      let budgetArray: [number, number] | undefined = undefined;
+      
+      if (context.budget && Array.isArray(context.budget) && context.budget.length === 2) {
+        budgetArray = context.budget as [number, number];
+      } else if (context.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
+        budgetArray = context.autoGiftIntelligence.primaryRecommendation.budgetRange;
+      }
+      
+      // Update context with category interest and extracted budget
+      const updatedContext = { 
+        ...context, 
+        interests: [categoryName],
+        budget: budgetArray
+      };
       updateContext({ interests: [categoryName] });
       const searchQuery = generateSearchQuery();
-      console.log('🔍 Category expand - context with budget:', {
+      
+      console.log('🔍 Category expand - enhanced context:', {
+        searchQuery,
         budget: updatedContext.budget,
-        autoGiftBudget: updatedContext.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
-        interests: updatedContext.interests
+        budgetIsArray: Array.isArray(updatedContext.budget),
+        interests: updatedContext.interests,
+        categoryName
       });
+      
       onNavigateToMarketplace(searchQuery, updatedContext);
       onClose();
     }
@@ -479,6 +516,11 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
           />
         </div>
       )}
+
+      {/* Budget Flow Debugger - Temporary for testing */}
+      <div className="p-4 border-t flex-shrink-0">
+        <NicoleBudgetDebugger onNavigateToMarketplace={onNavigateToMarketplace} />
+      </div>
 
       {/* Input - Fixed at bottom */}
       <div className="p-4 border-t flex-shrink-0 bg-white">

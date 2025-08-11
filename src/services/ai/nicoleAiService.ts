@@ -175,10 +175,16 @@ function detectReadinessInResponse(message: string): boolean {
     /ready to see (your )?gifts/i,
     /let's find (some )?gifts/i,
     /search for gifts/i,
+    /click.{0,10}search.{0,10}gifts/i,
+    /search.{0,10}gifts.{0,10}below/i,
+    /click.{0,10}below/i,
     /show you (some )?options/i,
     /browse (the )?marketplace/i,
     /time to shop/i,
-    /perfect.*let's go/i
+    /perfect.*let's go/i,
+    /here are.{0,30}ideas/i,
+    /based on.{0,30}interests/i,
+    /can show you.{0,30}gift/i
   ];
   
   return readinessPatterns.some(pattern => pattern.test(message));
@@ -308,17 +314,39 @@ export async function chatWithNicole(
       }
     }
 
-    // Additional fallback: check if we have sufficient context
+    // Enhanced fallback: check if we have sufficient context
+    const hasRecipient = Boolean(data.context?.recipient);
+    const hasBudget = Boolean(data.context?.budget);
+    const hasInterests = Boolean(data.context?.interests?.length);
+    const hasOccasion = Boolean(data.context?.occasion);
+    
+    // More lenient context requirements
     const hasMinimumContext = Boolean(
-      (parsedContext.recipient || parsedContext.relationship) &&
-      (parsedContext.interests?.length > 0 || parsedContext.detectedBrands?.length > 0) &&
-      parsedContext.occasion
+      hasRecipient && (hasOccasion || hasInterests || hasBudget)
     );
     
-    if (!shouldShowSearchButton && hasMinimumContext) {
-      console.log('🔍 Context-based fallback triggered:', { hasMinimumContext });
+    // Special case: If we have budget and interests, always show button
+    const hasComprehensiveContext = hasBudget && hasInterests;
+    
+    if (!shouldShowSearchButton && (hasMinimumContext || hasComprehensiveContext)) {
       shouldShowSearchButton = true;
-      console.log('✅ Context fallback activated search button');
+      console.log('✅ Context check activated search button:', {
+        hasRecipient,
+        hasBudget,
+        hasInterests,
+        hasOccasion,
+        hasMinimumContext,
+        hasComprehensiveContext
+      });
+    }
+    
+    // Manual override: If Nicole explicitly mentions search gifts
+    if (!shouldShowSearchButton && data.response) {
+      const hasExplicitSearchMention = /click.{0,20}search.{0,20}gifts|search.{0,20}gifts.{0,20}below/i.test(data.response);
+      if (hasExplicitSearchMention) {
+        shouldShowSearchButton = true;
+        console.log('✅ Explicit search mention override activated button');
+      }
     }
 
     console.log('🎯 Final showSearchButton decision:', shouldShowSearchButton);

@@ -36,10 +36,23 @@ export const useSmartCTALogic = () => {
     const hasMultipleInterests = context.interests && context.interests.length > 1;
     const hasBrands = context.detectedBrands && context.detectedBrands.length > 0;
     const hasBasicInfo = Boolean(context.recipient && (context.occasion || context.interests?.length));
+    const hasBudget = Boolean(context.budget);
+
+    // Enhanced CTA logic: Show if we have budget + interests (common Nicole flow)
+    if (hasBudget && context.interests?.length) {
+      console.log('🎯 Budget + interests context detected, showing CTA');
+      return true;
+    }
 
     // Show CTA if we have sufficient context for grouped search
     if (hasBasicInfo && (hasMultipleInterests || hasBrands)) {
       console.log('🎯 Multi-category context detected, showing CTA');
+      return true;
+    }
+
+    // Manual override: Check for explicit search mentions in last message
+    if (lastMessage && /click.{0,20}search.{0,20}gifts|search.{0,20}gifts.{0,20}below/i.test(lastMessage)) {
+      console.log('🎯 Explicit search mention detected, showing CTA');
       return true;
     }
 

@@ -37,7 +37,7 @@ export class DirectNicoleMarketplaceService {
       // **PHASE 4: Experience-to-Product Translation**
       const enhancedQuery = this.translateExperiencesToProducts(query, nicoleContext.interests);
 
-      // Direct call to zinc-search with full context
+      // **CRITICAL FIX: Use zinc-search function instead of get-products**
       const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           query: enhancedQuery,
@@ -168,13 +168,16 @@ export class DirectNicoleMarketplaceService {
 
     for (const fallbackQuery of fallbackQueries) {
       try {
+        // **CRITICAL FIX: Use zinc-search function**
         const { data } = await supabase.functions.invoke('zinc-search', {
           body: {
             query: fallbackQuery,
             maxResults: 16,
             nicoleContext,
             minPrice: nicoleContext.budget?.min || nicoleContext.budget?.[0],
-            maxPrice: nicoleContext.budget?.max || nicoleContext.budget?.[1]
+            maxPrice: nicoleContext.budget?.max || nicoleContext.budget?.[1],
+            min_price: nicoleContext.budget?.min || nicoleContext.budget?.[0],
+            max_price: nicoleContext.budget?.max || nicoleContext.budget?.[1]
           }
         });
 

@@ -13,6 +13,11 @@ import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
 
+// Import Nicole integration test for debugging
+if (process.env.NODE_ENV === 'development') {
+  import("./debug/nicole-integration-test");
+}
+
 // Immediate load for critical pages
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";

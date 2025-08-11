@@ -96,7 +96,19 @@ export const useUnifiedNicoleAI = ({
     });
 
     try {
+      console.log('🤖 useUnifiedNicoleAI: Current context before chat:', {
+        budget: context.budget,
+        interests: context.interests,
+        recipient: context.recipient
+      });
+      
       const response = await unifiedNicoleAI.chat(message, context, currentSessionId);
+      
+      console.log('🤖 useUnifiedNicoleAI: Nicole response received:', {
+        budget: response.context.budget,
+        interests: response.context.interests,
+        recipient: response.context.recipient
+      });
       
       // Update local context
       setContext(response.context);

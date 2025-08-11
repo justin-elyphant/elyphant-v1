@@ -202,14 +202,26 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       try {
         const searchQuery = generateSearchQuery();
         console.log('🔍 Generated search query:', searchQuery);
-        console.log('🔍 Budget in context:', {
-          budget: context.budget,
+        
+        // Create enhanced context with all budget sources
+        const enhancedContext = {
+          ...context,
+          // Ensure budget is available from any possible source
+          budget: context.budget || 
+                  (context.autoGiftIntelligence?.primaryRecommendation?.budgetRange) ||
+                  undefined
+        };
+        
+        console.log('🔍 Enhanced context with budget:', {
+          originalBudget: context.budget,
           autoGiftBudget: context.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
-          interests: context.interests,
-          detectedBrands: context.detectedBrands
+          finalBudget: enhancedContext.budget,
+          interests: enhancedContext.interests,
+          detectedBrands: enhancedContext.detectedBrands
         });
-        console.log('🔍 Passing context to navigation:', context);
-        onNavigateToMarketplace(searchQuery, context);
+        
+        console.log('🔍 Passing enhanced context to navigation:', enhancedContext);
+        onNavigateToMarketplace(searchQuery, enhancedContext);
         onClose();
       } catch (error) {
         console.error('❌ Error navigating to marketplace:', error);

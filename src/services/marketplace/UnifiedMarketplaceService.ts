@@ -270,8 +270,15 @@ class UnifiedMarketplaceService {
     try {
       let response;
       
-      // Create search options with price filters
-      const searchOptions = { minPrice, maxPrice };
+      // Create search options with price filters (map to expected edge function format)
+      const searchOptions = { 
+        minPrice, 
+        maxPrice,
+        min_price: minPrice,  // Edge function expects this format
+        max_price: maxPrice   // Edge function expects this format
+      };
+      
+      console.log('🎯 UnifiedMarketplaceService: Final search options with price filters:', searchOptions);
       
       if (luxuryCategories) {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');

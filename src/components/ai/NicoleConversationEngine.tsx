@@ -18,7 +18,7 @@ import { toast } from "sonner";
 interface NicoleConversationEngineProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigateToMarketplace?: (searchQuery: string) => void;
+  onNavigateToMarketplace?: (searchQuery: string, nicoleContext?: any) => void;
   initialMessage?: string;
 }
 
@@ -202,7 +202,8 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       try {
         const searchQuery = generateSearchQuery();
         console.log('🔍 Generated search query:', searchQuery);
-        onNavigateToMarketplace(searchQuery);
+        console.log('🔍 Passing context to navigation:', context);
+        onNavigateToMarketplace(searchQuery, context);
         onClose();
       } catch (error) {
         console.error('❌ Error navigating to marketplace:', error);
@@ -339,9 +340,10 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const handleCategoryExpand = (categoryName: string) => {
     if (onNavigateToMarketplace) {
       // Update context with category interest and generate search
+      const updatedContext = { ...context, interests: [categoryName] };
       updateContext({ interests: [categoryName] });
       const searchQuery = generateSearchQuery();
-      onNavigateToMarketplace(searchQuery);
+      onNavigateToMarketplace(searchQuery, updatedContext);
       onClose();
     }
   };

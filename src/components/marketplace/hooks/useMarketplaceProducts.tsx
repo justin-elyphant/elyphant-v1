@@ -28,6 +28,17 @@ export const useMarketplaceProducts = () => {
       const recipient = searchParams.get("recipient");
       const occasion = searchParams.get("occasion");
       
+      console.log('🎯 Marketplace useEffect: URL parameters received:', {
+        searchParam,
+        minPrice,
+        maxPrice,
+        source,
+        recipient,
+        occasion,
+        personId,
+        occasionType
+      });
+      
       // Build Nicole context if available
       const nicoleContext = source === 'nicole' ? {
         minPrice: minPrice ? Number(minPrice) : undefined,

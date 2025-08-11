@@ -274,8 +274,31 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
             isOpen={true}
             initialMessage={query}
             onClose={() => setShowNicoleDropdown(false)}
-            onNavigateToMarketplace={(searchQuery) => {
-              navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&mode=nicole`);
+            onNavigateToMarketplace={(searchQuery, nicoleContext) => {
+              console.log('🎯 DualModeSearchBar: Navigate with context:', nicoleContext);
+              
+              // Build marketplace URL with Nicole context
+              const marketplaceUrl = new URL('/marketplace', window.location.origin);
+              marketplaceUrl.searchParams.set('search', searchQuery);
+              marketplaceUrl.searchParams.set('source', 'nicole');
+              
+              // Include budget information if available
+              if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
+                marketplaceUrl.searchParams.set('minPrice', String(nicoleContext.budget[0]));
+                marketplaceUrl.searchParams.set('maxPrice', String(nicoleContext.budget[1]));
+                console.log('🎯 DualModeSearchBar: Adding budget to URL:', nicoleContext.budget);
+              }
+              
+              // Include recipient and occasion for contextual search
+              if (nicoleContext?.recipient) {
+                marketplaceUrl.searchParams.set('recipient', String(nicoleContext.recipient));
+              }
+              if (nicoleContext?.occasion) {
+                marketplaceUrl.searchParams.set('occasion', String(nicoleContext.occasion));
+              }
+              
+              console.log('🎯 DualModeSearchBar: Final URL:', marketplaceUrl.pathname + marketplaceUrl.search);
+              navigate(marketplaceUrl.pathname + marketplaceUrl.search);
               setShowNicoleDropdown(false);
             }}
           />
@@ -287,8 +310,31 @@ const DualModeSearchBar: React.FC<DualModeSearchBarProps> = ({
         isOpen={showMobileModal}
         onClose={() => setShowMobileModal(false)}
         initialQuery={query}
-        onNavigateToResults={(searchQuery) => {
-          navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&mode=nicole`);
+        onNavigateToResults={(searchQuery, nicoleContext) => {
+          console.log('🎯 DualModeSearchBar Mobile: Navigate with context:', nicoleContext);
+          
+          // Build marketplace URL with Nicole context
+          const marketplaceUrl = new URL('/marketplace', window.location.origin);
+          marketplaceUrl.searchParams.set('search', searchQuery);
+          marketplaceUrl.searchParams.set('source', 'nicole');
+          
+          // Include budget information if available
+          if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
+            marketplaceUrl.searchParams.set('minPrice', String(nicoleContext.budget[0]));
+            marketplaceUrl.searchParams.set('maxPrice', String(nicoleContext.budget[1]));
+            console.log('🎯 DualModeSearchBar Mobile: Adding budget to URL:', nicoleContext.budget);
+          }
+          
+          // Include recipient and occasion for contextual search
+          if (nicoleContext?.recipient) {
+            marketplaceUrl.searchParams.set('recipient', String(nicoleContext.recipient));
+          }
+          if (nicoleContext?.occasion) {
+            marketplaceUrl.searchParams.set('occasion', String(nicoleContext.occasion));
+          }
+          
+          console.log('🎯 DualModeSearchBar Mobile: Final URL:', marketplaceUrl.pathname + marketplaceUrl.search);
+          navigate(marketplaceUrl.pathname + marketplaceUrl.search);
           setShowMobileModal(false);
         }}
       />

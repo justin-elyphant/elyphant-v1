@@ -108,8 +108,31 @@ export const useSearchHandlers = ({
     recognition.start();
   };
 
-  const handleNicoleNavigateToResults = (searchQuery: string) => {
-    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+  const handleNicoleNavigateToResults = (searchQuery: string, nicoleContext?: any) => {
+    console.log('🎯 HandleNicoleNavigateToResults: context received:', nicoleContext);
+    
+    // Build marketplace URL with Nicole context
+    const marketplaceUrl = new URL('/marketplace', window.location.origin);
+    marketplaceUrl.searchParams.set('search', searchQuery);
+    marketplaceUrl.searchParams.set('source', 'nicole');
+    
+    // Include budget information if available
+    if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
+      marketplaceUrl.searchParams.set('minPrice', String(nicoleContext.budget[0]));
+      marketplaceUrl.searchParams.set('maxPrice', String(nicoleContext.budget[1]));
+      console.log('🎯 Adding budget to URL:', nicoleContext.budget);
+    }
+    
+    // Include recipient and occasion for contextual search
+    if (nicoleContext?.recipient) {
+      marketplaceUrl.searchParams.set('recipient', String(nicoleContext.recipient));
+    }
+    if (nicoleContext?.occasion) {
+      marketplaceUrl.searchParams.set('occasion', String(nicoleContext.occasion));
+    }
+    
+    console.log('🎯 Final marketplace URL:', marketplaceUrl.pathname + marketplaceUrl.search);
+    navigate(marketplaceUrl.pathname + marketplaceUrl.search);
     setShowNicoleDropdown(false);
     setShowMobileModal(false);
   };

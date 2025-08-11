@@ -10,7 +10,7 @@ interface MobileConversationModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialQuery?: string;
-  onNavigateToResults: (searchQuery: string) => void;
+  onNavigateToResults: (searchQuery: string, nicoleContext?: any) => void;
 }
 
 const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
@@ -80,10 +80,12 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
     : {};
 
   // Enhanced navigation handler with error handling
-  const handleNavigateToMarketplace = (searchQuery: string) => {
+  const handleNavigateToMarketplace = (searchQuery: string, nicoleContext?: any) => {
     console.log('📱 Mobile modal - navigating to marketplace:', searchQuery);
+    console.log('📱 Mobile modal - context received:', nicoleContext);
     try {
-      onNavigateToResults(searchQuery);
+      // Always pass the context to support budget parameters
+      onNavigateToResults(searchQuery, nicoleContext);
     } catch (error) {
       console.error('❌ Mobile navigation error:', error);
     }

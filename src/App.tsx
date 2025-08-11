@@ -110,11 +110,50 @@ function AppContent() {
   useEffect(() => {
     const handleNicoleSearch = (event: CustomEvent) => {
       console.log('🎯 Nicole search event received:', event.detail);
-      const { searchQuery } = event.detail;
+      const { searchQuery, nicoleContext } = (event as any).detail || {};
       if (searchQuery) {
         console.log('🚀 Navigating to marketplace with query:', searchQuery);
-        // Navigate to marketplace with search query
-        navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+
+        // Build URL with Nicole context for proper filtering on marketplace
+        const params = new URLSearchParams();
+        params.set('search', String(searchQuery));
+        params.set('source', 'nicole');
+
+        // Persist full Nicole context (interests, budget, recipient, etc.)
+        try {
+          if (nicoleContext) {
+            sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+            console.log('💰 Stored Nicole context in session storage:', nicoleContext);
+
+            // Handle budget in multiple possible shapes
+            const budget = (nicoleContext as any).budget;
+            if (Array.isArray(budget) && budget.length === 2) {
+              const [min, max] = budget;
+              if (typeof min === 'number') params.set('minPrice', String(min));
+              if (typeof max === 'number') params.set('maxPrice', String(max));
+            } else if (budget && typeof budget === 'object') {
+              if (budget.minPrice != null) params.set('minPrice', String(budget.minPrice));
+              if (budget.maxPrice != null) params.set('maxPrice', String(budget.maxPrice));
+            }
+            // Fallback if budget lives at root level
+            if ((nicoleContext as any).minPrice != null) params.set('minPrice', String((nicoleContext as any).minPrice));
+            if ((nicoleContext as any).maxPrice != null) params.set('maxPrice', String((nicoleContext as any).maxPrice));
+
+            // Optional nicole metadata for debugging/filters
+            if ((nicoleContext as any).recipient) params.set('recipient', String((nicoleContext as any).recipient));
+            if ((nicoleContext as any).occasion) params.set('occasion', String((nicoleContext as any).occasion));
+            if ((nicoleContext as any).interests && Array.isArray((nicoleContext as any).interests)) {
+              params.set('interests', (nicoleContext as any).interests.join(','));
+            }
+            if ((nicoleContext as any).recipient_id) params.set('personId', String((nicoleContext as any).recipient_id));
+            if ((nicoleContext as any).occasionType) params.set('occasionType', String((nicoleContext as any).occasionType));
+          }
+        } catch (e) {
+          console.warn('Failed to persist Nicole context to session storage', e);
+        }
+
+        // Navigate to marketplace with all parameters
+        navigate(`/marketplace?${params.toString()}`);
       } else {
         console.warn('⚠️ No searchQuery in event detail:', event.detail);
       }

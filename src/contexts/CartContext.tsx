@@ -78,25 +78,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('[CartProvider] Successfully initialized useUnifiedCart hook');
   } catch (error) {
     console.error('[CartProvider] Failed to initialize useUnifiedCart, using fallback:', error);
-    // Fallback empty cart state to prevent app crash
+    // Provide a complete fallback state that matches the interface
     cartHookResult = {
       cartItems: [],
       cartTotal: 0,
       itemCount: 0,
-      addToCart: async () => {
+      isProcessing: false,
+      addToCart: async (productId: string, quantity?: number) => {
         console.warn('[CartProvider] Cart addToCart called but service unavailable');
       },
-      removeFromCart: () => {
+      removeFromCart: (productId: string) => {
         console.warn('[CartProvider] Cart removeFromCart called but service unavailable');
       },
-      updateQuantity: () => {
+      updateQuantity: (productId: string, quantity: number) => {
         console.warn('[CartProvider] Cart updateQuantity called but service unavailable');
       },
       clearCart: () => {
         console.warn('[CartProvider] Cart clearCart called but service unavailable');
       },
-      assignItemToRecipient: () => {
+      assignItemToRecipient: (productId: string, recipient: any) => {
         console.warn('[CartProvider] Cart assignItemToRecipient called but service unavailable');
+      },
+      refreshCart: () => {
+        console.warn('[CartProvider] Cart refreshCart called but service unavailable');
       }
     };
   }

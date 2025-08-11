@@ -18,9 +18,17 @@ const OptimizedShoppingCartButton: React.FC<OptimizedShoppingCartButtonProps> = 
   variant = "ghost",
   size = "icon"
 }) => {
-  const { getItemCount } = useCart();
   const navigate = useNavigate();
-  const itemCount = getItemCount();
+  
+  // Safe cart hook usage with error boundary
+  let itemCount = 0;
+  try {
+    const { getItemCount } = useCart();
+    itemCount = getItemCount();
+  } catch (error) {
+    console.warn('[OptimizedShoppingCartButton] Cart context not available, showing default cart button');
+    itemCount = 0;
+  }
 
   const handleCartClick = () => {
     navigate("/cart");

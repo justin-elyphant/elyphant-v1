@@ -110,7 +110,8 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     clearConversation,
     isReadyToSearch,
     getConversationContext,
-    updateContext
+    updateContext,
+    generateSearchQuery
   } = useUnifiedNicoleAI({
     initialContext: buildInitialContext(),
     onResponse: async (response) => {
@@ -413,21 +414,29 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
 
   const handleSearch = () => {
     const searchQuery = lastResponse?.searchQuery || '';
+    console.log('🎯 handleSearch called - lastResponse:', lastResponse);
+    console.log('🎯 searchQuery from lastResponse:', searchQuery);
+    console.log('🎯 generateSearchQuery():', generateSearchQuery());
+    
+    // Fallback to generated search query if lastResponse doesn't have one
+    const finalSearchQuery = searchQuery || generateSearchQuery();
+    console.log('🎯 Final search query to use:', finalSearchQuery);
     
     // Use onNavigateToResults callback if provided (for AIEnhancedSearchBar)
     if (onNavigateToResults) {
-      onNavigateToResults(searchQuery);
+      console.log('🎯 Using onNavigateToResults callback');
+      onNavigateToResults(finalSearchQuery);
       onClose();
       return;
     }
     
     // Default behavior: dispatch custom event
-    console.log('🎯 Triggering marketplace search with Nicole context, searchQuery:', searchQuery);
+    console.log('🎯 Triggering marketplace search with Nicole context, searchQuery:', finalSearchQuery);
     onClose();
     
     // Dispatch the event
     const event = new CustomEvent('nicole-search', {
-      detail: { searchQuery }
+      detail: { searchQuery: finalSearchQuery }
     });
     console.log('📡 Dispatching nicole-search event:', event);
     window.dispatchEvent(event);

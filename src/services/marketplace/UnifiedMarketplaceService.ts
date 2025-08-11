@@ -152,6 +152,90 @@ class UnifiedMarketplaceService {
   }
 
   /**
+   * Extract interest keywords from search term
+   */
+  private extractInterestKeywords(searchTerm: string): string[] {
+    const keywords = searchTerm.toLowerCase().split(/\s+|[,&+]/);
+    return keywords.filter(word => word.length > 2 && !['gift', 'gifts', 'for', 'and', 'the'].includes(word));
+  }
+
+  /**
+   * Map interest keywords to Amazon-friendly best selling categories
+   */
+  private mapInterestsToCategories(interests: string[]): string[] {
+    const interestMap: Record<string, string> = {
+      // Entertainment & Media
+      'concerts': 'music',
+      'music': 'music',
+      'netflix': 'entertainment',
+      'streaming': 'entertainment',
+      'movies': 'entertainment',
+      'gaming': 'gaming tech',
+      'games': 'gaming tech',
+      'books': 'books',
+      'reading': 'books',
+      
+      // Hobbies & Activities
+      'cooking': 'kitchen cooking',
+      'kitchen': 'kitchen cooking',
+      'baking': 'kitchen cooking',
+      'fitness': 'fitness gear',
+      'workout': 'fitness gear',
+      'yoga': 'fitness gear',
+      'sports': 'sports equipment',
+      'travel': 'travel accessories',
+      'photography': 'cameras tech',
+      'art': 'arts crafts',
+      'crafts': 'arts crafts',
+      'gardening': 'garden tools',
+      
+      // Technology
+      'tech': 'electronics tech',
+      'electronics': 'electronics tech',
+      'phone': 'electronics tech',
+      'computer': 'electronics tech',
+      'laptop': 'electronics tech',
+      
+      // Fashion & Beauty
+      'fashion': 'fashion clothing',
+      'beauty': 'beauty skincare',
+      'skincare': 'beauty skincare',
+      'jewelry': 'jewelry accessories',
+      'accessories': 'jewelry accessories',
+      
+      // Home & Living
+      'home': 'home decor',
+      'decor': 'home decor',
+      'organization': 'home organization',
+      
+      // Pets & Animals
+      'pets': 'pet supplies',
+      'dog': 'pet supplies',
+      'cat': 'pet supplies',
+      
+      // General categories
+      'luxury': 'luxury items',
+      'premium': 'luxury items'
+    };
+
+    const categories = new Set<string>();
+    
+    interests.forEach(interest => {
+      const mapped = interestMap[interest];
+      if (mapped) {
+        categories.add(mapped);
+      }
+    });
+
+    // If no specific mappings found, add generic categories
+    if (categories.size === 0) {
+      categories.add('popular gifts');
+    }
+
+    return Array.from(categories);
+  }
+
+  /**
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
@@ -184,6 +268,22 @@ class UnifiedMarketplaceService {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}"`);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
         response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults);
+        
+        // If no results found, try best selling fallback based on interests
+        if (!response.error && (!response.results || response.results.length === 0)) {
+          console.log(`[UnifiedMarketplaceService] No results for "${searchTerm}", trying best selling fallback`);
+          
+          const interests = this.extractInterestKeywords(searchTerm);
+          const categories = this.mapInterestsToCategories(interests);
+          
+          if (categories.length > 0) {
+            console.log(`[UnifiedMarketplaceService] Extracted interests: ${interests.join(', ')}`);
+            console.log(`[UnifiedMarketplaceService] Mapped categories: ${categories.join(', ')}`);
+            
+            this.showToast('Finding best selling products...', 'loading', 'Based on your interests');
+            response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults);
+          }
+        }
       } else {
         console.log('[UnifiedMarketplaceService] Loading default products');
         response = await enhancedZincApiService.getDefaultProducts(maxResults);

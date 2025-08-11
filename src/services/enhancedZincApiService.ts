@@ -52,6 +52,49 @@ class EnhancedZincApiService {
   private cache = new Map();
 
   /**
+   * Search for best selling products based on interest categories
+   */
+  async searchBestSellingByInterests(categories: string[], limit: number = 20): Promise<ZincSearchResponse> {
+    console.log(`Searching best selling products for categories: ${categories.join(', ')}, limit: ${limit}`);
+    
+    try {
+      // Create multiple "best selling" queries for different categories
+      const bestSellingQueries = categories.map(category => `best selling ${category}`);
+      const allResults: any[] = [];
+      
+      // Execute searches for each category
+      for (const query of bestSellingQueries.slice(0, 3)) { // Limit to 3 categories to avoid too many API calls
+        console.log(`Searching best selling for: "${query}"`);
+        
+        const response = await this.searchProducts(query, 1, Math.ceil(limit / bestSellingQueries.length));
+        
+        if (!response.error && response.results) {
+          allResults.push(...response.results);
+        }
+      }
+      
+      // Remove duplicates and limit results
+      const uniqueResults = allResults.filter((product, index, self) => 
+        index === self.findIndex(p => p.product_id === product.product_id)
+      ).slice(0, limit);
+      
+      console.log(`Best selling search returned ${uniqueResults.length} unique products`);
+      
+      return {
+        results: uniqueResults,
+        error: uniqueResults.length === 0 ? 'No best selling products found' : undefined
+      };
+      
+    } catch (error) {
+      console.error('Error searching best selling by interests:', error);
+      return {
+        results: [],
+        error: `Best selling search failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  /**
    * Process and enhance product data with best seller information
    */
   private enhanceProductData(product: any): any {

@@ -949,19 +949,30 @@ PROACTIVE ENGAGEMENT RULES:
       }
     }
 
-    // Enhanced interest parsing
+    // Enhanced interest parsing - prioritize recipient profile interests
     if (!updatedContext.interests) updatedContext.interests = [];
-    const interestPatterns = [
-      /(?:loves?|likes?|enjoys?|into|interested in|passionate about) ([^,.!?]+)/gi,
-      /(?:hobbies?|interests?) (?:include|are) ([^,.!?]+)/gi,
-      /really into ([^,.!?]+)/gi
-    ];
     
-    for (const pattern of interestPatterns) {
-      let match;
-      while ((match = pattern.exec(combinedMessage)) !== null) {
-        const interests = match[1].split(/\s+and\s+|\s*,\s*/).map(i => i.trim()).filter(i => i.length > 2);
-        updatedContext.interests.push(...interests);
+    // First, use clean interests from recipient profile if available
+    if (updatedContext.recipientProfile?.interests && Array.isArray(updatedContext.recipientProfile.interests)) {
+      console.log("🎯 Using clean recipient profile interests:", updatedContext.recipientProfile.interests);
+      updatedContext.interests = [...updatedContext.recipientProfile.interests.map(i => i.toLowerCase())];
+    } else {
+      // Fallback to conversation-based extraction, but be more selective
+      const interestPatterns = [
+        /(?:loves?|likes?|enjoys?|into|interested in|passionate about) ([^,.!?]+)/gi,
+        /(?:hobbies?|interests?) (?:include|are) ([^,.!?]+)/gi,
+        /really into ([^,.!?]+)/gi
+      ];
+      
+      for (const pattern of interestPatterns) {
+        let match;
+        while ((match = pattern.exec(combinedMessage)) !== null) {
+          const cleanInterest = match[1].trim();
+          // Only add if it's a short, clean interest (not a full sentence)
+          if (cleanInterest.length > 2 && cleanInterest.length < 30 && !cleanInterest.includes(' ')) {
+            updatedContext.interests.push(cleanInterest.toLowerCase());
+          }
+        }
       }
     }
 
@@ -1036,10 +1047,33 @@ PROACTIVE ENGAGEMENT RULES:
 
     // Generate search query for product tiles if needed
     let searchQuery;
-    if (showProductTiles && updatedContext.interests) {
-      searchQuery = updatedContext.interests.join(' ') + 
-        (updatedContext.detectedBrands ? ' ' + updatedContext.detectedBrands.join(' ') : '') +
-        (updatedContext.recipient ? ` gifts for ${updatedContext.recipient}` : '');
+    if (showProductTiles) {
+      // Create a robust search query using available context
+      const searchTerms: string[] = [];
+      
+      // Add interests (prefer clean profile interests)
+      if (updatedContext.interests && updatedContext.interests.length > 0) {
+        // Take the most relevant interests (limit to avoid overly long queries)
+        searchTerms.push(...updatedContext.interests.slice(0, 3));
+      }
+      
+      // Add brands if detected
+      if (updatedContext.detectedBrands && updatedContext.detectedBrands.length > 0) {
+        searchTerms.push(...updatedContext.detectedBrands.slice(0, 2));
+      }
+      
+      // Add gift context if we have a recipient
+      if (updatedContext.recipient) {
+        searchTerms.push('gifts');
+      }
+      
+      // Ensure we have at least some search terms
+      if (searchTerms.length === 0) {
+        searchTerms.push('popular', 'gifts');
+      }
+      
+      searchQuery = searchTerms.join(' ').trim();
+      console.log("🔍 Generated search query for product tiles:", searchQuery);
     }
 
     const responsePayload = {

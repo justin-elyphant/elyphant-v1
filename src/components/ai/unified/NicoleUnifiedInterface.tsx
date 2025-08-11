@@ -117,15 +117,20 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
       
       // Handle product tiles display when Nicole provides search context
-      if (response.showProductTiles && response.searchQuery) {
+      if (response.showProductTiles) {
+        const query = response.searchQuery || 'popular gifts';
+        console.log('🛍️ Fetching products for tiles with query:', query);
         try {
-          const products = await searchProducts(response.searchQuery, { maxResults: 12 });
+          const products = await searchProducts(query, { maxResults: 12 });
+          console.log('🎯 Found', products.length, 'products for tiles');
           if (products.length > 0) {
             setMessages(prev => [...prev, {
               role: 'assistant',
               type: 'product_tiles',
               payload: { products }
             }]);
+          } else {
+            console.warn('No products found for tiles, query:', query);
           }
         } catch (error) {
           console.error('Failed to fetch products for tiles:', error);

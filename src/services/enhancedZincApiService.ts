@@ -54,7 +54,7 @@ class EnhancedZincApiService {
   /**
    * Search for best selling products based on interest categories with balanced distribution
    */
-  async searchBestSellingByInterests(categories: string[], limit: number = 20): Promise<ZincSearchResponse> {
+  async searchBestSellingByInterests(categories: string[], limit: number = 20, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log(`Searching best selling products for categories: ${categories.join(', ')}, limit: ${limit}`);
     
     try {
@@ -74,7 +74,13 @@ class EnhancedZincApiService {
         
         console.log(`Searching best selling for category "${category}": "${query}"`);
         
-        const response = await this.searchProducts(query, 1, minProductsPerCategory + 2); // Get a few extra for filtering
+        // Pass price filters to individual searches
+        const filters = priceOptions ? {
+          min_price: priceOptions.minPrice,
+          max_price: priceOptions.maxPrice
+        } : {};
+        
+        const response = await this.searchProducts(query, 1, minProductsPerCategory + 2, filters); // Get a few extra for filtering
         
         if (!response.error && response.results && response.results.length > 0) {
           resultsByCategory[category] = response.results;
@@ -294,14 +300,18 @@ class EnhancedZincApiService {
   /**
    * Search gifts for her categories and return diverse product array
    */
-  async searchGiftsForHerCategories(limit: number = 16): Promise<ZincSearchResponse> {
+  async searchGiftsForHerCategories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log('Starting gifts for her category search...');
     
     try {
       const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
           giftsForHer: true,
-          limit
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
         }
       });
 
@@ -333,14 +343,18 @@ class EnhancedZincApiService {
   /**
    * Search gifts for him categories and return diverse product array
    */
-  async searchGiftsForHimCategories(limit: number = 16): Promise<ZincSearchResponse> {
+  async searchGiftsForHimCategories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log('Starting gifts for him category search...');
     
     try {
       const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
           giftsForHim: true,
-          limit
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
         }
       });
 
@@ -372,7 +386,7 @@ class EnhancedZincApiService {
   /**
    * Search gifts under $50 categories and return diverse product array
    */
-  async searchGiftsUnder50Categories(limit: number = 16): Promise<ZincSearchResponse> {
+  async searchGiftsUnder50Categories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log('Starting gifts under $50 category search...');
     
     try {
@@ -380,7 +394,11 @@ class EnhancedZincApiService {
         body: {
           query: 'gifts under $50 categories', // Required by edge function
           giftsUnder50: true,
-          limit
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
         }
       });
 
@@ -412,7 +430,7 @@ class EnhancedZincApiService {
   /**
    * Search brand categories and return diverse product array across all brand categories
    */
-  async searchBrandCategories(brandName: string, limit: number = 16): Promise<ZincSearchResponse> {
+  async searchBrandCategories(brandName: string, limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log(`Starting brand category search for: ${brandName}`);
     
     try {
@@ -420,7 +438,11 @@ class EnhancedZincApiService {
         body: {
           query: brandName,
           brandCategories: true,
-          limit
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
         }
       });
 
@@ -452,14 +474,18 @@ class EnhancedZincApiService {
   /**
    * Search luxury categories and return diverse product array
    */
-  async searchLuxuryCategories(limit: number = 16): Promise<ZincSearchResponse> {
+  async searchLuxuryCategories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log('Starting luxury category search...');
     
     try {
       const { data, error } = await supabase.functions.invoke('get-products', {
         body: {
           luxuryCategories: true,
-          limit
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
         }
       });
 
@@ -529,12 +555,16 @@ class EnhancedZincApiService {
   /**
    * Get default marketplace products (best sellers and popular items)
    */
-  async getDefaultProducts(limit: number = 20): Promise<ZincSearchResponse> {
+  async getDefaultProducts(limit: number = 20, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     console.log('Loading default marketplace products...');
     
     try {
       // Search for best selling gifts as default products
-      const response = await this.searchProducts('best selling gifts', 1, limit);
+      const filters = priceOptions ? {
+        min_price: priceOptions.minPrice,
+        max_price: priceOptions.maxPrice
+      } : {};
+      const response = await this.searchProducts('best selling gifts', 1, limit, filters);
       
       if (response.results && response.results.length > 0) {
         console.log(`Loaded ${response.results.length} default products`);
@@ -543,7 +573,7 @@ class EnhancedZincApiService {
       
       // Fallback to popular categories if no best sellers found
       console.log('No best sellers found, trying popular categories...');
-      const fallbackResponse = await this.searchProducts('popular gifts', 1, limit);
+      const fallbackResponse = await this.searchProducts('popular gifts', 1, limit, filters);
       
       return fallbackResponse;
       

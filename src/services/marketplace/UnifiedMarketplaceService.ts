@@ -4,6 +4,7 @@ import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { normalizeProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
+import { extractBudgetFromNicoleContext, logPriceRangeDebug } from "./nicoleContextUtils";
 
 export interface SearchOptions {
   maxResults?: number;
@@ -16,6 +17,11 @@ export interface SearchOptions {
   brandCategories?: boolean;
   personId?: string;
   occasionType?: string;
+  // Price range filtering from Nicole AI budget context
+  minPrice?: number;
+  maxPrice?: number;
+  // Nicole AI context for enhanced filtering
+  nicoleContext?: any;
 }
 
 export interface MarketplaceState {
@@ -40,10 +46,11 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, page = 1, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, page = 1, maxResults = 20, minPrice, maxPrice } = options;
     // Add version suffix to force cache refresh for updated categories
     const version = giftsUnder50 ? 'v7' : brandCategories ? 'v1' : 'v1';
-    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:brandCategories:${brandCategories}:page:${page}:limit:${maxResults}:${version}`;
+    const priceKey = minPrice || maxPrice ? `:price:${minPrice || 0}-${maxPrice || 9999}` : '';
+    return `search:${searchTerm}:luxury:${luxuryCategories}:giftsForHer:${giftsForHer}:giftsForHim:${giftsForHim}:giftsUnder50:${giftsUnder50}:brandCategories:${brandCategories}:page:${page}:limit:${maxResults}${priceKey}:${version}`;
   }
 
   /**
@@ -88,20 +95,32 @@ class UnifiedMarketplaceService {
     }
   }
 
+
   /**
    * Search products with unified caching and deduplication
    */
   async searchProducts(searchTerm: string, options: SearchOptions = {}): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, page = 1 } = options;
-    const cacheKey = this.getCacheKey(searchTerm, options);
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, page = 1, nicoleContext } = options;
     
-    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}, brandCategories: ${brandCategories}`);
+    // Extract budget from Nicole context if provided
+    const budgetFromContext = extractBudgetFromNicoleContext(nicoleContext);
+    const finalOptions = {
+      ...options,
+      minPrice: options.minPrice || budgetFromContext.minPrice,
+      maxPrice: options.maxPrice || budgetFromContext.maxPrice
+    };
+    
+    // Log debugging info for price range
+    logPriceRangeDebug(searchTerm, nicoleContext, budgetFromContext);
+    const cacheKey = this.getCacheKey(searchTerm, finalOptions);
+    
+    console.log(`[UnifiedMarketplaceService] Searching: "${searchTerm}", luxury: ${luxuryCategories}, giftsForHer: ${giftsForHer}, giftsForHim: ${giftsForHim}, giftsUnder50: ${giftsUnder50}, brandCategories: ${brandCategories}, priceRange: ${finalOptions.minPrice}-${finalOptions.maxPrice}`);
     console.log(`[UnifiedMarketplaceService] Cache key: ${cacheKey}`);
     
     // FORCE bypass cache for gifts under $50 until it works
     if (giftsUnder50) {
       console.log('[UnifiedMarketplaceService] Force bypassing cache for gifts under $50');
-      const requestPromise = this.executeSearch(searchTerm, options);
+      const requestPromise = this.executeSearch(searchTerm, finalOptions);
       try {
         const results = await requestPromise;
         // Cache the results
@@ -131,7 +150,7 @@ class UnifiedMarketplaceService {
     }
 
     // Create new request
-    const requestPromise = this.executeSearch(searchTerm, options);
+    const requestPromise = this.executeSearch(searchTerm, finalOptions);
     this.activeRequests.set(cacheKey, requestPromise);
 
     try {
@@ -244,35 +263,38 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20 } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice } = options;
     
     try {
       let response;
       
+      // Create search options with price filters
+      const searchOptions = { minPrice, maxPrice };
+      
       if (luxuryCategories) {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');
         this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
-        response = await enhancedZincApiService.searchLuxuryCategories(maxResults);
+        response = await enhancedZincApiService.searchLuxuryCategories(maxResults, searchOptions);
       } else if (giftsForHer) {
         console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
         this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
-        response = await enhancedZincApiService.searchGiftsForHerCategories(maxResults);
+        response = await enhancedZincApiService.searchGiftsForHerCategories(maxResults, searchOptions);
       } else if (giftsForHim) {
         console.log('[UnifiedMarketplaceService] Executing gifts for him category search');
         this.showToast('Loading gifts for him...', 'loading', 'Finding perfect gifts for him');
-        response = await enhancedZincApiService.searchGiftsForHimCategories(maxResults);
+        response = await enhancedZincApiService.searchGiftsForHimCategories(maxResults, searchOptions);
       } else if (giftsUnder50) {
         console.log('[UnifiedMarketplaceService] Executing gifts under $50 category search');
         this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
-        response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults);
+        response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults, searchOptions);
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
-        response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults);
+        response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {
-        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}"`);
+        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'}`);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
-        response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults);
+        response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
         
         // If no results found, try best selling fallback based on interests
         if (!response.error && (!response.results || response.results.length === 0)) {
@@ -286,12 +308,12 @@ class UnifiedMarketplaceService {
             console.log(`[UnifiedMarketplaceService] Mapped categories: ${categories.join(', ')}`);
             
             this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
-            response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults);
+            response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
           }
         }
       } else {
         console.log('[UnifiedMarketplaceService] Loading default products');
-        response = await enhancedZincApiService.getDefaultProducts(maxResults);
+        response = await enhancedZincApiService.getDefaultProducts(maxResults, searchOptions);
       }
 
       if (response.error) {

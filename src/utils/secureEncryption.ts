@@ -41,12 +41,36 @@ class SecureEncryption {
     return crypto.getRandomValues(new Uint8Array(length));
   }
 
+  // SECURITY FIX: Get encryption key from environment or generate secure fallback
+  private static getEncryptionKey(): string {
+    // Try to get key from environment first
+    if (typeof process !== 'undefined' && process.env?.ENCRYPTION_KEY) {
+      return process.env.ENCRYPTION_KEY;
+    }
+    
+    // For browser environments, check if it's set in localStorage (dev only)
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      const devKey = localStorage.getItem('dev-encryption-key');
+      if (devKey) return devKey;
+    }
+    
+    // Fallback: Generate a session-specific key and warn
+    console.warn('SECURITY WARNING: Using fallback encryption key. Please set ENCRYPTION_KEY environment variable.');
+    const fallbackKey = 'fallback-' + Math.random().toString(36).substring(2, 15);
+    
+    // Store in localStorage for development consistency
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      localStorage.setItem('dev-encryption-key', fallbackKey);
+    }
+    
+    return fallbackKey;
+  }
+
   // Encrypt data with AES-GCM
   static async encryptData(data: string, password?: string): Promise<string> {
     try {
-      // Use a default password if none provided (for backward compatibility)
-      // In production, this should come from secure key management
-      const encryptionPassword = password || 'elyphant-secure-key-2024';
+      // SECURITY FIX: Get encryption key from environment instead of hardcoded value
+      const encryptionPassword = password || this.getEncryptionKey();
       
       const dataBuffer = new TextEncoder().encode(data);
       const salt = this.getRandomBytes(this.SALT_LENGTH);
@@ -82,7 +106,8 @@ class SecureEncryption {
   // Decrypt data with AES-GCM
   static async decryptData(encryptedData: string, password?: string): Promise<string> {
     try {
-      const encryptionPassword = password || 'elyphant-secure-key-2024';
+      // SECURITY FIX: Get encryption key from environment instead of hardcoded value
+      const encryptionPassword = password || this.getEncryptionKey();
       
       // Decode from base64
       const encryptedBuffer = new Uint8Array(

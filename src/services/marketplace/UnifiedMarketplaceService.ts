@@ -189,6 +189,10 @@ class UnifiedMarketplaceService {
     const interestMap: Record<string, string[]> = {
       // Entertainment & Media - Multiple category mappings for diversity
       'concerts': ['music', 'fashion accessories', 'tech gadgets', 'electronics'],
+      'concert': ['music', 'headphones audio', 'electronics'],
+      'tickets': ['music', 'sports equipment', 'headphones audio'],
+      'experiences': ['gift sets', 'diy kits', 'books'],
+      'experience': ['gift sets', 'diy kits', 'books'],
       'music': ['music', 'electronics tech', 'headphones audio'],
       'netflix': ['entertainment', 'home comfort', 'snacks food'],
       'streaming': ['entertainment', 'electronics tech'],
@@ -200,6 +204,9 @@ class UnifiedMarketplaceService {
       
       // Hobbies & Activities - Comprehensive mappings
       'cooking': ['kitchen cooking', 'appliances', 'food specialty', 'books'],
+      'cooking classes': ['kitchen cooking', 'appliances', 'books'],
+      'class': ['kitchen cooking', 'books', 'diy kits'],
+      'classes': ['kitchen cooking', 'books', 'diy kits'],
       'kitchen': ['kitchen cooking', 'appliances', 'organization'],
       'baking': ['kitchen cooking', 'appliances', 'books'],
       'fitness': ['fitness gear', 'apparel', 'nutrition', 'tech'],
@@ -244,16 +251,15 @@ class UnifiedMarketplaceService {
     const categories = new Set<string>();
     
     interests.forEach(interest => {
-      const mapped = interestMap[interest];
+      const key = interest.toLowerCase();
+      const mapped = (interestMap as any)[key];
       if (mapped && Array.isArray(mapped)) {
-        // Add all mapped categories for diversity
         mapped.forEach(category => categories.add(category));
       } else if (typeof mapped === 'string') {
         categories.add(mapped);
       }
     });
 
-    // If no specific mappings found, add generic categories
     if (categories.size === 0) {
       categories.add('popular gifts');
     }

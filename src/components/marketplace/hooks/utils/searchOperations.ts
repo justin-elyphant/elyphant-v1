@@ -136,21 +136,22 @@ export const handleSearch = async (
           
           console.log('🎯 SearchOperations: Extracted price range:', { minPrice, maxPrice });
           
-          // **PHASE 1: Import and use DirectNicoleMarketplaceService**
-          const { directNicoleMarketplaceService } = await import('@/services/marketplace/DirectNicoleMarketplaceService');
-          
-          // Store context for debugging
-          directNicoleMarketplaceService.storeNicoleContext(enhancedNicoleContext);
-          
-          // Direct API call with guaranteed context preservation
-          const searchResults = await directNicoleMarketplaceService.searchWithNicoleContext(
-            term, 
-            enhancedNicoleContext,
-            { maxResults: 35 }
-          );
+          const searchResults = await unifiedMarketplaceService.searchProducts(term, {
+            nicoleContext: enhancedNicoleContext,
+            minPrice,
+            maxPrice,
+            maxResults: 16,
+            // CRITICAL: Pass filters that edge function expects
+            filters: {
+              min_price: minPrice,
+              max_price: maxPrice,
+              minPrice: minPrice,
+              maxPrice: maxPrice
+            }
+          });
           
           if (searchResults && searchResults.length > 0) {
-            console.log(`🎯 SearchOperations: Found ${searchResults.length} products from DirectNicole service`);
+            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
             setProducts(searchResults);
             
             // Show success toast with price range info
@@ -163,9 +164,6 @@ export const handleSearch = async (
               }
             }, 300);
             return;
-          } else {
-            // **PHASE 6: No fallback to mocks for Nicole searches**
-            console.log('🎯 SearchOperations: No results from DirectNicole service - this indicates an API issue');
           }
         } catch (error) {
           console.error('🎯 SearchOperations: UnifiedMarketplaceService error:', error);

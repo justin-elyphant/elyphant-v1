@@ -11,7 +11,6 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
 import { isInIframe } from "@/utils/iframeUtils";
 import { preloadRoutes, preloadCriticalImages } from "@/utils/lazyLoading";
-import { MarketplaceStatusCheck } from "@/components/debug/MarketplaceStatusCheck";
 
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
@@ -75,7 +74,6 @@ const HomeContent = () => {
       
       {/* Traditional sections with container - will be refactored later */}
       <div className="container mx-auto px-4 py-8 space-y-16">
-        <MarketplaceStatusCheck />
         <PopularBrands />
         <FeaturedCategories />
         <CategoriesGrid />

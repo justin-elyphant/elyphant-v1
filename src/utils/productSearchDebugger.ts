@@ -39,7 +39,7 @@ export class ProductSearchDebugger {
       // Test 2: Category searches
       console.log('[ProductSearchDebugger] Testing category searches...');
       const categoryTests = [
-        { name: 'luxury', fn: () => enhancedZincApiService.searchLuxuryCategories(['luxury', 'premium'], 3) },
+        { name: 'luxury', fn: () => enhancedZincApiService.searchLuxuryCategories(3) },
         { name: 'giftsForHer', fn: () => enhancedZincApiService.searchGiftsForHerCategories(3) },
         { name: 'giftsForHim', fn: () => enhancedZincApiService.searchGiftsForHimCategories(3) }
       ];

@@ -45,7 +45,7 @@ export class TestProductSearch {
     console.log(`[TestProductSearch] Testing category searches...`);
     
     const tests = [
-      { name: "Luxury Categories", fn: () => enhancedZincApiService.searchLuxuryCategories(['luxury', 'premium'], 5) },
+      { name: "Luxury Categories", fn: () => enhancedZincApiService.searchLuxuryCategories(5) },
       { name: "Gifts for Her", fn: () => enhancedZincApiService.searchGiftsForHerCategories(5) },
       { name: "Gifts for Him", fn: () => enhancedZincApiService.searchGiftsForHimCategories(5) },
       { name: "Gifts Under $50", fn: () => enhancedZincApiService.searchGiftsUnder50Categories(5) },

@@ -98,8 +98,7 @@ const StreamlinedMarketplaceWrapper = () => {
         const categoryType = Object.keys(categoryParams)[0];
         console.log(`Making ${categoryType} request with page:`, page);
         
-        // **PHASE 2 FIX: Use zinc-search instead of get-products**
-        const response = await supabase.functions.invoke('zinc-search', {
+        const response = await supabase.functions.invoke('get-products', {
           body: { 
             ...categoryParams,
             page,
@@ -135,27 +134,6 @@ const StreamlinedMarketplaceWrapper = () => {
       const urlMaxPrice = searchParams.get('maxPrice');
       const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
       const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
-
-      // If no nicoleContext in storage but source=nicole, build from URL (recipient, occasion, interests, budget)
-      let nicoleContextFromUrl: any = undefined;
-      if (!nicoleContext && searchParams.get('source') === 'nicole') {
-        const recipient = searchParams.get('recipient') || undefined;
-        const occasion = searchParams.get('occasion') || undefined;
-        const interestsParam = searchParams.get('interests');
-        const interests = interestsParam ? interestsParam.split(',').map(s => s.trim()).filter(Boolean) : undefined;
-        nicoleContextFromUrl = {
-          recipient,
-          occasion,
-          interests,
-          budget: (typeof minPrice === 'number' || typeof maxPrice === 'number')
-            ? [typeof minPrice === 'number' ? minPrice : 0, typeof maxPrice === 'number' ? maxPrice : 9999] as [number, number]
-            : undefined,
-          capability: 'search',
-          conversationPhase: 'presenting_results'
-        };
-        console.log('🧭 Built Nicole context from URL for pagination:', nicoleContextFromUrl);
-      }
-      const effectiveNicoleContext = nicoleContext || nicoleContextFromUrl;
       
       // For other search types, use unified marketplace
       const searchOptions = {
@@ -165,10 +143,10 @@ const StreamlinedMarketplaceWrapper = () => {
         ...(searchParams.get('brandCategories') && { brandCategories: true }),
         ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
         ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') }),
-        ...(effectiveNicoleContext && { nicoleContext: effectiveNicoleContext }), // Pass Nicole context for budget filtering
+        ...(nicoleContext && { nicoleContext }), // Pass Nicole context for budget filtering
         ...(minPrice !== undefined ? { minPrice } : {}),
         ...(maxPrice !== undefined ? { maxPrice } : {}),
-      } as any;
+      };
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
       console.log('🔍 Searching with options:', searchOptions);

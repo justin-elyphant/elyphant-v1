@@ -8,7 +8,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import BulkGiftingModal from "@/components/marketplace/BulkGiftingModal";
 import { useLocation } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
-import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
 
 const Marketplace = () => {
   const isMobile = useIsMobile();
@@ -27,93 +26,49 @@ const Marketplace = () => {
       setBulkGiftingOpen(true);
     };
 
-    const handleNicoleSearch = async (event: CustomEvent) => {
-      console.log('🎯 Marketplace: Enhanced Nicole search integration received:', event.detail);
-      const { searchQuery, nicoleContext, query } = event.detail;
-      const finalQuery = searchQuery || query;
-      
-      if (finalQuery) {
-        try {
-          // **PHASE 1: Import DirectNicoleMarketplaceService**
-          const { directNicoleMarketplaceService } = await import('@/services/marketplace/DirectNicoleMarketplaceService');
-          
-          // **PHASE 7: Enhanced Context Storage**
-          directNicoleMarketplaceService.storeNicoleContext(nicoleContext);
-          
-          const searchParams = new URLSearchParams(window.location.search);
-          searchParams.set('search', finalQuery);
-          searchParams.set('source', 'nicole');
-
-          if (nicoleContext) {
-            // **PHASE 2: Unified Budget Handling**
-            const { minPrice, maxPrice } = extractBudgetFromNicoleContext(nicoleContext as any);
-            if (minPrice != null) searchParams.set('minPrice', String(minPrice));
-            if (maxPrice != null) searchParams.set('maxPrice', String(maxPrice));
-
-            // Add recipient/occasion if present
-            if (nicoleContext.recipient) searchParams.set('recipient', String(nicoleContext.recipient));
-            if (nicoleContext.occasion) searchParams.set('occasion', String(nicoleContext.occasion));
-
-            // Include interests to help downstream mapping
-            if (Array.isArray(nicoleContext.interests) && nicoleContext.interests.length > 0) {
-              searchParams.set('interests', nicoleContext.interests.join(','));
-            }
-
-            // **PHASE 7: Enhanced Session Storage**
-            try {
-              sessionStorage.setItem('nicole-search-context', JSON.stringify({
-                ...nicoleContext,
-                timestamp: Date.now(),
-                source: 'marketplace-integration'
-              }));
-              console.log('🎯 Marketplace: Enhanced Nicole context stored:', { minPrice, maxPrice, interests: nicoleContext.interests });
-            } catch (e) {
-              console.warn('🎯 Marketplace: Failed to persist Nicole context:', e);
-            }
+    const handleNicoleSearch = (event: CustomEvent) => {
+      const { searchQuery, nicoleContext } = event.detail;
+      if (searchQuery) {
+        // Navigate to marketplace with search query
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.set('search', searchQuery);
+        
+        // Include budget in URL if provided via Nicole context
+        if (nicoleContext) {
+          const budget = nicoleContext.budget;
+          // Support [min,max] array
+          if (Array.isArray(budget) && budget.length === 2) {
+            const [min, max] = budget;
+            if (typeof min === 'number') searchParams.set('minPrice', String(min));
+            if (typeof max === 'number') searchParams.set('maxPrice', String(max));
           }
+          // Support { minPrice, maxPrice }
+          else if (budget && typeof budget === 'object') {
+            if (budget.minPrice !== undefined) searchParams.set('minPrice', String(budget.minPrice));
+            if (budget.maxPrice !== undefined) searchParams.set('maxPrice', String(budget.maxPrice));
+          }
+          // Fallback: root-level minPrice/maxPrice
+          if (nicoleContext.minPrice !== undefined) searchParams.set('minPrice', String(nicoleContext.minPrice));
+          if (nicoleContext.maxPrice !== undefined) searchParams.set('maxPrice', String(nicoleContext.maxPrice));
 
-          window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
-
-          // **PHASE 1: Direct API Integration**
-          console.log('🎯 Marketplace: Executing direct Nicole search');
-          let directResults = [];
-          
+          // Persist full Nicole context for richer filtering (interests, etc.)
           try {
-            directResults = await directNicoleMarketplaceService.searchWithNicoleContext(
-              finalQuery,
-              nicoleContext,
-              { maxResults: 35 }
-            );
-            console.log(`🎯 Marketplace: Direct search found ${directResults.length} products`);
-          } catch (searchError) {
-            console.error('🎯 Marketplace: Direct search failed:', searchError);
+            sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+            console.log('💰 Stored Nicole context with budget:', nicoleContext.budget);
+          } catch (e) {
+            console.warn('Failed to persist Nicole context to session storage', e);
           }
-
-          // Dispatch enhanced event with direct results
-          window.dispatchEvent(new CustomEvent('marketplace-search-updated', { 
-            detail: { 
-              searchTerm: finalQuery,
-              nicoleContext,
-              directResults,
-              source: 'enhanced-nicole-integration'
-            } 
-          }));
-        } catch (error) {
-          console.error('🎯 Marketplace: Nicole search integration error:', error);
-          
-          // Fallback to basic integration
-          const searchParams = new URLSearchParams(window.location.search);
-          searchParams.set('search', finalQuery);
-          searchParams.set('source', 'nicole');
-          window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
-          
-          window.dispatchEvent(new CustomEvent('marketplace-search-updated', { 
-            detail: { 
-              searchTerm: finalQuery,
-              nicoleContext 
-            } 
-          }));
         }
+        
+        window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
+        
+        // Dispatch event to trigger search in marketplace components
+        window.dispatchEvent(new CustomEvent('marketplace-search-updated', { 
+          detail: { 
+            searchTerm: searchQuery,
+            nicoleContext 
+          } 
+        }));
       }
     };
 

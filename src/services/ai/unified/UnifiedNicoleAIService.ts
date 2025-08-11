@@ -162,12 +162,10 @@ export class UnifiedNicoleAIService {
   }
 
   /**
-   * Generate enhanced search query with direct API integration
+   * Generate enhanced search query - preserves existing functionality
    */
   generateSearchQuery(context: UnifiedNicoleContext): string {
-    console.log('🎯 UnifiedNicole: Generating search query with context:', context);
-    
-    const enhancedQuery = generateEnhancedSearchQuery({
+    return generateEnhancedSearchQuery({
       recipient: context.recipient,
       relationship: context.relationship,
       occasion: context.occasion,
@@ -176,19 +174,6 @@ export class UnifiedNicoleAIService {
       budget: context.budget,
       detectedBrands: context.detectedBrands
     });
-
-    // **PHASE 1: Direct API Pipeline - Store context for marketplace**
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('nicoleContext', JSON.stringify({
-        ...context,
-        searchQuery: enhancedQuery,
-        timestamp: Date.now(),
-        source: 'unified-nicole'
-      }));
-      console.log('🎯 UnifiedNicole: Context stored for marketplace integration');
-    }
-
-    return enhancedQuery;
   }
 
   /**

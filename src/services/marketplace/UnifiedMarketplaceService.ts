@@ -189,10 +189,6 @@ class UnifiedMarketplaceService {
     const interestMap: Record<string, string[]> = {
       // Entertainment & Media - Multiple category mappings for diversity
       'concerts': ['music', 'fashion accessories', 'tech gadgets', 'electronics'],
-      'concert': ['music', 'headphones audio', 'electronics'],
-      'tickets': ['music', 'sports equipment', 'headphones audio'],
-      'experiences': ['gift sets', 'diy kits', 'books'],
-      'experience': ['gift sets', 'diy kits', 'books'],
       'music': ['music', 'electronics tech', 'headphones audio'],
       'netflix': ['entertainment', 'home comfort', 'snacks food'],
       'streaming': ['entertainment', 'electronics tech'],
@@ -204,9 +200,6 @@ class UnifiedMarketplaceService {
       
       // Hobbies & Activities - Comprehensive mappings
       'cooking': ['kitchen cooking', 'appliances', 'food specialty', 'books'],
-      'cooking classes': ['kitchen cooking', 'appliances', 'books'],
-      'class': ['kitchen cooking', 'books', 'diy kits'],
-      'classes': ['kitchen cooking', 'books', 'diy kits'],
       'kitchen': ['kitchen cooking', 'appliances', 'organization'],
       'baking': ['kitchen cooking', 'appliances', 'books'],
       'fitness': ['fitness gear', 'apparel', 'nutrition', 'tech'],
@@ -251,15 +244,16 @@ class UnifiedMarketplaceService {
     const categories = new Set<string>();
     
     interests.forEach(interest => {
-      const key = interest.toLowerCase();
-      const mapped = (interestMap as any)[key];
+      const mapped = interestMap[interest];
       if (mapped && Array.isArray(mapped)) {
+        // Add all mapped categories for diversity
         mapped.forEach(category => categories.add(category));
       } else if (typeof mapped === 'string') {
         categories.add(mapped);
       }
     });
 
+    // If no specific mappings found, add generic categories
     if (categories.size === 0) {
       categories.add('popular gifts');
     }
@@ -291,7 +285,7 @@ class UnifiedMarketplaceService {
       if (luxuryCategories) {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');
         this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
-        response = await enhancedZincApiService.searchLuxuryCategories(['luxury', 'premium'], maxResults);
+        response = await enhancedZincApiService.searchLuxuryCategories(maxResults, searchOptions);
       } else if (giftsForHer) {
         console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
         this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
@@ -344,7 +338,7 @@ class UnifiedMarketplaceService {
         }
       } else {
         console.log('[UnifiedMarketplaceService] Loading default products');
-        const defaultProducts = await enhancedZincApiService.getDefaultProducts(maxResults);
+        response = await enhancedZincApiService.getDefaultProducts(maxResults, searchOptions);
       }
 
       if (response.error) {

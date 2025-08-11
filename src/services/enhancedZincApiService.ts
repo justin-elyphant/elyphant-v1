@@ -184,15 +184,36 @@ class EnhancedZincApiService {
     console.log(`🎯 EnhancedZincApiService: Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
     try {
+      // CRITICAL FIX: Ensure price filters are properly formatted for the edge function
+      const requestBody: any = {
+        query,
+        page,
+        limit,
+        filters: filters || {}
+      };
+
+      // Add price filters directly to the request body for edge function compatibility
+      if (filters?.minPrice !== undefined) {
+        requestBody.filters.minPrice = filters.minPrice;
+        requestBody.filters.min_price = filters.minPrice;
+      }
+      if (filters?.maxPrice !== undefined) {
+        requestBody.filters.maxPrice = filters.maxPrice;
+        requestBody.filters.max_price = filters.maxPrice;
+      }
+      if (filters?.min_price !== undefined) {
+        requestBody.filters.min_price = filters.min_price;
+        requestBody.filters.minPrice = filters.min_price;
+      }
+      if (filters?.max_price !== undefined) {
+        requestBody.filters.max_price = filters.max_price;
+        requestBody.filters.maxPrice = filters.max_price;
+      }
+
+      console.log(`🎯 FIXED: Sending request body with price filters:`, requestBody);
+
       const { data, error } = await supabase.functions.invoke('get-products', {
-        body: {
-          query,
-          page,
-          limit,
-          filters: filters || {},  // Pass all filters including price constraints
-          // Also include direct price parameters for edge function compatibility
-          ...(filters || {})
-        }
+        body: requestBody
       });
 
       if (error) {

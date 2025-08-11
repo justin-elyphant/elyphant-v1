@@ -14,7 +14,7 @@ import { ConversationEnhancementService } from "@/services/ai/conversationEnhanc
 import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
 import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
 import { toast } from "sonner";
-import { NicoleBudgetDebugger } from "@/components/debug/NicoleBudgetDebugger";
+
 
 interface NicoleConversationEngineProps {
   isOpen: boolean;
@@ -516,11 +516,6 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
           />
         </div>
       )}
-
-      {/* Budget Flow Debugger - Temporary for testing */}
-      <div className="p-4 border-t flex-shrink-0">
-        <NicoleBudgetDebugger onNavigateToMarketplace={onNavigateToMarketplace} />
-      </div>
 
       {/* Input - Fixed at bottom */}
       <div className="p-4 border-t flex-shrink-0 bg-white">

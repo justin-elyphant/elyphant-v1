@@ -642,6 +642,39 @@ export type Database = {
         }
         Relationships: []
       }
+      business_admins: {
+        Row: {
+          admin_level: string
+          can_manage_payment_methods: boolean | null
+          can_view_payment_methods: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_level: string
+          can_manage_payment_methods?: boolean | null
+          can_view_payment_methods?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_level?: string
+          can_manage_payment_methods?: boolean | null
+          can_view_payment_methods?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       business_payment_methods: {
         Row: {
           card_type: string
@@ -3457,6 +3490,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_business_admin: {
+        Args: {
+          new_admin_user_id: string
+          admin_level_param: string
+          can_view_payment_methods_param?: boolean
+          can_manage_payment_methods_param?: boolean
+        }
+        Returns: Json
+      }
       are_users_connected: {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
@@ -3553,6 +3595,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
         }
+      }
+      is_authorized_for_payment_methods: {
+        Args: { action_type: string }
+        Returns: boolean
       }
       is_group_admin: {
         Args: { group_id: string; user_id: string }

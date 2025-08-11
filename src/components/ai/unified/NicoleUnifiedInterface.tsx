@@ -434,11 +434,15 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     console.log('🎯 Triggering marketplace search with Nicole context, searchQuery:', finalSearchQuery);
     onClose();
     
-    // Dispatch the event
+    // Dispatch the event with Nicole context for budget filtering
+    const context = getConversationContext();
     const event = new CustomEvent('nicole-search', {
-      detail: { searchQuery: finalSearchQuery }
+      detail: { 
+        searchQuery: finalSearchQuery,
+        nicoleContext: context // Pass the full Nicole context including budget
+      }
     });
-    console.log('📡 Dispatching nicole-search event:', event);
+    console.log('📡 Dispatching nicole-search event with context:', event);
     window.dispatchEvent(event);
   };
 

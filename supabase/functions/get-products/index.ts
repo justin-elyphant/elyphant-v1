@@ -83,9 +83,9 @@ const processBestSellerData = (product: any) => {
   };
 };
 
-// Luxury category search handler
-const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
-  console.log('Starting luxury category batch search');
+// Luxury category search handler  
+const searchLuxuryCategories = async (api_key: string, page: number = 1, priceFilter?: { min?: number; max?: number }) => {
+  console.log('Starting luxury category batch search with price filter:', priceFilter);
   
   const luxuryCategories = [
     "top designer bags for women",
@@ -94,64 +94,7 @@ const searchLuxuryCategories = async (api_key: string, page: number = 1) => {
     "designer jewelry"
   ];
   
-  const promises = luxuryCategories.map(async (category) => {
-    try {
-      console.log(`Searching luxury category: ${category}`);
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=1&retailer=amazon`, {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${api_key}:`)
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.results && Array.isArray(data.results)) {
-        // Take first 3-4 products from each category
-        const categoryResults = data.results.slice(0, 4).map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return {
-            ...product,
-            ...bestSellerData,
-            categorySource: category // Track which category this came from
-          };
-        });
-        
-        console.log(`Found ${categoryResults.length} products for category: ${category}`);
-        return categoryResults;
-      }
-      
-      return [];
-    } catch (error) {
-      console.error(`Error searching category ${category}:`, error);
-      return [];
-    }
-  });
-  
-  try {
-    const categoryResults = await Promise.all(promises);
-    
-    // Flatten and mix results
-    const allResults = categoryResults.flat();
-    
-    // Shuffle to prevent category clustering
-    for (let i = allResults.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
-    }
-    
-    console.log(`Luxury category search complete: ${allResults.length} total products`);
-    
-    return {
-      results: allResults,
-      total: allResults.length,
-      categoryBatch: true
-    };
-    
-  } catch (error) {
-    console.error('Error in luxury category batch search:', error);
-    throw error;
-  }
+  return searchCategoryBatch(api_key, luxuryCategories, "luxury items", page, 16, priceFilter);
 };
 
 // Gifts for Her category search handler with pagination support
@@ -278,7 +221,7 @@ const searchCategoryBatch = async (
 };
 
 // Gifts for Her category search handler
-const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
+const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
   const giftsForHerCategories = [
     "skincare essentials for women",
     "cozy sweaters and cardigans", 
@@ -288,11 +231,11 @@ const searchGiftsForHerCategories = async (api_key: string, page: number = 1, li
     "coffee and tea gifts"
   ];
   
-  return searchCategoryBatch(api_key, giftsForHerCategories, "gifts for her", page, limit);
+  return searchCategoryBatch(api_key, giftsForHerCategories, "gifts for her", page, limit, priceFilter);
 };
 
 // Gifts for Him category search handler
-const searchGiftsForHimCategories = async (api_key: string, page: number = 1, limit: number = 20) => {
+const searchGiftsForHimCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
   const giftsForHimCategories = [
     "tech gadgets for men",
     "grooming essentials",
@@ -302,11 +245,11 @@ const searchGiftsForHimCategories = async (api_key: string, page: number = 1, li
     "gaming accessories"
   ];
   
-  return searchCategoryBatch(api_key, giftsForHimCategories, "gifts for him", page, limit);
+  return searchCategoryBatch(api_key, giftsForHimCategories, "gifts for him", page, limit, priceFilter);
 };
 
 // Gifts Under $50 category search handler
-const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20) => {
+const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
   const giftsUnder50Categories = [
     "bluetooth earbuds under 50",
     "phone accessories under 50", 
@@ -316,7 +259,13 @@ const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, l
     "home decor under 50"
   ];
   
-  return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, { max: 50 });
+  // Combine provided price filter with default $50 max
+  const combinedFilter = {
+    max: Math.min(priceFilter?.max || 50, 50), // Never exceed $50 for this category
+    min: priceFilter?.min
+  };
+  
+  return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, combinedFilter);
 };
 
 // Brand category mappings for multi-category brand searches
@@ -386,7 +335,7 @@ const BRAND_CATEGORY_MAPPINGS = {
 };
 
 // Brand categories search handler with brand filtering
-const searchBrandCategories = async (api_key: string, brandName: string, page: number = 1, limit: number = 20) => {
+const searchBrandCategories = async (api_key: string, brandName: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
   console.log(`Starting brand category search for: ${brandName}`);
   
   const brandKey = brandName.toLowerCase().replace(/\s+/g, '');
@@ -426,7 +375,7 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
   }
   
   // Use category batch search and then filter by brand
-  const categoryResults = await searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit);
+  const categoryResults = await searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit, priceFilter);
   
   // Filter results to only include products from the specified brand
   if (categoryResults.results && categoryResults.results.length > 0) {
@@ -452,7 +401,7 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
       
       try {
         const fallbackCategories = categories.map(cat => `${brandName.toLowerCase()} ${cat}`);
-        const fallbackResults = await searchCategoryBatch(api_key, fallbackCategories, `${brandName} fallback`, page, limit);
+        const fallbackResults = await searchCategoryBatch(api_key, fallbackCategories, `${brandName} fallback`, page, limit, priceFilter);
         
         if (fallbackResults.results && fallbackResults.results.length > 0) {
           const fallbackFiltered = fallbackResults.results.filter((product: any) => {
@@ -496,13 +445,21 @@ serve(async (req) => {
       return new Response('API key not found', { status: 404 });
     }
     
-    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false} = await req.json();
+    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, filters = {}} = await req.json();
+    
+    // Extract price filters from filters object
+    const priceFilter = {
+      min: filters.min_price || filters.minPrice,
+      max: filters.max_price || filters.maxPrice
+    };
+    
+    console.log('Price filter extracted:', priceFilter);
     
     try {
       // Handle luxury category batch search
       if (luxuryCategories) {
-        console.log('Processing luxury category batch request');
-        const luxuryData = await searchLuxuryCategories(api_key, page);
+        console.log('Processing luxury category batch request with price filter:', priceFilter);
+        const luxuryData = await searchLuxuryCategories(api_key, page, priceFilter);
         
         return new Response(JSON.stringify(luxuryData), {
           status: 200,
@@ -512,8 +469,8 @@ serve(async (req) => {
       
       // Handle gifts for her category batch search
       if (giftsForHer) {
-        console.log('Processing gifts for her category batch request');
-        const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit);
+        console.log('Processing gifts for her category batch request with price filter:', priceFilter);
+        const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
         
         return new Response(JSON.stringify(giftsForHerData), {
           status: 200,
@@ -523,8 +480,8 @@ serve(async (req) => {
       
       // Handle gifts for him category batch search
       if (giftsForHim) {
-        console.log('Processing gifts for him category batch request');
-        const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit);
+        console.log('Processing gifts for him category batch request with price filter:', priceFilter);
+        const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit, priceFilter);
         
         return new Response(JSON.stringify(giftsForHimData), {
           status: 200,
@@ -534,8 +491,8 @@ serve(async (req) => {
       
       // Handle gifts under $50 category batch search
       if (giftsUnder50) {
-        console.log('Processing gifts under $50 category batch request');
-        const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit);
+        console.log('Processing gifts under $50 category batch request with price filter:', priceFilter);
+        const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit, priceFilter);
         
         return new Response(JSON.stringify(giftsUnder50Data), {
           status: 200,
@@ -545,8 +502,8 @@ serve(async (req) => {
       
       // Handle brand categories search
       if (brandCategories && query) {
-        console.log(`Processing brand categories request for: ${query}`);
-        const brandData = await searchBrandCategories(api_key, query, page, limit);
+        console.log(`Processing brand categories request for: ${query} with price filter:`, priceFilter);
+        const brandData = await searchBrandCategories(api_key, query, page, limit, priceFilter);
         
         return new Response(JSON.stringify(brandData), {
           status: 200,

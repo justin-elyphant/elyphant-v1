@@ -26,16 +26,26 @@ const Marketplace = () => {
     };
 
     const handleNicoleSearch = (event: CustomEvent) => {
-      const { searchQuery } = event.detail;
+      const { searchQuery, nicoleContext } = event.detail;
       if (searchQuery) {
         // Navigate to marketplace with search query
         const searchParams = new URLSearchParams(window.location.search);
         searchParams.set('search', searchQuery);
+        
+        // Store Nicole context for the search including budget information
+        if (nicoleContext) {
+          sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+          console.log('💰 Stored Nicole context with budget:', nicoleContext.budget);
+        }
+        
         window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
         
         // Dispatch event to trigger search in marketplace components
         window.dispatchEvent(new CustomEvent('marketplace-search-updated', { 
-          detail: { searchTerm: searchQuery } 
+          detail: { 
+            searchTerm: searchQuery,
+            nicoleContext 
+          } 
         }));
       }
     };

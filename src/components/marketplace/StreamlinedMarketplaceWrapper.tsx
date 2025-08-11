@@ -46,9 +46,13 @@ const StreamlinedMarketplaceWrapper = () => {
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
     const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
-      const { searchTerm } = event.detail;
+      const { searchTerm, nicoleContext } = event.detail;
       if (searchTerm) {
-        // Force re-trigger the search with the new term
+        // Store Nicole context for the search
+        if (nicoleContext) {
+          sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+        }
+        // Force re-trigger the search with the new term and context
         window.location.reload();
       }
     };
@@ -104,6 +108,18 @@ const StreamlinedMarketplaceWrapper = () => {
         return response.data?.results || [];
       }
       
+      // Get Nicole context from session storage for budget filtering
+      let nicoleContext;
+      try {
+        const storedContext = sessionStorage.getItem('nicole-search-context');
+        if (storedContext) {
+          nicoleContext = JSON.parse(storedContext);
+          console.log('💰 Retrieved Nicole context for search:', nicoleContext);
+        }
+      } catch (error) {
+        console.warn('Failed to parse Nicole context from session storage:', error);
+      }
+      
       // For other search types, use unified marketplace
       const searchOptions = {
         page,
@@ -111,10 +127,12 @@ const StreamlinedMarketplaceWrapper = () => {
         ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
         ...(searchParams.get('brandCategories') && { brandCategories: true }),
         ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
-        ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') })
+        ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') }),
+        ...(nicoleContext && { nicoleContext }) // Pass Nicole context for budget filtering
       };
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
+      console.log('🔍 Searching with options:', searchOptions);
       const result = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
       
       return result || [];

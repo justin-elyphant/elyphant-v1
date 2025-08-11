@@ -25,9 +25,27 @@ const Marketplace = () => {
       setBulkGiftingOpen(true);
     };
 
+    const handleNicoleSearch = (event: CustomEvent) => {
+      const { searchQuery } = event.detail;
+      if (searchQuery) {
+        // Navigate to marketplace with search query
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.set('search', searchQuery);
+        window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
+        
+        // Dispatch event to trigger search in marketplace components
+        window.dispatchEvent(new CustomEvent('marketplace-search-updated', { 
+          detail: { searchTerm: searchQuery } 
+        }));
+      }
+    };
+
     window.addEventListener('open-bulk-gifting', handleOpenBulkGifting as EventListener);
+    window.addEventListener('nicole-search', handleNicoleSearch as EventListener);
+    
     return () => {
       window.removeEventListener('open-bulk-gifting', handleOpenBulkGifting as EventListener);
+      window.removeEventListener('nicole-search', handleNicoleSearch as EventListener);
     };
   }, []);
 

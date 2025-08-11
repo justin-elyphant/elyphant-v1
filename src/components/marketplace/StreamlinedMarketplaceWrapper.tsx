@@ -43,6 +43,22 @@ const StreamlinedMarketplaceWrapper = () => {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();
 
+  // Listen for Nicole search events and trigger marketplace search
+  useEffect(() => {
+    const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
+      const { searchTerm } = event.detail;
+      if (searchTerm) {
+        // Force re-trigger the search with the new term
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
+    return () => {
+      window.removeEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
+    };
+  }, []);
+
   // Server-side load more function
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
     try {

@@ -1082,9 +1082,9 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     // Let Nicole handle follow-up suggestions naturally in her AI-generated response
     let finalMessage = aiMessage;
 
-    // Generate search query for product tiles if needed
+    // Generate search query when we have minimum context (for search button functionality)
     let searchQuery;
-    if (showProductTiles) {
+    if (hasMinimumContext || showProductTiles) {
       // Create a robust search query using available context
       const searchTerms: string[] = [];
       
@@ -1110,7 +1110,7 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
       }
       
       searchQuery = searchTerms.join(' ').trim();
-      console.log("🔍 Generated search query for product tiles:", searchQuery);
+      console.log("🔍 Generated search query for marketplace:", searchQuery);
     }
 
     const responsePayload = {

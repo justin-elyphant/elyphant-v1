@@ -2,6 +2,7 @@ import React from "react";
 import { getPrimaryProductImage } from "@/components/marketplace/product-item/getPrimaryProductImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SimpleMobileImage from "@/components/marketplace/ui/SimpleMobileImage";
+import { getOptimizedImageSrc } from "@/utils/imageOptimization";
 
 interface ProductCardImageSectionProps {
   product: any;
@@ -50,11 +51,19 @@ const ProductCardImageSection: React.FC<ProductCardImageSectionProps> = ({
     console.log("[ProductCardImageSection] Image loaded successfully:", selectedImg);
   };
 
+  // Get optimized image source
+  const optimizedSrc = getOptimizedImageSrc(selectedImg, {
+    width: 400,
+    height: 400,
+    quality: 85,
+    format: 'webp'
+  });
+
   // Use simplified mobile component for mobile devices
   if (isMobile) {
     return (
       <SimpleMobileImage
-        src={selectedImg}
+        src={optimizedSrc}
         alt={productName}
         aspectRatio="square"
         priority={priority}
@@ -65,10 +74,10 @@ const ProductCardImageSection: React.FC<ProductCardImageSectionProps> = ({
     );
   }
 
-  // Desktop version (unchanged)
+  // Desktop version with optimization
   return (
     <img
-      src={selectedImg}
+      src={optimizedSrc}
       alt={productName}
       className="object-cover w-full h-full transition-transform group-hover:scale-105"
       onError={(e) => {

@@ -8,7 +8,8 @@ import { getMockProducts } from "@/components/marketplace/services/mockProductSe
 import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils"; // Added the missing import
+import { cn } from "@/lib/utils";
+import { getOptimizedImageSrc, preloadCriticalImages } from "@/utils/imageOptimization";
 
 interface ZincProductResultsProps {
   products: Product[];
@@ -42,7 +43,14 @@ export const ZincProductResults = ({
     }
     
     // Use the provided products or fallback to mock products
-    setDisplayProducts(products && products.length > 0 ? products : getMockProducts(6));
+    const finalProducts = products && products.length > 0 ? products : getMockProducts(6);
+    setDisplayProducts(finalProducts);
+    
+    // Preload critical images for better performance
+    if (finalProducts.length > 0) {
+      const imageUrls = finalProducts.slice(0, 4).map(p => p.image).filter(Boolean);
+      preloadCriticalImages(imageUrls);
+    }
     
     return () => {
       if (timer) window.clearTimeout(timer);
@@ -79,15 +87,23 @@ export const ZincProductResults = ({
               Amazon Product
             </Badge>
             
-            <div className="h-40 overflow-hidden">
+            <div className="h-40 overflow-hidden bg-muted">
               <img 
-                src={product.image} 
+                src={getOptimizedImageSrc(product.image, {
+                  width: 400,
+                  height: 320,
+                  quality: 85,
+                  format: 'webp'
+                })} 
                 alt={product.title || product.name || ""} 
-                className="w-full h-full object-cover"
-                loading="lazy"
+                className="w-full h-full object-cover transition-opacity duration-300"
+                loading={index < 4 ? "eager" : "lazy"}
                 onError={(e) => {
-                  // Replace broken images with placeholder
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158";
+                  // Replace broken images with optimized placeholder
+                  (e.target as HTMLImageElement).src = getOptimizedImageSrc(
+                    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+                    { width: 400, height: 320, quality: 85, format: 'webp' }
+                  );
                 }}
               />
             </div>

@@ -181,7 +181,7 @@ class EnhancedZincApiService {
    * Search for products using the enhanced Zinc API via Supabase Edge Function
    */
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
-    console.log(`Searching products: "${query}", page: ${page}, limit: ${limit}`);
+    console.log(`Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
     try {
       const { data, error } = await supabase.functions.invoke('get-products', {

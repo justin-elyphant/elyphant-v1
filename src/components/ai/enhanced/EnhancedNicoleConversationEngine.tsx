@@ -395,8 +395,28 @@ Let me take you to your profile where you can start building your wishlist. You 
       
       console.log('🎯 Enhanced Nicole: Generated search query:', searchQuery);
       
-      // Navigate to marketplace with search query
-      navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+      // Navigate to marketplace with search query and Nicole context
+      const marketplaceUrl = new URL('/marketplace', window.location.origin);
+      marketplaceUrl.searchParams.set('search', searchQuery);
+      marketplaceUrl.searchParams.set('source', 'nicole');
+      
+      // Include budget information if available
+      if ((context as any)?.budget && Array.isArray((context as any).budget) && (context as any).budget.length === 2) {
+        marketplaceUrl.searchParams.set('minPrice', String((context as any).budget[0]));
+        marketplaceUrl.searchParams.set('maxPrice', String((context as any).budget[1]));
+        console.log('🎯 Nicole: Adding budget context to marketplace URL:', (context as any).budget);
+      }
+      
+      // Include recipient and occasion for contextual search
+      if ((context as any)?.recipient) {
+        marketplaceUrl.searchParams.set('recipient', String((context as any).recipient));
+      }
+      if ((context as any)?.occasion) {
+        marketplaceUrl.searchParams.set('occasion', String((context as any).occasion));
+      }
+      
+      console.log('🎯 Nicole: Navigating to marketplace with full context:', marketplaceUrl.pathname + marketplaceUrl.search);
+      navigate(marketplaceUrl.pathname + marketplaceUrl.search);
       
       // Close the conversation
       onClose();

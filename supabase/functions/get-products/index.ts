@@ -519,8 +519,20 @@ serve(async (req) => {
         });
       }
       
-      // Existing single search logic (preserved exactly)
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`, {
+      // Enhanced single search logic with price filtering support
+      let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`;
+      
+      // Add price filters to the URL if provided
+      if (filters?.min_price) {
+        searchUrl += `&min_price=${filters.min_price}`;
+      }
+      if (filters?.max_price) {
+        searchUrl += `&max_price=${filters.max_price}`;
+      }
+      
+      console.log('🎯 Zinc API URL with price filters:', searchUrl);
+      
+      const response = await fetch(searchUrl, {
         method: 'GET',
         headers: {
           'Authorization': 'Basic ' + btoa(`${api_key}:`)
@@ -529,9 +541,32 @@ serve(async (req) => {
   
       const data = await response.json();
       
+      // Apply post-search price filtering if Zinc API didn't handle it properly
+      let filteredResults = data.results || [];
+      if ((filters?.min_price || filters?.max_price) && filteredResults.length > 0) {
+        const minPrice = filters.min_price;
+        const maxPrice = filters.max_price;
+        
+        filteredResults = filteredResults.filter(product => {
+          const price = product.price;
+          if (!price) return true; // Keep products without price info
+          
+          const priceInCents = typeof price === 'number' ? price : parseInt(price);
+          const priceInDollars = priceInCents / 100;
+          
+          let passesFilter = true;
+          if (minPrice && priceInDollars < minPrice) passesFilter = false;
+          if (maxPrice && priceInDollars > maxPrice) passesFilter = false;
+          
+          return passesFilter;
+        });
+        
+        console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products (${minPrice ? `$${minPrice}` : 'no min'} to ${maxPrice ? `$${maxPrice}` : 'no max'})`);
+      }
+      
       // Process best seller data for each product
-      if (data.results && Array.isArray(data.results)) {
-        data.results = data.results.map((product: any) => {
+      if (filteredResults && Array.isArray(filteredResults)) {
+        filteredResults = filteredResults.map((product: any) => {
           const bestSellerData = processBestSellerData(product);
           return {
             ...product,
@@ -540,7 +575,13 @@ serve(async (req) => {
         });
       }
   
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify({
+        ...data,
+        results: filteredResults,
+        total: filteredResults.length,
+        originalTotal: data.total || 0,
+        priceFiltered: (filters?.min_price || filters?.max_price) ? true : false
+      }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });

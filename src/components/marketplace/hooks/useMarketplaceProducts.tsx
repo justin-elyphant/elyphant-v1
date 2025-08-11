@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -22,11 +21,29 @@ export const useMarketplaceProducts = () => {
       const personId = searchParams.get("personId");
       const occasionType = searchParams.get("occasionType");
       
+      // Extract Nicole context from URL parameters
+      const minPrice = searchParams.get("minPrice");
+      const maxPrice = searchParams.get("maxPrice");
+      const source = searchParams.get("source");
+      const recipient = searchParams.get("recipient");
+      const occasion = searchParams.get("occasion");
+      
+      // Build Nicole context if available
+      const nicoleContext = source === 'nicole' ? {
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        recipient,
+        occasion,
+        budget: (minPrice && maxPrice) ? [Number(minPrice), Number(maxPrice)] : undefined
+      } : undefined;
+      
+      console.log('🎯 Marketplace: Extracted Nicole context from URL:', nicoleContext);
+      
       // Generate unique ID for this search to prevent duplicate toasts
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType);
+      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
     } else {
       // Load some default products with personalization
       const userInterests = profile?.gift_preferences || [];
@@ -50,11 +67,27 @@ export const useMarketplaceProducts = () => {
     if (searchParam && searchParam !== searchTerm) {
       setSearchTerm(searchParam);
       
+      // Extract Nicole context from URL parameters
+      const minPrice = searchParams.get("minPrice");
+      const maxPrice = searchParams.get("maxPrice");
+      const source = searchParams.get("source");
+      const recipient = searchParams.get("recipient");
+      const occasion = searchParams.get("occasion");
+      
+      // Build Nicole context if available
+      const nicoleContext = source === 'nicole' ? {
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        recipient,
+        occasion,
+        budget: (minPrice && maxPrice) ? [Number(minPrice), Number(maxPrice)] : undefined
+      } : undefined;
+      
       // Generate unique ID for this search to prevent duplicate toasts
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"));
+      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
     }
   }, [searchParams]);
   
@@ -68,6 +101,12 @@ export const useMarketplaceProducts = () => {
     // Clear personId and occasionType since this is a direct search
     params.delete("personId");
     params.delete("occasionType");
+    // Clear Nicole context since this is a manual search
+    params.delete("source");
+    params.delete("minPrice");
+    params.delete("maxPrice");
+    params.delete("recipient");
+    params.delete("occasion");
     setSearchParams(params);
     
     // Generate unique ID for this search

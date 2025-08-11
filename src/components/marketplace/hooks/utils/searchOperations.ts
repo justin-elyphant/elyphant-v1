@@ -1,8 +1,8 @@
-
 import { Product } from "@/types/product";
 import { searchMockProducts } from "../../services/mockProductService";
 import { addMockImagesToProducts } from "./productImageUtils";
 import { toast } from "sonner";
+import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 
 // Track search operations to prevent duplicate toast notifications
 export const searchOperations = new Map();
@@ -11,15 +11,16 @@ export const searchOperations = new Map();
  * Handle search for marketplace products
  * @param showFullWishlist (optional) - if true, returns all wishlist items for friend (max 24)
  */
-export const handleSearch = (
+export const handleSearch = async (
   term: string, 
   searchIdRef: React.MutableRefObject<string>,
   setIsLoading: (isLoading: boolean) => void,
   setProducts: (products: Product[]) => void,
   personId?: string | null, 
   occasionType?: string | null,
-  showFullWishlist?: boolean
-): void => {
+  showFullWishlist?: boolean,
+  nicoleContext?: any
+): Promise<void> => {
   // Check if this exact search is already in progress and avoid duplicates
   const searchKey = `${term}-${personId || ''}-${occasionType || ''}-${showFullWishlist ? "full" : ""}`;
   if (searchOperations.has(searchKey) && Date.now() - searchOperations.get(searchKey) < 2000) {
@@ -34,7 +35,7 @@ export const handleSearch = (
   toast.dismiss();
   
   setIsLoading(true);
-  console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}, fullWishlist: ${showFullWishlist}`);
+  console.log(`MarketplaceWrapper: Searching for "${term}" with personId: ${personId}, occasionType: ${occasionType}, fullWishlist: ${showFullWishlist}, nicoleContext:`, nicoleContext);
   
   try {
     let mockResults: Product[] = [];
@@ -90,29 +91,67 @@ export const handleSearch = (
           mockResults = [...mockResults, ...genericItems];
         }
       }
+      
+      // Add mock images and features to friend-related products
+      mockResults = addMockImagesToProducts(mockResults);
+      setProducts(mockResults);
+      
     } else {
-      // Regular search without personalization
+      // Use UnifiedMarketplaceService for real search with Nicole context support
+      if (nicoleContext) {
+        console.log('🎯 SearchOperations: Using UnifiedMarketplaceService with Nicole context:', nicoleContext);
+        try {
+          const searchResults = await unifiedMarketplaceService.searchProducts(term, {
+            nicoleContext,
+            minPrice: nicoleContext.minPrice,
+            maxPrice: nicoleContext.maxPrice,
+            maxResults: 16
+          });
+          
+          if (searchResults && searchResults.length > 0) {
+            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
+            setProducts(searchResults);
+            
+            // Show success toast with price range info
+            const priceInfo = nicoleContext.budget ? ` ($${nicoleContext.budget[0]}-$${nicoleContext.budget[1]})` : '';
+            setTimeout(() => {
+              if (searchIdRef.current.includes(term)) {
+                toast.success(`Found ${searchResults.length} products for "${term}"${priceInfo}`, {
+                  id: `search-success-${term}`,
+                });
+              }
+            }, 300);
+            return;
+          }
+        } catch (error) {
+          console.error('🎯 SearchOperations: UnifiedMarketplaceService error:', error);
+          // Fall back to mock results
+        }
+      }
+      
+      // Fallback to mock search for non-Nicole searches or errors
       mockResults = searchMockProducts(term, 16);
+      // Add mock images and features to all mockProducts
+      mockResults = addMockImagesToProducts(mockResults);
+      
+      // Update products state
+      setProducts(mockResults);
     }
-    // Add mock images and features to all mockProducts
-    mockResults = addMockImagesToProducts(mockResults);
-    
-    // Update products state
-    setProducts(mockResults);
     
     console.log(`MarketplaceWrapper: Found ${mockResults.length} results for "${term}"`);
     
-    // Show success toast only for significant searches and only once
-    if (term.length > 3) {
+    // Show success toast with standard message for non-Nicole searches
+    if (term.length > 3 && !nicoleContext) {
       setTimeout(() => {
         // Check if this is still the current search
-        if (searchIdRef.current === `search-${term}-${Date.now()}`) {
+        if (searchIdRef.current.includes(term)) {
           toast.success(`Found ${mockResults.length} products for "${term}"`, {
             id: `search-success-${term}`,
           });
         }
       }, 300);
     }
+    
   } catch (error) {
     console.error('Error searching for products:', error);
     toast.error('Error searching for products', {
@@ -129,4 +168,3 @@ export const handleSearch = (
 export const clearSearchOperations = (): void => {
   searchOperations.clear();
 };
-

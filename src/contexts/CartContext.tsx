@@ -71,6 +71,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
   
   // Use UnifiedPaymentService via hooks - this is the key migration
+  // Add error boundary to prevent context failures
+  let cartHookResult;
+  try {
+    cartHookResult = useUnifiedCart();
+    console.log('[CartProvider] Successfully initialized useUnifiedCart hook');
+  } catch (error) {
+    console.error('[CartProvider] Failed to initialize useUnifiedCart, using fallback:', error);
+    // Fallback empty cart state to prevent app crash
+    cartHookResult = {
+      cartItems: [],
+      cartTotal: 0,
+      itemCount: 0,
+      addToCart: async () => {
+        console.warn('[CartProvider] Cart addToCart called but service unavailable');
+      },
+      removeFromCart: () => {
+        console.warn('[CartProvider] Cart removeFromCart called but service unavailable');
+      },
+      updateQuantity: () => {
+        console.warn('[CartProvider] Cart updateQuantity called but service unavailable');
+      },
+      clearCart: () => {
+        console.warn('[CartProvider] Cart clearCart called but service unavailable');
+      },
+      assignItemToRecipient: () => {
+        console.warn('[CartProvider] Cart assignItemToRecipient called but service unavailable');
+      }
+    };
+  }
+
   const {
     cartItems,
     cartTotal,
@@ -80,7 +110,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateQuantity: serviceUpdateQuantity,
     clearCart: serviceClearCart,
     assignItemToRecipient: serviceAssignToRecipient
-  } = useUnifiedCart();
+  } = cartHookResult;
 
   /*
    * ========================================================================

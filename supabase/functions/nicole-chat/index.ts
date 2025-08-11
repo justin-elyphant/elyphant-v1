@@ -699,6 +699,10 @@ Show search button when these conditions are met:
 3. Has budget range OR can infer reasonable budget
 4. Has gathered enough context for meaningful product search
 
+CRITICAL: When you provide gift suggestions or recommendations, ALWAYS end your response by instructing the user to "click on 'Search Gifts' to view and purchase these items in our marketplace!"
+- Use variations like "Ready to see these gifts? Click 'Search Gifts' below!" or "Click the 'Search Gifts' button to explore these options!"
+- This creates a clear action path from conversation to product discovery
+
 CTA Logic Examples:
 ✅ SHOW: "birthday gift for my sister who loves art, $50-100 budget"
 ✅ SHOW: "housewarming gift for coworker, around $30"  
@@ -1036,7 +1040,8 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     const positiveResponseToOptions = /(?:yes|sure|okay|ok|show|find|go ahead|sounds good|that works|perfect)/i.test(message) && /(?:show|find|option|gift)/i.test(aiMessage || '');
     
     const showSearchButton = hasMinimumContext || (hasBudget && hasInterestsOrBrands) || aiIndicatesReady;
-    const showProductTiles = wantsProductSuggestions || justProvidedBudget || positiveResponseToOptions || (aiIndicatesReady && hasInterestsOrBrands);
+    // Simplified: Remove complex product tile logic, focus on search button approach
+    const showProductTiles = false;
 
     console.log("CTA Button Logic:", {
       hasRecipient,
@@ -1045,11 +1050,8 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
       hasBudget,
       hasMinimumContext,
       aiIndicatesReady,
-      wantsProductSuggestions,
-      justProvidedBudget,
-      positiveResponseToOptions,
       showSearchButton,
-      showProductTiles,
+      showProductTiles: false, // Simplified approach
       userMessage: message,
       aiResponse: aiMessage?.substring(0, 100),
       context: {

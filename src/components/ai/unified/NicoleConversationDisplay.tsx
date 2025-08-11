@@ -185,7 +185,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
               className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full px-6"
             >
               <Search className="w-4 h-4 mr-2" />
-              Search Products
+              Search Gifts
               <Sparkles className="w-3 w-3 ml-2" />
             </Button>
           </div>

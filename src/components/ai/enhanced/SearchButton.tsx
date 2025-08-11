@@ -24,7 +24,7 @@ const SearchButton: React.FC<SearchButtonProps> = ({ onSearch, isLoading = false
       ) : (
         <>
           <Gift className="mr-2 h-5 w-5" />
-          Ready to See Gifts
+          Search Gifts
           <Sparkles className="ml-2 h-4 w-4" />
         </>
       )}

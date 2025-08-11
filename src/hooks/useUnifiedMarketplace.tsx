@@ -137,11 +137,15 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       let nicoleContext;
       try {
         const storedContext = sessionStorage.getItem('nicole-search-context');
+        console.log('🔍 Checking session storage for Nicole context:', storedContext ? 'Found' : 'Not found');
         if (storedContext) {
           nicoleContext = JSON.parse(storedContext);
           console.log('💰 Retrieved Nicole context for URL search:', nicoleContext);
+          console.log('💰 Budget from context:', nicoleContext.budget);
           // Clear after use to prevent stale data
           sessionStorage.removeItem('nicole-search-context');
+        } else {
+          console.log('ℹ️ No Nicole context found in session storage for search');
         }
       } catch (error) {
         console.warn('Failed to parse Nicole context from session storage:', error);

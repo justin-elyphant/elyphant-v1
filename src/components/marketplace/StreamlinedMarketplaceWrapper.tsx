@@ -48,11 +48,20 @@ const StreamlinedMarketplaceWrapper = () => {
     const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
       const { searchTerm, nicoleContext } = event.detail;
       if (searchTerm) {
+        console.log('🎯 Marketplace search update received:', { searchTerm, nicoleContext });
+        
         // Store Nicole context for the search
         if (nicoleContext) {
           sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+          console.log('💰 Stored Nicole context in session storage:', nicoleContext);
         }
-        // Force re-trigger the search with the new term and context
+        
+        // Update URL without page reload
+        const newSearchParams = new URLSearchParams(window.location.search);
+        newSearchParams.set('search', searchTerm);
+        window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
+        
+        // Force reload to trigger useEffect in useUnifiedMarketplace
         window.location.reload();
       }
     };

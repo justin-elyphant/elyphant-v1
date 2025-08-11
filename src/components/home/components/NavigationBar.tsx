@@ -10,9 +10,9 @@ import UserButton from "@/components/auth/UserButton";
 import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
-// Lazy load heavy components to improve performance on auth pages
+// Import directly instead of lazy loading to avoid context issues
 const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhancedSearchBar"));
-const OptimizedShoppingCartButton = React.lazy(() => import("@/components/marketplace/components/OptimizedShoppingCartButton"));
+import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 
 const NavigationBar = () => {
   const authContext = useAuth();
@@ -83,21 +83,13 @@ const NavigationBar = () => {
 
           {/* Desktop Auth & Cart */}
           <div className="hidden md:flex items-center space-x-4">
-            {shouldShowCart && (
-              <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
-                <OptimizedShoppingCartButton />
-              </React.Suspense>
-            )}
+            {shouldShowCart && <OptimizedShoppingCartButton />}
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
           {/* Mobile Right Side - Only Cart and Menu */}
           <div className="md:hidden flex items-center space-x-3">
-            {shouldShowCart && (
-              <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
-                <OptimizedShoppingCartButton />
-              </React.Suspense>
-            )}
+            {shouldShowCart && <OptimizedShoppingCartButton />}
             <Button
               variant="ghost"
               size="sm"

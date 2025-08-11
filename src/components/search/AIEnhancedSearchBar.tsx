@@ -151,7 +151,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     } else {
       navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
     }
-    setIsNicoleOpen(false);
+    
+    // Add a delay before closing to allow navigation to complete
+    setTimeout(() => {
+      setIsNicoleOpen(false);
+    }, 100);
   };
 
   const placeholderText = isNicoleMode 

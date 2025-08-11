@@ -426,7 +426,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     if (onNavigateToResults) {
       console.log('🎯 Using onNavigateToResults callback');
       onNavigateToResults(finalSearchQuery);
-      onClose();
+      // Don't close immediately - let the parent handle closure after navigation
       return;
     }
     

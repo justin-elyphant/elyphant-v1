@@ -16,6 +16,7 @@ import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleCon
 // Import Nicole integration test for debugging
 if (process.env.NODE_ENV === 'development') {
   import("./debug/nicole-integration-test");
+  import("./debug/test-nicole-marketplace");
 }
 
 // Immediate load for critical pages

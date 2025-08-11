@@ -3,7 +3,7 @@ import { Product } from "@/types/product";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { normalizeProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
-import { extractBudgetFromNicoleContext, logPriceRangeDebug } from "./nicoleContextUtils";
+import { extractBudgetFromNicoleContext, logPriceRangeDebug, validateResultsPriceRange } from "./nicoleContextUtils";
 
 export interface SearchOptions {
   maxResults?: number;
@@ -348,20 +348,33 @@ class UnifiedMarketplaceService {
       // Normalize and validate products
       const normalizedProducts = normalizeProducts(response.results || []);
       
-      if (normalizedProducts.length > 0) {
+      // Enforce client-side budget filtering as a safety net
+      let finalProducts = normalizedProducts;
+      if (typeof minPrice !== 'undefined' || typeof maxPrice !== 'undefined') {
+        const { validProducts, invalidProducts } = validateResultsPriceRange(normalizedProducts, {
+          minPrice,
+          maxPrice,
+        });
+        if (invalidProducts.length > 0) {
+          console.log('[UnifiedMarketplaceService] Client-side price filter removed', invalidProducts.length, 'items outside range', { minPrice, maxPrice });
+        }
+        finalProducts = validProducts;
+      }
+      
+      if (finalProducts.length > 0) {
         const successMessage = luxuryCategories 
-          ? `Found ${normalizedProducts.length} luxury items`
+          ? `Found ${finalProducts.length} luxury items`
           : giftsForHer
-            ? `Found ${normalizedProducts.length} gifts for her`
+            ? `Found ${finalProducts.length} gifts for her`
             : giftsForHim
-              ? `Found ${normalizedProducts.length} gifts for him`
+              ? `Found ${finalProducts.length} gifts for him`
               : giftsUnder50
-                ? `Found ${normalizedProducts.length} gifts under $50`
+                ? `Found ${finalProducts.length} gifts under $50`
                 : brandCategories
-                  ? `Found ${normalizedProducts.length} ${searchTerm} products`
+                  ? `Found ${finalProducts.length} ${searchTerm} products`
                   : searchTerm 
-                    ? `Found ${normalizedProducts.length} results`
-                    : `Loaded ${normalizedProducts.length} featured products`;
+                    ? `Found ${finalProducts.length} results`
+                    : `Loaded ${finalProducts.length} featured products`;
             
         this.showToast(successMessage, 'success');
       } else {
@@ -372,7 +385,7 @@ class UnifiedMarketplaceService {
         this.showToast(noResultsMessage, 'error');
       }
 
-      return normalizedProducts;
+      return finalProducts;
       
     } catch (error) {
       console.error('[UnifiedMarketplaceService] Search error:', error);
@@ -483,15 +496,25 @@ class UnifiedMarketplaceService {
       // Normalize and validate products
       const normalizedProducts = normalizeProducts(response.results || []);
       
-      if (normalizedProducts.length > 0) {
-        this.showToast(`Found ${normalizedProducts.length} popular alternatives`, 'success', 'Showing best selling items within your budget');
-        console.log(`[UnifiedMarketplaceService] Live fallback successful: ${normalizedProducts.length} products returned`);
+      // Apply client-side budget filtering here as well
+      let finalProducts = normalizedProducts;
+      if (typeof minPrice !== 'undefined' || typeof maxPrice !== 'undefined') {
+        const { validProducts, invalidProducts } = validateResultsPriceRange(normalizedProducts, { minPrice, maxPrice });
+        if (invalidProducts.length > 0) {
+          console.log('[UnifiedMarketplaceService] Fallback: removed', invalidProducts.length, 'items outside range', { minPrice, maxPrice });
+        }
+        finalProducts = validProducts;
+      }
+      
+      if (finalProducts.length > 0) {
+        this.showToast(`Found ${finalProducts.length} popular alternatives`, 'success', 'Showing best selling items within your budget');
+        console.log(`[UnifiedMarketplaceService] Live fallback successful: ${finalProducts.length} products returned`);
       } else {
         this.showToast('No alternatives found', 'error', 'No popular items found within budget');
         console.log('[UnifiedMarketplaceService] Live fallback returned no results');
       }
       
-      return normalizedProducts;
+      return finalProducts;
       
     } catch (fallbackError) {
       console.error('[UnifiedMarketplaceService] Live fallback also failed:', fallbackError);

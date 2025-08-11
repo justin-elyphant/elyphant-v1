@@ -151,11 +151,23 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
         console.warn('Failed to parse Nicole context from session storage:', error);
       }
       
+      // Also extract explicit min/max price from URL params as a fallback
+      const urlMinPrice = searchParams.get('minPrice');
+      const urlMaxPrice = searchParams.get('maxPrice');
+      const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
+      const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        console.log('💰 URL provided price filters:', { minPrice, maxPrice });
+      }
+      
       executeSearch(urlSearchTerm, { 
         maxResults: 20,
         personId,
         occasionType,
-        nicoleContext 
+        nicoleContext,
+        // Ensure price filters are honored even without full context
+        ...(minPrice !== undefined ? { minPrice } : {}),
+        ...(maxPrice !== undefined ? { maxPrice } : {}),
       });
     } else if (autoLoadOnMount) {
       console.log('[useUnifiedMarketplace] Loading default products');

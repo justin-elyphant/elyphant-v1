@@ -129,6 +129,12 @@ const StreamlinedMarketplaceWrapper = () => {
         console.warn('Failed to parse Nicole context from session storage:', error);
       }
       
+      // Also read explicit min/max price from URL
+      const urlMinPrice = searchParams.get('minPrice');
+      const urlMaxPrice = searchParams.get('maxPrice');
+      const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
+      const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
+      
       // For other search types, use unified marketplace
       const searchOptions = {
         page,
@@ -137,7 +143,9 @@ const StreamlinedMarketplaceWrapper = () => {
         ...(searchParams.get('brandCategories') && { brandCategories: true }),
         ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
         ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') }),
-        ...(nicoleContext && { nicoleContext }) // Pass Nicole context for budget filtering
+        ...(nicoleContext && { nicoleContext }), // Pass Nicole context for budget filtering
+        ...(minPrice !== undefined ? { minPrice } : {}),
+        ...(maxPrice !== undefined ? { maxPrice } : {}),
       };
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';

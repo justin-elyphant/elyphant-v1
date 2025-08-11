@@ -149,7 +149,43 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     if (onNavigateToResults) {
       onNavigateToResults(searchQuery, nicoleContext);
     } else {
-      navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+      // Serialize Nicole context into URL parameters
+      const marketplaceUrl = new URL('/marketplace', window.location.origin);
+      marketplaceUrl.searchParams.set('search', searchQuery);
+      
+      if (nicoleContext) {
+        // Add Nicole source indicator
+        marketplaceUrl.searchParams.set('source', 'nicole');
+        
+        // Add budget/price range if available
+        if (nicoleContext.budget) {
+          const budget = nicoleContext.budget;
+          if (budget.minPrice !== undefined) {
+            marketplaceUrl.searchParams.set('minPrice', String(budget.minPrice));
+          }
+          if (budget.maxPrice !== undefined) {
+            marketplaceUrl.searchParams.set('maxPrice', String(budget.maxPrice));
+          }
+        }
+        
+        // Add recipient information
+        if (nicoleContext.recipient) {
+          marketplaceUrl.searchParams.set('recipient', nicoleContext.recipient);
+        }
+        
+        // Add occasion information
+        if (nicoleContext.occasion) {
+          marketplaceUrl.searchParams.set('occasion', nicoleContext.occasion);
+        }
+        
+        console.log('🎯 Nicole Navigation with context:', {
+          searchQuery,
+          nicoleContext,
+          url: marketplaceUrl.pathname + marketplaceUrl.search
+        });
+      }
+      
+      navigate(marketplaceUrl.pathname + marketplaceUrl.search);
     }
     
     // Add a delay before closing to allow navigation to complete

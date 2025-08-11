@@ -425,7 +425,7 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     console.log('Triggering marketplace search with Nicole context');
     onClose();
     window.dispatchEvent(new CustomEvent('nicole-search', {
-      detail: { query: searchQuery }
+      detail: { searchQuery }
     }));
   };
 

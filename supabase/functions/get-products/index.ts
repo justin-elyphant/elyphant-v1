@@ -9,12 +9,14 @@ const corsHeaders = {
 
 const fetchApiKey = async () => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') 
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') 
   
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing environment variables for Supabase connection')
   }
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  // Use service role key for system access to API keys
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   const { data, error } = await supabase
   .from('api_keys')
@@ -442,7 +444,13 @@ serve(async (req) => {
     const api_key = await fetchApiKey();
     console.log('api_key', api_key);
     if(!api_key) {
-      return new Response('API key not found', { status: 404 });
+      console.error('No API key found in database');
+      return new Response(JSON.stringify({ 
+        error: 'API configuration missing - Zinc API key not found' 
+      }), { 
+        status: 500, 
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
     
     const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, filters = {}} = await req.json();

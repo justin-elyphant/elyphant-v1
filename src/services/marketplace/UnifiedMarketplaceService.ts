@@ -1,7 +1,6 @@
 
 import { Product } from "@/types/product";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
-import { searchMockProducts } from "@/components/marketplace/services/mockProductService";
 import { normalizeProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
 import { extractBudgetFromNicoleContext, logPriceRangeDebug } from "./nicoleContextUtils";
@@ -375,10 +374,10 @@ class UnifiedMarketplaceService {
       // Clear cache on error to force fresh data next time
       this.cache.clear();
       
-      // Fallback to mock products for development
+      // Live "best selling" fallback with price range instead of mock products
       if (searchTerm.trim()) {
-        console.log('[UnifiedMarketplaceService] Falling back to mock products');
-        return searchMockProducts(searchTerm, maxResults);
+        console.log('[UnifiedMarketplaceService] API failed, falling back to live "best selling" search with budget constraints');
+        return this.executeliveBestSellingFallback(searchTerm, options);
       }
       
       return [];
@@ -425,6 +424,71 @@ class UnifiedMarketplaceService {
     console.log('[UnifiedMarketplaceService] Cache cleared - forcing page reload');
     // Force reload to clear all cached data
     setTimeout(() => window.location.reload(), 100);
+  }
+
+  /**
+   * Execute live "best selling" fallback with price range filtering
+   */
+  private async executeliveBestSellingFallback(searchTerm: string, options: SearchOptions): Promise<Product[]> {
+    const { maxResults = 20, minPrice, maxPrice, nicoleContext } = options;
+    
+    console.log(`[UnifiedMarketplaceService] Executing live "best selling" fallback for "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'}`);
+    
+    try {
+      // Create search options with price filters
+      const searchOptions = { minPrice, maxPrice };
+      
+      // Build a "best selling" query that includes the price range and original interests
+      let fallbackQuery = 'best selling';
+      
+      // Add price range to query if specified
+      if (minPrice && maxPrice) {
+        fallbackQuery += ` $${minPrice}-$${maxPrice}`;
+      } else if (maxPrice) {
+        fallbackQuery += ` under $${maxPrice}`;
+      } else if (minPrice) {
+        fallbackQuery += ` over $${minPrice}`;
+      }
+      
+      // Extract interests for diverse fallback search
+      const interests = this.extractInterestKeywords(searchTerm);
+      const categories = this.mapInterestsToCategories(interests);
+      
+      this.showToast('Finding popular alternatives...', 'loading', `Searching best selling items within budget`);
+      
+      let response;
+      
+      // Use diverse category search if we have interests, otherwise use basic best selling
+      if (categories.length > 0) {
+        console.log(`[UnifiedMarketplaceService] Live fallback using diverse categories: ${categories.join(', ')}`);
+        response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
+      } else {
+        console.log(`[UnifiedMarketplaceService] Live fallback using basic best selling search: "${fallbackQuery}"`);
+        response = await enhancedZincApiService.searchProducts(fallbackQuery, 1, maxResults, searchOptions);
+      }
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      // Normalize and validate products
+      const normalizedProducts = normalizeProducts(response.results || []);
+      
+      if (normalizedProducts.length > 0) {
+        this.showToast(`Found ${normalizedProducts.length} popular alternatives`, 'success', 'Showing best selling items within your budget');
+        console.log(`[UnifiedMarketplaceService] Live fallback successful: ${normalizedProducts.length} products returned`);
+      } else {
+        this.showToast('No alternatives found', 'error', 'No popular items found within budget');
+        console.log('[UnifiedMarketplaceService] Live fallback returned no results');
+      }
+      
+      return normalizedProducts;
+      
+    } catch (fallbackError) {
+      console.error('[UnifiedMarketplaceService] Live fallback also failed:', fallbackError);
+      this.showToast('Search unavailable', 'error', 'Product search service is temporarily unavailable');
+      return [];
+    }
   }
 
   /**

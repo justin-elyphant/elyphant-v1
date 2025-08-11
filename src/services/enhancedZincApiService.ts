@@ -11,6 +11,7 @@ export interface ZincSearchResponse {
   results: any[];
   error?: string;
   cached?: boolean;
+  source?: string;
 }
 
 export interface ZincProductDetail {
@@ -512,6 +513,64 @@ class EnhancedZincApiService {
    */
   async searchBrandCategories(brandName: string, limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
     return this.searchProducts(brandName, 1, limit, priceOptions);
+  }
+
+  /**
+   * Get default featured products (method required by other parts of the app)
+   */
+  async getDefaultProducts(limit: number = 20): Promise<ZincSearchResponse> {
+    console.log(`Getting default featured products, limit: ${limit}`);
+    
+    const featuredQuery = "best selling popular trending featured products electronics home kitchen";
+    return this.searchProducts(featuredQuery, 1, limit);
+  }
+
+  /**
+   * Search luxury categories for high-end products
+   */
+  async searchLuxuryCategories(categories: string[], limit: number = 20): Promise<ZincSearchResponse> {
+    console.log(`Searching luxury categories: ${categories.join(', ')}, limit: ${limit}`);
+    
+    const luxuryQuery = categories.map(cat => `luxury premium ${cat}`).join(' ');
+    return this.searchProducts(luxuryQuery, 1, limit);
+  }
+
+  /**
+   * Get detailed product information
+   */
+  async getProductDetail(productId: string): Promise<ZincProductDetail | null> {
+    console.log(`Getting product detail for: ${productId}`);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-product-detail', {
+        body: { product_id: productId }
+      });
+
+      if (error) {
+        console.error('Error getting product detail:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getProductDetail:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get detailed product information (alternative method name)
+   */
+  async getProductDetails(productId: string): Promise<ZincProductDetail | null> {
+    return this.getProductDetail(productId);
+  }
+
+  /**
+   * Clear cache
+   */
+  clearCache(): void {
+    console.log('Clearing Enhanced Zinc API cache');
+    this.cache.clear();
   }
 }
 

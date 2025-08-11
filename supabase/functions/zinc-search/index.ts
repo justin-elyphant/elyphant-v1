@@ -49,44 +49,42 @@ serve(async (req) => {
       );
     }
 
-    // Use the correct Zinc API endpoint and method
-    const zincUrl = `https://api.zinc.io/v1/products/search`;
+    // Use the correct Zinc API endpoint and method - GET request with query params
+    const zincUrl = new URL('https://api.zinc.io/v1/products/search');
     const zincHeaders = {
       'Authorization': `Basic ${btoa(zincApiKey + ':')}`,
       'Content-Type': 'application/json',
     };
 
     // **PHASE 3: Enhanced Zinc API Request with Budget Constraints**
-    const zincBody = {
-      query: query,
-      retailer: 'amazon',
-      max_results: Math.min(parseInt(maxResults), 100),
-      page: 1,
-      sort: 'relevance',
-      condition: 'new'
-    };
+    // Build query parameters for GET request
+    zincUrl.searchParams.set('query', query);
+    zincUrl.searchParams.set('retailer', 'amazon');
+    zincUrl.searchParams.set('max_results', Math.min(parseInt(maxResults), 100).toString());
+    zincUrl.searchParams.set('page', '1');
+    zincUrl.searchParams.set('sort', 'relevance');
+    zincUrl.searchParams.set('condition', 'new');
 
     // Add price filters if available
     if (budgetMin !== undefined) {
-      zincBody.min_price = Math.round(budgetMin * 100); // Zinc expects cents
+      zincUrl.searchParams.set('min_price', Math.round(budgetMin * 100).toString()); // Zinc expects cents
     }
     if (budgetMax !== undefined) {
-      zincBody.max_price = Math.round(budgetMax * 100); // Zinc expects cents
+      zincUrl.searchParams.set('max_price', Math.round(budgetMax * 100).toString()); // Zinc expects cents
     }
 
-    console.log('🎯 Zinc API: Request with budget filters:', zincBody);
+    console.log('🎯 Zinc API: Request with budget filters:', Object.fromEntries(zincUrl.searchParams));
 
-    console.log('Making Zinc API request:', { url: zincUrl, body: zincBody });
+    console.log('Making Zinc API request:', { url: zincUrl.toString() });
 
     // Make request to Zinc API with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      const zincResponse = await fetch(zincUrl, {
-        method: 'POST',
+      const zincResponse = await fetch(zincUrl.toString(), {
+        method: 'GET',
         headers: zincHeaders,
-        body: JSON.stringify(zincBody),
         signal: controller.signal
       });
 

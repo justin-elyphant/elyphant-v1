@@ -31,8 +31,9 @@ serve(async (req) => {
 
     console.log("Sending Enhanced Zinc API request to OpenAI with CTA button system");
 
-    // Extract conversation history from context
-    const conversationHistory = context?.previousMessages || [];
+    // Extract conversation history from request data (fix field name mismatch)
+    const conversationHistory = requestData.conversationHistory || [];
+    console.log(`💬 Conversation history received: ${conversationHistory.length} messages`);
     const isDynamicGreeting = message === '__START_DYNAMIC_CHAT__';
     console.log(`🎯 Dynamic greeting mode: ${isDynamicGreeting}`);
     console.log(`👤 Current user ID: ${context?.currentUserId || 'not provided'}`);

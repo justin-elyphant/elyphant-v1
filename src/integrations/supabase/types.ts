@@ -3461,6 +3461,10 @@ export type Database = {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
       }
+      can_access_order_notes: {
+        Args: { note_order_id: string }
+        Returns: boolean
+      }
       can_cancel_order: {
         Args: { order_id: string }
         Returns: boolean

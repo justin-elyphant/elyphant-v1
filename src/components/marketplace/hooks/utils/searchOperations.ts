@@ -164,6 +164,38 @@ export const handleSearch = async (
               }
             }, 300);
             return;
+          } else {
+            // Live best-selling fallback within budget before resorting to mocks
+            console.log('🎯 SearchOperations: No results from primary search, trying live best-selling fallback with budget');
+            const fallbackQuery = `best selling ${Array.isArray(enhancedNicoleContext.interests) && enhancedNicoleContext.interests.length > 0 ? enhancedNicoleContext.interests.join(' ') : 'gifts'}`;
+            const fallbackResults = await unifiedMarketplaceService.searchProducts(fallbackQuery, {
+              nicoleContext: enhancedNicoleContext,
+              minPrice,
+              maxPrice,
+              maxResults: 16,
+              filters: {
+                min_price: minPrice,
+                max_price: maxPrice,
+                minPrice,
+                maxPrice
+              }
+            });
+
+            if (fallbackResults && fallbackResults.length > 0) {
+              console.log(`🎯 SearchOperations: Live fallback found ${fallbackResults.length} products`);
+              setProducts(fallbackResults);
+              const priceInfo2 = enhancedNicoleContext.budget ? ` ($${enhancedNicoleContext.budget[0]}-$${enhancedNicoleContext.budget[1]})` : '';
+              setTimeout(() => {
+                if (searchIdRef.current.includes(term)) {
+                  toast.success(`Found ${fallbackResults.length} products for "${term}"${priceInfo2}`, {
+                    id: `search-success-${term}`,
+                  });
+                }
+              }, 300);
+              return;
+            } else {
+              console.log('🎯 SearchOperations: Live fallback returned no results');
+            }
           }
         } catch (error) {
           console.error('🎯 SearchOperations: UnifiedMarketplaceService error:', error);

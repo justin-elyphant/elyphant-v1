@@ -422,11 +422,15 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }
     
     // Default behavior: dispatch custom event
-    console.log('Triggering marketplace search with Nicole context');
+    console.log('🎯 Triggering marketplace search with Nicole context, searchQuery:', searchQuery);
     onClose();
-    window.dispatchEvent(new CustomEvent('nicole-search', {
+    
+    // Dispatch the event
+    const event = new CustomEvent('nicole-search', {
       detail: { searchQuery }
-    }));
+    });
+    console.log('📡 Dispatching nicole-search event:', event);
+    window.dispatchEvent(event);
   };
 
   // Smart Auto-Gift CTA state and handler

@@ -109,16 +109,22 @@ function AppContent() {
 
   useEffect(() => {
     const handleNicoleSearch = (event: CustomEvent) => {
+      console.log('🎯 Nicole search event received:', event.detail);
       const { searchQuery } = event.detail;
       if (searchQuery) {
+        console.log('🚀 Navigating to marketplace with query:', searchQuery);
         // Navigate to marketplace with search query
         navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+      } else {
+        console.warn('⚠️ No searchQuery in event detail:', event.detail);
       }
     };
 
+    console.log('📡 Setting up nicole-search event listener');
     window.addEventListener('nicole-search', handleNicoleSearch as EventListener);
     
     return () => {
+      console.log('🧹 Removing nicole-search event listener');
       window.removeEventListener('nicole-search', handleNicoleSearch as EventListener);
     };
   }, [navigate]);

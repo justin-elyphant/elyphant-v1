@@ -58,7 +58,7 @@ export const useSearchProducts = (setProducts: React.Dispatch<React.SetStateActi
           id: loadingToastId,
         });
         
-        const results = await enhancedZincApiService.searchLuxuryCategories(RESULTS_LIMIT);
+        const results = await enhancedZincApiService.searchLuxuryCategories(['luxury', 'premium'], RESULTS_LIMIT);
         
         // Check if search was aborted
         if (abortControllerRef.current?.signal.aborted) {

@@ -291,7 +291,7 @@ class UnifiedMarketplaceService {
       if (luxuryCategories) {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');
         this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
-        response = await enhancedZincApiService.searchLuxuryCategories(maxResults, searchOptions);
+        response = await enhancedZincApiService.searchLuxuryCategories(['luxury', 'premium'], maxResults);
       } else if (giftsForHer) {
         console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
         this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
@@ -344,7 +344,7 @@ class UnifiedMarketplaceService {
         }
       } else {
         console.log('[UnifiedMarketplaceService] Loading default products');
-        response = await enhancedZincApiService.getDefaultProducts(maxResults, searchOptions);
+        const defaultProducts = await enhancedZincApiService.getDefaultProducts(maxResults);
       }
 
       if (response.error) {

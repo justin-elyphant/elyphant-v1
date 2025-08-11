@@ -35,11 +35,17 @@ serve(async (req) => {
     // Get Zinc API key from Supabase secrets
     const zincApiKey = Deno.env.get('ZINC_API_KEY');
     
+    console.log('🔑 Zinc API Key check:', { 
+      hasKey: !!zincApiKey, 
+      keyLength: zincApiKey?.length || 0,
+      keyPrefix: zincApiKey?.substring(0, 8) || 'none'
+    });
+    
     if (!zincApiKey) {
-      console.error('ZINC_API_KEY not found in environment variables');
+      console.error('❌ ZINC_API_KEY not found in environment variables');
       return new Response(
         JSON.stringify({ 
-          error: 'API configuration missing',
+          error: 'API configuration missing - ZINC_API_KEY not found',
           fallback: true
         }),
         { 

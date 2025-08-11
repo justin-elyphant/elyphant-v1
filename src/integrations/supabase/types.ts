@@ -3473,6 +3473,10 @@ export type Database = {
         Args: { requester_id: string; target_id: string }
         Returns: boolean
       }
+      can_view_profile: {
+        Args: { profile_user_id: string }
+        Returns: boolean
+      }
       cancel_order: {
         Args: { order_id: string; cancellation_reason?: string }
         Returns: Json
@@ -3513,6 +3517,10 @@ export type Database = {
           can_nudge: boolean
           days_until_next_nudge: number
         }[]
+      }
+      get_safe_profile_data: {
+        Args: { profile_user_id: string }
+        Returns: boolean
       }
       get_upcoming_auto_gift_events: {
         Args: { days_ahead?: number }

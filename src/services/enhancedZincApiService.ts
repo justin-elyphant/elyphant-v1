@@ -57,51 +57,26 @@ class EnhancedZincApiService {
   private cache = new Map();
 
   /**
-   * Main search method with comprehensive Nicole-aware fallback logic
+   * Main search method - calls Zinc API and throws errors for fallback handling
    */
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`🔍 [EnhancedZincApiService] Starting search for: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
-    try {
-      // **PRIMARY: Try zinc-search edge function first with better error handling**
-      try {
-        const primaryResult = await this.callZincSearchFunction(query, limit, filters);
-        
-        if (primaryResult && !primaryResult.error && primaryResult.results?.length > 0) {
-          console.log(`✅ [EnhancedZincApiService] SUCCESS with zinc-search function: ${primaryResult.results?.length || 0} results`);
-          return {
-            results: primaryResult.results.map((product: any) => this.enhanceProductData(product)),
-            cached: false
-          };
-        }
-        
-        console.log(`⚠️ [EnhancedZincApiService] zinc-search returned no results or error:`, primaryResult?.error);
-      } catch (zincError) {
-        console.log(`⚠️ [EnhancedZincApiService] zinc-search failed with error:`, zincError.message);
-      }
-      
-      // **FALLBACK: Generate Nicole-aware mock data immediately**
-      console.log(`🔄 [EnhancedZincApiService] Using Nicole-aware mock data for query: "${query}"`);
-      const mockResults = this.generateNicoleAwareMockResults(query, filters);
-      
+    // Try zinc-search edge function
+    const primaryResult = await this.callZincSearchFunction(query, limit, filters);
+    
+    if (primaryResult && !primaryResult.error && primaryResult.results?.length > 0) {
+      console.log(`✅ [EnhancedZincApiService] SUCCESS with zinc-search function: ${primaryResult.results?.length || 0} results`);
       return {
-        results: mockResults,
-        cached: false,
-        error: 'API temporarily unavailable - showing relevant recommendations'
-      };
-      
-    } catch (error) {
-      console.error(`❌ [EnhancedZincApiService] Complete failure:`, error);
-      
-      // **FINAL FALLBACK: Basic mock data**
-      const basicMockResults = this.generateBasicMockResults(query);
-      
-      return {
-        results: basicMockResults,
-        cached: false,
-        error: `Search failed: ${error.message}`
+        results: primaryResult.results.map((product: any) => this.enhanceProductData(product)),
+        cached: false
       };
     }
+    
+    // If we get here, the Zinc API failed - throw error for fallback handling
+    const errorMessage = primaryResult?.error || 'Zinc API returned no results';
+    console.log(`❌ [EnhancedZincApiService] Zinc API failed: ${errorMessage}`);
+    throw new Error(`Zinc API search failed: ${errorMessage}`);
   }
 
   /**
@@ -155,282 +130,8 @@ class EnhancedZincApiService {
     }
   }
 
-  /**
-   * Generate Nicole-aware mock results that respect budget and interests
-   */
-  private generateNicoleAwareMockResults(query: string, filters?: any): any[] {
-    console.log(`🎭 [EnhancedZincApiService] Generating Nicole-aware mock results for: "${query}"`);
-    console.log(`🎭 [EnhancedZincApiService] Filters:`, filters);
-    
-    // Extract budget from filters (could be from Nicole context)
-    const minPrice = filters?.minPrice || filters?.min_price || 10;
-    const maxPrice = filters?.maxPrice || filters?.max_price || 500;
-    const budget: [number, number] = [minPrice, maxPrice];
-    
-    // Extract interests from query
-    const queryLower = query.toLowerCase();
-    const detectedInterests = [];
-    
-    if (queryLower.includes('concert') || queryLower.includes('music')) detectedInterests.push('concerts');
-    if (queryLower.includes('cooking') || queryLower.includes('kitchen')) detectedInterests.push('cooking');
-    if (queryLower.includes('netflix') || queryLower.includes('movie') || queryLower.includes('tv')) detectedInterests.push('entertainment');
-    if (queryLower.includes('gift')) detectedInterests.push('gifts');
-    if (queryLower.includes('tech') || queryLower.includes('electronic')) detectedInterests.push('tech');
-    if (queryLower.includes('book')) detectedInterests.push('books');
-    if (queryLower.includes('fashion') || queryLower.includes('clothing')) detectedInterests.push('fashion');
-    
-    console.log(`🎭 [EnhancedZincApiService] Detected interests: ${detectedInterests.join(', ')}`);
-    console.log(`🎭 [EnhancedZincApiService] Budget: $${budget[0]}-$${budget[1]}`);
-    
-    // Generate budget-appropriate mock products
-    const mockProducts = this.generateBudgetAppropriateProducts(query, budget, detectedInterests);
-    
-    console.log(`🎭 [EnhancedZincApiService] Generated ${mockProducts.length} Nicole-aware mock products`);
-    return mockProducts;
-  }
 
-  /**
-   * Generate budget-appropriate products based on context
-   */
-  private generateBudgetAppropriateProducts(query: string, budget: [number, number], interests: string[]): any[] {
-    const [minPrice, maxPrice] = budget;
-    
-    // Base products categorized by interest
-    const productTemplates = {
-      concerts: [
-        {
-          title: "Premium Bluetooth Concert Headphones",
-          basePrice: 89.99,
-          category: "Electronics",
-          description: "High-quality wireless headphones perfect for music lovers and concert enthusiasts"
-        },
-        {
-          title: "Concert Poster Frame Set",
-          basePrice: 34.99,
-          category: "Home & Garden",
-          description: "Stylish frames for displaying concert posters and memorabilia"
-        },
-        {
-          title: "Portable Bluetooth Speaker for Music",
-          basePrice: 69.99,
-          category: "Electronics",
-          description: "Compact speaker with amazing sound quality for music on the go"
-        }
-      ],
-      cooking: [
-        {
-          title: "Professional Chef's Knife Set",
-          basePrice: 129.99,
-          category: "Kitchen",
-          description: "Premium stainless steel knife set for serious home cooking"
-        },
-        {
-          title: "Non-Stick Cooking Pan Set",
-          basePrice: 79.99,
-          category: "Kitchen",
-          description: "Professional-grade non-stick cookware for everyday cooking"
-        },
-        {
-          title: "Digital Kitchen Scale",
-          basePrice: 39.99,
-          category: "Kitchen",
-          description: "Precise measurements for perfect cooking and baking results"
-        }
-      ],
-      entertainment: [
-        {
-          title: "Smart TV Streaming Device",
-          basePrice: 149.99,
-          category: "Electronics",
-          description: "4K streaming device perfect for Netflix and entertainment"
-        },
-        {
-          title: "Cozy Throw Blanket for Movie Nights",
-          basePrice: 39.99,
-          category: "Home & Garden",
-          description: "Ultra-soft blanket perfect for binge-watching sessions"
-        },
-        {
-          title: "Wireless Gaming Controller",
-          basePrice: 89.99,
-          category: "Electronics",
-          description: "Premium controller for console and streaming entertainment"
-        }
-      ],
-      gifts: [
-        {
-          title: "Luxury Gift Box Set",
-          basePrice: 99.99,
-          category: "Gifts",
-          description: "Beautifully curated gift set perfect for any occasion"
-        },
-        {
-          title: "Personalized Photo Album",
-          basePrice: 49.99,
-          category: "Gifts",
-          description: "Custom photo album for preserving special memories"
-        },
-        {
-          title: "Artisan Candle Collection",
-          basePrice: 59.99,
-          category: "Gifts",
-          description: "Hand-poured candles with luxurious scents"
-        }
-      ],
-      tech: [
-        {
-          title: "Wireless Charging Pad",
-          basePrice: 45.99,
-          category: "Electronics",
-          description: "Fast wireless charging for all compatible devices"
-        },
-        {
-          title: "Smart Watch Fitness Tracker",
-          basePrice: 199.99,
-          category: "Electronics",
-          description: "Advanced fitness tracking with smart notifications"
-        }
-      ],
-      books: [
-        {
-          title: "Best Selling Novel Collection",
-          basePrice: 29.99,
-          category: "Books",
-          description: "Collection of current bestselling novels"
-        },
-        {
-          title: "Premium Reading Light",
-          basePrice: 49.99,
-          category: "Electronics",
-          description: "Adjustable LED reading light for comfortable reading"
-        }
-      ],
-      fashion: [
-        {
-          title: "Stylish Fashion Accessory Set",
-          basePrice: 79.99,
-          category: "Fashion",
-          description: "Trendy accessories to complement any outfit"
-        },
-        {
-          title: "Premium Quality Scarf",
-          basePrice: 59.99,
-          category: "Fashion",
-          description: "Soft, luxurious scarf in trending colors"
-        }
-      ]
-    };
 
-    // Collect relevant products based on interests
-    let relevantProducts: any[] = [];
-    
-    // Add products for detected interests
-    interests.forEach(interest => {
-      if (productTemplates[interest]) {
-        relevantProducts.push(...productTemplates[interest]);
-      }
-    });
-    
-    // If no specific interests detected, add a mix
-    if (relevantProducts.length === 0) {
-      relevantProducts = [
-        ...productTemplates.gifts.slice(0, 2),
-        ...productTemplates.tech.slice(0, 2),
-        ...productTemplates.entertainment.slice(0, 2)
-      ];
-    }
-
-    // Convert to final product format with budget-appropriate pricing
-    const finalProducts = relevantProducts
-      .map((template, index) => {
-        // Adjust price to fit budget
-        let adjustedPrice = template.basePrice;
-        if (adjustedPrice < minPrice) {
-          adjustedPrice = minPrice + (Math.random() * 20); // Add some variation above minimum
-        }
-        if (adjustedPrice > maxPrice) {
-          adjustedPrice = maxPrice - (Math.random() * 20); // Subtract some variation below maximum
-        }
-        
-        // Ensure price is within budget
-        adjustedPrice = Math.max(minPrice, Math.min(maxPrice, adjustedPrice));
-        
-        return {
-          product_id: `nicole-aware-${Date.now()}-${index}`,
-          title: template.title,
-          price: Math.round(adjustedPrice * 100) / 100,
-          description: template.description,
-          image: '/placeholder.svg',
-          images: ['/placeholder.svg'],
-          category: template.category,
-          retailer: 'Nicole Recommendations',
-          rating: 4.2 + (Math.random() * 0.8),
-          review_count: Math.floor(Math.random() * 1000) + 100,
-          url: '#',
-          brand: 'Premium Brand',
-          availability: 'in_stock',
-          nicoleMatch: {
-            budgetMatch: true,
-            interestMatch: interests.some(interest => 
-              template.title.toLowerCase().includes(interest) ||
-              template.description.toLowerCase().includes(interest)
-            )
-          }
-        };
-      })
-      .filter(product => product.price >= minPrice && product.price <= maxPrice);
-
-    // Add generic products if we have fewer than 6
-    while (finalProducts.length < 6) {
-      const genericPrice = minPrice + (Math.random() * (maxPrice - minPrice));
-      finalProducts.push({
-        product_id: `nicole-generic-${Date.now()}-${finalProducts.length}`,
-        title: `Quality Product ${finalProducts.length + 1}`,
-        price: Math.round(genericPrice * 100) / 100,
-        description: `A great product that fits your budget of $${minPrice}-$${maxPrice}`,
-        image: '/placeholder.svg',
-        images: ['/placeholder.svg'],
-        category: 'General',
-        retailer: 'Nicole Recommendations',
-        rating: 4.0 + (Math.random() * 1.0),
-        review_count: Math.floor(Math.random() * 500) + 50,
-        url: '#',
-        brand: 'Quality Brand',
-        availability: 'in_stock',
-        nicoleMatch: {
-          budgetMatch: true,
-          interestMatch: false
-        }
-      });
-    }
-
-    return finalProducts.slice(0, 8); // Return up to 8 products
-  }
-
-  /**
-   * Generate basic mock results (final fallback)
-   */
-  private generateBasicMockResults(query: string): any[] {
-    const basicProducts = [
-      {
-        product_id: `basic-${Date.now()}-1`,
-        title: `Search Results for "${query}"`,
-        price: 49.99,
-        description: `Products related to your search for ${query}`,
-        image: '/placeholder.svg',
-        images: ['/placeholder.svg'],
-        category: 'General',
-        retailer: 'Basic Store',
-        rating: 4.0,
-        review_count: 100,
-        url: '#',
-        brand: 'Generic Brand',
-        availability: 'in_stock'
-      }
-    ];
-
-    return basicProducts;
-  }
 
   /**
    * Process and enhance product data with best seller information

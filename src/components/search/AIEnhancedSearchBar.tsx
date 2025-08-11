@@ -157,15 +157,31 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         // Add Nicole source indicator
         marketplaceUrl.searchParams.set('source', 'nicole');
         
-        // Add budget/price range if available
-        if (nicoleContext.budget) {
+        // Add budget/price range if available (supports multiple shapes)
+        if (nicoleContext && nicoleContext.budget) {
           const budget = nicoleContext.budget;
-          if (budget.minPrice !== undefined) {
-            marketplaceUrl.searchParams.set('minPrice', String(budget.minPrice));
+          // Case 1: [min, max] array
+          if (Array.isArray(budget) && budget.length === 2) {
+            const [min, max] = budget;
+            if (typeof min === 'number') marketplaceUrl.searchParams.set('minPrice', String(min));
+            if (typeof max === 'number') marketplaceUrl.searchParams.set('maxPrice', String(max));
           }
-          if (budget.maxPrice !== undefined) {
-            marketplaceUrl.searchParams.set('maxPrice', String(budget.maxPrice));
+          // Case 2: { minPrice, maxPrice } object
+          else if (typeof budget === 'object' && budget !== null) {
+            if (budget.minPrice !== undefined) {
+              marketplaceUrl.searchParams.set('minPrice', String(budget.minPrice));
+            }
+            if (budget.maxPrice !== undefined) {
+              marketplaceUrl.searchParams.set('maxPrice', String(budget.maxPrice));
+            }
           }
+        }
+        // Fallback: explicit minPrice/maxPrice on root
+        if (nicoleContext?.minPrice !== undefined) {
+          marketplaceUrl.searchParams.set('minPrice', String(nicoleContext.minPrice));
+        }
+        if (nicoleContext?.maxPrice !== undefined) {
+          marketplaceUrl.searchParams.set('maxPrice', String(nicoleContext.maxPrice));
         }
         
         // Add recipient information

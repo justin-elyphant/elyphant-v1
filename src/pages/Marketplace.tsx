@@ -32,10 +32,31 @@ const Marketplace = () => {
         const searchParams = new URLSearchParams(window.location.search);
         searchParams.set('search', searchQuery);
         
-        // Store Nicole context for the search including budget information
+        // Include budget in URL if provided via Nicole context
         if (nicoleContext) {
-          sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
-          console.log('💰 Stored Nicole context with budget:', nicoleContext.budget);
+          const budget = nicoleContext.budget;
+          // Support [min,max] array
+          if (Array.isArray(budget) && budget.length === 2) {
+            const [min, max] = budget;
+            if (typeof min === 'number') searchParams.set('minPrice', String(min));
+            if (typeof max === 'number') searchParams.set('maxPrice', String(max));
+          }
+          // Support { minPrice, maxPrice }
+          else if (budget && typeof budget === 'object') {
+            if (budget.minPrice !== undefined) searchParams.set('minPrice', String(budget.minPrice));
+            if (budget.maxPrice !== undefined) searchParams.set('maxPrice', String(budget.maxPrice));
+          }
+          // Fallback: root-level minPrice/maxPrice
+          if (nicoleContext.minPrice !== undefined) searchParams.set('minPrice', String(nicoleContext.minPrice));
+          if (nicoleContext.maxPrice !== undefined) searchParams.set('maxPrice', String(nicoleContext.maxPrice));
+
+          // Persist full Nicole context for richer filtering (interests, etc.)
+          try {
+            sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+            console.log('💰 Stored Nicole context with budget:', nicoleContext.budget);
+          } catch (e) {
+            console.warn('Failed to persist Nicole context to session storage', e);
+          }
         }
         
         window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);

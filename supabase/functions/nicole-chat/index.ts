@@ -1023,14 +1023,20 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     // More sophisticated context evaluation
     const hasMinimumContext = hasRecipient && (hasOccasionOrAge || hasInterestsOrBrands);
     
-    // Check if AI indicates readiness for search
-    const aiIndicatesReady = /(?:ready to search|find (?:products|gifts)|search for|look for items|browse (?:products|gifts)|show (?:me )?(?:some )?(?:options|products|gifts))/i.test(aiMessage);
+    // Enhanced detection for AI indicating readiness for product search
+    const aiIndicatesReady = /(?:ready to search|find (?:products|gifts|some gift options)|search for|look for items|browse (?:products|gifts)|show (?:me )?(?:some )?(?:options|products|gifts)|want me to find|I can show you|can show you some|explore gifts|find some gift options|great gift options|some great options)/i.test(aiMessage);
     
-    // Check if user wants to see product suggestions after interests discussion
-    const wantsProductSuggestions = /(?:yes.*show.*suggestions|show.*me.*suggestions|see.*suggestions|view.*suggestions|display.*products|show.*products)/i.test(message);
+    // Enhanced detection for user wanting product suggestions - more permissive patterns
+    const wantsProductSuggestions = /(?:yes.*(?:show|find|see)|show.*(?:me|some|gift|options|suggestions)|see.*(?:suggestions|options|gifts|products)|view.*(?:suggestions|options)|display.*products|find.*(?:gifts|options)|browse.*(?:gifts|products)|explore.*gifts|look.*(?:for|at).*gifts|gift.*options)/i.test(message);
+    
+    // Enhanced fallback logic: auto-trigger product tiles when budget is provided after interests
+    const justProvidedBudget = /(?:\$\d+|budget|spend|around|no more than|under|less than|\d+\s*dollars?)/i.test(message) && hasInterestsOrBrands;
+    
+    // Auto-trigger when Nicole asks about showing options and user responds positively 
+    const positiveResponseToOptions = /(?:yes|sure|okay|ok|show|find|go ahead|sounds good|that works|perfect)/i.test(message) && /(?:show|find|option|gift)/i.test(aiMessage || '');
     
     const showSearchButton = hasMinimumContext || (hasBudget && hasInterestsOrBrands) || aiIndicatesReady;
-    const showProductTiles = wantsProductSuggestions && hasInterestsOrBrands;
+    const showProductTiles = wantsProductSuggestions || justProvidedBudget || positiveResponseToOptions || (aiIndicatesReady && hasInterestsOrBrands);
 
     console.log("CTA Button Logic:", {
       hasRecipient,
@@ -1040,8 +1046,12 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
       hasMinimumContext,
       aiIndicatesReady,
       wantsProductSuggestions,
+      justProvidedBudget,
+      positiveResponseToOptions,
       showSearchButton,
       showProductTiles,
+      userMessage: message,
+      aiResponse: aiMessage?.substring(0, 100),
       context: {
         recipient: updatedContext.recipient,
         occasion: updatedContext.occasion,

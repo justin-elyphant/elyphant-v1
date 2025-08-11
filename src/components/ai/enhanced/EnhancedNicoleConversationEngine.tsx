@@ -407,6 +407,12 @@ Let me take you to your profile where you can start building your wishlist. You 
         console.log('🎯 Nicole: Adding budget context to marketplace URL:', (context as any).budget);
       }
       
+      // Include interests for diverse search
+      if ((context as any)?.interests && Array.isArray((context as any).interests) && (context as any).interests.length > 0) {
+        marketplaceUrl.searchParams.set('interests', (context as any).interests.join(','));
+        console.log('🎯 Nicole: Adding interests context to marketplace URL:', (context as any).interests);
+      }
+      
       // Include recipient and occasion for contextual search
       if ((context as any)?.recipient) {
         marketplaceUrl.searchParams.set('recipient', String((context as any).recipient));

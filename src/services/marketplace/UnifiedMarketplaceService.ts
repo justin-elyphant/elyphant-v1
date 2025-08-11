@@ -184,69 +184,72 @@ class UnifiedMarketplaceService {
   }
 
   /**
-   * Map interest keywords to Amazon-friendly best selling categories
+   * Map interest keywords to diverse Amazon-friendly categories for gift variety
    */
   private mapInterestsToCategories(interests: string[]): string[] {
-    const interestMap: Record<string, string> = {
-      // Entertainment & Media
-      'concerts': 'music',
-      'music': 'music',
-      'netflix': 'entertainment',
-      'streaming': 'entertainment',
-      'movies': 'entertainment',
-      'gaming': 'gaming tech',
-      'games': 'gaming tech',
-      'books': 'books',
-      'reading': 'books',
+    const interestMap: Record<string, string[]> = {
+      // Entertainment & Media - Multiple category mappings for diversity
+      'concerts': ['music', 'fashion accessories', 'tech gadgets', 'electronics'],
+      'music': ['music', 'electronics tech', 'headphones audio'],
+      'netflix': ['entertainment', 'home comfort', 'snacks food'],
+      'streaming': ['entertainment', 'electronics tech'],
+      'movies': ['entertainment', 'home theater', 'collectibles'],
+      'gaming': ['gaming tech', 'electronics', 'accessories'],
+      'games': ['gaming tech', 'electronics', 'collectibles'],
+      'books': ['books', 'reading accessories', 'home decor'],
+      'reading': ['books', 'reading accessories', 'lighting'],
       
-      // Hobbies & Activities
-      'cooking': 'kitchen cooking',
-      'kitchen': 'kitchen cooking',
-      'baking': 'kitchen cooking',
-      'fitness': 'fitness gear',
-      'workout': 'fitness gear',
-      'yoga': 'fitness gear',
-      'sports': 'sports equipment',
-      'travel': 'travel accessories',
-      'photography': 'cameras tech',
-      'art': 'arts crafts',
-      'crafts': 'arts crafts',
-      'gardening': 'garden tools',
+      // Hobbies & Activities - Comprehensive mappings
+      'cooking': ['kitchen cooking', 'appliances', 'food specialty', 'books'],
+      'kitchen': ['kitchen cooking', 'appliances', 'organization'],
+      'baking': ['kitchen cooking', 'appliances', 'books'],
+      'fitness': ['fitness gear', 'apparel', 'nutrition', 'tech'],
+      'workout': ['fitness gear', 'apparel', 'accessories'],
+      'yoga': ['fitness gear', 'apparel', 'wellness'],
+      'sports': ['sports equipment', 'apparel', 'accessories'],
+      'travel': ['travel accessories', 'luggage', 'electronics', 'books'],
+      'photography': ['cameras tech', 'accessories', 'storage'],
+      'art': ['arts crafts', 'supplies', 'books'],
+      'crafts': ['arts crafts', 'supplies', 'storage'],
+      'gardening': ['garden tools', 'plants', 'books'],
       
       // Technology
-      'tech': 'electronics tech',
-      'electronics': 'electronics tech',
-      'phone': 'electronics tech',
-      'computer': 'electronics tech',
-      'laptop': 'electronics tech',
+      'tech': ['electronics tech', 'accessories', 'gadgets'],
+      'electronics': ['electronics tech', 'accessories'],
+      'phone': ['electronics tech', 'accessories'],
+      'computer': ['electronics tech', 'accessories', 'software'],
+      'laptop': ['electronics tech', 'accessories'],
       
       // Fashion & Beauty
-      'fashion': 'fashion clothing',
-      'beauty': 'beauty skincare',
-      'skincare': 'beauty skincare',
-      'jewelry': 'jewelry accessories',
-      'accessories': 'jewelry accessories',
+      'fashion': ['fashion clothing', 'accessories', 'jewelry'],
+      'beauty': ['beauty skincare', 'makeup', 'accessories'],
+      'skincare': ['beauty skincare', 'wellness'],
+      'jewelry': ['jewelry accessories', 'fashion'],
+      'accessories': ['jewelry accessories', 'fashion'],
       
       // Home & Living
-      'home': 'home decor',
-      'decor': 'home decor',
-      'organization': 'home organization',
+      'home': ['home decor', 'furniture', 'organization'],
+      'decor': ['home decor', 'art', 'lighting'],
+      'organization': ['home organization', 'storage'],
       
       // Pets & Animals
-      'pets': 'pet supplies',
-      'dog': 'pet supplies',
-      'cat': 'pet supplies',
+      'pets': ['pet supplies', 'toys', 'food'],
+      'dog': ['pet supplies', 'toys', 'accessories'],
+      'cat': ['pet supplies', 'toys', 'accessories'],
       
       // General categories
-      'luxury': 'luxury items',
-      'premium': 'luxury items'
+      'luxury': ['luxury items', 'jewelry', 'fashion'],
+      'premium': ['luxury items', 'electronics', 'fashion']
     };
 
     const categories = new Set<string>();
     
     interests.forEach(interest => {
       const mapped = interestMap[interest];
-      if (mapped) {
+      if (mapped && Array.isArray(mapped)) {
+        // Add all mapped categories for diversity
+        mapped.forEach(category => categories.add(category));
+      } else if (typeof mapped === 'string') {
         categories.add(mapped);
       }
     });
@@ -263,7 +266,7 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice, nicoleContext } = options;
     
     try {
       let response;
@@ -296,7 +299,21 @@ class UnifiedMarketplaceService {
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
         response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
         
-        // If no results found, try best selling fallback based on interests
+        // Enhanced diverse search strategy for Nicole context
+        if (nicoleContext && nicoleContext.interests && nicoleContext.interests.length > 0) {
+          console.log(`[UnifiedMarketplaceService] Nicole context detected with interests: ${nicoleContext.interests.join(', ')}`);
+          
+          // Map interests to diverse categories
+          const categories = this.mapInterestsToCategories(nicoleContext.interests);
+          console.log(`[UnifiedMarketplaceService] Mapped to diverse categories: ${categories.join(', ')}`);
+          
+          if (categories.length > 0) {
+            this.showToast('Finding diverse gift options...', 'loading', `Searching across ${categories.length} categories`);
+            response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
+          }
+        }
+        
+        // Fallback for standard search with no results
         if (!response.error && (!response.results || response.results.length === 0)) {
           console.log(`[UnifiedMarketplaceService] No results for "${searchTerm}", trying best selling fallback`);
           

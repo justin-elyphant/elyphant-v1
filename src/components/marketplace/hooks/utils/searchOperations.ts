@@ -3,6 +3,7 @@ import { searchMockProducts } from "../../services/mockProductService";
 import { addMockImagesToProducts } from "./productImageUtils";
 import { toast } from "sonner";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { UnifiedNicoleContext } from "@/services/ai/unified/types";
 
 // Track search operations to prevent duplicate toast notifications
 export const searchOperations = new Map();
@@ -97,14 +98,42 @@ export const handleSearch = async (
       setProducts(mockResults);
       
     } else {
+      // Enhanced Nicole context from URL parameters
+      let enhancedNicoleContext = nicoleContext;
+      
+      // If no Nicole context provided, check URL for Nicole-specific parameters
+      if (!nicoleContext && typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source');
+        
+        if (source === 'nicole') {
+          const minPrice = urlParams.get('minPrice');
+          const maxPrice = urlParams.get('maxPrice');
+          const interests = urlParams.get('interests');
+          const recipient = urlParams.get('recipient');
+          const occasion = urlParams.get('occasion');
+          
+          enhancedNicoleContext = {
+            budget: minPrice && maxPrice ? [parseFloat(minPrice), parseFloat(maxPrice)] as [number, number] : undefined,
+            interests: interests ? interests.split(',') : undefined,
+            recipient: recipient || undefined,
+            occasion: occasion || undefined,
+            conversationPhase: 'presenting_results',
+            capability: 'search'
+          } as UnifiedNicoleContext;
+          
+          console.log('🎯 SearchOperations: Constructed Nicole context from URL:', enhancedNicoleContext);
+        }
+      }
+      
       // Use UnifiedMarketplaceService for real search with Nicole context support
-      if (nicoleContext) {
-        console.log('🎯 SearchOperations: Using UnifiedMarketplaceService with Nicole context:', nicoleContext);
+      if (enhancedNicoleContext) {
+        console.log('🎯 SearchOperations: Using UnifiedMarketplaceService with Nicole context:', enhancedNicoleContext);
         try {
           const searchResults = await unifiedMarketplaceService.searchProducts(term, {
-            nicoleContext,
-            minPrice: nicoleContext.minPrice,
-            maxPrice: nicoleContext.maxPrice,
+            nicoleContext: enhancedNicoleContext,
+            minPrice: enhancedNicoleContext.minPrice,
+            maxPrice: enhancedNicoleContext.maxPrice,
             maxResults: 16
           });
           
@@ -113,7 +142,7 @@ export const handleSearch = async (
             setProducts(searchResults);
             
             // Show success toast with price range info
-            const priceInfo = nicoleContext.budget ? ` ($${nicoleContext.budget[0]}-$${nicoleContext.budget[1]})` : '';
+            const priceInfo = enhancedNicoleContext.budget ? ` ($${enhancedNicoleContext.budget[0]}-$${enhancedNicoleContext.budget[1]})` : '';
             setTimeout(() => {
               if (searchIdRef.current.includes(term)) {
                 toast.success(`Found ${searchResults.length} products for "${term}"${priceInfo}`, {

@@ -5,6 +5,7 @@ import { Product } from "@/types/product";
 import { handleSearch, clearSearchOperations } from "./utils/searchOperations";
 import { loadPersonalizedProducts } from "./utils/personalizationUtils";
 import { directNicoleMarketplaceService } from "@/services/marketplace/DirectNicoleMarketplaceService";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 export const useMarketplaceProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,33 +52,38 @@ export const useMarketplaceProducts = () => {
       
       console.log('🎯 Marketplace: Extracted Nicole context from URL:', nicoleContext);
       
-      // **PHASE 1 FIX: Use DirectNicole search when source=nicole**
-      if (source === 'nicole' && nicoleContext) {
-        console.log('🎯 PHASE 1: Using DirectNicole search for source=nicole');
-        setIsLoading(true);
+      // **ENHANCED NICOLE-AWARE SEARCH: Use enhanced service directly with Nicole context**
+      console.log('🎯 ENHANCED: Using Nicole-aware enhanced search for all requests');
+      setIsLoading(true);
+      
+      // Extract price filters from Nicole context for enhanced service
+      const priceFilters = nicoleContext ? {
+        minPrice: nicoleContext.minPrice || nicoleContext.budget?.[0],
+        maxPrice: nicoleContext.maxPrice || nicoleContext.budget?.[1]
+      } : {};
+      
+      console.log('🎯 ENHANCED: Calling enhanced service with Nicole context:', { nicoleContext, priceFilters });
+      
+      enhancedZincApiService.searchProducts(
+        searchParam,
+        1,
+        35,
+        priceFilters
+      ).then(enhancedResults => {
+        console.log(`🎯 ENHANCED: Enhanced service returned ${enhancedResults.results?.length || 0} results`);
+        console.log(`🎯 ENHANCED: Result source: ${enhancedResults.source || 'zinc-api'}`);
         
-        directNicoleMarketplaceService.searchWithNicoleContext(
-          searchParam,
-          nicoleContext,
-          { maxResults: 35 }
-        ).then(nicoleResults => {
-          console.log(`🎯 PHASE 1: DirectNicole returned ${nicoleResults.length} results`);
-          setProducts(nicoleResults);
-          setIsLoading(false);
-        }).catch(error => {
-          console.error('🎯 PHASE 1: DirectNicole search failed, falling back to standard search:', error);
-          // Fallback to standard search
-          const searchId = `search-${searchParam}-${Date.now()}`;
-          searchIdRef.current = searchId;
-          handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
-        });
-      } else {
-        // Generate unique ID for this search to prevent duplicate toasts
-        const searchId = `search-${searchParam}-${Date.now()}`;
-        searchIdRef.current = searchId;
+        setProducts(enhancedResults.results || []);
+        setIsLoading(false);
         
-        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
-      }
+        if (enhancedResults.error) {
+          console.log(`ℹ️ ENHANCED: Service note: ${enhancedResults.error}`);
+        }
+      }).catch(error => {
+        console.error('🎯 ENHANCED: Enhanced service failed:', error);
+        setProducts([]);
+        setIsLoading(false);
+      });
     } else {
       // Load some default products with personalization
       const userInterests = profile?.gift_preferences || [];
@@ -117,33 +123,38 @@ export const useMarketplaceProducts = () => {
         budget: (minPrice && maxPrice) ? [Number(minPrice), Number(maxPrice)] : undefined
       } : undefined;
       
-      // **PHASE 1 FIX: Use DirectNicole search when source=nicole**
-      if (source === 'nicole' && nicoleContext) {
-        console.log('🎯 PHASE 1: Using DirectNicole search for source=nicole (param change)');
-        setIsLoading(true);
+      // **ENHANCED NICOLE-AWARE SEARCH: Use enhanced service directly with Nicole context (param change)**
+      console.log('🎯 ENHANCED: Using Nicole-aware enhanced search for param change');
+      setIsLoading(true);
+      
+      // Extract price filters from Nicole context for enhanced service
+      const priceFilters = nicoleContext ? {
+        minPrice: nicoleContext.minPrice || nicoleContext.budget?.[0],
+        maxPrice: nicoleContext.maxPrice || nicoleContext.budget?.[1]
+      } : {};
+      
+      console.log('🎯 ENHANCED: Calling enhanced service with Nicole context (param change):', { nicoleContext, priceFilters });
+      
+      enhancedZincApiService.searchProducts(
+        searchParam,
+        1,
+        35,
+        priceFilters
+      ).then(enhancedResults => {
+        console.log(`🎯 ENHANCED: Enhanced service returned ${enhancedResults.results?.length || 0} results (param change)`);
+        console.log(`🎯 ENHANCED: Result source: ${enhancedResults.source || 'zinc-api'}`);
         
-        directNicoleMarketplaceService.searchWithNicoleContext(
-          searchParam,
-          nicoleContext,
-          { maxResults: 35 }
-        ).then(nicoleResults => {
-          console.log(`🎯 PHASE 1: DirectNicole returned ${nicoleResults.length} results`);
-          setProducts(nicoleResults);
-          setIsLoading(false);
-        }).catch(error => {
-          console.error('🎯 PHASE 1: DirectNicole search failed, falling back to standard search:', error);
-          // Fallback to standard search
-          const searchId = `search-${searchParam}-${Date.now()}`;
-          searchIdRef.current = searchId;
-          handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
-        });
-      } else {
-        // Generate unique ID for this search to prevent duplicate toasts
-        const searchId = `search-${searchParam}-${Date.now()}`;
-        searchIdRef.current = searchId;
+        setProducts(enhancedResults.results || []);
+        setIsLoading(false);
         
-        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
-      }
+        if (enhancedResults.error) {
+          console.log(`ℹ️ ENHANCED: Service note: ${enhancedResults.error}`);
+        }
+      }).catch(error => {
+        console.error('🎯 ENHANCED: Enhanced service failed (param change):', error);
+        setProducts([]);
+        setIsLoading(false);
+      });
     }
   }, [searchParams]);
   

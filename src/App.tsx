@@ -1,6 +1,5 @@
-
 import React, { Suspense, lazy, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
@@ -90,47 +89,7 @@ function App() {
                   <EventsProvider>
                     <NicoleStateProvider>
                       <Router>
-                      <div className="min-h-screen bg-background text-foreground">
-                        <Suspense fallback={
-                          <div className="min-h-screen flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-                          </div>
-                        }>
-                          <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/cart" element={<Cart />} />
-                            <Route path="/checkout" element={<Checkout />} />
-                            <Route path="/orders" element={<Orders />} />
-                            <Route path="/orders/:orderId" element={<OrderDetail />} />
-                            <Route path="/profile" element={<Profile />} />
-                            <Route path="/profile/:identifier" element={<Profile />} />
-                            <Route path="/auth" element={<Auth />} />
-                            
-                            <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route path="/marketplace" element={<Marketplace />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/order-status" element={<OrderStatusDashboard />} />
-                            <Route path="/messages" element={<Messages />} />
-                            <Route path="/messages/:userId" element={<Chat />} />
-                            <Route path="/connections" element={<Connections />} />
-                            <Route path="/wishlists" element={<Wishlists />} />
-                            <Route path="/privacy" element={<PrivacyPolicy />} />
-                            <Route path="/terms" element={<TermsOfService />} />
-                            <Route path="/sms-consent" element={<SMSConsent />} />
-                            
-                            {/* Nicole Auto-Gifting Test Routes */}
-                            <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
-                            <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
-                            
-                            <Route path="/trunkline/*" element={<Trunkline />} />
-                            {/* Legacy route redirects */}
-                            <Route path="/signin" element={<Auth />} />
-                            <Route path="/signup" element={<Auth />} />
-                          </Routes>
-                        </Suspense>
-                      </div>
+                        <AppContent />
                       </Router>
                     </NicoleStateProvider>
                   </EventsProvider>
@@ -141,6 +100,71 @@ function App() {
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
+  );
+}
+
+// Inner component that has access to useNavigate
+function AppContent() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleNicoleSearch = (event: CustomEvent) => {
+      const { searchQuery } = event.detail;
+      if (searchQuery) {
+        // Navigate to marketplace with search query
+        navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+      }
+    };
+
+    window.addEventListener('nicole-search', handleNicoleSearch as EventListener);
+    
+    return () => {
+      window.removeEventListener('nicole-search', handleNicoleSearch as EventListener);
+    };
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:orderId" element={<OrderDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:identifier" element={<Profile />} />
+          <Route path="/auth" element={<Auth />} />
+          
+          <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/order-status" element={<OrderStatusDashboard />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/messages/:userId" element={<Chat />} />
+          <Route path="/connections" element={<Connections />} />
+          <Route path="/wishlists" element={<Wishlists />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/sms-consent" element={<SMSConsent />} />
+          
+          {/* Nicole Auto-Gifting Test Routes */}
+          <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
+          <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
+          
+          <Route path="/trunkline/*" element={<Trunkline />} />
+          {/* Legacy route redirects */}
+          <Route path="/signin" element={<Auth />} />
+          <Route path="/signup" element={<Auth />} />
+        </Routes>
+      </Suspense>
+    </div>
   );
 }
 

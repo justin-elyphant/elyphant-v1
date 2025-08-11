@@ -136,22 +136,21 @@ export const handleSearch = async (
           
           console.log('🎯 SearchOperations: Extracted price range:', { minPrice, maxPrice });
           
-          const searchResults = await unifiedMarketplaceService.searchProducts(term, {
-            nicoleContext: enhancedNicoleContext,
-            minPrice,
-            maxPrice,
-            maxResults: 16,
-            // CRITICAL: Pass filters that edge function expects
-            filters: {
-              min_price: minPrice,
-              max_price: maxPrice,
-              minPrice: minPrice,
-              maxPrice: maxPrice
-            }
-          });
+          // **PHASE 1: Import and use DirectNicoleMarketplaceService**
+          const { directNicoleMarketplaceService } = await import('@/services/marketplace/DirectNicoleMarketplaceService');
+          
+          // Store context for debugging
+          directNicoleMarketplaceService.storeNicoleContext(enhancedNicoleContext);
+          
+          // Direct API call with guaranteed context preservation
+          const searchResults = await directNicoleMarketplaceService.searchWithNicoleContext(
+            term, 
+            enhancedNicoleContext,
+            { maxResults: 35 }
+          );
           
           if (searchResults && searchResults.length > 0) {
-            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
+            console.log(`🎯 SearchOperations: Found ${searchResults.length} products from DirectNicole service`);
             setProducts(searchResults);
             
             // Show success toast with price range info
@@ -165,37 +164,8 @@ export const handleSearch = async (
             }, 300);
             return;
           } else {
-            // Live best-selling fallback within budget before resorting to mocks
-            console.log('🎯 SearchOperations: No results from primary search, trying live best-selling fallback with budget');
-            const fallbackQuery = `best selling ${Array.isArray(enhancedNicoleContext.interests) && enhancedNicoleContext.interests.length > 0 ? enhancedNicoleContext.interests.join(' ') : 'gifts'}`;
-            const fallbackResults = await unifiedMarketplaceService.searchProducts(fallbackQuery, {
-              nicoleContext: enhancedNicoleContext,
-              minPrice,
-              maxPrice,
-              maxResults: 16,
-              filters: {
-                min_price: minPrice,
-                max_price: maxPrice,
-                minPrice,
-                maxPrice
-              }
-            });
-
-            if (fallbackResults && fallbackResults.length > 0) {
-              console.log(`🎯 SearchOperations: Live fallback found ${fallbackResults.length} products`);
-              setProducts(fallbackResults);
-              const priceInfo2 = enhancedNicoleContext.budget ? ` ($${enhancedNicoleContext.budget[0]}-$${enhancedNicoleContext.budget[1]})` : '';
-              setTimeout(() => {
-                if (searchIdRef.current.includes(term)) {
-                  toast.success(`Found ${fallbackResults.length} products for "${term}"${priceInfo2}`, {
-                    id: `search-success-${term}`,
-                  });
-                }
-              }, 300);
-              return;
-            } else {
-              console.log('🎯 SearchOperations: Live fallback returned no results');
-            }
+            // **PHASE 6: No fallback to mocks for Nicole searches**
+            console.log('🎯 SearchOperations: No results from DirectNicole service - this indicates an API issue');
           }
         } catch (error) {
           console.error('🎯 SearchOperations: UnifiedMarketplaceService error:', error);

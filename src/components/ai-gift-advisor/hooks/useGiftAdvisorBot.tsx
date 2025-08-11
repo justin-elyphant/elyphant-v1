@@ -195,26 +195,27 @@ export const useGiftAdvisorBot = () => {
     setIsLoading(true);
     
     try {
-      // Simulate query generation for now
-      let query = "";
+      console.log('🎯 Nicole Bot: Generating search with context preservation');
       
+      // Build enhanced Nicole context for direct API integration
+      const nicoleContext = {
+        recipient: botState.selectedFriend?.name || botState.recipientDetails?.name,
+        relationship: botState.selectedFriend?.relationship || botState.recipientDetails?.relationship,
+        occasion: botState.occasion,
+        interests: botState.selectedFriend?.interests || botState.recipientDetails?.interests || [],
+        budget: botState.budget ? [botState.budget.min, botState.budget.max] : undefined,
+        exactAge: botState.recipientDetails?.ageRange ? parseInt(botState.recipientDetails.ageRange) : undefined
+      };
+
+      // Generate search query with interests
+      let query = "";
       if (botState.selectedFriend) {
-        // Use friend's data for query
         query = `gifts for ${botState.selectedFriend.name}`;
-        if (botState.occasion) {
-          query += ` ${botState.occasion}`;
-        }
+        if (botState.occasion) query += ` ${botState.occasion}`;
       } else if (botState.recipientDetails) {
-        // Use manual input for query
         const { interests, ageRange, relationship } = botState.recipientDetails;
         query = `gifts for ${relationship} ${ageRange} ${interests.join(" ")}`;
-        if (botState.occasion) {
-          query += ` ${botState.occasion}`;
-        }
-      }
-
-      if (botState.budget) {
-        query += ` under $${botState.budget.max}`;
+        if (botState.occasion) query += ` ${botState.occasion}`;
       }
 
       // Save the AI search session
@@ -224,20 +225,57 @@ export const useGiftAdvisorBot = () => {
           recipient_data: botState.selectedFriend || botState.recipientDetails,
           occasion: botState.occasion,
           budget_range: botState.budget,
-          results: { query }, // This would contain actual results in real implementation
+          results: { query },
           was_successful: true
         });
       }
 
-      // For non-authenticated users, show preview instead of full results
-      const targetStep = user ? "results" : "results-preview";
+      // **PHASE 1: Direct Nicole → Marketplace Pipeline**
+      // Navigate to marketplace with preserved Nicole context
+      const searchParams = new URLSearchParams({
+        search: query,
+        source: 'nicole',
+        recipient: nicoleContext.recipient || 'friend'
+      });
 
+      // Add budget to URL for persistence
+      if (botState.budget) {
+        searchParams.set('minPrice', botState.budget.min.toString());
+        searchParams.set('maxPrice', botState.budget.max.toString());
+      }
+
+      // **PHASE 2: Persistent Session Storage**
+      // Store complete Nicole context in sessionStorage
+      sessionStorage.setItem('nicoleContext', JSON.stringify({
+        ...nicoleContext,
+        source: 'gift-advisor-bot',
+        timestamp: Date.now(),
+        searchQuery: query
+      }));
+
+      console.log('🎯 Nicole Bot: Context stored in sessionStorage:', nicoleContext);
+
+      // Dispatch Nicole search event with full context
+      window.dispatchEvent(new CustomEvent('nicole-search', {
+        detail: {
+          query,
+          nicoleContext: {
+            ...nicoleContext,
+            source: 'gift-advisor-bot'
+          }
+        }
+      }));
+
+      const targetStep = user ? "results" : "results-preview";
       setBotState(prev => ({
         ...prev,
         searchQuery: query,
         step: targetStep
       }));
 
+      // Navigate to marketplace
+      window.location.href = `/marketplace?${searchParams.toString()}`;
+      
       toast.success(user ? "Gift recommendations generated!" : "Preview generated!");
     } catch (error) {
       console.error("Error generating search query:", error);

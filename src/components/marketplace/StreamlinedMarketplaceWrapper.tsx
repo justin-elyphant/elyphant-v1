@@ -134,6 +134,27 @@ const StreamlinedMarketplaceWrapper = () => {
       const urlMaxPrice = searchParams.get('maxPrice');
       const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
       const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
+
+      // If no nicoleContext in storage but source=nicole, build from URL (recipient, occasion, interests, budget)
+      let nicoleContextFromUrl: any = undefined;
+      if (!nicoleContext && searchParams.get('source') === 'nicole') {
+        const recipient = searchParams.get('recipient') || undefined;
+        const occasion = searchParams.get('occasion') || undefined;
+        const interestsParam = searchParams.get('interests');
+        const interests = interestsParam ? interestsParam.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+        nicoleContextFromUrl = {
+          recipient,
+          occasion,
+          interests,
+          budget: (typeof minPrice === 'number' || typeof maxPrice === 'number')
+            ? [typeof minPrice === 'number' ? minPrice : 0, typeof maxPrice === 'number' ? maxPrice : 9999] as [number, number]
+            : undefined,
+          capability: 'search',
+          conversationPhase: 'presenting_results'
+        };
+        console.log('🧭 Built Nicole context from URL for pagination:', nicoleContextFromUrl);
+      }
+      const effectiveNicoleContext = nicoleContext || nicoleContextFromUrl;
       
       // For other search types, use unified marketplace
       const searchOptions = {
@@ -143,10 +164,10 @@ const StreamlinedMarketplaceWrapper = () => {
         ...(searchParams.get('brandCategories') && { brandCategories: true }),
         ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
         ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') }),
-        ...(nicoleContext && { nicoleContext }), // Pass Nicole context for budget filtering
+        ...(effectiveNicoleContext && { nicoleContext: effectiveNicoleContext }), // Pass Nicole context for budget filtering
         ...(minPrice !== undefined ? { minPrice } : {}),
         ...(maxPrice !== undefined ? { maxPrice } : {}),
-      };
+      } as any;
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
       console.log('🔍 Searching with options:', searchOptions);

@@ -159,12 +159,33 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       if (minPrice !== undefined || maxPrice !== undefined) {
         console.log('💰 URL provided price filters:', { minPrice, maxPrice });
       }
+
+      // Build Nicole context from URL if source indicates Nicole and none was found in storage
+      let nicoleContextFromUrl: any = undefined;
+      if (!nicoleContext && searchParams.get('source') === 'nicole') {
+        const recipient = searchParams.get('recipient') || undefined;
+        const occasion = searchParams.get('occasion') || undefined;
+        const interestsParam = searchParams.get('interests');
+        const interests = interestsParam ? interestsParam.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+        nicoleContextFromUrl = {
+          recipient,
+          occasion,
+          interests,
+          budget: (typeof minPrice === 'number' || typeof maxPrice === 'number')
+            ? [typeof minPrice === 'number' ? minPrice : 0, typeof maxPrice === 'number' ? maxPrice : 9999] as [number, number]
+            : undefined,
+          capability: 'search',
+          conversationPhase: 'presenting_results'
+        };
+        console.log('🧭 Built Nicole context from URL:', nicoleContextFromUrl);
+      }
+      const effectiveNicoleContext = nicoleContext || nicoleContextFromUrl;
       
       executeSearch(urlSearchTerm, { 
         maxResults: 20,
         personId,
         occasionType,
-        nicoleContext,
+        ...(effectiveNicoleContext ? { nicoleContext: effectiveNicoleContext } : {}),
         // Ensure price filters are honored even without full context
         ...(minPrice !== undefined ? { minPrice } : {}),
         ...(maxPrice !== undefined ? { maxPrice } : {}),

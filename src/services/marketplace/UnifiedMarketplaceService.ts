@@ -265,17 +265,19 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice, nicoleContext } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice, nicoleContext, filters } = options;
     
     try {
       let response;
       
       // Create search options with price filters (map to expected edge function format)
+      // Merge any provided filters with price parameters
       const searchOptions = { 
         minPrice, 
         maxPrice,
         min_price: minPrice,  // Edge function expects this format
-        max_price: maxPrice   // Edge function expects this format
+        max_price: maxPrice,   // Edge function expects this format
+        ...filters  // Include any additional filters passed from searchOperations
       };
       
       console.log('🎯 UnifiedMarketplaceService: Final search options with price filters:', searchOptions);
@@ -301,7 +303,7 @@ class UnifiedMarketplaceService {
         this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
         response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {
-        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'}`);
+        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'} and filters:`, searchOptions);
         this.showToast(`Searching for "${searchTerm}"...`, 'loading');
         response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
         

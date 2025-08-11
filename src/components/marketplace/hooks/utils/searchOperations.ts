@@ -140,7 +140,14 @@ export const handleSearch = async (
             nicoleContext: enhancedNicoleContext,
             minPrice,
             maxPrice,
-            maxResults: 16
+            maxResults: 16,
+            // CRITICAL: Pass filters that edge function expects
+            filters: {
+              min_price: minPrice,
+              max_price: maxPrice,
+              minPrice: minPrice,
+              maxPrice: maxPrice
+            }
           });
           
           if (searchResults && searchResults.length > 0) {

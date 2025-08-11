@@ -220,7 +220,7 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
           detectedBrands: enhancedContext.detectedBrands
         });
         
-        console.log('🔍 Passing enhanced context to navigation:', enhancedContext);
+        console.log('🔍 CRITICAL: Passing enhanced context to navigation with budget array:', enhancedContext.budget);
         onNavigateToMarketplace(searchQuery, enhancedContext);
         onClose();
       } catch (error) {

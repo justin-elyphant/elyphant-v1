@@ -130,10 +130,16 @@ export const handleSearch = async (
       if (enhancedNicoleContext) {
         console.log('🎯 SearchOperations: Using UnifiedMarketplaceService with Nicole context:', enhancedNicoleContext);
         try {
+          // Extract price range from Nicole context budget array
+          const minPrice = enhancedNicoleContext.budget ? enhancedNicoleContext.budget[0] : undefined;
+          const maxPrice = enhancedNicoleContext.budget ? enhancedNicoleContext.budget[1] : undefined;
+          
+          console.log('🎯 SearchOperations: Extracted price range:', { minPrice, maxPrice });
+          
           const searchResults = await unifiedMarketplaceService.searchProducts(term, {
             nicoleContext: enhancedNicoleContext,
-            minPrice: enhancedNicoleContext.minPrice,
-            maxPrice: enhancedNicoleContext.maxPrice,
+            minPrice,
+            maxPrice,
             maxResults: 16
           });
           

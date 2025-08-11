@@ -212,12 +212,13 @@ class EnhancedZincApiService {
 
       console.log(`🎯 FIXED: Sending request body with price filters:`, requestBody);
 
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: requestBody
       });
 
       if (error) {
-        console.error('Error calling get-products function:', error);
+        console.error('Error calling zinc-search function:', error);
         return {
           results: [],
           error: `Product search failed: ${error.message}`
@@ -266,7 +267,8 @@ class EnhancedZincApiService {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           query: categoryQuery,
           page: 1,
@@ -279,7 +281,7 @@ class EnhancedZincApiService {
       });
 
       if (error) {
-        console.error(`Error calling get-products for category ${category}:`, error);
+        console.error(`Error calling zinc-search for category ${category}:`, error);
         return {
           results: [],
           error: `Category search failed: ${error.message}`
@@ -327,7 +329,8 @@ class EnhancedZincApiService {
     console.log('Starting gifts for her category search...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           giftsForHer: true,
           limit,
@@ -370,7 +373,8 @@ class EnhancedZincApiService {
     console.log('Starting gifts for him category search...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           giftsForHim: true,
           limit,
@@ -413,7 +417,8 @@ class EnhancedZincApiService {
     console.log('Starting gifts under $50 category search...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           query: 'gifts under $50 categories', // Required by edge function
           giftsUnder50: true,
@@ -457,7 +462,8 @@ class EnhancedZincApiService {
     console.log(`Starting brand category search for: ${brandName}`);
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           query: brandName,
           brandCategories: true,
@@ -501,7 +507,8 @@ class EnhancedZincApiService {
     console.log('Starting luxury category search...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           luxuryCategories: true,
           limit,

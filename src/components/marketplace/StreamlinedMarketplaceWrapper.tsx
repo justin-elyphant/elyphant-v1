@@ -98,7 +98,8 @@ const StreamlinedMarketplaceWrapper = () => {
         const categoryType = Object.keys(categoryParams)[0];
         console.log(`Making ${categoryType} request with page:`, page);
         
-        const response = await supabase.functions.invoke('get-products', {
+        // **PHASE 2 FIX: Use zinc-search instead of get-products**
+        const response = await supabase.functions.invoke('zinc-search', {
           body: { 
             ...categoryParams,
             page,

@@ -4,6 +4,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Product } from "@/types/product";
 import { handleSearch, clearSearchOperations } from "./utils/searchOperations";
 import { loadPersonalizedProducts } from "./utils/personalizationUtils";
+import { directNicoleMarketplaceService } from "@/services/marketplace/DirectNicoleMarketplaceService";
 
 export const useMarketplaceProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,11 +51,33 @@ export const useMarketplaceProducts = () => {
       
       console.log('🎯 Marketplace: Extracted Nicole context from URL:', nicoleContext);
       
-      // Generate unique ID for this search to prevent duplicate toasts
-      const searchId = `search-${searchParam}-${Date.now()}`;
-      searchIdRef.current = searchId;
-      
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
+      // **PHASE 1 FIX: Use DirectNicole search when source=nicole**
+      if (source === 'nicole' && nicoleContext) {
+        console.log('🎯 PHASE 1: Using DirectNicole search for source=nicole');
+        setIsLoading(true);
+        
+        directNicoleMarketplaceService.searchWithNicoleContext(
+          searchParam,
+          nicoleContext,
+          { maxResults: 35 }
+        ).then(nicoleResults => {
+          console.log(`🎯 PHASE 1: DirectNicole returned ${nicoleResults.length} results`);
+          setProducts(nicoleResults);
+          setIsLoading(false);
+        }).catch(error => {
+          console.error('🎯 PHASE 1: DirectNicole search failed, falling back to standard search:', error);
+          // Fallback to standard search
+          const searchId = `search-${searchParam}-${Date.now()}`;
+          searchIdRef.current = searchId;
+          handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
+        });
+      } else {
+        // Generate unique ID for this search to prevent duplicate toasts
+        const searchId = `search-${searchParam}-${Date.now()}`;
+        searchIdRef.current = searchId;
+        
+        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
+      }
     } else {
       // Load some default products with personalization
       const userInterests = profile?.gift_preferences || [];
@@ -94,11 +117,33 @@ export const useMarketplaceProducts = () => {
         budget: (minPrice && maxPrice) ? [Number(minPrice), Number(maxPrice)] : undefined
       } : undefined;
       
-      // Generate unique ID for this search to prevent duplicate toasts
-      const searchId = `search-${searchParam}-${Date.now()}`;
-      searchIdRef.current = searchId;
-      
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
+      // **PHASE 1 FIX: Use DirectNicole search when source=nicole**
+      if (source === 'nicole' && nicoleContext) {
+        console.log('🎯 PHASE 1: Using DirectNicole search for source=nicole (param change)');
+        setIsLoading(true);
+        
+        directNicoleMarketplaceService.searchWithNicoleContext(
+          searchParam,
+          nicoleContext,
+          { maxResults: 35 }
+        ).then(nicoleResults => {
+          console.log(`🎯 PHASE 1: DirectNicole returned ${nicoleResults.length} results`);
+          setProducts(nicoleResults);
+          setIsLoading(false);
+        }).catch(error => {
+          console.error('🎯 PHASE 1: DirectNicole search failed, falling back to standard search:', error);
+          // Fallback to standard search
+          const searchId = `search-${searchParam}-${Date.now()}`;
+          searchIdRef.current = searchId;
+          handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
+        });
+      } else {
+        // Generate unique ID for this search to prevent duplicate toasts
+        const searchId = `search-${searchParam}-${Date.now()}`;
+        searchIdRef.current = searchId;
+        
+        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
+      }
     }
   }, [searchParams]);
   

@@ -115,7 +115,8 @@ class EnhancedAutoGiftingService {
     criteria: any
   ): Promise<any[]> {
     try {
-      const { data: searchResults, error } = await supabase.functions.invoke('get-products', {
+      // **PHASE 2 FIX: Use zinc-search instead of get-products**
+      const { data: searchResults, error } = await supabase.functions.invoke('zinc-search', {
         body: {
           query: query,
           page: 1,

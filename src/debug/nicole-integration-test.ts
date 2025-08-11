@@ -1,12 +1,13 @@
 /**
- * Test script to verify Nicole → Marketplace integration
+ * Test script to verify Nicole → Marketplace integration 
+ * **PHASE 4: Enhanced testing and logging**
  */
 
 // Test the DirectNicoleMarketplaceService
 const testNicoleIntegration = () => {
-  console.log('🧪 Testing Nicole → Marketplace Integration');
+  console.log('🧪 PHASE 4: Testing Nicole → Marketplace Integration');
   
-  // Test data mimicking Nicole chat context
+  // Test data mimicking Nicole chat context with budget
   const testNicoleContext = {
     budget: [75, 175],
     interests: ['concerts', 'cooking'],
@@ -15,17 +16,21 @@ const testNicoleIntegration = () => {
     source: 'test'
   };
 
-  const testQuery = 'gifts for friend birthday concerts cooking';
+  const testQuery = 'concerts cooking netflix gifts';
 
-  // Dispatch Nicole search event
-  window.dispatchEvent(new CustomEvent('nicole-search', {
-    detail: {
-      query: testQuery,
-      nicoleContext: testNicoleContext
-    }
-  }));
+  console.log('🧪 PHASE 4: Simulating Nicole search with budget filtering...');
+  console.log('🧪 Expected: Products should be $75-$175 and match interests');
 
-  console.log('🧪 Test event dispatched:', { testQuery, testNicoleContext });
+  // Navigate directly to the marketplace URL with Nicole context
+  const marketplaceUrl = `/marketplace?search=${encodeURIComponent(testQuery)}&source=nicole&minPrice=75&maxPrice=175&recipient=friend&occasion=birthday`;
+  console.log('🧪 PHASE 4: Navigate to:', marketplaceUrl);
+  
+  // For testing, simulate navigation
+  if (window.location.pathname !== '/marketplace') {
+    window.location.href = marketplaceUrl;
+  }
+
+  console.log('🧪 PHASE 4: Test context set:', { testQuery, testNicoleContext });
 };
 
 // Test budget standardization
@@ -55,6 +60,7 @@ declare global {
 window.testNicoleIntegration = testNicoleIntegration;
 window.testBudgetStandardization = testBudgetStandardization;
 
-console.log('🧪 Nicole integration tests loaded. Run:');
-console.log('- window.testNicoleIntegration() to test the search flow');
+console.log('🧪 PHASE 4: Nicole integration tests loaded. Run:');
+console.log('- window.testNicoleIntegration() to test Nicole → Marketplace flow');
 console.log('- window.testBudgetStandardization() to test budget handling');
+console.log('🧪 PHASE 4: Check console for "🎯 DirectNicole" and "🎯 PHASE 1" logs');

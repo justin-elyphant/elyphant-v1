@@ -1024,11 +1024,16 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     );
     const hasBudget = Boolean(updatedContext.budget);
     
-    // More sophisticated context evaluation
-    const hasMinimumContext = hasRecipient && (hasOccasionOrAge || hasInterestsOrBrands);
-    
     // Enhanced detection for AI indicating readiness for product search
     const aiIndicatesReady = /(?:ready to search|find (?:products|gifts|some gift options)|search for|look for items|browse (?:products|gifts)|show (?:me )?(?:some )?(?:options|products|gifts)|want me to find|I can show you|can show you some|explore gifts|find some gift options|great gift options|some great options)/i.test(aiMessage);
+    
+    // Detect when Nicole is asking for more information (budget, occasion, etc.)
+    const nicoleAskingForBudget = /(?:what.*budget|budget.*range|how much.*spend|price range|what.*spending)/i.test(aiMessage || '');
+    const nicoleAskingForOccasion = /(?:what.*occasion|when.*birthday|what.*event|what.*celebrating)/i.test(aiMessage || '');
+    const nicoleAskingForMoreInfo = nicoleAskingForBudget || nicoleAskingForOccasion;
+    
+    // More conservative context evaluation - requires recipient + interests/brands + (budget OR AI explicitly ready) + Nicole not asking for more info
+    const hasMinimumContext = hasRecipient && hasInterestsOrBrands && (hasBudget || aiIndicatesReady) && !nicoleAskingForMoreInfo;
     
     // Enhanced detection for user wanting product suggestions - more permissive patterns
     const wantsProductSuggestions = /(?:yes.*(?:show|find|see)|show.*(?:me|some|gift|options|suggestions)|see.*(?:suggestions|options|gifts|products)|view.*(?:suggestions|options)|display.*products|find.*(?:gifts|options)|browse.*(?:gifts|products)|explore.*gifts|look.*(?:for|at).*gifts|gift.*options)/i.test(message);
@@ -1039,7 +1044,7 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     // Auto-trigger when Nicole asks about showing options and user responds positively 
     const positiveResponseToOptions = /(?:yes|sure|okay|ok|show|find|go ahead|sounds good|that works|perfect)/i.test(message) && /(?:show|find|option|gift)/i.test(aiMessage || '');
     
-    const showSearchButton = hasMinimumContext || (hasBudget && hasInterestsOrBrands) || aiIndicatesReady;
+    const showSearchButton = hasMinimumContext;
     // Simplified: Remove complex product tile logic, focus on search button approach
     const showProductTiles = false;
 
@@ -1050,6 +1055,9 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
       hasBudget,
       hasMinimumContext,
       aiIndicatesReady,
+      nicoleAskingForBudget,
+      nicoleAskingForOccasion,
+      nicoleAskingForMoreInfo,
       showSearchButton,
       showProductTiles: false, // Simplified approach
       userMessage: message,

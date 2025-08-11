@@ -11,6 +11,7 @@ import { ThemeProvider } from "./contexts/theme/ThemeProvider";
 import { NicoleStateProvider } from "./contexts/nicole/NicoleStateContext";
 import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
+import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
 
 // Immediate load for critical pages
 import Home from "./pages/Home";
@@ -125,7 +126,12 @@ function AppContent() {
             sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
             console.log('💰 Stored Nicole context in session storage:', nicoleContext);
 
-            // Handle budget in multiple possible shapes
+            // Use robust extractor to derive budget from any Nicole context shape
+            const { minPrice, maxPrice } = extractBudgetFromNicoleContext(nicoleContext as any);
+            if (minPrice != null) params.set('minPrice', String(minPrice));
+            if (maxPrice != null) params.set('maxPrice', String(maxPrice));
+
+            // Legacy shapes as fallback (kept for backward compatibility)
             const budget = (nicoleContext as any).budget;
             if (Array.isArray(budget) && budget.length === 2) {
               const [min, max] = budget;

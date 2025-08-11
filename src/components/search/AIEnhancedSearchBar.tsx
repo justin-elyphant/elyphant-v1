@@ -18,7 +18,7 @@ let globalNicoleState = {
 };
 
 interface AIEnhancedSearchBarProps {
-  onNavigateToResults?: (searchQuery: string) => void;
+  onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
   className?: string;
   mobile?: boolean;
 }
@@ -145,9 +145,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     setMode("search"); // Reset to search mode when closing
   };
 
-  const handleNicoleNavigate = (searchQuery: string) => {
+  const handleNicoleNavigate = (searchQuery: string, nicoleContext?: any) => {
     if (onNavigateToResults) {
-      onNavigateToResults(searchQuery);
+      onNavigateToResults(searchQuery, nicoleContext);
     } else {
       navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
     }

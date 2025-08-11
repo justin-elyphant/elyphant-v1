@@ -132,10 +132,26 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       executeSearch(brandCategories, { brandCategories: true, maxResults: 20 });
     } else if (urlSearchTerm) {
       console.log(`[useUnifiedMarketplace] Detected URL search term: "${urlSearchTerm}"`);
+      
+      // Check for Nicole context in session storage for budget filtering
+      let nicoleContext;
+      try {
+        const storedContext = sessionStorage.getItem('nicole-search-context');
+        if (storedContext) {
+          nicoleContext = JSON.parse(storedContext);
+          console.log('💰 Retrieved Nicole context for URL search:', nicoleContext);
+          // Clear after use to prevent stale data
+          sessionStorage.removeItem('nicole-search-context');
+        }
+      } catch (error) {
+        console.warn('Failed to parse Nicole context from session storage:', error);
+      }
+      
       executeSearch(urlSearchTerm, { 
         maxResults: 20,
         personId,
-        occasionType 
+        occasionType,
+        nicoleContext 
       });
     } else if (autoLoadOnMount) {
       console.log('[useUnifiedMarketplace] Loading default products');

@@ -28,7 +28,7 @@ interface NicoleUnifiedInterfaceProps {
   // Additional props for backward compatibility
   entryPoint?: string;
   onIntentComplete?: (intent: "auto-gift" | "shop-solo" | "create-wishlist" | "giftor") => void;
-  onNavigateToResults?: (searchQuery: string) => void;
+  onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
 }
 
 interface Message {
@@ -425,7 +425,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     // Use onNavigateToResults callback if provided (for AIEnhancedSearchBar)
     if (onNavigateToResults) {
       console.log('🎯 Using onNavigateToResults callback');
-      onNavigateToResults(finalSearchQuery);
+      // Pass the Nicole context along with the search query
+      const nicoleContext = getConversationContext();
+      console.log('🎯 Nicole context for navigation:', nicoleContext);
+      onNavigateToResults(finalSearchQuery, nicoleContext);
       // Don't close immediately - let the parent handle closure after navigation
       return;
     }

@@ -83,6 +83,12 @@ const MobileConversationModal: React.FC<MobileConversationModalProps> = ({
   const handleNavigateToMarketplace = (searchQuery: string, nicoleContext?: any) => {
     console.log('📱 Mobile modal - navigating to marketplace:', searchQuery);
     console.log('📱 Mobile modal - context received:', nicoleContext);
+    console.log('📱 Mobile modal - budget details:', {
+      budget: nicoleContext?.budget,
+      autoGiftBudget: nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+      minPrice: nicoleContext?.minPrice,
+      maxPrice: nicoleContext?.maxPrice
+    });
     try {
       // Always pass the context to support budget parameters
       onNavigateToResults(searchQuery, nicoleContext);

@@ -196,12 +196,18 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
   const handleSearchInMarketplace = () => {
     console.log('🎯 Search button clicked - navigating to marketplace');
     console.log('🔍 onNavigateToMarketplace prop:', onNavigateToMarketplace);
-    console.log('🔍 Current context:', context);
+    console.log('🔍 Current context (full):', JSON.stringify(context, null, 2));
     
     if (onNavigateToMarketplace) {
       try {
         const searchQuery = generateSearchQuery();
         console.log('🔍 Generated search query:', searchQuery);
+        console.log('🔍 Budget in context:', {
+          budget: context.budget,
+          autoGiftBudget: context.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+          interests: context.interests,
+          detectedBrands: context.detectedBrands
+        });
         console.log('🔍 Passing context to navigation:', context);
         onNavigateToMarketplace(searchQuery, context);
         onClose();
@@ -343,6 +349,11 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       const updatedContext = { ...context, interests: [categoryName] };
       updateContext({ interests: [categoryName] });
       const searchQuery = generateSearchQuery();
+      console.log('🔍 Category expand - context with budget:', {
+        budget: updatedContext.budget,
+        autoGiftBudget: updatedContext.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+        interests: updatedContext.interests
+      });
       onNavigateToMarketplace(searchQuery, updatedContext);
       onClose();
     }

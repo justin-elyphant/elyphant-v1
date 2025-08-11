@@ -116,11 +116,28 @@ export const useSearchHandlers = ({
     marketplaceUrl.searchParams.set('search', searchQuery);
     marketplaceUrl.searchParams.set('source', 'nicole');
     
-    // Include budget information if available
+    // Include budget information from multiple possible sources
+    let minPrice, maxPrice;
+    
     if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
-      marketplaceUrl.searchParams.set('minPrice', String(nicoleContext.budget[0]));
-      marketplaceUrl.searchParams.set('maxPrice', String(nicoleContext.budget[1]));
-      console.log('🎯 Adding budget to URL:', nicoleContext.budget);
+      [minPrice, maxPrice] = nicoleContext.budget;
+    } else if (nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
+      [minPrice, maxPrice] = nicoleContext.autoGiftIntelligence.primaryRecommendation.budgetRange;
+    } else if (nicoleContext?.minPrice && nicoleContext?.maxPrice) {
+      minPrice = nicoleContext.minPrice;
+      maxPrice = nicoleContext.maxPrice;
+    }
+    
+    if (minPrice !== undefined && maxPrice !== undefined) {
+      marketplaceUrl.searchParams.set('minPrice', String(minPrice));
+      marketplaceUrl.searchParams.set('maxPrice', String(maxPrice));
+      console.log('🎯 Adding budget to URL:', { minPrice, maxPrice });
+    } else {
+      console.log('🎯 No budget found in Nicole context:', {
+        budget: nicoleContext?.budget,
+        autoGiftBudget: nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+        fullContext: nicoleContext
+      });
     }
     
     // Include recipient and occasion for contextual search

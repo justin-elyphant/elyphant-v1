@@ -3507,6 +3507,10 @@ export type Database = {
         Args: { note_order_id: string }
         Returns: boolean
       }
+      can_access_zma_accounts: {
+        Args: { action_type: string }
+        Returns: boolean
+      }
       can_cancel_order: {
         Args: { order_id: string }
         Returns: boolean
@@ -3595,6 +3599,20 @@ export type Database = {
           updated_at: string | null
           user_id: string
         }
+      }
+      get_zma_account_safe: {
+        Args: { account_id: string }
+        Returns: {
+          id: string
+          account_name: string
+          account_balance: number
+          account_status: string
+          last_balance_check: string
+          is_default: boolean
+          created_at: string
+          updated_at: string
+          has_api_key: boolean
+        }[]
       }
       is_authorized_for_payment_methods: {
         Args: { action_type: string }

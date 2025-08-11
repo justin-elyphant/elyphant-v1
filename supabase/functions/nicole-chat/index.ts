@@ -569,6 +569,7 @@ serve(async (req) => {
         /under\s*\$(\d+(?:,\d+)?)/i,
         /less\s+than\s*\$(\d+(?:,\d+)?)/i,
         /up\s+to\s*\$(\d+(?:,\d+)?)/i,
+        /no\s+more\s+than\s*\$(\d+(?:,\d+)?)/i,
         /maximum.*?\$(\d+(?:,\d+)?)/i,
         /max.*?\$(\d+(?:,\d+)?)/i
       ];
@@ -586,7 +587,7 @@ serve(async (req) => {
             break;
           } else if (match[1]) {
             const amount = parseInt(match[1].replace(',', ''));
-            if (message.toLowerCase().includes('under') || message.toLowerCase().includes('less than') || message.toLowerCase().includes('up to') || message.toLowerCase().includes('max')) {
+            if (message.toLowerCase().includes('under') || message.toLowerCase().includes('less than') || message.toLowerCase().includes('up to') || message.toLowerCase().includes('no more than') || message.toLowerCase().includes('max')) {
               budget = [0, amount];
               console.log(`Maximum budget detected: up to $${amount}`);
             } else {

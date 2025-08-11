@@ -152,11 +152,16 @@ class UnifiedMarketplaceService {
   }
 
   /**
-   * Extract interest keywords from search term
+   * Extract interest keywords from search term with improved parsing
    */
   private extractInterestKeywords(searchTerm: string): string[] {
-    const keywords = searchTerm.toLowerCase().split(/\s+|[,&+]/);
-    return keywords.filter(word => word.length > 2 && !['gift', 'gifts', 'for', 'and', 'the'].includes(word));
+    const keywords = searchTerm.toLowerCase()
+      .split(/\s+|[,&+]/) // Split on spaces, commas, ampersands, plus signs
+      .map(word => word.trim())
+      .filter(word => word.length > 2 && !['gift', 'gifts', 'for', 'and', 'the', 'with', 'from', 'best', 'top'].includes(word));
+    
+    console.log(`[UnifiedMarketplaceService] Extracted keywords from "${searchTerm}": ${keywords.join(', ')}`);
+    return keywords;
   }
 
   /**
@@ -280,7 +285,7 @@ class UnifiedMarketplaceService {
             console.log(`[UnifiedMarketplaceService] Extracted interests: ${interests.join(', ')}`);
             console.log(`[UnifiedMarketplaceService] Mapped categories: ${categories.join(', ')}`);
             
-            this.showToast('Finding best selling products...', 'loading', 'Based on your interests');
+            this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
             response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults);
           }
         }

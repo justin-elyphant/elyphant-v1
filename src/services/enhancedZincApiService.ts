@@ -52,7 +52,7 @@ class EnhancedZincApiService {
   private cache = new Map();
 
   /**
-   * Search for best selling products based on interest categories
+   * Search for best selling products based on interest categories with balanced distribution
    */
   async searchBestSellingByInterests(categories: string[], limit: number = 20): Promise<ZincSearchResponse> {
     console.log(`Searching best selling products for categories: ${categories.join(', ')}, limit: ${limit}`);
@@ -60,29 +60,82 @@ class EnhancedZincApiService {
     try {
       // Create multiple "best selling" queries for different categories
       const bestSellingQueries = categories.map(category => `best selling ${category}`);
-      const allResults: any[] = [];
+      console.log(`Generated queries: ${bestSellingQueries.join(', ')}`);
       
-      // Execute searches for each category
-      for (const query of bestSellingQueries.slice(0, 3)) { // Limit to 3 categories to avoid too many API calls
-        console.log(`Searching best selling for: "${query}"`);
+      // Calculate minimum products per category to ensure diversity
+      const minProductsPerCategory = Math.max(3, Math.floor(limit / categories.length));
+      const allResults: any[] = [];
+      const resultsByCategory: Record<string, any[]> = {};
+      
+      // Execute searches for ALL categories (not just first 3)
+      for (let i = 0; i < bestSellingQueries.length; i++) {
+        const query = bestSellingQueries[i];
+        const category = categories[i];
         
-        const response = await this.searchProducts(query, 1, Math.ceil(limit / bestSellingQueries.length));
+        console.log(`Searching best selling for category "${category}": "${query}"`);
         
-        if (!response.error && response.results) {
-          allResults.push(...response.results);
+        const response = await this.searchProducts(query, 1, minProductsPerCategory + 2); // Get a few extra for filtering
+        
+        if (!response.error && response.results && response.results.length > 0) {
+          resultsByCategory[category] = response.results;
+          console.log(`Found ${response.results.length} products for category: ${category}`);
+        } else {
+          console.log(`No results for category: ${category}`);
+          resultsByCategory[category] = [];
         }
       }
       
-      // Remove duplicates and limit results
-      const uniqueResults = allResults.filter((product, index, self) => 
-        index === self.findIndex(p => p.product_id === product.product_id)
-      ).slice(0, limit);
+      // Implement round-robin distribution to ensure variety
+      const finalResults: any[] = [];
+      const usedProductIds = new Set<string>();
       
-      console.log(`Best selling search returned ${uniqueResults.length} unique products`);
+      // First pass: Get minimum products from each category
+      for (const category of categories) {
+        const categoryResults = resultsByCategory[category] || [];
+        let addedFromCategory = 0;
+        
+        for (const product of categoryResults) {
+          if (addedFromCategory >= minProductsPerCategory) break;
+          if (usedProductIds.has(product.product_id)) continue;
+          if (finalResults.length >= limit) break;
+          
+          finalResults.push(product);
+          usedProductIds.add(product.product_id);
+          addedFromCategory++;
+        }
+        
+        console.log(`Added ${addedFromCategory} products from category: ${category}`);
+      }
+      
+      // Second pass: Fill remaining slots with any available products
+      if (finalResults.length < limit) {
+        for (const category of categories) {
+          const categoryResults = resultsByCategory[category] || [];
+          
+          for (const product of categoryResults) {
+            if (finalResults.length >= limit) break;
+            if (usedProductIds.has(product.product_id)) continue;
+            
+            finalResults.push(product);
+            usedProductIds.add(product.product_id);
+          }
+        }
+      }
+      
+      console.log(`Best selling search returned ${finalResults.length} balanced products across ${categories.length} categories`);
+      
+      // Log distribution for debugging
+      const distribution: Record<string, number> = {};
+      categories.forEach(category => {
+        distribution[category] = (resultsByCategory[category] || []).filter(p => 
+          finalResults.some(fp => fp.product_id === p.product_id)
+        ).length;
+      });
+      console.log('Product distribution by category:', distribution);
       
       return {
-        results: uniqueResults,
-        error: uniqueResults.length === 0 ? 'No best selling products found' : undefined
+        results: finalResults,
+        error: finalResults.length === 0 ? 'No best selling products found' : undefined
       };
       
     } catch (error) {

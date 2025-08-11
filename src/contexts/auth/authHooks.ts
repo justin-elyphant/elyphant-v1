@@ -37,8 +37,11 @@ export const useAuthFunctions = (user: any) => {
     try {
       toast.loading("Deleting account...");
       
-      // Delete user account
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      // Use the secure edge function to delete user account
+      const { data, error } = await supabase.functions.invoke('delete-user-account', {
+        method: 'POST'
+      });
+      
       if (error) throw error;
       
       // Sign out and clear data

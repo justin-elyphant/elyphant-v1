@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.send-invitation-email]
 verify_jwt = true
+
+[functions.zinc-search]
+verify_jwt = false

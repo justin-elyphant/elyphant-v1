@@ -110,6 +110,16 @@ export const useSearchHandlers = ({
 
   const handleNicoleNavigateToResults = (searchQuery: string, nicoleContext?: any) => {
     console.log('🎯 HandleNicoleNavigateToResults: context received:', nicoleContext);
+    console.log('🎯 DEBUGGING Nicole Context Budget:', {
+      hasContext: !!nicoleContext,
+      contextBudget: nicoleContext?.budget,
+      budgetType: typeof nicoleContext?.budget,
+      budgetIsArray: Array.isArray(nicoleContext?.budget),
+      budgetLength: nicoleContext?.budget?.length,
+      autoGiftBudget: nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+      allContextKeys: nicoleContext ? Object.keys(nicoleContext) : [],
+      fullContext: JSON.stringify(nicoleContext, null, 2)
+    });
     
     // Build marketplace URL with Nicole context
     const marketplaceUrl = new URL('/marketplace', window.location.origin);
@@ -121,21 +131,25 @@ export const useSearchHandlers = ({
     
     if (nicoleContext?.budget && Array.isArray(nicoleContext.budget) && nicoleContext.budget.length === 2) {
       [minPrice, maxPrice] = nicoleContext.budget;
+      console.log('🎯 Budget extracted from context.budget array:', { minPrice, maxPrice });
     } else if (nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange) {
       [minPrice, maxPrice] = nicoleContext.autoGiftIntelligence.primaryRecommendation.budgetRange;
+      console.log('🎯 Budget extracted from autoGiftIntelligence:', { minPrice, maxPrice });
     } else if (nicoleContext?.minPrice && nicoleContext?.maxPrice) {
       minPrice = nicoleContext.minPrice;
       maxPrice = nicoleContext.maxPrice;
+      console.log('🎯 Budget extracted from direct minPrice/maxPrice:', { minPrice, maxPrice });
     }
     
     if (minPrice !== undefined && maxPrice !== undefined) {
       marketplaceUrl.searchParams.set('minPrice', String(minPrice));
       marketplaceUrl.searchParams.set('maxPrice', String(maxPrice));
-      console.log('🎯 Adding budget to URL:', { minPrice, maxPrice });
+      console.log('🎯 SUCCESS: Adding budget to URL:', { minPrice, maxPrice });
     } else {
-      console.log('🎯 No budget found in Nicole context:', {
+      console.log('🎯 ERROR: No budget found in Nicole context:', {
         budget: nicoleContext?.budget,
         autoGiftBudget: nicoleContext?.autoGiftIntelligence?.primaryRecommendation?.budgetRange,
+        contextKeys: nicoleContext ? Object.keys(nicoleContext) : [],
         fullContext: nicoleContext
       });
     }

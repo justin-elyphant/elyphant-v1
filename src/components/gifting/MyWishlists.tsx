@@ -87,19 +87,6 @@ const MyWishlists = () => {
     return sanitized.filter(cat => cat && typeof cat === "string" && cat.trim().length > 0);
   }, [wishlists]);
 
-  // Defensive: Ensure filter is always valid—if not, reset it to null
-  React.useEffect(() => {
-    if (
-      categoryFilter &&
-      (!selectableCategories.includes(categoryFilter) ||
-        typeof categoryFilter !== "string" ||
-        !categoryFilter.trim())
-    ) {
-      console.warn("[Wishlists] Resetting invalid categoryFilter value", categoryFilter);
-      setCategoryFilter(null);
-    }
-  }, [categoryFilter, selectableCategories]);
-
   // Filter and sort wishlists based on category, search query, and sort option
   const filteredAndSortedWishlists = React.useMemo(() => {
     if (!wishlists) return [];
@@ -138,6 +125,29 @@ const MyWishlists = () => {
       }
     });
   }, [wishlists, categoryFilter, searchQuery, sortBy]);
+
+  // Contextual data for enhanced features
+  const contextualData = React.useMemo(() => {
+    const trendingCategories = selectableCategories.slice(0, 6); // Mock trending
+    return {
+      recentlyViewedCount: 5, // Mock data - could come from localStorage or API
+      trendingCategories,
+      collaborativeWishlists: 0, // Mock data
+    };
+  }, [selectableCategories]);
+
+  // Defensive: Ensure filter is always valid—if not, reset it to null
+  React.useEffect(() => {
+    if (
+      categoryFilter &&
+      (!selectableCategories.includes(categoryFilter) ||
+        typeof categoryFilter !== "string" ||
+        !categoryFilter.trim())
+    ) {
+      console.warn("[Wishlists] Resetting invalid categoryFilter value", categoryFilter);
+      setCategoryFilter(null);
+    }
+  }, [categoryFilter, selectableCategories]);
 
   const handleCreateWishlist = () => {
     setDialogOpen(true);
@@ -225,15 +235,6 @@ const MyWishlists = () => {
     );
   }
 
-  // Contextual data for enhanced features
-  const contextualData = React.useMemo(() => {
-    const trendingCategories = selectableCategories.slice(0, 6); // Mock trending
-    return {
-      recentlyViewedCount: 5, // Mock data - could come from localStorage or API
-      trendingCategories,
-      collaborativeWishlists: 0, // Mock data
-    };
-  }, [selectableCategories]);
 
   // Main content
   return (

@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
 import { ProfileProvider } from "./contexts/profile/ProfileContext";
@@ -9,6 +8,7 @@ import { NotificationsProvider } from "./contexts/notifications/NotificationsCon
 import { EventsProvider } from "./components/gifting/events/context/EventsContext";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
 import { NicoleStateProvider } from "./contexts/nicole/NicoleStateContext";
+import { QueryProvider } from "./providers/QueryProvider";
 import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 
@@ -39,8 +39,6 @@ const SMSConsent = lazy(() => import("./pages/SMSConsent"));
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
 const NicoleAutoGiftingDashboard = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingDashboard"));
-
-const queryClient = new QueryClient();
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -79,7 +77,7 @@ function App() {
   }, [trackRender]);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryProvider>
       <ThemeProvider>
         <AuthProvider>
           <ProfileProvider>
@@ -99,7 +97,7 @@ function App() {
           </ProfileProvider>
         </AuthProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    </QueryProvider>
   );
 }
 

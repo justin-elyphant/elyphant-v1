@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
 import WishlistSelectionPopover from "@/components/marketplace/WishlistSelectionPopover";
 
@@ -30,7 +30,7 @@ const QuickWishlistButton = ({
   variant = "default",
 }: QuickWishlistButtonProps) => {
   const { user } = useAuth();
-  const { isProductWishlisted } = useUnifiedWishlist();
+  const { isProductWishlisted } = useUnifiedWishlistSystem();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isPressed, setIsPressed] = useState(false);

@@ -4,7 +4,7 @@ import WishlistSelectionPopover from "@/components/marketplace/WishlistSelection
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 interface WishlistSelectionPopoverButtonProps {
   product: {
@@ -26,7 +26,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   isWishlisted,
 }) => {
   const isMobile = useIsMobile();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
 
   // Always live-calculate wishlist state - this ensures we show the correct state
   const computedIsWishlisted = typeof isWishlisted === "boolean"

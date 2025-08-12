@@ -188,7 +188,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   };
 
   const isFreeShipping = () => {
-    return product.prime || (product as any).free_shipping || false;
+    return false; // Disabled as free shipping is not offered
   };
 
   const isRecentlyViewed = () => {
@@ -389,22 +389,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         )}
 
 
-        {/* Free Shipping Indicator */}
-        {isFreeShipping() && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center text-xs text-green-600">
-                  <Truck className="h-3 w-3 mr-1" />
-                  <span>Free shipping</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Free shipping on this item</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
 
         {/* Tags Display */}
         {product.tags && product.tags.length > 0 && (

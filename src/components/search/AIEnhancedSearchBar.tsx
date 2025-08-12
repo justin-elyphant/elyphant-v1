@@ -212,7 +212,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const placeholderText = isNicoleMode 
     ? "Ask Nicole anything about gifts..." 
-    : "Search products or browse marketplace...";
+    : "Search brands, trending products, friends, and more...";
 
   return (
     <div className={`relative w-full ${className}`}>

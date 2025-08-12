@@ -362,7 +362,10 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       </div>
 
       {/* Content Section - Clean Airbnb Style */}
-      <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+      <div className={cn(
+        "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
+        isInCategorySection && "max-h-36"
+      )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
           <div className="text-xs text-gray-500 flex items-center">
@@ -371,31 +374,29 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
         )}
 
-        {/* Product Title */}
-        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug min-h-[2.5rem] flex items-start">
+        {/* Product Title - Fixed to exactly 2 lines */}
+        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug max-h-[2.5rem] overflow-hidden">
           {getProductTitle()}
         </h3>
 
-        {/* Brand - Always show brand or "Amazon" fallback */}
-        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-          {(product.brand && product.brand.trim()) || "AMAZON"}
-        </p>
+        {/* Brand and Rating Combined Row */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+            {(product.brand && product.brand.trim()) || "AMAZON"}
+          </p>
+          {getRating() > 0 && (
+            <div className="flex items-center text-xs">
+              <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
+              <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
+              {getReviewCount() > 0 && (
+                <span className="text-gray-500 ml-1">({getReviewCount()})</span>
+              )}
+            </div>
+          )}
+        </div>
 
-        {/* Rating */}
-        {getRating() > 0 && (
-          <div className="flex items-center text-xs">
-            <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
-            <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
-            {getReviewCount() > 0 && (
-              <span className="text-gray-500 ml-1">({getReviewCount()})</span>
-            )}
-          </div>
-        )}
-
-
-
-        {/* Tags Display */}
-        {product.tags && product.tags.length > 0 && (
+        {/* Tags Display - Only show in non-category sections */}
+        {!isInCategorySection && product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {product.tags.slice(0, 2).map((tag: string, i: number) => (
               <span 

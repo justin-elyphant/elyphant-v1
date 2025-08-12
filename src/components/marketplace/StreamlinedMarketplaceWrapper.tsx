@@ -352,7 +352,7 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Products Grid (when search is active or as fallback) */}
       {(showSearchInfo || !products.length) && paginatedProducts.length > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
             {paginatedProducts.map((product, index) => (
               <AirbnbStyleProductCard
                 key={product.id || product.product_id || index}

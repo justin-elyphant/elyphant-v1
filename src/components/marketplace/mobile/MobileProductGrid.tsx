@@ -128,7 +128,7 @@ const MobileProductGrid = ({
     
     return (
       <Card 
-        className="cursor-pointer hover:shadow-md transition-shadow touch-manipulation tap-feedback safe-area-inset"
+        className="cursor-pointer hover:shadow-md transition-shadow touch-manipulation tap-feedback safe-area-inset h-full flex flex-col"
         onClick={() => handleProductClick(productId)}
         role="button"
         tabIndex={0}
@@ -178,7 +178,7 @@ const MobileProductGrid = ({
           </div>
 
           {/* Product Info */}
-          <div className="p-3 space-y-2">
+          <div className="p-3 space-y-2 flex-1 flex flex-col">
             <h3 className="font-medium text-sm line-clamp-2 mb-1 leading-tight">
               {productName}
             </h3>
@@ -252,7 +252,7 @@ const MobileProductGrid = ({
                   right: 0,
                   height: ITEM_HEIGHT
                 }}
-                className="grid grid-cols-2 gap-3 px-4"
+                className="grid grid-cols-2 gap-3 px-4 items-stretch"
               >
                 {productPair.map((product: Product) => (
                   <ProductCard key={product.product_id || product.id} product={product} isVirtual={true} />
@@ -277,7 +277,7 @@ const MobileProductGrid = ({
   // Standard grid for smaller lists
   return (
     <div className="safe-area-inset" role="region" aria-label="Product grid">
-      <div className="grid grid-cols-2 gap-3 p-4 mobile-grid-optimized">
+      <div className="grid grid-cols-2 gap-3 p-4 mobile-grid-optimized items-stretch">
         {products.map((product) => (
           <ProductCard 
             key={product.product_id || product.id} 

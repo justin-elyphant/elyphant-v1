@@ -61,8 +61,8 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   // Desktop grid layout with enhanced spacing and performance optimizations
   const getGridClasses = () => {
     return viewMode === "list" 
-      ? "grid grid-cols-1 gap-4 intersection-target will-change-scroll" 
-      : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 intersection-target will-change-scroll";
+      ? "grid grid-cols-1 gap-4 intersection-target will-change-scroll items-stretch" 
+      : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 intersection-target will-change-scroll items-stretch";
   };
 
   return (

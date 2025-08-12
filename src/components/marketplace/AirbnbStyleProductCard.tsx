@@ -215,8 +215,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     <>
       <Card 
         className={cn(
-          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl",
-          viewMode === "list" && "flex flex-row",
+          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col",
+          viewMode === "list" && "flex flex-row h-auto",
           isWishlisted && "border-2 border-pink-200 hover:border-pink-300",
           isMobile && "active:scale-[0.98] touch-manipulation"
         )}
@@ -358,7 +358,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       </div>
 
       {/* Content Section - Clean Airbnb Style */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-2 flex-1 flex flex-col">
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
           <div className="text-xs text-gray-500 flex items-center">

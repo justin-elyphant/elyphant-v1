@@ -130,9 +130,11 @@ const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
 
   return (
     <>
-      {/* Top-left badges: Category identification & Best Seller */}
-      <div className="absolute top-2 left-2 flex flex-col gap-1 items-start z-20">
+      {/* Status badges stacked below category badges on left side */}
+      <div className="absolute top-8 left-2 flex flex-col gap-1 items-start z-20">
         {getBestSellerBadge()}
+        {getTrendingBadge()}
+        {getPopularBadge()}
         {isNewArrival && (
           <Badge variant="secondary" className="bg-green-500 text-white border-0">
             <span className="text-xs">New</span>
@@ -144,12 +146,6 @@ const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
             <span className="text-xs">Viewed</span>
           </Badge>
         )}
-      </div>
-      
-      {/* Bottom-left badges: Trending & Popular (avoid heart icon conflict) */}
-      <div className="absolute bottom-3 left-2 flex flex-col gap-1 items-start z-20">
-        {getTrendingBadge()}
-        {getPopularBadge()}
       </div>
     </>
   );

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Search, 
@@ -10,13 +11,16 @@ import {
   List, 
   LayoutGrid,
   SlidersHorizontal,
-  X
+  X,
+  ChevronDown
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -95,10 +99,10 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
         </Button>
       </div>
 
-      {/* Search and Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
+      {/* Marketplace-Style Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Left Side: Search */}
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search wishlists..."
@@ -108,63 +112,85 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
           />
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex border rounded-lg p-1 bg-muted/20">
-          {viewModeOptions.map(({ mode, icon: Icon, label }) => (
+        {/* Right Side: Controls */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* View Mode Toggle - Marketplace Style */}
+          <div className="flex items-center border rounded-md overflow-hidden">
             <Button
-              key={mode}
-              variant={viewMode === mode ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              onClick={() => onViewModeChange(mode)}
-              className={cn(
-                "h-8 px-3",
-                viewMode === mode && "bg-background shadow-sm"
-              )}
+              className={`rounded-none px-2.5 h-8 ${
+                viewMode === "pinterest" ? "bg-muted" : ""
+              }`}
+              onClick={() => onViewModeChange("pinterest")}
             >
-              <Icon className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">{label}</span>
+              <LayoutGrid className="h-4 w-4" />
             </Button>
-          ))}
-        </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-none px-2.5 h-8 ${
+                viewMode === "grid" ? "bg-muted" : ""
+              }`}
+              onClick={() => onViewModeChange("grid")}
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-none px-2.5 h-8 ${
+                viewMode === "list" ? "bg-muted" : ""
+              }`}
+              onClick={() => onViewModeChange("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
 
-        {/* Sort Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="shrink-0">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Sort
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {sortOptions.map(option => (
-              <DropdownMenuItem
-                key={option.value}
-                onClick={() => onSortChange(option.value)}
-                className={cn(sortBy === option.value && "bg-accent")}
-              >
-                {option.label}
+          {/* Options Dropdown (Sort + Filter Combined) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8">
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Options
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-4 w-4 p-0 text-xs">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+              {sortOptions.map(option => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => onSortChange(option.value)}
+                  className={cn(sortBy === option.value && "bg-accent")}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuLabel>Filters</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                <Filter className="mr-2 h-4 w-4" />
+                {isFilterOpen ? "Hide Filters" : "Show Filters"}
               </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Filter Toggle */}
-        <Button
-          variant="outline"
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className={cn(
-            "shrink-0",
-            activeFiltersCount > 0 && "border-primary"
-          )}
-        >
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-              {activeFiltersCount}
-            </Badge>
-          )}
-        </Button>
+              
+              {activeFiltersCount > 0 && (
+                <DropdownMenuItem onClick={clearAllFilters}>
+                  <X className="mr-2 h-4 w-4" />
+                  Clear All Filters
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Filter Panel */}

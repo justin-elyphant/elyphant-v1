@@ -13,40 +13,76 @@ import SignUpDialog from "@/components/marketplace/SignUpDialog";
 import { Product } from "@/types/product";
 import { useNavigate } from "react-router-dom";
 
+// Enhanced Product type with category badge
+type ProductWithCategory = Product & { categoryBadge?: string };
+
 const WishlistCreationCTA = () => {
   const { user } = useAuth();
   const { quickAddToWishlist, wishlists } = useUnifiedWishlist();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
 
   useEffect(() => {
-    const fetchTrendingProducts = async () => {
+    const fetchDiverseProducts = async () => {
       try {
         setLoading(true);
-        const results = await unifiedMarketplaceService.searchProducts("trending", {
-          maxResults: 15
+        
+        // Define diverse categories that appeal to different audiences
+        const categorySearches = [
+          { name: "Tech", query: "best selling smartphone laptop tablet", maxResults: 3 },
+          { name: "Fashion", query: "best selling fashion accessories jewelry", maxResults: 3 },
+          { name: "Home", query: "best selling home decor kitchen appliances", maxResults: 3 },
+          { name: "Beauty", query: "best selling skincare makeup perfume", maxResults: 2 },
+          { name: "Sports", query: "best selling fitness equipment sports gear", maxResults: 2 },
+          { name: "Books", query: "bestselling books fiction", maxResults: 2 }
+        ];
+        
+        // Fetch products from all categories in parallel
+        const categoryPromises = categorySearches.map(async (category) => {
+          try {
+            const results = await unifiedMarketplaceService.searchProducts(category.query, {
+              maxResults: category.maxResults
+            });
+            return results.map(product => ({ ...product, categoryBadge: category.name }));
+          } catch (error) {
+            console.error(`Error fetching ${category.name} products:`, error);
+            return [];
+          }
         });
         
-        if (results.length === 0) {
-          // Fallback to "best selling"
-          const fallbackResults = await unifiedMarketplaceService.searchProducts("best selling", {
+        const allCategoryResults = await Promise.allSettled(categoryPromises);
+        
+        // Combine all successful results
+        const allProducts: ProductWithCategory[] = [];
+        allCategoryResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            allProducts.push(...result.value);
+          }
+        });
+        
+        // Shuffle products for variety on each visit
+        const shuffledProducts = allProducts.sort(() => Math.random() - 0.5);
+        
+        if (shuffledProducts.length === 0) {
+          // Ultimate fallback if all categories fail
+          const fallbackResults = await unifiedMarketplaceService.searchProducts("trending", {
             maxResults: 15
           });
           setProducts(fallbackResults);
         } else {
-          setProducts(results);
+          setProducts(shuffledProducts);
         }
       } catch (error) {
-        console.error("Error fetching trending products:", error);
-        // Final fallback to popular categories
+        console.error("Error fetching diverse products:", error);
+        // Final fallback
         try {
-          const popularResults = await unifiedMarketplaceService.searchProducts("electronics gadgets", {
+          const fallbackResults = await unifiedMarketplaceService.searchProducts("best selling", {
             maxResults: 15
           });
-          setProducts(popularResults);
+          setProducts(fallbackResults);
         } catch (fallbackError) {
           console.error("Error with fallback search:", fallbackError);
         }
@@ -55,7 +91,7 @@ const WishlistCreationCTA = () => {
       }
     };
 
-    fetchTrendingProducts();
+    fetchDiverseProducts();
   }, []);
 
   const handleSignUpClick = () => {
@@ -66,7 +102,7 @@ const WishlistCreationCTA = () => {
     navigate("/profile?tab=wishlists");
   };
 
-  const handleProductWishlistClick = async (product: Product) => {
+  const handleProductWishlistClick = async (product: ProductWithCategory) => {
     if (!user) {
       setShowSignUpDialog(true);
       return;
@@ -93,7 +129,7 @@ const WishlistCreationCTA = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-2 text-primary">
             <TrendingUp className="h-5 w-5" />
-            <span className="text-sm font-medium">Trending Now</span>
+            <span className="text-sm font-medium">Popular Across Categories</span>
           </div>
           
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
@@ -104,7 +140,7 @@ const WishlistCreationCTA = () => {
           </h2>
           
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover trending products and save your favorites. Build wishlists for yourself or share them with others.
+            Discover popular products across tech, fashion, home, beauty, and more. Build wishlists for yourself or share them with others.
           </p>
         </div>
 
@@ -164,14 +200,19 @@ const WishlistCreationCTA = () => {
       <div className="relative">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 15 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-muted/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {products.slice(0, 12).map((product) => (
-              <div key={product.product_id || product.id} className="w-full">
+            {products.slice(0, 15).map((product) => (
+              <div key={product.product_id || product.id} className="w-full relative">
+                {product.categoryBadge && (
+                  <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
+                    {product.categoryBadge}
+                  </div>
+                )}
                 <UnifiedProductCard
                   cardType="gifting"
                   product={product}

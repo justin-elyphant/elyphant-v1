@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { preloadCriticalRoutes } from './utils/lazyComponentLoader'
 
 // Enhanced performance tracking
 const startTime = performance.now();
@@ -30,4 +31,8 @@ const trackLoadMetrics = () => {
 
 // Track on next tick and when fully loaded
 setTimeout(trackLoadMetrics, 0);
-window.addEventListener('load', trackLoadMetrics);
+window.addEventListener('load', () => {
+  trackLoadMetrics();
+  // Preload critical routes after initial load
+  preloadCriticalRoutes();
+});

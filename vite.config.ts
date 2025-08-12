@@ -19,14 +19,26 @@ export default defineConfig(({ command }) => ({
     },
   },
   build: {
-    // Optimize bundle splitting
+    // Optimize bundle splitting with enhanced performance chunks
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunk for large libraries
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
-          utils: ['clsx', 'tailwind-merge', 'class-variance-authority']
+          // Core vendor chunk for essential libraries
+          vendor: ['react', 'react-dom'],
+          // Router chunk for navigation
+          router: ['react-router-dom'],
+          // UI library chunks
+          radix: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-avatar', '@radix-ui/react-popover'],
+          // Form and validation
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Icons and styling utilities
+          styling: ['lucide-react', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+          // Heavy marketplace components
+          marketplace: ['recharts'],
+          // Query and state management
+          query: ['@tanstack/react-query'],
+          // Date utilities
+          dates: ['date-fns']
         },
         // Optimize chunk names for better caching
         chunkFileNames: (chunkInfo) => {
@@ -67,6 +79,8 @@ export default defineConfig(({ command }) => ({
   },
   // Enable experimental features for better performance
   esbuild: {
-    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+    // Strip console logs in production for better performance
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
   }
 }));

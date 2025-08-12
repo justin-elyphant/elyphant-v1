@@ -85,6 +85,19 @@ const FeaturedCategories: React.FC = () => {
             <CarouselPrevious className="hidden md:flex -left-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
             <CarouselNext className="hidden md:flex -right-12 top-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-200 hover:bg-gray-50" />
           </Carousel>
+          
+          {/* Shop All Categories Button */}
+          <div className="flex justify-center mt-6 md:mt-8">
+            <Button
+              onClick={() => navigate('/marketplace')}
+              variant="outline"
+              size="lg"
+              className="bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 px-6 md:px-8 py-3 text-sm md:text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              Shop All 20+ Categories
+              <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform duration-200" />
+            </Button>
+          </div>
         </div>
       </ResponsiveContainer>
     </FullWidthSection>

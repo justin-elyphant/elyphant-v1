@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
 import { useCallback } from "react";
 import { getCategoryByValue } from "@/constants/categories";
+import CategoryOverview from "./CategoryOverview";
 
 const StreamlinedMarketplaceWrapper = () => {
   const {
@@ -344,9 +345,12 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Quick Filters */}
       <MarketplaceQuickFilters />
 
-      {/* Category Sections (when no search active) */}
+      {/* Category Overview (when no search active) */}
       {!showSearchInfo && (
-        <AirbnbStyleCategorySections onProductClick={handleProductClick} />
+        <>
+          <CategoryOverview />
+          <AirbnbStyleCategorySections onProductClick={handleProductClick} />
+        </>
       )}
 
       {/* Products Grid (when search is active or as fallback) */}

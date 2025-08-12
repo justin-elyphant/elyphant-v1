@@ -72,13 +72,19 @@ const HomeContent = () => {
       
       {/* Bleed-first sections with no external container constraints */}
       <GiftCategoriesCarousel />
-      <PersonTypeCarousel />
       <WishlistCreationCTA />
       
       {/* Traditional sections with container - will be refactored later */}
       <div className="container mx-auto px-4 py-8 space-y-16">
         <PopularBrands />
         <FeaturedCategories />
+      </div>
+      
+      {/* Additional bleed sections */}
+      <PersonTypeCarousel />
+      
+      {/* More traditional sections */}
+      <div className="container mx-auto px-4 py-8">
         <AutomationFeatures />
       </div>
       

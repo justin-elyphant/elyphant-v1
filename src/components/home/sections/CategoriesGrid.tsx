@@ -1,77 +1,154 @@
 
 import React from "react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { FullBleedSection } from "@/components/layout/FullBleedSection";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-interface Category {
+interface PersonType {
   id: string;
-  name: string;
+  title: string;
+  description: string;
   image: string;
   searchTerm: string;
 }
 
-const CategoriesGrid = () => {
+const PersonTypeCarousel = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
-  const categories: Category[] = [
+  const personTypes: PersonType[] = [
     {
-      id: "birthdays",
-      name: "Birthdays",
-      image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=80",
-      searchTerm: "birthday gifts"
+      id: "on-the-go",
+      title: "On the Go",
+      description: "Perfect for busy, active lifestyles",
+      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "portable electronics travel accessories convenience gadgets on-the-go essentials commuter gear"
     },
     {
-      id: "anniversaries",
-      name: "Anniversaries",
-      image: "https://images.unsplash.com/photo-1522057384400-681b421cfebc?w=800&auto=format&fit=crop&q=80",
-      searchTerm: "anniversary gifts"
+      id: "movie-buff",
+      title: "Movie Buff",
+      description: "For cinema lovers and entertainment enthusiasts",
+      image: "https://images.unsplash.com/photo-1489599063012-afd1c6d824b9?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "streaming devices home theater popcorn makers entertainment accessories movie collectibles comfort items"
     },
     {
-      id: "holidays",
-      name: "Holidays",
-      image: "https://images.unsplash.com/photo-1513297887119-d46091b24bfa?w=800&auto=format&fit=crop&q=80",
-      searchTerm: "holiday gifts"
+      id: "work-from-home",
+      title: "Work From Home",
+      description: "Essentials for productive remote work",
+      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "office supplies ergonomic furniture productivity tools desk accessories lighting organization"
     },
     {
-      id: "corporate",
-      name: "Corporate",
-      image: "https://images.unsplash.com/photo-1513530534585-c7b1394c6d51?w=800&auto=format&fit=crop&q=80",
-      searchTerm: "corporate gifts"
+      id: "the-traveler",
+      title: "The Traveler",
+      description: "Adventure-ready gear for wanderers",
+      image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "luggage travel accessories portable chargers travel comfort international adapters"
+    },
+    {
+      id: "the-home-chef",
+      title: "The Home Chef",
+      description: "Culinary tools for kitchen enthusiasts",
+      image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "kitchen appliances cooking gadgets specialty ingredients cookbooks utensils food storage"
+    },
+    {
+      id: "teens",
+      title: "Teens",
+      description: "Trendy picks for young adults",
+      image: "https://images.unsplash.com/photo-1529690840038-f38da8894ff6?w=800&auto=format&fit=crop&q=80",
+      searchTerm: "trendy accessories tech gadgets gaming items room decor study supplies fashion"
     }
   ];
   
-  const handleCategoryClick = (searchTerm: string) => {
-    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+  const handlePersonTypeClick = (personType: PersonType) => {
+    navigate(`/marketplace?search=${encodeURIComponent(personType.searchTerm)}`, { 
+      state: { fromPersonType: true }
+    });
   };
   
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="container px-4">
-        <h2 className="text-3xl font-bold mb-3 text-center">Curated for Every Type of Person</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          Discover thoughtfully selected gifts for every occasion and every type of recipient
+    <FullBleedSection 
+      background="bg-muted/30" 
+      height="large"
+      className="intersection-target"
+      contentPadding={false}
+    >
+      {/* Header positioned absolutely over the carousel */}
+      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-4">
+          Find Gifts by Person Type
+        </h2>
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          Discover thoughtfully curated gifts tailored to different lifestyles and personalities
         </p>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.map((category) => (
-            <div 
-              key={category.id}
-              onClick={() => handleCategoryClick(category.searchTerm)}
-              className="group relative overflow-hidden rounded-lg aspect-square cursor-pointer"
-            >
-              <img 
-                src={category.image}
-                alt={category.name}
-                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
-                <h3 className="text-white font-semibold text-xl">{category.name}</h3>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
-    </div>
+
+      {/* True full-bleed carousel */}
+      <div className="h-full pt-32 md:pt-40 lg:pt-44">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full h-full swipe-container will-change-scroll"
+        >
+          <CarouselContent className="h-full">
+            {personTypes.map((personType) => (
+              <CarouselItem key={personType.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item">
+                <div
+                  className="group relative overflow-hidden bg-background cursor-pointer h-80 md:h-96 lg:h-[500px] touch-target-48 touch-manipulation tap-feedback rounded-2xl"
+                  onClick={() => handlePersonTypeClick(personType)}
+                >
+                  {/* Image Container - Full height of carousel */}
+                  <div className="relative h-full overflow-hidden">
+                    <img
+                      src={personType.image}
+                      alt={personType.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 gpu-accelerated"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                    
+                    {/* Overlay Content - positioned at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10 text-white">
+                      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
+                        {personType.title}
+                      </h3>
+                      <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
+                        {personType.description}
+                      </p>
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-base md:text-lg px-6 py-3"
+                      >
+                        Shop Now
+                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          
+          {/* Navigation arrows - positioned outside content area */}
+          <CarouselPrevious className="hidden md:flex left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-background/90 z-30 w-12 h-12" />
+          <CarouselNext className="hidden md:flex right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-background/90 z-30 w-12 h-12" />
+        </Carousel>
+      </div>
+    </FullBleedSection>
   );
 };
 
-export default CategoriesGrid;
+export default PersonTypeCarousel;

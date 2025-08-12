@@ -17,7 +17,7 @@ interface CategorySectionProps {
   onShare?: (product: Product) => void;
 }
 
-export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
+export const CategorySection: React.FC<CategorySectionProps> = ({
   title,
   subtitle,
   products,
@@ -107,6 +107,7 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
               }}
             >
               <UnifiedProductCard
+                key={`${key}-category-${Date.now()}`}
                 cardType="general"
                 product={product}
                 onClick={() => onProductClick?.(product)}
@@ -123,4 +124,4 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
       </div>
     </div>
   );
-});
+};

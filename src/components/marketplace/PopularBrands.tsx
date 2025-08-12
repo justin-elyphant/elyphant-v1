@@ -1,5 +1,12 @@
 
 import React from "react";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselPrevious, 
+  CarouselNext 
+} from "@/components/ui/carousel";
 
 interface Brand {
   id: string;
@@ -58,20 +65,29 @@ const PopularBrands = () => {
     <div className="space-y-6 mb-12">
       <h2 className="text-2xl font-semibold tracking-tight">Popular Brands</h2>
       
-      <div className="flex gap-4 overflow-x-auto py-2 pb-4 -mx-4 px-4 snap-x">
-        {brands.map((brand) => (
-          <div 
-            key={brand.id}
-            className="min-w-32 h-16 bg-white rounded-lg flex items-center justify-center shadow-sm border px-4 hover:shadow-md transition-shadow cursor-pointer snap-start"
-          >
-            <img 
-              src={brand.logo} 
-              alt={brand.name} 
-              className="max-h-10 max-w-28"
-            />
-          </div>
-        ))}
-      </div>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full relative"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {brands.map((brand) => (
+            <CarouselItem key={brand.id} className="pl-2 md:pl-4 basis-auto">
+              <div className="min-w-32 h-16 bg-white rounded-lg flex items-center justify-center shadow-sm border px-4 hover:shadow-md transition-shadow cursor-pointer">
+                <img 
+                  src={brand.logo} 
+                  alt={brand.name} 
+                  className="max-h-10 max-w-28"
+                />
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
     </div>
   );
 };

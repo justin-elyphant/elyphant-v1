@@ -59,6 +59,7 @@ type UnifiedProductCardProps =
       statusBadge?: { badge: string; color: string } | null;
       onAddToCart?: (product: Product) => void;
       onShare?: (product: Product) => void;
+      isInCategorySection?: boolean;
     };
 
 /**
@@ -128,6 +129,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
           onAddToCart={generalProps.onAddToCart}
           onShare={generalProps.onShare}
           viewMode="grid"
+          isInCategorySection={generalProps.isInCategorySection}
         />
       );
     }

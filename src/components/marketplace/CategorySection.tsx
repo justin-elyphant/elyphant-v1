@@ -112,6 +112,7 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
                 onClick={() => onProductClick?.(product)}
                 onAddToCart={onAddToCart}
                 onShare={onShare}
+                isInCategorySection={true}
               />
             </div>
           ))}

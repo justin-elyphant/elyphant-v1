@@ -38,6 +38,8 @@ interface AirbnbStyleProductCardProps {
   isWishlisted?: boolean;
   isGifteeView?: boolean;
   onToggleWishlist?: () => void;
+  // Category section specific prop for image ratio
+  isInCategorySection?: boolean;
 }
 
 const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
@@ -56,7 +58,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   onWishlistClick,
   isWishlisted: propIsWishlisted,
   isGifteeView = true,
-  onToggleWishlist
+  onToggleWishlist,
+  isInCategorySection = false
 }) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
@@ -225,13 +228,14 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       {/* Image Section - Airbnb Style with Enhanced Quality */}
       <div className={cn(
         "relative overflow-hidden group",
-        viewMode === "list" ? "w-32 h-32 flex-shrink-0 rounded-l-xl" : "aspect-square rounded-t-xl"
+        viewMode === "list" ? "w-32 h-32 flex-shrink-0 rounded-l-xl" : 
+        isInCategorySection ? "aspect-[4/3] rounded-t-xl" : "aspect-square rounded-t-xl"
       )}>
         <OptimizedImage
           src={getProductImage()}
           alt={getProductTitle()}
           className="group-hover:scale-105 transition-transform duration-300"
-          aspectRatio="square"
+          aspectRatio={isInCategorySection ? "portrait" : "square"}
           priority={currentImageIndex === 0}
           quality={80}
           sizes="300px"

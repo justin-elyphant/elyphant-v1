@@ -121,6 +121,7 @@ const WishlistCreationCTA = () => {
     });
   };
 
+  // Add to cart handler for product cards
   const handleAddToCart = async (product: Product) => {
     console.log('WishlistCreationCTA - Add to cart:', product);
     try {

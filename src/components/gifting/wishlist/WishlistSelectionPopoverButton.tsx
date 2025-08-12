@@ -54,6 +54,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log('WishlistSelectionPopoverButton clicked for product:', product.id);
   };
 
   const triggerNode = (

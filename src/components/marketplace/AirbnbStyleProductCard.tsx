@@ -102,6 +102,19 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       setShowSignUpDialog(true);
       return;
     }
+    console.log('Wishlist clicked for product:', productId);
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('Add to cart clicked for product:', product);
+    
+    if (onAddToCart) {
+      onAddToCart(product);
+    } else {
+      console.warn('No onAddToCart handler provided');
+    }
   };
 
   const getProductImage = () => {
@@ -317,11 +330,19 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                   : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
               )}
               onAdded={handleWishlistAdded}
+              isWishlisted={isWishlisted}
             />
           ) : (
-            <div className="p-2 bg-white/80 rounded-full shadow-sm">
-              <Heart className="h-4 w-4 text-gray-600" />
-            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleWishlistClick();
+              }}
+              className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
+            >
+              <Heart className="h-4 w-4 text-gray-600 hover:text-pink-500 transition-colors" />
+            </button>
           )}
         </div>
 
@@ -461,17 +482,11 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 variant="luxury"
                 size="sm"
                 className="min-w-[80px]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddToCart?.(product);
-                }}
+                onClick={handleAddToCartClick}
               />
             ) : (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddToCart?.(product);
-                }}
+                onClick={handleAddToCartClick}
                 className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
                 title="Add to cart"
               >

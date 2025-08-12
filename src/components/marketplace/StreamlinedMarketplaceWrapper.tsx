@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
@@ -42,6 +44,7 @@ const StreamlinedMarketplaceWrapper = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();
+  const { addToCart } = useCart();
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
@@ -190,9 +193,15 @@ const StreamlinedMarketplaceWrapper = () => {
     setShowProductDetails(true);
   };
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = async (product: any) => {
     console.log('Add to cart:', product);
-    // TODO: Implement add to cart functionality
+    try {
+      await addToCart(product, 1);
+      toast.success(`${product.title || product.name} has been added to your cart.`);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      toast.error("Failed to add item to cart. Please try again.");
+    }
   };
 
   const handleShare = (product: any) => {

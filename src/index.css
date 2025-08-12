@@ -225,4 +225,83 @@ body {
     border-color: hsl(var(--stepper-active));
     background: hsl(var(--stepper-active));
   }
+
+  /* Pinterest-style masonry grid */
+  .masonry-grid {
+    columns: 2;
+    column-gap: 1rem;
+    break-inside: avoid;
+  }
+  
+  @media (min-width: 768px) {
+    .masonry-grid {
+      columns: 3;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .masonry-grid {
+      columns: 4;
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .masonry-grid {
+      columns: 5;
+    }
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    page-break-inside: avoid;
+  }
+
+  /* Pinterest-style hover effects */
+  .pinterest-hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .pinterest-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-floating);
+  }
+
+  /* Mixed bleed image styles */
+  .bleed-image {
+    aspect-ratio: auto;
+    object-fit: cover;
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  .bleed-tall {
+    aspect-ratio: 3/4;
+  }
+
+  .bleed-wide {
+    aspect-ratio: 4/3;
+  }
+
+  .bleed-square {
+    aspect-ratio: 1/1;
+  }
+
+  /* Contextual section styling */
+  .contextual-section {
+    background: var(--gradient-subtle);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+  }
+
+  /* Smart category tags */
+  .smart-tag {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
+    border: 1px solid hsl(var(--primary) / 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .smart-tag:hover {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2));
+    border-color: hsl(var(--primary) / 0.3);
+  }
 }

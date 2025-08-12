@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import WishlistHeader from "./wishlist/WishlistHeader";
+import { Button } from "@/components/ui/button";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
 import WishlistCard from "./wishlist/WishlistCard";
 import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
@@ -8,8 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
-import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,14 +20,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import SignInPrompt from "./my-wishlists/SignInPrompt";
 import LoadingWishlists from "./my-wishlists/LoadingWishlists";
 import InitErrorState from "./my-wishlists/InitErrorState";
-import WishlistCategoryFilter from "./wishlist/WishlistCategoryFilter";
 import { getValidWishlistCategories, sanitizeCategories } from "./wishlist/utils/categoryUtils";
+import PinterestStyleWishlistGrid from "./wishlist/PinterestStyleWishlistGrid";
+import ContextualWishlistActions from "./wishlist/ContextualWishlistActions";
+import EnhancedWishlistHeader from "./wishlist/EnhancedWishlistHeader";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -53,6 +52,9 @@ function isValidCategoryString(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0;
 }
 
+type ViewMode = "pinterest" | "grid" | "list";
+type SortOption = "recent" | "name" | "items" | "updated";
+
 const MyWishlists = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -62,6 +64,8 @@ const MyWishlists = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("pinterest");
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
   
   // Use unified wishlist system directly
@@ -72,6 +76,7 @@ const MyWishlists = () => {
     createWishlist,
     deleteWishlist,
     removeFromWishlist,
+    updateWishlistSharing,
   } = useUnifiedWishlist();
 
   // Use the sanitize utility to provide *only* cleaned categories
@@ -94,11 +99,11 @@ const MyWishlists = () => {
     }
   }, [categoryFilter, selectableCategories]);
 
-  // Filter wishlists based on category and search query
-  const filteredWishlists = React.useMemo(() => {
+  // Filter and sort wishlists based on category, search query, and sort option
+  const filteredAndSortedWishlists = React.useMemo(() => {
     if (!wishlists) return [];
     
-    return wishlists.filter(wishlist => {
+    let filtered = wishlists.filter(wishlist => {
       // Filter by category if selected
       if (categoryFilter && wishlist.category !== categoryFilter) {
         return false;
@@ -116,7 +121,22 @@ const MyWishlists = () => {
       
       return true;
     });
-  }, [wishlists, categoryFilter, searchQuery]);
+
+    // Sort wishlists
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.title.localeCompare(b.title);
+        case "items":
+          return (b.items?.length || 0) - (a.items?.length || 0);
+        case "updated":
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [wishlists, categoryFilter, searchQuery, sortBy]);
 
   const handleCreateWishlist = () => {
     setDialogOpen(true);
@@ -204,58 +224,103 @@ const MyWishlists = () => {
     );
   }
 
+  // Contextual data for enhanced features
+  const contextualData = React.useMemo(() => {
+    const trendingCategories = selectableCategories.slice(0, 6); // Mock trending
+    return {
+      recentlyViewedCount: 5, // Mock data - could come from localStorage or API
+      trendingCategories,
+      collaborativeWishlists: 0, // Mock data
+    };
+  }, [selectableCategories]);
+
   // Main content
   return (
-    <div>
-      <WishlistHeader onCreateNew={() => setDialogOpen(true)} />
+    <div className="space-y-6">
+      <EnhancedWishlistHeader
+        onCreateNew={() => setDialogOpen(true)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        availableCategories={selectableCategories}
+        totalWishlists={wishlists?.length || 0}
+      />
       
-      <Alert className="mb-6">
+      <Alert className="border-border/50">
         <AlertDescription>
           Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
         </AlertDescription>
       </Alert>
 
-      {/* Filter and search section - only show if we have valid categories */}
-      {wishlists && wishlists.length > 1 && selectableCategories.length > 0 && (
-        <WishlistCategoryFilter
-          selectableCategories={selectableCategories}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onClearFilters={clearFilters}
-        />
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Content Area */}
+        <div className="lg:col-span-3">
+          {/* Empty state for filtered results */}
+          {wishlists?.length > 0 && filteredAndSortedWishlists.length === 0 && (
+            <div className="contextual-section p-6 text-center">
+              <p className="text-muted-foreground mb-2">No wishlists match your filters</p>
+              <Button variant="outline" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            </div>
+          )}
 
-      {/* Empty state for filtered results */}
-      {wishlists?.length > 0 && filteredWishlists.length === 0 && (
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center mb-6">
-          <p className="text-muted-foreground mb-2">No wishlists match your filters</p>
-          <Button variant="outline" onClick={clearFilters}>
-            Clear Filters
-          </Button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
-        
-        {filteredWishlists && filteredWishlists.length > 0 ? (
-          filteredWishlists.map((wishlist) => (
-            <WishlistCard 
-              key={wishlist.id}
-              wishlist={wishlist}
+          {/* Wishlists Display */}
+          {viewMode === "pinterest" && filteredAndSortedWishlists.length > 0 ? (
+            <PinterestStyleWishlistGrid
+              wishlists={filteredAndSortedWishlists}
               onEdit={handleEditWishlist}
               onDelete={handleDeleteWishlist}
+              onUpdateSharing={updateWishlistSharing}
             />
-          ))
-        ) : (
-          wishlists?.length === 0 && (
-            <div className="col-span-full py-8 text-center text-muted-foreground">
-              No wishlists found. Create your first wishlist to get started!
+          ) : viewMode === "grid" && filteredAndSortedWishlists.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAndSortedWishlists.map((wishlist) => (
+                <WishlistCard 
+                  key={wishlist.id}
+                  wishlist={wishlist}
+                  onEdit={handleEditWishlist}
+                  onDelete={handleDeleteWishlist}
+                />
+              ))}
             </div>
-          )
-        )}
+          ) : viewMode === "list" && filteredAndSortedWishlists.length > 0 ? (
+            <div className="space-y-4">
+              {filteredAndSortedWishlists.map((wishlist) => (
+                <WishlistCard 
+                  key={wishlist.id}
+                  wishlist={wishlist}
+                  onEdit={handleEditWishlist}
+                  onDelete={handleDeleteWishlist}
+                />
+              ))}
+            </div>
+          ) : wishlists?.length === 0 ? (
+            <div className="contextual-section p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>
+                <p className="text-muted-foreground mb-6">
+                  Start building your wishlist to share with friends and family. It's the perfect way to let others know what you'd love to receive!
+                </p>
+                <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Sidebar with Contextual Actions */}
+        <div className="lg:col-span-1">
+          <ContextualWishlistActions
+            recentlyViewedCount={contextualData.recentlyViewedCount}
+            trendingCategories={contextualData.trendingCategories}
+            collaborativeWishlists={contextualData.collaborativeWishlists}
+          />
+        </div>
       </div>
 
       <CreateWishlistDialog 

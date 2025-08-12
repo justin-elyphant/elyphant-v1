@@ -30,11 +30,11 @@ const WishlistCreationCTA = () => {
       try {
         setLoading(true);
         
-        // Define diverse categories that appeal to different audiences
+        // Define diverse categories that appeal to different audiences (12 total products)
         const categorySearches = [
-          { name: "Tech", query: "best selling smartphone laptop tablet", maxResults: 3 },
-          { name: "Fashion", query: "best selling fashion accessories jewelry", maxResults: 3 },
-          { name: "Home", query: "best selling home decor kitchen appliances", maxResults: 3 },
+          { name: "Tech", query: "best selling smartphone laptop tablet", maxResults: 2 },
+          { name: "Fashion", query: "best selling fashion accessories jewelry", maxResults: 2 },
+          { name: "Home", query: "best selling home decor kitchen appliances", maxResults: 2 },
           { name: "Beauty", query: "best selling skincare makeup perfume", maxResults: 2 },
           { name: "Sports", query: "best selling fitness equipment sports gear", maxResults: 2 },
           { name: "Books", query: "bestselling books fiction", maxResults: 2 }
@@ -69,7 +69,7 @@ const WishlistCreationCTA = () => {
         if (shuffledProducts.length === 0) {
           // Ultimate fallback if all categories fail
           const fallbackResults = await unifiedMarketplaceService.searchProducts("trending", {
-            maxResults: 15
+            maxResults: 12
           });
           setProducts(fallbackResults);
         } else {
@@ -80,7 +80,7 @@ const WishlistCreationCTA = () => {
         // Final fallback
         try {
           const fallbackResults = await unifiedMarketplaceService.searchProducts("best selling", {
-            maxResults: 15
+            maxResults: 12
           });
           setProducts(fallbackResults);
         } catch (fallbackError) {
@@ -200,13 +200,13 @@ const WishlistCreationCTA = () => {
       <div className="relative">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 15 }).map((_, i) => (
+            {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-muted/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {products.slice(0, 15).map((product) => (
+            {products.slice(0, 12).map((product) => (
               <div key={product.product_id || product.id} className="w-full relative">
                 {product.categoryBadge && (
                   <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">

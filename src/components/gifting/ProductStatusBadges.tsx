@@ -129,22 +129,29 @@ const ProductStatusBadges: React.FC<ProductStatusBadgesProps> = ({
   };
 
   return (
-    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-20" style={{ marginRight: '48px' }}>
-      {getBestSellerBadge()}
-      {getTrendingBadge()}
-      {getPopularBadge()}
-      {isNewArrival && (
-        <Badge variant="secondary" className="bg-green-500 text-white border-0">
-          <span className="text-xs">New</span>
-        </Badge>
-      )}
-      {isRecentlyViewed && (
-        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-          <Clock className="h-3 w-3 mr-1" />
-          <span className="text-xs">Viewed</span>
-        </Badge>
-      )}
-    </div>
+    <>
+      {/* Top-left badges: Category identification & Best Seller */}
+      <div className="absolute top-2 left-2 flex flex-col gap-1 items-start z-20">
+        {getBestSellerBadge()}
+        {isNewArrival && (
+          <Badge variant="secondary" className="bg-green-500 text-white border-0">
+            <span className="text-xs">New</span>
+          </Badge>
+        )}
+        {isRecentlyViewed && (
+          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+            <Clock className="h-3 w-3 mr-1" />
+            <span className="text-xs">Viewed</span>
+          </Badge>
+        )}
+      </div>
+      
+      {/* Bottom-left badges: Trending & Popular (avoid heart icon conflict) */}
+      <div className="absolute bottom-3 left-2 flex flex-col gap-1 items-start z-20">
+        {getTrendingBadge()}
+        {getPopularBadge()}
+      </div>
+    </>
   );
 };
 

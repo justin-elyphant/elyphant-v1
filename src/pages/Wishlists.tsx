@@ -38,7 +38,6 @@ const Wishlists = () => {
     <SidebarLayout>
       <ProductProvider>
         <div className="container mx-auto py-8 px-4">
-          <h1 className="text-2xl font-bold mb-6 text-left">{pageTitle}</h1>
           <MyWishlists />
         </div>
       </ProductProvider>

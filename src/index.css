@@ -228,9 +228,14 @@ body {
 
   /* Pinterest-style masonry grid */
   .masonry-grid {
-    columns: 2;
+    columns: 1;
     column-gap: 1rem;
-    break-inside: avoid;
+  }
+
+  @media (min-width: 640px) {
+    .masonry-grid {
+      columns: 2;
+    }
   }
   
   @media (min-width: 768px) {

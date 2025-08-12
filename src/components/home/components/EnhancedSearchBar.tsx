@@ -73,7 +73,7 @@ const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({ mobile = false })
         
         <Input
           type="search"
-          placeholder="Search for products, brands, or categories"
+          placeholder="Search brands, trending products, friends, and more..."
           className={`pl-10 pr-16 ${
             mobile 
               ? "text-base py-3 h-12 rounded-lg" 

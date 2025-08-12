@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, TrendingUp, ArrowRight } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { FullBleedSection } from "@/components/layout/FullBleedSection";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
@@ -14,6 +17,7 @@ const WishlistCreationCTA = () => {
   const { user } = useAuth();
   const { quickAddToWishlist, wishlists } = useUnifiedWishlist();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
@@ -79,146 +83,155 @@ const WishlistCreationCTA = () => {
   };
 
   return (
-    <section className="w-full bg-gradient-to-r from-background via-muted/30 to-background py-16 sm:py-20">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* CTA Content - Left Side */}
-          <div className="flex-1 space-y-6 text-center lg:text-left">
-            <div className="space-y-4">
-              <div className="flex items-center justify-center lg:justify-start gap-2 text-primary">
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-medium">Top Selling Products</span>
-              </div>
-              
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-                Create Your Perfect{" "}
-                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  Wishlist
-                </span>
-              </h2>
-              
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
-                Discover trending products and save your favorites. Build wishlists for yourself or share them with others.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              {user ? (
-                <>
-                  <Button 
-                    size="lg" 
-                    className="gap-2"
-                    onClick={() => window.scrollTo({ top: window.scrollY + 400, behavior: 'smooth' })}
-                  >
-                    <Heart className="h-4 w-4" />
-                    Add to My Wishlist
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="gap-2"
-                    onClick={handleViewWishlists}
-                  >
-                    View My Wishlists
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button 
-                    size="lg" 
-                    className="gap-2"
-                    onClick={handleSignUpClick}
-                  >
-                    <Heart className="h-4 w-4" />
-                    Sign Up to Create Wishlist
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="gap-2"
-                    onClick={handleSignUpClick}
-                  >
-                    Learn More
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {user && wishlists.length > 0 && (
-              <div className="text-sm text-muted-foreground">
-                You have {wishlists.length} wishlist{wishlists.length !== 1 ? 's' : ''} with{' '}
-                {wishlists.reduce((total, wishlist) => total + (wishlist.items?.length || 0), 0)} items
-              </div>
-            )}
+    <FullBleedSection 
+      background="bg-gradient-to-r from-background via-muted/30 to-background"
+      height="auto"
+      className="py-16 sm:py-20"
+    >
+      {/* Header Section */}
+      <div className="text-center space-y-6 mb-12">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-2 text-primary">
+            <TrendingUp className="h-5 w-5" />
+            <span className="text-sm font-medium">Trending Now</span>
           </div>
-
-          {/* Products Grid - Right Side */}
-          <div className="flex-1 w-full">
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-              <CardContent className="p-6">
-                {loading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="aspect-square bg-muted/50 rounded-lg animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Trending Now</h3>
-                      <div className="text-sm text-muted-foreground">
-                        {products.length} products
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {products.slice(0, 12).map((product) => (
-                        <div key={product.product_id || product.id} className="group">
-                          <UnifiedProductCard
-                            cardType="gifting"
-                            product={product}
-                            isGifteeView={true}
-                            onToggleWishlist={() => handleProductWishlistClick(product)}
-                            onClick={() => {
-                              // Optional: navigate to product detail
-                              console.log("Product clicked:", product);
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {!user && (
-                      <div className="pt-4 border-t border-border/50 text-center">
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Sign up to add these items to your wishlist
-                        </p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={handleSignUpClick}
-                          className="gap-2"
-                        >
-                          <Heart className="h-4 w-4" />
-                          Create Account
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
+            Create Your Perfect{" "}
+            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Wishlist
+            </span>
+          </h2>
+          
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Discover trending products and save your favorites. Build wishlists for yourself or share them with others.
+          </p>
         </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {user ? (
+            <>
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={() => window.scrollTo({ top: window.scrollY + 400, behavior: 'smooth' })}
+              >
+                <Heart className="h-4 w-4" />
+                Add to My Wishlist
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleViewWishlists}
+              >
+                View My Wishlists
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={handleSignUpClick}
+              >
+                <Heart className="h-4 w-4" />
+                Sign Up to Create Wishlist
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleSignUpClick}
+              >
+                Learn More
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+
+        {user && wishlists.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            You have {wishlists.length} wishlist{wishlists.length !== 1 ? 's' : ''} with{' '}
+            {wishlists.reduce((total, wishlist) => total + (wishlist.items?.length || 0), 0)} items
+          </div>
+        )}
+      </div>
+
+      {/* Horizontal Product Carousel */}
+      <div className="relative">
+        {loading ? (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="min-w-[280px] aspect-[3/4] bg-muted/50 rounded-lg animate-pulse flex-shrink-0" />
+            ))}
+          </div>
+        ) : (
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {products.slice(0, 12).map((product) => (
+                <CarouselItem 
+                  key={product.product_id || product.id} 
+                  className={`pl-2 md:pl-4 ${
+                    isMobile 
+                      ? 'basis-full max-w-[280px]' 
+                      : 'basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5'
+                  }`}
+                >
+                  <UnifiedProductCard
+                    cardType="gifting"
+                    product={product}
+                    isGifteeView={true}
+                    onToggleWishlist={() => handleProductWishlistClick(product)}
+                    onClick={() => {
+                      // Optional: navigate to product detail
+                      console.log("Product clicked:", product);
+                    }}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            
+            {!isMobile && (
+              <>
+                <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+              </>
+            )}
+          </Carousel>
+        )}
+
+        {!user && (
+          <div className="mt-8 text-center bg-card/50 backdrop-blur-sm rounded-lg p-6 border border-border/50">
+            <p className="text-sm text-muted-foreground mb-3">
+              Sign up to add these items to your wishlist
+            </p>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleSignUpClick}
+              className="gap-2"
+            >
+              <Heart className="h-4 w-4" />
+              Create Account
+            </Button>
+          </div>
+        )}
       </div>
 
       <SignUpDialog 
         open={showSignUpDialog} 
         onOpenChange={setShowSignUpDialog} 
       />
-    </section>
+    </FullBleedSection>
   );
 };
 

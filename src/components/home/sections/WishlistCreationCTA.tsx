@@ -12,6 +12,8 @@ import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
 import { Product } from "@/types/product";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 // Enhanced Product type with category badge
 type ProductWithCategory = Product & { categoryBadge?: string };
@@ -19,6 +21,7 @@ type ProductWithCategory = Product & { categoryBadge?: string };
 const WishlistCreationCTA = () => {
   const { user } = useAuth();
   const { quickAddToWishlist, wishlists } = useUnifiedWishlist();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [products, setProducts] = useState<ProductWithCategory[]>([]);
@@ -116,6 +119,17 @@ const WishlistCreationCTA = () => {
       price: product.price,
       brand: product.brand
     });
+  };
+
+  const handleAddToCart = async (product: Product) => {
+    console.log('WishlistCreationCTA - Add to cart:', product);
+    try {
+      await addToCart(product, 1);
+      toast.success(`${product.title || product.name} has been added to your cart.`);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      toast.error("Failed to add item to cart. Please try again.");
+    }
   };
 
   return (
@@ -218,6 +232,7 @@ const WishlistCreationCTA = () => {
                   product={product}
                   isGifteeView={true}
                   onToggleWishlist={() => handleProductWishlistClick(product)}
+                  onAddToCart={handleAddToCart}
                   onClick={() => {
                     // Optional: navigate to product detail
                     console.log("Product clicked:", product);

@@ -49,6 +49,7 @@ type UnifiedProductCardProps =
       isGifteeView?: boolean;
       onToggleWishlist?: () => void;
       onClick?: () => void;
+      onAddToCart?: (product: Product) => void;
     }
   // General ProductCard interface
   | {
@@ -111,6 +112,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
           isWishlisted={giftingProps.isWishlisted}
           isGifteeView={giftingProps.isGifteeView}
           onToggleWishlist={giftingProps.onToggleWishlist}
+          onAddToCart={giftingProps.onAddToCart}
           viewMode="grid"
         />
       );

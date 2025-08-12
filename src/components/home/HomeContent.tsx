@@ -6,6 +6,7 @@ import FeaturedCategories from "./sections/FeaturedCategories";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
 import PersonTypeCarousel from "./sections/CategoriesGrid";
+import WishlistCreationCTA from "./sections/WishlistCreationCTA";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
@@ -72,6 +73,7 @@ const HomeContent = () => {
       {/* Bleed-first sections with no external container constraints */}
       <GiftCategoriesCarousel />
       <PersonTypeCarousel />
+      <WishlistCreationCTA />
       
       {/* Traditional sections with container - will be refactored later */}
       <div className="container mx-auto px-4 py-8 space-y-16">

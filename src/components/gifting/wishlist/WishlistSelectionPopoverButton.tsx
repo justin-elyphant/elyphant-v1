@@ -51,19 +51,12 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     }, 100);
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    console.log('WishlistSelectionPopoverButton clicked for product:', product.id);
-  };
-
   const triggerNode = (
     <Button
       variant="ghost"
       size="icon"
       className={triggerClassName || ""}
       aria-label="Add to wishlist"
-      onClick={handleClick}
     >
       <Heart
         className="h-4 w-4"

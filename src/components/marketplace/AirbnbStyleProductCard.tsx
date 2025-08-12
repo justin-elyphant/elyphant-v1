@@ -358,7 +358,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       </div>
 
       {/* Content Section - Clean Airbnb Style */}
-      <div className="p-4 space-y-2 flex-1 flex flex-col">
+      <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
           <div className="text-xs text-gray-500 flex items-center">
@@ -368,7 +368,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         )}
 
         {/* Product Title */}
-        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug">
+        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug min-h-[2.5rem] flex items-start">
           {getProductTitle()}
         </h3>
 

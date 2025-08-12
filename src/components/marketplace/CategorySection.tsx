@@ -100,7 +100,7 @@ export const CategorySection: React.FC<CategorySectionProps> = React.memo(({
           {memoizedProducts.map(({ product, index, key }) => (
             <div 
               key={key}
-              className="flex-shrink-0 w-48 transition-transform duration-200 hover:scale-105"
+              className="flex-shrink-0 w-48 h-80 transition-transform duration-200 hover:scale-105"
               style={{ 
                 animationDelay: `${index * 30}ms`,
                 willChange: 'transform'

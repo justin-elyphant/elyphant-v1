@@ -28,6 +28,7 @@ import { getValidWishlistCategories, sanitizeCategories } from "./wishlist/utils
 import PinterestStyleWishlistGrid from "./wishlist/PinterestStyleWishlistGrid";
 import ContextualWishlistActions from "./wishlist/ContextualWishlistActions";
 import EnhancedWishlistHeader from "./wishlist/EnhancedWishlistHeader";
+import TagBasedRecommendations from "./wishlist/TagBasedRecommendations";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -314,7 +315,8 @@ const MyWishlists = () => {
         </div>
 
         {/* Sidebar with Contextual Actions */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
+          <TagBasedRecommendations />
           <ContextualWishlistActions
             recentlyViewedCount={contextualData.recentlyViewedCount}
             trendingCategories={contextualData.trendingCategories}

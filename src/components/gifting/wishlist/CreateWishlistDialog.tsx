@@ -17,7 +17,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import WishlistTagInput from "./WishlistTagInput";
+import EnhancedTagInput from "./EnhancedTagInput";
 import { normalizeTags } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -217,15 +217,20 @@ const CreateWishlistDialog = ({
                   <FormItem>
                     <FormLabel>Tags (optional)</FormLabel>
                     <FormControl>
-                      <WishlistTagInput 
+                      <EnhancedTagInput 
                         tags={tags}
                         onChange={setTags}
-                        placeholder="Type and press Enter to add tags"
+                        placeholder="Add tags to organize your wishlist..."
+                        disabled={isSubmitting}
                         maxTags={10}
+                        wishlistTitle={form.watch("title")}
+                        wishlistDescription={form.watch("description")}
+                        category={form.watch("category")}
+                        showSuggestions={true}
                       />
                     </FormControl>
                     <FormDescription>
-                      Add up to 10 tags to help organize your wishlist
+                      Smart suggestions help you organize and find your wishlist later
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

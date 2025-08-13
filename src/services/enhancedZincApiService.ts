@@ -45,7 +45,11 @@ const CATEGORY_SEARCH_QUERIES = {
   home: "home decor furniture accessories organization storage household items",
   pets: "pet supplies dog cat accessories toys treats food pet care",
   sports: "sports equipment fitness gear outdoor recreation exercise equipment",
-  toys: "toys games kids children educational fun entertainment play"
+  toys: "toys games kids children educational fun entertainment play",
+  // Missing categories that were causing "Failed to load products" errors
+  "best-selling": "best selling top rated popular trending most bought bestseller",
+  wedding: "wedding gifts bridal party engagement ceremony reception decorations invitations favors",
+  baby: "baby gifts newborn infant toddler nursery toys clothes feeding"
 };
 
 class EnhancedZincApiService {

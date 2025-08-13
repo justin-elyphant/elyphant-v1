@@ -89,7 +89,7 @@ const MarketplaceQuickFilters = () => {
               <ChevronDown className="h-3 w-3 ml-1" />
             </Badge>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto bg-white border border-gray-200 shadow-lg z-50">
+          <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-[9999]">
             {getFeaturedCategories().map((category) => (
               <DropdownMenuItem
                 key={category.id}

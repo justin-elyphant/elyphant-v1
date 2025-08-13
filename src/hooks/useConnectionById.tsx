@@ -11,20 +11,24 @@ const useConnectionsById = (connectionId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!connectionId || connections.length === 0) {
+      setLoading(true);
+      return;
+    }
+
     setLoading(true);
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      const foundConnection = connections.find(c => c.id === connectionId);
-      
-      if (foundConnection) {
-        setConnection(foundConnection);
-        setError(null);
-      } else {
-        setError("Connection not found");
-      }
-      
-      setLoading(false);
-    }, 500); // Simulate network delay
+    
+    // Find the connection immediately without setTimeout to prevent freezing
+    const foundConnection = connections.find(c => c.id === connectionId);
+    
+    if (foundConnection) {
+      setConnection(foundConnection);
+      setError(null);
+    } else {
+      setError("Connection not found");
+    }
+    
+    setLoading(false);
   }, [connectionId, connections]);
 
   const updateRelationship = (newRelationship: RelationshipType, customValue?: string) => {

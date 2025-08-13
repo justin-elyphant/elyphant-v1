@@ -17,65 +17,48 @@ export const useConnectionsAdapter = () => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return [];
 
-      console.log('🔍 [useConnectionsAdapter] Fetching friends for user:', currentUser.user.id);
-
-      // First get the connections - use a simpler query without joins
-      const { data: connections, error: connectionsError } = await supabase
+      // Use foreign key joins to get connections with profile data
+      const { data: connections, error } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at')
+        .select(`
+          id,
+          user_id,
+          connected_user_id,
+          status,
+          relationship_type,
+          created_at,
+          connected_profile:profiles!user_connections_connected_user_id_fkey (
+            id,
+            name,
+            username,
+            profile_image,
+            bio
+          ),
+          user_profile:profiles!user_connections_user_id_fkey (
+            id,
+            name,
+            username,
+            profile_image,
+            bio
+          )
+        `)
         .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
         .eq('status', 'accepted');
 
-      if (connectionsError) throw connectionsError;
-
-      console.log('✅ [useConnectionsAdapter] Found connections:', connections?.length || 0);
+      if (error) throw error;
 
       if (!connections || connections.length === 0) {
         return [];
       }
 
-      // Get all unique profile IDs we need to fetch
-      const profileIds = new Set<string>();
-      connections.forEach(conn => {
-        profileIds.add(conn.user_id);
-        profileIds.add(conn.connected_user_id);
-      });
-
-      // Remove current user ID as we don't need their own profile
-      profileIds.delete(currentUser.user.id);
-
-      // Fetch all profiles in one query
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, username, profile_image, bio')
-        .in('id', Array.from(profileIds));
-
-      if (profilesError) throw profilesError;
-
-      console.log('✅ [useConnectionsAdapter] Found profiles:', profiles?.length || 0);
-
-      // Create a map for easy profile lookup
-      const profileMap = new Map();
-      profiles?.forEach(profile => {
-        profileMap.set(profile.id, profile);
-      });
-
       // Transform connections to friend objects
-      const friends = connections.map(conn => {
+      const friends = connections.map((conn: any) => {
         // Determine which profile to show (the other person)
         const isCurrentUserRequester = conn.user_id === currentUser.user.id;
-        const otherUserId = isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
-        const otherProfile = profileMap.get(otherUserId);
+        const otherProfile = isCurrentUserRequester ? conn.connected_profile : conn.user_profile;
         
-        console.log('🔍 [useConnectionsAdapter] Processing connection:', {
-          connectionId: conn.id,
-          isCurrentUserRequester,
-          otherUserId,
-          otherProfile: otherProfile ? { name: otherProfile.name, username: otherProfile.username } : 'Not found'
-        });
-
         return {
-          id: otherUserId,
+          id: isCurrentUserRequester ? conn.connected_user_id : conn.user_id,
           name: otherProfile?.name || 'Unknown',
           username: otherProfile?.username || '',
           imageUrl: otherProfile?.profile_image || '',
@@ -92,12 +75,10 @@ export const useConnectionsAdapter = () => {
           connectionDate: conn.created_at
         };
       });
-
-      console.log('✅ [useConnectionsAdapter] Final friends data:', friends.map(f => ({ name: f.name, username: f.username })));
       
       return friends;
     } catch (error) {
-      console.error('❌ [useConnectionsAdapter] Error fetching friends:', error);
+      console.error('Error fetching friends:', error);
       return [];
     }
   };

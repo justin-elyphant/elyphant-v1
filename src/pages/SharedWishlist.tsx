@@ -26,33 +26,45 @@ const SharedWishlist = () => {
       try {
         setLoading(true);
         
-        // For demo purposes, we'll fetch from the local user's wishlists
-        // In a real implementation, this would be a separate API endpoint
-        const { data: profileData, error: profileError } = await supabase
+        // First, try to find the wishlist from all public profiles
+        // This is a more realistic approach for shared wishlists
+        const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('wishlists, name, profile_image')
-          .eq('id', user?.id)
-          .single();
+          .select('id, wishlists, name, profile_image')
+          .not('wishlists', 'is', null);
         
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
           toast.error("Failed to load wishlist");
           return;
         }
         
-        // Find the specific wishlist
-        if (profileData?.wishlists && Array.isArray(profileData.wishlists)) {
-          const foundWishlist = profileData.wishlists.find(list => list.id === wishlistId);
-          if (foundWishlist) {
-            setWishlist(foundWishlist);
-            setOwnerProfile({
-              name: profileData.name,
-              image: profileData.profile_image,
-              id: user?.id
-            });
-          } else {
-            toast.error("Wishlist not found or is private");
+        // Find the wishlist across all profiles
+        let foundWishlist: any = null;
+        let wishlistOwner: any = null;
+        
+        for (const profileData of profiles || []) {
+          if (profileData.wishlists && Array.isArray(profileData.wishlists)) {
+            const wishlist = profileData.wishlists.find(list => 
+              list.id === wishlistId && list.is_public === true
+            );
+            if (wishlist) {
+              foundWishlist = wishlist;
+              wishlistOwner = {
+                name: profileData.name,
+                image: profileData.profile_image,
+                id: profileData.id
+              };
+              break;
+            }
           }
+        }
+        
+        if (foundWishlist && wishlistOwner) {
+          setWishlist(foundWishlist);
+          setOwnerProfile(wishlistOwner);
+        } else {
+          toast.error("Wishlist not found or is private");
         }
       } catch (error) {
         console.error("Error fetching shared wishlist:", error);
@@ -63,7 +75,7 @@ const SharedWishlist = () => {
     };
 
     fetchSharedWishlist();
-  }, [wishlistId, user?.id]);
+  }, [wishlistId]);
 
   if (loading) {
     return (

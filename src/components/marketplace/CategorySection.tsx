@@ -30,7 +30,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   // Memoize product cards for better performance
   const memoizedProducts = useMemo(() => 
-    products.slice(0, 5).map((product, index) => ({ 
+    products.slice(0, 8).map((product, index) => ({ 
       product, 
       index,
       key: product.product_id || product.id || index 

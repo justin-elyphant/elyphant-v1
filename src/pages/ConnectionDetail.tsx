@@ -1,18 +1,23 @@
-import React from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, MessageCircle, Gift, Phone, Mail, MapPin } from "lucide-react";
+import React, { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, MessageCircle, Gift, UserMinus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useConnection } from "@/hooks/useConnection";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 import DataVerificationSection from "@/components/connections/DataVerificationSection";
 
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
+  const navigate = useNavigate();
   const { connection, loading, error } = useConnection(connectionId || "");
+  const { handleDeleteConnection } = useConnectionsAdapter();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (loading) {
     return (
@@ -83,6 +88,40 @@ const ConnectionDetail: React.FC = () => {
                   <Gift className="w-4 h-4 mr-2" />
                   Send Gift
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <UserMinus className="w-4 h-4 mr-2" />
+                      Remove Connection
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Connection</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to remove {connection.name} from your connections? 
+                        This action cannot be undone and you'll need to send a new connection request to reconnect.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          setIsDeleting(true);
+                          const success = await handleDeleteConnection(connection.id);
+                          if (success) {
+                            navigate('/connections');
+                          }
+                          setIsDeleting(false);
+                        }}
+                        disabled={isDeleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeleting ? 'Removing...' : 'Remove Connection'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </CardHeader>

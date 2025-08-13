@@ -17,75 +17,87 @@ export const useConnectionsAdapter = () => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return [];
 
-      // Get connections where current user is either the requester OR the recipient
-      const { data, error } = await supabase
+      console.log('🔍 [useConnectionsAdapter] Fetching friends for user:', currentUser.user.id);
+
+      // First get the connections - use a simpler query without joins
+      const { data: connections, error: connectionsError } = await supabase
         .from('user_connections')
-        .select(`
-          *,
-          requester_profile:profiles!user_connections_user_id_fkey(
-            id,
-            name,
-            username,
-            profile_image,
-            bio
-          ),
-          recipient_profile:profiles!user_connections_connected_user_id_fkey(
-            id,
-            name,
-            username,
-            profile_image,
-            bio
-          )
-        `)
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at')
         .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
         .eq('status', 'accepted');
 
-      if (error) throw error;
+      if (connectionsError) throw connectionsError;
 
-      return data?.map(conn => {
+      console.log('✅ [useConnectionsAdapter] Found connections:', connections?.length || 0);
+
+      if (!connections || connections.length === 0) {
+        return [];
+      }
+
+      // Get all unique profile IDs we need to fetch
+      const profileIds = new Set<string>();
+      connections.forEach(conn => {
+        profileIds.add(conn.user_id);
+        profileIds.add(conn.connected_user_id);
+      });
+
+      // Remove current user ID as we don't need their own profile
+      profileIds.delete(currentUser.user.id);
+
+      // Fetch all profiles in one query
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, username, profile_image, bio')
+        .in('id', Array.from(profileIds));
+
+      if (profilesError) throw profilesError;
+
+      console.log('✅ [useConnectionsAdapter] Found profiles:', profiles?.length || 0);
+
+      // Create a map for easy profile lookup
+      const profileMap = new Map();
+      profiles?.forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
+
+      // Transform connections to friend objects
+      const friends = connections.map(conn => {
         // Determine which profile to show (the other person)
         const isCurrentUserRequester = conn.user_id === currentUser.user.id;
+        const otherUserId = isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
+        const otherProfile = profileMap.get(otherUserId);
         
-        if (isCurrentUserRequester) {
-          // Current user sent the request, show recipient profile
-          return {
-            id: conn.connected_user_id,
-            name: conn.recipient_profile?.name || 'Unknown',
-            username: conn.recipient_profile?.username || '',
-            imageUrl: conn.recipient_profile?.profile_image || '',
-            mutualFriends: 0,
-            type: 'friend' as const,
-            lastActive: 'recently',
-            relationship: conn.relationship_type as RelationshipType,
-            dataStatus: {
-              shipping: 'missing' as const,
-              birthday: 'missing' as const,
-              email: 'missing' as const
-            },
-            bio: conn.recipient_profile?.bio
-          };
-        } else {
-          // Current user received the request, show requester profile
-          return {
-            id: conn.user_id,
-            name: conn.requester_profile?.name || 'Unknown',
-            username: conn.requester_profile?.username || '',
-            imageUrl: conn.requester_profile?.profile_image || '',
-            mutualFriends: 0,
-            type: 'friend' as const,
-            lastActive: 'recently',
-            relationship: conn.relationship_type as RelationshipType,
-            dataStatus: {
-              shipping: 'missing' as const,
-              birthday: 'missing' as const,
-              email: 'missing' as const
-            },
-            bio: conn.requester_profile?.bio
-          };
-        }
-      }) || [];
+        console.log('🔍 [useConnectionsAdapter] Processing connection:', {
+          connectionId: conn.id,
+          isCurrentUserRequester,
+          otherUserId,
+          otherProfile: otherProfile ? { name: otherProfile.name, username: otherProfile.username } : 'Not found'
+        });
+
+        return {
+          id: otherUserId,
+          name: otherProfile?.name || 'Unknown',
+          username: otherProfile?.username || '',
+          imageUrl: otherProfile?.profile_image || '',
+          mutualFriends: 0,
+          type: 'friend' as const,
+          lastActive: 'recently',
+          relationship: conn.relationship_type as RelationshipType,
+          dataStatus: {
+            shipping: 'missing' as const,
+            birthday: 'missing' as const,
+            email: 'missing' as const
+          },
+          bio: otherProfile?.bio,
+          connectionDate: conn.created_at
+        };
+      });
+
+      console.log('✅ [useConnectionsAdapter] Final friends data:', friends.map(f => ({ name: f.name, username: f.username })));
+      
+      return friends;
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      console.error('❌ [useConnectionsAdapter] Error fetching friends:', error);
       return [];
     }
   };
@@ -97,83 +109,73 @@ export const useConnectionsAdapter = () => {
 
       console.log('🔍 [useConnectionsAdapter] Fetching pending connections for user:', currentUser.user.id);
 
-      // Get both incoming AND outgoing pending requests
-      const { data, error } = await supabase
+      // First get the pending connections - use a simpler query without joins
+      const { data: connections, error: connectionsError } = await supabase
         .from('user_connections')
-        .select(`
-          *,
-          requester_profile:profiles!user_connections_user_id_fkey(
-            id,
-            name,
-            username,
-            profile_image,
-            bio
-          ),
-          recipient_profile:profiles!user_connections_connected_user_id_fkey(
-            id,
-            name,
-            username,
-            profile_image,
-            bio
-          )
-        `)
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at')
         .or(`connected_user_id.eq.${currentUser.user.id},user_id.eq.${currentUser.user.id}`)
         .eq('status', 'pending');
 
-      if (error) throw error;
+      if (connectionsError) throw connectionsError;
 
-      console.log('✅ [useConnectionsAdapter] Pending connections fetched:', data?.length || 0);
+      console.log('✅ [useConnectionsAdapter] Found pending connections:', connections?.length || 0);
 
-      return data?.map(conn => {
+      if (!connections || connections.length === 0) {
+        return [];
+      }
+
+      // Get all unique profile IDs we need to fetch
+      const profileIds = new Set<string>();
+      connections.forEach(conn => {
+        profileIds.add(conn.user_id);
+        profileIds.add(conn.connected_user_id);
+      });
+
+      // Remove current user ID as we don't need their own profile
+      profileIds.delete(currentUser.user.id);
+
+      // Fetch all profiles in one query
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, username, profile_image, bio')
+        .in('id', Array.from(profileIds));
+
+      if (profilesError) throw profilesError;
+
+      // Create a map for easy profile lookup
+      const profileMap = new Map();
+      profiles?.forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
+
+      // Transform connections to pending connection objects
+      return connections.map(conn => {
         // Determine if this is an incoming or outgoing request
         const isIncoming = conn.connected_user_id === currentUser.user.id;
+        const otherUserId = isIncoming ? conn.user_id : conn.connected_user_id;
+        const otherProfile = profileMap.get(otherUserId);
         
-        if (isIncoming) {
-          // Incoming request - show requester info
-          return {
-            id: conn.user_id,
-            connectionId: conn.id,
-            name: conn.requester_profile?.name || 'Unknown',
-            username: conn.requester_profile?.username || '',
-            imageUrl: conn.requester_profile?.profile_image || '',
-            mutualFriends: 0,
-            type: 'friend' as const,
-            lastActive: 'recently',
-            relationship: conn.relationship_type as RelationshipType,
-            dataStatus: {
-              shipping: 'missing' as const,
-              birthday: 'missing' as const,
-              email: 'missing' as const
-            },
-            bio: conn.requester_profile?.bio,
-            isPending: true,
-            isIncoming: true,
-            connectionDate: conn.created_at
-          };
-        } else {
-          // Outgoing request - show recipient info
-          return {
-            id: conn.connected_user_id,
-            connectionId: conn.id,
-            name: conn.recipient_profile?.name || 'Unknown',
-            username: conn.recipient_profile?.username || '',
-            imageUrl: conn.recipient_profile?.profile_image || '',
-            mutualFriends: 0,
-            type: 'friend' as const,
-            lastActive: 'recently',
-            relationship: conn.relationship_type as RelationshipType,
-            dataStatus: {
-              shipping: 'missing' as const,
-              birthday: 'missing' as const,
-              email: 'missing' as const
-            },
-            bio: conn.recipient_profile?.bio,
-            isPending: true,
-            isIncoming: false,
-            connectionDate: conn.created_at
-          };
-        }
-      }) || [];
+        return {
+          id: otherUserId,
+          connectionId: conn.id,
+          name: otherProfile?.name || 'Unknown',
+          username: otherProfile?.username || '',
+          imageUrl: otherProfile?.profile_image || '',
+          mutualFriends: 0,
+          type: 'friend' as const,
+          lastActive: 'recently',
+          relationship: conn.relationship_type as RelationshipType,
+          dataStatus: {
+            shipping: 'missing' as const,
+            birthday: 'missing' as const,
+            email: 'missing' as const
+          },
+          bio: otherProfile?.bio,
+          isPending: true,
+          isIncoming,
+          connectionDate: conn.created_at
+        };
+      });
     } catch (error) {
       console.error('❌ [useConnectionsAdapter] Error fetching pending connections:', error);
       return [];

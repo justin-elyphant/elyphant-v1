@@ -45,9 +45,12 @@ const SharedWishlist = () => {
         
         for (const profileData of profiles || []) {
           if (profileData.wishlists && Array.isArray(profileData.wishlists)) {
-            const wishlist = profileData.wishlists.find(list => 
-              list.id === wishlistId && list.is_public === true
-            );
+            const wishlist = profileData.wishlists.find(list => {
+              // If user owns the wishlist, show regardless of privacy
+              // If user doesn't own it, only show if public
+              const isOwner = user?.id === profileData.id;
+              return list.id === wishlistId && (isOwner || list.is_public === true);
+            });
             if (wishlist) {
               foundWishlist = wishlist;
               wishlistOwner = {
@@ -85,7 +88,7 @@ const SharedWishlist = () => {
     );
   }
 
-  if (!wishlist || !wishlist.is_public) {
+  if (!wishlist) {
     return (
       <div className="container mx-auto py-8 px-4">
         <NoWishlistFound />

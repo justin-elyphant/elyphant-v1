@@ -82,7 +82,7 @@ const MarketplaceQuickFilters = () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-auto px-3 py-2 text-sm bg-white text-gray-700 hover:bg-gray-50 border-gray-300 rounded-full"
+              className="h-auto px-3 py-2 text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 border-gray-300 rounded-full border transition-colors"
             >
               <Grid3X3 className="h-3 w-3 mr-1" />
               Categories

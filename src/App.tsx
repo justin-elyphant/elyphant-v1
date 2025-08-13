@@ -31,6 +31,7 @@ const Messages = lazy(() => import("./pages/Messages"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Connections = lazy(() => import("./pages/Connections"));
 const Wishlists = lazy(() => import("./pages/Wishlists"));
+const SharedWishlist = lazy(() => import("./pages/SharedWishlist"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -154,6 +155,7 @@ function AppContent() {
           <Route path="/messages/:userId" element={<Chat />} />
           <Route path="/connections" element={<Connections />} />
           <Route path="/wishlists" element={<Wishlists />} />
+          <Route path="/wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

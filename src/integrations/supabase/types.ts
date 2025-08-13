@@ -3507,6 +3507,14 @@ export type Database = {
         Args: { note_order_id: string }
         Returns: boolean
       }
+      can_access_wishlist: {
+        Args: {
+          wishlist_owner_id: string
+          viewer_id: string
+          privacy_level?: string
+        }
+        Returns: boolean
+      }
       can_access_zma_accounts: {
         Args: { action_type: string }
         Returns: boolean
@@ -3530,6 +3538,10 @@ export type Database = {
       cancel_order: {
         Args: { order_id: string; cancellation_reason?: string }
         Returns: Json
+      }
+      check_friend_connection: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
       }
       check_message_rate_limit: {
         Args: { sender_uuid: string }

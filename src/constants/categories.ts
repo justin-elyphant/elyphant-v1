@@ -211,7 +211,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Top-rated and popular items"
   },
   {
-    id: 21,
+    id: 23,
     name: "Gifts",
     value: "gifts",
     searchTerm: "best selling gifts",
@@ -219,7 +219,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     description: "Perfect gift ideas"
   },
   {
-    id: 22,
+    id: 24,
     name: "Bags & Purses",
     value: "bags-purses",
     searchTerm: "best selling bags purses",

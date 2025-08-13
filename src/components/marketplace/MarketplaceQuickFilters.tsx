@@ -11,7 +11,7 @@ import {
 import { MapPin, Tag, DollarSign, Filter, ChevronDown, Grid3X3 } from "lucide-react";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useNavigate } from "react-router-dom";
-import { UNIVERSAL_CATEGORIES } from "@/constants/categories";
+import { getFeaturedCategories } from "@/constants/categories";
 
 const MarketplaceQuickFilters = () => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -90,7 +90,7 @@ const MarketplaceQuickFilters = () => {
             </Badge>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 max-h-80 overflow-y-auto bg-white border border-gray-200 shadow-lg z-50">
-            {UNIVERSAL_CATEGORIES.map((category) => (
+            {getFeaturedCategories().map((category) => (
               <DropdownMenuItem
                 key={category.id}
                 onClick={() => handleCategoryClick(category)}

@@ -196,14 +196,22 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
   },
   {
     id: 19,
-    name: "Wedding & Party",
-    value: "wedding-party",
-    searchTerm: "best selling wedding party",
+    name: "Wedding",
+    value: "wedding",
+    searchTerm: "wedding gifts bridal party engagement ceremony reception decorations invitations favors",
     icon: PartyPopper,
-    description: "Celebration essentials"
+    description: "Wedding essentials and gifts"
   },
   {
     id: 20,
+    name: "Best Selling",
+    value: "best-selling",
+    searchTerm: "best selling top rated popular trending most bought bestseller",
+    icon: Sparkles,
+    description: "Top-rated and popular items"
+  },
+  {
+    id: 21,
     name: "Gifts",
     value: "gifts",
     searchTerm: "best selling gifts",
@@ -233,10 +241,10 @@ export const getCategoryName = (categoryUrl: string | null): string => {
 
 // Filtered categories for specific components
 export const getFeaturedCategories = (): Category[] => {
-  // Return featured categories in alphabetical order
+  // Return 15 featured categories in alphabetical order
   return UNIVERSAL_CATEGORIES
     .filter(cat => 
-      ['arts', 'athleisure', 'beauty', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys'].includes(cat.value)
+      ['arts', 'athleisure', 'baby', 'beauty', 'best-selling', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys', 'wedding'].includes(cat.value)
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 };

@@ -94,7 +94,7 @@ const FeaturedCategories: React.FC = () => {
               size="lg"
               className="bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400 text-gray-700 hover:text-gray-900 px-6 md:px-8 py-3 text-sm md:text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              Shop All 20+ Categories
+              Shop All Categories
               <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform duration-200" />
             </Button>
           </div>

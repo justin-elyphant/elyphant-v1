@@ -2,16 +2,16 @@
 import React from "react";
 import { User, Package, Building2, Globe, Users, Lock } from "lucide-react";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
-import { ZincProduct } from "@/components/marketplace/zinc/types";
+import { Product } from "@/types/product";
 import FriendResultCard from "./results/FriendResultCard";
 
 interface UnifiedSearchSuggestionsProps {
   friends: FriendSearchResult[];
-  products: ZincProduct[];
+  products: Product[];
   brands: string[];
   isVisible: boolean;
   onFriendSelect: (friend: FriendSearchResult) => void;
-  onProductSelect: (product: ZincProduct) => void;
+  onProductSelect: (product: Product) => void;
   onBrandSelect: (brand: string) => void;
   onSendFriendRequest: (friendId: string, friendName: string) => void;
   mobile?: boolean;

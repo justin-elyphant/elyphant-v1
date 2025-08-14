@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,11 @@ import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInt
 import { NicolePortalContainer } from "@/components/nicole/NicolePortalContainer";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
+import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useAuth } from "@/contexts/auth";
+import UnifiedSearchSuggestions from "@/components/search/UnifiedSearchSuggestions";
+import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { Product } from "@/types/product";
 
 // Global state to prevent duplicate Nicole interfaces
 let globalNicoleState = {
@@ -31,8 +36,26 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const [query, setQuery] = useState("");
   const [isNicoleOpen, setIsNicoleOpen] = useState(false);
   const [nicoleContext, setNicoleContext] = useState<any>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const navigate = useNavigate();
   const { isNicoleMode, setMode } = useSearchMode();
+  const { user } = useAuth();
+  
+  // Unified search hook for friend/product/brand search
+  const { 
+    search: performUnifiedSearch, 
+    results: unifiedResults,
+    isLoading: searchLoading,
+    setQuery: setSearchQuery
+  } = useUnifiedSearch({ 
+    maxResults: 15,
+    debounceMs: 300 
+  });
+  
+  // Refs for click outside detection
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Create unique instance ID for this search bar
   const instanceId = React.useMemo(() => `${mobile ? 'mobile' : 'desktop'}-${Math.random()}`, [mobile]);
@@ -89,6 +112,43 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     };
   }, [instanceId, setMode]);
 
+  // Handle input changes and trigger search
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    setSearchQuery(newQuery);
+    
+    // Only show suggestions in search mode and if there's a query
+    if (!isNicoleMode && newQuery.trim().length >= 1) {
+      setShowSuggestions(true);
+      performUnifiedSearch(newQuery, {
+        currentUserId: user?.id,
+        includeFriends: true,
+        includeProducts: true,
+        includeBrands: true
+      });
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    setInputFocused(true);
+    if (!isNicoleMode && query.trim().length >= 1) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    setInputFocused(false);
+    // Delay hiding suggestions to allow clicks on suggestions
+    setTimeout(() => {
+      if (!inputFocused) {
+        setShowSuggestions(false);
+      }
+    }, 150);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -101,6 +161,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         setIsNicoleOpen(true);
       } else {
         // In search mode, navigate to results
+        setShowSuggestions(false);
         if (onNavigateToResults) {
           onNavigateToResults(query.trim());
         } else {
@@ -110,8 +171,34 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     }
   };
 
+  // Handle friend selection
+  const handleFriendSelect = (friend: FriendSearchResult) => {
+    setShowSuggestions(false);
+    navigate(`/profile/${friend.id}`);
+  };
+
+  // Handle product selection
+  const handleProductSelect = (product: Product) => {
+    setShowSuggestions(false);
+    navigate(`/marketplace?search=${encodeURIComponent(product.title)}`);
+  };
+
+  // Handle brand selection
+  const handleBrandSelect = (brand: string) => {
+    setShowSuggestions(false);
+    navigate(`/marketplace?search=${encodeURIComponent(brand)}`);
+  };
+
+  // Handle friend request sending
+  const handleSendFriendRequest = async (friendId: string, friendName: string) => {
+    // This would typically call a friend request service
+    toast.success(`Friend request sent to ${friendName}!`);
+  };
+
   const handleModeToggle = (checked: boolean) => {
     setMode(checked ? "nicole" : "search");
+    setShowSuggestions(false); // Hide suggestions when switching modes
+    
     if (checked) {
       // Close any existing Nicole interface before opening this one
       if (globalNicoleState.isOpen && globalNicoleState.currentInstance !== instanceId) {
@@ -214,8 +301,22 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     ? "Ask Nicole anything about gifts..." 
     : "Search brands, trending products, friends, and more...";
 
+  // Click outside detection
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className={`relative w-full ${className}`}>
+    <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       {/* Enhanced Search Bar with Toggle */}
       <form onSubmit={handleSearch} className="relative">
         <div className={`relative flex items-center transition-all duration-300 ${
@@ -238,10 +339,13 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           </div>
           
           <Input
+            ref={inputRef}
             type="text"
             placeholder={placeholderText}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             className={`pl-32 pr-32 transition-all duration-300 ${
               mobile 
                 ? "text-base py-3 h-12 rounded-lg" 
@@ -260,7 +364,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setQuery("")}
+                onClick={() => {
+                  setQuery("");
+                  setSearchQuery("");
+                  setShowSuggestions(false);
+                }}
                 className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
               >
                 <X className="h-4 w-4 text-gray-400" />
@@ -302,6 +410,21 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           </div>
         )}
       </form>
+
+      {/* Unified Search Suggestions - Only show in search mode */}
+      {!isNicoleMode && showSuggestions && (
+        <UnifiedSearchSuggestions
+          friends={unifiedResults.friends}
+          products={unifiedResults.products}
+          brands={unifiedResults.brands}
+          isVisible={showSuggestions}
+          onFriendSelect={handleFriendSelect}
+          onProductSelect={handleProductSelect}
+          onBrandSelect={handleBrandSelect}
+          onSendFriendRequest={handleSendFriendRequest}
+          mobile={mobile}
+        />
+      )}
 
       {/* Nicole Interface - Only render if this instance owns the global state */}
       {isNicoleMode && isNicoleOpen && globalNicoleState.currentInstance === instanceId && (

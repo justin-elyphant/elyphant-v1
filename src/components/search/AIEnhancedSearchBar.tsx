@@ -238,7 +238,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           </div>
           
           <Input
-            type="search"
+            type="text"
             placeholder={placeholderText}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

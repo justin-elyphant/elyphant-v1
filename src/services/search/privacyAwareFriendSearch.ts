@@ -45,12 +45,12 @@ export const searchFriendsWithPrivacy = async (
     // Build search query based on type
     let searchQuery = '';
     if (isEmailSearch) {
-      // Exact email match for email searches  
-      searchQuery = `email.ilike.${cleanedSearchTerm}`;
+      // Exact email match for email searches using eq for case-sensitive exact matching
+      searchQuery = `email.eq.${cleanedSearchTerm}`;
       console.log(`🔍 [EMAIL SEARCH] Looking for exact email: "${cleanedSearchTerm}"`);
     } else if (isUsernameSearch) {
-      // Username exact match for @username searches
-      searchQuery = `username.ilike.${cleanedSearchTerm}`;
+      // Username exact match for @username searches using eq for case-sensitive exact matching
+      searchQuery = `username.eq.${cleanedSearchTerm}`;
       console.log(`🔍 [USERNAME SEARCH] Looking for exact username: "${cleanedSearchTerm}"`);
     } else {
       // General search across all fields for name searches

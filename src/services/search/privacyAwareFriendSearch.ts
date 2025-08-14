@@ -71,8 +71,10 @@ export const searchFriendsWithPrivacy = async (
     const profileIds = profiles.map(p => p.id);
     const { data: privacySettings, error: privacyError } = await supabase
       .from('privacy_settings')
-      .select('user_id, allow_connection_requests_from')
+      .select('user_id, allow_connection_requests_from, profile_visibility')
       .in('user_id', profileIds);
+
+    console.log(`🔍 Privacy settings found for ${privacySettings?.length || 0} profiles:`, privacySettings);
 
     if (privacyError) throw privacyError;
 
@@ -128,9 +130,26 @@ export const searchFriendsWithPrivacy = async (
     
     const filteredProfiles = profiles.filter(profile => {
       const isBlocked = blockedUserIds.has(profile.id);
-      console.log(`🔍 Profile ${profile.id} (${profile.name}): blocked=${isBlocked}`);
-      // Only filter out blocked users for now
-      return !isBlocked;
+      const userPrivacy = privacySettings?.find(ps => ps.user_id === profile.id);
+      const profileVisibility = userPrivacy?.profile_visibility || 'public'; // Default to public for search
+      const isConnected = connectedUserIds.has(profile.id);
+      
+      console.log(`🔍 Profile ${profile.id} (${profile.name}): blocked=${isBlocked}, visibility=${profileVisibility}, connected=${isConnected}`);
+      
+      // Filter logic:
+      // 1. Always filter out blocked users
+      if (isBlocked) return false;
+      
+      // 2. Handle profile visibility for search purposes (separate from connection permissions)
+      // - 'public': Always searchable
+      // - 'friends': Searchable (users can find them but connection depends on other settings)  
+      // - 'private': Only searchable by existing connections (if this level exists)
+      if (profileVisibility === 'private' && !isConnected) {
+        console.log(`🔍 Filtering out ${profile.name} - private profile and not connected`);
+        return false;
+      }
+      
+      return true;
     });
     
     console.log(`🔍 After filtering: ${filteredProfiles.length} profiles remain`);

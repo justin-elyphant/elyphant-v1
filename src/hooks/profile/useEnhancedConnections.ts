@@ -52,28 +52,43 @@ export const useEnhancedConnections = () => {
     setError(null);
     
     try {
-      // Fetch connections with profile data
+      // First fetch connections without foreign key joins to avoid RLS bypass
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
-        .select(`
-          *,
-          connected_profile:profiles!user_connections_connected_user_id_fkey(
-            id,
-            name,
-            email,
-            profile_image,
-            bio,
-            username
-          )
-        `)
+        .select('*')
         .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
       
       if (connectionsError) throw connectionsError;
       
-      // Transform the data to include profile information
-      const enhancedConnections = (connectionsData || []).map(conn => {
-        const profile = conn.connected_profile;
+      // Then fetch profile data for each connection while respecting RLS
+      const enhancedConnections = await Promise.all((connectionsData || []).map(async conn => {
         const isUserInitiated = conn.user_id === user.id;
+        const targetUserId = isUserInitiated ? conn.connected_user_id : conn.user_id;
+        
+        let profile = null;
+        
+        // Use can_view_profile function to check access and get profile data if allowed
+        if (targetUserId) {
+          try {
+            const { data: canView } = await supabase
+              .rpc('can_view_profile', {
+                viewer_id: user.id,
+                profile_user_id: targetUserId
+              });
+            
+            if (canView) {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id, name, email, profile_image, bio, username')
+                .eq('id', targetUserId)
+                .single();
+              
+              profile = profileData;
+            }
+          } catch (error) {
+            console.log('Profile access denied for user:', targetUserId);
+          }
+        }
         
         // Handle both regular connections and pending invitations
         let profileName = profile?.name;
@@ -87,22 +102,22 @@ export const useEnhancedConnections = () => {
           profileUsername = `@${conn.pending_recipient_name?.toLowerCase().replace(/\s+/g, '')}`;
         }
         
-        // Fallback for display when no data is available
-        const fallbackId = conn.connected_user_id || conn.id;
-        const fallbackName = profileName || `User ${fallbackId?.substring(0, 8) || 'Unknown'}`;
-        const fallbackUsername = profileUsername || `@user${fallbackId?.substring(0, 6) || 'unknown'}`;
+        // Improved fallback handling - show actual names when available
+        const fallbackId = targetUserId || conn.id;
+        const fallbackName = profileName || (profile ? 'Private User' : `User ${fallbackId?.substring(0, 8) || 'Unknown'}`);
+        const fallbackUsername = profileUsername || (profile ? '@private' : `@user${fallbackId?.substring(0, 6) || 'unknown'}`);
         
         return {
           ...conn,
           profile_name: fallbackName,
           profile_email: profileEmail,
-          profile_image: profile?.profile_image,
-          profile_bio: profile?.bio,
+          profile_image: profile?.profile_image || '/placeholder.svg',
+          profile_bio: profile?.bio || '',
           profile_username: fallbackUsername,
-          display_user_id: isUserInitiated ? conn.connected_user_id : conn.user_id,
+          display_user_id: targetUserId,
           is_pending_invitation: conn.status === 'pending_invitation'
         };
-      });
+      }));
       
       // Separate different types of connections
       const accepted = enhancedConnections.filter(conn => conn.status === 'accepted');

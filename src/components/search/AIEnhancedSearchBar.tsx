@@ -235,9 +235,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             <Bot className={`h-4 w-4 transition-colors duration-200 ${
               isNicoleMode ? 'text-purple-500' : 'text-gray-400'
             }`} />
-            {isNicoleMode && (
-              <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
-            )}
           </div>
           
           <Input

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -3492,10 +3492,10 @@ export type Database = {
     Functions: {
       add_business_admin: {
         Args: {
-          new_admin_user_id: string
           admin_level_param: string
-          can_view_payment_methods_param?: boolean
           can_manage_payment_methods_param?: boolean
+          can_view_payment_methods_param?: boolean
+          new_admin_user_id: string
         }
         Returns: Json
       }
@@ -3509,9 +3509,9 @@ export type Database = {
       }
       can_access_wishlist: {
         Args: {
-          wishlist_owner_id: string
-          viewer_id: string
           privacy_level?: string
+          viewer_id: string
+          wishlist_owner_id: string
         }
         Returns: boolean
       }
@@ -3524,7 +3524,7 @@ export type Database = {
         Returns: boolean
       }
       can_send_nudge: {
-        Args: { p_user_id: string; p_recipient_email: string }
+        Args: { p_recipient_email: string; p_user_id: string }
         Returns: boolean
       }
       can_user_connect: {
@@ -3536,7 +3536,7 @@ export type Database = {
         Returns: boolean
       }
       cancel_order: {
-        Args: { order_id: string; cancellation_reason?: string }
+        Args: { cancellation_reason?: string; order_id: string }
         Returns: Json
       }
       check_friend_connection: {
@@ -3572,12 +3572,12 @@ export type Database = {
         Returns: string
       }
       get_nudge_summary: {
-        Args: { p_user_id: string; p_recipient_email: string }
+        Args: { p_recipient_email: string; p_user_id: string }
         Returns: {
-          total_nudges: number
-          last_nudge_sent: string
           can_nudge: boolean
           days_until_next_nudge: number
+          last_nudge_sent: string
+          total_nudges: number
         }[]
       }
       get_safe_profile_data: {
@@ -3587,14 +3587,14 @@ export type Database = {
       get_upcoming_auto_gift_events: {
         Args: { days_ahead?: number }
         Returns: {
+          budget_limit: number
+          event_date: string
           event_id: string
+          event_type: string
+          notification_days: number[]
+          recipient_id: string
           rule_id: string
           user_id: string
-          event_date: string
-          event_type: string
-          recipient_id: string
-          budget_limit: number
-          notification_days: number[]
         }[]
       }
       get_user_privacy_settings: {
@@ -3615,15 +3615,15 @@ export type Database = {
       get_zma_account_safe: {
         Args: { account_id: string }
         Returns: {
-          id: string
-          account_name: string
           account_balance: number
+          account_name: string
           account_status: string
-          last_balance_check: string
-          is_default: boolean
           created_at: string
-          updated_at: string
           has_api_key: boolean
+          id: string
+          is_default: boolean
+          last_balance_check: string
+          updated_at: string
         }[]
       }
       is_authorized_for_payment_methods: {
@@ -3644,18 +3644,18 @@ export type Database = {
       }
       track_zma_cost: {
         Args: {
-          user_uuid: string
-          order_uuid: string
           cost: number
           cost_type_param?: string
+          order_uuid: string
+          user_uuid: string
         }
         Returns: undefined
       }
       validate_zma_order: {
         Args: {
-          user_uuid: string
-          order_hash_param: string
           order_amount: number
+          order_hash_param: string
+          user_uuid: string
         }
         Returns: Json
       }

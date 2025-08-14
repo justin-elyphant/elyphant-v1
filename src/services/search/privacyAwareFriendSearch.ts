@@ -34,12 +34,31 @@ export const searchFriendsWithPrivacy = async (
   limit: number = 20
 ): Promise<FilteredProfile[]> => {
   try {
-    // Clean the search term - remove @ symbol if searching for username
+    // Clean and process the search term
     const cleanedSearchTerm = searchTerm.startsWith('@') ? searchTerm.slice(1) : searchTerm;
+    const isEmailSearch = searchTerm.includes('@') && !searchTerm.startsWith('@');
+    const isUsernameSearch = searchTerm.startsWith('@');
     
-    console.log(`🔍 Searching for profiles with term: "${searchTerm}" (cleaned: "${cleanedSearchTerm}")`);
+    console.log(`🔍 [SEARCH START] Original: "${searchTerm}", Cleaned: "${cleanedSearchTerm}"`);
+    console.log(`🔍 [SEARCH TYPE] Email: ${isEmailSearch}, Username: ${isUsernameSearch}, General: ${!isEmailSearch && !isUsernameSearch}`);
     
-    // Search for profiles matching the search term across multiple fields
+    // Build search query based on type
+    let searchQuery = '';
+    if (isEmailSearch) {
+      // Exact email match for email searches
+      searchQuery = `email.ilike.%${cleanedSearchTerm}%`;
+      console.log(`🔍 [EMAIL SEARCH] Looking for email containing: "${cleanedSearchTerm}"`);
+    } else if (isUsernameSearch) {
+      // Username exact match for @username searches
+      searchQuery = `username.ilike.%${cleanedSearchTerm}%`;
+      console.log(`🔍 [USERNAME SEARCH] Looking for username containing: "${cleanedSearchTerm}"`);
+    } else {
+      // General search across all fields for name searches
+      searchQuery = `name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`;
+      console.log(`🔍 [GENERAL SEARCH] Looking across name fields for: "${cleanedSearchTerm}"`);
+    }
+    
+    // Search for profiles matching the search term
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select(`
@@ -52,13 +71,18 @@ export const searchFriendsWithPrivacy = async (
         profile_image,
         bio
       `)
-      .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%,email.ilike.%${cleanedSearchTerm}%`)
+      .or(searchQuery)
       .limit(limit);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error(`🔍 [SEARCH ERROR] Database error:`, profileError);
+      throw profileError;
+    }
 
-    console.log(`🔍 Raw search results: ${profiles?.length || 0} profiles found`);
-    console.log(`🔍 Profile results:`, profiles);
+    console.log(`🔍 [SEARCH RESULTS] Found ${profiles?.length || 0} profiles`);
+    profiles?.forEach((profile, index) => {
+      console.log(`🔍 [RESULT ${index + 1}] ${profile.name} (@${profile.username}) - ${profile.email}`);
+    });
 
     if (!profiles || profiles.length === 0) {
       console.log(`🔍 No profiles found for search term: "${cleanedSearchTerm}"`);

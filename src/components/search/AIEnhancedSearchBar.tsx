@@ -121,6 +121,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     // Only show suggestions in search mode and if there's a query
     if (!isNicoleMode && newQuery.trim().length >= 1) {
       setShowSuggestions(true);
+      console.log('🔍 [AIEnhancedSearchBar] Triggering unified search for:', newQuery, {
+        currentUserId: user?.id,
+        includeFriends: true,
+        includeProducts: true,
+        includeBrands: true
+      });
       performUnifiedSearch(newQuery, {
         currentUserId: user?.id,
         includeFriends: true,
@@ -413,17 +419,26 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
       {/* Unified Search Suggestions - Only show in search mode */}
       {!isNicoleMode && showSuggestions && (
-        <UnifiedSearchSuggestions
-          friends={unifiedResults.friends}
-          products={unifiedResults.products}
-          brands={unifiedResults.brands}
-          isVisible={showSuggestions}
-          onFriendSelect={handleFriendSelect}
-          onProductSelect={handleProductSelect}
-          onBrandSelect={handleBrandSelect}
-          onSendFriendRequest={handleSendFriendRequest}
-          mobile={mobile}
-        />
+        <>
+          {console.log('🔍 [AIEnhancedSearchBar] Rendering UnifiedSearchSuggestions with:', {
+            friends: unifiedResults.friends?.length || 0,
+            products: unifiedResults.products?.length || 0, 
+            brands: unifiedResults.brands?.length || 0,
+            showSuggestions,
+            isNicoleMode
+          })}
+          <UnifiedSearchSuggestions
+            friends={unifiedResults.friends}
+            products={unifiedResults.products}
+            brands={unifiedResults.brands}
+            isVisible={showSuggestions}
+            onFriendSelect={handleFriendSelect}
+            onProductSelect={handleProductSelect}
+            onBrandSelect={handleBrandSelect}
+            onSendFriendRequest={handleSendFriendRequest}
+            mobile={mobile}
+          />
+        </>
       )}
 
       {/* Nicole Interface - Only render if this instance owns the global state */}

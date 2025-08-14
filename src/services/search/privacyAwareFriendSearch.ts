@@ -42,37 +42,65 @@ export const searchFriendsWithPrivacy = async (
     console.log(`🔍 [SEARCH START] Original: "${searchTerm}", Cleaned: "${cleanedSearchTerm}"`);
     console.log(`🔍 [SEARCH TYPE] Email: ${isEmailSearch}, Username: ${isUsernameSearch}, General: ${!isEmailSearch && !isUsernameSearch}`);
     
-    // Build search query based on type
-    let searchQuery = '';
-    if (isEmailSearch) {
-      // Exact email match for email searches using eq for case-sensitive exact matching
-      searchQuery = `email.eq.${cleanedSearchTerm}`;
-      console.log(`🔍 [EMAIL SEARCH] Looking for exact email: "${cleanedSearchTerm}"`);
-    } else if (isUsernameSearch) {
-      // Username exact match for @username searches using eq for case-sensitive exact matching
-      searchQuery = `username.eq.${cleanedSearchTerm}`;
-      console.log(`🔍 [USERNAME SEARCH] Looking for exact username: "${cleanedSearchTerm}"`);
-    } else {
-      // General search across all fields for name searches
-      searchQuery = `name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`;
-      console.log(`🔍 [GENERAL SEARCH] Looking across name fields for: "${cleanedSearchTerm}"`);
-    }
+    // Search for profiles using proper Supabase client methods
+    let profiles;
+    let profileError;
     
-    // Search for profiles matching the search term
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        name,
-        username,
-        first_name,
-        last_name,
-        email,
-        profile_image,
-        bio
-      `)
-      .or(searchQuery)
-      .limit(limit);
+    if (isEmailSearch) {
+      console.log(`🔍 [EMAIL SEARCH] Looking for exact email: "${cleanedSearchTerm}"`);
+      const result = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          username,
+          first_name,
+          last_name,
+          email,
+          profile_image,
+          bio
+        `)
+        .eq('email', cleanedSearchTerm)
+        .limit(limit);
+      profiles = result.data;
+      profileError = result.error;
+    } else if (isUsernameSearch) {
+      console.log(`🔍 [USERNAME SEARCH] Looking for exact username: "${cleanedSearchTerm}"`);
+      const result = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          username,
+          first_name,
+          last_name,
+          email,
+          profile_image,
+          bio
+        `)
+        .eq('username', cleanedSearchTerm)
+        .limit(limit);
+      profiles = result.data;
+      profileError = result.error;
+    } else {
+      console.log(`🔍 [GENERAL SEARCH] Looking across name fields for: "${cleanedSearchTerm}"`);
+      const result = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          username,
+          first_name,
+          last_name,
+          email,
+          profile_image,
+          bio
+        `)
+        .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`)
+        .limit(limit);
+      profiles = result.data;
+      profileError = result.error;
+    }
 
     if (profileError) {
       console.error(`🔍 [SEARCH ERROR] Database error:`, profileError);

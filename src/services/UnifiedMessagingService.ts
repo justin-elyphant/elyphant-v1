@@ -328,10 +328,7 @@ class UnifiedMessagingService {
     
     const { data, error, count } = await supabase
       .from('messages')
-      .select(`
-        *,
-        sender:profiles(name, profile_image)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .or(`sender_id.eq.${user.user.id}.and.recipient_id.eq.${otherUserId},sender_id.eq.${otherUserId}.and.recipient_id.eq.${user.user.id}`)
       .is('group_chat_id', null) // Only direct messages
       .order('created_at', { ascending: false })
@@ -347,7 +344,23 @@ class UnifiedMessagingService {
     console.log('📝 Raw message data (first 3):', data?.slice(0, 3));
     console.log('🔄 About to reverse and return messages...');
 
-    const messages = (data as UnifiedMessage[]).reverse();
+    const messagesWithProfiles = await Promise.all(
+      (data as UnifiedMessage[]).map(async (message) => {
+        // Fetch sender profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, profile_image')
+          .eq('id', message.sender_id)
+          .single();
+        
+        return {
+          ...message,
+          sender: profile
+        };
+      })
+    );
+
+    const messages = messagesWithProfiles.reverse();
     const hasMore = count ? offset + limit < count : false;
 
     console.log('🎯 Final messages being returned:', { 
@@ -364,16 +377,30 @@ class UnifiedMessagingService {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select(`
-          *,
-          sender:profiles(name, profile_image)
-        `)
+        .select('*')
         .eq('group_chat_id', groupChatId)
         .is('message_parent_id', null) // Only get top-level messages
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as UnifiedMessage[] || [];
+
+      // Fetch sender profiles separately
+      const messagesWithProfiles = await Promise.all(
+        (data || []).map(async (message) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, profile_image')
+            .eq('id', message.sender_id)
+            .single();
+          
+          return {
+            ...message,
+            sender: profile
+          };
+        })
+      );
+
+      return messagesWithProfiles as UnifiedMessage[];
     } catch (error) {
       console.error('Error fetching group messages:', error);
       toast.error("Failed to load group messages");

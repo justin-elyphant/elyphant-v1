@@ -344,10 +344,18 @@ class UnifiedMessagingService {
     }
 
     console.log('✅ Messages fetched successfully:', { count: data?.length, totalCount: count });
-    console.log('📝 Sample message data:', data?.[0]);
+    console.log('📝 Raw message data (first 3):', data?.slice(0, 3));
+    console.log('🔄 About to reverse and return messages...');
 
     const messages = (data as UnifiedMessage[]).reverse();
     const hasMore = count ? offset + limit < count : false;
+
+    console.log('🎯 Final messages being returned:', { 
+      messageCount: messages.length, 
+      hasMore,
+      firstMessage: messages[0]?.content,
+      lastMessage: messages[messages.length - 1]?.content
+    });
 
     return { messages, hasMore };
   }

@@ -63,6 +63,13 @@ export const useSearchHandlers = ({
   };
 
   const handleFriendSelect = (friend: FriendSearchResult) => {
+    console.log(`🔍 [NAVIGATION] Navigating to profile:`, {
+      id: friend.id,
+      name: friend.name,
+      username: friend.username,
+      email: friend.email,
+      url: `/profile/${friend.id}`
+    });
     navigate(`/profile/${friend.id}`);
     setShowSuggestions(false);
   };

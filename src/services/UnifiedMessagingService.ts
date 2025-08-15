@@ -317,7 +317,10 @@ class UnifiedMessagingService {
     
     const { data, error, count } = await supabase
       .from('messages')
-      .select('*, sender:profiles!messages_sender_id_fkey(name, profile_image)', { count: 'exact' })
+      .select(`
+        *,
+        sender:profiles!inner(name, profile_image)
+      `, { count: 'exact' })
       .or(`and(sender_id.eq.${user.user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.user.id})`)
       .is('group_chat_id', null) // Only direct messages
       .order('created_at', { ascending: false })
@@ -341,20 +344,20 @@ class UnifiedMessagingService {
         .from('messages')
         .select(`
           *,
-          sender:profiles!messages_sender_id_fkey(name, profile_image),
+          sender:profiles!inner(name, profile_image),
           votes:gift_proposal_votes(
             id,
             user_id,
             vote_type,
             created_at,
-            voter:profiles!gift_proposal_votes_user_id_fkey(name)
+            voter:profiles!inner(name)
           ),
-          replies:messages!messages_message_parent_id_fkey(
+          replies:messages!inner(
             id,
             content,
             created_at,
             sender_id,
-            sender:profiles!messages_sender_id_fkey(name, profile_image)
+            sender:profiles!inner(name, profile_image)
           )
         `)
         .eq('group_chat_id', groupChatId)

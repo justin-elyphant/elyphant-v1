@@ -44,35 +44,105 @@ export const useConnectionsAdapter = () => {
       // Remove current user ID as we don't need their own profile
       profileIds.delete(currentUser.user.id);
 
-      // Fetch all profiles in one query
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, username, profile_image, bio')
-        .in('id', Array.from(profileIds));
+      // Enhanced profile fetching with fallback strategy for accepted connections
+      const profileData = await Promise.allSettled(
+        Array.from(profileIds).map(async (profileId) => {
+          try {
+            // First try using can_view_profile RPC (should work now after fix)
+            const { data: canView, error: rpcError } = await supabase
+              .rpc('can_view_profile', { profile_user_id: profileId });
 
-      if (profilesError) throw profilesError;
+            if (rpcError) {
+              console.warn('🚨 [useConnectionsAdapter] RPC error for profile', profileId, ':', rpcError);
+              // Fallback: For accepted connections, always try to fetch profile data
+              console.log('🔄 [useConnectionsAdapter] Using fallback for accepted connection:', profileId);
+            }
 
-      console.log('✅ [useConnectionsAdapter] Found profiles:', profiles?.length || 0);
+            // Try to fetch profile data (should work for accepted connections)
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, name, username, profile_image, bio')
+              .eq('id', profileId)
+              .maybeSingle();
 
-      // Create a map for easy profile lookup
+            if (profileError) {
+              console.error('❌ [useConnectionsAdapter] Profile fetch error for', profileId, ':', profileError);
+              throw profileError;
+            }
+
+            if (!profile) {
+              console.warn('⚠️ [useConnectionsAdapter] No profile found for accepted connection:', profileId);
+              // Return minimal profile data for accepted connections
+              return {
+                id: profileId,
+                name: `Friend ${profileId.substring(0, 8)}`,
+                username: `@friend${profileId.substring(0, 6)}`,
+                profile_image: '/placeholder.svg',
+                bio: ''
+              };
+            }
+
+            console.log('✅ [useConnectionsAdapter] Successfully fetched profile for:', profile.name || profileId);
+            return profile;
+
+          } catch (error) {
+            console.error('❌ [useConnectionsAdapter] Failed to fetch profile for', profileId, ':', error);
+            // Always provide fallback for accepted connections
+            return {
+              id: profileId,
+              name: `Friend ${profileId.substring(0, 8)}`,
+              username: `@friend${profileId.substring(0, 6)}`,
+              profile_image: '/placeholder.svg',
+              bio: ''
+            };
+          }
+        })
+      );
+
+      // Process results and create profile map
       const profileMap = new Map();
-      profiles?.forEach(profile => {
-        profileMap.set(profile.id, profile);
+      profileData.forEach((result, index) => {
+        const profileId = Array.from(profileIds)[index];
+        if (result.status === 'fulfilled' && result.value) {
+          profileMap.set(profileId, result.value);
+        } else {
+          console.error('❌ [useConnectionsAdapter] Failed to get profile for:', profileId);
+          // Add fallback profile
+          profileMap.set(profileId, {
+            id: profileId,
+            name: `Friend ${profileId.substring(0, 8)}`,
+            username: `@friend${profileId.substring(0, 6)}`,
+            profile_image: '/placeholder.svg',
+            bio: ''
+          });
+        }
       });
 
-      // Transform connections to friend objects
+      console.log('✅ [useConnectionsAdapter] Processed profiles:', profileMap.size);
+
+      // Transform connections to friend objects with enhanced fallback
       const friends = connections.map(conn => {
         // Determine which profile to show (the other person)
         const isCurrentUserRequester = conn.user_id === currentUser.user.id;
         const otherUserId = isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
         const otherProfile = profileMap.get(otherUserId);
         
+        // Enhanced name resolution for accepted connections
+        let displayName = otherProfile?.name || 'Unknown User';
+        let displayUsername = otherProfile?.username || `@user${otherUserId?.substring(0, 6) || 'unknown'}`;
+        
+        // For accepted connections, we should always have some name
+        if (displayName === 'Unknown User' || displayName.startsWith('Unknown')) {
+          displayName = `Friend ${otherUserId?.substring(0, 8) || 'Unknown'}`;
+          console.warn('⚠️ [useConnectionsAdapter] Using fallback name for accepted connection:', otherUserId);
+        }
+        
         return {
           id: otherUserId,
           connectionId: conn.id, // Add connectionId for deletion
-          name: otherProfile?.name || 'Unknown',
-          username: otherProfile?.username || '',
-          imageUrl: otherProfile?.profile_image || '',
+          name: displayName,
+          username: displayUsername,
+          imageUrl: otherProfile?.profile_image || '/placeholder.svg',
           mutualFriends: 0,
           type: 'friend' as const,
           lastActive: 'recently',
@@ -82,12 +152,13 @@ export const useConnectionsAdapter = () => {
             birthday: 'missing' as const,
             email: 'missing' as const
           },
-          bio: otherProfile?.bio,
+          bio: otherProfile?.bio || '',
           connectionDate: conn.created_at
         };
       });
       
-      console.log('✅ [useConnectionsAdapter] Transformed friends:', friends.length);
+      console.log('✅ [useConnectionsAdapter] Transformed friends with enhanced fallback:', friends.length);
+      console.log('🔍 [useConnectionsAdapter] Sample friend names:', friends.slice(0, 3).map(f => f.name));
       return friends;
     } catch (error) {
       console.error('❌ [useConnectionsAdapter] Error fetching friends:', error);

@@ -194,12 +194,15 @@ export const searchFriendsWithPrivacy = async (
       
       // 2. Handle profile visibility for search purposes (separate from connection permissions)
       // - 'public': Always searchable
-      // - 'friends': Searchable (users can find them but connection depends on other settings)  
+      // - 'friends': Always searchable (users can find them but connection depends on other settings)  
       // - 'private': Only searchable by existing connections (if this level exists)
+      // Note: 'friends' visibility profiles should appear in search results - visibility vs connection are different
       if (profileVisibility === 'private' && !isConnected) {
         console.log(`🔍 Filtering out ${profile.name} - private profile and not connected`);
         return false;
       }
+      
+      console.log(`🔍 Including ${profile.name} - visibility: ${profileVisibility}, connected: ${isConnected}`);
       
       return true;
     });

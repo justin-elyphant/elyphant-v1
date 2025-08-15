@@ -103,31 +103,34 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
       );
     }
 
-    if (!permissions.canSendRequest) {
-      return (
-        <Button size="sm" variant="outline" disabled title={permissions.restrictionReason}>
-          <Lock className="h-4 w-4 mr-1" />
-          Restricted
-        </Button>
-      );
-    }
-
+    // Priority 1: Check connection status first
     switch (connectionStatus) {
       case 'connected':
         return (
-          <Button size="sm" variant="outline" disabled>
+          <Button size="sm" variant="outline" disabled className="border-green-200 bg-green-50 text-green-700">
             <Check className="h-4 w-4 mr-1" />
             Connected
           </Button>
         );
       case 'pending':
         return (
-          <Button size="sm" variant="outline" disabled>
+          <Button size="sm" variant="outline" disabled className="border-amber-200 bg-amber-50 text-amber-700">
             <Clock className="h-4 w-4 mr-1" />
             Pending
           </Button>
         );
       default:
+        // Priority 2: Only check permissions for non-connected users
+        if (!permissions.canSendRequest) {
+          return (
+            <Button size="sm" variant="outline" disabled title={permissions.restrictionReason}>
+              <Lock className="h-4 w-4 mr-1" />
+              Restricted
+            </Button>
+          );
+        }
+        
+        // Priority 3: Show connect button
         return (
           <Button
             size="sm"

@@ -299,6 +299,8 @@ class UnifiedMessagingService {
     page: number = 0, 
     limit: number = 50
   ): Promise<{ messages: UnifiedMessage[]; hasMore: boolean }> {
+    console.log('🔍 fetchDirectMessages called', { otherUserId, page, limit });
+    
     // Handle mock users
     if (otherUserId.startsWith('mock-')) {
       return { 
@@ -309,11 +311,20 @@ class UnifiedMessagingService {
 
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
+      console.error('❌ No authenticated user found');
       toast.error("You must be logged in to view messages");
       return { messages: [], hasMore: false };
     }
 
+    console.log('✅ Authenticated user:', user.user.id);
     const offset = page * limit;
+    
+    console.log('📡 Making query with params:', {
+      currentUserId: user.user.id,
+      otherUserId,
+      offset,
+      limit
+    });
     
     const { data, error, count } = await supabase
       .from('messages')
@@ -327,10 +338,13 @@ class UnifiedMessagingService {
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error('Error fetching direct messages:', error);
+      console.error('❌ Error fetching direct messages:', error);
       toast.error("Failed to load messages");
       return { messages: [], hasMore: false };
     }
+
+    console.log('✅ Messages fetched successfully:', { count: data?.length, totalCount: count });
+    console.log('📝 Sample message data:', data?.[0]);
 
     const messages = (data as UnifiedMessage[]).reverse();
     const hasMore = count ? offset + limit < count : false;

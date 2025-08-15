@@ -10,7 +10,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import ShareStatusBadge from "@/components/gifting/wishlist/ShareStatusBadge";
 
 interface FavoritesDropdownProps {
@@ -19,7 +19,7 @@ interface FavoritesDropdownProps {
 
 const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
   const { user } = useAuth();
-  const { wishlists, loading, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, loading, loadWishlists } = useUnifiedWishlistSystem();
   const navigate = useNavigate();
   
   // Reload wishlists when component mounts to ensure fresh data

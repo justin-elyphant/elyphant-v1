@@ -8,7 +8,7 @@ import ProductDetailsImageSection from "./product-details/ProductDetailsImageSec
 import ProductDetailsActionsSection from "./product-details/ProductDetailsActionsSection";
 import MobileProductSheet from "./product-details/MobileProductSheet";
 import ProductCarousel from "./product-details/ProductCarousel";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import { Star } from "lucide-react";
 
@@ -34,7 +34,7 @@ const ProductDetailsDialog = ({
   const [productData, setProductData] = useState(null);
 
   // Use unified wishlist system directly
-  const { wishlists, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, loadWishlists } = useUnifiedWishlistSystem();
 
   useEffect(() => {
     if (open) {

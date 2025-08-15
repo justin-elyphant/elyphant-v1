@@ -3,7 +3,7 @@ import React from "react";
 import { Product } from "@/types/product";
 import ProductItem from "./product-item/ProductItem";
 import MobileProductGrid from "./mobile/MobileProductGrid";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 interface ProductGridDisplayProps {
   products: Product[];
@@ -24,7 +24,7 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   isFavorited,
   isMobile
 }) => {
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
 
   if (products.length === 0) {
     return (

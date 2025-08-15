@@ -20,7 +20,7 @@ import WishlistCategoryBadge from "@/components/gifting/wishlist/categories/Wish
 import WishlistShareButton from "@/components/gifting/wishlist/share/WishlistShareButton";
 import StandardBackButton from "@/components/shared/StandardBackButton";
 import StandardBreadcrumb from "@/components/shared/StandardBreadcrumb";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ import { Loader2 } from "lucide-react";
 const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { wishlists, loading, deleteWishlist, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, loading, deleteWishlist, loadWishlists } = useUnifiedWishlistSystem();
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

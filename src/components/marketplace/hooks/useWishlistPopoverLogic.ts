@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 // Core extracted logic for WishlistSelectionPopover
 export const useWishlistPopoverLogic = ({
@@ -19,7 +19,7 @@ export const useWishlistPopoverLogic = ({
   productBrand?: string;
   onClose?: () => void;
 }) => {
-  const { wishlists, addToWishlist, removeFromWishlist, createWishlistWithItem, loadWishlists } = useUnifiedWishlist();
+  const { wishlists, addToWishlist, removeFromWishlist, createWishlistWithItem, loadWishlists } = useUnifiedWishlistSystem();
   const [open, setOpen] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState<string | null>(null);
   const [removingFromWishlist, setRemovingFromWishlist] = useState<string | null>(null);
@@ -49,15 +49,14 @@ export const useWishlistPopoverLogic = ({
     try {
       setAddingToWishlist(wishlistId);
       
-      const success = await addToWishlist(wishlistId, {
+      const success = await addToWishlist({ wishlistId, item: {
         product_id: productId,
         title: productName,
         name: productName,
         price: productPrice,
         image_url: productImage,
-        brand: productBrand,
-        wishlist_id: wishlistId
-      });
+        brand: productBrand
+      }});
 
       if (success) {
         console.log('useWishlistPopoverLogic - Successfully added to wishlist, reloading data');
@@ -90,7 +89,7 @@ export const useWishlistPopoverLogic = ({
     try {
       setRemovingFromWishlist(wishlistId);
       
-      const success = await removeFromWishlist(wishlistId, item.id);
+      const success = await removeFromWishlist({ wishlistId, itemId: item.id });
       
       if (success) {
         console.log('useWishlistPopoverLogic - Successfully removed from wishlist, reloading data');
@@ -120,7 +119,7 @@ export const useWishlistPopoverLogic = ({
       const removalPromises = wishlistsContainingProduct.map(async (wishlist) => {
         const item = wishlist.items?.find(item => item.product_id === productId);
         if (item) {
-          return removeFromWishlist(wishlist.id, item.id);
+          return removeFromWishlist({ wishlistId: wishlist.id, itemId: item.id });
         }
         return Promise.resolve(false);
       });

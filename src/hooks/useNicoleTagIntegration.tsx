@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { tagIntelligenceService } from "@/services/wishlist/TagIntelligenceService";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 interface NicoleTagContext {
   recipientProfile?: any;
@@ -14,7 +14,7 @@ interface NicoleTagContext {
  * Hook to integrate wishlist tags with Nicole's AI recommendations
  */
 export function useNicoleTagIntegration() {
-  const { wishlists } = useUnifiedWishlist();
+  const { wishlists } = useUnifiedWishlistSystem();
 
   /**
    * Get contextual tags for Nicole's gift recommendations

@@ -7,7 +7,7 @@ import CreateWishlistDialog from "./wishlist/CreateWishlistDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditWishlistDialog from "./wishlist/EditWishlistDialog";
 import { Wishlist } from "@/types/profile";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { Loader2 } from "lucide-react";
 import {
   AlertDialog,
@@ -78,7 +78,7 @@ const MyWishlists = () => {
     deleteWishlist,
     removeFromWishlist,
     updateWishlistSharing,
-  } = useUnifiedWishlist();
+  } = useUnifiedWishlistSystem();
 
   // Use the sanitize utility to provide *only* cleaned categories
   const selectableCategories = React.useMemo(() => {
@@ -155,7 +155,7 @@ const MyWishlists = () => {
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
     // Only pass title and description to createWishlist
-    await createWishlist(values.title, values.description || "");
+    await createWishlist({ title: values.title, description: values.description || "" });
     setDialogOpen(false);
   };
 
@@ -278,7 +278,10 @@ const MyWishlists = () => {
               wishlists={filteredAndSortedWishlists}
               onEdit={handleEditWishlist}
               onDelete={handleDeleteWishlist}
-              onUpdateSharing={updateWishlistSharing}
+              onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+                await updateWishlistSharing({ wishlistId, isPublic });
+                return true;
+              }}
             />
           ) : viewMode === "grid" && filteredAndSortedWishlists.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

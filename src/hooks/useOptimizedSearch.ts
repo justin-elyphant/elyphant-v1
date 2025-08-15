@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { optimizedZincService } from '../services/search/optimizedZincService';
+import { unifiedMarketplaceService } from '@/services/marketplace/UnifiedMarketplaceService';
 import { toast } from 'sonner';
 
 export const useOptimizedSearch = () => {

@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useAuth } from "@/contexts/auth";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 
 const WishlistsCard = () => {
-  const { wishlists, loading } = useUnifiedWishlist();
+  const { wishlists, loading } = useUnifiedWishlistSystem();
   const { user } = useAuth();
   
   // Product details dialog state

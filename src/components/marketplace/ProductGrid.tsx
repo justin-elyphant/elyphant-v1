@@ -4,7 +4,7 @@ import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useAuth } from "@/contexts/auth";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import ProductItem from "./product-item/ProductItem";
@@ -47,7 +47,7 @@ const ProductGrid = ({
   const isMobile = useIsMobile();
   const [userData] = useLocalStorage("userData", null);
   const { user } = useAuth();
-  const { isProductWishlisted, quickAddToWishlist, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, quickAddToWishlist, loadWishlists } = useUnifiedWishlistSystem();
   
   // Memoize sorted products to prevent unnecessary recalculations
   const sortedProducts = useMemo(() => {

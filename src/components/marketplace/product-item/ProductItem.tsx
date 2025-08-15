@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Button } from "@/components/ui/button";
 import { Heart, Users } from "lucide-react";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import ProductRating from "./ProductRating";
@@ -30,7 +30,7 @@ const ProductItem = ({
   statusBadge,
 }: ProductItemProps) => {
   const { user } = useAuth();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
 
   const productId = String(product.product_id || product.id);

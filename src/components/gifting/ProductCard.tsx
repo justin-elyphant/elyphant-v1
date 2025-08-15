@@ -14,7 +14,7 @@ import WishlistButton from "./WishlistButton";
 import ProductPriceSection from "./ProductPriceSection";
 import ProductRatingSection from "./ProductRatingSection";
 import WishlistSelectionPopoverButton from "./wishlist/WishlistSelectionPopoverButton";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 interface ProductCardProps {
   product: any;
@@ -33,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
   const isMobile = useIsMobile();
 
   // Use the unified wishlist system to determine if product is wishlisted

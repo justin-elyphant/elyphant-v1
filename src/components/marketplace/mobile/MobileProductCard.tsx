@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import SignUpDialog from "../SignUpDialog";
 
 interface MobileProductCardProps {
@@ -25,7 +25,7 @@ const MobileProductCard = ({
   statusBadge,
 }: MobileProductCardProps) => {
   const { user } = useAuth();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlist();
+  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
 
   const productId = String(product.product_id || product.id);

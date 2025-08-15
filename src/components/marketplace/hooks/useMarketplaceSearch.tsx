@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { toast } from "sonner";
-import { useSearchProducts } from "./useSearchProducts";
+import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import { useFilterProducts } from "./useFilterProducts";
 import { usePageInfo } from "./usePageInfo";
 import { useEnhancedCategorySearch } from "@/hooks/useEnhancedCategorySearch";
@@ -25,7 +25,7 @@ export const useMarketplaceSearch = () => {
     toastShownRef, 
     searchIdRef,
     RESULTS_LIMIT 
-  } = useSearchProducts(setProducts);
+  } = useUnifiedSearch();
   
   const { searchCategoryProducts } = useEnhancedCategorySearch();
   

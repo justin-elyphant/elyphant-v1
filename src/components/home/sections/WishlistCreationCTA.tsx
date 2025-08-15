@@ -7,7 +7,7 @@ import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { useAuth } from "@/contexts/auth";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
 import { Product } from "@/types/product";
@@ -20,7 +20,7 @@ type ProductWithCategory = Product & { categoryBadge?: string };
 
 const WishlistCreationCTA = () => {
   const { user } = useAuth();
-  const { quickAddToWishlist, wishlists } = useUnifiedWishlist();
+  const { quickAddToWishlist, wishlists } = useUnifiedWishlistSystem();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const isMobile = useIsMobile();

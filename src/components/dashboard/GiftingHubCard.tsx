@@ -13,7 +13,7 @@ import { format } from "date-fns";
 
 // Import existing hooks and components
 import { useAuth } from "@/contexts/auth";
-import { useUnifiedWishlist } from "@/hooks/useUnifiedWishlist";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
@@ -392,7 +392,7 @@ const SmartGiftingTab = () => {
 
 // My Collections Tab Component
 const MyCollectionsTab = () => {
-  const { wishlists, loading } = useUnifiedWishlist();
+  const { wishlists, loading } = useUnifiedWishlistSystem();
   const { user } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductDetails, setShowProductDetails] = useState(false);

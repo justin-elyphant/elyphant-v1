@@ -13,7 +13,7 @@ import { toast } from "sonner";
 interface FriendResultCardProps {
   friend: FriendSearchResult;
   onSendRequest: (friendId: string, friendName: string) => void;
-  onViewProfile?: (friendId: string) => void;
+  onViewProfile?: (profileIdentifier: string) => void;
 }
 
 const FriendResultCard: React.FC<FriendResultCardProps> = ({
@@ -198,7 +198,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onViewProfile(friend.id)}
+            onClick={() => onViewProfile(friend.username || friend.id)}
           >
             View
           </Button>

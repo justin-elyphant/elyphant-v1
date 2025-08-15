@@ -179,15 +179,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   // Handle friend selection
   const handleFriendSelect = (friend: FriendSearchResult) => {
+    const profilePath = friend.username || friend.id;
     console.log(`🔍 [AI SEARCH NAVIGATION] Navigating to profile:`, {
       id: friend.id,
       name: friend.name,
       username: friend.username,
       email: friend.email,
-      url: `/profile/${friend.id}`
+      url: `/profile/${profilePath}`
     });
     setShowSuggestions(false);
-    navigate(`/profile/${friend.id}`);
+    navigate(`/profile/${profilePath}`);
   };
 
   // Handle product selection

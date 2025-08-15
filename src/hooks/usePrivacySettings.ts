@@ -71,6 +71,8 @@ export const usePrivacySettings = () => {
           ...settings,
           ...newSettings,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;

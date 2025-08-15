@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Gift, Users, Heart, Baby, Plus, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,9 +23,53 @@ interface FriendCardProps {
 
 const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, onVerificationRequest }) => {
   const navigate = useNavigate();
+  const { profile } = useProfile();
   const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
   const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
+
+  const handleViewDetailsClick = () => {
+    console.group('🔍 [FriendCard] View Details Debug Information');
+    console.log('📅 Timestamp:', new Date().toISOString());
+    console.log('👤 Current User:', {
+      id: profile?.id,
+      name: profile?.name,
+      username: profile?.username
+    });
+    console.log('🔗 Friend Object (Complete):', friend);
+    console.log('📊 Friend Properties Analysis:', {
+      id: friend.id,
+      name: friend.name,
+      username: friend.username,
+      imageUrl: friend.imageUrl,
+      type: friend.type,
+      relationship: friend.relationship,
+      customRelationship: friend.customRelationship,
+      dataStatus: friend.dataStatus,
+      interests: friend.interests,
+      bio: friend.bio,
+      mutualFriends: friend.mutualFriends,
+      lastActive: friend.lastActive,
+      connectionDate: friend.connectionDate,
+      isPending: friend.isPending,
+      recipientEmail: friend.recipientEmail
+    });
+    console.log('🚩 Potential Issues:', {
+      nameIsUnknown: friend.name.includes('Unknown'),
+      usernameIsGeneric: friend.username.includes('@unknown'),
+      missingProfileImage: friend.imageUrl === '/placeholder.svg',
+      noInterests: !friend.interests || friend.interests.length === 0,
+      noBio: !friend.bio
+    });
+    console.log('🧭 Navigation Details:', {
+      targetRoute: `/connection/${friend.id}`,
+      connectionId: friend.id
+    });
+    console.groupEnd();
+    
+    // Navigate after logging
+    navigate(`/connection/${friend.id}`);
+  };
 
   const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {
     switch (intent) {
@@ -124,8 +169,8 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
           />
         </CardContent>
         <CardFooter className="flex justify-between pt-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/connection/${friend.id}`}>View Details</Link>
+          <Button variant="outline" size="sm" onClick={handleViewDetailsClick}>
+            View Details
           </Button>
           <div className="flex gap-2">
             <TooltipProvider>

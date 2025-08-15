@@ -37,17 +37,35 @@ export const useConnectionsAdapter = () => {
   const transformedConnections = useMemo(() => {
     console.log('🔄 [useConnectionsAdapter] Transforming connections:', connections.length);
     return connections.map(conn => {
-      const connectedUserId = conn.user_id !== conn.connected_user_id 
-        ? (conn.user_id === conn.id ? conn.connected_user_id : conn.user_id)
-        : conn.connected_user_id;
+      // For accepted connections, we should always show the profile name
+      // even if the privacy check fails, since they're already connected
+      const isAcceptedConnection = conn.status === 'accepted';
+      
+      // Use the actual profile data that comes from the connection query
+      const displayName = isAcceptedConnection 
+        ? (conn.profile_name || conn.name || 'Connected User')
+        : (conn.profile_name || 'Unknown User');
+        
+      const displayUsername = isAcceptedConnection
+        ? (conn.profile_username || conn.username || '@connected')
+        : (conn.profile_username || '@unknown');
+
+      console.log('🔍 [useConnectionsAdapter] Processing connection:', {
+        id: conn.id,
+        originalName: conn.profile_name,
+        fallbackName: conn.name,
+        displayName,
+        status: conn.status,
+        isAccepted: isAcceptedConnection
+      });
 
       return {
         id: conn.id,
-        name: conn.profile_name || 'Unknown User',
-        username: conn.profile_username || '@unknown',
+        name: displayName,
+        username: displayUsername,
         imageUrl: conn.profile_image || '/placeholder.svg',
         mutualFriends: 0, // Will be calculated asynchronously
-        type: conn.status === 'accepted' ? 'friend' as const : 'suggestion' as const,
+        type: isAcceptedConnection ? 'friend' as const : 'suggestion' as const,
         lastActive: 'Recently',
         relationship: conn.relationship_type as RelationshipType,
         dataStatus: {
@@ -64,8 +82,8 @@ export const useConnectionsAdapter = () => {
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({
       id: conn.id,
-      name: conn.profile_name || 'Unknown User',
-      username: conn.profile_username || '@unknown',
+      name: conn.profile_name || conn.name || 'Following User',
+      username: conn.profile_username || conn.username || '@following',
       imageUrl: conn.profile_image || '/placeholder.svg',
       mutualFriends: 0,
       type: 'following' as const,

@@ -34,6 +34,18 @@ export const searchFriendsWithPrivacy = async (
   limit: number = 20
 ): Promise<FilteredProfile[]> => {
   try {
+    // First try enhanced search for better results
+    const { enhancedFriendSearch } = await import('./enhancedFriendSearch');
+    const enhancedResults = await enhancedFriendSearch(searchTerm, currentUserId, limit);
+    
+    if (enhancedResults.length > 0) {
+      console.log(`🔍 [ENHANCED SEARCH] Found ${enhancedResults.length} results, using enhanced search`);
+      return enhancedResults;
+    }
+    
+    // Fallback to original search logic
+    console.log(`🔍 [FALLBACK SEARCH] Using original search logic`);
+    
     // Clean and process the search term
     const cleanedSearchTerm = searchTerm.startsWith('@') ? searchTerm.slice(1) : searchTerm;
     const isEmailSearch = searchTerm.includes('@') && !searchTerm.startsWith('@');

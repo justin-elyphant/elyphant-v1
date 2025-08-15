@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Shield, Eye, Users, MessageSquare, Heart } from "lucide-react";
-import { usePrivacySettings } from "@/hooks/usePrivacySettings";
+import { usePrivacySettings } from "@/hooks/usePrivacySettings.ts";
 import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
 

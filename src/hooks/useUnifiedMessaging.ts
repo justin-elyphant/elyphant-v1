@@ -37,18 +37,34 @@ export const useUnifiedMessaging = ({ type, chatId }: UseUnifiedMessagingOptions
   // =============================================================================
 
   const loadMessages = useCallback(async (pageNum: number = 0, append: boolean = false) => {
-    if (!user || !chatId) return;
+    console.log('🚀 loadMessages called', { user: user?.id, chatId, type, pageNum, append });
+    
+    if (!user || !chatId) {
+      console.log('❌ Missing user or chatId', { user: user?.id, chatId });
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('📡 Starting message fetch...', { type, chatId, pageNum });
       
       let result;
       if (type === 'direct') {
+        console.log('🔄 Calling fetchDirectMessages...', { chatId, pageNum });
         result = await unifiedMessagingService.fetchDirectMessages(chatId, pageNum);
+        console.log('✅ fetchDirectMessages result:', result);
       } else {
+        console.log('🔄 Calling fetchGroupMessages...', { chatId });
         const groupMessages = await unifiedMessagingService.fetchGroupMessages(chatId);
         result = { messages: groupMessages, hasMore: false };
+        console.log('✅ fetchGroupMessages result:', result);
       }
+
+      console.log('📝 Setting messages in state...', { 
+        resultCount: result.messages.length, 
+        append, 
+        currentMessageCount: messages.length 
+      });
 
       if (append) {
         setMessages(prev => [...result.messages, ...prev]);
@@ -58,8 +74,13 @@ export const useUnifiedMessaging = ({ type, chatId }: UseUnifiedMessagingOptions
       
       setHasMore(result.hasMore);
       setPage(pageNum);
+      
+      console.log('✅ Messages loaded successfully', { 
+        newCount: result.messages.length, 
+        hasMore: result.hasMore 
+      });
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error('❌ Error loading messages:', error);
     } finally {
       setLoading(false);
     }

@@ -22,6 +22,8 @@ const Chat = () => {
   const { user } = useAuth();
   const [connection, setConnection] = useState<ConnectionInfo | null>(null);
   
+  console.log('🚀 Chat component mounted', { userId, currentUser: user?.id });
+  
   // Use unified messaging hook for this chat
   const { 
     messages, 
@@ -32,7 +34,15 @@ const Chat = () => {
     isTyping 
   } = useDirectMessaging(userId || '');
 
+  console.log('📱 Chat state:', { 
+    messagesCount: messages.length, 
+    loading, 
+    userId, 
+    hasConnection: !!connection 
+  });
+
   useEffect(() => {
+    console.log('🔄 Chat useEffect triggered', { userId, user: user?.id });
     if (!userId || !user) return;
     loadConnectionInfo();
   }, [userId, user]);

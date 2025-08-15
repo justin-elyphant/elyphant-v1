@@ -114,22 +114,38 @@ export const searchFriendsWithPrivacy = async (
       profileError = result.error;
     } else {
       console.log(`🔍 [GENERAL SEARCH] Looking across name fields for: "${cleanedSearchTerm}"`);
-      const result = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          name,
-          username,
-          first_name,
-          last_name,
-          email,
-          profile_image,
-          bio
-        `)
-        .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`)
-        .limit(limit);
-      profiles = result.data;
-      profileError = result.error;
+      
+      // Use RPC call to bypass RLS restrictions for search functionality
+      // This allows finding users that would normally be filtered by privacy policies
+      const { data: searchResults, error: searchError } = await supabase.rpc('search_users_for_friends', {
+        search_term: cleanedSearchTerm,
+        requesting_user_id: currentUserId || null,
+        search_limit: limit
+      });
+      
+      if (searchError) {
+        console.log(`🔍 [SEARCH FALLBACK] RPC failed, trying direct query:`, searchError);
+        // Fallback to direct query for users that are publicly visible
+        const result = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            name,
+            username,
+            first_name,
+            last_name,
+            email,
+            profile_image,
+            bio
+          `)
+          .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`)
+          .limit(limit);
+        profiles = result.data;
+        profileError = result.error;
+      } else {
+        profiles = searchResults;
+        profileError = null;
+      }
     }
 
     if (profileError) {

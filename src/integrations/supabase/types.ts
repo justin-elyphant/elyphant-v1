@@ -3662,6 +3662,23 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
+      search_users_for_friends: {
+        Args: {
+          requesting_user_id?: string
+          search_limit?: number
+          search_term: string
+        }
+        Returns: {
+          bio: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          name: string
+          profile_image: string
+          username: string
+        }[]
+      }
       set_limit: {
         Args: { "": number }
         Returns: number

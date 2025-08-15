@@ -17,14 +17,19 @@ export const useFriendSearch = (): UseFriendSearchResult => {
   const [error, setError] = useState<string | null>(null);
 
   const searchForFriends = useCallback(async (query: string) => {
+    console.log('🔍 [useFriendSearch.ts] Starting search for:', query);
+    
     try {
       setIsLoading(true);
       setError(null);
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 [useFriendSearch.ts] Current user ID:', user?.id);
+      
       const found = await searchFriends(query, user?.id);
+      console.log('🔍 [useFriendSearch.ts] Search results:', found);
       setResults(found);
     } catch (e: any) {
-      console.error("useFriendSearch.searchForFriends error", e);
+      console.error("🔍 [useFriendSearch.ts] searchForFriends error", e);
       setError(e?.message || "Search failed");
       setResults([]);
     } finally {

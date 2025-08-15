@@ -153,39 +153,54 @@ async function searchByUsername(username: string, profiles: Map<string, any>, li
 async function searchByName(processedQuery: any, variations: string[], profiles: Map<string, any>, limit: number) {
   const { nameTokens } = processedQuery;
   
-  if (!nameTokens) return;
+  console.log(`🔍 [NAME SEARCH] Starting with tokens:`, nameTokens);
+  
+  if (!nameTokens) {
+    console.log(`🔍 [NAME SEARCH] No name tokens found, skipping`);
+    return;
+  }
   
   // Search for exact first + last name combinations
   if (nameTokens.firstName && nameTokens.lastName) {
+    console.log(`🔍 [NAME SEARCH] Searching for: "${nameTokens.firstName}" + "${nameTokens.lastName}"`);
+    
     // Original order: first last
-    const { data: originalOrder } = await supabase
+    const { data: originalOrder, error: originalError } = await supabase
       .from('profiles')
       .select(`
         id, name, username, first_name, last_name, email, profile_image, bio
       `)
-      .ilike('first_name', nameTokens.firstName)
-      .ilike('last_name', nameTokens.lastName)
+      .ilike('first_name', `${nameTokens.firstName}%`)
+      .ilike('last_name', `${nameTokens.lastName}%`)
       .limit(10);
       
-    if (originalOrder) {
+    console.log(`🔍 [NAME SEARCH] Original order query result:`, { data: originalOrder, error: originalError });
+      
+    if (originalOrder && originalOrder.length > 0) {
+      console.log(`🔍 [NAME SEARCH] Found ${originalOrder.length} profiles in original order`);
       originalOrder.forEach(profile => {
+        console.log(`🔍 [NAME SEARCH] Adding profile: ${profile.first_name} ${profile.last_name} (${profile.name})`);
         profiles.set(profile.id, { ...profile, matchType: 'fullNameMatch', searchScore: 95 });
       });
     }
     
     // Reversed order: last first
-    const { data: reversedOrder } = await supabase
+    const { data: reversedOrder, error: reversedError } = await supabase
       .from('profiles')
       .select(`
         id, name, username, first_name, last_name, email, profile_image, bio
       `)
-      .ilike('first_name', nameTokens.lastName)
-      .ilike('last_name', nameTokens.firstName)
+      .ilike('first_name', `${nameTokens.lastName}%`)
+      .ilike('last_name', `${nameTokens.firstName}%`)
       .limit(10);
       
-    if (reversedOrder) {
+    console.log(`🔍 [NAME SEARCH] Reversed order query result:`, { data: reversedOrder, error: reversedError });
+      
+    if (reversedOrder && reversedOrder.length > 0) {
+      console.log(`🔍 [NAME SEARCH] Found ${reversedOrder.length} profiles in reversed order`);
       reversedOrder.forEach(profile => {
         if (!profiles.has(profile.id)) {
+          console.log(`🔍 [NAME SEARCH] Adding reversed profile: ${profile.first_name} ${profile.last_name} (${profile.name})`);
           profiles.set(profile.id, { ...profile, matchType: 'fullNameMatch', searchScore: 90 });
         }
       });
@@ -194,7 +209,9 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
   
   // Search by individual name parts
   if (nameTokens.firstName) {
-    const { data: firstNameMatches } = await supabase
+    console.log(`🔍 [NAME SEARCH] Searching individual name parts for: "${nameTokens.firstName}"`);
+    
+    const { data: firstNameMatches, error: firstNameError } = await supabase
       .from('profiles')
       .select(`
         id, name, username, first_name, last_name, email, profile_image, bio
@@ -202,11 +219,15 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
       .or(`first_name.ilike.%${nameTokens.firstName}%,last_name.ilike.%${nameTokens.firstName}%`)
       .limit(limit);
       
-    if (firstNameMatches) {
+    console.log(`🔍 [NAME SEARCH] Individual name parts result:`, { data: firstNameMatches, error: firstNameError });
+      
+    if (firstNameMatches && firstNameMatches.length > 0) {
+      console.log(`🔍 [NAME SEARCH] Found ${firstNameMatches.length} profiles matching individual name parts`);
       firstNameMatches.forEach(profile => {
         if (!profiles.has(profile.id)) {
           const matchType = profile.first_name?.toLowerCase().includes(nameTokens.firstName!.toLowerCase()) 
             ? 'firstNameMatch' : 'lastNameMatch';
+          console.log(`🔍 [NAME SEARCH] Adding individual match: ${profile.first_name} ${profile.last_name} (${matchType})`);
           profiles.set(profile.id, { ...profile, matchType, searchScore: 75 });
         }
       });
@@ -215,7 +236,9 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
   
   // Fallback to general name search
   const fullQuery = `${nameTokens.firstName} ${nameTokens.lastName || ''}`.trim();
-  const { data: generalMatches } = await supabase
+  console.log(`🔍 [NAME SEARCH] Fallback general search for: "${fullQuery}"`);
+  
+  const { data: generalMatches, error: generalError } = await supabase
     .from('profiles')
     .select(`
       id, name, username, first_name, last_name, email, profile_image, bio
@@ -223,13 +246,19 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
     .ilike('name', `%${fullQuery}%`)
     .limit(limit);
     
-  if (generalMatches) {
+  console.log(`🔍 [NAME SEARCH] General fallback result:`, { data: generalMatches, error: generalError });
+    
+  if (generalMatches && generalMatches.length > 0) {
+    console.log(`🔍 [NAME SEARCH] Found ${generalMatches.length} profiles in general fallback`);
     generalMatches.forEach(profile => {
       if (!profiles.has(profile.id)) {
+        console.log(`🔍 [NAME SEARCH] Adding general match: ${profile.name}`);
         profiles.set(profile.id, { ...profile, matchType: 'partialName', searchScore: 60 });
       }
     });
   }
+  
+  console.log(`🔍 [NAME SEARCH] Completed - Total profiles found: ${profiles.size}`);
 }
 
 /**
@@ -323,10 +352,16 @@ function rankSearchResults(
         ...profile,
         searchScore: finalScore,
         matchReasons,
-        // Transform to FilteredProfile format
-        name: profile.name || 'Unknown User',
+        matchType: profile.matchType,
+        // Ensure required fields are properly set
+        id: profile.id,
+        name: profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
         username: profile.username || '',
-        email: '', // Hide email for privacy
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        email: profile.email || '', // Keep email for debugging
+        profile_image: profile.profile_image,
+        bio: profile.bio,
         connectionStatus: 'none' as const,
         mutualConnections: 0,
         privacyLevel: 'public' as const,

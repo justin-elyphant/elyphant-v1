@@ -2,9 +2,10 @@
 import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { Product } from "@/types/product";
+import { FriendSearchResult } from "./friendSearchService";
 
 export interface UnifiedSearchResults {
-  friends: FilteredProfile[];
+  friends: FriendSearchResult[];
   products: Product[];
   brands: string[];
   total: number;
@@ -53,8 +54,26 @@ export const unifiedSearch = async (
     try {
       console.log('🔍 [unifiedSearch] Searching friends...');
       const friendResults = await searchFriendsWithPrivacy(query, currentUserId);
-      results.friends = friendResults.slice(0, Math.floor(maxResults / 3));
+      
+      // Convert FilteredProfile to FriendSearchResult for UI compatibility
+      results.friends = friendResults.slice(0, Math.floor(maxResults / 3)).map(profile => ({
+        id: profile.id,
+        name: profile.name,
+        username: profile.username,
+        email: profile.email,
+        profile_image: profile.profile_image,
+        bio: profile.bio,
+        connectionStatus: profile.connectionStatus,
+        mutualConnections: profile.mutualConnections || 0,
+        lastActive: profile.lastActive,
+        privacyLevel: profile.privacyLevel || 'public',
+        isPrivacyRestricted: profile.isPrivacyRestricted || false,
+        first_name: profile.name.split(' ')[0] || '',
+        last_name: profile.name.split(' ').slice(1).join(' ') || ''
+      }));
+      
       console.log(`🔍 [unifiedSearch] Friend search completed: ${results.friends.length} results`);
+      console.log('🔍 [unifiedSearch] Friend results formatted for UI:', results.friends);
     } catch (error) {
       console.error('🔍 [unifiedSearch] Error searching friends:', error);
     }

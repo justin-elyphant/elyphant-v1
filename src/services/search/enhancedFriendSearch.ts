@@ -348,7 +348,7 @@ function rankSearchResults(
       const matchReasons = calculateMatchReasons(profile, processedQuery);
       const finalScore = weights[profile.matchType] || 30;
       
-      return {
+      const formattedResult = {
         ...profile,
         searchScore: finalScore,
         matchReasons,
@@ -367,6 +367,16 @@ function rankSearchResults(
         privacyLevel: 'public' as const,
         isPrivacyRestricted: false
       };
+      
+      console.log(`🔍 [ENHANCED RANKING] Profile ${profile.id} formatted:`, {
+        id: formattedResult.id,
+        name: formattedResult.name,
+        username: formattedResult.username,
+        matchType: formattedResult.matchType,
+        searchScore: formattedResult.searchScore
+      });
+      
+      return formattedResult;
     })
     .sort((a, b) => b.searchScore - a.searchScore);
 }

@@ -179,16 +179,25 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   // Handle friend selection
   const handleFriendSelect = (friend: FriendSearchResult) => {
+    // Ensure proper profile navigation path
     const profilePath = friend.username || friend.id;
     console.log(`🔍 [AI SEARCH NAVIGATION] Navigating to profile:`, {
       id: friend.id,
       name: friend.name,
       username: friend.username,
       email: friend.email,
-      url: `/profile/${profilePath}`
+      targetUrl: `/profile/${profilePath}`
     });
+    
     setShowSuggestions(false);
-    navigate(`/profile/${profilePath}`);
+    
+    // Navigate with proper error handling
+    try {
+      navigate(`/profile/${profilePath}`);
+    } catch (error) {
+      console.error('🔍 [AI SEARCH NAVIGATION] Navigation error:', error);
+      toast.error('Failed to navigate to profile');
+    }
   };
 
   // Handle product selection
@@ -433,12 +442,17 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             products: unifiedResults.products?.length || 0, 
             brands: unifiedResults.brands?.length || 0,
             showSuggestions,
-            isNicoleMode
+            isNicoleMode,
+            sampleFriend: unifiedResults.friends?.[0] ? {
+              id: unifiedResults.friends[0].id,
+              name: unifiedResults.friends[0].name,
+              username: unifiedResults.friends[0].username
+            } : null
           })}
           <UnifiedSearchSuggestions
-            friends={unifiedResults.friends}
-            products={unifiedResults.products}
-            brands={unifiedResults.brands}
+            friends={unifiedResults.friends || []}
+            products={unifiedResults.products || []}
+            brands={unifiedResults.brands || []}
             isVisible={showSuggestions}
             onFriendSelect={handleFriendSelect}
             onProductSelect={handleProductSelect}

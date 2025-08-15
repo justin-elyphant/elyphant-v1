@@ -90,65 +90,50 @@ async function executeOptimizedSearch(
 }
 
 /**
- * Search by exact email
+ * Search by exact email using RPC to bypass RLS
  */
 async function searchByEmail(email: string, profiles: Map<string, any>) {
-  const { data } = await supabase
-    .from('profiles')
-    .select(`
-      id, name, username, first_name, last_name, email, profile_image, bio
-    `)
-    .eq('email', email)
-    .limit(1);
+  const { data } = await supabase.rpc('search_users_for_friends', {
+    search_term: email,
+    requesting_user_id: null,
+    search_limit: 5
+  });
     
   if (data) {
-    data.forEach(profile => {
+    // Filter for exact email matches
+    const exactMatches = data.filter(profile => profile.email?.toLowerCase() === email.toLowerCase());
+    exactMatches.forEach(profile => {
       profiles.set(profile.id, { ...profile, matchType: 'exactEmail', searchScore: 100 });
     });
   }
 }
 
 /**
- * Search by username with both exact and partial matching
+ * Search by username using RPC to bypass RLS
  */
 async function searchByUsername(username: string, profiles: Map<string, any>, limit: number) {
-  // Exact username match first
-  const { data: exactMatch } = await supabase
-    .from('profiles')
-    .select(`
-      id, name, username, first_name, last_name, email, profile_image, bio
-    `)
-    .eq('username', username)
-    .limit(5);
+  // Use RPC for username search
+  const { data } = await supabase.rpc('search_users_for_friends', {
+    search_term: username,
+    requesting_user_id: null,
+    search_limit: limit
+  });
     
-  if (exactMatch) {
-    exactMatch.forEach(profile => {
-      profiles.set(profile.id, { ...profile, matchType: 'exactUsername', searchScore: 100 });
-    });
-  }
-  
-  // Partial username match if exact didn't return results
-  if (!exactMatch?.length) {
-    const { data: partialMatch } = await supabase
-      .from('profiles')
-      .select(`
-        id, name, username, first_name, last_name, email, profile_image, bio
-      `)
-      .ilike('username', `%${username}%`)
-      .limit(limit);
+  if (data) {
+    data.forEach(profile => {
+      const isExactMatch = profile.username?.toLowerCase() === username.toLowerCase();
+      const matchType = isExactMatch ? 'exactUsername' : 'partialUsername';
+      const score = isExactMatch ? 100 : 80;
       
-    if (partialMatch) {
-      partialMatch.forEach(profile => {
-        if (!profiles.has(profile.id)) {
-          profiles.set(profile.id, { ...profile, matchType: 'partialUsername', searchScore: 80 });
-        }
-      });
-    }
+      if (!profiles.has(profile.id)) {
+        profiles.set(profile.id, { ...profile, matchType, searchScore: score });
+      }
+    });
   }
 }
 
 /**
- * Search by name with intelligent name matching
+ * Search by name using RPC to bypass RLS - more efficient single call
  */
 async function searchByName(processedQuery: any, variations: string[], profiles: Map<string, any>, limit: number) {
   const { nameTokens } = processedQuery;
@@ -160,70 +145,70 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
     return;
   }
   
-  // Search for exact first + last name combinations
+  // Try different search strategies using RPC
   if (nameTokens.firstName && nameTokens.lastName) {
     console.log(`🔍 [NAME SEARCH] Searching for: "${nameTokens.firstName}" + "${nameTokens.lastName}"`);
     
-    // Original order: first last
-    const { data: originalOrder, error: originalError } = await supabase
-      .from('profiles')
-      .select(`
-        id, name, username, first_name, last_name, email, profile_image, bio
-      `)
-      .ilike('first_name', `${nameTokens.firstName}%`)
-      .ilike('last_name', `${nameTokens.lastName}%`)
-      .limit(10);
-      
-    console.log(`🔍 [NAME SEARCH] Original order query result:`, { data: originalOrder, error: originalError });
-      
-    if (originalOrder && originalOrder.length > 0) {
-      console.log(`🔍 [NAME SEARCH] Found ${originalOrder.length} profiles in original order`);
-      originalOrder.forEach(profile => {
-        console.log(`🔍 [NAME SEARCH] Adding profile: ${profile.first_name} ${profile.last_name} (${profile.name})`);
-        profiles.set(profile.id, { ...profile, matchType: 'fullNameMatch', searchScore: 95 });
+    // Search with "firstName lastName" format
+    const fullName1 = `${nameTokens.firstName} ${nameTokens.lastName}`;
+    const { data: results1 } = await supabase.rpc('search_users_for_friends', {
+      search_term: fullName1,
+      requesting_user_id: null,
+      search_limit: limit
+    });
+    
+    if (results1) {
+      results1.forEach(profile => {
+        const isExactFullName = profile.name?.toLowerCase() === fullName1.toLowerCase();
+        const isFirstLastMatch = profile.first_name?.toLowerCase().includes(nameTokens.firstName!.toLowerCase()) && 
+                                profile.last_name?.toLowerCase().includes(nameTokens.lastName!.toLowerCase());
+        
+        let matchType = 'partialName';
+        let score = 60;
+        
+        if (isExactFullName) {
+          matchType = 'fullNameMatch';
+          score = 95;
+        } else if (isFirstLastMatch) {
+          matchType = 'fullNameMatch';
+          score = 90;
+        }
+        
+        console.log(`🔍 [NAME SEARCH] Adding profile: ${profile.first_name} ${profile.last_name} (${profile.name}) - ${matchType}`);
+        profiles.set(profile.id, { ...profile, matchType, searchScore: score });
       });
     }
     
-    // Reversed order: last first
-    const { data: reversedOrder, error: reversedError } = await supabase
-      .from('profiles')
-      .select(`
-        id, name, username, first_name, last_name, email, profile_image, bio
-      `)
-      .ilike('first_name', `${nameTokens.lastName}%`)
-      .ilike('last_name', `${nameTokens.firstName}%`)
-      .limit(10);
-      
-    console.log(`🔍 [NAME SEARCH] Reversed order query result:`, { data: reversedOrder, error: reversedError });
-      
-    if (reversedOrder && reversedOrder.length > 0) {
-      console.log(`🔍 [NAME SEARCH] Found ${reversedOrder.length} profiles in reversed order`);
-      reversedOrder.forEach(profile => {
+    // Try reversed order: "lastName firstName"
+    const fullName2 = `${nameTokens.lastName} ${nameTokens.firstName}`;
+    const { data: results2 } = await supabase.rpc('search_users_for_friends', {
+      search_term: fullName2,
+      requesting_user_id: null,
+      search_limit: limit
+    });
+    
+    if (results2) {
+      results2.forEach(profile => {
         if (!profiles.has(profile.id)) {
           console.log(`🔍 [NAME SEARCH] Adding reversed profile: ${profile.first_name} ${profile.last_name} (${profile.name})`);
-          profiles.set(profile.id, { ...profile, matchType: 'fullNameMatch', searchScore: 90 });
+          profiles.set(profile.id, { ...profile, matchType: 'fullNameMatch', searchScore: 85 });
         }
       });
     }
   }
   
-  // Search by individual name parts
-  if (nameTokens.firstName) {
-    console.log(`🔍 [NAME SEARCH] Searching individual name parts for: "${nameTokens.firstName}"`);
+  // Search by first name only if we don't have enough results
+  if (nameTokens.firstName && profiles.size < limit / 2) {
+    console.log(`🔍 [NAME SEARCH] Searching for first name: "${nameTokens.firstName}"`);
     
-    const { data: firstNameMatches, error: firstNameError } = await supabase
-      .from('profiles')
-      .select(`
-        id, name, username, first_name, last_name, email, profile_image, bio
-      `)
-      .or(`first_name.ilike.%${nameTokens.firstName}%,last_name.ilike.%${nameTokens.firstName}%`)
-      .limit(limit);
-      
-    console.log(`🔍 [NAME SEARCH] Individual name parts result:`, { data: firstNameMatches, error: firstNameError });
-      
-    if (firstNameMatches && firstNameMatches.length > 0) {
-      console.log(`🔍 [NAME SEARCH] Found ${firstNameMatches.length} profiles matching individual name parts`);
-      firstNameMatches.forEach(profile => {
+    const { data: firstNameResults } = await supabase.rpc('search_users_for_friends', {
+      search_term: nameTokens.firstName,
+      requesting_user_id: null,
+      search_limit: limit
+    });
+    
+    if (firstNameResults) {
+      firstNameResults.forEach(profile => {
         if (!profiles.has(profile.id)) {
           const matchType = profile.first_name?.toLowerCase().includes(nameTokens.firstName!.toLowerCase()) 
             ? 'firstNameMatch' : 'lastNameMatch';
@@ -234,48 +219,24 @@ async function searchByName(processedQuery: any, variations: string[], profiles:
     }
   }
   
-  // Fallback to general name search
-  const fullQuery = `${nameTokens.firstName} ${nameTokens.lastName || ''}`.trim();
-  console.log(`🔍 [NAME SEARCH] Fallback general search for: "${fullQuery}"`);
-  
-  const { data: generalMatches, error: generalError } = await supabase
-    .from('profiles')
-    .select(`
-      id, name, username, first_name, last_name, email, profile_image, bio
-    `)
-    .ilike('name', `%${fullQuery}%`)
-    .limit(limit);
-    
-  console.log(`🔍 [NAME SEARCH] General fallback result:`, { data: generalMatches, error: generalError });
-    
-  if (generalMatches && generalMatches.length > 0) {
-    console.log(`🔍 [NAME SEARCH] Found ${generalMatches.length} profiles in general fallback`);
-    generalMatches.forEach(profile => {
-      if (!profiles.has(profile.id)) {
-        console.log(`🔍 [NAME SEARCH] Adding general match: ${profile.name}`);
-        profiles.set(profile.id, { ...profile, matchType: 'partialName', searchScore: 60 });
-      }
-    });
-  }
-  
   console.log(`🔍 [NAME SEARCH] Completed - Total profiles found: ${profiles.size}`);
 }
 
 /**
- * General search across all fields
+ * General search using RPC to bypass RLS
  */
 async function searchGeneral(query: string, profiles: Map<string, any>, limit: number) {
-  const { data } = await supabase
-    .from('profiles')
-    .select(`
-      id, name, username, first_name, last_name, email, profile_image, bio
-    `)
-    .or(`name.ilike.%${query}%,username.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
-    .limit(limit);
+  const { data } = await supabase.rpc('search_users_for_friends', {
+    search_term: query,
+    requesting_user_id: null,
+    search_limit: limit
+  });
     
   if (data) {
     data.forEach(profile => {
-      profiles.set(profile.id, { ...profile, matchType: 'generalMatch', searchScore: 50 });
+      if (!profiles.has(profile.id)) {
+        profiles.set(profile.id, { ...profile, matchType: 'generalMatch', searchScore: 50 });
+      }
     });
   }
 }

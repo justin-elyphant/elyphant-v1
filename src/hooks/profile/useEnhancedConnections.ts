@@ -72,7 +72,6 @@ export const useEnhancedConnections = () => {
           try {
             const { data: canView } = await supabase
               .rpc('can_view_profile', {
-                viewer_id: user.id,
                 profile_user_id: targetUserId
               });
             

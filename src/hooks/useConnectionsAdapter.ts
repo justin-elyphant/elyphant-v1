@@ -120,6 +120,45 @@ export const useConnectionsAdapter = () => {
 
       console.log('✅ [useConnectionsAdapter] Processed profiles:', profileMap.size);
 
+      // Get all unique profile IDs for privacy settings lookup
+      const friendProfileIds = connections.map(conn => {
+        const isCurrentUserRequester = conn.user_id === currentUser.user.id;
+        return isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
+      });
+
+      // Fetch privacy settings for all friends in batch
+      const { data: privacyProfiles, error: privacyError } = await supabase
+        .from('profiles')
+        .select('id, data_sharing_settings, dob, email, shipping_address')
+        .in('id', friendProfileIds);
+
+      if (privacyError) {
+        console.error('❌ [useConnectionsAdapter] Privacy settings fetch error:', privacyError);
+      }
+
+      // Create privacy map for quick lookup
+      const privacyMap = new Map();
+      privacyProfiles?.forEach(profile => {
+        const settings = profile.data_sharing_settings || {};
+        privacyMap.set(profile.id, {
+          shipping: settings.shipping_address === 'friends' 
+            ? (profile.shipping_address ? 'verified' as const : 'missing' as const)
+            : settings.shipping_address === 'public' 
+              ? (profile.shipping_address ? 'verified' as const : 'missing' as const)
+              : 'missing' as const,
+          birthday: settings.dob === 'friends' 
+            ? (profile.dob ? 'verified' as const : 'missing' as const)
+            : settings.dob === 'public' 
+              ? (profile.dob ? 'verified' as const : 'missing' as const)
+              : 'missing' as const,
+          email: settings.email === 'friends' 
+            ? (profile.email ? 'verified' as const : 'missing' as const)
+            : settings.email === 'public' 
+              ? (profile.email ? 'verified' as const : 'missing' as const)
+              : 'missing' as const
+        });
+      });
+
       // Transform connections to friend objects with enhanced fallback
       const friends = connections.map(conn => {
         // Determine which profile to show (the other person)
@@ -137,6 +176,15 @@ export const useConnectionsAdapter = () => {
           console.warn('⚠️ [useConnectionsAdapter] Using fallback name for accepted connection:', otherUserId);
         }
         
+        // Get data status from privacy map or use fallback
+        const dataStatus = privacyMap.get(otherUserId) || {
+          shipping: 'missing' as const,
+          birthday: 'missing' as const,
+          email: 'missing' as const
+        };
+
+        console.log(`🔍 [useConnectionsAdapter] Privacy status for ${displayName}:`, dataStatus);
+
         return {
           id: otherUserId,
           connectionId: conn.id, // Add connectionId for deletion
@@ -147,11 +195,7 @@ export const useConnectionsAdapter = () => {
           type: 'friend' as const,
           lastActive: 'recently',
           relationship: conn.relationship_type as RelationshipType,
-          dataStatus: {
-            shipping: 'missing' as const,
-            birthday: 'missing' as const,
-            email: 'missing' as const
-          },
+          dataStatus,
           bio: otherProfile?.bio || '',
           connectionDate: conn.created_at
         };

@@ -106,7 +106,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
 
       <ConnectionPrivacyControls
         connection={friend}
-        onUpdate={() => window.location.reload()} // Simple refresh for now
+        onUpdate={() => window.location.reload()}
         isOpen={showPrivacyControls}
         onClose={() => setShowPrivacyControls(false)}
       />

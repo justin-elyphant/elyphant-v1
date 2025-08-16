@@ -14,6 +14,8 @@ import DataVerificationSection from "./DataVerificationSection";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
 import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import { AutoGiftStatusBadge } from "./AutoGiftStatusBadge";
+import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 
 interface FriendCardProps {
   friend: Connection;
@@ -27,6 +29,9 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
   const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
   const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
   const [showGiftWizard, setShowGiftWizard] = useState(false);
+  
+  // Auto-gift permission checking
+  const { permissionResult, loading: permissionLoading } = useAutoGiftPermission(friend);
 
   const handleViewDetailsClick = () => {
     console.group('🔍 [FriendCard] View Details Debug Information');
@@ -87,7 +92,14 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
 
   return (
     <>
-      <Card key={friend.id} className="overflow-hidden">
+      <Card key={friend.id} className="overflow-hidden relative">
+        {/* Auto-Gift Status Badge - Outside card, top-right corner */}
+        {permissionResult && !permissionLoading && (
+          <div className="absolute -top-2 -right-2 z-10">
+            <AutoGiftStatusBadge status={permissionResult.status} className="shadow-md" />
+          </div>
+        )}
+        
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-3">

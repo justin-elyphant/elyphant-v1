@@ -59,6 +59,11 @@ export const useConnectionsAdapter = () => {
         isAccepted: isAcceptedConnection
       });
 
+      // Fix data status logic - we need to show what the CURRENT USER has granted to the connected user
+      // Find the connection record where current user is granting permissions (user_id = current user)
+      const currentUserIsGrantor = conn.user_id === user?.id;
+      const permissionsToCheck = currentUserIsGrantor ? conn.data_access_permissions : {};
+      
       return {
         id: conn.id,
         name: displayName,
@@ -69,15 +74,18 @@ export const useConnectionsAdapter = () => {
         lastActive: 'Recently',
         relationship: conn.relationship_type as RelationshipType,
         dataStatus: {
-          shipping: conn.data_access_permissions?.shipping_address ? 'verified' as const : 'missing' as const,
-          birthday: conn.data_access_permissions?.dob ? 'verified' as const : 'missing' as const,
-          email: conn.data_access_permissions?.email ? 'verified' as const : 'missing' as const
+          shipping: permissionsToCheck?.shipping_address === false ? 'blocked' as const : 
+                   permissionsToCheck?.shipping_address === undefined ? 'verified' as const : 'missing' as const,
+          birthday: permissionsToCheck?.dob === false ? 'blocked' as const : 
+                   permissionsToCheck?.dob === undefined ? 'verified' as const : 'missing' as const,
+          email: permissionsToCheck?.email === false ? 'blocked' as const : 
+                 permissionsToCheck?.email === undefined ? 'verified' as const : 'missing' as const
         },
         interests: [],
         bio: conn.profile_bio || '',
       } as Connection;
     });
-  }, [connections, refreshTrigger]);
+  }, [connections, refreshTrigger, user]);
 
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({

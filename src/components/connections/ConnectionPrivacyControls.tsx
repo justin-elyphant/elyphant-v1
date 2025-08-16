@@ -34,10 +34,12 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return;
 
+      // Get the connection record where current user is the one granting permissions
       const { data, error } = await supabase
         .from('user_connections')
         .select('data_access_permissions')
-        .or(`and(user_id.eq.${currentUser.user.id},connected_user_id.eq.${connection.id}),and(user_id.eq.${connection.id},connected_user_id.eq.${currentUser.user.id})`)
+        .eq('user_id', currentUser.user.id)
+        .eq('connected_user_id', connection.id)
         .single();
 
       if (error) throw error;
@@ -73,13 +75,15 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
         gift_preferences: newPermissions.gift_preferences ? undefined : false
       };
 
+      // Update the connection record where current user is granting permissions
       const { error } = await supabase
         .from('user_connections')
         .update({ 
           data_access_permissions: dbPermissions,
           updated_at: new Date().toISOString()
         })
-        .or(`and(user_id.eq.${currentUser.user.id},connected_user_id.eq.${connection.id}),and(user_id.eq.${connection.id},connected_user_id.eq.${currentUser.user.id})`);
+        .eq('user_id', currentUser.user.id)
+        .eq('connected_user_id', connection.id);
 
       if (error) throw error;
 

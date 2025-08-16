@@ -120,16 +120,47 @@ export const useEnhancedConnections = () => {
       
       // Deduplicate connections by the other user's ID to avoid showing duplicates
       // Each connection should only appear once regardless of bidirectionality
+      console.log('🔍 [useEnhancedConnections] Before deduplication:', enhancedConnections.length, 'connections');
+      enhancedConnections.forEach((conn, idx) => {
+        const otherUserId = conn.user_id === user.id ? conn.connected_user_id : conn.user_id;
+        console.log(`🔍 [useEnhancedConnections] Connection ${idx}:`, {
+          id: conn.id,
+          user_id: conn.user_id,
+          connected_user_id: conn.connected_user_id,
+          otherUserId,
+          status: conn.status,
+          profile_name: conn.profile_name
+        });
+      });
+      
+      // Use a more robust deduplication strategy
       const uniqueConnections = new Map<string, typeof enhancedConnections[0]>();
       
       enhancedConnections.forEach(conn => {
         const otherUserId = conn.user_id === user.id ? conn.connected_user_id : conn.user_id;
-        if (otherUserId && !uniqueConnections.has(otherUserId)) {
+        
+        if (!otherUserId) {
+          console.log('🔍 [useEnhancedConnections] Skipping connection with no other user:', conn.id);
+          return;
+        }
+        
+        // Check if we already have this user
+        if (uniqueConnections.has(otherUserId)) {
+          console.log('🔍 [useEnhancedConnections] Skipping duplicate connection for user:', otherUserId, conn.profile_name);
+          return;
+        }
+        
+        // Only include connections that have the current user as one of the participants
+        if (conn.user_id === user.id || conn.connected_user_id === user.id) {
+          console.log('🔍 [useEnhancedConnections] Adding unique connection for user:', otherUserId, conn.profile_name);
           uniqueConnections.set(otherUserId, conn);
+        } else {
+          console.log('🔍 [useEnhancedConnections] Skipping connection not involving current user:', conn.id);
         }
       });
       
       const deduplicatedConnections = Array.from(uniqueConnections.values());
+      console.log('🔍 [useEnhancedConnections] After deduplication:', deduplicatedConnections.length, 'connections');
       
       // Separate different types of connections
       const accepted = deduplicatedConnections.filter(conn => conn.status === 'accepted');

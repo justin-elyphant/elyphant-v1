@@ -3539,6 +3539,10 @@ export type Database = {
         Args: { cancellation_reason?: string; order_id: string }
         Returns: Json
       }
+      check_auto_gift_permission: {
+        Args: { p_connection_id: string; p_user_id: string }
+        Returns: Json
+      }
       check_friend_connection: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean

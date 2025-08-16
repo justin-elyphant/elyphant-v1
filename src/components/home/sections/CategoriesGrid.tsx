@@ -86,7 +86,7 @@ const PersonTypeCarousel = () => {
       {/* Header positioned absolutely over the carousel */}
       <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
         <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-4">
-          Find Gifts by Person Type
+          Gifts for Every Lifestyle
         </h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Discover thoughtfully curated gifts tailored to different lifestyles and personalities

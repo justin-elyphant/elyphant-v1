@@ -16,12 +16,12 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
   
   const renderStatusBadgeAndButton = (status: string, dataType: keyof Connection['dataStatus'], icon: React.ReactNode, label: string) => {
     if (status === 'verified') {
-      return <Badge variant="outline" className="text-green-500 border-green-500">Verified</Badge>;
+      return <Badge variant="outline" className="text-green-500 border-green-500">Sharing</Badge>;
     } else if (status === 'blocked') {
       return (
         <div className="flex items-center gap-2">
           <Badge variant="destructive" className="text-white bg-destructive border-destructive min-w-0 flex-shrink-0">
-            Blocked by {friend.name}
+            Not Sharing
           </Badge>
           <Button 
             variant="ghost" 
@@ -42,7 +42,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
           onClick={() => onVerificationRequest(friend.connectionId || friend.id, dataType)}
         >
           <AlertCircle className="h-3 w-3 mr-1" /> 
-          {status === 'missing' ? 'Request' : 'Update'}
+          {status === 'missing' ? 'Start Sharing' : 'Update'}
         </Button>
       );
     }
@@ -54,15 +54,16 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
   return (
     <>
       <div className="bg-muted p-3 rounded-md mb-3">
-        <h4 className="text-sm font-medium mb-2 flex items-center">
+        <h4 className="text-sm font-medium mb-1 flex items-center">
           <Shield className="h-4 w-4 mr-1 text-primary" />
-          Data Verification
+          Data Sharing with {friend.name}
         </h4>
+        <p className="text-xs text-muted-foreground mb-2">Control what information you're sharing for gifting</p>
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center">
               <MapPin className="h-3 w-3 mr-1" />
-              <span>Shipping Address:</span>
+              <span>My Shipping Address:</span>
             </div>
             <div className="flex items-center">
               {renderStatusBadgeAndButton(friend.dataStatus.shipping, 'shipping', <MapPin className="h-3 w-3" />, 'Shipping Address')}
@@ -72,7 +73,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center">
               <Calendar className="h-3 w-3 mr-1" />
-              <span>Birthday:</span>
+              <span>My Birthday:</span>
             </div>
             <div className="flex items-center">
               {renderStatusBadgeAndButton(friend.dataStatus.birthday, 'birthday', <Calendar className="h-3 w-3" />, 'Birthday')}
@@ -82,7 +83,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
           <div className="flex justify-between items-center text-sm">
             <div className="flex items-center">
               <Mail className="h-3 w-3 mr-1" />
-              <span>Email:</span>
+              <span>My Email Address:</span>
             </div>
             <div className="flex items-center">
               {renderStatusBadgeAndButton(friend.dataStatus.email, 'email', <Mail className="h-3 w-3" />, 'Email')}
@@ -97,8 +98,8 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
           <AlertTitle className="text-xs text-white">Auto-gifting unavailable</AlertTitle>
           <AlertDescription className="text-xs">
             {hasBlockedData 
-              ? `${friend.name} has blocked access to some data. Manage privacy settings to enable gifting.`
-              : 'Complete profile data verification to enable auto-gifting.'
+              ? `You're not sharing some information with ${friend.name}. Update your sharing settings to enable auto-gifting.`
+              : `Share your information with ${friend.name} to enable auto-gifting.`
             }
           </AlertDescription>
         </Alert>

@@ -11,6 +11,7 @@ import { useConnection } from "@/hooks/useConnection";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 import DataVerificationSection from "@/components/connections/DataVerificationSection";
+import { ConnectionPrivacyControls } from "@/components/connections/ConnectionPrivacyControls";
 
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
@@ -161,14 +162,18 @@ const ConnectionDetail: React.FC = () => {
         {/* Data Verification Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Data Verification</CardTitle>
+            <CardTitle>Data Verification & Privacy</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <DataVerificationSection 
               friend={connection} 
               onVerificationRequest={(connectionId, dataType) => {
                 console.log('Verification request:', connectionId, dataType);
               }} 
+            />
+            <ConnectionPrivacyControls 
+              connection={connection}
+              onUpdate={() => window.location.reload()}
             />
           </CardContent>
         </Card>

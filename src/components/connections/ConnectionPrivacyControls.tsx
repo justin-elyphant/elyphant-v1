@@ -11,15 +11,11 @@ import { Connection } from "@/types/connections";
 interface ConnectionPrivacyControlsProps {
   connection: Connection;
   onUpdate: () => void;
-  isOpen: boolean;
-  onClose: () => void;
 }
 
 export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps> = ({ 
   connection, 
-  onUpdate, 
-  isOpen, 
-  onClose 
+  onUpdate
 }) => {
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState({
@@ -31,7 +27,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
 
   React.useEffect(() => {
     fetchCurrentPermissions();
-  }, [connection.id, isOpen]);
+  }, [connection.id]);
 
   const fetchCurrentPermissions = async () => {
     try {
@@ -98,38 +94,35 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
     }
   };
 
-  if (!isOpen) return null;
-
   const hasAnyBlocks = !permissions.shipping_address || !permissions.dob || !permissions.email || !permissions.gift_preferences;
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="space-y-4">
+      {hasAnyBlocks && (
+        <div className="flex items-center gap-2 p-3 bg-warning/10 text-warning rounded-lg">
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-sm">Auto-gifting is disabled due to blocked data</span>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <h4 className="flex items-center gap-2 text-sm font-medium">
           {hasAnyBlocks ? (
             <>
-              <Shield className="h-5 w-5 text-warning" />
+              <Shield className="h-4 w-4 text-warning" />
               Privacy Controls - Some Data Blocked
             </>
           ) : (
             <>
-              <ShieldCheck className="h-5 w-5 text-success" />
+              <ShieldCheck className="h-4 w-4 text-success" />
               Privacy Controls - All Data Shared
             </>
           )}
-        </CardTitle>
-        <CardDescription>
+        </h4>
+        <p className="text-sm text-muted-foreground">
           Control what information {connection.name} can access for gift-giving purposes.
           Blocking data will prevent automatic gift suggestions and purchases.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {hasAnyBlocks && (
-          <div className="flex items-center gap-2 p-3 bg-warning/10 text-warning rounded-lg">
-            <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm">Auto-gifting is disabled due to blocked data</span>
-          </div>
-        )}
+        </p>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -184,13 +177,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
             />
           </div>
         </div>
-
-        <div className="flex justify-end pt-4">
-          <Button variant="outline" onClick={onClose}>
-            Done
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

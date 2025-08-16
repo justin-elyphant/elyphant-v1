@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { MapPin, Calendar, Mail, AlertCircle, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Connection } from "@/types/connections";
-import { ConnectionPrivacyControls } from "./ConnectionPrivacyControls";
+import { useNavigate } from "react-router-dom";
 
 interface DataVerificationSectionProps {
   friend: Connection;
@@ -12,7 +12,7 @@ interface DataVerificationSectionProps {
 }
 
 const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ friend, onVerificationRequest }) => {
-  const [showPrivacyControls, setShowPrivacyControls] = useState(false);
+  const navigate = useNavigate();
   
   const renderStatusBadgeAndButton = (status: string, dataType: keyof Connection['dataStatus'], icon: React.ReactNode, label: string) => {
     if (status === 'verified') {
@@ -27,7 +27,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
             variant="ghost" 
             size="sm" 
             className="h-6 text-blue-500 p-0"
-            onClick={() => setShowPrivacyControls(true)}
+            onClick={() => navigate(`/connection/${friend.id}`)}
           >
             <Settings className="h-3 w-3 mr-1" /> Manage
           </Button>
@@ -104,12 +104,6 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
         </Alert>
       )}
 
-      <ConnectionPrivacyControls
-        connection={friend}
-        onUpdate={() => window.location.reload()}
-        isOpen={showPrivacyControls}
-        onClose={() => setShowPrivacyControls(false)}
-      />
     </>
   );
 };

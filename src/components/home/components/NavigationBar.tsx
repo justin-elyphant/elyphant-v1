@@ -11,7 +11,7 @@ import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNa
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 // Import directly instead of lazy loading to avoid context issues
-const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhancedSearchBar"));
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 
 const NavigationBar = () => {
@@ -75,9 +75,7 @@ const NavigationBar = () => {
           {/* Desktop Search Bar */}
           {shouldShowSearch && (
             <div className="hidden md:flex flex-1 justify-center max-w-3xl mx-4">
-              <React.Suspense fallback={<div className="h-10 bg-muted rounded animate-pulse flex-1" />}>
-                <AIEnhancedSearchBar />
-              </React.Suspense>
+              <AIEnhancedSearchBar />
             </div>
           )}
 
@@ -108,9 +106,7 @@ const NavigationBar = () => {
         {/* Mobile Search Bar - Below header */}
         {shouldShowSearch && (
           <div className="md:hidden pb-3 pt-2">
-            <React.Suspense fallback={<div className="h-10 bg-muted rounded animate-pulse mx-4" />}>
-              <AIEnhancedSearchBar mobile />
-            </React.Suspense>
+            <AIEnhancedSearchBar mobile />
           </div>
         )}
       </div>

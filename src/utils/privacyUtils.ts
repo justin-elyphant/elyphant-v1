@@ -21,10 +21,10 @@ export function getSharingLevelLabel(level: PrivacyLevel): string {
 
 export function getDefaultDataSharingSettings(): DataSharingSettings {
   return {
-    dob: 'private',
-    shipping_address: 'private',
+    dob: 'friends',
+    shipping_address: 'friends',
     gift_preferences: 'public',
-    email: 'private'
+    email: 'friends'
   };
 }
 

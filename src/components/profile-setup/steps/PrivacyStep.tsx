@@ -27,7 +27,7 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
       <div className="text-center mb-6">
         <h3 className="text-lg font-medium">Privacy Settings</h3>
         <p className="text-sm text-muted-foreground">
-          Control who can see your information
+          Your information will be shared with friends by default. You can block specific friends later if needed.
         </p>
       </div>
       
@@ -35,7 +35,7 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         <div className="space-y-2">
           <Label>Email Address</Label>
           <Select
-            value={currentSettings.email || "private"}
+            value={currentSettings.email || "friends"}
             onValueChange={(value) => handlePrivacyChange("email", value)}
           >
             <SelectTrigger>
@@ -69,7 +69,7 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         <div className="space-y-2">
           <Label>Shipping Address</Label>
           <Select
-            value={currentSettings.shipping_address || "private"}
+            value={currentSettings.shipping_address || "friends"}
             onValueChange={(value) => handlePrivacyChange("shipping_address", value)}
           >
             <SelectTrigger>

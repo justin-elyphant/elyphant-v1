@@ -126,36 +126,59 @@ export const useConnectionsAdapter = () => {
         return isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
       });
 
-      // Fetch privacy settings for all friends in batch
+      // Fetch privacy settings AND connection permissions for all friends in batch
       const { data: privacyProfiles, error: privacyError } = await supabase
         .from('profiles')
         .select('id, data_sharing_settings, dob, email, shipping_address')
         .in('id', friendProfileIds);
 
+      // Fetch connection-level permissions
+      const { data: connectionPermissions, error: permError } = await supabase
+        .from('user_connections')
+        .select('user_id, connected_user_id, data_access_permissions')
+        .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
+        .eq('status', 'accepted');
+
       if (privacyError) {
         console.error('❌ [useConnectionsAdapter] Privacy settings fetch error:', privacyError);
       }
+      if (permError) {
+        console.error('❌ [useConnectionsAdapter] Connection permissions fetch error:', permError);
+      }
 
-      // Create privacy map for quick lookup
+      // Create connection permissions map
+      const permissionsMap = new Map();
+      connectionPermissions?.forEach(conn => {
+        const friendId = conn.user_id === currentUser.user.id ? conn.connected_user_id : conn.user_id;
+        const permissions = conn.data_access_permissions || {};
+        permissionsMap.set(friendId, permissions);
+      });
+
+      // Create privacy map with hierarchical checking (connection-level overrides global)
       const privacyMap = new Map();
       privacyProfiles?.forEach(profile => {
         const settings = profile.data_sharing_settings || {};
+        const connectionPerms = permissionsMap.get(profile.id) || {};
+        
+        // Check if this friend is blocked from specific data types
+        const isShippingBlocked = connectionPerms.shipping_address === false;
+        const isBirthdayBlocked = connectionPerms.dob === false;
+        const isEmailBlocked = connectionPerms.email === false;
+        
         privacyMap.set(profile.id, {
-          shipping: settings.shipping_address === 'friends' 
-            ? (profile.shipping_address ? 'verified' as const : 'missing' as const)
-            : settings.shipping_address === 'public' 
+          shipping: isShippingBlocked ? 'blocked' as const :
+            (settings.shipping_address === 'friends' || settings.shipping_address === 'public') 
               ? (profile.shipping_address ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
-          birthday: settings.dob === 'friends' 
-            ? (profile.dob ? 'verified' as const : 'missing' as const)
-            : settings.dob === 'public' 
+          birthday: isBirthdayBlocked ? 'blocked' as const :
+            (settings.dob === 'friends' || settings.dob === 'public') 
               ? (profile.dob ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
-          email: settings.email === 'friends' 
-            ? (profile.email ? 'verified' as const : 'missing' as const)
-            : settings.email === 'public' 
+          email: isEmailBlocked ? 'blocked' as const :
+            (settings.email === 'friends' || settings.email === 'public') 
               ? (profile.email ? 'verified' as const : 'missing' as const)
-              : 'missing' as const
+              : 'missing' as const,
+          isBlocked: isShippingBlocked || isBirthdayBlocked || isEmailBlocked
         });
       });
 

@@ -92,10 +92,10 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
       </div>
       
       {hasUnverifiedData && (
-        <Alert variant="destructive" className="mb-2 p-3 text-xs">
+        <Alert variant="destructive" className="mb-2 p-2 text-xs">
           <AlertCircle className="h-3 w-3 text-white" />
-          <AlertTitle className="text-xs text-white mb-1">Auto-gifting unavailable</AlertTitle>
-          <AlertDescription className="text-xs text-red-200 leading-tight">
+          <AlertTitle className="text-xs text-white">Auto-gifting unavailable</AlertTitle>
+          <AlertDescription className="text-xs text-center">
             {hasBlockedData 
               ? `${friend.name} has blocked access to some data. Manage privacy settings to enable gifting.`
               : 'Complete profile data verification to enable auto-gifting.'

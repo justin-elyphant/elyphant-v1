@@ -37,7 +37,7 @@ const PersonTypeCarousel = () => {
       id: "movie-buff",
       title: "Movie Buff",
       description: "For cinema lovers and entertainment enthusiasts",
-      image: "https://images.unsplash.com/photo-1489599063012-afd1c6d824b9?w=800&auto=format&fit=crop&q=80",
+      image: "/lovable-uploads/9d12d653-19ff-45ff-9666-516bf95d27ad.png",
       searchTerm: "streaming devices home theater popcorn makers entertainment accessories movie collectibles comfort items"
     },
     {

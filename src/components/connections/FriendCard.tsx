@@ -105,7 +105,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
                   <CardTitle className="text-lg">{friend.name}</CardTitle>
                   {/* Auto-Gift Status Badge - Next to name like a verified badge */}
                   {permissionResult && !permissionLoading && (
-                    <AutoGiftStatusBadge status={permissionResult.status} className="text-xs" />
+                    <AutoGiftStatusBadge status={permissionResult.status} className="text-[10px] px-1.5 py-0.5 h-4" />
                   )}
                 </div>
                 <CardDescription>{friend.username}</CardDescription>

@@ -84,7 +84,7 @@ const ConnectionDetail: React.FC = () => {
                    <CardTitle className="text-2xl">{connection.name}</CardTitle>
                    {/* Auto-Gift Status Badge - Next to name like a verified badge */}
                    {permissionResult && !permissionLoading && (
-                     <AutoGiftStatusBadge status={permissionResult.status} />
+                     <AutoGiftStatusBadge status={permissionResult.status} className="text-[10px] px-1.5 py-0.5 h-4" />
                    )}
                  </div>
                  <p className="text-muted-foreground">@{connection.username}</p>

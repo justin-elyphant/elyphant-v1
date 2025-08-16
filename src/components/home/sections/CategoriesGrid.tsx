@@ -44,7 +44,7 @@ const PersonTypeCarousel = () => {
       id: "work-from-home",
       title: "Work From Home",
       description: "Essentials for productive remote work",
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&auto=format&fit=crop&q=80",
+      image: "/lovable-uploads/4820a05f-3843-40f5-b22d-9765af82a27a.png",
       searchTerm: "office supplies ergonomic furniture productivity tools desk accessories lighting organization"
     },
     {

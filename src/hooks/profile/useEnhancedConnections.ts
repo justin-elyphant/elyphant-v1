@@ -118,25 +118,38 @@ export const useEnhancedConnections = () => {
         };
       }));
       
+      // Deduplicate connections by the other user's ID to avoid showing duplicates
+      // Each connection should only appear once regardless of bidirectionality
+      const uniqueConnections = new Map<string, typeof enhancedConnections[0]>();
+      
+      enhancedConnections.forEach(conn => {
+        const otherUserId = conn.user_id === user.id ? conn.connected_user_id : conn.user_id;
+        if (otherUserId && !uniqueConnections.has(otherUserId)) {
+          uniqueConnections.set(otherUserId, conn);
+        }
+      });
+      
+      const deduplicatedConnections = Array.from(uniqueConnections.values());
+      
       // Separate different types of connections
-      const accepted = enhancedConnections.filter(conn => conn.status === 'accepted');
-      const pending = enhancedConnections.filter(conn => 
+      const accepted = deduplicatedConnections.filter(conn => conn.status === 'accepted');
+      const pending = deduplicatedConnections.filter(conn => 
         conn.status === 'pending' && conn.connected_user_id === user.id
       );
       
       // Pending invitations that the user has sent
-      const invitations = enhancedConnections.filter(conn => 
+      const invitations = deduplicatedConnections.filter(conn => 
         conn.status === 'pending_invitation' && conn.user_id === user.id
       );
       
       // Separate followers and following for follow relationships
-      const followerConnections = enhancedConnections.filter(conn => 
+      const followerConnections = deduplicatedConnections.filter(conn => 
         conn.connected_user_id === user.id && 
         conn.relationship_type === 'follow' && 
         conn.status === 'accepted'
       );
       
-      const followingConnections = enhancedConnections.filter(conn => 
+      const followingConnections = deduplicatedConnections.filter(conn => 
         conn.user_id === user.id && 
         conn.relationship_type === 'follow' && 
         conn.status === 'accepted'

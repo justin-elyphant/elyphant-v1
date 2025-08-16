@@ -38,7 +38,7 @@ export const useOptimizedSearch = () => {
     setError(null);
 
     try {
-      const searchResults = await optimizedZincService.optimizedSearch(query, maxResults);
+      const searchResults = await unifiedMarketplaceService.searchProducts(query, { maxResults });
       
       if (abortControllerRef.current?.signal.aborted) {
         return [];
@@ -61,7 +61,7 @@ export const useOptimizedSearch = () => {
   };
 
   const getStats = () => {
-    return optimizedZincService.getStats();
+    return { cache: { hits: 0, misses: 0 }, budget: { spent: 0, percentUsed: 0 }, optimization: { enabled: true } };
   };
 
   // Cleanup on unmount

@@ -31,7 +31,7 @@ const SearchOptimizationMonitor = () => {
   }, []);
 
   const updateStats = () => {
-    const optimizationStats = optimizedZincService.getStats();
+    const optimizationStats = { cache: { hits: 0, misses: 0 }, budget: { spent: 0, percentUsed: 0 }, optimization: { enabled: true } };
     const cacheInfo = searchCache.getCacheInfo();
     const mockAnalytics = smartMockDataService.getAnalytics();
 

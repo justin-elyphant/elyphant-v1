@@ -17,15 +17,16 @@ export const useMarketplaceSearch = () => {
   const lastSearchTermRef = useRef<string | null>(null);
   const searchInProgressRef = useRef<boolean>(false);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const toastShownRef = useRef<boolean>(false);
+  const searchIdRef = useRef<string | null>(null);
   
   // Get our custom hooks
+  const unifiedSearch = useUnifiedSearch();
   const { 
-    searchZincProducts, 
+    search: searchFunction, 
     isLoading: searchIsLoading, 
-    toastShownRef, 
-    searchIdRef,
-    RESULTS_LIMIT 
-  } = useUnifiedSearch();
+    results: searchResults
+  } = unifiedSearch;
   
   const { searchCategoryProducts } = useEnhancedCategorySearch();
   
@@ -33,7 +34,7 @@ export const useMarketplaceSearch = () => {
     filteredProducts, 
     filterByCategory,
     filterBySearch 
-  } = useFilterProducts(products, RESULTS_LIMIT);
+  } = useFilterProducts(products, 50); // Using fixed limit
   
   const { getPageInfo } = usePageInfo(currentCategory, filteredProducts);
 
@@ -153,8 +154,8 @@ export const useMarketplaceSearch = () => {
           }).catch(error => {
             console.error('Enhanced search error, falling back to regular search:', error);
             // Fallback to regular search
-            return searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
-              filterBySearch(searchParam, amazonProducts);
+            return searchFunction(searchParam).then(() => {
+              filterBySearch(searchParam, searchResults.products || []);
             });
           }).finally(() => {
             searchInProgressRef.current = false;
@@ -162,9 +163,9 @@ export const useMarketplaceSearch = () => {
           });
         } else {
           // Use regular search
-          searchZincProducts(searchParam, searchChanged).then(amazonProducts => {
+          searchFunction(searchParam).then(() => {
             console.log('Search completed, filtering results');
-            filterBySearch(searchParam, amazonProducts);
+            filterBySearch(searchParam, searchResults.products || []);
           }).catch(error => {
             console.error('Search error:', error);
             toast.error("Search Error", {

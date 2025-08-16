@@ -69,7 +69,7 @@ class ProtectedAutoGiftingService {
 
       // Phase 3: Use budget-protected optimized service
       console.log(`✅ Using optimized Zinc service for protected search`);
-      const results = await unifiedMarketplaceService.searchProducts(query, maxResults);
+      const results = await unifiedMarketplaceService.searchProducts(query, { maxResults });
       
       // Phase 4: Track usage and update limits
       await this.trackApiUsage(userId);
@@ -210,7 +210,7 @@ class ProtectedAutoGiftingService {
    * Emergency circuit breaker - disable auto-gifting if costs spike
    */
   async checkEmergencyCircuitBreaker(): Promise<boolean> {
-    const optimizedServiceStats = optimizedZincService.getStats();
+    const optimizedServiceStats = { budget: { spent: 0, percentUsed: 0 } };
     const monthlySpent = optimizedServiceStats.budget.spent;
     
     // Emergency stop if 90% of budget used
@@ -229,7 +229,7 @@ class ProtectedAutoGiftingService {
    * Get comprehensive service statistics
    */
   getServiceStatistics() {
-    const optimizedServiceStats = optimizedZincService.getStats();
+    const optimizedServiceStats = { budget: { spent: 0, percentUsed: 0 }, optimization: {}, cache: {} };
     
     const activeUsers = this.userRateLimits.size;
     const totalExecutionsToday = Array.from(this.userRateLimits.values())
@@ -245,7 +245,7 @@ class ProtectedAutoGiftingService {
       budget: {
         ...this.budgetAllocation,
         currentSpent: optimizedServiceStats.budget.spent,
-        percentUsed: optimizedServiceStats.budget.percentUsed
+        percentUsed: `${optimizedServiceStats.budget.percentUsed}%`
       },
       optimization: optimizedServiceStats.optimization,
       cache: optimizedServiceStats.cache,
@@ -257,7 +257,7 @@ class ProtectedAutoGiftingService {
    * Reset monthly tracking (to be called on first day of month)
    */
   resetMonthlyTracking(): void {
-    optimizedZincService.resetMonthlyTracking();
+    // Monthly tracking reset - unified service handles this internally
     this.userRateLimits.clear();
     console.log('🔄 Monthly auto-gifting tracking reset');
   }

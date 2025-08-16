@@ -92,14 +92,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
 
   return (
     <>
-      <Card key={friend.id} className="overflow-hidden relative">
-        {/* Auto-Gift Status Badge - Outside card, top-right corner */}
-        {permissionResult && !permissionLoading && (
-          <div className="absolute -top-2 -right-2 z-10">
-            <AutoGiftStatusBadge status={permissionResult.status} className="shadow-md" />
-          </div>
-        )}
-        
+      <Card key={friend.id} className="overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-3">
@@ -108,7 +101,13 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
                 <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle className="text-lg">{friend.name}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{friend.name}</CardTitle>
+                  {/* Auto-Gift Status Badge - Next to name like a verified badge */}
+                  {permissionResult && !permissionLoading && (
+                    <AutoGiftStatusBadge status={permissionResult.status} className="text-xs" />
+                  )}
+                </div>
                 <CardDescription>{friend.username}</CardDescription>
               </div>
             </div>

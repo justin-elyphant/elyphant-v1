@@ -71,14 +71,7 @@ const ConnectionDetail: React.FC = () => {
         </div>
 
         {/* Profile Card */}
-        <div className="relative">
-          {/* Auto-Gift Status Badge - Outside card, top-right */}
-          {permissionResult && !permissionLoading && (
-            <div className="absolute -top-2 -right-2 z-10">
-              <AutoGiftStatusBadge status={permissionResult.status} className="shadow-lg" />
-            </div>
-          )}
-          
+        {/* Profile Card */}
           <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center space-x-4">
@@ -86,9 +79,15 @@ const ConnectionDetail: React.FC = () => {
                 <AvatarImage src={connection.imageUrl} alt={connection.name} />
                 <AvatarFallback className="text-2xl">{connection.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <CardTitle className="text-2xl">{connection.name}</CardTitle>
-                <p className="text-muted-foreground">@{connection.username}</p>
+               <div className="flex-1">
+                 <div className="flex items-center gap-2">
+                   <CardTitle className="text-2xl">{connection.name}</CardTitle>
+                   {/* Auto-Gift Status Badge - Next to name like a verified badge */}
+                   {permissionResult && !permissionLoading && (
+                     <AutoGiftStatusBadge status={permissionResult.status} />
+                   )}
+                 </div>
+                 <p className="text-muted-foreground">@{connection.username}</p>
                 <div className="flex items-center mt-2 gap-2">
                   <div className="flex items-center">
                     {getRelationshipIcon(connection.relationship)}
@@ -189,7 +188,6 @@ const ConnectionDetail: React.FC = () => {
             </div>
           </CardContent>
           </Card>
-        </div>
 
         {/* Data Verification Section */}
         <Card>

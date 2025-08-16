@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
-import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import ConnectionsHeader from "@/components/connections/ConnectionsHeader";
 import FriendsTabContent from "@/components/connections/FriendsTabContent";
 import SuggestionsTabContent from "@/components/connections/SuggestionsTabContent";
@@ -9,8 +9,9 @@ import PendingTabContent from "@/components/connections/PendingTabContent";
 import ConnectionsErrorBoundary from "@/components/connections/ConnectionsErrorBoundary";
 import PrivacyIntegration from "@/components/connections/PrivacyIntegration";
 import { useState, useEffect } from "react";
-import { RelationshipType } from "@/types/connections";
+import { RelationshipType, Connection } from "@/types/connections";
 import { ConnectionFilters } from "@/types/connection-filters";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
@@ -31,17 +32,87 @@ const Connections = () => {
   });
   
   const {
-    friends,
-    suggestions,
-    pendingConnections,
+    connections: enhancedConnections,
+    pendingRequests,
+    pendingInvitations,
     loading,
     error,
-    handleRelationshipChange,
-    handleSendVerificationRequest,
-    filterConnections,
-    refreshPendingConnections,
-    loadData
-  } = useConnectionsAdapter();
+    fetchConnections,
+    sendConnectionRequest,
+    acceptConnectionRequest,
+    rejectConnectionRequest,
+    removeConnection
+  } = useEnhancedConnections();
+
+  // Transform enhanced connections to match the expected interface
+  const friends = enhancedConnections.filter(conn => conn.status === 'accepted').map(conn => ({
+    id: conn.display_user_id || (conn.user_id === user?.id ? conn.connected_user_id : conn.user_id) || conn.id,
+    connectionId: conn.id,
+    name: conn.profile_name || conn.pending_recipient_name || 'Unknown',
+    username: conn.profile_username || `@${conn.profile_name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
+    imageUrl: conn.profile_image || '/placeholder.svg',
+    mutualFriends: 0,
+    type: 'friend' as const,
+    lastActive: 'recently',
+    relationship: conn.relationship_type as RelationshipType,
+    dataStatus: {
+      shipping: 'missing' as const,
+      birthday: 'missing' as const,
+      email: 'missing' as const
+    },
+    bio: conn.profile_bio || '',
+    connectionDate: conn.created_at
+  }));
+
+  const suggestions: Connection[] = []; // Empty for now
+
+  const pendingConnections = [...pendingRequests, ...pendingInvitations].map(conn => ({
+    id: conn.display_user_id || (conn.user_id === user?.id ? conn.connected_user_id : conn.user_id) || conn.id,
+    connectionId: conn.id,
+    name: conn.profile_name || conn.pending_recipient_name || 'Unknown',
+    username: conn.profile_username || `@${conn.profile_name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
+    imageUrl: conn.profile_image || '/placeholder.svg',
+    mutualFriends: 0,
+    type: 'friend' as const,
+    lastActive: 'recently',
+    relationship: conn.relationship_type as RelationshipType,
+    dataStatus: {
+      shipping: 'missing' as const,
+      birthday: 'missing' as const,
+      email: 'missing' as const
+    },
+    bio: conn.profile_bio || '',
+    isPending: true,
+    isIncoming: conn.connected_user_id === user?.id,
+    connectionDate: conn.created_at
+  }));
+
+  // Adapter functions to match the expected interface
+  const handleRelationshipChange = async (connectionId: string, newRelationship: RelationshipType) => {
+    // This functionality would need to be added to enhanced connections
+    toast.info('Relationship update feature coming soon');
+  };
+
+  const handleSendVerificationRequest = async (connectionId: string) => {
+    toast.info('Verification request feature coming soon');
+  };
+
+  const filterConnections = (connections: Connection[], searchTerm: string) => {
+    if (!searchTerm) return connections;
+    const lowercaseSearch = searchTerm.toLowerCase();
+    return connections.filter(conn => 
+      conn.name.toLowerCase().includes(lowercaseSearch) ||
+      conn.username.toLowerCase().includes(lowercaseSearch)
+    );
+  };
+
+  const refreshPendingConnections = async () => {
+    await fetchConnections();
+  };
+
+  const loadData = async () => {
+    await fetchConnections();
+  };
 
   // Set up real-time connection updates
   useRealtimeConnections(loadData);

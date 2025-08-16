@@ -97,7 +97,7 @@ const DataVerificationSection: React.FC<DataVerificationSectionProps> = ({ frien
           <AlertCircle className="h-3 w-3" />
           <AlertTitle className="text-xs">Help {friend.name} send you perfect gifts!</AlertTitle>
           <AlertDescription className="text-xs">
-            Share your details so {friend.name} can send you gifts you'll love! Complete your sharing settings to help them choose the perfect presents.
+            Share your details so {friend.name} can send you gifts you'll love!
           </AlertDescription>
         </Alert>
       )}

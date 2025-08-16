@@ -65,7 +65,7 @@ const PersonTypeCarousel = () => {
       id: "teens",
       title: "Teens",
       description: "Trendy picks for young adults",
-      image: "https://images.unsplash.com/photo-1529690840038-f38da8894ff6?w=800&auto=format&fit=crop&q=80",
+      image: "/lovable-uploads/cbadbc52-4113-4bd6-a899-3b805199f733.png",
       searchTerm: "trendy accessories tech gadgets gaming items room decor study supplies fashion"
     }
   ];

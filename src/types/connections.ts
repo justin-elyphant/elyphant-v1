@@ -2,13 +2,14 @@
 export type RelationshipType = 'friend' | 'spouse' | 'cousin' | 'child' | 'parent' | 'sibling' | 'colleague' | 'custom';
 
 export type DataVerificationStatus = {
-  shipping: 'verified' | 'missing' | 'outdated';
-  birthday: 'verified' | 'missing' | 'outdated';
-  email: 'verified' | 'missing' | 'outdated';
+  shipping: 'verified' | 'missing' | 'outdated' | 'blocked';
+  birthday: 'verified' | 'missing' | 'outdated' | 'blocked';
+  email: 'verified' | 'missing' | 'outdated' | 'blocked';
 };
 
 export interface Connection {
   id: string;
+  connectionId?: string; // Add connection record ID for operations
   name: string;
   username: string;
   imageUrl: string;
@@ -25,6 +26,7 @@ export interface Connection {
   score?: number; // Add optional score property for suggestions
   isPending?: boolean; // For pending connections from quick gift wizard
   recipientEmail?: string; // Email for pending connections
+  isIncoming?: boolean; // For incoming connection requests
 }
 
 export type ConnectionRequest = {

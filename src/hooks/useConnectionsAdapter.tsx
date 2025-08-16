@@ -74,12 +74,9 @@ export const useConnectionsAdapter = () => {
         lastActive: 'Recently',
         relationship: conn.relationship_type as RelationshipType,
         dataStatus: {
-          shipping: permissionsToCheck?.shipping_address === false ? 'blocked' as const : 
-                   permissionsToCheck?.shipping_address === undefined ? 'verified' as const : 'missing' as const,
-          birthday: permissionsToCheck?.dob === false ? 'blocked' as const : 
-                   permissionsToCheck?.dob === undefined ? 'verified' as const : 'missing' as const,
-          email: permissionsToCheck?.email === false ? 'blocked' as const : 
-                 permissionsToCheck?.email === undefined ? 'verified' as const : 'missing' as const
+          shipping: permissionsToCheck?.shipping_address === false ? 'blocked' as const : 'verified' as const,
+          birthday: permissionsToCheck?.dob === false ? 'blocked' as const : 'verified' as const,
+          email: permissionsToCheck?.email === false ? 'blocked' as const : 'verified' as const
         },
         interests: [],
         bio: conn.profile_bio || '',

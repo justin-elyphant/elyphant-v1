@@ -10,7 +10,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useConnection } from "@/hooks/useConnection";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
-import DataVerificationSection from "@/components/connections/DataVerificationSection";
+
 import { ConnectionPrivacyControls } from "@/components/connections/ConnectionPrivacyControls";
 import { AutoGiftStatusBadge } from "@/components/connections/AutoGiftStatusBadge";
 import { AutoGiftNudgeButton } from "@/components/connections/AutoGiftNudgeButton";
@@ -189,18 +189,12 @@ const ConnectionDetail: React.FC = () => {
           </CardContent>
           </Card>
 
-        {/* Data Verification Section */}
+        {/* Privacy Controls Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Data Verification & Privacy</CardTitle>
+            <CardTitle>Privacy Controls</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <DataVerificationSection 
-              friend={connection} 
-              onVerificationRequest={(connectionId, dataType) => {
-                console.log('Verification request:', connectionId, dataType);
-              }} 
-            />
+          <CardContent>
             <ConnectionPrivacyControls 
               connection={connection}
               onUpdate={() => window.location.reload()}

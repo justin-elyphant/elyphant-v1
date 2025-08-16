@@ -34,7 +34,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return;
 
-      // Get the connection record where current user is the one granting permissions
+      // Get the connection record where current user is granting permissions to connected user
       const { data, error } = await supabase
         .from('user_connections')
         .select('data_access_permissions')
@@ -124,15 +124,15 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
           )}
         </h4>
         <p className="text-sm text-muted-foreground">
-          Control what information {connection.name} can access for gift-giving purposes.
-          Blocking data will prevent automatic gift suggestions and purchases.
+          Control what information you're sharing with {connection.name} for gift-giving purposes.
+          Blocking data will prevent them from accessing this information for auto-gifting.
         </p>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="shipping-toggle">Shipping Address</Label>
-              <p className="text-sm text-muted-foreground">Allow access to your shipping address for gift delivery</p>
+              <Label htmlFor="shipping-toggle">My Shipping Address</Label>
+              <p className="text-sm text-muted-foreground">Share your shipping address with {connection.name} for gift delivery</p>
             </div>
             <Switch
               id="shipping-toggle"
@@ -144,8 +144,8 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="birthday-toggle">Birthday</Label>
-              <p className="text-sm text-muted-foreground">Allow access to your birthday for occasion-based gifts</p>
+              <Label htmlFor="birthday-toggle">My Birthday</Label>
+              <p className="text-sm text-muted-foreground">Share your birthday with {connection.name} for occasion-based gifts</p>
             </div>
             <Switch
               id="birthday-toggle"
@@ -157,8 +157,8 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="email-toggle">Email Address</Label>
-              <p className="text-sm text-muted-foreground">Allow access to your email for gift notifications</p>
+              <Label htmlFor="email-toggle">My Email Address</Label>
+              <p className="text-sm text-muted-foreground">Share your email with {connection.name} for gift notifications</p>
             </div>
             <Switch
               id="email-toggle"
@@ -170,8 +170,8 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="preferences-toggle">Gift Preferences</Label>
-              <p className="text-sm text-muted-foreground">Allow access to your gift preferences and wishlist</p>
+              <Label htmlFor="preferences-toggle">My Gift Preferences</Label>
+              <p className="text-sm text-muted-foreground">Share your gift preferences and wishlist with {connection.name}</p>
             </div>
             <Switch
               id="preferences-toggle"

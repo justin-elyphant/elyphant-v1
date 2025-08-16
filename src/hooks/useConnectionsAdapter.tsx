@@ -59,10 +59,11 @@ export const useConnectionsAdapter = () => {
         isAccepted: isAcceptedConnection
       });
 
-      // Fix data status logic - we need to show what the CURRENT USER has granted to the connected user
-      // Find the connection record where current user is granting permissions (user_id = current user)
-      const currentUserIsGrantor = conn.user_id === user?.id;
-      const permissionsToCheck = currentUserIsGrantor ? conn.data_access_permissions : {};
+      // For data status, we need to show what the CONNECTED USER has granted to the current user
+      // This means we need to look at the connection where connected_user_id = current user
+      // and user_id = the connected user (they are granting permissions to us)
+      const connectedUserIsGrantor = conn.connected_user_id === user?.id;
+      const permissionsToCheck = connectedUserIsGrantor ? conn.data_access_permissions : {};
       
       return {
         id: conn.id,

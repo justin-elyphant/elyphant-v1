@@ -12,6 +12,9 @@ import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 import DataVerificationSection from "@/components/connections/DataVerificationSection";
 import { ConnectionPrivacyControls } from "@/components/connections/ConnectionPrivacyControls";
+import { AutoGiftStatusBadge } from "@/components/connections/AutoGiftStatusBadge";
+import { AutoGiftNudgeButton } from "@/components/connections/AutoGiftNudgeButton";
+import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
@@ -19,6 +22,13 @@ const ConnectionDetail: React.FC = () => {
   const { connection, loading, error } = useConnection(connectionId || "");
   const { handleDeleteConnection } = useConnectionsAdapter();
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Auto-gift permission checking
+  const { 
+    permissionResult, 
+    loading: permissionLoading, 
+    refreshPermission 
+  } = useAutoGiftPermission(connection);
 
   if (loading) {
     return (
@@ -71,11 +81,17 @@ const ConnectionDetail: React.FC = () => {
               <div className="flex-1">
                 <CardTitle className="text-2xl">{connection.name}</CardTitle>
                 <p className="text-muted-foreground">@{connection.username}</p>
-                <div className="flex items-center mt-2">
-                  {getRelationshipIcon(connection.relationship)}
-                  <span className="ml-1 text-sm font-medium">
-                    {getRelationshipLabel(connection.relationship, connection.customRelationship)}
-                  </span>
+                <div className="flex items-center mt-2 gap-2">
+                  <div className="flex items-center">
+                    {getRelationshipIcon(connection.relationship)}
+                    <span className="ml-1 text-sm font-medium">
+                      {getRelationshipLabel(connection.relationship, connection.customRelationship)}
+                    </span>
+                  </div>
+                  {/* Auto-Gift Status Badge */}
+                  {permissionResult && !permissionLoading && (
+                    <AutoGiftStatusBadge status={permissionResult.status} />
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -89,6 +105,17 @@ const ConnectionDetail: React.FC = () => {
                   <Gift className="w-4 h-4 mr-2" />
                   Send Gift
                 </Button>
+                {/* Auto-Gift Nudge Button */}
+                {permissionResult && 
+                 permissionResult.status === 'setup_needed' && 
+                 !permissionLoading && (
+                  <AutoGiftNudgeButton
+                    connection={connection}
+                    missingData={permissionResult.missingData}
+                    hasActiveRules={permissionResult.hasActiveRules}
+                    onNudgeSent={refreshPermission}
+                  />
+                )}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">

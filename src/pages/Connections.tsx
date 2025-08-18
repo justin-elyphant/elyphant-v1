@@ -17,6 +17,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 
 const Connections = () => {
+  console.log('🚀 [Connections] Page component loaded!');
   const { user } = useAuth();
   const [userData] = useLocalStorage("userData", null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +47,8 @@ const Connections = () => {
 
   // Transform enhanced connections to match the expected interface
   const friends = enhancedConnections.filter(conn => conn.status === 'accepted').map(conn => {
+    console.log('🔍 [Connections Page] Processing enhanced connection:', conn);
+    
     // Determine the target user ID (the user whose card we're displaying)
     const targetUserId = conn.user_id === user?.id ? conn.connected_user_id : conn.user_id;
     

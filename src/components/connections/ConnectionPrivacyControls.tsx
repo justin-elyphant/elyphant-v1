@@ -17,6 +17,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
   connection, 
   onUpdate
 }) => {
+  console.log('🚀 [Privacy Controls] Component rendered with connection:', connection);
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState({
     shipping_address: true,

@@ -2940,7 +2940,7 @@ export type Database = {
           blocked_by: string | null
           connected_user_id: string | null
           created_at: string | null
-          data_access_permissions: Json | null
+          data_access_permissions: Json
           follow_type: string | null
           id: string
           invitation_sent_at: string | null
@@ -2961,7 +2961,7 @@ export type Database = {
           blocked_by?: string | null
           connected_user_id?: string | null
           created_at?: string | null
-          data_access_permissions?: Json | null
+          data_access_permissions?: Json
           follow_type?: string | null
           id?: string
           invitation_sent_at?: string | null
@@ -2982,7 +2982,7 @@ export type Database = {
           blocked_by?: string | null
           connected_user_id?: string | null
           created_at?: string | null
-          data_access_permissions?: Json | null
+          data_access_permissions?: Json
           follow_type?: string | null
           id?: string
           invitation_sent_at?: string | null

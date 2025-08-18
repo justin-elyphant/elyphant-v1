@@ -74,23 +74,27 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Check if auto-gifting is enabled for this connection via data access permissions
+   * Check if auto-gifting is enabled for this connection via database function
+   * Uses bidirectional connection checking for improved reliability
    */
   private async checkAutoGiftEnabled(userId: string, connectionId: string): Promise<boolean> {
     try {
-      const { data: connection, error } = await supabase
-        .from('user_connections')
-        .select('data_access_permissions')
-        .eq('user_id', userId)
-        .eq('connected_user_id', connectionId)
-        .eq('status', 'accepted')
-        .single();
+      // Use the database function which handles bidirectional permission checking
+      const { data, error } = await supabase
+        .rpc('check_auto_gift_permission', { 
+          p_user_id: userId, 
+          p_connection_id: connectionId 
+        });
 
-      if (error || !connection) return false;
+      if (error) {
+        console.error('Error calling check_auto_gift_permission RPC:', error);
+        return false;
+      }
 
-      const permissions = connection.data_access_permissions || {};
-      // Auto-gift is enabled if all required permissions are granted
-      return permissions.shipping_address && permissions.dob && permissions.email;
+      if (!data) return false;
+
+      // Return true if auto-gifting is ready or setup needed (has permissions but might need profile completion)
+      return data.status === 'ready' || (data.status === 'setup_needed' && data.reasonCode !== 'data_sharing_restricted');
     } catch (error) {
       console.error('Error checking auto-gift enabled status:', error);
       return false;
@@ -210,7 +214,7 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Toggle auto-gifting permission for a connection
+   * Toggle auto-gifting permission for a connection (bidirectional)
    */
   async toggleAutoGiftPermission(userId: string, connectionId: string, enabled: boolean): Promise<{ success: boolean; error?: string }> {
     try {
@@ -220,14 +224,15 @@ class AutoGiftPermissionService {
         email: enabled
       };
 
+      // Update the connection record (handles bidirectional relationships)
       const { error } = await supabase
         .from('user_connections')
         .update({ 
           data_access_permissions: permissions,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', userId)
-        .eq('connected_user_id', connectionId);
+        .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId})`)
+        .eq('status', 'accepted');
 
       if (error) {
         console.error('Error toggling auto-gift permission:', error);

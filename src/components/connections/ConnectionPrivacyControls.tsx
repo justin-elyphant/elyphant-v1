@@ -116,10 +116,13 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       
       console.log('✅ [Privacy Controls] Successfully updated permissions');
       
-      // Force a complete refresh of the page data
+      // Trigger immediate refresh of the parent component data
+      onUpdate();
+      
+      // Also force a page reload to ensure all components refresh
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 100);
     } catch (error) {
       console.error('Error updating permissions:', error);
       toast.error('Failed to update privacy settings');

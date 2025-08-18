@@ -90,7 +90,7 @@ class AutoGiftPermissionService {
 
       const permissions = connection.data_access_permissions || {};
       // Auto-gift is enabled if all required permissions are granted
-      return permissions.shipping && permissions.birthday && permissions.email;
+      return permissions.shipping_address && permissions.dob && permissions.email;
     } catch (error) {
       console.error('Error checking auto-gift enabled status:', error);
       return false;
@@ -215,8 +215,8 @@ class AutoGiftPermissionService {
   async toggleAutoGiftPermission(userId: string, connectionId: string, enabled: boolean): Promise<{ success: boolean; error?: string }> {
     try {
       const permissions = {
-        shipping: enabled,
-        birthday: enabled,
+        shipping_address: enabled,
+        dob: enabled,
         email: enabled
       };
 

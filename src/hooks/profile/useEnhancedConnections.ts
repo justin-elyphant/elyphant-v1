@@ -246,6 +246,7 @@ export const useEnhancedConnections = () => {
           data_access_permissions: {
             dob: true,
             shipping_address: true,
+            email: true,
             gift_preferences: false
           }
         })

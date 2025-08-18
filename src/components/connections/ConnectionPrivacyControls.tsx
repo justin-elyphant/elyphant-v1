@@ -116,8 +116,10 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       
       console.log('✅ [Privacy Controls] Successfully updated permissions');
       
-      // Trigger immediate refresh of the parent component data
-      onUpdate();
+      // Force a delay to ensure database is updated before refreshing
+      setTimeout(() => {
+        onUpdate();
+      }, 500);
     } catch (error) {
       console.error('Error updating permissions:', error);
       toast.error('Failed to update privacy settings');

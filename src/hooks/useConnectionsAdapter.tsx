@@ -36,6 +36,8 @@ export const useConnectionsAdapter = () => {
 
   // Add state to track bidirectional permissions
   const [bidirectionalPermissions, setBidirectionalPermissions] = useState<Map<string, any>>(new Map());
+  // Add state to track what current user has granted to friends
+  const [currentUserPermissions, setCurrentUserPermissions] = useState<Map<string, any>>(new Map());
 
   // Fetch bidirectional permissions for each target user
   const fetchBidirectionalPermissions = useCallback(async () => {
@@ -46,6 +48,7 @@ export const useConnectionsAdapter = () => {
     }
 
     const permissionsMap = new Map();
+    const currentUserPermissionsMap = new Map();
     
     // For each unique target user, fetch their permissions to current user
     const uniqueTargetUsers = new Set<string>();
@@ -73,8 +76,8 @@ export const useConnectionsAdapter = () => {
         .eq('connected_user_id', user.id)
         .eq('status', 'accepted');
 
-      // Second approach: Also check the reverse direction in case the connection was initiated differently
-      const { data: recipientConnections, error: recipientError } = await supabase
+      // Second approach: Also check what current user has granted to target users
+      const { data: currentUserConnections, error: currentUserError } = await supabase
         .from('user_connections')
         .select('user_id, connected_user_id, data_access_permissions')
         .eq('user_id', user.id)
@@ -92,26 +95,32 @@ export const useConnectionsAdapter = () => {
         });
       }
 
-      if (recipientError) {
-        console.error('❌ [Bidirectional Permissions] Error fetching recipient permissions:', recipientError);
+      if (currentUserError) {
+        console.error('❌ [Current User Permissions] Error fetching current user permissions:', currentUserError);
       } else {
-        console.log('🔍 [Bidirectional Permissions] Fetched recipient connections:', recipientConnections);
+        console.log('🔍 [Current User Permissions] Fetched current user connections:', currentUserConnections);
         
-        // For recipient connections, the current user granted permissions to target users
-        // But we want to know what target users granted to current user
-        // So we need to look at the target user's permissions in this case
-        recipientConnections?.forEach(conn => {
-          // If this connection exists but we haven't found grantor permissions,
-          // it means the target user hasn't granted any permissions yet
-          if (!permissionsMap.has(conn.connected_user_id)) {
-            console.log('🔍 [Bidirectional Permissions] Target user has not granted permissions yet:', conn.connected_user_id);
-            permissionsMap.set(conn.connected_user_id, {});
-          }
+        currentUserConnections?.forEach(conn => {
+          console.log('🔍 [Current User Permissions] Setting permissions for target user:', conn.connected_user_id, 'permissions:', conn.data_access_permissions);
+          currentUserPermissionsMap.set(conn.connected_user_id, conn.data_access_permissions || {});
         });
       }
+
+      // For any target users not found, set empty permissions
+      targetUserIds.forEach(targetUserId => {
+        if (!permissionsMap.has(targetUserId)) {
+          console.log('🔍 [Bidirectional Permissions] Target user has not granted permissions yet:', targetUserId);
+          permissionsMap.set(targetUserId, {});
+        }
+        if (!currentUserPermissionsMap.has(targetUserId)) {
+          console.log('🔍 [Current User Permissions] Current user has not granted permissions to target yet:', targetUserId);
+          currentUserPermissionsMap.set(targetUserId, {});
+        }
+      });
     }
 
     setBidirectionalPermissions(permissionsMap);
+    setCurrentUserPermissions(currentUserPermissionsMap);
   }, [connections, user]);
 
   // Fetch bidirectional permissions when connections change
@@ -148,29 +157,29 @@ export const useConnectionsAdapter = () => {
       // Determine who is the target user (the one whose card we're displaying)
       const targetUserId = conn.user_id === user?.id ? conn.connected_user_id : conn.user_id;
       
-      // CRITICAL FIX: Use bidirectional permissions to get what target user has granted to current user
-      const permissionsFromTarget = bidirectionalPermissions.get(targetUserId) || {};
+      // Get permissions that current user has granted to target user (for DataVerificationSection)
+      const permissionsToTarget = currentUserPermissions.get(targetUserId) || {};
       
-      console.log('🔍 [Permission Debug] Using bidirectional permissions:', {
+      console.log('🔍 [Permission Debug] Using current user permissions to target:', {
         connectionId: conn.id,
         currentUserId: user?.id,
         targetUserId,
-        permissionsFromTarget,
-        hasBidirectionalData: bidirectionalPermissions.has(targetUserId),
-        allBidirectionalKeys: Array.from(bidirectionalPermissions.keys())
+        permissionsToTarget,
+        hasCurrentUserData: currentUserPermissions.has(targetUserId),
+        allCurrentUserKeys: Array.from(currentUserPermissions.keys())
       });
       
-      console.log('🔍 [DataStatus Debug] Calculating dataStatus for target:', targetUserId, {
-        shipping_permission: permissionsFromTarget?.shipping_address,
-        dob_permission: permissionsFromTarget?.dob,
-        email_permission: permissionsFromTarget?.email,
+      console.log('🔍 [DataStatus Debug] Calculating dataStatus based on what current user grants:', targetUserId, {
+        shipping_permission: permissionsToTarget?.shipping_address,
+        dob_permission: permissionsToTarget?.dob,
+        email_permission: permissionsToTarget?.email,
         calculated_dataStatus: {
-          shipping: permissionsFromTarget?.shipping_address === false ? 'blocked' : 
-                   permissionsFromTarget?.shipping_address === true ? 'verified' : 'missing',
-          birthday: permissionsFromTarget?.dob === false ? 'blocked' : 
-                   permissionsFromTarget?.dob === true ? 'verified' : 'missing',
-          email: permissionsFromTarget?.email === false ? 'blocked' : 
-                 permissionsFromTarget?.email === true ? 'verified' : 'missing'
+          shipping: permissionsToTarget?.shipping_address === false ? 'blocked' : 
+                   permissionsToTarget?.shipping_address === true ? 'verified' : 'missing',
+          birthday: permissionsToTarget?.dob === false ? 'blocked' : 
+                   permissionsToTarget?.dob === true ? 'verified' : 'missing',
+          email: permissionsToTarget?.email === false ? 'blocked' : 
+                 permissionsToTarget?.email === true ? 'verified' : 'missing'
         }
       });
       
@@ -185,18 +194,18 @@ export const useConnectionsAdapter = () => {
         lastActive: 'Recently',
         relationship: conn.relationship_type as RelationshipType,
         dataStatus: {
-          shipping: permissionsFromTarget?.shipping_address === false ? 'blocked' as const : 
-                   permissionsFromTarget?.shipping_address === true ? 'verified' as const : 'missing' as const,
-          birthday: permissionsFromTarget?.dob === false ? 'blocked' as const : 
-                   permissionsFromTarget?.dob === true ? 'verified' as const : 'missing' as const,
-          email: permissionsFromTarget?.email === false ? 'blocked' as const : 
-                 permissionsFromTarget?.email === true ? 'verified' as const : 'missing' as const
+          shipping: permissionsToTarget?.shipping_address === false ? 'blocked' as const : 
+                   permissionsToTarget?.shipping_address === true ? 'verified' as const : 'missing' as const,
+          birthday: permissionsToTarget?.dob === false ? 'blocked' as const : 
+                   permissionsToTarget?.dob === true ? 'verified' as const : 'missing' as const,
+          email: permissionsToTarget?.email === false ? 'blocked' as const : 
+                 permissionsToTarget?.email === true ? 'verified' as const : 'missing' as const
         },
         interests: [],
         bio: conn.profile_bio || '',
       } as Connection;
     });
-  }, [connections, refreshTrigger, user, bidirectionalPermissions]);
+  }, [connections, refreshTrigger, user, currentUserPermissions]);
 
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({

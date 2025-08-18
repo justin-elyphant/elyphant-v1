@@ -71,7 +71,6 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
   };
 
   const updatePermissions = async (field: string, allowed: boolean) => {
-    alert(`Toggle clicked: ${field} = ${allowed}`); // Immediate visual confirmation
     console.log('🚀 [Privacy Controls] Toggle clicked!', { field, allowed });
     setLoading(true);
     try {
@@ -117,8 +116,10 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       
       console.log('✅ [Privacy Controls] Successfully updated permissions');
       
-      // Trigger a refresh of the connections to update the data status
-      onUpdate();
+      // Force a complete refresh of the page data
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error('Error updating permissions:', error);
       toast.error('Failed to update privacy settings');

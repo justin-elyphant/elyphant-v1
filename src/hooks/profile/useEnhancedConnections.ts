@@ -244,8 +244,8 @@ export const useEnhancedConnections = () => {
           relationship_type: relationshipType,
           status: relationshipType === 'follow' ? 'accepted' : 'pending',
           data_access_permissions: {
-            dob: false,
-            shipping_address: false,
+            dob: true,
+            shipping_address: true,
             gift_preferences: false
           }
         })

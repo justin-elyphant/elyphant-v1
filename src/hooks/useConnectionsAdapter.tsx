@@ -59,14 +59,31 @@ export const useConnectionsAdapter = () => {
         isAccepted: isAcceptedConnection
       });
 
-      // For data status, we need to show what the CONNECTED USER has granted to the current user
-      // This means we need to look at the connection where connected_user_id = current user
-      // and user_id = the connected user (they are granting permissions to us)
-      const connectedUserIsGrantor = conn.connected_user_id === user?.id;
-      const permissionsToCheck = connectedUserIsGrantor ? conn.data_access_permissions : {};
+      // For auto-gift status on Justin's card, we need to show what Justin has granted to Dua
+      // This determines if Dua can auto-gift to Justin
+      
+      // Get the user_id from this connection record - this is who we're viewing
+      const targetUserId = conn.user_id === user?.id ? conn.connected_user_id : conn.user_id;
+      
+      // Check if this connection record represents permissions FROM the target user TO the current user
+      // If current user is the grantor (user_id), then we need the REVERSE connection to see target's permissions
+      const targetIsGrantor = conn.user_id === targetUserId;
+      const permissionsFromTarget = targetIsGrantor ? (conn.data_access_permissions || {}) : {};
+      
+      console.log('🔍 [Permission Debug] Connection analysis:', {
+        connectionId: conn.id,
+        currentUserId: user?.id,
+        targetUserId,
+        connUserId: conn.user_id,
+        connConnectedUserId: conn.connected_user_id,
+        targetIsGrantor,
+        rawPermissions: conn.data_access_permissions,
+        permissionsToUse: permissionsFromTarget
+      });
       
       return {
-        id: conn.id,
+        id: targetUserId, // Use the target user's ID, not the connection ID
+        connectionId: conn.id, // Store the actual connection ID for operations
         name: displayName,
         username: displayUsername,
         imageUrl: conn.profile_image || '/placeholder.svg',
@@ -75,9 +92,12 @@ export const useConnectionsAdapter = () => {
         lastActive: 'Recently',
         relationship: conn.relationship_type as RelationshipType,
         dataStatus: {
-          shipping: permissionsToCheck?.shipping_address === false ? 'blocked' as const : 'verified' as const,
-          birthday: permissionsToCheck?.dob === false ? 'blocked' as const : 'verified' as const,
-          email: permissionsToCheck?.email === false ? 'blocked' as const : 'verified' as const
+          shipping: permissionsFromTarget?.shipping_address === false ? 'blocked' as const : 
+                   permissionsFromTarget?.shipping_address === true ? 'verified' as const : 'missing' as const,
+          birthday: permissionsFromTarget?.dob === false ? 'blocked' as const : 
+                   permissionsFromTarget?.dob === true ? 'verified' as const : 'missing' as const,
+          email: permissionsFromTarget?.email === false ? 'blocked' as const : 
+                 permissionsFromTarget?.email === true ? 'verified' as const : 'missing' as const
         },
         interests: [],
         bio: conn.profile_bio || '',

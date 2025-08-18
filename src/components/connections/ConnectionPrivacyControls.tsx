@@ -35,12 +35,25 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       if (!currentUser.user) return;
 
       // Get the connection record where current user is granting permissions to connected user
+      // The connection.id is the target user ID, not the connection record ID
+      const targetUserId = connection.id;
+      
       const { data, error } = await supabase
         .from('user_connections')
         .select('data_access_permissions')
         .eq('user_id', currentUser.user.id)
-        .eq('connected_user_id', connection.id)
+        .eq('connected_user_id', targetUserId)
+        .eq('status', 'accepted')
         .single();
+      
+      console.log('🔍 [Privacy Controls] Fetching permissions for:', {
+        currentUserId: currentUser.user.id,
+        targetUserId,
+        connectionId: connection.id,
+        connectionConnectionId: (connection as any).connectionId,
+        foundData: data,
+        error: error?.message
+      });
 
       if (error) throw error;
 
@@ -67,15 +80,24 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
         [field]: allowed
       };
 
-      // Convert to the format expected by the database (false means blocked)
+      // Convert to the format expected by the database (true means granted, false means blocked, undefined means not set)
       const dbPermissions = {
-        shipping_address: newPermissions.shipping_address ? undefined : false,
-        dob: newPermissions.dob ? undefined : false,
-        email: newPermissions.email ? undefined : false,
-        gift_preferences: newPermissions.gift_preferences ? undefined : false
+        shipping_address: newPermissions.shipping_address ? true : false,
+        dob: newPermissions.dob ? true : false,
+        email: newPermissions.email ? true : false,
+        gift_preferences: newPermissions.gift_preferences ? true : false
       };
+      
+      console.log('🔍 [Privacy Controls] Updating permissions:', {
+        newPermissions,
+        dbPermissions,
+        currentUserId: currentUser.user.id,
+        connectionId: connection.id
+      });
 
       // Update the connection record where current user is granting permissions
+      const targetUserId = connection.id;
+      
       const { error } = await supabase
         .from('user_connections')
         .update({ 
@@ -83,12 +105,16 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
           updated_at: new Date().toISOString()
         })
         .eq('user_id', currentUser.user.id)
-        .eq('connected_user_id', connection.id);
+        .eq('connected_user_id', targetUserId);
 
       if (error) throw error;
 
       setPermissions(newPermissions);
       toast.success('Privacy settings updated');
+      
+      console.log('✅ [Privacy Controls] Successfully updated permissions');
+      
+      // Trigger a refresh of the connections to update the data status
       onUpdate();
     } catch (error) {
       console.error('Error updating permissions:', error);

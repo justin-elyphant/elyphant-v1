@@ -20,7 +20,7 @@ const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
   const navigate = useNavigate();
   const { connection, loading, error } = useConnection(connectionId || "");
-  const { handleDeleteConnection } = useConnectionsAdapter();
+  const { handleDeleteConnection, refreshPendingConnections: refreshConnections } = useConnectionsAdapter();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Auto-gift permission checking
@@ -197,7 +197,12 @@ const ConnectionDetail: React.FC = () => {
           <CardContent>
             <ConnectionPrivacyControls 
               connection={connection}
-              onUpdate={() => window.location.reload()}
+              onUpdate={() => {
+                // Refresh the auto-gift permission
+                refreshPermission();
+                // Refresh the connections data
+                refreshConnections();
+              }}
             />
           </CardContent>
         </Card>

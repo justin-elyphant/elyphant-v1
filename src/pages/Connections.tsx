@@ -45,24 +45,46 @@ const Connections = () => {
   } = useEnhancedConnections();
 
   // Transform enhanced connections to match the expected interface
-  const friends = enhancedConnections.filter(conn => conn.status === 'accepted').map(conn => ({
-    id: conn.display_user_id || (conn.user_id === user?.id ? conn.connected_user_id : conn.user_id) || conn.id,
-    connectionId: conn.id,
-    name: conn.profile_name || conn.pending_recipient_name || 'Unknown',
-    username: conn.profile_username || `@${conn.profile_name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
-    imageUrl: conn.profile_image || '/placeholder.svg',
-    mutualFriends: 0,
-    type: 'friend' as const,
-    lastActive: 'recently',
-    relationship: conn.relationship_type as RelationshipType,
-    dataStatus: {
-      shipping: 'missing' as const,
-      birthday: 'missing' as const,
-      email: 'missing' as const
-    },
-    bio: conn.profile_bio || '',
-    connectionDate: conn.created_at
-  }));
+  const friends = enhancedConnections.filter(conn => conn.status === 'accepted').map(conn => {
+    // Determine the target user ID (the user whose card we're displaying)
+    const targetUserId = conn.user_id === user?.id ? conn.connected_user_id : conn.user_id;
+    
+    // Find the bidirectional permission record where target user granted permissions to current user
+    const targetUserConnection = enhancedConnections.find(c => 
+      c.user_id === targetUserId && c.connected_user_id === user?.id && c.status === 'accepted'
+    );
+    
+    const permissions = targetUserConnection?.data_access_permissions || {};
+    
+    console.log('🔍 [Connections Page] Processing friend:', {
+      connectionId: conn.id,
+      targetUserId,
+      permissions,
+      name: conn.profile_name
+    });
+    
+    return {
+      id: conn.display_user_id || targetUserId || conn.id,
+      connectionId: conn.id,
+      name: conn.profile_name || conn.pending_recipient_name || 'Unknown',
+      username: conn.profile_username || `@${conn.profile_name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
+      imageUrl: conn.profile_image || '/placeholder.svg',
+      mutualFriends: 0,
+      type: 'friend' as const,
+      lastActive: 'recently',
+      relationship: conn.relationship_type as RelationshipType,
+      dataStatus: {
+        shipping: permissions?.shipping_address === false ? 'blocked' as const : 
+                 permissions?.shipping_address === true ? 'verified' as const : 'missing' as const,
+        birthday: permissions?.dob === false ? 'blocked' as const : 
+                 permissions?.dob === true ? 'verified' as const : 'missing' as const,
+        email: permissions?.email === false ? 'blocked' as const : 
+               permissions?.email === true ? 'verified' as const : 'missing' as const
+      },
+      bio: conn.profile_bio || '',
+      connectionDate: conn.created_at
+    };
+  });
 
   const suggestions: Connection[] = []; // Empty for now
 

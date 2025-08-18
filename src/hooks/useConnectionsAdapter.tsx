@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useConnectionsAdapter = () => {
+  console.log('🚀 [useConnectionsAdapter] Hook initialized!');
   const { user } = useAuth();
   const { 
     connections,
@@ -38,7 +39,11 @@ export const useConnectionsAdapter = () => {
 
   // Fetch bidirectional permissions for each target user
   const fetchBidirectionalPermissions = useCallback(async () => {
-    if (!connections || !user) return;
+    console.log('🚀 [Bidirectional Permissions] Function called!');
+    if (!connections || !user) {
+      console.log('🚀 [Bidirectional Permissions] No connections or user, returning');
+      return;
+    }
 
     const permissionsMap = new Map();
     
@@ -52,6 +57,7 @@ export const useConnectionsAdapter = () => {
     });
 
     console.log('🔍 [Bidirectional Permissions] Fetching permissions for users:', Array.from(uniqueTargetUsers));
+    console.log('🔍 [Bidirectional Permissions] Current user ID:', user.id);
 
     // Fetch all connection records where these users are grantors to current user
     if (uniqueTargetUsers.size > 0) {

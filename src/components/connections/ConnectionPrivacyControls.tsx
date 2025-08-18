@@ -70,6 +70,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
   };
 
   const updatePermissions = async (field: string, allowed: boolean) => {
+    console.log('🚀 [Privacy Controls] Toggle clicked!', { field, allowed });
     setLoading(true);
     try {
       const { data: currentUser } = await supabase.auth.getUser();

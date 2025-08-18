@@ -29,12 +29,12 @@ export const AutoGiftStatusBadge: React.FC<AutoGiftStatusBadgeProps> = ({
           variant: 'secondary' as const,
           className: 'bg-warning text-warning-foreground border-warning'
         };
-      case 'blocked':
+      case 'disabled':
         return {
           icon: Ban,
-          text: 'Auto-Gift Blocked',
-          variant: 'destructive' as const,
-          className: 'bg-destructive text-destructive-foreground border-destructive'
+          text: 'Auto-Gift Disabled',
+          variant: 'secondary' as const,
+          className: 'bg-muted text-muted-foreground border-muted'
         };
       default:
         return {

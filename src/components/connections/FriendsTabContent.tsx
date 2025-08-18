@@ -9,14 +9,14 @@ interface FriendsTabContentProps {
   friends: Connection[];
   searchTerm: string;
   onRelationshipChange: (connectionId: string, newRelationship: RelationshipType, customValue?: string) => void;
-  onVerificationRequest: (connectionId: string, dataType: keyof Connection['dataStatus']) => void;
+  onAutoGiftToggle: (connectionId: string, enabled: boolean) => void;
 }
 
 const FriendsTabContent: React.FC<FriendsTabContentProps> = ({ 
   friends, 
   searchTerm, 
   onRelationshipChange,
-  onVerificationRequest
+  onAutoGiftToggle
 }) => {
   if (friends.length === 0) {
     return (
@@ -37,11 +37,11 @@ const FriendsTabContent: React.FC<FriendsTabContentProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {friends.map(friend => (
-        <FriendCard 
+        <FriendCard
           key={friend.id}
           friend={friend}
           onRelationshipChange={onRelationshipChange}
-          onVerificationRequest={onVerificationRequest}
+          onAutoGiftToggle={onAutoGiftToggle}
         />
       ))}
     </div>

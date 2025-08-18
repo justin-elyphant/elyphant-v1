@@ -1,40 +1,38 @@
 /**
- * Auto-Gift Permission Service
+ * Simplified Auto-Gift Permission Service
  * Handles permission checking for auto-gifting between users
  */
 
 import { Connection } from '@/types/connections';
 import { protectedAutoGiftingService } from './protected-auto-gifting-service';
 import { supabase } from '@/integrations/supabase/client';
+import { unifiedProfileService } from './profiles/UnifiedProfileService';
 
-export type AutoGiftPermissionStatus = 'ready' | 'setup_needed' | 'blocked';
+export type AutoGiftPermissionStatus = 'ready' | 'setup_needed' | 'disabled';
 
 export interface AutoGiftPermissionResult {
   status: AutoGiftPermissionStatus;
   canAutoGift: boolean;
-  missingData: Array<'shipping' | 'birthday' | 'email'>;
-  blockedData: Array<'shipping' | 'birthday' | 'email'>;
-  hasActiveRules: boolean;
-  withinRateLimits: boolean;
+  isAutoGiftEnabled: boolean;
+  hasCompleteProfile: boolean;
   reasonCode: string;
   userFriendlyMessage: string;
 }
 
 class AutoGiftPermissionService {
   /**
-   * Check comprehensive auto-gift permission status for a connection
+   * Check simplified auto-gift permission status for a connection
    */
   async checkAutoGiftPermission(
     userId: string,
     connection: Connection
   ): Promise<AutoGiftPermissionResult> {
     try {
-      // Step 1: Check data verification status
-      const missingData = this.checkMissingData(connection);
-      const blockedData = this.checkBlockedData(connection);
+      // Step 1: Check if auto-gifting is enabled for this connection
+      const isAutoGiftEnabled = await this.checkAutoGiftEnabled(userId, connection.id);
       
-      // Step 2: Check if user has auto-gifting rules for this connection
-      const hasActiveRules = await this.checkActiveAutoGiftRules(userId, connection.id);
+      // Step 2: Check if user profile is complete
+      const hasCompleteProfile = await this.checkProfileCompleteness(userId);
       
       // Step 3: Check rate limits and protective measures
       const withinRateLimits = await this.checkRateLimits(userId);
@@ -43,10 +41,9 @@ class AutoGiftPermissionService {
       const circuitBreakerOk = await protectedAutoGiftingService.checkEmergencyCircuitBreaker();
       
       // Determine overall status
-      const status = this.determineStatus({
-        missingData,
-        blockedData,
-        hasActiveRules,
+      const status = this.determineSimplifiedStatus({
+        isAutoGiftEnabled,
+        hasCompleteProfile,
         withinRateLimits,
         circuitBreakerOk
       });
@@ -54,27 +51,22 @@ class AutoGiftPermissionService {
       return {
         status,
         canAutoGift: status === 'ready',
-        missingData,
-        blockedData,
-        hasActiveRules,
-        withinRateLimits: withinRateLimits && circuitBreakerOk,
-        reasonCode: this.getReasonCode(status, { missingData, blockedData, hasActiveRules }),
-        userFriendlyMessage: this.getUserFriendlyMessage(status, connection.name, {
-          missingData,
-          blockedData,
-          hasActiveRules
+        isAutoGiftEnabled,
+        hasCompleteProfile,
+        reasonCode: this.getSimplifiedReasonCode(status, { isAutoGiftEnabled, hasCompleteProfile }),
+        userFriendlyMessage: this.getSimplifiedUserFriendlyMessage(status, connection.name, {
+          isAutoGiftEnabled,
+          hasCompleteProfile
         })
       };
       
     } catch (error) {
       console.error('Error checking auto-gift permission:', error);
       return {
-        status: 'blocked',
+        status: 'disabled',
         canAutoGift: false,
-        missingData: [],
-        blockedData: [],
-        hasActiveRules: false,
-        withinRateLimits: false,
+        isAutoGiftEnabled: false,
+        hasCompleteProfile: false,
         reasonCode: 'service_error',
         userFriendlyMessage: 'Auto-gifting temporarily unavailable'
       };
@@ -82,60 +74,45 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Check what data is missing for auto-gifting
+   * Check if auto-gifting is enabled for this connection via data access permissions
    */
-  private checkMissingData(connection: Connection): Array<'shipping' | 'birthday' | 'email'> {
-    const missing: Array<'shipping' | 'birthday' | 'email'> = [];
-    
-    if (connection.dataStatus.shipping === 'missing') {
-      missing.push('shipping');
-    }
-    if (connection.dataStatus.birthday === 'missing') {
-      missing.push('birthday');
-    }
-    if (connection.dataStatus.email === 'missing') {
-      missing.push('email');
-    }
-    
-    return missing;
-  }
-
-  /**
-   * Check what data is blocked by the connection
-   */
-  private checkBlockedData(connection: Connection): Array<'shipping' | 'birthday' | 'email'> {
-    const blocked: Array<'shipping' | 'birthday' | 'email'> = [];
-    
-    if (connection.dataStatus.shipping === 'blocked') {
-      blocked.push('shipping');
-    }
-    if (connection.dataStatus.birthday === 'blocked') {
-      blocked.push('birthday');
-    }
-    if (connection.dataStatus.email === 'blocked') {
-      blocked.push('email');
-    }
-    
-    return blocked;
-  }
-
-  /**
-   * Check if user has active auto-gifting rules for this connection
-   */
-  private async checkActiveAutoGiftRules(userId: string, connectionId: string): Promise<boolean> {
+  private async checkAutoGiftEnabled(userId: string, connectionId: string): Promise<boolean> {
     try {
-      const { data: rules, error } = await supabase
-        .from('auto_gifting_rules')
-        .select('id')
+      const { data: connection, error } = await supabase
+        .from('user_connections')
+        .select('data_access_permissions')
         .eq('user_id', userId)
-        .eq('recipient_id', connectionId)
-        .eq('is_active', true)
-        .limit(1);
+        .eq('connected_user_id', connectionId)
+        .eq('status', 'accepted')
+        .single();
 
-      if (error) throw error;
-      return (rules?.length || 0) > 0;
+      if (error || !connection) return false;
+
+      const permissions = connection.data_access_permissions || {};
+      // Auto-gift is enabled if all required permissions are granted
+      return permissions.shipping && permissions.birthday && permissions.email;
     } catch (error) {
-      console.error('Error checking auto-gift rules:', error);
+      console.error('Error checking auto-gift enabled status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if user profile has required data for auto-gifting
+   */
+  private async checkProfileCompleteness(userId: string): Promise<boolean> {
+    try {
+      const profile = await unifiedProfileService.getProfileById(userId);
+      if (!profile) return false;
+
+      const hasShipping = !!(profile.shipping_address && 
+        (profile.shipping_address as any).address_line1);
+      const hasBirthday = !!(profile.dob);
+      const hasEmail = !!(profile.email);
+
+      return hasShipping && hasBirthday && hasEmail;
+    } catch (error) {
+      console.error('Error checking profile completeness:', error);
       return false;
     }
   }
@@ -154,33 +131,31 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Determine overall permission status
+   * Determine simplified permission status
    */
-  private determineStatus({
-    missingData,
-    blockedData,
-    hasActiveRules,
+  private determineSimplifiedStatus({
+    isAutoGiftEnabled,
+    hasCompleteProfile,
     withinRateLimits,
     circuitBreakerOk
   }: {
-    missingData: string[];
-    blockedData: string[];
-    hasActiveRules: boolean;
+    isAutoGiftEnabled: boolean;
+    hasCompleteProfile: boolean;
     withinRateLimits: boolean;
     circuitBreakerOk: boolean;
   }): AutoGiftPermissionStatus {
-    // Blocked if any data is blocked or circuit breaker active
-    if (blockedData.length > 0 || !circuitBreakerOk) {
-      return 'blocked';
+    // If auto-gifting is disabled, return disabled
+    if (!isAutoGiftEnabled) {
+      return 'disabled';
     }
 
-    // Setup needed if missing critical data or no rules set up
-    if (missingData.includes('shipping') || missingData.includes('birthday') || !hasActiveRules) {
+    // If profile is incomplete, need setup
+    if (!hasCompleteProfile) {
       return 'setup_needed';
     }
 
-    // Ready if all conditions met
-    if (hasActiveRules && withinRateLimits && circuitBreakerOk) {
+    // If within limits and circuit breaker ok, ready
+    if (withinRateLimits && circuitBreakerOk) {
       return 'ready';
     }
 
@@ -188,25 +163,19 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Get machine-readable reason code
+   * Get simplified machine-readable reason code
    */
-  private getReasonCode(
+  private getSimplifiedReasonCode(
     status: AutoGiftPermissionStatus,
-    details: { missingData: string[]; blockedData: string[]; hasActiveRules: boolean }
+    details: { isAutoGiftEnabled: boolean; hasCompleteProfile: boolean }
   ): string {
-    if (status === 'blocked') {
-      if (details.blockedData.length > 0) {
-        return 'data_blocked';
-      }
-      return 'system_blocked';
+    if (status === 'disabled') {
+      return 'auto_gift_disabled';
     }
 
     if (status === 'setup_needed') {
-      if (!details.hasActiveRules) {
-        return 'no_rules_configured';
-      }
-      if (details.missingData.length > 0) {
-        return 'missing_required_data';
+      if (!details.hasCompleteProfile) {
+        return 'incomplete_profile';
       }
       return 'configuration_incomplete';
     }
@@ -215,35 +184,60 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Get user-friendly status message
+   * Get simplified user-friendly status message
    */
-  private getUserFriendlyMessage(
+  private getSimplifiedUserFriendlyMessage(
     status: AutoGiftPermissionStatus,
     connectionName: string,
-    details: { missingData: string[]; blockedData: string[]; hasActiveRules: boolean }
+    details: { isAutoGiftEnabled: boolean; hasCompleteProfile: boolean }
   ): string {
     switch (status) {
       case 'ready':
-        return `Auto-gifting is set up for ${connectionName}`;
+        return `Auto-gifting enabled for ${connectionName}`;
         
       case 'setup_needed':
-        if (!details.hasActiveRules) {
-          return `Set up auto-gifting for ${connectionName}`;
+        if (!details.hasCompleteProfile) {
+          return `Complete your profile to enable auto-gifting`;
         }
-        if (details.missingData.length > 0) {
-          const missing = details.missingData.join(' and ');
-          return `Request ${missing} from ${connectionName}`;
-        }
-        return `Complete auto-gift setup for ${connectionName}`;
+        return `Auto-gifting setup needed`;
         
-      case 'blocked':
-        if (details.blockedData.length > 0) {
-          return `${connectionName} has restricted data sharing`;
-        }
-        return 'Auto-gifting temporarily unavailable';
+      case 'disabled':
+        return `Auto-gifting disabled for ${connectionName}`;
         
       default:
         return 'Auto-gift status unknown';
+    }
+  }
+
+  /**
+   * Toggle auto-gifting permission for a connection
+   */
+  async toggleAutoGiftPermission(userId: string, connectionId: string, enabled: boolean): Promise<{ success: boolean; error?: string }> {
+    try {
+      const permissions = {
+        shipping: enabled,
+        birthday: enabled,
+        email: enabled
+      };
+
+      const { error } = await supabase
+        .from('user_connections')
+        .update({ 
+          data_access_permissions: permissions,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('connected_user_id', connectionId);
+
+      if (error) {
+        console.error('Error toggling auto-gift permission:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error toggling auto-gift permission:', error);
+      return { success: false, error: error.message || 'Failed to update auto-gift permission' };
     }
   }
 }

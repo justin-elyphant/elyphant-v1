@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Connection, RelationshipType } from "@/types/connections";
 import { getRelationshipIcon, getRelationshipLabel } from "./RelationshipUtils";
-import DataVerificationSection from "./DataVerificationSection";
+import { AutoGiftToggle } from "./AutoGiftToggle";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
 import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
@@ -20,10 +20,10 @@ import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 interface FriendCardProps {
   friend: Connection;
   onRelationshipChange: (connectionId: string, newRelationship: RelationshipType, customValue?: string) => void;
-  onVerificationRequest: (connectionId: string, dataType: keyof Connection['dataStatus']) => void;
+  onAutoGiftToggle: (connectionId: string, enabled: boolean) => void;
 }
 
-const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, onVerificationRequest }) => {
+const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, onAutoGiftToggle }) => {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
@@ -174,9 +174,12 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
           </p>
           <p className="text-xs text-muted-foreground mb-3">Active {friend.lastActive}</p>
           
-          <DataVerificationSection 
-            friend={friend} 
-            onVerificationRequest={onVerificationRequest} 
+          <AutoGiftToggle
+            connectionName={friend.name}
+            connectionId={friend.id}
+            isEnabled={permissionResult?.isAutoGiftEnabled ?? false}
+            isLoading={permissionLoading}
+            onToggle={onAutoGiftToggle}
           />
         </CardContent>
         <CardFooter className="flex justify-between pt-2">

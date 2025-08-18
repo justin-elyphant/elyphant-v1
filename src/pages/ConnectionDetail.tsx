@@ -13,8 +13,9 @@ import { getRelationshipIcon, getRelationshipLabel } from "@/components/connecti
 
 import { ConnectionPrivacyControls } from "@/components/connections/ConnectionPrivacyControls";
 import { AutoGiftStatusBadge } from "@/components/connections/AutoGiftStatusBadge";
-import { AutoGiftNudgeButton } from "@/components/connections/AutoGiftNudgeButton";
+import { AutoGiftToggle } from "@/components/connections/AutoGiftToggle";
 import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
+import { autoGiftPermissionService } from "@/services/autoGiftPermissionService";
 
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
@@ -29,6 +30,20 @@ const ConnectionDetail: React.FC = () => {
     loading: permissionLoading, 
     refreshPermission 
   } = useAutoGiftPermission(connection);
+
+  const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
+    if (!connection) return;
+    
+    const result = await autoGiftPermissionService.toggleAutoGiftPermission(
+      connection.id, // Current user's ID 
+      connectionId,
+      enabled
+    );
+    
+    if (result.success) {
+      refreshPermission();
+    }
+  };
 
   if (loading) {
     return (
@@ -108,16 +123,16 @@ const ConnectionDetail: React.FC = () => {
                   <Gift className="w-4 h-4 mr-2" />
                   Send Gift
                 </Button>
-                {/* Auto-Gift Nudge Button */}
-                {permissionResult && 
-                 permissionResult.status === 'setup_needed' && 
-                 !permissionLoading && (
-                  <AutoGiftNudgeButton
-                    connection={connection}
-                    missingData={permissionResult.missingData}
-                    hasActiveRules={permissionResult.hasActiveRules}
-                    onNudgeSent={refreshPermission}
-                  />
+                {/* Auto-Gift Toggle */}
+                {permissionResult && !permissionLoading && (
+                  <div className="p-3 border rounded-lg bg-card">
+                    <AutoGiftToggle
+                      connectionName={connection.name}
+                      connectionId={connection.id}
+                      isEnabled={permissionResult.isAutoGiftEnabled}
+                      onToggle={handleAutoGiftToggle}
+                    />
+                  </div>
                 )}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

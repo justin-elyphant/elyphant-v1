@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
+import { autoGiftPermissionService } from "@/services/autoGiftPermissionService";
 
 const Connections = () => {
   console.log('🚀 [Connections] Page component loaded!');
@@ -118,8 +119,21 @@ const Connections = () => {
     toast.info('Relationship update feature coming soon');
   };
 
-  const handleSendVerificationRequest = async (connectionId: string) => {
-    toast.info('Verification request feature coming soon');
+  const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
+    if (!user) return;
+    
+    const result = await autoGiftPermissionService.toggleAutoGiftPermission(
+      user.id,
+      connectionId,
+      enabled
+    );
+    
+    if (result.success) {
+      toast.success(`Auto-gifting ${enabled ? 'enabled' : 'disabled'}`);
+      await fetchConnections(); // Refresh connections to get updated permissions
+    } else {
+      toast.error(result.error || 'Failed to update auto-gift settings');
+    }
   };
 
   const filterConnections = (connections: Connection[], searchTerm: string) => {
@@ -190,7 +204,7 @@ const Connections = () => {
                 friends={filteredFriends}
                 searchTerm={searchTerm}
                 onRelationshipChange={handleRelationshipChange}
-                onVerificationRequest={handleSendVerificationRequest}
+                onAutoGiftToggle={handleAutoGiftToggle}
               />
             </TabsContent>
             

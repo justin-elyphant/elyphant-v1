@@ -52,7 +52,7 @@ export const useEnhancedConnections = () => {
     setError(null);
     
     try {
-      // First fetch connections without foreign key joins to avoid RLS bypass
+      // First fetch connections and explicitly get both directions for permission checking
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
         .select('*')

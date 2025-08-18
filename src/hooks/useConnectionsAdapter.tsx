@@ -1,5 +1,5 @@
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { useConnectionSuggestions } from "@/hooks/useConnectionSuggestions";
 import { useMutualConnections } from "@/hooks/useMutualConnections";
@@ -33,6 +33,56 @@ export const useConnectionsAdapter = () => {
   const { suggestions, loading: suggestionsLoading } = useConnectionSuggestions();
   const { calculateMutualFriends } = useMutualConnections();
 
+  // Add state to track bidirectional permissions
+  const [bidirectionalPermissions, setBidirectionalPermissions] = useState<Map<string, any>>(new Map());
+
+  // Fetch bidirectional permissions for each target user
+  const fetchBidirectionalPermissions = useCallback(async () => {
+    if (!connections || !user) return;
+
+    const permissionsMap = new Map();
+    
+    // For each unique target user, fetch their permissions to current user
+    const uniqueTargetUsers = new Set<string>();
+    connections.forEach(conn => {
+      const targetUserId = conn.user_id === user.id ? conn.connected_user_id : conn.user_id;
+      if (targetUserId) {
+        uniqueTargetUsers.add(targetUserId);
+      }
+    });
+
+    console.log('🔍 [Bidirectional Permissions] Fetching permissions for users:', Array.from(uniqueTargetUsers));
+
+    // Fetch all connection records where these users are grantors to current user
+    if (uniqueTargetUsers.size > 0) {
+      const targetUserIds = Array.from(uniqueTargetUsers);
+      
+      const { data: grantorConnections, error } = await supabase
+        .from('user_connections')
+        .select('user_id, connected_user_id, data_access_permissions')
+        .in('user_id', targetUserIds)
+        .eq('connected_user_id', user.id)
+        .eq('status', 'accepted');
+
+      if (error) {
+        console.error('❌ [Bidirectional Permissions] Error fetching permissions:', error);
+      } else {
+        console.log('🔍 [Bidirectional Permissions] Fetched grantor connections:', grantorConnections);
+        
+        grantorConnections?.forEach(conn => {
+          permissionsMap.set(conn.user_id, conn.data_access_permissions || {});
+        });
+      }
+    }
+
+    setBidirectionalPermissions(permissionsMap);
+  }, [connections, user]);
+
+  // Fetch bidirectional permissions when connections change
+  useEffect(() => {
+    fetchBidirectionalPermissions();
+  }, [fetchBidirectionalPermissions]);
+
   // Transform enhanced connections into UI-compatible format
   const transformedConnections = useMemo(() => {
     console.log('🔄 [useConnectionsAdapter] Transforming connections:', connections.length);
@@ -59,26 +109,19 @@ export const useConnectionsAdapter = () => {
         isAccepted: isAcceptedConnection
       });
 
-      // For auto-gift status on Justin's card, we need to show what Justin has granted to Dua
-      // This determines if Dua can auto-gift to Justin
-      
-      // Get the user_id from this connection record - this is who we're viewing
+      // Determine who is the target user (the one whose card we're displaying)
       const targetUserId = conn.user_id === user?.id ? conn.connected_user_id : conn.user_id;
       
-      // Check if this connection record represents permissions FROM the target user TO the current user
-      // If current user is the grantor (user_id), then we need the REVERSE connection to see target's permissions
-      const targetIsGrantor = conn.user_id === targetUserId;
-      const permissionsFromTarget = targetIsGrantor ? (conn.data_access_permissions || {}) : {};
+      // CRITICAL FIX: Use bidirectional permissions to get what target user has granted to current user
+      const permissionsFromTarget = bidirectionalPermissions.get(targetUserId) || {};
       
-      console.log('🔍 [Permission Debug] Connection analysis:', {
+      console.log('🔍 [Permission Debug] Using bidirectional permissions:', {
         connectionId: conn.id,
         currentUserId: user?.id,
         targetUserId,
-        connUserId: conn.user_id,
-        connConnectedUserId: conn.connected_user_id,
-        targetIsGrantor,
-        rawPermissions: conn.data_access_permissions,
-        permissionsToUse: permissionsFromTarget
+        permissionsFromTarget,
+        hasBidirectionalData: bidirectionalPermissions.has(targetUserId),
+        allBidirectionalKeys: Array.from(bidirectionalPermissions.keys())
       });
       
       return {
@@ -103,7 +146,7 @@ export const useConnectionsAdapter = () => {
         bio: conn.profile_bio || '',
       } as Connection;
     });
-  }, [connections, refreshTrigger, user]);
+  }, [connections, refreshTrigger, user, bidirectionalPermissions]);
 
   const transformedFollowing = useMemo(() => {
     return following.map(conn => ({
@@ -286,7 +329,8 @@ export const useConnectionsAdapter = () => {
     setRefreshTrigger(prev => prev + 1);
     await Promise.all([
       refetchConnections(),
-      fetchPendingConnections()
+      fetchPendingConnections(),
+      fetchBidirectionalPermissions()
     ]);
   };
 

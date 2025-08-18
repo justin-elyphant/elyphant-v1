@@ -57,20 +57,50 @@ export const useConnectionsAdapter = () => {
     if (uniqueTargetUsers.size > 0) {
       const targetUserIds = Array.from(uniqueTargetUsers);
       
-      const { data: grantorConnections, error } = await supabase
+      console.log('🔍 [Bidirectional Permissions] Fetching for targets:', targetUserIds, 'current user:', user.id);
+      
+      // First approach: Check where target users are grantors (user_id) and current user is recipient
+      const { data: grantorConnections, error: grantorError } = await supabase
         .from('user_connections')
         .select('user_id, connected_user_id, data_access_permissions')
         .in('user_id', targetUserIds)
         .eq('connected_user_id', user.id)
         .eq('status', 'accepted');
 
-      if (error) {
-        console.error('❌ [Bidirectional Permissions] Error fetching permissions:', error);
+      // Second approach: Also check the reverse direction in case the connection was initiated differently
+      const { data: recipientConnections, error: recipientError } = await supabase
+        .from('user_connections')
+        .select('user_id, connected_user_id, data_access_permissions')
+        .eq('user_id', user.id)
+        .in('connected_user_id', targetUserIds)
+        .eq('status', 'accepted');
+
+      if (grantorError) {
+        console.error('❌ [Bidirectional Permissions] Error fetching grantor permissions:', grantorError);
       } else {
         console.log('🔍 [Bidirectional Permissions] Fetched grantor connections:', grantorConnections);
         
         grantorConnections?.forEach(conn => {
+          console.log('🔍 [Bidirectional Permissions] Setting permissions for user:', conn.user_id, 'permissions:', conn.data_access_permissions);
           permissionsMap.set(conn.user_id, conn.data_access_permissions || {});
+        });
+      }
+
+      if (recipientError) {
+        console.error('❌ [Bidirectional Permissions] Error fetching recipient permissions:', recipientError);
+      } else {
+        console.log('🔍 [Bidirectional Permissions] Fetched recipient connections:', recipientConnections);
+        
+        // For recipient connections, the current user granted permissions to target users
+        // But we want to know what target users granted to current user
+        // So we need to look at the target user's permissions in this case
+        recipientConnections?.forEach(conn => {
+          // If this connection exists but we haven't found grantor permissions,
+          // it means the target user hasn't granted any permissions yet
+          if (!permissionsMap.has(conn.connected_user_id)) {
+            console.log('🔍 [Bidirectional Permissions] Target user has not granted permissions yet:', conn.connected_user_id);
+            permissionsMap.set(conn.connected_user_id, {});
+          }
         });
       }
     }
@@ -122,6 +152,20 @@ export const useConnectionsAdapter = () => {
         permissionsFromTarget,
         hasBidirectionalData: bidirectionalPermissions.has(targetUserId),
         allBidirectionalKeys: Array.from(bidirectionalPermissions.keys())
+      });
+      
+      console.log('🔍 [DataStatus Debug] Calculating dataStatus for target:', targetUserId, {
+        shipping_permission: permissionsFromTarget?.shipping_address,
+        dob_permission: permissionsFromTarget?.dob,
+        email_permission: permissionsFromTarget?.email,
+        calculated_dataStatus: {
+          shipping: permissionsFromTarget?.shipping_address === false ? 'blocked' : 
+                   permissionsFromTarget?.shipping_address === true ? 'verified' : 'missing',
+          birthday: permissionsFromTarget?.dob === false ? 'blocked' : 
+                   permissionsFromTarget?.dob === true ? 'verified' : 'missing',
+          email: permissionsFromTarget?.email === false ? 'blocked' : 
+                 permissionsFromTarget?.email === true ? 'verified' : 'missing'
+        }
       });
       
       return {

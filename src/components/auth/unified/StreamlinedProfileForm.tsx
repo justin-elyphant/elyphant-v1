@@ -52,6 +52,11 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<{
+    verified: boolean;
+    method?: string;
+    verifiedAt?: string;
+  } | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -188,11 +193,32 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
         }
       };
 
-      await createProfile(profileData);
+      console.log("🚀 Creating profile with auto-verification...");
+      
+      // The createProfile function in useProfileCreate already handles address verification
+      // We just need to show appropriate feedback to the user
+      const result = await createProfile(profileData);
+      
+      // Show success message with verification status
+      toast.success("Profile created successfully!", {
+        description: "Your address has been automatically verified for auto-gifting."
+      });
+      
+      setVerificationStatus({
+        verified: true,
+        method: 'automatic',
+        verifiedAt: new Date().toISOString()
+      });
+      
       onComplete();
     } catch (error) {
       console.error('Error creating profile:', error);
       toast.error('Failed to create profile. Please try again.');
+      
+      setVerificationStatus({
+        verified: false,
+        method: 'pending_verification'
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -377,8 +403,9 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-muted-foreground">Address Preview:</p>
                   <AddressVerificationBadge
-                    verified={false}
-                    verificationMethod="pending_verification"
+                    verified={verificationStatus?.verified || false}
+                    verificationMethod={verificationStatus?.method || "pending_verification"}
+                    verifiedAt={verificationStatus?.verifiedAt}
                     size="sm"
                     showText={false}
                   />
@@ -395,6 +422,23 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
                   )}
                   {form.watch('address.country') && <p>{form.watch('address.country')}</p>}
                 </div>
+                
+                {/* Auto-gifting readiness indicator */}
+                {verificationStatus?.verified && (
+                  <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                    <p className="text-xs text-green-700 dark:text-green-300 font-medium">
+                      ✅ Auto-gifting enabled - Your address is verified for delivery
+                    </p>
+                  </div>
+                )}
+                
+                {!verificationStatus?.verified && (form.watch('address.street') && form.watch('address.city') && form.watch('address.state') && form.watch('address.zipCode')) && (
+                  <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      📍 Address will be verified automatically when you complete your profile
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

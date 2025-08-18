@@ -71,6 +71,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
   };
 
   const updatePermissions = async (field: string, allowed: boolean) => {
+    alert(`Toggle clicked: ${field} = ${allowed}`); // Immediate visual confirmation
     console.log('🚀 [Privacy Controls] Toggle clicked!', { field, allowed });
     setLoading(true);
     try {

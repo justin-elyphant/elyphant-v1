@@ -62,7 +62,11 @@ export function useProfileFetch() {
           shipping_address: 'private', 
           gift_preferences: 'friends',
           email: 'private'
-        }
+        },
+        // Extract the actual count from the Supabase count aggregation result
+        wishlist_count: Array.isArray(profile.wishlist_count) && profile.wishlist_count.length > 0 
+          ? profile.wishlist_count[0].count 
+          : 0
       };
 
       return enhancedProfile;

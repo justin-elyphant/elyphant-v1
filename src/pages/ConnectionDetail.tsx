@@ -112,35 +112,26 @@ const ConnectionDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button asChild>
-                  <Link to={`/messages/${connection.id}`}>
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Message
-                  </Link>
-                </Button>
-                <Button variant="outline">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Send Gift
-                </Button>
-                {/* Auto-Gift Toggle */}
-                {permissionResult && !permissionLoading && (
-                  <div className="p-3 border rounded-lg bg-card">
-                    <AutoGiftToggle
-                      connectionName={connection.name}
-                      connectionId={connection.id}
-                      isEnabled={permissionResult.isAutoGiftEnabled}
-                      onToggle={handleAutoGiftToggle}
-                    />
-                  </div>
-                )}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <UserMinus className="w-4 h-4 mr-2" />
-                      Remove Connection
-                    </Button>
-                  </AlertDialogTrigger>
+              <div className="flex flex-col gap-3">
+                {/* Action Buttons Row */}
+                <div className="flex gap-2">
+                  <Button size="sm" asChild>
+                    <Link to={`/messages/${connection.id}`}>
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Message
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Gift className="w-4 h-4 mr-2" />
+                    Send Gift
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Remove Connection
+                      </Button>
+                    </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Remove Connection</AlertDialogTitle>
@@ -168,6 +159,18 @@ const ConnectionDetail: React.FC = () => {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                </div>
+                
+                {/* Auto-Gift Toggle Row */}
+                {permissionResult && !permissionLoading && (
+                  <AutoGiftToggle
+                    connectionName={connection.name}
+                    connectionId={connection.id}
+                    isEnabled={permissionResult.isAutoGiftEnabled}
+                    onToggle={handleAutoGiftToggle}
+                    className="border-t pt-3 mt-1"
+                  />
+                )}
               </div>
             </div>
           </CardHeader>

@@ -28,7 +28,7 @@ export const AutoGiftToggle: React.FC<AutoGiftToggleProps> = ({
 
   return (
     <div className={`flex items-center justify-between py-2 ${className}`}>
-      <Label htmlFor={`auto-gift-${connectionId}`} className="text-sm font-medium">
+      <Label htmlFor={`auto-gift-${connectionId}`} className="text-sm font-medium text-muted-foreground">
         Auto-Gifting with {connectionName}
       </Label>
       <div className="flex items-center gap-2">
@@ -38,7 +38,7 @@ export const AutoGiftToggle: React.FC<AutoGiftToggleProps> = ({
           checked={isEnabled}
           onCheckedChange={handleToggle}
           disabled={isLoading}
-          className="data-[state=checked]:bg-primary"
+          className="data-[state=checked]:bg-primary h-4 w-7"
         />
       </div>
     </div>

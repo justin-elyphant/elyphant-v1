@@ -45,24 +45,43 @@ export const useUnifiedWishlistSystem = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('wishlists')
-        .eq('id', user.id)
-        .single();
+      // Fetch wishlists from the wishlists table
+      const { data: wishlistData, error: wishlistError } = await supabase
+        .from('wishlists')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching wishlists:", error);
-        throw error;
+      if (wishlistError) {
+        console.error("Error fetching wishlists:", wishlistError);
+        throw wishlistError;
       }
 
-      if (!profile?.wishlists || !Array.isArray(profile.wishlists)) {
+      if (!wishlistData || !Array.isArray(wishlistData)) {
         return [];
       }
 
-      return profile.wishlists
-        .filter(list => list && typeof list === 'object' && list.id)
-        .map(list => normalizeWishlist({ ...list, user_id: user.id }));
+      // Fetch items for each wishlist
+      const wishlistsWithItems = await Promise.all(
+        wishlistData.map(async (wishlist) => {
+          const { data: items, error: itemsError } = await supabase
+            .from('wishlist_items')
+            .select('*')
+            .eq('wishlist_id', wishlist.id)
+            .order('created_at', { ascending: false });
+
+          if (itemsError) {
+            console.error(`Error fetching items for wishlist ${wishlist.id}:`, itemsError);
+          }
+
+          return normalizeWishlist({
+            ...wishlist,
+            items: items || []
+          });
+        })
+      );
+
+      return wishlistsWithItems;
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -78,13 +97,27 @@ export const useUnifiedWishlistSystem = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
+          table: 'wishlists',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           console.log('Wishlist real-time update:', payload);
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.wishlists(user.id)
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wishlist_items',
+        },
+        (payload) => {
+          console.log('Wishlist item real-time update:', payload);
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.wishlists(user.id)
           });
@@ -102,24 +135,50 @@ export const useUnifiedWishlistSystem = () => {
     };
   }, [user, queryClient]);
 
-  // Utility function to sync wishlists to profile
-  const syncWishlistsToProfile = useCallback(async (updatedWishlists: Wishlist[]) => {
+  // Create or update wishlist in the wishlists table
+  const saveWishlistToDatabase = useCallback(async (wishlist: Wishlist, isUpdate = false) => {
     if (!user) throw new Error("User must be authenticated");
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        wishlists: updatedWishlists,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
+    if (isUpdate) {
+      const { error } = await supabase
+        .from('wishlists')
+        .update({
+          title: wishlist.title,
+          description: wishlist.description,
+          is_public: wishlist.is_public,
+          category: wishlist.category,
+          priority: wishlist.priority,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wishlist.id)
+        .eq('user_id', user.id);
 
-    if (error) {
-      console.error("Error syncing wishlists to profile:", error);
-      throw error;
+      if (error) {
+        console.error("Error updating wishlist:", error);
+        throw error;
+      }
+    } else {
+      const { error } = await supabase
+        .from('wishlists')
+        .insert({
+          id: wishlist.id,
+          user_id: wishlist.user_id,
+          title: wishlist.title,
+          description: wishlist.description,
+          is_public: wishlist.is_public || false,
+          category: wishlist.category,
+          priority: wishlist.priority || 1,
+          created_at: wishlist.created_at,
+          updated_at: wishlist.updated_at
+        });
+
+      if (error) {
+        console.error("Error creating wishlist:", error);
+        throw error;
+      }
     }
 
-    return updatedWishlists;
+    return wishlist;
   }, [user]);
 
   // Create wishlist mutation
@@ -138,8 +197,7 @@ export const useUnifiedWishlistSystem = () => {
         items: [],
       });
 
-      const updatedWishlists = [...wishlists, newWishlist];
-      await syncWishlistsToProfile(updatedWishlists);
+      await saveWishlistToDatabase(newWishlist, false);
       
       return newWishlist;
     },
@@ -160,8 +218,23 @@ export const useUnifiedWishlistSystem = () => {
     mutationFn: async (wishlistId: string) => {
       if (!user) throw new Error("User must be authenticated");
 
-      const updatedWishlists = wishlists.filter(w => w.id !== wishlistId);
-      await syncWishlistsToProfile(updatedWishlists);
+      // Delete all items first
+      await supabase
+        .from('wishlist_items')
+        .delete()
+        .eq('wishlist_id', wishlistId);
+
+      // Delete the wishlist
+      const { error } = await supabase
+        .from('wishlists')
+        .delete()
+        .eq('id', wishlistId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error("Error deleting wishlist:", error);
+        throw error;
+      }
       
       return wishlistId;
     },
@@ -182,37 +255,54 @@ export const useUnifiedWishlistSystem = () => {
     mutationFn: async ({ wishlistId, item }: { wishlistId: string; item: WishlistItemInput }) => {
       if (!user) throw new Error("User must be authenticated");
 
-      const wishlistIndex = wishlists.findIndex(w => w.id === wishlistId);
-      if (wishlistIndex === -1) throw new Error("Wishlist not found");
+      // Check if wishlist exists and belongs to user
+      const { data: wishlist } = await supabase
+        .from('wishlists')
+        .select('id')
+        .eq('id', wishlistId)
+        .eq('user_id', user.id)
+        .single();
 
-      const targetWishlist = wishlists[wishlistIndex];
+      if (!wishlist) throw new Error("Wishlist not found");
       
       // Check if item already exists
-      const existingItem = targetWishlist.items.find(i => i.product_id === item.product_id);
-      if (existingItem) {
+      const { data: existingItems } = await supabase
+        .from('wishlist_items')
+        .select('id')
+        .eq('wishlist_id', wishlistId)
+        .eq('product_id', item.product_id);
+
+      if (existingItems && existingItems.length > 0) {
         throw new Error("Item already exists in this wishlist");
       }
 
       const newItem: WishlistItem = normalizeWishlistItem({
         id: crypto.randomUUID(),
         wishlist_id: wishlistId,
-        added_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         ...item
       });
 
-      const updatedWishlist = {
-        ...targetWishlist,
-        items: [...targetWishlist.items, newItem],
-        updated_at: new Date().toISOString()
-      };
+      // Insert the item into the database
+      const { error } = await supabase
+        .from('wishlist_items')
+        .insert({
+          id: newItem.id,
+          wishlist_id: newItem.wishlist_id,
+          product_id: newItem.product_id,
+          title: newItem.title,
+          name: newItem.name,
+          price: newItem.price,
+          brand: newItem.brand,
+          image_url: newItem.image_url,
+          created_at: newItem.created_at
+        });
 
-      const updatedWishlists = [
-        ...wishlists.slice(0, wishlistIndex),
-        updatedWishlist,
-        ...wishlists.slice(wishlistIndex + 1)
-      ];
+      if (error) {
+        console.error("Error adding item to wishlist:", error);
+        throw error;
+      }
 
-      await syncWishlistsToProfile(updatedWishlists);
       return { wishlistId, item: newItem };
     },
     onSuccess: ({ item }) => {
@@ -238,28 +328,28 @@ export const useUnifiedWishlistSystem = () => {
     mutationFn: async ({ wishlistId, itemId }: { wishlistId: string; itemId: string }) => {
       if (!user) throw new Error("User must be authenticated");
 
-      const wishlistIndex = wishlists.findIndex(w => w.id === wishlistId);
-      if (wishlistIndex === -1) throw new Error("Wishlist not found");
-
-      const targetWishlist = wishlists[wishlistIndex];
-      const itemToRemove = targetWishlist.items.find(item => item.id === itemId);
+      // Get the item details before deletion for the toast
+      const { data: itemToRemove } = await supabase
+        .from('wishlist_items')
+        .select('*')
+        .eq('id', itemId)
+        .eq('wishlist_id', wishlistId)
+        .single();
       
       if (!itemToRemove) throw new Error("Item not found in wishlist");
 
-      const updatedItems = targetWishlist.items.filter(item => item.id !== itemId);
-      const updatedWishlist = {
-        ...targetWishlist,
-        items: updatedItems,
-        updated_at: new Date().toISOString()
-      };
+      // Delete the item from the database
+      const { error } = await supabase
+        .from('wishlist_items')
+        .delete()
+        .eq('id', itemId)
+        .eq('wishlist_id', wishlistId);
 
-      const updatedWishlists = [
-        ...wishlists.slice(0, wishlistIndex),
-        updatedWishlist,
-        ...wishlists.slice(wishlistIndex + 1)
-      ];
+      if (error) {
+        console.error("Error removing item from wishlist:", error);
+        throw error;
+      }
 
-      await syncWishlistsToProfile(updatedWishlists);
       return { wishlistId, itemId, removedItem: itemToRemove };
     },
     onSuccess: ({ removedItem }) => {
@@ -281,22 +371,20 @@ export const useUnifiedWishlistSystem = () => {
     mutationFn: async ({ wishlistId, isPublic }: { wishlistId: string; isPublic: boolean }) => {
       if (!user) throw new Error("User must be authenticated");
 
-      const wishlistIndex = wishlists.findIndex(w => w.id === wishlistId);
-      if (wishlistIndex === -1) throw new Error("Wishlist not found");
+      const { error } = await supabase
+        .from('wishlists')
+        .update({
+          is_public: isPublic,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wishlistId)
+        .eq('user_id', user.id);
 
-      const updatedWishlist = {
-        ...wishlists[wishlistIndex],
-        is_public: isPublic,
-        updated_at: new Date().toISOString()
-      };
+      if (error) {
+        console.error("Error updating wishlist sharing:", error);
+        throw error;
+      }
 
-      const updatedWishlists = [
-        ...wishlists.slice(0, wishlistIndex),
-        updatedWishlist,
-        ...wishlists.slice(wishlistIndex + 1)
-      ];
-
-      await syncWishlistsToProfile(updatedWishlists);
       return { wishlistId, isPublic };
     },
     onSuccess: ({ isPublic }) => {

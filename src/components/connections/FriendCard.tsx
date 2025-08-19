@@ -72,8 +72,8 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
     });
     console.groupEnd();
     
-    // Navigate after logging
-    navigate(`/connection/${friend.id}`);
+    // Navigate to profile with connection context
+    navigate(`/profile/${friend.id}?context=connection`);
   };
 
   const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {

@@ -3,10 +3,11 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock } from "lucide-react";
+import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock, Gift, UserMinus, Heart } from "lucide-react";
 import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
+import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 
 export interface ProfileBannerProps {
   userData: any;
@@ -21,6 +22,16 @@ export interface ProfileBannerProps {
   canConnect?: boolean;
   canMessage?: boolean;
   isAnonymousUser?: boolean;
+  // Connection-specific props for consolidated view
+  connectionData?: {
+    relationship?: string;
+    customRelationship?: string;
+    connectionDate?: string;
+    isAutoGiftEnabled?: boolean;
+    canRemoveConnection?: boolean;
+  };
+  onSendGift?: () => void;
+  onRemoveConnection?: () => void;
 }
 
 const ProfileBanner: React.FC<ProfileBannerProps> = ({
@@ -33,7 +44,10 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   wishlistCount = 0,
   canConnect = true,
   canMessage = true,
-  isAnonymousUser = false
+  isAnonymousUser = false,
+  connectionData,
+  onSendGift,
+  onRemoveConnection
 }) => {
   // Privacy logic for email display
   const shouldShowEmail = () => {
@@ -137,12 +151,22 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     // Authenticated user viewing someone else's profile
     return (
       <div className="flex space-x-3">
-        {canConnect && (
+        {canConnect && !isConnected && (
           <ConnectButton
             targetUserId={userData?.id}
             variant="default"
             className="bg-white text-gray-900 hover:bg-gray-100"
           />
+        )}
+        {isConnected && onSendGift && (
+          <Button
+            onClick={onSendGift}
+            variant="default"
+            className="bg-white text-gray-900 hover:bg-gray-100"
+          >
+            <Gift className="h-4 w-4 mr-2" />
+            Send Gift
+          </Button>
         )}
         {canMessage && (
           <Button
@@ -185,6 +209,11 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
             <div className="text-white space-y-3">
               <div className="flex items-center space-x-3">
                 <h1 className="text-4xl font-bold">{userData?.name || 'User'}</h1>
+                {connectionData?.isAutoGiftEnabled && (
+                  <Badge variant="secondary" className="bg-green-500/20 text-green-100 border-green-300/30 text-xs px-2 py-1">
+                    Auto-Gift Enabled
+                  </Badge>
+                )}
                 {!isCurrentUser && !canConnect && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                     <Lock className="h-3 w-3 mr-1" />
@@ -200,6 +229,21 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
               
               {userData?.username && (
                 <p className="text-xl opacity-90">@{userData.username}</p>
+              )}
+              
+              {/* Connection relationship info */}
+              {connectionData?.relationship && (
+                <div className="flex items-center space-x-2">
+                  {getRelationshipIcon(connectionData.relationship as any)}
+                  <span className="text-sm font-medium opacity-90">
+                    {getRelationshipLabel(connectionData.relationship as any, connectionData.customRelationship)}
+                  </span>
+                  {connectionData.connectionDate && (
+                    <span className="text-sm opacity-75">
+                      • Connected since {new Date(connectionData.connectionDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
               )}
               
               {/* Bio */}

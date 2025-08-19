@@ -5,9 +5,26 @@ import ProfileTabs from "./ProfileTabs";
 
 interface UserProfileViewProps {
   profile: Profile | null;
+  connectionData?: {
+    relationship?: string;
+    customRelationship?: string;
+    connectionDate?: string;
+    isAutoGiftEnabled?: boolean;
+    canRemoveConnection?: boolean;
+    id?: string;
+  };
+  onSendGift?: () => void;
+  onRemoveConnection?: () => void;
+  onRefreshConnection?: () => void;
 }
 
-const UserProfileView: React.FC<UserProfileViewProps> = ({ profile }) => {
+const UserProfileView: React.FC<UserProfileViewProps> = ({ 
+  profile, 
+  connectionData, 
+  onSendGift, 
+  onRemoveConnection, 
+  onRefreshConnection 
+}) => {
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!profile) {
@@ -31,24 +48,31 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile }) => {
     <div className="min-h-screen bg-gray-50">
       <ProfileBanner
         userData={profile}
-        isCurrentUser={true}
-        isConnected={false}
+        isCurrentUser={!connectionData} // If connectionData exists, we're viewing someone else's profile
+        isConnected={!!connectionData}
         onConnect={() => {}}
         onShare={handleShare}
         connectionCount={0} // These would come from actual data
         wishlistCount={profile.wishlists?.length || 0}
         canConnect={false}
-        canMessage={false}
+        canMessage={true}
         isAnonymousUser={false}
+        connectionData={connectionData}
+        onSendGift={onSendGift}
+        onRemoveConnection={onRemoveConnection}
       />
       
       <div className="container mx-auto px-4 py-6">
         <ProfileTabs
           profile={profile}
-          isOwnProfile={true}
+          isOwnProfile={!connectionData} // If connectionData exists, we're viewing someone else's profile
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           isPublicView={false}
+          connectionData={connectionData}
+          onSendGift={onSendGift}
+          onRemoveConnection={onRemoveConnection}
+          onRefreshConnection={onRefreshConnection}
         />
       </div>
     </div>

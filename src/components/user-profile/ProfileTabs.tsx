@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Gift, Settings, Eye, EyeOff } from "lucide-react";
+import { Heart, Gift, Settings, Eye, EyeOff, Users } from "lucide-react";
+import ConnectionTabContent from "./tabs/ConnectionTabContent";
 
 
 interface ProfileTabsProps {
@@ -14,6 +15,18 @@ interface ProfileTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isPublicView?: boolean;
+  // Connection-specific props for consolidated view
+  connectionData?: {
+    relationship?: string;
+    customRelationship?: string;
+    connectionDate?: string;
+    isAutoGiftEnabled?: boolean;
+    canRemoveConnection?: boolean;
+    id?: string;
+  };
+  onSendGift?: () => void;
+  onRemoveConnection?: () => void;
+  onRefreshConnection?: () => void;
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({
@@ -22,19 +35,28 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   onUpdateProfile,
   activeTab,
   setActiveTab,
-  isPublicView = false
+  isPublicView = false,
+  connectionData,
+  onSendGift,
+  onRemoveConnection,
+  onRefreshConnection
 }) => {
   const { user } = useAuth();
 
   // Filter tabs based on viewing context
   const availableTabs = isOwnProfile 
     ? ["overview", "wishlists", "activity", "settings"]
-    : ["overview", "wishlists"];
+    : connectionData 
+      ? ["overview", "wishlists", "connection"]
+      : ["overview", "wishlists"];
+
+  // Dynamic grid layout based on available tabs
+  const gridCols = availableTabs.length === 3 ? "grid-cols-3" : "grid-cols-4";
 
   return (
     <div className="max-w-4xl mx-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
+        <TabsList className={`grid w-full ${gridCols} lg:${gridCols}`}>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             Overview
@@ -43,6 +65,12 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <Heart className="h-4 w-4" />
             Wishlists
           </TabsTrigger>
+          {connectionData && (
+            <TabsTrigger value="connection" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Connection
+            </TabsTrigger>
+          )}
           {isOwnProfile && (
             <>
               <TabsTrigger value="activity" className="flex items-center gap-2">
@@ -192,6 +220,18 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Connection Tab - Only shown for connection profiles */}
+        {connectionData && (
+          <TabsContent value="connection" className="mt-6">
+            <ConnectionTabContent
+              profile={profile}
+              connectionData={connectionData}
+              onRemoveConnection={onRemoveConnection}
+              onRefreshConnection={onRefreshConnection}
+            />
+          </TabsContent>
+        )}
 
         {isOwnProfile && (
           <>

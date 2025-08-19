@@ -78,7 +78,7 @@ export const useEnhancedConnections = () => {
             if (canView) {
               const { data: profileData } = await supabase
                 .from('profiles')
-                .select('id, name, email, profile_image, bio, username')
+                .select('id, name, email, profile_image, bio, username, interests, important_dates')
                 .eq('id', targetUserId)
                 .single();
               

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useConnection } from "@/hooks/useConnection";
@@ -212,24 +213,27 @@ const ConnectionDetail: React.FC = () => {
           </Card>
 
         {/* Dynamic Content Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Birthday Countdown */}
+        <div className="space-y-6 mb-6">
+          {/* Birthday Countdown - Full width when shown */}
           <BirthdayCountdown 
             userId={connection.id} 
             connectionName={connection.name} 
           />
           
-          {/* Public Wishlists */}
-          <PublicWishlistsSection 
-            userId={connection.id} 
-            connectionName={connection.name} 
-          />
-          
-          {/* Mutual Connections */}
-          <MutualConnectionsSection 
-            connectionId={connection.id} 
-            connectionName={connection.name} 
-          />
+          {/* Two-column layout for other sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Public Wishlists */}
+            <PublicWishlistsSection 
+              userId={connection.id} 
+              connectionName={connection.name} 
+            />
+            
+            {/* Mutual Connections */}
+            <MutualConnectionsSection 
+              connectionId={connection.id} 
+              connectionName={connection.name} 
+            />
+          </div>
         </div>
 
         {/* Privacy Controls Section */}

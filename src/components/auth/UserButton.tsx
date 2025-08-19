@@ -38,6 +38,11 @@ const UserButton = () => {
   const getUserFirstName = () => {
     if (!user) return "My";
     
+    // Try user metadata first_name field (highest priority)
+    if (user.user_metadata?.first_name) {
+      return user.user_metadata.first_name.trim();
+    }
+    
     // Try user metadata name fields - extract first name only
     if (user.user_metadata?.name) {
       const firstName = user.user_metadata.name.split(' ')[0].trim();
@@ -67,7 +72,7 @@ const UserButton = () => {
   };
 
   const userName = getUserFirstName();
-  const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName} Wishlist`;
+  const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName}'s Wishlist`;
   
   // Calculate total notification count for avatar badge
   const totalNotificationCount = notificationsCount + unreadMessagesCount + (hasIssues ? 1 : 0);

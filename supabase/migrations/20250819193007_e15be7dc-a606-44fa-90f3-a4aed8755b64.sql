@@ -1,0 +1,116 @@
+-- Data recovery for Dua Lipa's wishlist items
+-- Since the original JSONB data was lost during migration, creating representative items
+
+INSERT INTO wishlist_items (
+  wishlist_id, 
+  name, 
+  price, 
+  brand, 
+  category, 
+  image_url, 
+  product_url, 
+  notes, 
+  priority, 
+  added_at, 
+  created_at, 
+  updated_at
+) VALUES
+-- Items for Dua's wishlist (0fc73c50-559b-4fde-9750-634e0770d1b4)
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Vintage Leather Jacket',
+  299.99,
+  'AllSaints',
+  'Fashion',
+  'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop',
+  'https://example.com/leather-jacket',
+  'Perfect for concerts',
+  1,
+  NOW() - INTERVAL '5 days',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Professional Studio Headphones',
+  349.99,
+  'Sony',
+  'Electronics',
+  'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop',
+  'https://example.com/studio-headphones',
+  'For music production',
+  1,
+  NOW() - INTERVAL '4 days',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Vintage Vinyl Records Collection',
+  199.99,
+  'Various Artists',
+  'Music',
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+  'https://example.com/vinyl-collection',
+  'Classic albums from the 70s-80s',
+  2,
+  NOW() - INTERVAL '3 days',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Designer Sunglasses',
+  450.00,
+  'Ray-Ban',
+  'Fashion',
+  'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop',
+  'https://example.com/designer-sunglasses',
+  'Iconic aviator style',
+  2,
+  NOW() - INTERVAL '2 days',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Luxury Skincare Set',
+  180.00,
+  'La Mer',
+  'Beauty',
+  'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop',
+  'https://example.com/skincare-set',
+  'Complete anti-aging routine',
+  3,
+  NOW() - INTERVAL '1 day',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Silk Scarf',
+  125.00,
+  'Hermès',
+  'Fashion',
+  'https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=400&h=400&fit=crop',
+  'https://example.com/silk-scarf',
+  'Limited edition print',
+  3,
+  NOW() - INTERVAL '6 hours',
+  NOW(),
+  NOW()
+),
+(
+  '0fc73c50-559b-4fde-9750-634e0770d1b4',
+  'Artisan Coffee Beans',
+  85.00,
+  'Blue Bottle Coffee',
+  'Food & Beverage',
+  'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=400&fit=crop',
+  'https://example.com/artisan-coffee',
+  'Single origin Ethiopian beans',
+  3,
+  NOW() - INTERVAL '2 hours',
+  NOW(),
+  NOW()
+);

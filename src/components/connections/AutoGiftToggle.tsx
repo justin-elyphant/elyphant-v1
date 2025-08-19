@@ -37,23 +37,13 @@ export const AutoGiftToggle: React.FC<AutoGiftToggleProps> = ({
       </Label>
       <div className="flex items-center gap-2">
         {isLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-        <div 
-          onClick={() => {
-            console.log('🖱️ Switch container clicked - isLoading:', isLoading, 'isEnabled:', isEnabled);
-            if (!isLoading) {
-              handleToggle(!isEnabled);
-            }
-          }}
-          className="cursor-pointer"
-        >
-          <Switch
-            id={`auto-gift-${connectionId}`}
-            checked={isEnabled}
-            onCheckedChange={handleToggle}
-            disabled={isLoading}
-            className="data-[state=checked]:bg-primary h-4 w-7"
-          />
-        </div>
+        <Switch
+          id={`auto-gift-${connectionId}`}
+          checked={isEnabled}
+          onCheckedChange={handleToggle}
+          disabled={isLoading}
+          className="data-[state=checked]:bg-primary h-4 w-7"
+        />
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   console.log("🎨 ProfileTabs rendering with profile:", {
     profileId: profile?.id,
     profileName: profile?.name,
-    wishlistCount: profile?.wishlist_count || profile?.wishlists?.length || 0,
+    wishlistCount: (profile as any)?.wishlist_count || profile?.wishlists?.length || 0,
     isOwnProfile,
     isPublicView,
     hasConnectionData: !!connectionData
@@ -39,11 +39,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   // Get wishlists - check both possible locations
   const wishlists = profile?.wishlists || [];
-  const wishlistCount = profile?.wishlist_count || wishlists.length || 0;
+  const wishlistCount = (profile as any)?.wishlist_count || wishlists.length || 0;
   
   console.log("🔢 ProfileTabs wishlist calculation:", {
     wishlistsLength: wishlists.length,
-    profileWishlistCount: profile?.wishlist_count,
+    profileWishlistCount: (profile as any)?.wishlist_count,
     finalCount: wishlistCount,
     wishlists: wishlists.map(w => ({ id: w.id, title: w.title, is_public: w.is_public }))
   });
@@ -91,11 +91,13 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 <Heart className="h-5 w-5" />
                 Gift Preferences
               </h3>
-              <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                 {profile.gift_preferences && profile.gift_preferences.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1">
                     {profile.gift_preferences.map((pref, index) => (
-                      <li key={index}>{pref}</li>
+                      <li key={index}>
+                        {typeof pref === 'string' ? pref : pref.category}
+                      </li>
                     ))}
                   </ul>
                 ) : (

@@ -40,7 +40,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
       
       <div className="container mx-auto px-4 py-6">
         <ProfileTabs
-          profile={profile}
+          profile={profile as any}
           isOwnProfile={false}
           activeTab={activeTab}
           setActiveTab={setActiveTab}

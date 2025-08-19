@@ -31,11 +31,9 @@ export function useProfileFetch() {
         .select(`
           *,
           wishlist_count:wishlists(count),
-          connection_count:user_connections!user_connections_user_id_fkey(count),
-          connected_count:user_connections!user_connections_connected_user_id_fkey(count)
+          connection_count:user_connections!user_connections_user_id_fkey(count)
         `)
         .eq('id', user.id)
-        .eq('user_connections.status', 'accepted')
         .eq('user_connections.status', 'accepted')
         .single();
 
@@ -75,22 +73,13 @@ export function useProfileFetch() {
           }
           return 0;
         })(),
-        // Extract connection count (sum of both directions for bidirectional connections)
+        // Extract connection count (only count where user is the initiator to avoid double counting)
         connection_count: (() => {
-          const userConnectionData = (profile as any).connection_count;
-          const connectedConnectionData = (profile as any).connected_count;
-          
-          let userCount = 0;
-          if (Array.isArray(userConnectionData) && userConnectionData.length > 0 && typeof userConnectionData[0].count === 'number') {
-            userCount = userConnectionData[0].count;
+          const connectionData = (profile as any).connection_count;
+          if (Array.isArray(connectionData) && connectionData.length > 0 && typeof connectionData[0].count === 'number') {
+            return connectionData[0].count;
           }
-          
-          let connectedCount = 0;
-          if (Array.isArray(connectedConnectionData) && connectedConnectionData.length > 0 && typeof connectedConnectionData[0].count === 'number') {
-            connectedCount = connectedConnectionData[0].count;
-          }
-          
-          return userCount + connectedCount;
+          return 0;
         })()
       };
 

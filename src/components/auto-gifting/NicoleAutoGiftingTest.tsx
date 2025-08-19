@@ -240,8 +240,19 @@ const NicoleAutoGiftingTest: React.FC = () => {
       // Test Enhanced Auto-Gifting Service
       const enhancedTest = await unifiedGiftManagementService.createRule({
         user_id: user!.id,
+        recipient_id: user!.id, // Test rule - self as recipient
+        date_type: 'birthday',
         is_active: true,
-        budget_limit: 5
+        budget_limit: 5,
+        notification_preferences: {
+          email_enabled: true,
+          notification_days: [7, 3, 1]
+        },
+        gift_selection_criteria: {
+          source: 'ai',
+          categories: ['test'],
+          max_price: 5
+        }
       });
       results.enhancedService = { status: 'success', response: enhancedTest };
       addDebugLog('✓ Enhanced Auto-Gifting Service integration working');

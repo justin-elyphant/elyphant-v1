@@ -1,5 +1,5 @@
 import React from "react";
-import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
+
 import { publicProfileService } from "@/services/publicProfileService";
 import MyProfilePreview from "./MyProfilePreview";
 import PublicProfileView from "./PublicProfileView";
@@ -25,26 +25,20 @@ interface ProfileDataRouterProps {
  * - Connection profile → Enhanced UserProfileView with connection features
  * - Public profile → PublicProfileView (conversion-optimized)
  */
-const ProfileDataRouter: React.FC<ProfileDataRouterProps> = ({
+interface ExtendedProfileDataRouterProps extends ProfileDataRouterProps {
+  ownProfile?: any; // Accept profile from parent to avoid duplicate hook calls
+}
+
+const ProfileDataRouter: React.FC<ExtendedProfileDataRouterProps> = ({
   isOwnProfile,
   isConnectionProfile,
   publicProfile,
   connectionProfile,
+  ownProfile,
   onSendGift,
   onRemoveConnection,
   onRefreshConnection
 }) => {
-  const { profile: ownProfile, loading: ownProfileLoading } = useUnifiedProfile();
-
-  // Loading state for own profile
-  if (isOwnProfile && ownProfileLoading) {
-    return (
-      <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <div>Loading your profile preview...</div>
-      </div>
-    );
-  }
-
   // Own profile - render the social proof dashboard
   if (isOwnProfile) {
     return (

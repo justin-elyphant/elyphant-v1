@@ -217,6 +217,10 @@ const Profile = () => {
         isConnectionProfile={isConnectionProfile}
         publicProfile={publicProfile}
         connectionProfile={connectionProfile}
+        ownProfile={ownProfile}
+        onSendGift={() => console.log("Send gift clicked")}
+        onRemoveConnection={() => console.log("Remove connection clicked")}
+        onRefreshConnection={() => console.log("Refresh connection clicked")}
       />
       {/* Show signup CTA for public profiles when not authenticated */}
       {shouldLoadPublicProfile && shouldShowCTA && publicProfile && (

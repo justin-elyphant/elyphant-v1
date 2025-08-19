@@ -158,6 +158,7 @@ function AppContent() {
           <Route path="/connection/:connectionId" element={<ConnectionDetail />} />
           <Route path="/wishlists" element={<Wishlists />} />
           <Route path="/wishlist/:wishlistId" element={<SharedWishlist />} />
+          <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useConnection } from "@/hooks/useConnection";
@@ -14,6 +15,9 @@ import { getRelationshipIcon, getRelationshipLabel } from "@/components/connecti
 import { ConnectionPrivacyControls } from "@/components/connections/ConnectionPrivacyControls";
 import { AutoGiftStatusBadge } from "@/components/connections/AutoGiftStatusBadge";
 import { AutoGiftToggle } from "@/components/connections/AutoGiftToggle";
+import { PublicWishlistsSection } from "@/components/connections/PublicWishlistsSection";
+import { BirthdayCountdown } from "@/components/connections/BirthdayCountdown";
+import { MutualConnectionsSection } from "@/components/connections/MutualConnectionsSection";
 import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 import { autoGiftPermissionService } from "@/services/autoGiftPermissionService";
 
@@ -206,6 +210,27 @@ const ConnectionDetail: React.FC = () => {
             </div>
           </CardContent>
           </Card>
+
+        {/* Dynamic Content Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Birthday Countdown */}
+          <BirthdayCountdown 
+            userId={connection.id} 
+            connectionName={connection.name} 
+          />
+          
+          {/* Public Wishlists */}
+          <PublicWishlistsSection 
+            userId={connection.id} 
+            connectionName={connection.name} 
+          />
+          
+          {/* Mutual Connections */}
+          <MutualConnectionsSection 
+            connectionId={connection.id} 
+            connectionName={connection.name} 
+          />
+        </div>
 
         {/* Privacy Controls Section */}
         <Card>

@@ -150,13 +150,16 @@ export const connectionService = {
         // Add wishlists to profile - now using consistent data source
         const profileWithWishlists = {
           ...profile,
-          wishlists: wishlists || []
+          wishlists: wishlists || [],
+          wishlist_count: wishlists?.length || 0  // Add the count for profile display
         };
 
-        console.log('Connection profile loaded successfully:', { 
+        console.log('✅ Connection profile loaded successfully:', { 
           profileId: profile.id, 
+          profileName: profile.name,
           connectionId: connectionData.id,
-          wishlistCount: wishlists?.length || 0
+          wishlistCount: wishlists?.length || 0,
+          publicWishlists: wishlists?.map(w => w.title)
         });
 
         return {

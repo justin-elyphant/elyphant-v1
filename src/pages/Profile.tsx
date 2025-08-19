@@ -111,27 +111,32 @@ const Profile = () => {
 
   // Load public profile data
   useEffect(() => {
+    console.log("🎬 Profile useEffect triggered - shouldLoadPublicProfile:", shouldLoadPublicProfile);
+    console.log("🎬 Current state - identifier:", identifier, "publicProfile:", !!publicProfile);
+    
     if (!shouldLoadPublicProfile) {
-      console.log("Skipping public profile load");
+      console.log("❌ Skipping public profile load - shouldLoadPublicProfile is false");
       return;
     }
 
     const loadPublicProfile = async () => {
-      console.log("Loading public profile for:", identifier);
+      console.log("🚀 Starting to load public profile for:", identifier);
       setIsLoadingPublic(true);
       setProfileNotFound(false);
       
       try {
         const profile = await publicProfileService.getProfileByIdentifier(identifier);
-        console.log("Public profile result:", profile);
+        console.log("📦 Public profile service returned:", profile);
         
         if (profile) {
+          console.log("✅ Setting public profile with wishlist_count:", profile.wishlist_count);
           setPublicProfile(profile);
         } else {
+          console.log("❌ No profile returned, setting not found");
           setProfileNotFound(true);
         }
       } catch (error) {
-        console.error("Error loading public profile:", error);
+        console.error("💥 Error loading public profile:", error);
         setProfileNotFound(true);
       } finally {
         setIsLoadingPublic(false);

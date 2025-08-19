@@ -2,7 +2,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Profile } from "@/types/profile";
-import ImportantDatesSection from "../ImportantDatesSection";
+import EnhancedInterestsSection from "../EnhancedInterestsSection";
+import EnhancedImportantDatesSection from "../EnhancedImportantDatesSection";
+import GiftSuggestionsPreview from "../GiftSuggestionsPreview";
 
 interface OverviewTabContentProps {
   profile: Profile | null;
@@ -39,23 +41,11 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
         </CardContent>
       </Card>
 
-      {/* Show interests as the primary gift preferences */}
-      {displayInterests && displayInterests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Interests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {displayInterests.map((interest, index) => (
-                <div key={index} className="bg-muted px-3 py-1 rounded-full text-sm">
-                  {typeof interest === 'string' ? interest : interest}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Enhanced interests with gift context */}
+      <EnhancedInterestsSection 
+        interests={displayInterests} 
+        isOwnProfile={isOwnProfile}
+      />
 
       {/* Fallback to gift_preferences if no interests */}
       {(!displayInterests || displayInterests.length === 0) && 
@@ -76,9 +66,22 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
         </Card>
       )}
 
-      {/* Show important dates if available */}
+      {/* Enhanced important dates with gift timing */}
       {importantDates && importantDates.length > 0 && (
-        <ImportantDatesSection importantDates={importantDates} />
+        <EnhancedImportantDatesSection 
+          importantDates={importantDates}
+          isOwnProfile={isOwnProfile}
+        />
+      )}
+
+      {/* Gift suggestions preview for other users */}
+      {!isOwnProfile && displayInterests && displayInterests.length > 0 && (
+        <GiftSuggestionsPreview
+          interests={displayInterests}
+          profileId={profile.id}
+          profileName={profile.name || 'User'}
+          isOwnProfile={isOwnProfile}
+        />
       )}
     </div>
   );

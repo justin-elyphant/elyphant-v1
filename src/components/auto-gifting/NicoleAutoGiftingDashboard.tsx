@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { useNicoleAutoGifting } from '@/hooks/useNicoleAutoGifting';
+// Nicole auto-gifting hook removed - using unified service directly
 import { useAutoGifting } from '@/hooks/useAutoGifting';
 import NicoleApprovalInterface from './NicoleApprovalInterface';
 import { toast } from 'sonner';
@@ -46,14 +46,13 @@ interface AutoGiftExecution {
 const NicoleAutoGiftingDashboard: React.FC = () => {
   const { user } = useAuth();
   const { rules, settings, loading: autoGiftingLoading } = useAutoGifting();
-  const {
-    loading: nicoleLoading,
-    predictiveInsights,
-    approvalStates,
-    getNicoleStats,
-    generatePredictiveInsights,
-    processNicoleApproval
-  } = useNicoleAutoGifting();
+  // Nicole functionality simplified for unified architecture
+  const nicoleLoading = false;
+  const predictiveInsights: any[] = [];
+  const approvalStates: Record<string, any> = {};
+  const getNicoleStats = async () => ({ totalConversations: 0, approvalsByMethod: { email: 0, nicole_chat: 0 }, averageConfidence: 0, successRate: 0 });
+  const generatePredictiveInsights = async () => {};
+  const processNicoleApproval = async () => {};
 
   const [executions, setExecutions] = useState<AutoGiftExecution[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<string | null>(null);

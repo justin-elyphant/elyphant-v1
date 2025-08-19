@@ -4,7 +4,7 @@ import { useAutoGiftToggle } from "./useAutoGiftToggle";
 import { useEventEdit } from "./useEventEdit";
 import { useEventCRUD } from "./useEventCRUD";
 import { useEventArchive } from "./useEventArchive";
-import { useNicoleAutoGifting } from "@/hooks/useNicoleAutoGifting";
+// Nicole auto-gifting hook removed - using unified service directly
 
 export const useEventHandlers = () => {
   const { handleSendGift, handleVerifyEvent, handleEventClick } = useEventActions();

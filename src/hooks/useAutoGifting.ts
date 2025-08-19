@@ -4,9 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { unifiedGiftManagementService, UnifiedGiftSettings as AutoGiftingSettings, UnifiedGiftRule as AutoGiftingRule } from "@/services/UnifiedGiftManagementService";
 import { toast } from "sonner";
 
-// 🚨 MIGRATION WARNING: This hook now uses UnifiedGiftManagementService
-// Legacy autoGiftingService calls have been migrated to the unified service
-console.warn("useAutoGifting: Now using UnifiedGiftManagementService (Phase 5 migration)");
+// This hook manages auto-gifting rules and settings using the unified gift management service
 
 export const useAutoGifting = () => {
   const { user } = useAuth();

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { nicoleAIService } from '@/services/ai/unified/nicoleAIService';
-import { enhancedAutoGiftingService } from '@/services/enhanced-auto-gifting-service';
+import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -238,10 +238,11 @@ const NicoleAutoGiftingTest: React.FC = () => {
       addDebugLog('✓ Nicole AI Service integration working');
 
       // Test Enhanced Auto-Gifting Service
-      const enhancedTest = await enhancedAutoGiftingService.createRuleWithNicole(
-        user!.id,
-        "Test auto-gift rule for integration testing"
-      );
+      const enhancedTest = await unifiedGiftManagementService.createRule({
+        user_id: user!.id,
+        is_active: true,
+        budget_limit: 5
+      });
       results.enhancedService = { status: 'success', response: enhancedTest };
       addDebugLog('✓ Enhanced Auto-Gifting Service integration working');
 

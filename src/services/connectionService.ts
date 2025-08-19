@@ -86,35 +86,11 @@ export const connectionService = {
    */
   async getConnectionProfile(currentUserId: string, profileIdentifier: string): Promise<ConnectionProfile | null> {
     try {
-      // First, get the profile data with public wishlists
+      // First, get the profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          wishlists:wishlists!inner(
-            id,
-            title,
-            description,
-            is_public,
-            created_at,
-            updated_at,
-            category,
-            tags,
-            priority,
-            items:wishlist_items(
-              id,
-              product_id,
-              title,
-              created_at,
-              name,
-              brand,
-              price,
-              image_url
-            )
-          )
-        `)
+        .select('*')
         .or(`username.eq.${profileIdentifier},id.eq.${profileIdentifier}`)
-        .eq('wishlists.is_public', true)
         .maybeSingle();
 
       if (profileError || !profile) {
@@ -130,8 +106,46 @@ export const connectionService = {
         return null;
       }
 
+      // Finally, get public wishlists for this profile
+      const { data: wishlists, error: wishlistError } = await supabase
+        .from('wishlists')
+        .select(`
+          id,
+          title,
+          description,
+          is_public,
+          created_at,
+          updated_at,
+          category,
+          tags,
+          priority,
+          items:wishlist_items(
+            id,
+            product_id,
+            title,
+            created_at,
+            name,
+            brand,
+            price,
+            image_url
+          )
+        `)
+        .eq('user_id', profile.id)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      if (wishlistError) {
+        console.error('Error fetching wishlists:', wishlistError);
+      }
+
+      // Add wishlists to profile
+      const profileWithWishlists = {
+        ...profile,
+        wishlists: wishlists || []
+      };
+
       return {
-        profile: profile as Profile,
+        profile: profileWithWishlists as Profile,
         connectionData
       };
     } catch (error) {

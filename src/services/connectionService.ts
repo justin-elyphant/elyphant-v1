@@ -82,75 +82,94 @@ export const connectionService = {
   },
 
   /**
-   * Fetch a connection profile (profile + connection data)
+   * Fetch a connection profile (profile + connection data) with retry logic
    */
   async getConnectionProfile(currentUserId: string, profileIdentifier: string): Promise<ConnectionProfile | null> {
-    try {
-      // First, get the profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`username.eq.${profileIdentifier},id.eq.${profileIdentifier}`)
-        .maybeSingle();
+    // Retry logic to handle auth state transitions
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        // First, get the profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .or(`username.eq.${profileIdentifier},id.eq.${profileIdentifier}`)
+          .maybeSingle();
 
-      if (profileError || !profile) {
-        console.log('Profile not found:', { profileIdentifier, profileError });
-        return null;
-      }
+        if (profileError) {
+          console.log(`Profile fetch error (attempt ${attempt + 1}):`, { profileIdentifier, profileError });
+          if (attempt === 2) return null; // Last attempt failed
+          await new Promise(resolve => setTimeout(resolve, 500)); // Wait before retry
+          continue;
+        }
 
-      // Then get the connection data
-      const connectionData = await this.getConnectionData(currentUserId, profile.id);
-      
-      if (!connectionData) {
-        console.log('No connection found between current user and profile owner');
-        return null;
-      }
+        if (!profile) {
+          console.log('Profile not found:', { profileIdentifier });
+          return null;
+        }
 
-      // Finally, get public wishlists for this profile
-      const { data: wishlists, error: wishlistError } = await supabase
-        .from('wishlists')
-        .select(`
-          id,
-          title,
-          description,
-          is_public,
-          created_at,
-          updated_at,
-          category,
-          tags,
-          priority,
-          items:wishlist_items(
+        // Then get the connection data
+        const connectionData = await this.getConnectionData(currentUserId, profile.id);
+        
+        if (!connectionData) {
+          console.log('No connection found between current user and profile owner');
+          return null;
+        }
+
+        // Finally, get public wishlists for this profile from the proper wishlists table
+        const { data: wishlists, error: wishlistError } = await supabase
+          .from('wishlists')
+          .select(`
             id,
-            product_id,
             title,
+            description,
+            is_public,
             created_at,
-            name,
-            brand,
-            price,
-            image_url
-          )
-        `)
-        .eq('user_id', profile.id)
-        .eq('is_public', true)
-        .order('created_at', { ascending: false });
+            updated_at,
+            category,
+            tags,
+            priority,
+            items:wishlist_items(
+              id,
+              product_id,
+              title,
+              created_at,
+              name,
+              brand,
+              price,
+              image_url
+            )
+          `)
+          .eq('user_id', profile.id)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false });
 
-      if (wishlistError) {
-        console.error('Error fetching wishlists:', wishlistError);
+        if (wishlistError) {
+          console.error('Error fetching wishlists:', wishlistError);
+        }
+
+        // Add wishlists to profile - now using consistent data source
+        const profileWithWishlists = {
+          ...profile,
+          wishlists: wishlists || []
+        };
+
+        console.log('Connection profile loaded successfully:', { 
+          profileId: profile.id, 
+          connectionId: connectionData.id,
+          wishlistCount: wishlists?.length || 0
+        });
+
+        return {
+          profile: profileWithWishlists as Profile,
+          connectionData
+        };
+      } catch (error) {
+        console.error(`Connection profile fetch error (attempt ${attempt + 1}):`, error);
+        if (attempt === 2) return null; // Last attempt failed
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait before retry
       }
-
-      // Add wishlists to profile
-      const profileWithWishlists = {
-        ...profile,
-        wishlists: wishlists || []
-      };
-
-      return {
-        profile: profileWithWishlists as Profile,
-        connectionData
-      };
-    } catch (error) {
-      console.error('Error fetching connection profile:', error);
-      return null;
     }
+    
+    return null;
   }
 };

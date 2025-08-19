@@ -217,6 +217,8 @@ class AutoGiftPermissionService {
    * Toggle auto-gifting permission for a connection (bidirectional)
    */
   async toggleAutoGiftPermission(userId: string, connectionId: string, enabled: boolean): Promise<{ success: boolean; error?: string }> {
+    console.log('🔧 toggleAutoGiftPermission called:', { userId, connectionId, enabled });
+    
     try {
       const permissions = {
         shipping_address: enabled,
@@ -224,8 +226,11 @@ class AutoGiftPermissionService {
         email: enabled
       };
 
+      console.log('📋 Setting permissions to:', permissions);
+      console.log('🔍 Updating user_connections with query:', `or(and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId}))`);
+
       // Update the connection record (handles bidirectional relationships)
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_connections')
         .update({ 
           data_access_permissions: permissions,
@@ -234,14 +239,17 @@ class AutoGiftPermissionService {
         .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId})`)
         .eq('status', 'accepted');
 
+      console.log('📊 Database update result:', { data, error });
+
       if (error) {
-        console.error('Error toggling auto-gift permission:', error);
+        console.error('❌ Error toggling auto-gift permission:', error);
         return { success: false, error: error.message };
       }
 
+      console.log('✅ Auto-gift permission toggle successful');
       return { success: true };
     } catch (error: any) {
-      console.error('Error toggling auto-gift permission:', error);
+      console.error('💥 Exception in toggleAutoGiftPermission:', error);
       return { success: false, error: error.message || 'Failed to update auto-gift permission' };
     }
   }

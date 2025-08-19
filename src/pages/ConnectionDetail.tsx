@@ -37,16 +37,28 @@ const ConnectionDetail: React.FC = () => {
   } = useAutoGiftPermission(connection);
 
   const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
-    if (!connection) return;
+    console.log('🔄 Toggle clicked:', { connectionId, enabled, currentUserId: connection?.id });
     
+    if (!connection) {
+      console.log('❌ No connection found, aborting toggle');
+      return;
+    }
+    
+    console.log('📡 Calling autoGiftPermissionService.toggleAutoGiftPermission...');
     const result = await autoGiftPermissionService.toggleAutoGiftPermission(
       connection.id, // Current user's ID 
       connectionId,
       enabled
     );
     
+    console.log('📨 Toggle result:', result);
+    
     if (result.success) {
-      refreshPermission();
+      console.log('✅ Toggle successful, refreshing permission...');
+      await refreshPermission();
+      console.log('🔄 Permission refreshed');
+    } else {
+      console.log('❌ Toggle failed:', result.error);
     }
   };
 

@@ -66,6 +66,7 @@ const SharedWishlist = () => {
         // Transform to match expected Wishlist type
         const transformedWishlist: Wishlist = {
           id: wishlistData.id,
+          user_id: wishlistData.user_id,
           title: wishlistData.title,
           description: wishlistData.description || '',
           category: wishlistData.category,

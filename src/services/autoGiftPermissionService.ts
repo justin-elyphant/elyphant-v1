@@ -74,29 +74,42 @@ class AutoGiftPermissionService {
   }
 
   /**
-   * Check if auto-gifting is enabled for this connection via database function
-   * Uses bidirectional connection checking for improved reliability
+   * Check if auto-gifting is enabled for this connection via direct database query
    */
   private async checkAutoGiftEnabled(userId: string, connectionId: string): Promise<boolean> {
     try {
-      // Use the database function which handles bidirectional permission checking
+      console.log('🔍 Checking auto-gift enabled status for:', { userId, connectionId });
+      
+      // Query the user_connections table directly instead of using RPC
       const { data, error } = await supabase
-        .rpc('check_auto_gift_permission', { 
-          p_user_id: userId, 
-          p_connection_id: connectionId 
-        });
+        .from('user_connections')
+        .select('data_access_permissions')
+        .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId})`)
+        .eq('status', 'accepted')
+        .single();
+
+      console.log('📊 Direct connection query result:', { data, error });
 
       if (error) {
-        console.error('Error calling check_auto_gift_permission RPC:', error);
+        console.error('❌ Error querying user_connections:', error);
         return false;
       }
 
-      if (!data) return false;
+      if (!data || !data.data_access_permissions) {
+        console.log('❌ No data or permissions found');
+        return false;
+      }
 
-      // Return true if auto-gifting is ready or setup needed (has permissions but might need profile completion)
-      return data.status === 'ready' || (data.status === 'setup_needed' && data.reasonCode !== 'data_sharing_restricted');
+      const permissions = data.data_access_permissions as any;
+      console.log('🔐 Current permissions:', permissions);
+      
+      // Check if at least one required permission is enabled
+      const hasAnyPermission = permissions.shipping_address || permissions.dob || permissions.email;
+      console.log('✅ Has any auto-gift permission:', hasAnyPermission);
+      
+      return hasAnyPermission;
     } catch (error) {
-      console.error('Error checking auto-gift enabled status:', error);
+      console.error('💥 Exception checking auto-gift enabled status:', error);
       return false;
     }
   }

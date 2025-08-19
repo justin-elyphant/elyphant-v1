@@ -180,11 +180,11 @@ export const publicProfileService = {
     }
 
     try {
-      const { data: connection, error } = await supabase
+      const { data: connections, error } = await supabase
         .from('user_connections')
         .select('status')
         .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
-        .maybeSingle();
+        .limit(1);
 
       if (error) {
         console.error("Error checking connection status:", error);
@@ -194,6 +194,8 @@ export const publicProfileService = {
           can_connect: true
         };
       }
+
+      const connection = connections && connections.length > 0 ? connections[0] : null;
 
       const status = connection?.status || 'none';
       

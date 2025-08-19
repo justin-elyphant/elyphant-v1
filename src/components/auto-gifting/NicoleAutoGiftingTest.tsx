@@ -245,12 +245,15 @@ const NicoleAutoGiftingTest: React.FC = () => {
         is_active: true,
         budget_limit: 5,
         notification_preferences: {
-          email_enabled: true,
-          notification_days: [7, 3, 1]
+          enabled: true,
+          email: true,
+          push: false,
+          days_before: [7, 3, 1]
         },
         gift_selection_criteria: {
           source: 'ai',
           categories: ['test'],
+          exclude_items: [],
           max_price: 5
         }
       });

@@ -64,9 +64,13 @@ export function useProfileFetch() {
           email: 'private'
         },
         // Extract the actual count from the Supabase count aggregation result
-        wishlist_count: Array.isArray(profile.wishlist_count) && profile.wishlist_count.length > 0 
-          ? profile.wishlist_count[0].count 
-          : 0
+        wishlist_count: (() => {
+          const countData = (profile as any).wishlist_count;
+          if (Array.isArray(countData) && countData.length > 0 && typeof countData[0].count === 'number') {
+            return countData[0].count;
+          }
+          return 0;
+        })()
       };
 
       return enhancedProfile;

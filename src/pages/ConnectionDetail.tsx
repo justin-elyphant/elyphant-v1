@@ -186,6 +186,7 @@ const ConnectionDetail: React.FC = () => {
                     connectionName={connection.name}
                     connectionId={connection.id}
                     isEnabled={permissionResult.isAutoGiftEnabled}
+                    isLoading={permissionLoading}
                     onToggle={handleAutoGiftToggle}
                     className="border-t pt-3 mt-1"
                   />

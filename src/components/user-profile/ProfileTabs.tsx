@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Wishlist, WishlistItem, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import ConnectionTabContent from "./tabs/ConnectionTabContent";
+import OverviewTabContent from "./tabs/OverviewTabContent";
 
 
 interface ProfileTabsProps {
@@ -156,87 +157,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Profile Information
-                  {isPublicView && (
-                    <Badge variant="secondary" className="ml-2">
-                      Public View
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-900">About</h3>
-                  <p className="text-gray-600">
-                    {profile?.bio || "No bio available"}
-                  </p>
-                </div>
-                
-                {profile?.location && (
-                  <div>
-                    <h3 className="font-medium text-gray-900">Location</h3>
-                    <p className="text-gray-600">{profile.location}</p>
-                  </div>
-                )}
-                
-                <div>
-                  <h3 className="font-medium text-gray-900">Member Since</h3>
-                  <p className="text-gray-600">
-                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "Unknown"}
-                  </p>
-                </div>
-
-                {isPublicView && !user && (
-                  <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <h4 className="font-medium text-purple-900 mb-2">Want to see more?</h4>
-                    <p className="text-sm text-purple-700 mb-3">
-                      Sign up to follow {profile?.name} and see their full activity.
-                    </p>
-                    <a 
-                      href="/signup" 
-                      className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
-                      onClick={() => {
-                        sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                          type: 'follow',
-                          targetUserId: profile?.id,
-                          targetName: profile?.name
-                        }));
-                      }}
-                    >
-                      Sign Up Free
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  Gift Preferences
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile?.gift_preferences && profile.gift_preferences.length > 0 ? (
-                  <div className="space-y-2">
-                    {profile.gift_preferences.map((pref: string, index: number) => (
-                      <Badge key={index} variant="outline">
-                        {pref}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600">No gift preferences shared</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <OverviewTabContent profile={profile} isOwnProfile={isOwnProfile} />
         </TabsContent>
 
         <TabsContent value="wishlists" className="mt-6">

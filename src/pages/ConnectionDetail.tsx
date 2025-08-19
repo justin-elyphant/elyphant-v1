@@ -236,23 +236,25 @@ const ConnectionDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Privacy Controls Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacy Controls</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ConnectionPrivacyControls 
-              connection={connection}
-              onUpdate={() => {
-                // Refresh the auto-gift permission
-                refreshPermission();
-                // Refresh the connections data
-                refreshConnections();
-              }}
-            />
-          </CardContent>
-        </Card>
+        {/* Privacy Controls Section - Only show when auto-gifting is enabled */}
+        {permissionResult && permissionResult.isAutoGiftEnabled && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Privacy Controls</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ConnectionPrivacyControls 
+                connection={connection}
+                onUpdate={() => {
+                  // Refresh the auto-gift permission
+                  refreshPermission();
+                  // Refresh the connections data
+                  refreshConnections();
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </SidebarLayout>
   );

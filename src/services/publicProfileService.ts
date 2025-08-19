@@ -171,6 +171,8 @@ export const publicProfileService = {
   
   async getWishlistCount(userId: string): Promise<number> {
     try {
+      console.log("🔍 Getting wishlist count for user:", userId);
+      
       // Now using only the wishlists table (data has been migrated)
       const { count, error } = await supabase
         .from('wishlists')
@@ -178,14 +180,18 @@ export const publicProfileService = {
         .eq('user_id', userId)
         .eq('is_public', true); // Only count public wishlists
       
+      console.log("📊 Wishlist count query result:", { count, error });
+      
       if (error) {
         console.error("Error getting wishlist count from wishlists table:", error);
         return 0;
       }
 
-      return count || 0;
+      const finalCount = count || 0;
+      console.log("✅ Final wishlist count:", finalCount);
+      return finalCount;
     } catch (error) {
-      console.error("Error getting wishlist count:", error);
+      console.error("Exception in getWishlistCount:", error);
       return 0;
     }
   },

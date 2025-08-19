@@ -28,7 +28,10 @@ export function useProfileFetch() {
       const timestamp = Date.now();
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          wishlist_count:wishlists(count)
+        `)
         .eq('id', user.id)
         .single();
 

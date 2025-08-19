@@ -99,6 +99,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           })
         );
 
+        console.log('✅ Fetched public wishlists:', { profileId: profile.id, count: normalizedWishlists.length, wishlists: normalizedWishlists.map(w => w.title) });
         setWishlists(normalizedWishlists);
       } catch (err) {
         console.error('Error fetching public wishlists:', err);
@@ -275,24 +276,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   >
                     View Wishlists
                   </a>
-                </div>
-              ) : profile?.wishlist_count > 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">
-                    {isOwnProfile 
-                      ? "View your wishlists on the dedicated page."
-                      : `View ${profile?.name}'s wishlists when connected.`
-                    }
-                  </p>
-                  {isOwnProfile && (
-                    <Button 
-                      className="mt-4" 
-                      onClick={() => window.location.href = '/wishlists'}
-                    >
-                      Go to My Wishlists
-                    </Button>
-                  )}
                 </div>
               ) : wishlistsLoading ? (
                 <div className="text-center py-8">

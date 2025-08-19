@@ -39,10 +39,12 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   }
 
   // Debug wishlist count data
-  console.log("UserProfileView wishlist data:", {
+  console.log("🎯 UserProfileView wishlist data:", {
+    profile_name: profile?.name,
     wishlist_count: profile.wishlist_count,
     wishlists_length: profile.wishlists?.length,
-    final_count: profile.wishlist_count ?? profile.wishlists?.length ?? 0
+    final_count: profile.wishlist_count ?? profile.wishlists?.length ?? 0,
+    has_connection_data: !!connectionData
   });
 
   const handleShare = () => {

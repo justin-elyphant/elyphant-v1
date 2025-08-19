@@ -157,13 +157,40 @@ export const publicProfileService = {
   
   async getWishlistCount(userId: string): Promise<number> {
     try {
+      // First try the wishlists table (preferred method)
       const { count, error } = await supabase
         .from('wishlists')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('is_public', true); // Only count public wishlists
       
-      return count || 0;
+      if (error) {
+        console.error("Error getting wishlist count from wishlists table:", error);
+      }
+
+      // If we have data from the wishlists table, use that
+      if (count !== null && count !== undefined) {
+        return count;
+      }
+
+      // Fallback: check the profiles.wishlists JSONB column (legacy data)
+      // but only count public wishlists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('wishlists')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile?.wishlists) {
+        return 0;
+      }
+
+      // Count only public wishlists from the JSONB column
+      const publicWishlistCount = Array.isArray(profile.wishlists) 
+        ? profile.wishlists.filter(wishlist => wishlist.is_public === true).length
+        : 0;
+
+      return publicWishlistCount;
     } catch (error) {
       console.error("Error getting wishlist count:", error);
       return 0;

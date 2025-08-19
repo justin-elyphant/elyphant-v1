@@ -3,31 +3,83 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Sparkles } from "lucide-react";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
+import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useNavigate } from "react-router-dom";
+import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
+import { Product } from "@/types/product";
 
 interface GiftSuggestionsPreviewProps {
   interests: string[];
   profileId: string;
   profileName: string;
   isOwnProfile: boolean;
+  wishlistItems?: any[];
 }
 
 const GiftSuggestionsPreview = ({ 
   interests, 
   profileId, 
   profileName, 
-  isOwnProfile 
+  isOwnProfile,
+  wishlistItems = []
 }: GiftSuggestionsPreviewProps) => {
+  const navigate = useNavigate();
+  const { searchProducts } = useUnifiedSearch({ maxResults: 12 });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  
   if (isOwnProfile || !interests?.length) return null;
 
   const { 
     generateRecommendations, 
     recommendations, 
-    loading,
+    loading: aiLoading,
     hasRecommendations 
   } = useEnhancedGiftRecommendations();
 
   const [hasGenerated, setHasGenerated] = useState(false);
 
+  // Fetch curated product grid from multiple sources
+  useEffect(() => {
+    const fetchProductsFromMultipleSources = async () => {
+      if (loading) return;
+      
+      setLoading(true);
+      try {
+        const allProducts: Product[] = [];
+        
+        // 1. Get products from interests (3-4 products per major interest)
+        const mainInterests = interests.slice(0, 3); // Focus on top 3 interests
+        for (const interest of mainInterests) {
+          try {
+            const interestProducts = await searchProducts(interest, { maxResults: 4 });
+            allProducts.push(...interestProducts);
+          } catch (error) {
+            console.log(`Failed to fetch products for ${interest}:`, error);
+          }
+        }
+
+        // 2. Remove duplicates and limit to 10 items
+        const uniqueProducts = allProducts
+          .filter((product, index, self) => 
+            index === self.findIndex(p => p.id === product.id)
+          )
+          .slice(0, 10);
+
+        setProducts(uniqueProducts);
+      } catch (error) {
+        console.error('Failed to fetch gift suggestions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (interests.length > 0) {
+      fetchProductsFromMultipleSources();
+    }
+  }, [interests, searchProducts]);
+
+  // Still generate AI recommendations for fallback
   useEffect(() => {
     if (!hasGenerated && interests.length > 0) {
       const searchContext = {
@@ -47,24 +99,12 @@ const GiftSuggestionsPreview = ({
     }
   }, [interests, profileId, profileName, generateRecommendations, hasGenerated]);
 
-  const handleSeeMoreSuggestions = () => {
-    console.log(`Getting more gift suggestions for ${profileName}`);
-    window.dispatchEvent(new CustomEvent('triggerNicole', {
-      detail: {
-        capability: 'gift-recommendations',
-        source: 'suggestions-preview',
-        autoGreeting: true,
-        greetingContext: {
-          greeting: 'comprehensive-recommendations',
-          recipientName: profileName,
-          interests: interests,
-          activeMode: 'gift-advisor'
-        }
-      }
-    }));
+  const handleViewAllProducts = () => {
+    const searchQuery = interests.join(' ');
+    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
   };
 
-  if (loading) {
+  if (loading || aiLoading) {
     return (
       <Card>
         <CardHeader>
@@ -77,7 +117,7 @@ const GiftSuggestionsPreview = ({
           <div className="flex items-center justify-center py-8">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Bot className="h-4 w-4 animate-pulse" />
-              Generating personalized suggestions...
+              Finding perfect products based on {profileName}'s interests...
             </div>
           </div>
         </CardContent>
@@ -85,7 +125,7 @@ const GiftSuggestionsPreview = ({
     );
   }
 
-  if (!hasRecommendations) {
+  if (products.length === 0 && !hasRecommendations) {
     return (
       <Card>
         <CardHeader>
@@ -97,14 +137,14 @@ const GiftSuggestionsPreview = ({
         <CardContent>
           <div className="text-center py-4">
             <p className="text-muted-foreground mb-4">
-              Get AI-powered gift suggestions based on {profileName}'s interests
+              Discover perfect gifts for {profileName} based on their interests
             </p>
             <Button
-              onClick={handleSeeMoreSuggestions}
+              onClick={handleViewAllProducts}
               className="flex items-center gap-2"
             >
               <Bot className="h-4 w-4" />
-              Get Gift Ideas
+              Browse Gift Ideas
             </Button>
           </div>
         </CardContent>
@@ -112,52 +152,40 @@ const GiftSuggestionsPreview = ({
     );
   }
 
-  const previewRecommendations = recommendations.slice(0, 2);
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           Gift Suggestions
+          <span className="text-sm font-normal text-muted-foreground ml-2">
+            ({products.length} curated items)
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {previewRecommendations.map((rec, index) => (
-            <div 
-              key={rec.productId || index} 
-              className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg"
-            >
-              {rec.imageUrl && (
-                <img 
-                  src={rec.imageUrl} 
-                  alt={rec.title}
-                  className="w-12 h-12 object-cover rounded"
-                />
-              )}
-              <div className="flex-1">
-                <div className="font-medium text-sm">{rec.title}</div>
-                {rec.price && (
-                  <div className="text-primary font-semibold text-sm">
-                    ${rec.price}
-                  </div>
-                )}
-              </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+          {products.map((product) => (
+            <div key={product.id} className="min-h-[200px]">
+              <UnifiedProductCard
+                product={product}
+                cardType="mobile"
+                onProductClick={(productId) => navigate(`/marketplace/product/${productId}`)}
+              />
             </div>
           ))}
-          
-          <div className="pt-2 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSeeMoreSuggestions}
-              className="w-full flex items-center gap-2"
-            >
-              <Bot className="h-4 w-4" />
-              See More Suggestions
-            </Button>
-          </div>
+        </div>
+        
+        <div className="pt-3 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleViewAllProducts}
+            className="w-full flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            View All Gift Ideas for {profileName}
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Bot } from "lucide-react";
+import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface EnhancedInterestsSectionProps {
   interests: string[];
@@ -8,23 +9,13 @@ interface EnhancedInterestsSectionProps {
 }
 
 const EnhancedInterestsSection = ({ interests, isOwnProfile }: EnhancedInterestsSectionProps) => {
+  const navigate = useNavigate();
+  
   if (!interests || interests.length === 0) return null;
 
-  const handleFindGifts = (interest: string) => {
-    console.log(`Finding gifts for interest: ${interest}`);
-    // Dispatch Nicole event with gift context
-    window.dispatchEvent(new CustomEvent('triggerNicole', {
-      detail: {
-        capability: 'gift-recommendations',
-        source: 'interest-discovery',
-        autoGreeting: true,
-        greetingContext: {
-          greeting: 'interest-gifts',
-          interest: interest,
-          activeMode: 'gift-advisor'
-        }
-      }
-    }));
+  const handleFindProducts = (interest: string) => {
+    console.log(`Searching marketplace for interest: ${interest}`);
+    navigate(`/marketplace?search=${encodeURIComponent(interest)}`);
   };
   
   return (
@@ -46,11 +37,11 @@ const EnhancedInterestsSection = ({ interests, isOwnProfile }: EnhancedInterests
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleFindGifts(interest)}
+                onClick={() => handleFindProducts(interest)}
                 className="flex items-center gap-2 text-xs"
               >
-                <Bot className="h-3 w-3" />
-                Find Gifts
+                <Search className="h-3 w-3" />
+                Find {interest} Products
               </Button>
             )}
           </div>
@@ -61,11 +52,11 @@ const EnhancedInterestsSection = ({ interests, isOwnProfile }: EnhancedInterests
             <Button
               variant="default"
               size="sm"
-              onClick={() => handleFindGifts(interests.join(', '))}
+              onClick={() => handleFindProducts(interests.join(' '))}
               className="flex items-center gap-2"
             >
-              <Bot className="h-4 w-4" />
-              Get Gift Ideas for All Interests
+              <Search className="h-4 w-4" />
+              Browse All Interest Products
             </Button>
           </div>
         )}

@@ -67,7 +67,7 @@ const UserButton = () => {
   };
 
   const userName = getUserFirstName();
-  const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
+  const wishlistsLabel = userName === "My" ? "My Wishlists" : `${userName} Wishlist`;
   
   // Calculate total notification count for avatar badge
   const totalNotificationCount = notificationsCount + unreadMessagesCount + (hasIssues ? 1 : 0);

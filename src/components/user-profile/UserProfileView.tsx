@@ -38,6 +38,13 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     );
   }
 
+  // Debug wishlist count data
+  console.log("UserProfileView wishlist data:", {
+    wishlist_count: profile.wishlist_count,
+    wishlists_length: profile.wishlists?.length,
+    final_count: profile.wishlist_count ?? profile.wishlists?.length ?? 0
+  });
+
   const handleShare = () => {
     const profileUrl = window.location.origin + `/profile/${profile.username || profile.id}`;
     navigator.clipboard.writeText(profileUrl);
@@ -53,7 +60,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         onConnect={() => {}}
         onShare={handleShare}
         connectionCount={0} // These would come from actual data
-        wishlistCount={profile.wishlists?.length || 0}
+        wishlistCount={profile.wishlist_count ?? profile.wishlists?.length ?? 0}
         canConnect={false}
         canMessage={true}
         isAnonymousUser={false}

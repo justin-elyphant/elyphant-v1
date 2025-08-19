@@ -143,12 +143,26 @@ export const publicProfileService = {
   
   async getConnectionCount(userId: string): Promise<number> {
     try {
-      const { count, error } = await supabase
+      // Count unique connections by getting distinct user pairs
+      // Since connections can exist in both directions, we need to avoid double-counting
+      const { data: connections, error } = await supabase
         .from('user_connections')
-        .select('*', { count: 'exact', head: true })
+        .select('user_id, connected_user_id')
         .or(`and(user_id.eq.${userId},status.eq.accepted),and(connected_user_id.eq.${userId},status.eq.accepted)`);
       
-      return count || 0;
+      if (error) {
+        console.error("Error getting connections:", error);
+        return 0;
+      }
+
+      // Create a set of unique connection partner IDs to avoid double counting
+      const uniqueConnections = new Set();
+      connections?.forEach(conn => {
+        const partnerId = conn.user_id === userId ? conn.connected_user_id : conn.user_id;
+        uniqueConnections.add(partnerId);
+      });
+      
+      return uniqueConnections.size;
     } catch (error) {
       console.error("Error getting connection count:", error);
       return 0;

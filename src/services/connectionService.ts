@@ -86,11 +86,35 @@ export const connectionService = {
    */
   async getConnectionProfile(currentUserId: string, profileIdentifier: string): Promise<ConnectionProfile | null> {
     try {
-      // First, get the profile data
+      // First, get the profile data with public wishlists
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          wishlists:wishlists!inner(
+            id,
+            title,
+            description,
+            is_public,
+            created_at,
+            updated_at,
+            category,
+            tags,
+            priority,
+            items:wishlist_items(
+              id,
+              product_id,
+              title,
+              created_at,
+              name,
+              brand,
+              price,
+              image_url
+            )
+          )
+        `)
         .or(`username.eq.${profileIdentifier},id.eq.${profileIdentifier}`)
+        .eq('wishlists.is_public', true)
         .maybeSingle();
 
       if (profileError || !profile) {

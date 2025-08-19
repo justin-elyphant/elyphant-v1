@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Gift, Settings, Eye, EyeOff, Users } from "lucide-react";
@@ -174,7 +175,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Heart className="h-5 w-5" />
-                Public Wishlists
+                {isOwnProfile ? "My Wishlists" : "Public Wishlists"}
                 {isPublicView && (
                   <Badge variant="secondary" className="ml-2">
                     Public View
@@ -206,6 +207,66 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                     View Wishlists
                   </a>
                 </div>
+              ) : profile?.wishlists && profile.wishlists.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {profile.wishlists.map((wishlist) => (
+                    <div key={wishlist.id} className="relative">
+                      <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => window.location.href = `/wishlist/${wishlist.id}`}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">{wishlist.title}</CardTitle>
+                          {wishlist.description && (
+                            <CardDescription>{wishlist.description}</CardDescription>
+                          )}
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>{wishlist.items?.length || 0} items</span>
+                            {wishlist.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {wishlist.category}
+                              </Badge>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {wishlist.items && wishlist.items.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              {wishlist.items.slice(0, 4).map((item) => (
+                                <div key={item.id} className="aspect-square bg-gray-50 rounded-lg p-2 flex flex-col items-center justify-center text-center">
+                                  {item.image_url ? (
+                                    <img 
+                                      src={item.image_url} 
+                                      alt={item.title || item.name || "Wishlist item"} 
+                                      className="w-full h-12 object-cover rounded mb-1"
+                                    />
+                                  ) : (
+                                    <Gift className="h-6 w-6 text-gray-400 mb-1" />
+                                  )}
+                                  <p className="text-xs font-medium truncate w-full">
+                                    {item.title || item.name || "Untitled Item"}
+                                  </p>
+                                  {item.price && (
+                                    <p className="text-xs text-gray-500">${item.price}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-gray-500">
+                              <Gift className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                              <p className="text-sm">No items yet</p>
+                            </div>
+                          )}
+                          {wishlist.items && wishlist.items.length > 4 && (
+                            <div className="mt-2 text-center">
+                              <span className="text-sm text-primary font-medium">
+                                +{wishlist.items.length - 4} more items
+                              </span>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -215,6 +276,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                       : `${profile?.name} hasn't created any public wishlists yet.`
                     }
                   </p>
+                  {isOwnProfile && (
+                    <Button 
+                      className="mt-4" 
+                      onClick={() => window.location.href = '/wishlists'}
+                    >
+                      Create Your First Wishlist
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>

@@ -12,10 +12,23 @@ interface WishlistsTabContentProps {
 }
 
 const WishlistsTabContent = ({ isCurrentUser, wishlists }: WishlistsTabContentProps) => {
+  console.log("🎁 WishlistsTabContent rendering:", {
+    isCurrentUser,
+    wishlistsCount: wishlists?.length || 0,
+    wishlists: wishlists?.map(w => ({
+      id: w.id,
+      title: w.title,
+      is_public: w.is_public,
+      itemCount: w.items?.length || 0
+    }))
+  });
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Wishlists</h3>
+        <h3 className="text-lg font-medium">
+          Wishlists ({wishlists?.length || 0})
+        </h3>
         <div className="flex gap-2">
           {isCurrentUser && (
             <Dialog>
@@ -37,19 +50,22 @@ const WishlistsTabContent = ({ isCurrentUser, wishlists }: WishlistsTabContentPr
         </div>
       </div>
       
-      {wishlists.length > 0 ? (
+      {wishlists && wishlists.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {wishlists.map((wishlist) => (
             <Card key={wishlist.id} className="overflow-hidden">
-              <div className="h-32 bg-cover bg-center" style={{
-                backgroundImage: `url(${wishlist.image})`
-              }} />
+              <div className="h-32 bg-cover bg-center bg-gradient-to-br from-purple-400 to-pink-400" />
               <CardHeader className="pb-2">
                 <h4 className="font-semibold">{wishlist.title}</h4>
               </CardHeader>
               <CardContent className="pb-2">
                 <p className="text-sm text-muted-foreground">{wishlist.description}</p>
-                <p className="text-sm mt-1">{wishlist.itemCount} items</p>
+                <p className="text-sm mt-1">{wishlist.items?.length || 0} items</p>
+                {wishlist.is_public && (
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
+                    Public
+                  </span>
+                )}
               </CardContent>
               <CardFooter>
                 <Button variant="outline" size="sm" asChild className="w-full">

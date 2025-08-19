@@ -1,30 +1,17 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/auth";
-import { Badge } from "@/components/ui/badge";
-import { Heart, Gift, Settings, Eye, EyeOff, Users } from "lucide-react";
-import ConnectionTabContent from "./tabs/ConnectionTabContent";
-
+import { User, Heart, Activity, Settings } from "lucide-react";
+import { Profile } from "@/types/profile";
+import WishlistsTabContent from "./tabs/WishlistsTabContent";
 
 interface ProfileTabsProps {
-  profile: any;
+  profile: Profile;
   isOwnProfile: boolean;
-  onUpdateProfile?: (updates: any) => Promise<any>;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isPublicView?: boolean;
-  // Connection-specific props for consolidated view
-  connectionData?: {
-    relationship?: string;
-    customRelationship?: string;
-    connectionDate?: string;
-    isAutoGiftEnabled?: boolean;
-    canRemoveConnection?: boolean;
-    id?: string;
-  };
+  isPublicView: boolean;
+  connectionData?: any;
   onSendGift?: () => void;
   onRemoveConnection?: () => void;
   onRefreshConnection?: () => void;
@@ -33,265 +20,116 @@ interface ProfileTabsProps {
 const ProfileTabs: React.FC<ProfileTabsProps> = ({
   profile,
   isOwnProfile,
-  onUpdateProfile,
   activeTab,
   setActiveTab,
-  isPublicView = false,
+  isPublicView,
   connectionData,
   onSendGift,
   onRemoveConnection,
   onRefreshConnection
 }) => {
-  const { user } = useAuth();
+  console.log("🎨 ProfileTabs rendering with profile:", {
+    profileId: profile?.id,
+    profileName: profile?.name,
+    wishlistCount: profile?.wishlist_count || profile?.wishlists?.length || 0,
+    isOwnProfile,
+    isPublicView,
+    hasConnectionData: !!connectionData
+  });
 
-  // Filter tabs based on viewing context
-  const availableTabs = isOwnProfile 
-    ? ["overview", "wishlists", "activity", "settings"]
-    : connectionData 
-      ? ["overview", "wishlists", "connection"]
-      : ["overview", "wishlists"];
-
-  // Dynamic grid layout based on available tabs
-  const gridCols = availableTabs.length === 3 ? "grid-cols-3" : "grid-cols-4";
+  // Get wishlists - check both possible locations
+  const wishlists = profile?.wishlists || [];
+  const wishlistCount = profile?.wishlist_count || wishlists.length || 0;
+  
+  console.log("🔢 ProfileTabs wishlist calculation:", {
+    wishlistsLength: wishlists.length,
+    profileWishlistCount: profile?.wishlist_count,
+    finalCount: wishlistCount,
+    wishlists: wishlists.map(w => ({ id: w.id, title: w.title, is_public: w.is_public }))
+  });
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${gridCols} lg:${gridCols}`}>
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Overview
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsTrigger value="overview" className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="wishlists" className="flex items-center gap-2">
+          <Heart className="h-4 w-4" />
+          Wishlists ({wishlistCount})
+        </TabsTrigger>
+        <TabsTrigger value="activity" className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Activity
+        </TabsTrigger>
+        {isOwnProfile && (
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
           </TabsTrigger>
-          <TabsTrigger value="wishlists" className="flex items-center gap-2">
-            <Heart className="h-4 w-4" />
-            Wishlists
-          </TabsTrigger>
-          {connectionData && (
-            <TabsTrigger value="connection" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Connection
-            </TabsTrigger>
-          )}
-          {isOwnProfile && (
-            <>
-              <TabsTrigger value="activity" className="flex items-center gap-2">
-                <Gift className="h-4 w-4" />
-                Activity
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Settings
-              </TabsTrigger>
-            </>
-          )}
-        </TabsList>
+        )}
+      </TabsList>
 
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Profile Information
-                  {isPublicView && (
-                    <Badge variant="secondary" className="ml-2">
-                      Public View
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-900">About</h3>
-                  <p className="text-gray-600">
-                    {profile?.bio || "No bio available"}
-                  </p>
-                </div>
-                
-                {profile?.location && (
-                  <div>
-                    <h3 className="font-medium text-gray-900">Location</h3>
-                    <p className="text-gray-600">{profile.location}</p>
-                  </div>
-                )}
-                
-                <div>
-                  <h3 className="font-medium text-gray-900">Member Since</h3>
-                  <p className="text-gray-600">
-                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "Unknown"}
-                  </p>
-                </div>
+      <TabsContent value="overview">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Profile Information
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">Name:</span> {profile.name}</p>
+                {profile.bio && <p><span className="font-medium">Bio:</span> {profile.bio}</p>}
+                {profile.email && <p><span className="font-medium">Email:</span> {profile.email}</p>}
+              </div>
+            </div>
 
-                {isPublicView && !user && (
-                  <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <h4 className="font-medium text-purple-900 mb-2">Want to see more?</h4>
-                    <p className="text-sm text-purple-700 mb-3">
-                      Sign up to follow {profile?.name} and see their full activity.
-                    </p>
-                    <a 
-                      href="/signup" 
-                      className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
-                      onClick={() => {
-                        sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                          type: 'follow',
-                          targetUserId: profile?.id,
-                          targetName: profile?.name
-                        }));
-                      }}
-                    >
-                      Sign Up Free
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  Gift Preferences
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile?.gift_preferences && profile.gift_preferences.length > 0 ? (
-                  <div className="space-y-2">
-                    {profile.gift_preferences.map((pref: string, index: number) => (
-                      <Badge key={index} variant="outline">
-                        {pref}
-                      </Badge>
+            <div className="bg-white rounded-lg border p-6">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Heart className="h-5 w-5" />
+                Gift Preferences
+              </h3>
+              <div className="text-sm text-muted-foreground">
+                {profile.gift_preferences && profile.gift_preferences.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1">
+                    {profile.gift_preferences.map((pref, index) => (
+                      <li key={index}>{pref}</li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
-                  <p className="text-gray-600">No gift preferences shared</p>
+                  <p>No gift preferences set.</p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="wishlists">
+        <WishlistsTabContent 
+          isCurrentUser={isOwnProfile} 
+          wishlists={wishlists}
+        />
+      </TabsContent>
+
+      <TabsContent value="activity">
+        <div className="text-center py-8">
+          <Activity className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+          <p className="text-muted-foreground">Activity feed coming soon</p>
+        </div>
+      </TabsContent>
+
+      {isOwnProfile && (
+        <TabsContent value="settings">
+          <div className="text-center py-8">
+            <Settings className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">Profile settings coming soon</p>
           </div>
         </TabsContent>
-
-        <TabsContent value="wishlists" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5" />
-                {isOwnProfile ? "My Wishlists" : "Public Wishlists"}
-                {isPublicView && (
-                  <Badge variant="secondary" className="ml-2">
-                    Public View
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isPublicView && !user ? (
-                <div className="text-center py-8">
-                  <EyeOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Sign up to see {profile?.name}'s wishlists
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Create your account to view and interact with wishlists.
-                  </p>
-                  <a 
-                    href="/signup"
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700"
-                    onClick={() => {
-                      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                        type: 'view_wishlists',
-                        targetUserId: profile?.id,
-                        targetName: profile?.name
-                      }));
-                    }}
-                  >
-                    View Wishlists
-                  </a>
-                </div>
-              ) : profile?.wishlist_count > 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">
-                    {isOwnProfile 
-                      ? "View your wishlists on the dedicated page."
-                      : `View ${profile?.name}'s wishlists when connected.`
-                    }
-                  </p>
-                  {isOwnProfile && (
-                    <Button 
-                      className="mt-4" 
-                      onClick={() => window.location.href = '/wishlists'}
-                    >
-                      Go to My Wishlists
-                    </Button>
-                  )}
-                </div>
-              ) : false ? ( // Placeholder for actual wishlist data structure
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Wishlist grid will be implemented when we have the data structure */}
-                  {/* Wishlist cards will render here when data structure is complete */}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">
-                    {isOwnProfile 
-                      ? "You don't have any public wishlists yet."
-                      : `${profile?.name} hasn't created any public wishlists yet.`
-                    }
-                  </p>
-                  {isOwnProfile && (
-                    <Button 
-                      className="mt-4" 
-                      onClick={() => window.location.href = '/wishlists'}
-                    >
-                      Create Your First Wishlist
-                    </Button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Connection Tab - Only shown for connection profiles */}
-        {connectionData && (
-          <TabsContent value="connection" className="mt-6">
-            <ConnectionTabContent
-              profile={profile}
-              connectionData={connectionData}
-              onRemoveConnection={onRemoveConnection}
-              onRefreshConnection={onRefreshConnection}
-            />
-          </TabsContent>
-        )}
-
-        {isOwnProfile && (
-          <>
-            <TabsContent value="activity" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">No recent activity to display.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Profile settings will be available soon.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
-    </div>
+      )}
+    </Tabs>
   );
 };
 

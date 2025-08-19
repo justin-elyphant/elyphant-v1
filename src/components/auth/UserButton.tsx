@@ -34,7 +34,7 @@ const UserButton = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [user?.id, profile?.id]); // Only depend on stable IDs
+  }, [user?.id, profile?.id, checkDataIntegrity]); // Add checkDataIntegrity dependency
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   

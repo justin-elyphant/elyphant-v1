@@ -80,32 +80,42 @@ class AutoGiftPermissionService {
     try {
       console.log('🔍 Checking auto-gift enabled status for:', { userId, connectionId });
       
-      // Query the user_connections table directly instead of using RPC
+      // Query BOTH directions of the connection and find the one where the USER is granting permissions TO the connection
       const { data, error } = await supabase
         .from('user_connections')
-        .select('data_access_permissions')
+        .select('data_access_permissions, user_id, connected_user_id')
         .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId})`)
-        .eq('status', 'accepted')
-        .single();
+        .eq('status', 'accepted');
 
-      console.log('📊 Direct connection query result:', { data, error });
+      console.log('📊 Bidirectional connection query result:', { data, error });
 
       if (error) {
         console.error('❌ Error querying user_connections:', error);
         return false;
       }
 
-      if (!data || !data.data_access_permissions) {
-        console.log('❌ No data or permissions found');
+      if (!data || data.length === 0) {
+        console.log('❌ No connection data found');
         return false;
       }
 
-      const permissions = data.data_access_permissions as any;
-      console.log('🔐 Current permissions:', permissions);
+      // Find the record where the current user is the one GRANTING permissions (user_id = userId)
+      // This is the record that contains the permissions the current user has granted to their connection
+      const userGrantingRecord = data.find(record => record.user_id === userId);
+      
+      console.log('👤 User granting permissions record:', userGrantingRecord);
+
+      if (!userGrantingRecord || !userGrantingRecord.data_access_permissions) {
+        console.log('❌ No user granting record or permissions found');
+        return false;
+      }
+
+      const permissions = userGrantingRecord.data_access_permissions as any;
+      console.log('🔐 Current permissions granted by user:', permissions);
       
       // Check if at least one required permission is enabled
       const hasAnyPermission = permissions.shipping_address || permissions.dob || permissions.email;
-      console.log('✅ Has any auto-gift permission:', hasAnyPermission);
+      console.log('✅ User has granted auto-gift permissions:', hasAnyPermission);
       
       return hasAnyPermission;
     } catch (error) {

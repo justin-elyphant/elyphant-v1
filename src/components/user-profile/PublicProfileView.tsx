@@ -28,7 +28,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
       <ProfileBanner
         userData={profile}
         isCurrentUser={false}
-        isConnected={false}
+        isConnected={profile.is_connected}
         onConnect={handleConnect}
         onShare={handleShare}
         connectionCount={profile.connection_count || 0}

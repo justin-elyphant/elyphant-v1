@@ -17,12 +17,18 @@ export interface PublicProfileData {
   is_public: boolean;
   can_connect: boolean;
   can_message: boolean;
+  // Connection status fields
+  is_connected: boolean;
+  connection_status?: 'none' | 'pending' | 'accepted' | 'rejected' | 'blocked';
 }
 
 export const publicProfileService = {
   async getProfileByIdentifier(identifier: string): Promise<PublicProfileData | null> {
     try {
       console.log("🔍 Fetching public profile for identifier:", identifier);
+      
+      // Get current user for connection status checks
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       // Try to fetch profile by username first, then by ID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -72,13 +78,18 @@ export const publicProfileService = {
           created_at: profile.created_at,
           is_public: false,
           can_connect: false,
-          can_message: false
+          can_message: false,
+          is_connected: false,
+          connection_status: 'none'
         };
       }
       
       // Get connection counts and wishlist count
       const connectionCount = await this.getConnectionCount(profile.id);
       const wishlistCount = await this.getWishlistCount(profile.id);
+      
+      // Check connection status with current user
+      const connectionStatus = await this.getConnectionStatus(profile.id, currentUser?.id);
       
       return {
         id: profile.id,
@@ -92,8 +103,10 @@ export const publicProfileService = {
         connection_count: connectionCount,
         wishlist_count: wishlistCount,
         is_public: true,
-        can_connect: true,
-        can_message: privacySettings.allow_message_requests
+        can_connect: connectionStatus.can_connect,
+        can_message: privacySettings.allow_message_requests,
+        is_connected: connectionStatus.is_connected,
+        connection_status: connectionStatus.status
       };
       
     } catch (error) {
@@ -154,6 +167,48 @@ export const publicProfileService = {
     } catch (error) {
       console.error("Error getting wishlist count:", error);
       return 0;
+    }
+  },
+
+  async getConnectionStatus(targetUserId: string, currentUserId?: string) {
+    if (!currentUserId || currentUserId === targetUserId) {
+      return {
+        is_connected: false,
+        status: 'none' as const,
+        can_connect: currentUserId !== targetUserId
+      };
+    }
+
+    try {
+      const { data: connection, error } = await supabase
+        .from('user_connections')
+        .select('status')
+        .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking connection status:", error);
+        return {
+          is_connected: false,
+          status: 'none' as const,
+          can_connect: true
+        };
+      }
+
+      const status = connection?.status || 'none';
+      
+      return {
+        is_connected: status === 'accepted',
+        status: status as 'none' | 'pending' | 'accepted' | 'rejected' | 'blocked',
+        can_connect: !connection || status === 'rejected'
+      };
+    } catch (error) {
+      console.error("Error getting connection status:", error);
+      return {
+        is_connected: false,
+        status: 'none' as const,
+        can_connect: true
+      };
     }
   }
 };

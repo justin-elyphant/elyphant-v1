@@ -51,25 +51,26 @@ export const publicProfileService = {
       const { data: profile, error } = await query;
       
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error("❌ Error fetching profile:", error);
         return null;
       }
       
       if (!profile) {
-        console.log("No profile found for identifier:", identifier);
+        console.log("❌ No profile found for identifier:", identifier);
         return null;
       }
       
-      console.log("✅ Profile found:", profile.name);
+      console.log("✅ Profile found:", profile.name, "- ID:", profile.id);
       
       // Get privacy settings for this user
       const privacySettings = await this.getPrivacySettings(profile.id);
+      console.log("🔒 Privacy settings:", privacySettings);
       
       // Check if profile is public
       const isPublic = privacySettings.profile_visibility === 'public';
       
       if (!isPublic) {
-        console.log("Profile is not public, returning limited data");
+        console.log("🚫 Profile is not public, returning limited data");
         return {
           id: profile.id,
           name: profile.name,
@@ -84,14 +85,17 @@ export const publicProfileService = {
         };
       }
       
+      console.log("🔢 Getting counts for public profile...");
       // Get connection counts and wishlist count
       const connectionCount = await this.getConnectionCount(profile.id);
       const wishlistCount = await this.getWishlistCount(profile.id);
       
+      console.log("📊 Counts retrieved - Connections:", connectionCount, "Wishlists:", wishlistCount);
+      
       // Check connection status with current user
       const connectionStatus = await this.getConnectionStatus(profile.id, currentUser?.id);
       
-      return {
+      const finalProfile = {
         id: profile.id,
         name: profile.name,
         username: profile.username,
@@ -109,8 +113,11 @@ export const publicProfileService = {
         connection_status: connectionStatus.status
       };
       
+      console.log("🎯 Final profile object:", finalProfile);
+      return finalProfile;
+      
     } catch (error) {
-      console.error("Exception in getProfileByIdentifier:", error);
+      console.error("💥 Exception in getProfileByIdentifier:", error);
       return null;
     }
   },

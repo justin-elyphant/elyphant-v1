@@ -250,16 +250,19 @@ class AutoGiftPermissionService {
       };
 
       console.log('📋 Setting permissions to:', permissions);
-      console.log('🔍 Updating user_connections with query:', `or(and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId}))`);
+      
+      // CRITICAL FIX: Only update the record where the CURRENT USER is granting permissions
+      // This means user_id = userId (current user) and connected_user_id = connectionId (the connection)
+      console.log('🎯 Updating specific user connection record where user_id =', userId, 'and connected_user_id =', connectionId);
 
-      // Update the connection record (handles bidirectional relationships)
       const { data, error } = await supabase
         .from('user_connections')
         .update({ 
           data_access_permissions: permissions,
           updated_at: new Date().toISOString()
         })
-        .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectionId}),and(user_id.eq.${connectionId},connected_user_id.eq.${userId})`)
+        .eq('user_id', userId)           // Current user is the one granting permissions
+        .eq('connected_user_id', connectionId)  // To this specific connection
         .eq('status', 'accepted');
 
       console.log('📊 Database update result:', { data, error });
@@ -269,7 +272,7 @@ class AutoGiftPermissionService {
         return { success: false, error: error.message };
       }
 
-      console.log('✅ Auto-gift permission toggle successful');
+      console.log('✅ Auto-gift permission toggle successful - updated specific record only');
       return { success: true };
     } catch (error: any) {
       console.error('💥 Exception in toggleAutoGiftPermission:', error);

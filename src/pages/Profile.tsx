@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { publicProfileService } from "@/services/publicProfileService";
+import { connectionService } from "@/services/connectionService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
 import MainLayout from "@/components/layout/MainLayout";
@@ -14,19 +15,26 @@ import UserProfileView from "@/components/user-profile/UserProfileView";
 import PublicProfileView from "@/components/user-profile/PublicProfileView";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import type { PublicProfileData } from "@/services/publicProfileService";
+import type { ConnectionProfile } from "@/services/connectionService";
 
 const Profile = () => {
   const { identifier } = useParams();
+  const [searchParams] = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const { profile: ownProfile, loading: ownProfileLoading } = useProfile();
   const { profileData: fallbackProfile } = useProfileRetrieval();
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
+  const [connectionProfile, setConnectionProfile] = useState<ConnectionProfile | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+  const [isLoadingConnection, setIsLoadingConnection] = useState(false);
   const [profileNotFound, setProfileNotFound] = useState(false);
+
+  const context = searchParams.get('context');
 
   // Enhanced debugging
   console.log("=== Profile Page Debug ===");
   console.log("URL identifier:", identifier);
+  console.log("Context:", context);
   console.log("Auth state:", { 
     hasUser: !!user, 
     userId: user?.id, 
@@ -56,9 +64,44 @@ const Profile = () => {
 
   console.log("Is own profile:", isOwnProfile);
 
-  // If not authenticated or not own profile, treat as public profile
-  const shouldLoadPublicProfile = !isOwnProfile && identifier;
+  // Determine profile viewing mode
+  const isConnectionProfile = context === 'connection' && identifier && isAuthenticated && !isOwnProfile;
+  const shouldLoadPublicProfile = !isOwnProfile && !isConnectionProfile && identifier;
+  
+  console.log("Is connection profile:", isConnectionProfile);
   console.log("Should load public profile:", shouldLoadPublicProfile);
+
+  // Load connection profile data
+  useEffect(() => {
+    if (!isConnectionProfile || !user?.id || !identifier) {
+      console.log("Skipping connection profile load");
+      return;
+    }
+
+    const loadConnectionProfile = async () => {
+      console.log("Loading connection profile for:", identifier);
+      setIsLoadingConnection(true);
+      setProfileNotFound(false);
+      
+      try {
+        const profile = await connectionService.getConnectionProfile(user.id, identifier);
+        console.log("Connection profile result:", profile);
+        
+        if (profile) {
+          setConnectionProfile(profile);
+        } else {
+          setProfileNotFound(true);
+        }
+      } catch (error) {
+        console.error("Error loading connection profile:", error);
+        setProfileNotFound(true);
+      } finally {
+        setIsLoadingConnection(false);
+      }
+    };
+
+    loadConnectionProfile();
+  }, [isConnectionProfile, user?.id, identifier]);
 
   // Load public profile data
   useEffect(() => {
@@ -130,6 +173,42 @@ const Profile = () => {
       <SidebarLayout>
         <UserProfileView profile={ownProfile} />
       </SidebarLayout>
+    );
+  }
+
+  // For connection profile views - enhanced profile view with connection features
+  if (isConnectionProfile) {
+    console.log("Rendering connection profile view");
+    if (isLoadingConnection) {
+      return (
+        <PublicProfileLayout>
+          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+            <div>Loading connection profile...</div>
+          </div>
+        </PublicProfileLayout>
+      );
+    }
+
+    if (profileNotFound || !connectionProfile) {
+      return (
+        <PublicProfileLayout>
+          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Connection Not Found</h1>
+              <p className="text-gray-600">This connection doesn't exist or you don't have access to view it.</p>
+            </div>
+          </div>
+        </PublicProfileLayout>
+      );
+    }
+
+    return (
+      <PublicProfileLayout>
+        <UserProfileView 
+          profile={connectionProfile.profile} 
+          connectionData={connectionProfile.connectionData}
+        />
+      </PublicProfileLayout>
     );
   }
 

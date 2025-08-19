@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageCircle, Gift, UserMinus } from "lucide-react";
+import { ArrowLeft, MessageCircle, Gift, UserMinus, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -128,6 +128,12 @@ const ConnectionDetail: React.FC = () => {
               <div className="flex flex-col gap-3">
                 {/* Action Buttons Row */}
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/profile/${connection.id}`}>
+                      <User className="w-4 h-4 mr-2" />
+                      View Profile
+                    </Link>
+                  </Button>
                   <Button size="sm" asChild>
                     <Link to={`/messages/${connection.id}`}>
                       <MessageCircle className="w-4 h-4 mr-2" />

@@ -30,9 +30,13 @@ export function useProfileFetch() {
         .from('profiles')
         .select(`
           *,
-          wishlist_count:wishlists(count)
+          wishlist_count:wishlists(count),
+          connection_count:user_connections!user_connections_user_id_fkey(count),
+          connected_count:user_connections!user_connections_connected_user_id_fkey(count)
         `)
         .eq('id', user.id)
+        .eq('user_connections.status', 'accepted')
+        .eq('user_connections.status', 'accepted')
         .single();
 
       if (error) {
@@ -70,6 +74,23 @@ export function useProfileFetch() {
             return countData[0].count;
           }
           return 0;
+        })(),
+        // Extract connection count (sum of both directions for bidirectional connections)
+        connection_count: (() => {
+          const userConnectionData = (profile as any).connection_count;
+          const connectedConnectionData = (profile as any).connected_count;
+          
+          let userCount = 0;
+          if (Array.isArray(userConnectionData) && userConnectionData.length > 0 && typeof userConnectionData[0].count === 'number') {
+            userCount = userConnectionData[0].count;
+          }
+          
+          let connectedCount = 0;
+          if (Array.isArray(connectedConnectionData) && connectedConnectionData.length > 0 && typeof connectedConnectionData[0].count === 'number') {
+            connectedCount = connectedConnectionData[0].count;
+          }
+          
+          return userCount + connectedCount;
         })()
       };
 

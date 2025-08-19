@@ -18,6 +18,7 @@ export interface Profile {
   data_sharing_settings?: DataSharingSettings;
   wishlists?: Wishlist[];
   wishlist_count?: number;
+  connection_count?: number;
   interests?: string[];  // Add interests field
   onboarding_completed?: boolean;
   updated_at?: string;

@@ -59,7 +59,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         isConnected={!!connectionData}
         onConnect={() => {}}
         onShare={handleShare}
-        connectionCount={0} // These would come from actual data
+        connectionCount={profile.connection_count ?? 0}
         wishlistCount={profile.wishlist_count ?? profile.wishlists?.length ?? 0}
         canConnect={false}
         canMessage={true}

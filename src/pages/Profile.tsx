@@ -1,11 +1,10 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { publicProfileService } from "@/services/publicProfileService";
-import { connectionService, type ConnectionWithAutoGift } from "@/services/connectionService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
 import MainLayout from "@/components/layout/MainLayout";
@@ -18,25 +17,16 @@ import type { PublicProfileData } from "@/services/publicProfileService";
 
 const Profile = () => {
   const { identifier } = useParams();
-  const [searchParams] = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const { profile: ownProfile, loading: ownProfileLoading } = useProfile();
   const { profileData: fallbackProfile } = useProfileRetrieval();
   const [publicProfile, setPublicProfile] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
   const [profileNotFound, setProfileNotFound] = useState(false);
-  const [connectionData, setConnectionData] = useState<ConnectionWithAutoGift | null>(null);
-  const [isLoadingConnection, setIsLoadingConnection] = useState(false);
-
-  // Check for connection context
-  const context = searchParams.get('context');
-  const isConnectionContext = context === 'connection';
 
   // Enhanced debugging
   console.log("=== Profile Page Debug ===");
   console.log("URL identifier:", identifier);
-  console.log("Context:", context);
-  console.log("Is connection context:", isConnectionContext);
   console.log("Auth state:", { 
     hasUser: !!user, 
     userId: user?.id, 
@@ -66,11 +56,8 @@ const Profile = () => {
 
   console.log("Is own profile:", isOwnProfile);
 
-  // Determine what type of profile to load
-  const shouldLoadConnectionProfile = isAuthenticated && isConnectionContext && identifier && !isOwnProfile;
-  const shouldLoadPublicProfile = !isOwnProfile && identifier && !isConnectionContext;
-  
-  console.log("Should load connection profile:", shouldLoadConnectionProfile);
+  // If not authenticated or not own profile, treat as public profile
+  const shouldLoadPublicProfile = !isOwnProfile && identifier;
   console.log("Should load public profile:", shouldLoadPublicProfile);
 
   // Load public profile data
@@ -104,42 +91,6 @@ const Profile = () => {
 
     loadPublicProfile();
   }, [shouldLoadPublicProfile, identifier]);
-
-  // Load connection profile data
-  useEffect(() => {
-    if (!shouldLoadConnectionProfile || !user) {
-      console.log("Skipping connection profile load");
-      return;
-    }
-
-    const loadConnectionProfile = async () => {
-      console.log("Loading connection profile for:", identifier);
-      setIsLoadingConnection(true);
-      setProfileNotFound(false);
-      
-      try {
-        // First get the public profile
-        const profile = await publicProfileService.getProfileByIdentifier(identifier);
-        if (profile) {
-          setPublicProfile(profile);
-          
-          // Then get connection-specific data
-          const connectionInfo = await connectionService.getConnectionData(user.id, profile.id);
-          console.log("Connection data result:", connectionInfo);
-          setConnectionData(connectionInfo);
-        } else {
-          setProfileNotFound(true);
-        }
-      } catch (error) {
-        console.error("Error loading connection profile:", error);
-        setProfileNotFound(true);
-      } finally {
-        setIsLoadingConnection(false);
-      }
-    };
-
-    loadConnectionProfile();
-  }, [shouldLoadConnectionProfile, identifier, user?.id]);
 
   // Signup CTA logic - only show for public profiles when not authenticated
   const { shouldShowCTA, dismissCTA } = useSignupCTA({
@@ -178,43 +129,6 @@ const Profile = () => {
     return (
       <SidebarLayout>
         <UserProfileView profile={ownProfile} />
-      </SidebarLayout>
-    );
-  }
-
-  // For connection profile views - use SidebarLayout with connection data
-  if (shouldLoadConnectionProfile) {
-    console.log("Rendering connection profile view");
-    if (isLoadingConnection) {
-      return (
-        <SidebarLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-            <div>Loading connection profile...</div>
-          </div>
-        </SidebarLayout>
-      );
-    }
-
-    if (profileNotFound || !publicProfile) {
-      return (
-        <SidebarLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">Profile Not Found</h1>
-              <p className="text-muted-foreground">The connection profile you're looking for doesn't exist.</p>
-            </div>
-          </div>
-        </SidebarLayout>
-      );
-    }
-
-    return (
-      <SidebarLayout>
-        <UserProfileView 
-          profile={publicProfile} 
-          connectionData={connectionData}
-          isOwnProfile={false}
-        />
       </SidebarLayout>
     );
   }

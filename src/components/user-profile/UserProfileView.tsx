@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { Profile } from "@/types/profile";
-import { PublicProfileData } from "@/services/publicProfileService";
-import { ConnectionWithAutoGift } from "@/services/connectionService";
 import ProfileBanner from "./ProfileBanner";
 import ProfileTabs from "./ProfileTabs";
 
 interface UserProfileViewProps {
-  profile: Profile | PublicProfileData | null;
-  connectionData?: ConnectionWithAutoGift | null;
-  isOwnProfile?: boolean;
+  profile: Profile | null;
+  connectionData?: {
+    relationship?: string;
+    customRelationship?: string;
+    connectionDate?: string;
+    isAutoGiftEnabled?: boolean;
+    canRemoveConnection?: boolean;
+    id?: string;
+  };
   onSendGift?: () => void;
   onRemoveConnection?: () => void;
   onRefreshConnection?: () => void;
@@ -17,7 +21,6 @@ interface UserProfileViewProps {
 const UserProfileView: React.FC<UserProfileViewProps> = ({ 
   profile, 
   connectionData, 
-  isOwnProfile = true,
   onSendGift, 
   onRemoveConnection, 
   onRefreshConnection 
@@ -42,24 +45,19 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <ProfileBanner
         userData={profile}
-        isCurrentUser={isOwnProfile}
+        isCurrentUser={!connectionData} // If connectionData exists, we're viewing someone else's profile
         isConnected={!!connectionData}
         onConnect={() => {}}
         onShare={handleShare}
         connectionCount={0} // These would come from actual data
-        wishlistCount={(profile as any).wishlist_count || (profile as any).wishlists?.length || 0}
-        canConnect={!connectionData}
+        wishlistCount={profile.wishlists?.length || 0}
+        canConnect={false}
         canMessage={true}
         isAnonymousUser={false}
-        connectionData={connectionData ? {
-          relationship: connectionData.relationship_type,
-          connectionDate: connectionData.connected_at,
-          isAutoGiftEnabled: connectionData.auto_gift_enabled,
-          canRemoveConnection: true
-        } : undefined}
+        connectionData={connectionData}
         onSendGift={onSendGift}
         onRemoveConnection={onRemoveConnection}
       />
@@ -67,17 +65,11 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
       <div className="container mx-auto px-4 py-6">
         <ProfileTabs
           profile={profile}
-          isOwnProfile={isOwnProfile}
+          isOwnProfile={!connectionData} // If connectionData exists, we're viewing someone else's profile
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           isPublicView={false}
-          connectionData={connectionData ? {
-            relationship: connectionData.relationship_type,
-            connectionDate: connectionData.connected_at,
-            isAutoGiftEnabled: connectionData.auto_gift_enabled,
-            canRemoveConnection: true,
-            id: connectionData.id
-          } : undefined}
+          connectionData={connectionData}
           onSendGift={onSendGift}
           onRemoveConnection={onRemoveConnection}
           onRefreshConnection={onRefreshConnection}

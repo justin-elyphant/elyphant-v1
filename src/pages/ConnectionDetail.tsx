@@ -188,6 +188,10 @@ const ConnectionDetail: React.FC = () => {
                     className="border-t pt-3 mt-1"
                   />
                 )}
+                {/* Debug info */}
+                <div className="text-xs text-muted-foreground mt-2">
+                  Debug: permissionResult={JSON.stringify(permissionResult)}, loading={permissionLoading}
+                </div>
               </div>
             </div>
           </CardHeader>

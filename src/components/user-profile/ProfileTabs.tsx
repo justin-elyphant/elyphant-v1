@@ -1,11 +1,14 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Gift, Settings, Eye, EyeOff, Users } from "lucide-react";
+import { Heart, Gift, Settings, Eye, EyeOff, Users, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Wishlist, WishlistItem, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import ConnectionTabContent from "./tabs/ConnectionTabContent";
 
 
@@ -43,6 +46,72 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   onRefreshConnection
 }) => {
   const { user } = useAuth();
+  const [wishlists, setWishlists] = useState<Wishlist[]>([]);
+  const [wishlistsLoading, setWishlistsLoading] = useState(false);
+
+  // Fetch public wishlists when viewing someone else's profile
+  useEffect(() => {
+    const fetchPublicWishlists = async () => {
+      if (!profile?.id || isOwnProfile) return;
+
+      try {
+        setWishlistsLoading(true);
+
+        // Fetch public wishlists for this user
+        const { data: wishlistData, error: wishlistError } = await supabase
+          .from('wishlists')
+          .select('*')
+          .eq('user_id', profile.id)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false });
+
+        if (wishlistError) throw wishlistError;
+
+        if (!wishlistData || wishlistData.length === 0) {
+          setWishlists([]);
+          return;
+        }
+
+        // Fetch items for these wishlists for preview
+        const wishlistIds = wishlistData.map(wl => wl.id);
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('wishlist_items')
+          .select('*')
+          .in('wishlist_id', wishlistIds);
+
+        if (itemsError) throw itemsError;
+
+        // Group items by wishlist
+        const itemsByWishlist = (itemsData || []).reduce((acc, item) => {
+          const normalized = normalizeWishlistItem(item);
+          if (!acc[item.wishlist_id]) {
+            acc[item.wishlist_id] = [];
+          }
+          acc[item.wishlist_id].push(normalized);
+          return acc;
+        }, {} as Record<string, WishlistItem[]>);
+
+        // Create normalized wishlists with their items
+        const normalizedWishlists = wishlistData.map(wl => 
+          normalizeWishlist({
+            ...wl,
+            items: itemsByWishlist[wl.id] || []
+          })
+        );
+
+        setWishlists(normalizedWishlists);
+      } catch (err) {
+        console.error('Error fetching public wishlists:', err);
+        setWishlists([]);
+      } finally {
+        setWishlistsLoading(false);
+      }
+    };
+
+    if (activeTab === 'wishlists') {
+      fetchPublicWishlists();
+    }
+  }, [profile?.id, isOwnProfile, activeTab]);
 
   // Filter tabs based on viewing context
   const availableTabs = isOwnProfile 
@@ -225,10 +294,68 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                     </Button>
                   )}
                 </div>
-              ) : false ? ( // Placeholder for actual wishlist data structure
+              ) : wishlistsLoading ? (
+                <div className="text-center py-8">
+                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+                  <p className="text-gray-600">Loading wishlists...</p>
+                </div>
+              ) : wishlists.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Wishlist grid will be implemented when we have the data structure */}
-                  {/* Wishlist cards will render here when data structure is complete */}
+                  {wishlists.map((wishlist) => (
+                    <Card key={wishlist.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{wishlist.title}</CardTitle>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/shared-wishlist/${wishlist.id}`}>
+                              <ExternalLink className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                        {wishlist.description && (
+                          <CardDescription className="line-clamp-2">
+                            {wishlist.description}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        {wishlist.items.length > 0 ? (
+                          <div className="space-y-3">
+                            <div className="flex gap-2 overflow-x-auto">
+                              {wishlist.items.slice(0, 4).map((item) => (
+                                <div key={item.id} className="flex-shrink-0">
+                                  <div className="w-16 h-16 bg-muted rounded overflow-hidden">
+                                    {item.image_url && (
+                                      <img 
+                                        src={item.image_url} 
+                                        alt={item.name || item.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                              {wishlist.items.length > 4 && (
+                                <div className="flex-shrink-0 w-16 h-16 bg-muted rounded flex items-center justify-center">
+                                  <span className="text-xs text-muted-foreground">
+                                    +{wishlist.items.length - 4}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                              <span>{wishlist.items.length} items</span>
+                              <Badge variant="secondary" className="text-xs">
+                                Public
+                              </Badge>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No items yet</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-8">

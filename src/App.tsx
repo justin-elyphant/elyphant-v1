@@ -37,7 +37,6 @@ const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSet
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
-const ProfileSystemTest = lazy(() => import("./pages/ProfileSystemTest"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
@@ -146,7 +145,6 @@ function AppContent() {
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
-          <Route path="/profile-test" element={<ProfileSystemTest />} />
           <Route path="/auth" element={<Auth />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />

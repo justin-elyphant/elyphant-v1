@@ -22,6 +22,7 @@ import { BirthdayCountdown } from "@/components/connections/BirthdayCountdown";
 import { MutualConnectionsSection } from "@/components/connections/MutualConnectionsSection";
 import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 import { autoGiftPermissionService } from "@/services/autoGiftPermissionService";
+import { toast } from "@/hooks/use-toast";
 
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
@@ -39,28 +40,21 @@ const ConnectionDetail: React.FC = () => {
   } = useAutoGiftPermission(connection);
 
   const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
-    console.log('🔄 Toggle clicked:', { connectionId, enabled, currentUserId: user?.id, connectionBeingViewed: connection?.id });
-    
     if (!connection || !user) {
-      console.log('❌ No connection or user found, aborting toggle');
       return;
     }
     
-    console.log('📡 Calling autoGiftPermissionService.toggleAutoGiftPermission...');
     const result = await autoGiftPermissionService.toggleAutoGiftPermission(
-      user.id, // FIXED: Current logged-in user's ID 
+      user.id, // Current logged-in user's ID 
       connectionId, // The connection being viewed
       enabled
     );
     
-    console.log('📨 Toggle result:', result);
-    
     if (result.success) {
-      console.log('✅ Toggle successful, refreshing permission...');
       await refreshPermission();
-      console.log('🔄 Permission refreshed');
+      toast.success(`Auto-gifting ${enabled ? 'enabled' : 'disabled'} for ${connection.name}`);
     } else {
-      console.log('❌ Toggle failed:', result.error);
+      toast.error('Failed to update auto-gift settings. Please try again.');
     }
   };
 

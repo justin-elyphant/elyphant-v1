@@ -21,12 +21,8 @@ export const AutoGiftToggle: React.FC<AutoGiftToggleProps> = ({
   className
 }) => {
   const handleToggle = (checked: boolean) => {
-    console.log('🎛️ AutoGiftToggle handleToggle called:', { checked, isLoading, connectionId });
     if (!isLoading) {
-      console.log('🚀 Calling onToggle with:', { connectionId, checked });
       onToggle(connectionId, checked);
-    } else {
-      console.log('⏳ Toggle is loading, ignoring click');
     }
   };
 

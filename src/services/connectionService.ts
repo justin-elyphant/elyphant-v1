@@ -22,15 +22,40 @@ export const connectionService = {
    */
   async getConnectionData(userId: string, connectedUserId: string): Promise<ConnectionData | null> {
     try {
-      const { data: connection, error } = await supabase
+      let connection = null;
+      
+      // Try first direction: current user -> target user
+      const { data: conn1 } = await supabase
         .from('user_connections')
         .select('*')
-        .or(`and(user_id.eq.${userId},connected_user_id.eq.${connectedUserId}),and(user_id.eq.${connectedUserId},connected_user_id.eq.${userId})`)
+        .eq('user_id', userId)
+        .eq('connected_user_id', connectedUserId)
         .eq('status', 'accepted')
-        .single();
+        .maybeSingle();
 
-      if (error || !connection) {
-        console.log('No connection found between users:', { userId, connectedUserId, error });
+      console.log('🔍 Connection lookup (direction 1):', { userId, connectedUserId, found: !!conn1 });
+
+      if (conn1) {
+        connection = conn1;
+      } else {
+        // Try second direction: target user -> current user
+        const { data: conn2 } = await supabase
+          .from('user_connections')
+          .select('*')
+          .eq('user_id', connectedUserId)
+          .eq('connected_user_id', userId)
+          .eq('status', 'accepted')
+          .maybeSingle();
+
+        console.log('🔍 Connection lookup (direction 2):', { connectedUserId, userId, found: !!conn2 });
+
+        if (conn2) {
+          connection = conn2;
+        }
+      }
+
+      if (!connection) {
+        console.log('No connection found between users:', { userId, connectedUserId });
         return null;
       }
 
@@ -66,7 +91,7 @@ export const connectionService = {
         .from('profiles')
         .select('*')
         .or(`username.eq.${profileIdentifier},id.eq.${profileIdentifier}`)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profile) {
         console.log('Profile not found:', { profileIdentifier, profileError });

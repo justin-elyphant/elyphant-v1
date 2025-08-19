@@ -74,26 +74,32 @@ const Profile = () => {
   // Load connection profile data
   useEffect(() => {
     if (!isConnectionProfile || !user?.id || !identifier) {
-      console.log("Skipping connection profile load");
+      console.log("Skipping connection profile load", { isConnectionProfile, userId: user?.id, identifier });
       return;
     }
 
     const loadConnectionProfile = async () => {
-      console.log("Loading connection profile for:", identifier);
+      console.log("🔄 Loading connection profile for:", identifier, "by user:", user.id);
       setIsLoadingConnection(true);
       setProfileNotFound(false);
       
       try {
         const profile = await connectionService.getConnectionProfile(user.id, identifier);
-        console.log("Connection profile result:", profile);
+        console.log("✅ Connection profile result:", profile);
         
         if (profile) {
           setConnectionProfile(profile);
+          console.log("🎉 Connection profile loaded successfully:", {
+            profileName: profile.profile.name,
+            relationship: profile.connectionData.relationship,
+            autoGiftEnabled: profile.connectionData.isAutoGiftEnabled
+          });
         } else {
+          console.log("❌ Connection profile not found or no access");
           setProfileNotFound(true);
         }
       } catch (error) {
-        console.error("Error loading connection profile:", error);
+        console.error("💥 Error loading connection profile:", error);
         setProfileNotFound(true);
       } finally {
         setIsLoadingConnection(false);

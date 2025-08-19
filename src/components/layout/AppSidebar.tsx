@@ -17,36 +17,23 @@ import {
   Home,
   ShoppingBag,
   ShoppingCart,
-  User,
-  Settings,
-  Users,
   Heart,
   Package,
-  MessageSquare,
-  LayoutDashboard,
+  Gift,
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
-import NotificationBadge from "@/components/notifications/NotificationBadge";
-import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
-import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const pendingConnectionsCount = usePendingConnectionsCount();
-  const unreadMessagesCount = useUnreadMessagesCount();
 
+  // Core e-commerce functions - always visible
   const mainMenuItems = [
     {
       title: "Home",
       url: "/",
       icon: Home,
-    },
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
     },
     {
       title: "Marketplace",
@@ -57,26 +44,6 @@ const AppSidebar = () => {
       title: "Cart",
       url: "/cart",
       icon: ShoppingCart,
-    },
-  ];
-
-  const userMenuItems = user ? [
-    {
-      title: "Profile",
-      url: "/profile",
-      icon: User,
-    },
-    {
-      title: "Messages",
-      url: "/messages",
-      icon: MessageSquare,
-      badge: unreadMessagesCount,
-    },
-    {
-      title: "Connections",
-      url: "/connections",
-      icon: Users,
-      badge: pendingConnectionsCount,
     },
     {
       title: "Wishlists",
@@ -89,11 +56,11 @@ const AppSidebar = () => {
       icon: Package,
     },
     {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
+      title: "Gifting Hub",
+      url: "/gifting",
+      icon: Gift,
     },
-  ] : [];
+  ];
 
   const isActiveRoute = (url: string) => {
     if (url === "/") {
@@ -109,7 +76,7 @@ const AppSidebar = () => {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>E-commerce</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
@@ -125,32 +92,6 @@ const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {user && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Account</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {userMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
-                      <Link to={item.url} className="relative">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && item.badge > 0 && (
-                          <NotificationBadge 
-                            count={item.badge} 
-                            className="ml-auto"
-                          />
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

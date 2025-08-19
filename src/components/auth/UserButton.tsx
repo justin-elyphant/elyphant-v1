@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings, Heart, Store, MessageSquare, LayoutDashboard, Users } from "lucide-react";
+import { User, LogOut, Settings, Heart, MessageSquare, LayoutDashboard, Users, CreditCard, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -25,12 +25,16 @@ const UserButton = () => {
   const { unreadCount: notificationsCount } = useNotifications();
   const unreadMessagesCount = useUnreadMessagesCount();
   
-  // Run integrity check when component mounts or profile changes
+  // Debounced integrity check to prevent page cycling
   React.useEffect(() => {
     if (user && profile) {
-      checkDataIntegrity(false); // Don't show toasts in dropdown
+      const timeoutId = setTimeout(() => {
+        checkDataIntegrity(false); // Don't show toasts in dropdown
+      }, 2000); // 2 second debounce
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [user, profile, checkDataIntegrity]);
+  }, [user?.id, profile?.id]); // Only depend on stable IDs
   
   const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
   
@@ -93,13 +97,8 @@ const UserButton = () => {
     }
   };
 
-  const handleMarketplaceClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Marketplace button clicked - attempting navigation to /marketplace");
-    console.log("Current location:", window.location.pathname);
+  const handleMarketplaceClick = () => {
     navigate("/marketplace");
-    console.log("Navigate function called");
   };
   
   return (
@@ -138,9 +137,22 @@ const UserButton = () => {
         
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={handleMarketplaceClick}>
-          <Store className="mr-2 h-4 w-4" />
-          <span>Marketplace</span>
+        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          <span className="relative">
+            Dashboard
+            {hasIssues && (
+              <NotificationBadge 
+                count={1} 
+                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
+              />
+            )}
+          </span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={handleProfileClick}>
+          <User className="mr-2 h-4 w-4" />
+          <span>My Profile</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/messages")}>
@@ -160,24 +172,6 @@ const UserButton = () => {
           <Users className="mr-2 h-4 w-4" />
           <span>Connections</span>
         </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          <span className="relative">
-            Dashboard
-            {hasIssues && (
-              <NotificationBadge 
-                count={1} 
-                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
-              />
-            )}
-          </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={handleProfileClick}>
-          <User className="mr-2 h-4 w-4" />
-          <span>View Profile</span>
-        </DropdownMenuItem>
         
         <DropdownMenuItem onClick={() => navigate("/wishlists")}>
           <Heart className="mr-2 h-4 w-4" />
@@ -190,13 +184,13 @@ const UserButton = () => {
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/orders")}>
-          <span className="mr-2">🛒</span>
+          <Package className="mr-2 h-4 w-4" />
           <span>Orders</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/payments")}>
-          <span className="mr-2">💳</span>
-          <span>Payment</span>
+          <CreditCard className="mr-2 h-4 w-4" />
+          <span>Payment Methods</span>
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />

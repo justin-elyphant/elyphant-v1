@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
@@ -24,6 +24,7 @@ export function useProfileDataIntegrity() {
   const [issues, setIssues] = useState<DataIntegrityIssue[]>([]);
   const [completionScore, setCompletionScore] = useState(0);
 
+  // Debounced integrity check to prevent excessive calls
   const checkDataIntegrity = useCallback(async (showToasts = true, formValues?: any) => {
     if (!user || !profile) return [];
     
@@ -295,7 +296,7 @@ export function useProfileDataIntegrity() {
     } finally {
       setIsChecking(false);
     }
-  }, [user, profile, connections, wishlists]);
+  }, [user?.id, profile?.id, connections.length, wishlists.length]); // Use stable IDs instead of objects
 
   const refreshData = useCallback(async () => {
     try {

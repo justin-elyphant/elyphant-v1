@@ -14,6 +14,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import UserProfileView from "@/components/user-profile/UserProfileView";
 import PublicProfileView from "@/components/user-profile/PublicProfileView";
 import SignupCTA from "@/components/user-profile/SignupCTA";
+import ProfileDataRouter from "@/components/user-profile/ProfileDataRouter";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import type { ConnectionProfile } from "@/services/connectionService";
 
@@ -167,113 +168,66 @@ const Profile = () => {
     );
   }
 
-  // For authenticated users viewing their own profile - use SidebarLayout
-  if (isOwnProfile) {
-    console.log("Rendering own profile view");
-    if (ownProfileLoading) {
-      return (
-        <SidebarLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-            <div>Loading your profile...</div>
-          </div>
-        </SidebarLayout>
-      );
-    }
+  // Unified profile routing using ProfileDataRouter
+  const layoutComponent = isOwnProfile ? SidebarLayout : PublicProfileLayout;
+  const Layout = layoutComponent;
+
+  // Handle loading states
+  if ((isOwnProfile && ownProfileLoading) || (isConnectionProfile && isLoadingConnection) || (shouldLoadPublicProfile && isLoadingPublic)) {
+    const loadingMessage = isOwnProfile 
+      ? "Loading your profile preview..." 
+      : isConnectionProfile 
+        ? "Loading connection profile..."
+        : "Loading profile...";
 
     return (
-      <SidebarLayout>
-        <UserProfileView profile={ownProfile} />
-      </SidebarLayout>
-    );
-  }
-
-  // For connection profile views - enhanced profile view with connection features
-  if (isConnectionProfile) {
-    console.log("Rendering connection profile view");
-    if (isLoadingConnection) {
-      return (
-        <PublicProfileLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
-            <div>Loading connection profile...</div>
-          </div>
-        </PublicProfileLayout>
-      );
-    }
-
-    if (profileNotFound || !connectionProfile) {
-      return (
-        <PublicProfileLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Connection Not Found</h1>
-              <p className="text-gray-600">This connection doesn't exist or you don't have access to view it.</p>
-            </div>
-          </div>
-        </PublicProfileLayout>
-      );
-    }
-
-    return (
-      <PublicProfileLayout>
-        <UserProfileView 
-          profile={connectionProfile.profile} 
-          connectionData={connectionProfile.connectionData}
-        />
-      </PublicProfileLayout>
-    );
-  }
-
-  // For public profile views - use PublicProfileLayout for microsite experience
-  if (shouldLoadPublicProfile) {
-    console.log("Rendering public profile view");
-    if (isLoadingPublic) {
-      return (
-        <PublicProfileLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
-            <div>Loading profile...</div>
-          </div>
-        </PublicProfileLayout>
-      );
-    }
-
-    if (profileNotFound || !publicProfile) {
-      return (
-        <PublicProfileLayout>
-          <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h1>
-              <p className="text-gray-600">The profile you're looking for doesn't exist or isn't public.</p>
-            </div>
-          </div>
-        </PublicProfileLayout>
-      );
-    }
-
-    return (
-      <PublicProfileLayout>
-        <PublicProfileView profile={publicProfile} />
-        {shouldShowCTA && (
-          <SignupCTA 
-            profileName={publicProfile.name} 
-            onDismiss={dismissCTA} 
-          />
-        )}
-      </PublicProfileLayout>
-    );
-  }
-
-  // Fallback - should not reach here
-  console.log("Fallback case reached - redirecting to not found");
-  return (
-    <PublicProfileLayout>
-      <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h1>
-          <p className="text-gray-600">Invalid profile identifier.</p>
+      <Layout>
+        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+          <div>{loadingMessage}</div>
         </div>
-      </div>
-    </PublicProfileLayout>
+      </Layout>
+    );
+  }
+
+  // Handle error states
+  if ((isConnectionProfile && (profileNotFound || !connectionProfile)) || 
+      (shouldLoadPublicProfile && (profileNotFound || !publicProfile))) {
+    const errorTitle = isConnectionProfile ? "Connection Not Found" : "Profile Not Found";
+    const errorMessage = isConnectionProfile 
+      ? "This connection doesn't exist or you don't have access to view it."
+      : "The profile you're looking for doesn't exist or isn't public.";
+
+    return (
+      <Layout>
+        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{errorTitle}</h1>
+            <p className="text-gray-600">{errorMessage}</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Render the appropriate profile view using ProfileDataRouter
+  return (
+    <Layout>
+      <ProfileDataRouter
+        isOwnProfile={isOwnProfile}
+        isConnectionProfile={isConnectionProfile}
+        publicProfile={publicProfile}
+        connectionProfile={connectionProfile}
+      />
+      {/* Show signup CTA for public profiles when not authenticated */}
+      {shouldLoadPublicProfile && shouldShowCTA && publicProfile && (
+        <SignupCTA 
+          profileName={publicProfile.name} 
+          onDismiss={dismissCTA} 
+        />
+      )}
+    </Layout>
   );
+
 };
 
 export default Profile;

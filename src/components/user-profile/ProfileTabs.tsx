@@ -99,7 +99,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           })
         );
 
-        console.log('✅ Fetched public wishlists:', { profileId: profile.id, count: normalizedWishlists.length, wishlists: normalizedWishlists.map(w => w.title) });
         setWishlists(normalizedWishlists);
       } catch (err) {
         console.error('Error fetching public wishlists:', err);

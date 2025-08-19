@@ -20,7 +20,7 @@ export const useAutoGiftPermission = (connection: Connection | null) => {
       setError(null);
       
       const result = await autoGiftPermissionService.checkAutoGiftPermission(
-        user.id,
+        user.id, // Current logged-in user ID
         connection
       );
       

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { useAuth } from "@/contexts/auth";
 import { useConnection } from "@/hooks/useConnection";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
@@ -25,6 +26,7 @@ import { autoGiftPermissionService } from "@/services/autoGiftPermissionService"
 const ConnectionDetail: React.FC = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get the current logged-in user
   const { connection, loading, error } = useConnection(connectionId || "");
   const { handleDeleteConnection, refreshPendingConnections: refreshConnections } = useConnectionsAdapter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,17 +39,17 @@ const ConnectionDetail: React.FC = () => {
   } = useAutoGiftPermission(connection);
 
   const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
-    console.log('🔄 Toggle clicked:', { connectionId, enabled, currentUserId: connection?.id });
+    console.log('🔄 Toggle clicked:', { connectionId, enabled, currentUserId: user?.id, connectionBeingViewed: connection?.id });
     
-    if (!connection) {
-      console.log('❌ No connection found, aborting toggle');
+    if (!connection || !user) {
+      console.log('❌ No connection or user found, aborting toggle');
       return;
     }
     
     console.log('📡 Calling autoGiftPermissionService.toggleAutoGiftPermission...');
     const result = await autoGiftPermissionService.toggleAutoGiftPermission(
-      connection.id, // Current user's ID 
-      connectionId,
+      user.id, // FIXED: Current logged-in user's ID 
+      connectionId, // The connection being viewed
       enabled
     );
     

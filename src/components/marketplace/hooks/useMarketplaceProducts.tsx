@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Product } from "@/types/product";
-import { handleSearch, clearSearchOperations } from "./utils/searchOperations";
+import { handleSearch, handleMultiInterestSearch, clearSearchOperations } from "./utils/searchOperations";
 import { loadPersonalizedProducts } from "./utils/personalizationUtils";
 
 export const useMarketplaceProducts = () => {
@@ -20,6 +20,7 @@ export const useMarketplaceProducts = () => {
       setSearchTerm(searchParam);
       const personId = searchParams.get("personId");
       const occasionType = searchParams.get("occasionType");
+      const multiInterest = searchParams.get("multi_interest");
       
       // Extract Nicole context from URL parameters
       const minPrice = searchParams.get("minPrice");
@@ -36,7 +37,8 @@ export const useMarketplaceProducts = () => {
         recipient,
         occasion,
         personId,
-        occasionType
+        occasionType,
+        multiInterest
       });
       
       // Build Nicole context if available
@@ -54,7 +56,15 @@ export const useMarketplaceProducts = () => {
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
+      // Check if this is a multi-interest search
+      if (multiInterest === 'true') {
+        // Split the search term back into individual interests
+        const interests = searchParam.split(' ').filter(term => term.length > 0);
+        console.log('🎯 Marketplace: Detected multi-interest search for:', interests);
+        handleMultiInterestSearch(interests, searchIdRef, setIsLoading, setProducts);
+      } else {
+        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, personId, occasionType, false, nicoleContext);
+      }
     } else {
       // Load some default products with personalization
       const userInterests = profile?.gift_preferences || [];
@@ -75,6 +85,8 @@ export const useMarketplaceProducts = () => {
   // This is optimized to prevent duplicate searches
   useEffect(() => {
     const searchParam = searchParams.get("search");
+    const multiInterest = searchParams.get("multi_interest");
+    
     if (searchParam && searchParam !== searchTerm) {
       setSearchTerm(searchParam);
       
@@ -98,7 +110,15 @@ export const useMarketplaceProducts = () => {
       const searchId = `search-${searchParam}-${Date.now()}`;
       searchIdRef.current = searchId;
       
-      handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
+      // Check if this is a multi-interest search
+      if (multiInterest === 'true') {
+        // Split the search term back into individual interests
+        const interests = searchParam.split(' ').filter(term => term.length > 0);
+        console.log('🎯 Marketplace: Detected multi-interest search for:', interests);
+        handleMultiInterestSearch(interests, searchIdRef, setIsLoading, setProducts);
+      } else {
+        handleSearch(searchParam, searchIdRef, setIsLoading, setProducts, searchParams.get("personId"), searchParams.get("occasionType"), false, nicoleContext);
+      }
     }
   }, [searchParams]);
   

@@ -4,6 +4,7 @@ import { addMockImagesToProducts } from "./productImageUtils";
 import { toast } from "sonner";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { UnifiedNicoleContext } from "@/services/ai/unified/types";
+import { searchMultipleInterests } from "../../zinc/utils/searchUtils";
 
 // Track search operations to prevent duplicate toast notifications
 export const searchOperations = new Map();
@@ -198,6 +199,78 @@ export const handleSearch = async (
     console.error('Error searching for products:', error);
     toast.error('Error searching for products', {
       id: `search-error-${term}`,
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+/**
+ * Handle multi-interest search for marketplace products
+ */
+export const handleMultiInterestSearch = async (
+  interests: string[],
+  searchIdRef: React.MutableRefObject<string>,
+  setIsLoading: (isLoading: boolean) => void,
+  setProducts: (products: Product[]) => void
+): Promise<void> => {
+  // Check if this exact search is already in progress
+  const searchKey = `multi-${interests.join('-')}`;
+  if (searchOperations.has(searchKey) && Date.now() - searchOperations.get(searchKey) < 2000) {
+    console.log(`Skipping duplicate multi-interest search for "${interests.join(', ')}"`);
+    return;
+  }
+  
+  // Record this search operation with timestamp
+  searchOperations.set(searchKey, Date.now());
+  
+  // Clear previous toasts to avoid stacking
+  toast.dismiss();
+  
+  setIsLoading(true);
+  console.log(`🎯 Multi-Interest Search: Searching for interests:`, interests);
+  
+  try {
+    // Use our multi-interest search with enhanced brand diversity
+    const searchResult = await searchMultipleInterests(interests, {
+      maxProductsPerInterest: 8,
+      maxProductsPerBrand: 2, // Enhanced diversity - max 2 per brand
+      enableBrandDiversity: true,
+      targetTotalResults: 24
+    });
+    
+    console.log(`🎯 Multi-Interest Search: Found ${searchResult.totalResults} diversified products`);
+    console.log(`🎯 Multi-Interest Search: Breakdown:`, searchResult.searchBreakdown);
+    
+    // Convert ZincProduct to Product format for marketplace
+    const products: Product[] = searchResult.products.map(zincProduct => ({
+      product_id: zincProduct.product_id,
+      title: zincProduct.title,
+      description: zincProduct.features?.join(', ') || 'No description available',
+      price: zincProduct.price,
+      image: zincProduct.image,
+      category: zincProduct.category || 'General',
+      rating: zincProduct.rating || zincProduct.stars || 0,
+      tags: [],
+      brand: zincProduct.brand || 'Unknown',
+      features: zincProduct.features
+    }));
+    
+    setProducts(products);
+    
+    // Show success toast
+    setTimeout(() => {
+      if (searchIdRef.current.includes(interests.join(' '))) {
+        toast.success(`Found ${searchResult.totalResults} products across ${interests.length} interests`, {
+          id: `multi-search-success-${interests.join('-')}`,
+        });
+      }
+    }, 300);
+    
+  } catch (error) {
+    console.error('🎯 Multi-Interest Search: Error:', error);
+    toast.error('Error searching for products across interests', {
+      id: `multi-search-error-${interests.join('-')}`,
     });
   } finally {
     setIsLoading(false);

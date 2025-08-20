@@ -92,7 +92,9 @@ const extractBrand = (product: ZincProduct): string => {
   const commonBrands = [
     'Apple', 'Samsung', 'Sony', 'Nike', 'Adidas', 'Lego', 'Disney',
     'Microsoft', 'Google', 'Amazon', 'Kindle', 'Echo', 'Fire',
-    'Fisher-Price', 'Mattel', 'Hasbro', 'Barbie', 'Hot Wheels'
+    'Fisher-Price', 'Mattel', 'Hasbro', 'Barbie', 'Hot Wheels',
+    'Lululemon', 'Under Armour', 'Patagonia', 'REI', 'Samsonite',
+    'Away', 'Tumi', 'North Face', 'Columbia', 'Osprey'
   ];
   
   for (const brand of commonBrands) {

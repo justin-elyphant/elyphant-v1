@@ -271,6 +271,14 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                     <span>Joined {new Date(userData.created_at).toLocaleDateString()}</span>
                   </div>
                 )}
+                <div className="flex items-center space-x-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span>{connectionCount} connections</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Heart className="h-4 w-4" />
+                  <span>{wishlistCount} wishlists</span>
+                </div>
               </div>
 
               {/* Sign up prompt for anonymous users */}
@@ -302,19 +310,6 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
         </div>
       </div>
 
-      {/* Stats Bar - Separate from banner */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex justify-center space-x-12 py-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">{connectionCount}</div>
-            <div className="text-base text-gray-600 font-medium">Connections</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">{wishlistCount}</div>
-            <div className="text-base text-gray-600 font-medium">Wishlists</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

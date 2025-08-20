@@ -45,9 +45,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group">
+    <div className="card-unified cursor-pointer group">
       {/* Image Container with Overlay Actions */}
-      <div className="relative aspect-square bg-gray-100 overflow-hidden cursor-pointer" onClick={onClick}>
+      <div className="relative aspect-square surface-sunken overflow-hidden cursor-pointer" onClick={onClick}>
         <img
           src={product.image || '/placeholder.svg'}
           alt={product.title}
@@ -94,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
       
       {/* Content */}
-      <div className="p-3 space-y-2">
+      <div className="touch-padding space-y-tight">
         {/* Brand Name - Prominent at top */}
         {(product.brand || product.vendor) && (
           <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -113,14 +113,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         
         {/* Title */}
         <div onClick={onClick} className="cursor-pointer">
-          <h3 className="font-medium text-sm text-gray-900 line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="text-body-sm font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
             {product.title}
           </h3>
         </div>
         
         {/* Price and Action Icons */}
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-lg text-gray-900">
+          <span className="text-lg font-semibold text-foreground">
             {formatPrice(product.price, getPriceFormatOptions())}
           </span>
           

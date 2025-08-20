@@ -75,7 +75,7 @@ const HomeContent = () => {
       <WishlistCreationCTA />
       
       {/* Traditional sections with container - will be refactored later */}
-      <div className="container mx-auto px-4 py-8 space-y-16">
+      <div className="container-content space-y-unified">
         <PopularBrands />
         <FeaturedCategories />
       </div>
@@ -84,7 +84,7 @@ const HomeContent = () => {
       <PersonTypeCarousel />
       
       {/* More traditional sections */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container-content">
         <AutomationFeatures />
       </div>
       

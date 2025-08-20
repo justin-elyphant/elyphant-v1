@@ -110,10 +110,10 @@ const Hero = () => {
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
         <ResponsiveContainer className={`${targetEvent ? 'pt-24 md:pt-8' : 'pt-8'} safe-area-inset safe-area-inset-top`}>
           <div className="max-w-2xl text-white">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-shadow-lg no-select">
+            <h1 className="text-heading-1 md:text-4xl lg:text-5xl text-white mb-6 leading-tight text-shadow-lg no-select">
               Connecting Through Gifting
             </h1>
-            <p className="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md no-select">
+            <p className="text-body-lg text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md no-select">
               Create wishlists, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>

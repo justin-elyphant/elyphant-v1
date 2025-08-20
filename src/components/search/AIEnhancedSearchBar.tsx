@@ -360,8 +360,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   };
 
   const placeholderText = isNicoleMode 
-    ? "Ask Nicole anything about gifts..." 
-    : "Search brands, trending products, friends, and more...";
+    ? (isMobile ? "Ask Nicole about gifts..." : "Ask Nicole anything about gifts...")
+    : (isMobile ? "Find gifts..." : "Search brands, trending products, friends, and more...");
 
   // Click outside detection
   useEffect(() => {

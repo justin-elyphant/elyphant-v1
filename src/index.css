@@ -467,8 +467,16 @@ body {
     margin-top: var(--space-4);
   }
   
+  .space-y-standard > * + * {
+    margin-top: var(--space-6);
+  }
+  
   .space-y-loose > * + * {
     margin-top: var(--space-8);
+  }
+  
+  .space-y-minimal > * + * {
+    margin-top: var(--space-2);
   }
   
   .gap-unified {
@@ -483,6 +491,68 @@ body {
     gap: var(--space-8);
   }
 
+  /* Margin spacing utilities */
+  .mb-space-minimal {
+    margin-bottom: var(--space-2);
+  }
+  
+  .mb-space-tight {
+    margin-bottom: var(--space-4);
+  }
+  
+  .mb-space-standard {
+    margin-bottom: var(--space-6);
+  }
+  
+  .mb-space-loose {
+    margin-bottom: var(--space-8);
+  }
+  
+  .mb-space-xl {
+    margin-bottom: var(--space-12);
+  }
+  
+  .mt-space-minimal {
+    margin-top: var(--space-2);
+  }
+  
+  .mt-space-tight {
+    margin-top: var(--space-4);
+  }
+  
+  .mt-space-standard {
+    margin-top: var(--space-6);
+  }
+  
+  .mt-space-loose {
+    margin-top: var(--space-8);
+  }
+  
+  .mt-space-xl {
+    margin-top: var(--space-12);
+  }
+
+  /* Padding spacing utilities */
+  .py-space-tight {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+  
+  .py-space-standard {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+  
+  .py-space-loose {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+  
+  .py-space-xl {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
+  }
+
   /* Touch-Optimized Components */
   .touch-target {
     min-height: 44px;
@@ -490,8 +560,24 @@ body {
     touch-action: manipulation;
   }
   
+  .touch-target-44 {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  .touch-target-48 {
+    min-height: 48px;
+    min-width: 48px;
+    touch-action: manipulation;
+  }
+  
   .touch-padding {
     padding: var(--space-3) var(--space-4);
+  }
+  
+  .touch-padding-sm {
+    padding: var(--space-2) var(--space-3);
   }
   
   .touch-padding-lg {

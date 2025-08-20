@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock data for popular brands with real logos
@@ -128,8 +129,16 @@ const PopularBrands = () => {
 
   return (
     <div className="mb-8">
+      <div className="text-center mb-space-loose md:mb-space-xl">
+        <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight md:mb-space-standard">
+          Featured Brands
+        </h2>
+        <p className="text-body-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          Discover trusted brands our customers love - quality guaranteed
+        </p>
+      </div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Featured Brands</h2>
+        <div></div>
         <div className="flex gap-2">
           <button
             onClick={scrollLeft}
@@ -186,6 +195,23 @@ const PopularBrands = () => {
               </Card>
             </Link>
           ))}
+      </div>
+      
+      {/* Shop All Brands Button */}
+      <div className="flex justify-center mt-space-loose md:mt-space-xl">
+        <Link
+          to="/marketplace"
+          className="inline-flex"
+        >
+          <Button
+            variant="outline" 
+            size="touch"
+            className="touch-target-44 transition-all duration-200"
+          >
+            View All Brands
+            <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform duration-200" />
+          </Button>
+        </Link>
       </div>
     </div>
   );

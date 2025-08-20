@@ -371,9 +371,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         <div className={`relative flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
-          {/* Mode Toggle - Hide on mobile when input is focused for more space */}
+          {/* Mode Toggle - Keep search icon visible on mobile for clicking */}
           <div className={`absolute left-3 flex items-center gap-2 z-10 transition-opacity duration-200 ${
-            isMobile && inputFocused ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            isMobile && inputFocused ? 'opacity-100' : 'opacity-100'
           }`}>
             <button
               type="button"
@@ -389,15 +389,20 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                 isNicoleMode ? 'text-purple-500' : 'text-gray-400'
               }`} />
             </button>
-            <IOSSwitch
-              size="sm"
-              checked={isNicoleMode}
-              onCheckedChange={handleModeToggle}
-              className="touch-manipulation"
-            />
-            <Bot className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
+            {/* Hide mode toggle on mobile when focused to save space */}
+            {!(isMobile && inputFocused) && (
+              <>
+                <IOSSwitch
+                  size="sm"
+                  checked={isNicoleMode}
+                  onCheckedChange={handleModeToggle}
+                  className="touch-manipulation"
+                />
+                <Bot className={`h-4 w-4 transition-colors duration-200 ${
+                  isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+                }`} />
+              </>
+            )}
           </div>
           
           <Input
@@ -411,7 +416,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             className={`transition-all duration-300 ${
               mobile 
                 ? `text-base py-3 h-12 rounded-lg ${
-                    inputFocused ? 'pl-4 pr-16' : 'pl-32 pr-16'
+                    inputFocused ? 'pl-12 pr-16' : 'pl-32 pr-16'
                   }` 
                 : "h-12 text-base pl-32 pr-32"
             } border-2 ${

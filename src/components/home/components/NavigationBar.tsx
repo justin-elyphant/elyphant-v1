@@ -22,17 +22,17 @@ const NavigationBar = () => {
   // Handle case where AuthProvider context is not yet available
   if (!authContext) {
     return (
-      <nav className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4">
+      <nav className="surface-primary border-b">
+        <div className="container-content">
           <div className="flex items-center justify-between h-16">
             <div className="flex-shrink-0">
               <Logo />
             </div>
             <div className="hidden md:flex items-center space-x-4">
-              <div className="h-10 w-20 bg-muted rounded animate-pulse" />
+              <div className="h-10 w-20 surface-secondary rounded animate-pulse" />
             </div>
             <div className="md:hidden">
-              <div className="h-10 w-10 bg-muted rounded animate-pulse" />
+              <div className="h-10 w-10 surface-secondary rounded animate-pulse" />
             </div>
           </div>
         </div>
@@ -64,8 +64,8 @@ const NavigationBar = () => {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="container mx-auto px-4">
+    <nav className="surface-primary border-b">
+      <div className="container-content">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
@@ -80,19 +80,19 @@ const NavigationBar = () => {
           )}
 
           {/* Desktop Auth & Cart */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-unified">
             {shouldShowCart && <OptimizedShoppingCartButton />}
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
           {/* Mobile Right Side - Only Cart and Menu */}
-          <div className="md:hidden flex items-center space-x-3">
+          <div className="md:hidden flex items-center gap-tight">
             {shouldShowCart && <OptimizedShoppingCartButton />}
             <Button
               variant="ghost"
-              size="sm"
+              size="touch"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2"
+              className="touch-target-44"
             >
               {isMobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -105,7 +105,7 @@ const NavigationBar = () => {
 
         {/* Mobile Search Bar - Below header */}
         {shouldShowSearch && (
-          <div className="md:hidden pb-3 pt-2">
+          <div className="md:hidden touch-padding-sm pt-2">
             <AIEnhancedSearchBar mobile />
           </div>
         )}

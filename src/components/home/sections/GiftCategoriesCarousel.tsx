@@ -64,11 +64,11 @@ const GiftCategoriesCarousel: React.FC = () => {
       contentPadding={false}
     >
       {/* Header positioned absolutely over the carousel */}
-      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
-        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
+      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center touch-padding">
+        <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight md:mb-space-standard">
           Quick Picks
         </h2>
-        <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-body-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Find the perfect gift for any occasion with our curated collections
         </p>
       </div>
@@ -86,7 +86,7 @@ const GiftCategoriesCarousel: React.FC = () => {
             {giftCategories.map((category) => (
               <CarouselItem key={category.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item">
                 <div
-                  className="group relative overflow-hidden bg-white cursor-pointer h-80 md:h-96 lg:h-[500px] touch-target-48 touch-manipulation tap-feedback rounded-2xl"
+                  className="group relative overflow-hidden card-unified cursor-pointer h-80 md:h-96 lg:h-[500px] touch-target-48 touch-manipulation tap-feedback"
                   onClick={() => handleCategoryClick(category)}
                 >
                   {/* Image Container - Full height of carousel */}
@@ -100,17 +100,17 @@ const GiftCategoriesCarousel: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     
                     {/* Overlay Content - positioned at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10 text-white">
-                      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
+                    <div className="absolute bottom-0 left-0 right-0 touch-padding-lg text-white">
+                      <h3 className="text-heading-3 md:text-heading-2 lg:text-heading-1 mb-space-tight md:mb-space-standard">
                         {category.title}
                       </h3>
-                      <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
+                      <p className="text-body md:text-body-lg text-white/90 mb-space-standard md:mb-space-loose leading-relaxed">
                         {category.description}
                       </p>
                       <Button
                         variant="secondary"
-                        size="lg"
-                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-base md:text-lg px-6 py-3"
+                        size="touch"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select"
                       >
                         Shop Now
                         <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />

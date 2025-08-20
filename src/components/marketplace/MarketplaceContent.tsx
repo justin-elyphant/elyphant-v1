@@ -71,20 +71,20 @@ const MarketplaceContent = ({
   // Error state
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container-content py-space-loose">
         <div className="text-center max-w-md mx-auto">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <div className="flex gap-2 justify-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-space-standard" />
+          <h3 className="text-body-lg font-semibold mb-space-minimal">Something went wrong</h3>
+          <p className="text-muted-foreground mb-space-standard">{error}</p>
+          <div className="flex gap-tight justify-center">
             {onRefresh && (
-              <Button onClick={onRefresh} variant="outline">
+              <Button onClick={onRefresh} variant="outline" size="touch">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
               </Button>
             )}
             {searchError && (
-              <Button onClick={handleRetrySearch} variant="outline">
+              <Button onClick={handleRetrySearch} variant="outline" size="touch">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Search
               </Button>
@@ -98,9 +98,9 @@ const MarketplaceContent = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <div className="h-12 bg-gray-200 rounded animate-pulse mb-4" />
+      <div className="container-content py-space-loose">
+        <div className="mb-space-loose">
+          <div className="h-12 surface-secondary rounded animate-pulse mb-space-standard" />
         </div>
         <ProductSkeleton count={isMobile ? 6 : 12} viewMode={viewMode} />
       </div>
@@ -109,8 +109,8 @@ const MarketplaceContent = ({
 
   // Desktop content
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex gap-6">
+    <div className="container-content py-space-loose">
+      <div className="flex gap-loose">
         {/* Desktop Filters Sidebar */}
         {showFilters && (
           <AdvancedFilterDrawer
@@ -125,7 +125,7 @@ const MarketplaceContent = ({
         {/* Main Content */}
         <div className="flex-1">
           {/* Toolbar */}
-          <div className="mb-6">
+          <div className="mb-space-loose">
             <MarketplaceToolbar
               viewMode={viewMode}
               setViewMode={setViewMode}
@@ -142,14 +142,14 @@ const MarketplaceContent = ({
 
           {/* Active Filters Display */}
           {activeFilterCount > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg">
+            <div className="mb-space-standard surface-secondary p-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-body-sm text-muted-foreground">
                   {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} applied
                 </span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="touch"
                   onClick={clearFilters}
                   className="text-red-500 hover:text-red-700"
                 >

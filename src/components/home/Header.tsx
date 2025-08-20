@@ -9,7 +9,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className }) => {
   return (
-    <header className={cn("sticky top-0 z-50 bg-white border-b", className)}>
+    <header className={cn("sticky top-0 z-50 surface-primary border-b", className)}>
       <NavigationBar />
     </header>
   );

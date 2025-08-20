@@ -84,63 +84,66 @@ const SignUpForm = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-loose">
       <SocialLoginButtons />
       
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
+        <div className="relative flex justify-center text-caption uppercase">
+          <span className="surface-primary px-2 text-muted-foreground">
             Or continue with
           </span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-standard">
+        <div className="space-y-minimal">
+          <Label htmlFor="name" className="text-body-sm">Full Name</Label>
           <Input
             id="name"
             type="text"
             placeholder="Enter your full name"
             {...register("name")}
             disabled={isLoading}
+            className="touch-target-44"
           />
           {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
+            <p className="text-body-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-minimal">
+          <Label htmlFor="email" className="text-body-sm">Email</Label>
           <Input
             id="email"
             type="email"
             placeholder="Enter your email"
             {...register("email")}
             disabled={isLoading}
+            className="touch-target-44"
           />
           {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
+            <p className="text-body-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-minimal">
+          <Label htmlFor="password" className="text-body-sm">Password</Label>
           <PasswordInput
             id="password"
             placeholder="Create a secure password"
             {...register("password")}
             disabled={isLoading}
+            className="touch-target-44"
           />
           {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
+            <p className="text-body-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
         
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" size="touch" className="w-full touch-target-44" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -151,7 +154,7 @@ const SignUpForm = () => {
           )}
         </Button>
         
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-caption text-muted-foreground text-center">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>
       </form>

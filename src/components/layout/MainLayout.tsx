@@ -18,7 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   footerClassName
 }) => {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen surface-primary flex flex-col">
       <Header className={headerClassName} />
       <main className={cn("flex-1", className)}>
         {children}

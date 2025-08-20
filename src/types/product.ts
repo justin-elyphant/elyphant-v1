@@ -48,4 +48,9 @@ export type Product = {
   tags?: string[];
   fromWishlist?: boolean;
   fromPreferences?: boolean;
+  
+  // Unified pricing strategy fields
+  productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+  skipCentsDetection?: boolean;
+  isZincApiProduct?: boolean; // Legacy compatibility flag
 };

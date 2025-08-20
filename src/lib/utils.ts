@@ -39,7 +39,7 @@ export function formatCurrency(
 
 /**
  * Enhanced price formatter with validation and conversion
- * Handles various price formats (cents, dollars) and edge cases
+ * Handles various price formats (cents, dollars) and edge cases with source-aware logic
  * @param {number | undefined | null} price - The price to format
  * @param {object} options - Formatting options
  * @returns {string} The formatted price string (e.g., "$1,999.99")
@@ -51,13 +51,17 @@ export function formatPrice(
     fallbackText?: string;
     currency?: string;
     locale?: string;
+    productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+    skipCentsDetection?: boolean;
   } = {}
 ): string {
   const {
     detectCents = true,
     fallbackText = "Price not available",
     currency = 'USD',
-    locale = 'en-US'
+    locale = 'en-US',
+    productSource,
+    skipCentsDetection = false
   } = options;
 
   // Handle edge cases
@@ -72,14 +76,33 @@ export function formatPrice(
     return fallbackText;
   }
 
-  // Auto-detect if price is in cents (common with APIs)
+  // Source-aware price conversion logic
   let finalPrice = numPrice;
-  if (detectCents && numPrice > 1000 && Number.isInteger(numPrice)) {
+  let shouldDetectCents = detectCents;
+  
+  // Override cents detection based on product source
+  if (skipCentsDetection) {
+    shouldDetectCents = false;
+  } else if (productSource) {
+    switch (productSource) {
+      case 'zinc_api':
+        shouldDetectCents = true; // Zinc API uses cents
+        break;
+      case 'shopify':
+      case 'vendor_portal':
+      case 'manual':
+        shouldDetectCents = false; // These sources use dollars
+        break;
+    }
+  }
+  
+  // Auto-detect if price is in cents (for Zinc API and legacy products)
+  if (shouldDetectCents && numPrice > 1000 && Number.isInteger(numPrice)) {
     // Likely in cents if it's a whole number > 1000
     const possibleDollarAmount = numPrice / 100;
     if (possibleDollarAmount < 10000) { // Reasonable upper limit
       finalPrice = possibleDollarAmount;
-      console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice}`);
+      console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice} (source: ${productSource || 'auto-detected'})`);
     }
   }
 

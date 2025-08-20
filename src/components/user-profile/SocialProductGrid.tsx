@@ -37,6 +37,7 @@ interface WishlistItem {
 
 interface EnhancedProduct extends Product {
   source?: 'wishlist' | 'interests' | 'ai' | 'trending';
+  isZincApiProduct?: boolean;
 }
 
 const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile }) => {
@@ -284,7 +285,9 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         num_reviews: product.reviewCount || product.num_reviews || 127,
         brand: product.brand || extractBrand(product.title),
         category: product.category,
-        source: product.source // Source information for context
+        source: product.source, // Source information for context
+        // Mark trending/AI products as Zinc API products to prevent price re-conversion
+        isZincApiProduct: product.source === 'trending' || product.source === 'ai'
       };
       
       setSelectedProduct(productForDialog);

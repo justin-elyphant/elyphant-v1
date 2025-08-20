@@ -184,7 +184,7 @@ const GiftSuggestionsPreview = ({
       generateRecommendations(
         searchContext,
         profileId,
-        `preview-${profileId}`,
+        profileId, // Remove preview- prefix to fix UUID parsing error
         { maxRecommendations: 3, fallbackToGeneric: true }
       );
       setHasGenerated(true);

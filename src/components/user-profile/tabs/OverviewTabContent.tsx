@@ -22,6 +22,16 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
   // Get important dates from the profile
   const importantDates = profile.important_dates || [];
 
+  // Debug: Log profile.wishlists structure
+  console.log('🔍 OverviewTabContent - Profile wishlists:', {
+    wishlists: profile.wishlists,
+    type: typeof profile.wishlists,
+    isArray: Array.isArray(profile.wishlists),
+    length: profile.wishlists?.length || 0,
+    keys: profile.wishlists ? Object.keys(profile.wishlists) : [],
+    firstItem: profile.wishlists?.[0] || null
+  });
+
   return (
     <div className="grid gap-4">
       <Card>

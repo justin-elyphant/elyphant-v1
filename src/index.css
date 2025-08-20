@@ -598,7 +598,7 @@ body {
   .container-header {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 var(--space-10);
+    padding: 0 var(--space-6);
   }
   
   .container-narrow {
@@ -619,7 +619,7 @@ body {
     }
     
     .container-header {
-      padding: 0 1.75rem;
+      padding: 0 var(--space-4);
     }
   }
 }

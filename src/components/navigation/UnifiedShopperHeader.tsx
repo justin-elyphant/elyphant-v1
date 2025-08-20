@@ -12,9 +12,9 @@ import UserButton from "@/components/auth/UserButton";
 import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
-// Conditional imports for performance
-const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhancedSearchBar"));
-const OptimizedShoppingCartButton = React.lazy(() => import("@/components/marketplace/components/OptimizedShoppingCartButton"));
+// Direct imports to avoid dynamic import issues
+import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
+import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 
 interface UnifiedShopperHeaderProps {
   mode?: "main" | "minimal" | "marketplace-focused";
@@ -113,29 +113,19 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
             {/* Desktop Search Bar */}
             {config.searchEnabled && (
               <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-4">
-                <React.Suspense fallback={<div className="h-10 w-full bg-muted rounded animate-pulse" />}>
-                  <AIEnhancedSearchBar />
-                </React.Suspense>
+                <AIEnhancedSearchBar />
               </div>
             )}
 
             {/* Desktop Auth & Cart */}
             <div className="hidden md:flex items-center gap-commerce">
-              {config.cartEnabled && (
-                <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
-                  <OptimizedShoppingCartButton />
-                </React.Suspense>
-              )}
+              {config.cartEnabled && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
             {/* Mobile Right Side */}
             <div className="md:hidden flex items-center gap-tight">
-              {config.cartEnabled && (
-                <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
-                  <OptimizedShoppingCartButton />
-                </React.Suspense>
-              )}
+              {config.cartEnabled && <OptimizedShoppingCartButton />}
               <Button
                 variant="ghost"
                 size="touch"
@@ -154,9 +144,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
           {/* Mobile Search Bar - Below header */}
           {config.searchEnabled && (
             <div className="md:hidden touch-padding-sm pt-2">
-              <React.Suspense fallback={<div className="h-10 w-full bg-muted rounded animate-pulse" />}>
-                <AIEnhancedSearchBar mobile />
-              </React.Suspense>
+              <AIEnhancedSearchBar mobile />
             </div>
           )}
         </div>

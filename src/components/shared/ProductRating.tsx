@@ -42,8 +42,8 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   const starSize = getStarSize();
   const textSize = getTextSize();
   
-  // Convert reviewCount to string if it's a number
-  const reviewCountStr = reviewCount !== undefined ? reviewCount.toString() : undefined;
+  // Convert reviewCount to string if it's a valid value
+  const reviewCountStr = (reviewCount !== undefined && reviewCount !== null) ? String(reviewCount) : undefined;
   
   const starCount = 5;
   const fullStars = Math.floor(rating);

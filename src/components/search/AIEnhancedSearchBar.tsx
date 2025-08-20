@@ -475,8 +475,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           />
           
           <div className="absolute right-2 flex items-center space-x-1">
-            {/* Voice Input Button - Mobile only, Nicole mode only */}
-            {isMobile && isNicoleMode && isVoiceSupported && (
+            {/* Voice Input Button - Mobile only when voice is supported */}
+            {isMobile && isVoiceSupported && (
               <VoiceInputButton
                 isListening={isListening}
                 onVoiceInput={handleVoiceInput}

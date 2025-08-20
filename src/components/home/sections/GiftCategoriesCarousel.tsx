@@ -99,14 +99,14 @@ const GiftCategoriesCarousel: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     
-                    {/* Overlay Content - positioned at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 touch-padding-lg text-white">
-                      <h3 className="text-heading-3 md:text-heading-2 lg:text-heading-1 mb-space-tight md:mb-space-standard">
-                        {category.title}
-                      </h3>
-                      <p className="text-body md:text-body-lg text-white/90 mb-space-standard md:mb-space-loose leading-relaxed">
-                        {category.description}
-                      </p>
+                     {/* Overlay Content - positioned at bottom */}
+                     <div className="absolute bottom-0 left-0 right-0 touch-padding-lg text-white">
+                       <h3 className="text-heading-3 md:text-heading-2 lg:text-heading-1 mb-space-tight md:mb-space-standard text-white font-bold drop-shadow-lg">
+                         {category.title}
+                       </h3>
+                       <p className="text-body md:text-body-lg text-white mb-space-standard md:mb-space-loose leading-relaxed drop-shadow-md">
+                         {category.description}
+                       </p>
                       <Button
                         variant="secondary"
                         size="touch"

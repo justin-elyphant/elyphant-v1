@@ -12,7 +12,10 @@ import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import { useAuth } from "@/contexts/auth";
+import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
+import { useIsMobile } from "@/hooks/use-mobile";
 import UnifiedSearchSuggestions from "@/components/search/UnifiedSearchSuggestions";
+import RecentSearches from "@/components/search/RecentSearches";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
 import { Product } from "@/types/product";
 
@@ -41,6 +44,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const navigate = useNavigate();
   const { isNicoleMode, setMode } = useSearchMode();
   const { user } = useAuth();
+  const { recentSearches, addSearch } = useUserSearchHistory();
+  const isMobile = useIsMobile();
   
   // Unified search hook for friend/product/brand search
   const { 
@@ -140,7 +145,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const handleInputFocus = () => {
     setInputFocused(true);
-    if (!isNicoleMode && query.trim().length >= 1) {
+    // Show suggestions on focus in search mode (includes recent searches when query is empty)
+    if (!isNicoleMode) {
       setShowSuggestions(true);
     }
   };
@@ -158,6 +164,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      // Add to search history
+      addSearch(query.trim());
+      
       if (isNicoleMode) {
         // In Nicole mode, open the conversation
         setNicoleContext({
@@ -177,6 +186,20 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     }
   };
 
+  // Handle recent search selection
+  const handleRecentSearchSelect = (searchTerm: string) => {
+    setQuery(searchTerm);
+    setSearchQuery(searchTerm);
+    setShowSuggestions(false);
+    addSearch(searchTerm);
+    
+    if (onNavigateToResults) {
+      onNavigateToResults(searchTerm);
+    } else {
+      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   // Handle friend selection
   const handleFriendSelect = (friend: FriendSearchResult) => {
     // Ensure proper profile navigation path
@@ -190,6 +213,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     });
     
     setShowSuggestions(false);
+    addSearch(friend.name); // Add friend name to search history
     
     // Navigate with proper error handling
     try {
@@ -203,12 +227,14 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   // Handle product selection
   const handleProductSelect = (product: Product) => {
     setShowSuggestions(false);
+    addSearch(product.title); // Add product title to search history
     navigate(`/marketplace?search=${encodeURIComponent(product.title)}`);
   };
 
   // Handle brand selection
   const handleBrandSelect = (brand: string) => {
     setShowSuggestions(false);
+    addSearch(brand); // Add brand to search history
     navigate(`/marketplace?search=${encodeURIComponent(brand)}`);
   };
 
@@ -345,8 +371,10 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         <div className={`relative flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
-          {/* Mode Toggle */}
-          <div className="absolute left-3 flex items-center gap-2 z-10">
+          {/* Mode Toggle - Hide on mobile when input is focused for more space */}
+          <div className={`absolute left-3 flex items-center gap-2 z-10 transition-opacity duration-200 ${
+            isMobile && inputFocused ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}>
             <Search className={`h-4 w-4 transition-colors duration-200 ${
               isNicoleMode ? 'text-purple-500' : 'text-gray-400'
             }`} />
@@ -369,10 +397,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
-            className={`pl-32 pr-32 transition-all duration-300 ${
+            className={`transition-all duration-300 ${
               mobile 
-                ? "text-base py-3 h-12 rounded-lg" 
-                : "h-12 text-base"
+                ? `text-base py-3 h-12 rounded-lg ${
+                    inputFocused ? 'pl-4 pr-32' : 'pl-32 pr-32'
+                  }` 
+                : "h-12 text-base pl-32 pr-32"
             } border-2 ${
               isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
@@ -402,7 +432,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             <Button 
               type="submit" 
               size="sm" 
-              className={`h-8 px-3 transition-all duration-300 ${
+              className={`transition-all duration-300 ${
+                mobile ? 'h-10 px-4 min-w-[44px]' : 'h-8 px-3'
+              } ${
                 isNicoleMode
                   ? "bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
                   : "bg-primary hover:bg-primary/90"
@@ -411,12 +443,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
               {isNicoleMode ? (
                 <>
                   <Sparkles className="h-3 w-3 mr-1" />
-                  Ask Nicole
+                  {mobile && inputFocused ? "Ask" : "Ask Nicole"}
                 </>
               ) : (
                 <>
                   <Search className="h-3 w-3 mr-1" />
-                  Search
+                  {mobile && inputFocused ? "Go" : "Search"}
                 </>
               )}
             </Button>
@@ -434,33 +466,47 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         )}
       </form>
 
-      {/* Unified Search Suggestions - Only show in search mode */}
+      {/* Search Suggestions and Recent Searches - Only show in search mode */}
       {!isNicoleMode && showSuggestions && (
-        <>
-          {console.log('🔍 [AIEnhancedSearchBar] Rendering UnifiedSearchSuggestions with:', {
-            friends: unifiedResults.friends?.length || 0,
-            products: unifiedResults.products?.length || 0, 
-            brands: unifiedResults.brands?.length || 0,
-            showSuggestions,
-            isNicoleMode,
-            sampleFriend: unifiedResults.friends?.[0] ? {
-              id: unifiedResults.friends[0].id,
-              name: unifiedResults.friends[0].name,
-              username: unifiedResults.friends[0].username
-            } : null
-          })}
-          <UnifiedSearchSuggestions
-            friends={unifiedResults.friends || []}
-            products={unifiedResults.products || []}
-            brands={unifiedResults.brands || []}
-            isVisible={showSuggestions}
-            onFriendSelect={handleFriendSelect}
-            onProductSelect={handleProductSelect}
-            onBrandSelect={handleBrandSelect}
-            onSendFriendRequest={handleSendFriendRequest}
-            mobile={mobile}
-          />
-        </>
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-[400px] overflow-y-auto">
+          {/* Show recent searches when no query or at the top */}
+          {(!query.trim() || query.trim().length < 2) && recentSearches.length > 0 && (
+            <RecentSearches
+              searches={recentSearches}
+              onSearchSelect={handleRecentSearchSelect}
+              mobile={mobile}
+            />
+          )}
+          
+          {/* Show unified search results when there's a query */}
+          {query.trim().length >= 1 && (
+            <>
+              {console.log('🔍 [AIEnhancedSearchBar] Rendering UnifiedSearchSuggestions with:', {
+                friends: unifiedResults.friends?.length || 0,
+                products: unifiedResults.products?.length || 0, 
+                brands: unifiedResults.brands?.length || 0,
+                showSuggestions,
+                isNicoleMode,
+                sampleFriend: unifiedResults.friends?.[0] ? {
+                  id: unifiedResults.friends[0].id,
+                  name: unifiedResults.friends[0].name,
+                  username: unifiedResults.friends[0].username
+                } : null
+              })}
+              <UnifiedSearchSuggestions
+                friends={unifiedResults.friends || []}
+                products={unifiedResults.products || []}
+                brands={unifiedResults.brands || []}
+                isVisible={showSuggestions}
+                onFriendSelect={handleFriendSelect}
+                onProductSelect={handleProductSelect}
+                onBrandSelect={handleBrandSelect}
+                onSendFriendRequest={handleSendFriendRequest}
+                mobile={mobile}
+              />
+            </>
+          )}
+        </div>
       )}
 
       {/* Nicole Interface - Only render if this instance owns the global state */}

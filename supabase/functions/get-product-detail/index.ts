@@ -10,12 +10,14 @@ const corsHeaders = {
 
 const fetchApiKey = async () => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') 
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') 
   
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing environment variables for Supabase connection')
   }
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  // Use service role key for system access to API keys
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   const { data, error } = await supabase
   .from('api_keys')

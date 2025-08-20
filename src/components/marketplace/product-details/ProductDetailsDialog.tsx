@@ -57,14 +57,33 @@ const ProductDetailsDialog = ({
     try {
       const data = await getProductDetail(productId, retailer);
       if(!data) {
-        toast.error('Fetch product detail failed.', {duration: 5000});
+        console.error('Failed to fetch enhanced product details for:', productId);
+        // If enhancement fails but we have a base product, fall back to it
+        if (product) {
+          console.log('Falling back to basic product data');
+          setProductDetail(product);
+        } else {
+          toast.error('Product details not available', {duration: 3000});
+        }
       } else {
-        // Ensure the product data is normalized
-        setProductDetail(data);
+        // Ensure the product data is normalized and preserve source context
+        const enhancedProduct = {
+          ...data,
+          // Preserve original product_id for consistency
+          product_id: productId
+        };
+        setProductDetail(enhancedProduct);
+        console.log('Successfully enhanced product details:', enhancedProduct.title || enhancedProduct.name);
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);
-      toast.error('Error fetching product details', {duration: 5000});
+      // Fall back to basic product data if available
+      if (product) {
+        console.log('API call failed, falling back to basic product data');
+        setProductDetail(product);
+      } else {
+        toast.error('Unable to load product details', {duration: 3000});
+      }
     } finally {
       setLoading(false);
     }

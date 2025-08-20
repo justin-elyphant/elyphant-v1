@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Users, Gift, UserPlus } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
@@ -161,7 +162,7 @@ const Cart = () => {
     toast.success(`Assigned ${unassignedItems.length} items to your address`);
   };
 
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  // Use centralized formatPrice from utils
   const unassignedItems = getUnassignedItems();
   
   // Check shipping address validity for UI feedback

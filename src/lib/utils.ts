@@ -38,12 +38,93 @@ export function formatCurrency(
 }
 
 /**
- * Simple price formatter for when you just need the dollar amount
- * @param {number} price - The price to format
+ * Enhanced price formatter with validation and conversion
+ * Handles various price formats (cents, dollars) and edge cases
+ * @param {number | undefined | null} price - The price to format
+ * @param {object} options - Formatting options
  * @returns {string} The formatted price string (e.g., "$1,999.99")
  */
-export function formatPrice(price: number): string {
-  return formatCurrency(price);
+export function formatPrice(
+  price: number | undefined | null, 
+  options: {
+    detectCents?: boolean;
+    fallbackText?: string;
+    currency?: string;
+    locale?: string;
+  } = {}
+): string {
+  const {
+    detectCents = true,
+    fallbackText = "Price not available",
+    currency = 'USD',
+    locale = 'en-US'
+  } = options;
+
+  // Handle edge cases
+  if (price === null || price === undefined || isNaN(price)) {
+    return fallbackText;
+  }
+
+  // Validate price is a number
+  const numPrice = Number(price);
+  if (isNaN(numPrice) || numPrice < 0) {
+    console.warn(`[Price Validation] Invalid price value: ${price}`);
+    return fallbackText;
+  }
+
+  // Auto-detect if price is in cents (common with APIs)
+  let finalPrice = numPrice;
+  if (detectCents && numPrice > 1000 && Number.isInteger(numPrice)) {
+    // Likely in cents if it's a whole number > 1000
+    const possibleDollarAmount = numPrice / 100;
+    if (possibleDollarAmount < 10000) { // Reasonable upper limit
+      finalPrice = possibleDollarAmount;
+      console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice}`);
+    }
+  }
+
+  return formatCurrency(finalPrice, currency, locale);
+}
+
+/**
+ * Validates and normalizes price data from various sources
+ * @param {any} priceData - Raw price data from API/database
+ * @returns {number | null} Normalized price in dollars or null if invalid
+ */
+export function validateAndNormalizePrice(priceData: any): number | null {
+  if (priceData === null || priceData === undefined) return null;
+  
+  const numPrice = Number(priceData);
+  if (isNaN(numPrice) || numPrice < 0) {
+    console.warn(`[Price Validation] Invalid price data: ${priceData}`);
+    return null;
+  }
+
+  // Auto-detect cents vs dollars
+  if (numPrice > 1000 && Number.isInteger(numPrice)) {
+    const dollarsAmount = numPrice / 100;
+    if (dollarsAmount < 10000) { // Reasonable upper limit
+      return dollarsAmount;
+    }
+  }
+
+  return numPrice;
+}
+
+/**
+ * Creates a price debugging report for development
+ * @param {any} priceData - Price data to analyze
+ * @param {string} source - Source identifier for logging
+ */
+export function debugPrice(priceData: any, source: string = 'unknown'): void {
+  if (process.env.NODE_ENV !== 'development') return;
+  
+  const normalized = validateAndNormalizePrice(priceData);
+  console.group(`[Price Debug] ${source}`);
+  console.log('Raw price:', priceData);
+  console.log('Normalized price:', normalized);
+  console.log('Formatted price:', formatPrice(normalized));
+  console.groupEnd();
 }
 
 /**

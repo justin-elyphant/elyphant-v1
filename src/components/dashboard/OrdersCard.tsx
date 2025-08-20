@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getUserOrders, Order } from "@/services/orderService";
@@ -44,9 +45,7 @@ const OrdersCard = () => {
     });
   };
 
-  const formatPrice = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
+  // Use centralized formatPrice from utils
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {

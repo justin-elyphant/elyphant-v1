@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingBag, MoreHorizontal, Eye, Share2 } from "lucide-react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice, validateAndNormalizePrice } from "@/lib/utils";
 import WishlistShareButton from "./share/WishlistShareButton";
 import ShareStatusBadge from "./ShareStatusBadge";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
@@ -218,8 +218,8 @@ const WishlistMasonryCard: React.FC<{
           {wishlist.items.length > 0 && (
             <div className="flex justify-between items-center text-xs text-muted-foreground">
               <span>
-                {wishlist.items.filter(item => item.price).length > 0 && (
-                  <>Total: ${wishlist.items.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)}</>
+                {wishlist.items.filter(item => item.price && validateAndNormalizePrice(item.price)).length > 0 && (
+                  <>Total: {formatPrice(wishlist.items.reduce((sum, item) => sum + (validateAndNormalizePrice(item.price) || 0), 0))}</>
                 )}
               </span>
               <span>{new Date(wishlist.updated_at).toLocaleDateString()}</span>

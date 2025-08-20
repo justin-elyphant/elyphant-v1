@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, ShoppingCart, ExternalLink, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { Product } from '@/types/product';
+import { formatPrice } from '@/lib/utils';
 
 interface ProductTilesDisplayProps {
   products: Product[];
@@ -44,12 +45,7 @@ const ProductTilesDisplay: React.FC<ProductTilesDisplayProps> = ({
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
-  };
+  // Use centralized formatPrice from utils
 
   const renderStars = (rating?: number) => {
     if (!rating) return null;

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +77,7 @@ const GiftItemCard = ({
         </div>
         <div className="p-2 text-xs">
           <p className="font-medium line-clamp-1">{name}</p>
-          <p className="text-muted-foreground">${price}</p>
+          <p className="text-muted-foreground">{formatPrice(price)}</p>
         </div>
       </div>
     );
@@ -120,7 +120,7 @@ const GiftItemCard = ({
           <p className="text-sm text-muted-foreground">{brand}</p>
           <h3 className="font-medium mb-2 line-clamp-2">{name}</h3>
           <div className="flex justify-between items-center">
-            <p className="font-bold">${price}</p>
+            <p className="font-bold">{formatPrice(price)}</p>
             <Button size="sm" variant="secondary">
               <ShoppingCart className="h-4 w-4 mr-1" />
               Add

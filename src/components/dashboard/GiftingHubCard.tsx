@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
 import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -598,9 +599,7 @@ const GiftActivityTab = () => {
     });
   };
 
-  const formatPrice = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
+  // Use centralized formatPrice from utils
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

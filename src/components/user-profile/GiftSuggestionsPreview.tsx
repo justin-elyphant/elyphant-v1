@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bot, Sparkles, Heart } from "lucide-react";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ const GiftSuggestionsPreview = ({
   const navigate = useNavigate();
   const { searchProducts } = useUnifiedSearch({ maxResults: 12 });
   const [products, setProducts] = useState<Product[]>([]);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   
   if (isOwnProfile || !interests?.length) return null;
@@ -39,6 +41,35 @@ const GiftSuggestionsPreview = ({
 
   const [hasGenerated, setHasGenerated] = useState(false);
 
+  // Convert wishlist items to Product format and set wishlist products
+  useEffect(() => {
+    if (wishlistItems && wishlistItems.length > 0) {
+      const convertedWishlistProducts: Product[] = [];
+      
+      wishlistItems.forEach((wishlist: any) => {
+        if (wishlist.items && Array.isArray(wishlist.items)) {
+          wishlist.items.forEach((item: any) => {
+            const product: Product = {
+              product_id: item.id || `wishlist-${Math.random()}`,
+              id: item.id || `wishlist-${Math.random()}`,
+              title: item.title || item.name || 'Wishlist Item',
+              price: item.price || 0,
+              image: item.image_url || item.image || '/placeholder.svg',
+              description: item.description || '',
+              brand: item.brand || '',
+              category: item.category || 'wishlist',
+              rating: item.rating || 0,
+              reviewCount: item.review_count || 0
+            };
+            convertedWishlistProducts.push(product);
+          });
+        }
+      });
+      
+      setWishlistProducts(convertedWishlistProducts.slice(0, 6)); // Limit to 6 wishlist items
+    }
+  }, [wishlistItems]);
+
   // Fetch curated product grid from multiple sources
   useEffect(() => {
     const fetchProductsFromMultipleSources = async () => {
@@ -49,22 +80,22 @@ const GiftSuggestionsPreview = ({
         const allProducts: Product[] = [];
         
         // 1. Get products from interests (3-4 products per major interest)
-        const mainInterests = interests.slice(0, 3); // Focus on top 3 interests
+        const mainInterests = interests.slice(0, 2); // Reduce to make room for wishlist items
         for (const interest of mainInterests) {
           try {
-            const interestProducts = await searchProducts(interest, { maxResults: 4 });
+            const interestProducts = await searchProducts(interest, { maxResults: 3 });
             allProducts.push(...interestProducts);
           } catch (error) {
             console.log(`Failed to fetch products for ${interest}:`, error);
           }
         }
 
-        // 2. Remove duplicates and limit to 10 items
+        // 2. Remove duplicates and limit items
         const uniqueProducts = allProducts
           .filter((product, index, self) => 
             index === self.findIndex(p => p.id === product.id)
           )
-          .slice(0, 10);
+          .slice(0, 6);
 
         setProducts(uniqueProducts);
       } catch (error) {
@@ -125,7 +156,7 @@ const GiftSuggestionsPreview = ({
     );
   }
 
-  if (products.length === 0 && !hasRecommendations) {
+  if (wishlistProducts.length === 0 && products.length === 0 && !hasRecommendations) {
     return (
       <Card>
         <CardHeader>
@@ -152,6 +183,49 @@ const GiftSuggestionsPreview = ({
     );
   }
 
+  // Combine all products in priority order: wishlist first, then interests, then AI
+  const allDisplayProducts = [
+    ...wishlistProducts,
+    ...products,
+    // Convert AI recommendations to Product format
+    ...(recommendations?.slice(0, 2).map((rec: any) => ({
+      product_id: rec.id || `rec-${Math.random()}`,
+      id: rec.id || `rec-${Math.random()}`,
+      title: rec.title || rec.name || 'AI Recommendation',
+      price: rec.price || 0,
+      image: rec.image || rec.image_url || '/placeholder.svg',
+      description: rec.description || '',
+      brand: rec.brand || '',
+      category: rec.category || 'recommendation',
+      rating: rec.rating || 0,
+      reviewCount: rec.review_count || 0
+    } satisfies Product)) || [])
+  ].slice(0, 12); // Limit total display
+
+  const getProductBadge = (product: Product, index: number) => {
+    if (index < wishlistProducts.length) {
+      return (
+        <Badge variant="secondary" className="absolute top-2 left-2 z-10 bg-primary/10 text-primary">
+          <Heart className="h-3 w-3 mr-1" />
+          From {profileName}'s Wishlist
+        </Badge>
+      );
+    } else if (index < wishlistProducts.length + products.length) {
+      return (
+        <Badge variant="outline" className="absolute top-2 left-2 z-10 bg-background/80">
+          Based on Interests
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="absolute top-2 left-2 z-10 bg-background/80">
+          <Bot className="h-3 w-3 mr-1" />
+          AI Pick
+        </Badge>
+      );
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -159,14 +233,20 @@ const GiftSuggestionsPreview = ({
           <Sparkles className="h-5 w-5 text-primary" />
           Gift Suggestions
           <span className="text-sm font-normal text-muted-foreground ml-2">
-            ({products.length} curated items)
+            ({allDisplayProducts.length} curated items)
           </span>
         </CardTitle>
+        {wishlistProducts.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Featuring items from {profileName}'s wishlist
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-          {products.map((product) => (
-            <div key={product.id} className="min-h-[200px]">
+          {allDisplayProducts.map((product, index) => (
+            <div key={product.product_id || product.id} className="min-h-[200px] relative">
+              {getProductBadge(product, index)}
               <UnifiedProductCard
                 product={product}
                 cardType="mobile"

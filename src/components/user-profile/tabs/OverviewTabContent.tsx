@@ -77,11 +77,12 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
 
       {/* Gift suggestions preview for other users */}
       {!isOwnProfile && displayInterests && displayInterests.length > 0 && (
-        <GiftSuggestionsPreview
+        <GiftSuggestionsPreview 
           interests={displayInterests}
           profileId={profile.id}
           profileName={profile.name || 'User'}
           isOwnProfile={isOwnProfile}
+          wishlistItems={profile.wishlists || []}
         />
       )}
     </div>

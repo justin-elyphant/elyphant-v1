@@ -111,32 +111,8 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     }
   }, [abortCurrentRequest, updateState, state.lastSearchId]);
 
-  // Listen for marketplace force refresh events
-  useEffect(() => {
-    const handleForceRefresh = (event: CustomEvent) => {
-      const { searchTerm, nicoleContext } = event.detail;
-      console.log('🔄 Force refresh triggered:', { searchTerm, nicoleContext });
-      
-      // Update search parameters and re-execute search
-      const searchOptions: SearchOptions = { maxResults: 20 };
-      
-      if (nicoleContext) {
-        searchOptions.nicoleContext = nicoleContext;
-        
-        // Extract price filters from Nicole context
-        const budget = extractBudgetFromNicoleContext(nicoleContext);
-        if (budget.minPrice !== undefined) searchOptions.minPrice = budget.minPrice;
-        if (budget.maxPrice !== undefined) searchOptions.maxPrice = budget.maxPrice;
-      }
-      
-      executeSearch(searchTerm, searchOptions);
-    };
-
-    window.addEventListener('marketplace-force-refresh', handleForceRefresh as EventListener);
-    return () => {
-      window.removeEventListener('marketplace-force-refresh', handleForceRefresh as EventListener);
-    };
-  }, [executeSearch]);
+  // Removed the force refresh event listener that was causing infinite loops
+  // The URL change detection in handleUrlSearch is sufficient
 
   /**
    * Handle search based on URL parameters

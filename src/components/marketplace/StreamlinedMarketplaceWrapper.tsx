@@ -65,10 +65,8 @@ const StreamlinedMarketplaceWrapper = () => {
         newSearchParams.set('search', searchTerm);
         window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
         
-        // Force search update without full page reload
-        window.dispatchEvent(new CustomEvent('marketplace-force-refresh', { 
-          detail: { searchTerm, nicoleContext } 
-        }));
+        // Let the useUnifiedMarketplace hook handle the search automatically via URL change
+        // No need to dispatch additional events that could cause loops
       }
     };
 

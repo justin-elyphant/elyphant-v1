@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { UnifiedProfileData } from "@/services/profiles/UnifiedProfileService";
 import { publicProfileService } from "@/services/publicProfileService";
-import ProfileBanner from "./ProfileBanner";
 import PublicProfileTabs from "./PublicProfileTabs";
 import PrivacyNotice from "./PrivacyNotice";
+import InstagramProfileLayout from "./InstagramProfileLayout";
 import { Badge } from "@/components/ui/badge";
 import { Eye, AlertTriangle } from "lucide-react";
 import type { PublicProfileData } from "@/services/publicProfileService";
@@ -80,6 +80,29 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   const completeness = calculateCompleteness();
   const needsAttention = completeness < 80;
 
+  // Secondary content for the preview mode
+  const secondaryContent = (
+    <>
+      {/* Privacy Notice */}
+      <div className="mb-6">
+        <PrivacyNotice 
+          level="public" 
+          className="max-w-4xl mx-auto"
+        />
+      </div>
+      
+      {/* Profile Tabs Preview */}
+      <PublicProfileTabs
+        profile={profile}
+        publicViewData={publicViewData}
+        isLoadingPublic={isLoadingPublic}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        completeness={completeness}
+      />
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Preview Mode Indicator */}
@@ -105,9 +128,10 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         </div>
       </div>
 
-      {/* Enhanced ProfileBanner with preview context */}
-      <ProfileBanner
+      {/* Instagram-style Layout for Profile Preview */}
+      <InstagramProfileLayout
         userData={profile}
+        profile={profile}
         isCurrentUser={true}
         isConnected={false}
         onConnect={() => {}}
@@ -117,27 +141,9 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         canConnect={false}
         canMessage={false}
         isAnonymousUser={false}
+        secondaryContent={secondaryContent}
+        secondaryTitle="Profile Management"
       />
-      
-      {/* Privacy Notice */}
-      <div className="container mx-auto px-4 py-4">
-        <PrivacyNotice 
-          level="public" 
-          className="max-w-4xl mx-auto"
-        />
-      </div>
-      
-      {/* Social Proof Tabs */}
-      <div className="container mx-auto px-4 py-6">
-        <PublicProfileTabs
-          profile={profile}
-          publicViewData={publicViewData}
-          isLoadingPublic={isLoadingPublic}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          completeness={completeness}
-        />
-      </div>
     </div>
   );
 };

@@ -1,9 +1,9 @@
 
 import React, { useState } from "react";
-import ProfileBanner from "./ProfileBanner";
 import ProfileTabs from "./ProfileTabs";
 import { toast } from "sonner";
 import type { PublicProfileData } from "@/services/publicProfileService";
+import InstagramProfileLayout from "./InstagramProfileLayout";
 
 interface PublicProfileViewProps {
   profile: PublicProfileData;
@@ -23,31 +23,33 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ profile }) => {
     console.log("Connect clicked for user:", profile.id);
   };
 
+  // Secondary content (collapsed by default)
+  const secondaryContent = (
+    <ProfileTabs
+      profile={profile}
+      isOwnProfile={false}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      isPublicView={true}
+    />
+  );
+
   return (
-    <>
-      <ProfileBanner
-        userData={profile}
-        isCurrentUser={false}
-        isConnected={profile.is_connected}
-        onConnect={handleConnect}
-        onShare={handleShare}
-        connectionCount={profile.connection_count || 0}
-        wishlistCount={profile.wishlist_count}
-        canConnect={profile.can_connect}
-        canMessage={profile.can_message}
-        isAnonymousUser={true} // Set to true since this is a public view
-      />
-      
-      <div className="container mx-auto px-4 py-6">
-        <ProfileTabs
-          profile={profile}
-          isOwnProfile={false}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isPublicView={true}
-        />
-      </div>
-    </>
+    <InstagramProfileLayout
+      userData={profile}
+      profile={profile}
+      isCurrentUser={false}
+      isConnected={profile.is_connected}
+      onConnect={handleConnect}
+      onShare={handleShare}
+      connectionCount={profile.connection_count || 0}
+      wishlistCount={profile.wishlist_count}
+      canConnect={profile.can_connect}
+      canMessage={profile.can_message}
+      isAnonymousUser={true}
+      secondaryContent={secondaryContent}
+      secondaryTitle="Profile Details"
+    />
   );
 };
 

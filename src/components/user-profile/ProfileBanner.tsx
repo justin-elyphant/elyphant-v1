@@ -251,7 +251,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                 <p className="text-base opacity-90 max-w-md leading-relaxed">{userData.bio}</p>
               )}
 
-              {/* Additional Info */}
+              {/* Additional Info - Row 1 */}
               <div className="flex items-center space-x-6 text-sm opacity-90">
                 {userData?.location && (
                   <div className="flex items-center space-x-2">
@@ -271,6 +271,10 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                     <span>Joined {new Date(userData.created_at).toLocaleDateString()}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Additional Info - Row 2 */}
+              <div className="flex items-center space-x-6 text-sm opacity-90">
                 <div className="flex items-center space-x-2">
                   <UserPlus className="h-4 w-4" />
                   <span>{connectionCount} connections</span>

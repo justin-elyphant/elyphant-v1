@@ -6,6 +6,7 @@ import { Heart, Target, Bot, TrendingUp, ShoppingBag, ExternalLink } from "lucid
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -22,13 +23,74 @@ interface ProductWithSource extends Product {
   sourceColor: string;
 }
 
+interface WishlistItem {
+  id: string;
+  name?: string;
+  title?: string;
+  price?: number;
+  image_url?: string;
+  product_url?: string;
+}
+
 const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile }) => {
   const [products, setProducts] = useState<ProductWithSource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
   const { searchProducts } = useUnifiedSearch({ maxResults: 8 });
+
+  // Fetch wishlist items directly from database
+  useEffect(() => {
+    const fetchWishlistItems = async () => {
+      if (!profile?.id) return;
+
+      try {
+        console.log('🔍 Fetching wishlist items for profile:', profile.id);
+        
+        // Get all wishlists for this user
+        const { data: wishlists, error: wishlistError } = await supabase
+          .from('wishlists')
+          .select('id, title')
+          .eq('user_id', profile.id)
+          .eq('is_public', true);
+
+        if (wishlistError) {
+          console.error('Error fetching wishlists:', wishlistError);
+          return;
+        }
+
+        if (!wishlists || wishlists.length === 0) {
+          console.log('No public wishlists found for user');
+          setWishlistItems([]);
+          return;
+        }
+
+        console.log('📋 Found wishlists:', wishlists);
+
+        // Get items from all these wishlists
+        const { data: items, error: itemsError } = await supabase
+          .from('wishlist_items')
+          .select('*')
+          .in('wishlist_id', wishlists.map(w => w.id))
+          .order('created_at', { ascending: false })
+          .limit(12); // Get more items than we need for variety
+
+        if (itemsError) {
+          console.error('Error fetching wishlist items:', itemsError);
+          return;
+        }
+
+        console.log('🎁 Found wishlist items:', items);
+        setWishlistItems(items || []);
+      } catch (error) {
+        console.error('Error in fetchWishlistItems:', error);
+      }
+    };
+
+    fetchWishlistItems();
+  }, [profile?.id]);
 
   useEffect(() => {
     const loadSocialGrid = async () => {
@@ -38,26 +100,33 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       const gridProducts: ProductWithSource[] = [];
 
       try {
-        // 1. Get wishlist items (40% of grid)
+        console.log('🚀 Loading social grid with wishlist items:', wishlistItems.length);
+        
+        // 1. Get wishlist items (50% of grid) - PRIORITIZE THESE!
         const wishlistProducts = extractWishlistProducts();
-        gridProducts.push(...wishlistProducts.slice(0, 8));
+        console.log('❤️ Wishlist products extracted:', wishlistProducts.length);
+        gridProducts.push(...wishlistProducts);
 
         // 2. Get interest-based products (30% of grid)
         const interestProducts = await getInterestBasedProducts();
+        console.log('🎯 Interest products:', interestProducts.length);
         gridProducts.push(...interestProducts.slice(0, 6));
 
-        // 3. Get AI recommendations (20% of grid)
+        // 3. Get AI recommendations (15% of grid) - Only for others viewing
         if (!isOwnProfile) {
           const aiProducts = await getAIRecommendations();
-          gridProducts.push(...aiProducts.slice(0, 4));
+          console.log('🤖 AI products:', aiProducts.length);
+          gridProducts.push(...aiProducts.slice(0, 3));
         }
 
-        // 4. Get trending products (10% of grid)
+        // 4. Get trending products (5% of grid)
         const trendingProducts = await getTrendingProducts();
+        console.log('📈 Trending products:', trendingProducts.length);
         gridProducts.push(...trendingProducts.slice(0, 2));
 
         // Shuffle and limit to 20 items for Instagram-like grid
         const shuffledProducts = shuffleArray(gridProducts).slice(0, 20);
+        console.log('🎲 Final grid products:', shuffledProducts.length);
         setProducts(shuffledProducts);
       } catch (error) {
         console.error('Error loading social grid:', error);
@@ -66,30 +135,34 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       }
     };
 
+    // Only load the grid once we have attempted to fetch wishlist items
     loadSocialGrid();
-  }, [profile?.id]);
+  }, [profile?.id, wishlistItems]);
 
   const extractWishlistProducts = (): ProductWithSource[] => {
-    if (!profile?.wishlists || !Array.isArray(profile.wishlists)) return [];
-
-    const items: ProductWithSource[] = [];
-    for (const wishlist of profile.wishlists) {
-      if (wishlist?.items && Array.isArray(wishlist.items)) {
-        for (const item of wishlist.items) {
-          items.push({
-            product_id: item.id || `wishlist-${Math.random()}`,
-            title: item.name || item.title || 'Wishlist Item',
-            price: item.price || 0,
-            image: item.image_url || '/placeholder.svg',
-            source: 'wishlist',
-            sourceIcon: Heart,
-            sourceLabel: 'Wishlist',
-            sourceColor: 'bg-red-100 text-red-700'
-          });
-        }
-      }
+    console.log('🎁 Extracting wishlist products from items:', wishlistItems.length);
+    
+    if (!wishlistItems || wishlistItems.length === 0) {
+      console.log('❌ No wishlist items to extract');
+      return [];
     }
-    return items;
+
+    const products: ProductWithSource[] = [];
+    for (const item of wishlistItems) {
+      products.push({
+        product_id: item.id || `wishlist-${Math.random()}`,
+        title: item.name || item.title || 'Wishlist Item',
+        price: item.price || 0,
+        image: item.image_url || '/placeholder.svg',
+        source: 'wishlist',
+        sourceIcon: Heart,
+        sourceLabel: 'Wishlist',
+        sourceColor: 'bg-red-100 text-red-700'
+      });
+    }
+    
+    console.log('✅ Extracted wishlist products:', products.length);
+    return products;
   };
 
   const getInterestBasedProducts = async (): Promise<ProductWithSource[]> => {

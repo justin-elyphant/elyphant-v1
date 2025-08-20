@@ -65,8 +65,10 @@ const StreamlinedMarketplaceWrapper = () => {
         newSearchParams.set('search', searchTerm);
         window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
         
-        // Force reload to trigger useEffect in useUnifiedMarketplace
-        window.location.reload();
+        // Force search update without full page reload
+        window.dispatchEvent(new CustomEvent('marketplace-force-refresh', { 
+          detail: { searchTerm, nicoleContext } 
+        }));
       }
     };
 

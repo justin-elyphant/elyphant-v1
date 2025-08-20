@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Product } from "@/types/product";
 import { unifiedMarketplaceService, SearchOptions, MarketplaceState } from "@/services/marketplace/UnifiedMarketplaceService";
+import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
 
 interface UseUnifiedMarketplaceOptions {
   autoLoadOnMount?: boolean;
@@ -108,7 +109,34 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       
       return [];
     }
-  }, [abortCurrentRequest, updateState]);
+  }, [abortCurrentRequest, updateState, state.lastSearchId]);
+
+  // Listen for marketplace force refresh events
+  useEffect(() => {
+    const handleForceRefresh = (event: CustomEvent) => {
+      const { searchTerm, nicoleContext } = event.detail;
+      console.log('🔄 Force refresh triggered:', { searchTerm, nicoleContext });
+      
+      // Update search parameters and re-execute search
+      const searchOptions: SearchOptions = { maxResults: 20 };
+      
+      if (nicoleContext) {
+        searchOptions.nicoleContext = nicoleContext;
+        
+        // Extract price filters from Nicole context
+        const budget = extractBudgetFromNicoleContext(nicoleContext);
+        if (budget.minPrice !== undefined) searchOptions.minPrice = budget.minPrice;
+        if (budget.maxPrice !== undefined) searchOptions.maxPrice = budget.maxPrice;
+      }
+      
+      executeSearch(searchTerm, searchOptions);
+    };
+
+    window.addEventListener('marketplace-force-refresh', handleForceRefresh as EventListener);
+    return () => {
+      window.removeEventListener('marketplace-force-refresh', handleForceRefresh as EventListener);
+    };
+  }, [executeSearch]);
 
   /**
    * Handle search based on URL parameters

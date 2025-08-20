@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Gift, Settings, Eye, EyeOff, Users, ExternalLink } from "lucide-react";
+import { Heart, Gift, Settings, Eye, EyeOff, Users, ExternalLink, Grid3X3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Wishlist, WishlistItem, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import ConnectionTabContent from "./tabs/ConnectionTabContent";
 import OverviewTabContent from "./tabs/OverviewTabContent";
+import SocialProductGrid from "./SocialProductGrid";
 
 
 interface ProfileTabsProps {
@@ -116,13 +117,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   // Filter tabs based on viewing context
   const availableTabs = isOwnProfile 
-    ? ["overview", "wishlists", "activity", "settings"]
+    ? ["overview", "social", "wishlists", "activity", "settings"]
     : connectionData 
-      ? ["overview", "wishlists", "connection"]
-      : ["overview", "wishlists"];
+      ? ["overview", "social", "wishlists", "connection"]
+      : ["overview", "social", "wishlists"];
 
   // Dynamic grid layout based on available tabs
-  const gridCols = availableTabs.length === 3 ? "grid-cols-3" : "grid-cols-4";
+  const gridCols = availableTabs.length === 3 ? "grid-cols-3" : 
+                   availableTabs.length === 4 ? "grid-cols-4" : "grid-cols-5";
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -131,6 +133,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Social
           </TabsTrigger>
           <TabsTrigger value="wishlists" className="flex items-center gap-2">
             <Heart className="h-4 w-4" />
@@ -158,6 +164,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
         <TabsContent value="overview" className="mt-6">
           <OverviewTabContent profile={profile} isOwnProfile={isOwnProfile} />
+        </TabsContent>
+
+        <TabsContent value="social" className="mt-6">
+          <SocialProductGrid profile={profile} isOwnProfile={isOwnProfile} />
         </TabsContent>
 
         <TabsContent value="wishlists" className="mt-6">

@@ -83,8 +83,8 @@ const HomeContent = () => {
       {/* Additional bleed sections */}
       <PersonTypeCarousel />
       
-      {/* More traditional sections with increased top spacing */}
-      <div className="container-content pt-space-xl md:pt-space-2xl">
+      {/* More traditional sections with much larger top spacing */}
+      <div className="container-content pt-16 md:pt-24 lg:pt-32">
         <AutomationFeatures />
       </div>
       

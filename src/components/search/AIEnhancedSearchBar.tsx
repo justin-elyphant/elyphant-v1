@@ -375,9 +375,20 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           <div className={`absolute left-3 flex items-center gap-2 z-10 transition-opacity duration-200 ${
             isMobile && inputFocused ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}>
-            <Search className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (isMobile) {
+                  handleSearch(e);
+                }
+              }}
+              className={`transition-colors duration-200 ${isMobile ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`}
+            >
+              <Search className={`h-4 w-4 transition-colors duration-200 ${
+                isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+              }`} />
+            </button>
             <IOSSwitch
               size="sm"
               checked={isNicoleMode}
@@ -400,7 +411,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             className={`transition-all duration-300 ${
               mobile 
                 ? `text-base py-3 h-12 rounded-lg ${
-                    inputFocused ? 'pl-4 pr-32' : 'pl-32 pr-32'
+                    inputFocused ? 'pl-4 pr-16' : 'pl-32 pr-16'
                   }` 
                 : "h-12 text-base pl-32 pr-32"
             } border-2 ${
@@ -428,30 +439,30 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
               </Button>
             )}
             
-            {/* Search/Ask Button */}
-            <Button 
-              type="submit" 
-              size="sm" 
-              className={`transition-all duration-300 ${
-                mobile ? 'h-10 px-4 min-w-[44px]' : 'h-8 px-3'
-              } ${
-                isNicoleMode
-                  ? "bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
-                  : "bg-primary hover:bg-primary/90"
-              }`}
-            >
-              {isNicoleMode ? (
-                <>
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {mobile && inputFocused ? "Ask" : "Ask Nicole"}
-                </>
-              ) : (
-                <>
-                  <Search className="h-3 w-3 mr-1" />
-                  {mobile && inputFocused ? "Go" : "Search"}
-                </>
-              )}
-            </Button>
+            {/* Search/Ask Button - Hidden on mobile */}
+            {!isMobile && (
+              <Button 
+                type="submit" 
+                size="sm" 
+                className={`transition-all duration-300 h-8 px-3 ${
+                  isNicoleMode
+                    ? "bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
+                    : "bg-primary hover:bg-primary/90"
+                }`}
+              >
+                {isNicoleMode ? (
+                  <>
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Ask Nicole
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-3 w-3 mr-1" />
+                    Search
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
         

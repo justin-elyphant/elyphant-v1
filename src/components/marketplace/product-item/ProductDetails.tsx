@@ -3,7 +3,7 @@ import React from "react";
 import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductRating from "@/components/marketplace/product-item/ProductRating";
-import { formatProductPrice } from "./productUtils";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductDetailsProps {
   product: {
@@ -13,6 +13,9 @@ interface ProductDetailsProps {
     num_reviews?: number;
     category?: string;
     brand?: string;
+    productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+    skipCentsDetection?: boolean;
+    isZincApiProduct?: boolean;
   };
   onClick?: () => void;
   basePrice?: number;
@@ -73,7 +76,10 @@ const ProductDetails = ({
       )}
       
       <div className="font-bold text-xl mt-2 mb-2">
-        ${formatProductPrice(product.price)}
+        {formatPrice(product.price, {
+          productSource: product.productSource || (product.isZincApiProduct ? 'zinc_api' : 'manual'),
+          skipCentsDetection: product.skipCentsDetection || false
+        })}
       </div>
       
       <ProductRating 

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import ProductCarousel from "./ProductCarousel";
 import ProductRating from "@/components/shared/ProductRating";
-import { formatProductPrice } from "../product-item/productUtils";
+import { formatPrice } from "@/lib/utils";
 
 interface MobileProductSheetProps {
   product: Product;
@@ -207,7 +207,10 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
           {/* Product Info */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${formatProductPrice(product.price)}</div>
+              <div className="text-2xl font-bold">{formatPrice(product.price, {
+                productSource: product.productSource || (product.isZincApiProduct ? 'zinc_api' : 'manual'),
+                skipCentsDetection: product.skipCentsDetection || false
+              })}</div>
             </div>
             
             <ProductRating 

@@ -20,10 +20,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   onShare 
 }) => {
-  const formatProductPrice = (price: number) => {
-    // Zinc API now returns prices in dollars, so format directly
-    return formatPrice(price);
-  };
+  const getPriceFormatOptions = () => ({
+    productSource: product.productSource || (product.isZincApiProduct ? 'zinc_api' : 'manual'),
+    skipCentsDetection: product.skipCentsDetection || false
+  });
 
   const formatRating = (rating: number) => {
     return Math.round(rating * 10) / 10;
@@ -121,7 +121,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Price and Action Icons */}
         <div className="flex items-center justify-between">
           <span className="font-semibold text-lg text-gray-900">
-            {formatProductPrice(product.price)}
+            {formatPrice(product.price, getPriceFormatOptions())}
           </span>
           
           {/* Styled Action Icons - Share and Cart */}

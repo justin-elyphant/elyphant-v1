@@ -591,6 +591,12 @@ body {
     padding: 0 var(--space-6);
   }
   
+  .container-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-8);
+  }
+  
   .container-narrow {
     max-width: 768px;
     margin: 0 auto;
@@ -606,6 +612,10 @@ body {
     .container-content,
     .container-narrow {
       padding: 0 var(--space-4);
+    }
+    
+    .container-header {
+      padding: 0 var(--space-6);
     }
   }
 }

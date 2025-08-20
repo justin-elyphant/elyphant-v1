@@ -22,8 +22,8 @@ const NavigationBar = () => {
   // Handle case where AuthProvider context is not yet available
   if (!authContext) {
     return (
-      <nav className="surface-primary border-b">
-        <div className="container-content">
+      <nav className="bg-transparent">
+        <div className="container-header">
           <div className="flex items-center justify-between h-16">
             <div className="flex-shrink-0">
               <Logo />
@@ -64,8 +64,8 @@ const NavigationBar = () => {
   ];
 
   return (
-    <nav className="surface-primary border-b">
-      <div className="container-content">
+    <nav className="bg-transparent">
+      <div className="container-header">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">

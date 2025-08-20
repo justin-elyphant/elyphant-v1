@@ -21,7 +21,7 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
       type="button"
       variant="ghost"
       size="sm"
-      className={`absolute right-12 h-8 w-8 p-0 touch-manipulation min-h-[44px] min-w-[44px] ${
+      className={`h-8 w-8 p-0 touch-manipulation min-h-[44px] min-w-[44px] ${
         isListening ? 'text-red-500' : 'text-gray-500'
       }`}
       onClick={onVoiceInput}

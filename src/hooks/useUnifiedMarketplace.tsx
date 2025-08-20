@@ -177,7 +177,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Loading default products');
       executeSearch("", { maxResults: 20 });
     }
-  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, urlSearchTerm, personId, occasionType, executeSearch, autoLoadOnMount]);
+  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
 
   /**
    * Public search function for manual searches
@@ -238,14 +238,27 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
    */
   const refresh = useCallback(() => {
     if (state.searchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories) {
-      handleUrlSearch();
+      // Call executeSearch directly instead of handleUrlSearch to avoid dependency issues
+      if (luxuryCategories) {
+        executeSearch("luxury collections", { luxuryCategories: true, maxResults: 20 });
+      } else if (giftsForHer) {
+        executeSearch("gifts for her categories", { giftsForHer: true, maxResults: 20 });
+      } else if (giftsForHim) {
+        executeSearch("gifts for him categories", { giftsForHim: true, maxResults: 20 });
+      } else if (giftsUnder50) {
+        executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20 });
+      } else if (brandCategories) {
+        executeSearch(brandCategories, { brandCategories: true, maxResults: 20 });
+      } else if (state.searchTerm) {
+        executeSearch(state.searchTerm, { maxResults: 20 });
+      }
     }
-  }, [state.searchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, handleUrlSearch]);
+  }, [state.searchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, executeSearch]);
 
-  // Handle URL parameter changes
+  // Handle URL parameter changes - use specific dependencies to avoid infinite loops
   useEffect(() => {
     handleUrlSearch();
-  }, [handleUrlSearch]);
+  }, [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Removed handleUrlSearch from dependencies
 
   // Cleanup on unmount
   useEffect(() => {

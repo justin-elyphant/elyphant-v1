@@ -105,6 +105,12 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
       }
       
       if (searchResult.results && searchResult.results.length > 0) {
+        // Debug: Log actual prices from API
+        console.log('🔍 Frontend price debugging - First 3 results from API:');
+        searchResult.results.slice(0, 3).forEach((result, index) => {
+          console.log(`Result ${index + 1}: "${result.title}" - API Price: ${result.price} (type: ${typeof result.price})`);
+        });
+
         // Convert to Product format and update context
         const normalizedProducts = searchResult.results.map(result => ({
           id: result.product_id,
@@ -121,6 +127,7 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         }));
 
         console.log("Normalized products: ", normalizedProducts.length);
+        console.log('🔍 Frontend normalized prices - First 3 products:', normalizedProducts.slice(0, 3).map(p => `"${p.title}" - Price: ${p.price}`));
         
         // Update products context
         setProducts(prev => {
@@ -244,6 +251,12 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
   const clearCache = () => {
     enhancedZincApiService.clearCache();
     toast.success("Search cache cleared");
+    // Force refresh after clearing cache
+    if (debouncedSearchTerm) {
+      performSearch(debouncedSearchTerm, currentPage);
+    } else {
+      loadDefaultProducts();
+    }
   };
 
   // Cleanup on unmount

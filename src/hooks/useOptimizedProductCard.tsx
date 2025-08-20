@@ -8,17 +8,11 @@ const LazyUnifiedProductCard = React.lazy(() =>
 
 // Memoized product formatting utilities
 const formatProductPrice = createBoundedMemoization((price: number) => {
-  let actualPrice = price;
-  if (Number.isInteger(price) && price > 500) {
-    const dollarPrice = price / 100;
-    if (dollarPrice >= 5 && dollarPrice <= 10000) {
-      actualPrice = dollarPrice;
-    }
-  }
+  // Zinc API returns prices in dollars, format directly
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
-  }).format(actualPrice);
+  }).format(price);
 });
 
 const formatRating = createBoundedMemoization((rating: number) => {

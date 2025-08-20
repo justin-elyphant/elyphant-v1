@@ -568,6 +568,14 @@ serve(async (req) => {
         });
       }
   
+      // Log price debugging info for first few products
+      if (filteredResults && filteredResults.length > 0) {
+        console.log('🔍 Price debugging - First 3 products:');
+        filteredResults.slice(0, 3).forEach((product: any, index: number) => {
+          console.log(`Product ${index + 1}: "${product.title}" - Price: ${product.price} (type: ${typeof product.price})`);
+        });
+      }
+
       return new Response(JSON.stringify({
         ...data,
         results: filteredResults,

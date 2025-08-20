@@ -166,8 +166,7 @@ const ProductDetailsDialog = ({
               <div className="flex items-center justify-between mt-2">
                 <div className="text-lg font-bold">${(() => {
                   const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
-                  const normalizedPrice = price > 100 ? price / 100 : price;
-                  return normalizedPrice.toFixed(2);
+                  return price.toFixed(2);
                 })()}</div>
                 {product.rating && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">

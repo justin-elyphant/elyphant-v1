@@ -105,11 +105,8 @@ export const standardizeProduct = (product: any): any => {
   if (product.price) {
     const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
     
-    // If price is suspiciously high (likely in cents), convert to dollars
-    // Common pattern: 3999 cents = $39.99, but 39.99 dollars should stay as is
-    if (rawPrice >= 1000) {
-      normalizedPrice = rawPrice / 100;
-    } else if (rawPrice > 0) {
+    // Zinc API returns prices in dollars, use directly
+    if (rawPrice > 0) {
       normalizedPrice = rawPrice;
     } else {
       normalizedPrice = 19.99; // fallback

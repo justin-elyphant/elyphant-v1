@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Target, Bot, TrendingUp, ShoppingBag, ExternalLink } from "lucide-react";
+import { Heart, Target, Bot, TrendingUp, ShoppingBag, ExternalLink, Trash2 } from "lucide-react";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+import WishlistItemManagementDialog from "./WishlistItemManagementDialog";
 
 interface SocialProductGridProps {
   profile: any;
@@ -30,12 +32,17 @@ interface WishlistItem {
   price?: number;
   image_url?: string;
   product_url?: string;
+  wishlist_id?: string;
 }
 
 const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile }) => {
   const [products, setProducts] = useState<ProductWithSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedWishlistItem, setSelectedWishlistItem] = useState<WishlistItem | null>(null);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
@@ -244,18 +251,91 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   };
 
   const handleProductClick = (product: ProductWithSource) => {
-    if (product.source === 'wishlist') {
-      // Navigate to wishlist detail or product page
-      console.log('Navigate to product:', product.title);
+    if (product.source === 'wishlist' && isOwnProfile) {
+      // For wishlist items on own profile, show wishlist management
+      const wishlistItem = wishlistItems.find(item => 
+        (item.name || item.title) === product.title
+      );
+      
+      if (wishlistItem) {
+        setSelectedWishlistItem(wishlistItem);
+        setShowWishlistItemDialog(true);
+      }
     } else {
-      // Open product in marketplace or external link
-      console.log('View product:', product.title);
+      // For other products, show product details dialog
+      const productForDialog: Product = {
+        id: product.product_id,
+        product_id: product.product_id,
+        title: product.title,
+        name: product.title,
+        price: product.price,
+        image: product.image,
+        description: "",
+        vendor: "",
+        rating: 0,
+        reviewCount: 0
+      };
+      
+      setSelectedProduct(productForDialog);
+      setShowProductDialog(true);
     }
   };
 
   const handleWishlistAction = async (e: React.MouseEvent, product: ProductWithSource) => {
     e.stopPropagation();
     await handleWishlistToggle(product.product_id, product);
+  };
+
+  const handleRemoveFromWishlist = async (e: React.MouseEvent, product: ProductWithSource) => {
+    e.stopPropagation();
+    const wishlistItem = wishlistItems.find(item => 
+      (item.name || item.title) === product.title
+    );
+    
+    if (wishlistItem) {
+      setSelectedWishlistItem(wishlistItem);
+      setShowWishlistItemDialog(true);
+    }
+  };
+
+  const handleItemRemoved = () => {
+    // Refresh the wishlist items after removal
+    const fetchWishlistItems = async () => {
+      if (!profile?.id) return;
+
+      try {
+        let wishlistQuery = supabase
+          .from('wishlists')
+          .select('id, title')
+          .eq('user_id', profile.id);
+        
+        if (!isOwnProfile) {
+          wishlistQuery = wishlistQuery.eq('is_public', true);
+        }
+        
+        const { data: wishlists, error: wishlistError } = await wishlistQuery;
+
+        if (wishlistError || !wishlists || wishlists.length === 0) {
+          setWishlistItems([]);
+          return;
+        }
+
+        const { data: items, error: itemsError } = await supabase
+          .from('wishlist_items')
+          .select('*')
+          .in('wishlist_id', wishlists.map(w => w.id))
+          .order('created_at', { ascending: false })
+          .limit(12);
+
+        if (!itemsError) {
+          setWishlistItems(items || []);
+        }
+      } catch (error) {
+        console.error('Error refreshing wishlist items:', error);
+      }
+    };
+
+    fetchWishlistItems();
   };
 
   if (loading) {
@@ -333,23 +413,38 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
                     </Badge>
                   )}
 
-                  {/* Wishlist Heart */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
-                      isWishlisted && "opacity-100"
+                  {/* Action Buttons - Context Aware */}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {product.source === 'wishlist' && isOwnProfile ? (
+                      // Show remove button for own wishlist items
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500"
+                        onClick={(e) => handleRemoveFromWishlist(e, product)}
+                      >
+                        <Trash2 className="h-4 w-4 text-white" />
+                      </Button>
+                    ) : (
+                      // Show wishlist heart for other products
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
+                          isWishlisted && "opacity-100"
+                        )}
+                        onClick={(e) => handleWishlistAction(e, product)}
+                      >
+                        <Heart
+                          className={cn(
+                            "h-4 w-4",
+                            isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                          )}
+                        />
+                      </Button>
                     )}
-                    onClick={(e) => handleWishlistAction(e, product)}
-                  >
-                    <Heart
-                      className={cn(
-                        "h-4 w-4",
-                        isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                      )}
-                    />
-                  </Button>
+                  </div>
 
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -358,7 +453,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" variant="secondary" className="text-xs">
                           <ExternalLink className="w-3 h-3 mr-1" />
-                          View
+                          {product.source === 'wishlist' && isOwnProfile ? 'Manage' : 'View'}
                         </Button>
                       </div>
                     </div>
@@ -388,6 +483,22 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
             );
           })}
         </div>
+
+        {/* Dialogs */}
+        <ProductDetailsDialog
+          product={selectedProduct}
+          open={showProductDialog}
+          onOpenChange={setShowProductDialog}
+          userData={profile}
+          onWishlistChange={handleItemRemoved}
+        />
+
+        <WishlistItemManagementDialog
+          item={selectedWishlistItem}
+          open={showWishlistItemDialog}
+          onOpenChange={setShowWishlistItemDialog}
+          onItemRemoved={handleItemRemoved}
+        />
       </CardContent>
     </Card>
   );

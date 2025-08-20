@@ -1,6 +1,6 @@
 
 import React from "react";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ const PublicProfileLayout: React.FC<PublicProfileLayoutProps> = ({
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Full header with navigation and search functionality */}
-      <Header />
+      <UnifiedShopperHeader mode="main" />
       <main className={cn("flex-1", className)}>
         {children}
       </main>

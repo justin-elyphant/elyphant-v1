@@ -74,7 +74,7 @@ const NavigationBar = () => {
 
           {/* Desktop Search Bar */}
           {shouldShowSearch && (
-            <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-8">
+            <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-4">
               <AIEnhancedSearchBar />
             </div>
           )}

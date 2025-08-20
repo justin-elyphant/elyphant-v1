@@ -1,6 +1,6 @@
 
 import React from "react";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen surface-primary flex flex-col">
-      <Header className={headerClassName} />
+      <UnifiedShopperHeader mode="main" className={headerClassName} />
       <main className={cn("flex-1", className)}>
         {children}
       </main>

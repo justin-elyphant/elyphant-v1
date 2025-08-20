@@ -1,0 +1,178 @@
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth";
+import { cn } from "@/lib/utils";
+
+// Shopper-specific components
+import Logo from "@/components/home/components/Logo";
+import AuthButtons from "@/components/home/components/AuthButtons";
+import UserButton from "@/components/auth/UserButton";
+import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
+import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
+
+// Conditional imports for performance
+const AIEnhancedSearchBar = React.lazy(() => import("@/components/search/AIEnhancedSearchBar"));
+const OptimizedShoppingCartButton = React.lazy(() => import("@/components/marketplace/components/OptimizedShoppingCartButton"));
+
+interface UnifiedShopperHeaderProps {
+  mode?: "main" | "minimal" | "marketplace-focused";
+  className?: string;
+  showSearch?: boolean;
+  showCart?: boolean;
+}
+
+const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
+  mode = "main",
+  className,
+  showSearch,
+  showCart,
+}) => {
+  const authContext = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Handle case where AuthProvider context is not yet available
+  if (!authContext) {
+    return (
+      <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm", className)}>
+        <nav className="bg-transparent">
+          <div className="container-header">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex-shrink-0">
+                <Logo />
+              </div>
+              <div className="hidden md:flex items-center space-x-4">
+                <div className="h-10 w-20 surface-secondary rounded animate-pulse" />
+              </div>
+              <div className="md:hidden">
+                <div className="h-10 w-10 surface-secondary rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
+    );
+  }
+
+  const { user, signOut } = authContext;
+
+  // Auto-detect features based on route if not explicitly set
+  const isAuthPage = ['/auth', '/reset-password'].includes(location.pathname);
+  const shouldShowSearch = showSearch ?? !isAuthPage;
+  const shouldShowCart = showCart ?? !isAuthPage;
+
+  // Mode-specific configurations
+  const modeConfig = {
+    main: {
+      height: "h-20",
+      searchEnabled: shouldShowSearch,
+      cartEnabled: shouldShowCart,
+    },
+    minimal: {
+      height: "h-16",
+      searchEnabled: false,
+      cartEnabled: false,
+    },
+    "marketplace-focused": {
+      height: "h-20",
+      searchEnabled: true,
+      cartEnabled: shouldShowCart,
+    },
+  };
+
+  const config = modeConfig[mode];
+
+  const marketplaceItems: NavDropdownItem[] = [
+    { label: "All Products", href: "/marketplace" },
+    { label: "Electronics", href: "/marketplace?category=electronics" },
+    { label: "Fashion", href: "/marketplace?category=fashion" },
+    { label: "Home & Garden", href: "/marketplace?category=home-garden" },
+    { label: "Sports & Outdoors", href: "/marketplace?category=sports" },
+    { label: "Books & Media", href: "/marketplace?category=books" },
+  ];
+
+  const profileItems: NavDropdownItem[] = [
+    { label: "Profile", href: "/profile" },
+    { label: "Settings", href: "/settings" },
+    { label: "Orders", href: "/orders" },
+    { label: "Wishlists", href: "/my-wishlists" },
+  ];
+
+  return (
+    <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm", className)}>
+      <nav className="bg-transparent">
+        <div className="container-header">
+          <div className={cn("flex items-center justify-between", config.height)}>
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Logo />
+            </div>
+
+            {/* Desktop Search Bar */}
+            {config.searchEnabled && (
+              <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-4">
+                <React.Suspense fallback={<div className="h-10 w-full bg-muted rounded animate-pulse" />}>
+                  <AIEnhancedSearchBar />
+                </React.Suspense>
+              </div>
+            )}
+
+            {/* Desktop Auth & Cart */}
+            <div className="hidden md:flex items-center gap-commerce">
+              {config.cartEnabled && (
+                <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
+                  <OptimizedShoppingCartButton />
+                </React.Suspense>
+              )}
+              {user ? <UserButton /> : <AuthButtons />}
+            </div>
+
+            {/* Mobile Right Side */}
+            <div className="md:hidden flex items-center gap-tight">
+              {config.cartEnabled && (
+                <React.Suspense fallback={<div className="h-10 w-10 bg-muted rounded animate-pulse" />}>
+                  <OptimizedShoppingCartButton />
+                </React.Suspense>
+              )}
+              <Button
+                variant="ghost"
+                size="touch"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="touch-target-44"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Search Bar - Below header */}
+          {config.searchEnabled && (
+            <div className="md:hidden touch-padding-sm pt-2">
+              <React.Suspense fallback={<div className="h-10 w-full bg-muted rounded animate-pulse" />}>
+                <AIEnhancedSearchBar mobile />
+              </React.Suspense>
+            </div>
+          )}
+        </div>
+
+        {/* Clean Mobile Menu */}
+        <CleanMobileNavMenu
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+          onSignOut={signOut}
+          isAuthenticated={!!user}
+          marketplaceItems={marketplaceItems}
+          profileItems={profileItems}
+        />
+      </nav>
+    </header>
+  );
+};
+
+export default UnifiedShopperHeader;

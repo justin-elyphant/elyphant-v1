@@ -63,6 +63,12 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				surface: {
+					primary: 'hsl(var(--surface-primary))',
+					secondary: 'hsl(var(--surface-secondary))',
+					elevated: 'hsl(var(--surface-elevated))',
+					sunken: 'hsl(var(--surface-sunken))'
+				},
 				slate: {
 					50: '#f8fafc',
 					100: '#f1f5f9',
@@ -149,6 +155,38 @@ export default {
 			boxShadow: {
 				'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
 				'card': '0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 4px -1px rgba(0, 0, 0, 0.06)',
+				'floating': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+			},
+			spacing: {
+				'0': 'var(--space-0)',
+				'1': 'var(--space-1)',
+				'2': 'var(--space-2)',
+				'3': 'var(--space-3)',
+				'4': 'var(--space-4)',
+				'5': 'var(--space-5)',
+				'6': 'var(--space-6)',
+				'8': 'var(--space-8)',
+				'10': 'var(--space-10)',
+				'12': 'var(--space-12)',
+				'16': 'var(--space-16)',
+				'20': 'var(--space-20)',
+				'24': 'var(--space-24)',
+			},
+			fontSize: {
+				'xs': ['var(--text-xs)', { lineHeight: 'var(--leading-normal)' }],
+				'sm': ['var(--text-sm)', { lineHeight: 'var(--leading-normal)' }],
+				'base': ['var(--text-base)', { lineHeight: 'var(--leading-normal)' }],
+				'lg': ['var(--text-lg)', { lineHeight: 'var(--leading-relaxed)' }],
+				'xl': ['var(--text-xl)', { lineHeight: 'var(--leading-snug)' }],
+				'2xl': ['var(--text-2xl)', { lineHeight: 'var(--leading-snug)' }],
+				'3xl': ['var(--text-3xl)', { lineHeight: 'var(--leading-tight)' }],
+				'4xl': ['var(--text-4xl)', { lineHeight: 'var(--leading-tight)' }],
+			},
+			fontWeight: {
+				'normal': 'var(--font-normal)',
+				'medium': 'var(--font-medium)',
+				'semibold': 'var(--font-semibold)',
+				'bold': 'var(--font-bold)',
 			},
 		}
 	},

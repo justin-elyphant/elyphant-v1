@@ -7,7 +7,7 @@ import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 touch-manipulation select-none tap-feedback",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 touch-target select-none tap-feedback",
   {
     variants: {
       variant: {
@@ -23,11 +23,11 @@ const buttonVariants = cva(
         purple: "bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white border-0 focus-visible:ring-purple/50",
       },
       size: {
-        default: "h-10 px-4 py-2 min-h-[44px]",
-        sm: "h-9 rounded-md px-3 min-h-[44px]",
-        lg: "h-11 rounded-md px-8 min-h-[44px]",
-        icon: "h-10 w-10 min-h-[44px] min-w-[44px]",
-        touch: "h-12 px-6 py-3 min-h-[48px] text-base",
+        default: "touch-padding text-sm",
+        sm: "px-3 py-2 text-sm",
+        lg: "touch-padding-lg text-base",
+        icon: "p-2",
+        touch: "touch-padding-lg text-base",
       },
     },
     defaultVariants: {

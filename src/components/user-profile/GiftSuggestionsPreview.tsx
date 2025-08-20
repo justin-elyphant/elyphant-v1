@@ -43,6 +43,8 @@ const GiftSuggestionsPreview = ({
 
   // Convert wishlist items to Product format and set wishlist products
   useEffect(() => {
+    // Force visible debugging
+    alert(`Debug: wishlistItems received! Length: ${wishlistItems?.length || 0}, Type: ${typeof wishlistItems}`);
     console.log('🎯 GiftSuggestionsPreview - wishlistItems received:', wishlistItems);
     console.log('🎯 wishlistItems type:', typeof wishlistItems);
     console.log('🎯 wishlistItems length:', wishlistItems?.length);

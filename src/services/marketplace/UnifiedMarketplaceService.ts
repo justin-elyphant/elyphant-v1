@@ -443,9 +443,7 @@ class UnifiedMarketplaceService {
     this.cache.clear();
     this.activeRequests.clear();
     this.toastHistory.clear();
-    console.log('[UnifiedMarketplaceService] Cache cleared - forcing page reload');
-    // Force reload to clear all cached data
-    setTimeout(() => window.location.reload(), 100);
+    console.log('[UnifiedMarketplaceService] Cache cleared - fresh data will be fetched on next search');
   }
 
   /**
@@ -537,3 +535,6 @@ class UnifiedMarketplaceService {
 
 // Export singleton instance
 export const unifiedMarketplaceService = new UnifiedMarketplaceService();
+
+// Clear cache on service initialization to force fresh data with correct pricing
+unifiedMarketplaceService.clearCache();

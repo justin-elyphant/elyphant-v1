@@ -168,6 +168,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
 
   const getProductPrice = () => {
     const price = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
+    // Add debug logging to trace price values
+    console.log(`🔍 ProductCard price debug: "${product.title}" - Raw price: ${product.price}, Parsed: ${price}, Type: ${typeof product.price}`);
     // Zinc API returns prices in dollars, format directly
     return formatPrice(price);
   };

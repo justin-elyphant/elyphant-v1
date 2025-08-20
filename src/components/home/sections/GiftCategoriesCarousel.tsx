@@ -64,7 +64,7 @@ const GiftCategoriesCarousel: React.FC = () => {
       contentPadding={false}
     >
       {/* Header positioned absolutely over the carousel */}
-      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center touch-padding">
+      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
         <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight md:mb-space-standard">
           Quick Picks
         </h2>
@@ -100,17 +100,17 @@ const GiftCategoriesCarousel: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     
                      {/* Overlay Content - positioned at bottom */}
-                     <div className="absolute bottom-0 left-0 right-0 touch-padding-lg">
-                       <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-space-tight md:mb-space-standard drop-shadow-lg">
+                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10">
+                       <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4 drop-shadow-lg">
                          {category.title}
                        </h3>
-                       <p className="text-base md:text-lg text-white mb-space-standard md:mb-space-loose leading-relaxed drop-shadow-md">
+                       <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed drop-shadow-md">
                          {category.description}
                        </p>
                       <Button
                         variant="secondary"
-                        size="touch"
-                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select"
+                        size="lg"
+                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-base md:text-lg px-6 py-3"
                       >
                         Shop Now
                         <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />

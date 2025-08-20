@@ -150,20 +150,14 @@ const searchCategoryBatch = async (
         // Additional price filtering for budget categories - try multiple price field formats
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
-            // Try different price field formats
+            // Zinc API returns prices in dollars - extract price value
             let price = 0;
             if (product.price) {
               if (typeof product.price === 'string') {
                 price = parseFloat(product.price.replace(/[$,]/g, ''));
               } else if (typeof product.price === 'number') {
                 price = product.price;
-                // If price appears to be in cents (over 100 for items under $50), convert to dollars
-                if (price > 100 && price < 10000) {
-                  price = price / 100;
-                }
               }
-            } else if (product.price_cents) {
-              price = product.price_cents / 100;
             } else if (product.price_amount) {
               price = product.price_amount;
             }
@@ -551,8 +545,7 @@ serve(async (req) => {
           const price = product.price;
           if (!price) return true; // Keep products without price info
           
-          const priceInCents = typeof price === 'number' ? price : parseInt(price);
-          const priceInDollars = priceInCents / 100;
+          const priceInDollars = typeof price === 'number' ? price : parseFloat(price) || 0;
           
           let passesFilter = true;
           if (minPrice && priceInDollars < minPrice) passesFilter = false;

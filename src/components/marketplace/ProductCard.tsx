@@ -21,20 +21,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onShare 
 }) => {
   const formatProductPrice = (price: number) => {
-    // More robust price detection: if price looks like cents (no decimals and > $100 equivalent), convert
-    // Examples: 1999 cents = $19.99, 79998 cents = $799.98
-    let actualPrice = price;
-    
-    // If the price is a whole number > 500 and looks like it could be in cents, convert it
-    if (Number.isInteger(price) && price > 500) {
-      // Check if converting to dollars makes more sense (between $5-$10000 range)
-      const dollarPrice = price / 100;
-      if (dollarPrice >= 5 && dollarPrice <= 10000) {
-        actualPrice = dollarPrice;
-      }
-    }
-    
-    return formatPrice(actualPrice);
+    // Zinc API now returns prices in dollars, so format directly
+    return formatPrice(price);
   };
 
   const formatRating = (rating: number) => {

@@ -37,15 +37,7 @@ export const useProductValidation = () => {
       }
     }
     
-    // Normalize price to be a reasonable value
-    if (typeof validatedProduct.price === 'number' && validatedProduct.price > 1000) {
-      // If price is unreasonably high for common items, adjust it
-      const lowerTitle = (validatedProduct.title || "").toLowerCase();
-      if (lowerTitle.includes("hat") || lowerTitle.includes("cap") || lowerTitle.includes("padres")) {
-        validatedProduct.price = validatedProduct.price / 100;
-        console.log(`Adjusted unreasonable price for ${validatedProduct.title}: ${product.price} -> ${validatedProduct.price}`);
-      }
-    }
+    // Remove legacy price normalization - prices should come as dollars from Zinc API
     
     // For Padres hat searches, explicitly set the category to ensure proper filtering
     if (query.includes("padres") && (query.includes("hat") || query.includes("cap"))) {

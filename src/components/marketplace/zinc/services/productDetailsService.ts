@@ -58,7 +58,7 @@ export const fetchProductDetails = async (productId: string): Promise<ZincProduc
       return {
         product_id: data.product_id || data.asin || productId, // Use the ID that was passed if nothing else works
         title: data.title,
-        price: typeof data.price === 'number' ? data.price / 100 : parseFloat(data.price) || 0,
+        price: typeof data.price === 'number' ? data.price : parseFloat(data.price) || 0,
         image: mainImage,
         images: images,
         description: data.description || '',

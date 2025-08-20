@@ -45,6 +45,7 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
       <EnhancedInterestsSection 
         interests={displayInterests} 
         isOwnProfile={isOwnProfile}
+        userName={profile.name}
       />
 
       {/* Fallback to gift_preferences if no interests */}

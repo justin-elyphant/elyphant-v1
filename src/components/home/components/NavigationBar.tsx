@@ -66,7 +66,7 @@ const NavigationBar = () => {
   return (
     <nav className="bg-transparent">
       <div className="container-header">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Logo />
@@ -74,13 +74,13 @@ const NavigationBar = () => {
 
           {/* Desktop Search Bar */}
           {shouldShowSearch && (
-            <div className="hidden md:flex flex-1 justify-center max-w-3xl mx-4">
+            <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-8">
               <AIEnhancedSearchBar />
             </div>
           )}
 
           {/* Desktop Auth & Cart */}
-          <div className="hidden md:flex items-center gap-unified">
+          <div className="hidden md:flex items-center gap-commerce">
             {shouldShowCart && <OptimizedShoppingCartButton />}
             {user ? <UserButton /> : <AuthButtons />}
           </div>

@@ -12,26 +12,37 @@ import { normalizeProduct, Product } from "@/contexts/ProductContext";
 import { getProductName, getProductImages } from "../product-item/productUtils";
 
 interface ProductDetailsDialogProps {
-  productId: string | null;
+  productId?: string | null;
+  product?: Product | null; // Direct product object for pre-loaded data
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userData: any | null;
+  source?: 'wishlist' | 'interests' | 'ai' | 'trending'; // Context for display
+  onWishlistChange?: () => void;
 }
 
 const ProductDetailsDialog = ({ 
   productId, 
+  product,
   open, 
   onOpenChange,
-  userData
+  userData,
+  source,
+  onWishlistChange
 }: ProductDetailsDialogProps) => {
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   
   useEffect(() => {
-    if (productId && open) {
+    if (product) {
+      // Use pre-loaded product data
+      setProductDetail(product);
+      setLoading(false);
+    } else if (productId && open) {
+      // Fetch product data if only ID provided
       fetchProductDetail(productId, 'amazon');
     }
-  }, [productId, open]);
+  }, [product, productId, open]);
 
   const fetchProductDetail = async (productId: string, retailer: string) => {
     setLoading(true);
@@ -59,6 +70,14 @@ const ProductDetailsDialog = ({
             {loading ? "" : (productDetail ? getProductName(productDetail) : "")}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground line-clamp-2">
+            {source && !loading && (
+              <div className="mb-2 text-xs font-medium text-primary">
+                {source === 'ai' && "🤖 AI picked this for you"}
+                {source === 'trending' && "📈 Trending now"}
+                {source === 'interests' && "🎯 Based on your interests"}
+                {source === 'wishlist' && "❤️ From wishlist"}
+              </div>
+            )}
             {!loading && productDetail?.description && productDetail.description}
           </DialogDescription>
         </DialogHeader>
@@ -78,10 +97,14 @@ const ProductDetailsDialog = ({
                   />
                 </div>
                 
-                <div className="flex flex-col space-y-4">
-                  <ProductInfo product={productDetail} />
-                  <ProductActions product={productDetail} userData={userData} />
-                </div>
+                 <div className="flex flex-col space-y-4">
+                   <ProductInfo product={productDetail} source={source} />
+                   <ProductActions 
+                     product={productDetail} 
+                     userData={userData}
+                     onWishlistChange={onWishlistChange}
+                   />
+                 </div>
               </div>
             </>
             :

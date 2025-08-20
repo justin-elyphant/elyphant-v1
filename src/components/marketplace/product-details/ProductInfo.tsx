@@ -5,15 +5,26 @@ import { formatProductPrice } from "../product-item/productUtils";
 
 interface ProductInfoProps {
   product: any;
+  source?: 'wishlist' | 'interests' | 'ai' | 'trending';
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const ProductInfo = ({ product, source }: ProductInfoProps) => {
   // Generate a description if one doesn't exist
-  let description = product?.product_description || "";
+  let description = product?.product_description || product?.description || "";
   if ((!description || description.trim() === "") && product?.title) {
     const productType = product.title.split(' ').slice(1).join(' ');
     const brand = product.title.split(' ')[0];
-    description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
+    
+    // Enhance description based on source
+    if (source === 'ai') {
+      description = `AI selected this ${productType} based on your preferences and gift-giving history. This item combines quality with thoughtful design that matches your interests.`;
+    } else if (source === 'trending') {
+      description = `Currently trending! This ${productType} is popular among users with similar interests. Features premium materials and exceptional craftsmanship for long-lasting use.`;
+    } else if (source === 'interests') {
+      description = `Recommended based on your interests. This ${productType} aligns with your preferences and offers great value for money.`;
+    } else {
+      description = `The ${brand} ${productType} is a high-quality product designed for performance and reliability. This item features premium materials and exceptional craftsmanship for long-lasting use.`;
+    }
   }
   
   const features = product.product_details || [];

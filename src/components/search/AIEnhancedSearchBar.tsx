@@ -14,6 +14,8 @@ import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import { useAuth } from "@/contexts/auth";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
+import VoiceInputButton from "./VoiceInputButton";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import UnifiedSearchSuggestions from "@/components/search/UnifiedSearchSuggestions";
 import RecentSearches from "@/components/search/RecentSearches";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
@@ -46,6 +48,17 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const { user } = useAuth();
   const { recentSearches, addSearch } = useUserSearchHistory();
   const isMobile = useIsMobile();
+  
+  // Voice recognition hook - only for mobile Nicole mode
+  const {
+    isListening,
+    transcript,
+    error: voiceError,
+    startListening,
+    stopListening,
+    resetTranscript,
+    isSupported: isVoiceSupported
+  } = useSpeechRecognition();
   
   // Unified search hook for friend/product/brand search
   const { 
@@ -364,6 +377,41 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
     };
   }, []);
 
+  // Handle voice transcript updates
+  useEffect(() => {
+    if (transcript && transcript.trim()) {
+      setQuery(transcript);
+      setSearchQuery(transcript);
+    }
+  }, [transcript, setSearchQuery]);
+
+  // Handle voice errors
+  useEffect(() => {
+    if (voiceError) {
+      toast.error("Voice recognition error", {
+        description: "Please try again or type your search"
+      });
+      resetTranscript();
+    }
+  }, [voiceError, resetTranscript]);
+
+  // Voice input handler
+  const handleVoiceInput = () => {
+    if (!isVoiceSupported) {
+      toast.error("Voice not supported", {
+        description: "Your browser doesn't support voice input"
+      });
+      return;
+    }
+
+    if (isListening) {
+      stopListening();
+    } else {
+      resetTranscript();
+      startListening();
+    }
+  };
+
   return (
     <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       {/* Enhanced Search Bar with Toggle */}
@@ -426,7 +474,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             }`}
           />
           
-          <div className="absolute right-2 flex items-center space-x-2">
+          <div className="absolute right-2 flex items-center space-x-1">
+            {/* Voice Input Button - Mobile only, Nicole mode only */}
+            {isMobile && isNicoleMode && isVoiceSupported && (
+              <VoiceInputButton
+                isListening={isListening}
+                onVoiceInput={handleVoiceInput}
+                mobile={true}
+              />
+            )}
+            
             {/* Clear Button */}
             {query && (
               <Button
@@ -437,6 +494,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                   setQuery("");
                   setSearchQuery("");
                   setShowSuggestions(false);
+                  resetTranscript();
                 }}
                 className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
               >

@@ -74,10 +74,14 @@ const ProductDetailsDialog = ({
         const enhancedProduct = {
           ...data,
           // Preserve original product_id for consistency
-          product_id: productId
+          product_id: productId,
+          // Mark as Zinc API product to prevent price re-conversion
+          isZincApiProduct: true,
+          retailer: retailer || 'amazon'
         };
         setProductDetail(enhancedProduct);
         console.log('Successfully enhanced product details:', enhancedProduct.title || enhancedProduct.name);
+        console.log('Product price from API:', enhancedProduct.price, 'marked as Zinc API product:', enhancedProduct.isZincApiProduct);
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);

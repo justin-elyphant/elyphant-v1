@@ -68,7 +68,7 @@ const GiftSuggestionsPreview = ({
       wishlistItems.forEach((wishlist) => {
         if (wishlist?.items && Array.isArray(wishlist.items)) {
           wishlist.items.forEach((item: any) => {
-            convertedWishlistProducts.push({
+            const product: Product = {
               product_id: item.product_id || item.id || `wishlist-${Math.random()}`,
               id: item.product_id || item.id || `wishlist-${Math.random()}`,
               title: item.title || item.name || 'Unknown Product',
@@ -81,7 +81,8 @@ const GiftSuggestionsPreview = ({
               rating: item.rating || 0,
               reviewCount: item.review_count || 0,
               fromWishlist: true
-            });
+            };
+            convertedWishlistProducts.push(product);
           });
         }
       });

@@ -244,22 +244,6 @@ const WishlistCreationCTA = () => {
           </div>
         )}
 
-        {!user && (
-          <div className="mt-8 text-center bg-card/50 backdrop-blur-sm rounded-lg p-6 border border-border/50">
-            <p className="text-sm text-muted-foreground mb-3">
-              Sign up to add these items to your wishlist
-            </p>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleSignUpClick}
-              className="gap-2"
-            >
-              <Heart className="h-4 w-4" />
-              Create Account
-            </Button>
-          </div>
-        )}
       </div>
 
       <SignUpDialog 

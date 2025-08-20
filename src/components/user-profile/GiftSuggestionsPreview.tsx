@@ -43,12 +43,16 @@ const GiftSuggestionsPreview = ({
 
   // Convert wishlist items to Product format and set wishlist products
   useEffect(() => {
+    console.log('🎯 GiftSuggestionsPreview - wishlistItems received:', wishlistItems);
+    
     if (wishlistItems && wishlistItems.length > 0) {
       const convertedWishlistProducts: Product[] = [];
       
       wishlistItems.forEach((wishlist: any) => {
+        console.log('🎯 Processing wishlist:', wishlist);
         if (wishlist.items && Array.isArray(wishlist.items)) {
           wishlist.items.forEach((item: any) => {
+            console.log('🎯 Processing wishlist item:', item);
             const product: Product = {
               product_id: item.id || `wishlist-${Math.random()}`,
               id: item.id || `wishlist-${Math.random()}`,
@@ -66,7 +70,11 @@ const GiftSuggestionsPreview = ({
         }
       });
       
+      console.log('🎯 Converted wishlist products:', convertedWishlistProducts);
       setWishlistProducts(convertedWishlistProducts.slice(0, 6)); // Limit to 6 wishlist items
+    } else {
+      console.log('🎯 No wishlist items found');
+      setWishlistProducts([]);
     }
   }, [wishlistItems]);
 
@@ -201,6 +209,13 @@ const GiftSuggestionsPreview = ({
       reviewCount: rec.review_count || 0
     } satisfies Product)) || [])
   ].slice(0, 12); // Limit total display
+
+  console.log('🎯 Final display products:', {
+    wishlistCount: wishlistProducts.length,
+    interestCount: products.length,
+    aiCount: recommendations?.length || 0,
+    totalDisplay: allDisplayProducts.length
+  });
 
   const getProductBadge = (product: Product, index: number) => {
     if (index < wishlistProducts.length) {

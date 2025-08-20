@@ -38,9 +38,7 @@ export const useMarketplaceProducts = () => {
         occasion,
         personId,
         occasionType,
-        multiInterest,
-        'multiInterest === true': multiInterest === 'true',
-        'typeof multiInterest': typeof multiInterest
+        multiInterest
       });
       
       // Build Nicole context if available

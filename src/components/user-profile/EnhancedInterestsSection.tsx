@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface EnhancedInterestsSectionProps {
   interests: string[];
   isOwnProfile: boolean;
+  userName?: string;
 }
 
-const EnhancedInterestsSection = ({ interests, isOwnProfile }: EnhancedInterestsSectionProps) => {
+const EnhancedInterestsSection = ({ interests, isOwnProfile, userName }: EnhancedInterestsSectionProps) => {
   const navigate = useNavigate();
   const [isSearchingAll, setIsSearchingAll] = useState(false);
   
@@ -62,7 +63,12 @@ const EnhancedInterestsSection = ({ interests, isOwnProfile }: EnhancedInterests
   
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-medium mb-2">Interests</h3>
+      <h3 className="text-lg font-medium mb-2">
+        {isOwnProfile 
+          ? "Your Interests" 
+          : `Search Gifts Based on ${userName || "This User"}'s Interests`
+        }
+      </h3>
       <div className="grid gap-3">
         {interests.map((interest, index) => (
           <div 

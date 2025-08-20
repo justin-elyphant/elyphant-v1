@@ -69,17 +69,18 @@ const GiftSuggestionsPreview = ({
         if (wishlist?.items && Array.isArray(wishlist.items)) {
           wishlist.items.forEach((item: any) => {
             convertedWishlistProducts.push({
-              id: item.product_id || item.id,
-              title: item.title || item.name,
+              product_id: item.product_id || item.id || `wishlist-${Math.random()}`,
+              id: item.product_id || item.id || `wishlist-${Math.random()}`,
+              title: item.title || item.name || 'Unknown Product',
+              name: item.title || item.name || 'Unknown Product',
               price: typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'),
               brand: item.brand || '',
-              image_url: item.image_url || '',
+              image: item.image_url || item.image || '/placeholder.svg',
               category: 'Wishlist Item',
               description: item.description || '',
-              amazon_url: `https://amazon.com/dp/${item.product_id}`,
-              rating: 0,
-              reviews: 0,
-              tags: []
+              rating: item.rating || 0,
+              reviewCount: item.review_count || 0,
+              fromWishlist: true
             });
           });
         }
@@ -94,73 +95,6 @@ const GiftSuggestionsPreview = ({
       console.log('🎯 No wishlist items found - setting empty array');
       setWishlistProducts([]);
     }
-        console.log(`🎯 Processing wishlist/item ${index}:`, wishlistOrItem);
-        console.log(`🎯 Item keys:`, Object.keys(wishlistOrItem || {}));
-        
-        // Check if this is a wishlist with items property
-        if (wishlistOrItem.items && Array.isArray(wishlistOrItem.items)) {
-          console.log('🎯 Found wishlist with items array, length:', wishlistOrItem.items.length);
-          wishlistOrItem.items.forEach((item: any, itemIndex: number) => {
-            console.log(`🎯 Processing wishlist item ${itemIndex}:`, item);
-            const product: Product = {
-              product_id: item.product_id || item.id || `wishlist-${Math.random()}`,
-              id: item.product_id || item.id || `wishlist-${Math.random()}`,
-              title: item.product_name || item.name || item.title || 'Unknown Product',
-              name: item.product_name || item.name || item.title || 'Unknown Product',
-              price: item.price || 0,
-              image: item.image_url || item.image || '/placeholder.svg',
-              description: item.description || '',
-              brand: item.brand || '',
-              category: item.category || '',
-              rating: item.rating || 0,
-              reviewCount: item.review_count || 0,
-              fromWishlist: true
-            };
-            convertedWishlistProducts.push(product);
-          });
-        }
-        // Check if this is a direct wishlist item
-        else if (wishlistOrItem.product_id || wishlistOrItem.id) {
-          console.log('🎯 Found direct wishlist item');
-          const product: Product = {
-            product_id: wishlistOrItem.product_id || wishlistOrItem.id || `wishlist-${Math.random()}`,
-            id: wishlistOrItem.product_id || wishlistOrItem.id || `wishlist-${Math.random()}`,
-            title: wishlistOrItem.product_name || wishlistOrItem.name || wishlistOrItem.title || 'Unknown Product',
-            name: wishlistOrItem.product_name || wishlistOrItem.name || wishlistOrItem.title || 'Unknown Product',
-            price: wishlistOrItem.price || 0,
-            image: wishlistOrItem.image_url || wishlistOrItem.image || '/placeholder.svg',
-            description: wishlistOrItem.description || '',
-            brand: wishlistOrItem.brand || '',
-            category: wishlistOrItem.category || '',
-            rating: wishlistOrItem.rating || 0,
-            reviewCount: wishlistOrItem.review_count || 0,
-            fromWishlist: true
-          };
-          convertedWishlistProducts.push(product);
-        }
-        // If it has product_data nested
-        else if (wishlistOrItem.product_data) {
-          console.log('🎯 Found wishlist item with product_data');
-          const productData = wishlistOrItem.product_data;
-          const product: Product = {
-            product_id: productData.product_id || productData.id || `wishlist-${Math.random()}`,
-            id: productData.product_id || productData.id || `wishlist-${Math.random()}`,
-            title: productData.title || productData.name || 'Unknown Product',
-            name: productData.title || productData.name || 'Unknown Product',
-            price: productData.price || 0,
-            image: productData.image || productData.image_url || '/placeholder.svg',
-            description: productData.description || '',
-            brand: productData.brand || '',
-            category: productData.category || '',
-            rating: productData.rating || 0,
-            reviewCount: productData.review_count || 0,
-            fromWishlist: true
-          };
-          convertedWishlistProducts.push(product);
-        }
-        else {
-          console.log('🎯 Unknown wishlist item structure:', wishlistOrItem);
-        }
   }, [wishlistItems, profileName]);
 
   // Fetch curated product grid from multiple sources

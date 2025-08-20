@@ -112,22 +112,19 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         });
 
         // Convert to Product format and update context
-        const normalizedProducts = searchResult.results.map(result => {
-          console.log(`🔍 Processing product: "${result.title}" - Original price: ${result.price}, Final price: ${result.price}`);
-          return {
-            id: result.product_id,
-            product_id: result.product_id,
-            name: result.title,
-            title: result.title,
-            price: result.price,
-            category: result.category,
-            image: result.image,
-            vendor: result.retailer || "Amazon via Zinc",
-            description: result.description,
-            rating: result.stars,
-            reviewCount: result.num_reviews
-          };
-        });
+        const normalizedProducts = searchResult.results.map(result => ({
+          id: result.product_id,
+          product_id: result.product_id,
+          name: result.title,
+          title: result.title,
+          price: result.price,
+          category: result.category,
+          image: result.image,
+          vendor: result.retailer || "Amazon via Zinc",
+          description: result.description,
+          rating: result.stars,
+          reviewCount: result.num_reviews
+        }));
 
         console.log("Normalized products: ", normalizedProducts.length);
         console.log('🔍 Frontend normalized prices - First 3 products:', normalizedProducts.slice(0, 3).map(p => `"${p.title}" - Price: ${p.price}`));

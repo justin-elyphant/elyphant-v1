@@ -536,5 +536,5 @@ class UnifiedMarketplaceService {
 // Export singleton instance
 export const unifiedMarketplaceService = new UnifiedMarketplaceService();
 
-// Clear cache on service initialization to force fresh data with correct pricing
+// Clear cache on service initialization to ensure fresh data
 unifiedMarketplaceService.clearCache();

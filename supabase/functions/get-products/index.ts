@@ -170,10 +170,27 @@ const searchCategoryBatch = async (
         
         const processedResults = categoryResults.map((product: any) => {
           const bestSellerData = processBestSellerData(product);
+          
+          // Normalize price from cents to dollars
+          let normalizedPrice = product.price;
+          if (typeof product.price === 'number' && product.price > 100) {
+            normalizedPrice = product.price / 100;
+            console.log(`🔄 Category price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
+          } else if (typeof product.price === 'string') {
+            const numericPrice = parseFloat(product.price.replace(/[$,]/g, ''));
+            if (numericPrice > 100) {
+              normalizedPrice = numericPrice / 100;
+              console.log(`🔄 Category price conversion (string): "${product.title}" - Original: ${product.price} → Converted: $${normalizedPrice}`);
+            } else {
+              normalizedPrice = numericPrice;
+            }
+          }
+          
           return {
             ...product,
             ...bestSellerData,
-            categorySource: category
+            categorySource: category,
+            price: normalizedPrice
           };
         });
         
@@ -568,11 +585,39 @@ serve(async (req) => {
         });
       }
   
-      // Log price debugging info for first few products
+      // Process and normalize prices (Zinc API returns prices in cents)
+      if (filteredResults && Array.isArray(filteredResults)) {
+        filteredResults = filteredResults.map((product: any) => {
+          let normalizedPrice = product.price;
+          
+          // Convert from cents to dollars if price is in cents
+          if (typeof product.price === 'number' && product.price > 100) {
+            // If price is over 100 and appears to be in cents, convert to dollars
+            normalizedPrice = product.price / 100;
+            console.log(`🔄 Price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
+          } else if (typeof product.price === 'string') {
+            // Handle string prices by parsing and checking if conversion is needed
+            const numericPrice = parseFloat(product.price.replace(/[$,]/g, ''));
+            if (numericPrice > 100) {
+              normalizedPrice = numericPrice / 100;
+              console.log(`🔄 Price conversion (string): "${product.title}" - Original: ${product.price} → Converted: $${normalizedPrice}`);
+            } else {
+              normalizedPrice = numericPrice;
+            }
+          }
+          
+          return {
+            ...product,
+            price: normalizedPrice
+          };
+        });
+      }
+
+      // Log price debugging info for first few products after conversion
       if (filteredResults && filteredResults.length > 0) {
-        console.log('🔍 Price debugging - First 3 products:');
+        console.log('🔍 Price debugging after conversion - First 3 products:');
         filteredResults.slice(0, 3).forEach((product: any, index: number) => {
-          console.log(`Product ${index + 1}: "${product.title}" - Price: ${product.price} (type: ${typeof product.price})`);
+          console.log(`Product ${index + 1}: "${product.title}" - Final Price: $${product.price} (type: ${typeof product.price})`);
         });
       }
 

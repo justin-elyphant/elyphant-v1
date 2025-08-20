@@ -60,15 +60,40 @@ const GiftSuggestionsPreview = ({
       })));
     }
     
-    // Handle different data structures - could be array or object
-    const itemsToProcess = Array.isArray(wishlistItems) ? wishlistItems : 
-                          (wishlistItems && typeof wishlistItems === 'object' ? Object.values(wishlistItems) : []);
-    
-    if (itemsToProcess && itemsToProcess.length > 0) {
+    // Extract wishlist items properly
+    if (Array.isArray(wishlistItems) && wishlistItems.length > 0) {
       const convertedWishlistProducts: Product[] = [];
       
-      // Handle different possible data structures
-      itemsToProcess.forEach((wishlistOrItem: any, index: number) => {
+      // Process each wishlist and extract its items
+      wishlistItems.forEach((wishlist) => {
+        if (wishlist?.items && Array.isArray(wishlist.items)) {
+          wishlist.items.forEach((item: any) => {
+            convertedWishlistProducts.push({
+              id: item.product_id || item.id,
+              title: item.title || item.name,
+              price: typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'),
+              brand: item.brand || '',
+              image_url: item.image_url || '',
+              category: 'Wishlist Item',
+              description: item.description || '',
+              amazon_url: `https://amazon.com/dp/${item.product_id}`,
+              rating: 0,
+              reviews: 0,
+              tags: []
+            });
+          });
+        }
+      });
+      
+      console.log('🎯 Converted wishlist products:', convertedWishlistProducts.length);
+      if (convertedWishlistProducts.length > 0) {
+        setWishlistProducts(convertedWishlistProducts);
+        alert(`SUCCESS: Found ${convertedWishlistProducts.length} wishlist items for ${profileName}!`);
+      }
+    } else {
+      console.log('🎯 No wishlist items found - setting empty array');
+      setWishlistProducts([]);
+    }
         console.log(`🎯 Processing wishlist/item ${index}:`, wishlistOrItem);
         console.log(`🎯 Item keys:`, Object.keys(wishlistOrItem || {}));
         
@@ -136,16 +161,7 @@ const GiftSuggestionsPreview = ({
         else {
           console.log('🎯 Unknown wishlist item structure:', wishlistOrItem);
         }
-      });
-      
-      console.log('🎯 Converted wishlist products:', convertedWishlistProducts);
-      console.log('🎯 Setting wishlist products count:', convertedWishlistProducts.length);
-      setWishlistProducts(convertedWishlistProducts.slice(0, 6)); // Limit to 6 wishlist items
-    } else {
-      console.log('🎯 No wishlist items found - setting empty array');
-      setWishlistProducts([]);
-    }
-  }, [wishlistItems]);
+  }, [wishlistItems, profileName]);
 
   // Fetch curated product grid from multiple sources
   useEffect(() => {

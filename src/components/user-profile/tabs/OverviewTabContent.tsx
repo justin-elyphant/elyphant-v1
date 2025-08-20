@@ -22,37 +22,40 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
   // Get important dates from the profile
   const importantDates = profile.important_dates || [];
 
-  // Debug: Log profile.wishlists structure
-  console.log('🔍 OverviewTabContent - Profile wishlists:', {
-    wishlists: profile.wishlists,
-    type: typeof profile.wishlists,
-    isArray: Array.isArray(profile.wishlists),
-    length: profile.wishlists?.length || 0,
-    keys: profile.wishlists ? Object.keys(profile.wishlists) : [],
-    firstItem: profile.wishlists?.[0] || null
+  // Debug: Log profile.wishlists structure with comprehensive debugging
+  console.log('🔍 OverviewTabContent - Full Profile Debug:', {
+    profileName: profile.name,
+    profileId: profile.id,
+    profileKeys: Object.keys(profile),
+    hasWishlists: !!profile.wishlists,
+    wishlistsType: typeof profile.wishlists,
+    wishlistsIsArray: Array.isArray(profile.wishlists),
+    wishlistsLength: profile.wishlists?.length || 0,
+    rawWishlists: profile.wishlists
   });
 
   // Enhanced debugging for wishlist items structure
-  console.log('🔍 OverviewTabContent - Enhanced wishlist debugging:', {
-    profileName: profile.name,
-    profileId: profile.id,
-    hasWishlists: !!profile.wishlists,
-    wishlistsStructure: profile.wishlists,
-    wishlistAnalysis: Array.isArray(profile.wishlists) ? profile.wishlists.map((w, i) => ({
+  if (Array.isArray(profile.wishlists)) {
+    const wishlistAnalysis = profile.wishlists.map((w, i) => ({
       index: i,
       title: w?.title,
       id: w?.id,
       hasItems: !!(w?.items && Array.isArray(w.items)),
       itemCount: w?.items?.length || 0,
       sampleItem: w?.items?.[0] || null,
-      itemKeys: w?.items?.[0] ? Object.keys(w.items[0]) : []
-    })) : 'Not an array'
-  });
-
-  // Show immediate alert for debugging
-  if (profile.wishlists && Array.isArray(profile.wishlists) && profile.wishlists.length > 0) {
-    const itemCount = profile.wishlists.reduce((total, w) => total + (w?.items?.length || 0), 0);
-    console.log(`🚨 WISHLIST DEBUG ALERT: ${profile.name} has ${profile.wishlists.length} wishlists with ${itemCount} total items`);
+      itemKeys: w?.items?.[0] ? Object.keys(w.items[0]) : [],
+      fullItems: w?.items
+    }));
+    
+    console.log('🔍 OverviewTabContent - Wishlist Analysis:', wishlistAnalysis);
+    
+    const totalItems = profile.wishlists.reduce((total, w) => total + (w?.items?.length || 0), 0);
+    console.log(`🚨 WISHLIST ITEMS COUNT: ${profile.name} has ${profile.wishlists.length} wishlists with ${totalItems} total items`);
+    
+    // Show alert for immediate feedback
+    if (totalItems > 0) {
+      alert(`DEBUG: Found ${totalItems} wishlist items for ${profile.name}`);
+    }
   }
 
   return (

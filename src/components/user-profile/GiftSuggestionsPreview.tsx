@@ -43,18 +43,21 @@ const GiftSuggestionsPreview = ({
 
   // Convert wishlist items to Product format and set wishlist products
   useEffect(() => {
-    // Force visible debugging
-    alert(`Debug: wishlistItems received! Length: ${wishlistItems?.length || 0}, Type: ${typeof wishlistItems}`);
     console.log('🎯 GiftSuggestionsPreview - wishlistItems received:', wishlistItems);
     console.log('🎯 wishlistItems type:', typeof wishlistItems);
-    console.log('🎯 wishlistItems length:', wishlistItems?.length);
+    console.log('🎯 wishlistItems is array?:', Array.isArray(wishlistItems));
+    console.log('🎯 wishlistItems keys:', wishlistItems ? Object.keys(wishlistItems) : 'null');
     console.log('🎯 wishlistItems structure:', JSON.stringify(wishlistItems, null, 2));
     
-    if (wishlistItems && wishlistItems.length > 0) {
+    // Handle different data structures - could be array or object
+    const itemsToProcess = Array.isArray(wishlistItems) ? wishlistItems : 
+                          (wishlistItems && typeof wishlistItems === 'object' ? Object.values(wishlistItems) : []);
+    
+    if (itemsToProcess && itemsToProcess.length > 0) {
       const convertedWishlistProducts: Product[] = [];
       
       // Handle different possible data structures
-      wishlistItems.forEach((wishlistOrItem: any, index: number) => {
+      itemsToProcess.forEach((wishlistOrItem: any, index: number) => {
         console.log(`🎯 Processing wishlist/item ${index}:`, wishlistOrItem);
         console.log(`🎯 Item keys:`, Object.keys(wishlistOrItem || {}));
         

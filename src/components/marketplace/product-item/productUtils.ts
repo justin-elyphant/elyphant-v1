@@ -55,7 +55,8 @@ export const getBasePrice = (product: Product): number => {
  */
 export const getProductId = (product: Product): string => {
   if (!product) return "";
-  return product.product_id || product.id || "";
+  const id = product.product_id || product.id;
+  return id ? String(id) : "";
 };
 
 /**
@@ -120,8 +121,8 @@ export const standardizeProduct = (product: any): any => {
     
     // Then set our standardized fields (these will override the spread)
     // Required fields with fallbacks
-    product_id: product.product_id || product.id || `product-${Math.random().toString(36).substr(2, 9)}`,
-    id: product.id || product.product_id || `product-${Math.random().toString(36).substr(2, 9)}`,
+    product_id: product.product_id || product.id || `product-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    id: product.id || product.product_id || `product-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     title: product.title || product.name || "Unnamed Product",
     name: product.name || product.title || "Unnamed Product",
     price: normalizedPrice, // This must come AFTER the spread to override

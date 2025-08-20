@@ -36,11 +36,15 @@ const ProductDetailsDialog = ({
   useEffect(() => {
     if (product) {
       // Check if we have basic product data that needs enhancement
-      const needsEnhancement = product && (!product.images || product.images.length <= 1) && product.product_id;
+      const productId = product.product_id || product.id;
+      const needsEnhancement = product && 
+        (!product.images || product.images.length <= 1) && 
+        productId && 
+        String(productId).trim() !== "";
       
       if (needsEnhancement && open) {
         // Auto-fetch full details for products with limited data
-        fetchProductDetail(product.product_id, 'amazon');
+        fetchProductDetail(String(productId), 'amazon');
       } else {
         // Use pre-loaded product data as-is
         setProductDetail(product);

@@ -157,6 +157,9 @@ export const standardizeProduct = (product: any): any => {
         return product.images.filter(img => img && typeof img === 'string');
       }
       return [product.image || "/placeholder.svg"];
-    })()
+    })(),
+    
+    // Mark as Zinc API product to prevent price conversion
+    isZincApiProduct: product.retailer === 'amazon' || product.vendor === 'Amazon' || product.source === 'zinc'
   };
 };

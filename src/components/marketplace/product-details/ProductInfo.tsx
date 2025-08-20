@@ -2,6 +2,7 @@
 import React from "react";
 import ProductRating from "@/components/shared/ProductRating";
 import { formatProductPrice } from "../product-item/productUtils";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductInfoProps {
   product: any;
@@ -33,7 +34,12 @@ const ProductInfo = ({ product, source }: ProductInfoProps) => {
   return (
     <div className="flex flex-col space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">${formatProductPrice(product.price)}</h3>
+        <h3 className="text-2xl font-bold">
+          {product.isZincApiProduct ? 
+            formatPrice(product.price, { detectCents: false }) : 
+            `$${formatProductPrice(product.price)}`
+          }
+        </h3>
         <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
         <span className="text-green-600 text-sm block mt-2">Free shipping</span>
       </div>

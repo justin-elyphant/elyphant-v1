@@ -26,3 +26,6 @@ export {
   isProductRelevantToSearch, 
   filterProductsByRelevance 
 } from './search/productRelevance';
+export { 
+  searchMultipleInterests 
+} from './search/multiInterestSearch';

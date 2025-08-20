@@ -49,12 +49,18 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       try {
         console.log('🔍 Fetching wishlist items for profile:', profile.id);
         
-        // Get all wishlists for this user
-        const { data: wishlists, error: wishlistError } = await supabase
+        // Get wishlists for this user (all for own profile, public only for others)
+        let wishlistQuery = supabase
           .from('wishlists')
           .select('id, title')
-          .eq('user_id', profile.id)
-          .eq('is_public', true);
+          .eq('user_id', profile.id);
+        
+        // Only filter by public if viewing someone else's profile
+        if (!isOwnProfile) {
+          wishlistQuery = wishlistQuery.eq('is_public', true);
+        }
+        
+        const { data: wishlists, error: wishlistError } = await wishlistQuery;
 
         if (wishlistError) {
           console.error('Error fetching wishlists:', wishlistError);

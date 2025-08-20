@@ -141,8 +141,6 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         canConnect={false}
         canMessage={false}
         isAnonymousUser={false}
-        secondaryContent={secondaryContent}
-        secondaryTitle="Profile Management"
       />
     </div>
   );

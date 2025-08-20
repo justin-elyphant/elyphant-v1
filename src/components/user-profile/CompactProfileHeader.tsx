@@ -2,7 +2,7 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users } from "lucide-react";
+import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users, Settings } from "lucide-react";
 import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
@@ -85,15 +85,26 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   const renderActionButtons = () => {
     if (isCurrentUser) {
       return (
-        <Button
-          onClick={onShare}
-          variant="outline"
-          size="sm"
-          className="bg-white/10 border-white text-white hover:bg-white/20"
-        >
-          <Share2 className="h-4 w-4 mr-2" />
-          Share
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => navigateInIframe('/settings')}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white text-white hover:bg-white/20"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+          <Button
+            onClick={onShare}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white text-white hover:bg-white/20"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
       );
     }
 

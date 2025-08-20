@@ -49,6 +49,17 @@ const GiftSuggestionsPreview = ({
     console.log('🎯 wishlistItems keys:', wishlistItems ? Object.keys(wishlistItems) : 'null');
     console.log('🎯 wishlistItems structure:', JSON.stringify(wishlistItems, null, 2));
     
+    // Add analysis of the wishlist structure
+    if (Array.isArray(wishlistItems)) {
+      console.log('🎯 Wishlist analysis:', wishlistItems.map((w, i) => ({
+        index: i,
+        title: w?.title,
+        hasItems: !!(w?.items && Array.isArray(w.items)),
+        itemCount: w?.items?.length || 0,
+        itemStructure: w?.items?.[0] ? Object.keys(w.items[0]) : []
+      })));
+    }
+    
     // Handle different data structures - could be array or object
     const itemsToProcess = Array.isArray(wishlistItems) ? wishlistItems : 
                           (wishlistItems && typeof wishlistItems === 'object' ? Object.values(wishlistItems) : []);

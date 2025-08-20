@@ -32,6 +32,29 @@ const OverviewTabContent: React.FC<OverviewTabContentProps> = ({ profile, isOwnP
     firstItem: profile.wishlists?.[0] || null
   });
 
+  // Enhanced debugging for wishlist items structure
+  console.log('🔍 OverviewTabContent - Enhanced wishlist debugging:', {
+    profileName: profile.name,
+    profileId: profile.id,
+    hasWishlists: !!profile.wishlists,
+    wishlistsStructure: profile.wishlists,
+    wishlistAnalysis: Array.isArray(profile.wishlists) ? profile.wishlists.map((w, i) => ({
+      index: i,
+      title: w?.title,
+      id: w?.id,
+      hasItems: !!(w?.items && Array.isArray(w.items)),
+      itemCount: w?.items?.length || 0,
+      sampleItem: w?.items?.[0] || null,
+      itemKeys: w?.items?.[0] ? Object.keys(w.items[0]) : []
+    })) : 'Not an array'
+  });
+
+  // Show immediate alert for debugging
+  if (profile.wishlists && Array.isArray(profile.wishlists) && profile.wishlists.length > 0) {
+    const itemCount = profile.wishlists.reduce((total, w) => total + (w?.items?.length || 0), 0);
+    console.log(`🚨 WISHLIST DEBUG ALERT: ${profile.name} has ${profile.wishlists.length} wishlists with ${itemCount} total items`);
+  }
+
   return (
     <div className="grid gap-4">
       <Card>

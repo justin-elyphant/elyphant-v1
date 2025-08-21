@@ -160,50 +160,6 @@ const WishlistCreationCTA = () => {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {user ? (
-            <>
-              <Button 
-                size="lg" 
-                className="gap-2"
-                onClick={() => window.scrollTo({ top: window.scrollY + 400, behavior: 'smooth' })}
-              >
-                <Heart className="h-4 w-4" />
-                Add to My Wishlist
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="gap-2"
-                onClick={handleViewWishlists}
-              >
-                View My Wishlists
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                size="lg" 
-                className="gap-2"
-                onClick={handleSignUpClick}
-              >
-                <Heart className="h-4 w-4" />
-                Sign Up to Create Wishlist
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="gap-2"
-                onClick={handleSignUpClick}
-              >
-                Learn More
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-
         {user && wishlists.length > 0 && (
           <div className="text-sm text-muted-foreground">
             You have {wishlists.length} wishlist{wishlists.length !== 1 ? 's' : ''} with{' '}
@@ -304,6 +260,65 @@ const WishlistCreationCTA = () => {
           </>
         )}
 
+      </div>
+
+      {/* CTA Section - Below Products */}
+      <div className="text-center mt-12">
+        <div className="space-y-4 mb-6">
+          <h3 className="text-xl md:text-2xl font-semibold">
+            Ready to start your wishlist?
+          </h3>
+          <p className="text-muted-foreground">
+            {user 
+              ? "Add these products to your wishlist and share with friends and family" 
+              : "Sign up to create wishlists and share them with friends and family"
+            }
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {user ? (
+            <>
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={() => window.scrollTo({ top: window.scrollY - 400, behavior: 'smooth' })}
+              >
+                <Heart className="h-4 w-4" />
+                Add to My Wishlist
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleViewWishlists}
+              >
+                View My Wishlists
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={handleSignUpClick}
+              >
+                <Heart className="h-4 w-4" />
+                Sign Up to Create Wishlist
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleSignUpClick}
+              >
+                Learn More
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <SignUpDialog 

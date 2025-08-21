@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import Hero from "./sections/hero/Hero";
-import GiftCategoriesCarousel from "./sections/GiftCategoriesCarousel";
+import GiftCategoriesGrid from "./sections/GiftCategoriesGrid";
 import FeaturedCategories from "./sections/FeaturedCategories";
 import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
@@ -70,8 +70,10 @@ const HomeContent = () => {
       {/* Hero section - maintains its own layout */}
       <Hero />
       
-      {/* Bleed-first sections with no external container constraints */}
-      <GiftCategoriesCarousel />
+      {/* Category grid section */}
+      <GiftCategoriesGrid />
+      
+      {/* Product discovery and wishlist CTA section */}
       <WishlistCreationCTA />
       
       {/* Traditional sections with container - will be refactored later */}

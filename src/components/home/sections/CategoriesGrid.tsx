@@ -4,14 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PersonType {
   id: string;
@@ -23,7 +15,7 @@ interface PersonType {
 
 const PersonTypeCarousel = () => {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  
   
   const personTypes: PersonType[] = [
     {
@@ -95,59 +87,47 @@ const PersonTypeCarousel = () => {
         </div>
       </div>
 
-      {/* True full-bleed carousel */}
-      <div className="h-full pt-40 md:pt-48 lg:pt-52">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full h-full swipe-container will-change-scroll"
-        >
-          <CarouselContent className="h-full">
-            {personTypes.map((personType) => (
-              <CarouselItem key={personType.id} className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 swipe-item">
-                <div
-                  className="group relative overflow-hidden bg-background cursor-pointer h-80 md:h-96 lg:h-[500px] touch-target-48 touch-manipulation tap-feedback rounded-2xl"
-                  onClick={() => handlePersonTypeClick(personType)}
-                >
-                  {/* Image Container - Full height of carousel */}
-                  <div className="relative h-full overflow-hidden">
-                    <img
-                      src={personType.image}
-                      alt={personType.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 gpu-accelerated"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                    
-                    {/* Overlay Content - positioned at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10 text-white">
-                      <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
-                        {personType.title}
-                      </h3>
-                      <p className="text-base md:text-lg text-white/90 mb-4 md:mb-6 leading-relaxed">
-                        {personType.description}
-                      </p>
-                      <Button
-                        variant="secondary"
-                        size="lg"
-                        className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-base md:text-lg px-6 py-3"
-                      >
-                        Shop Now
-                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
-                      </Button>
-                    </div>
-                  </div>
+      {/* Grid layout with container padding */}
+      <div className="container mx-auto px-4 md:px-6 pt-40 md:pt-48 lg:pt-52 pb-8 md:pb-12">
+        {/* Grid layout for mobile-first approach */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          {personTypes.map((personType) => (
+            <div
+              key={personType.id}
+              className="group relative overflow-hidden bg-background cursor-pointer h-80 md:h-96 lg:h-[400px] touch-target-48 touch-manipulation tap-feedback rounded-2xl"
+              onClick={() => handlePersonTypeClick(personType)}
+            >
+              {/* Image Container - Full height */}
+              <div className="relative h-full overflow-hidden">
+                <img
+                  src={personType.image}
+                  alt={personType.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 gpu-accelerated"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                
+                {/* Overlay Content - positioned at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 lg:p-8 text-white">
+                  <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3">
+                    {personType.title}
+                  </h3>
+                  <p className="text-sm md:text-base text-white/90 mb-3 md:mb-4 leading-relaxed">
+                    {personType.description}
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-sm md:text-base px-4 py-2"
+                  >
+                    Shop Now
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                  </Button>
                 </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          
-          {/* Navigation arrows - positioned outside content area */}
-          <CarouselPrevious className="hidden md:flex left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-background/90 z-30 w-12 h-12" />
-          <CarouselNext className="hidden md:flex right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm shadow-lg border border-border hover:bg-background/90 z-30 w-12 h-12" />
-        </Carousel>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </FullBleedSection>
   );

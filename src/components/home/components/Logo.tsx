@@ -25,15 +25,12 @@ const Logo = () => {
   };
 
   return (
-    <div onClick={handleLogoClick} className="cursor-pointer flex items-center">
+    <div onClick={handleLogoClick} className="cursor-pointer">
       <img 
-        src="/lovable-uploads/f2de31b2-3028-48b8-b4ce-22ed58bbcf81.png" 
+        src="/lovable-uploads/12c8902c-9c47-4b7f-8861-6cfd13ec628b.png" 
         alt="Elyphant" 
-        className="h-12 w-12 mr-3" 
+        className="h-12 w-auto" 
       />
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
-        Elyphant
-      </h1>
     </div>
   );
 };

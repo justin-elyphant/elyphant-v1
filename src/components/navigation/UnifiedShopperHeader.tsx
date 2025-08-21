@@ -130,10 +130,10 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
             </div>
           </div>
 
-          {/* Mobile Search Bar - Clean design */}
+          {/* Mobile Search Bar - Optimized for full text visibility */}
           {config.searchEnabled && (
             <div className="md:hidden bg-surface/30 border-t border-border/30 py-2">
-              <div className="px-4">
+              <div className="px-2">
                 <AIEnhancedSearchBar mobile />
               </div>
             </div>

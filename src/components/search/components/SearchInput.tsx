@@ -67,22 +67,24 @@ const SearchInput: React.FC<SearchInputProps> = ({
       <div className={`relative flex-1 flex items-center transition-all duration-300 ${
         isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
       }`}>
-        {/* AI Mode Toggle */}
-        <div className="absolute left-3 flex items-center gap-2 z-10">
-          <Search className={`h-4 w-4 transition-colors duration-200 ${
-            isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-          }`} />
+        {/* AI Mode Toggle - Always visible on mobile and desktop */}
+        <div className="absolute left-2 flex items-center gap-1.5 z-10">
+          <Search className={`transition-colors duration-200 ${
+            mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
+          } ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
           <IOSSwitch
             size="sm"
             checked={isNicoleMode}
             onCheckedChange={handleModeToggle}
-            className="touch-manipulation"
+            className={`touch-manipulation ${mobile ? 'scale-90' : ''}`}
           />
-          <Bot className={`h-4 w-4 transition-colors duration-200 ${
-            isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-          }`} />
+          <Bot className={`transition-colors duration-200 ${
+            mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
+          } ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
           {isNicoleMode && (
-            <Sparkles className="h-3 w-3 text-purple-500 animate-pulse" />
+            <Sparkles className={`text-purple-500 animate-pulse ${
+              mobile ? 'h-2.5 w-2.5' : 'h-3 w-3'
+            }`} />
           )}
         </div>
         
@@ -90,9 +92,11 @@ const SearchInput: React.FC<SearchInputProps> = ({
           ref={inputRef}
           type="text"
           placeholder={placeholderText}
-          className={`pl-32 pr-32 transition-all duration-300 ${
-            mobile ? "text-base py-3 h-12" : ""
-          } rounded-full border-gray-300 ${
+          className={`transition-all duration-300 rounded-full border-gray-300 ${
+            mobile 
+              ? "text-base py-3 h-12 pl-24 pr-12" 
+              : "pl-32 pr-32"
+          } ${
             isNicoleMode 
               ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
               : 'focus:border-blue-500'
@@ -103,14 +107,16 @@ const SearchInput: React.FC<SearchInputProps> = ({
           autoComplete="off"
         />
 
-        {/* Clear Button */}
+        {/* Clear Button - Optimized for mobile */}
         {query && (
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={handleClearClick}
-            className="absolute right-16 h-6 w-6 p-0 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            className={`absolute h-6 w-6 p-0 rounded-full hover:bg-gray-100 transition-colors duration-200 ${
+              mobile ? 'right-10' : 'right-16'
+            }`}
           >
             <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
           </Button>

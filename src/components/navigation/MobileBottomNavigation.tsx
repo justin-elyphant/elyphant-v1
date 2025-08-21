@@ -56,7 +56,7 @@ const MobileBottomNavigation: React.FC = () => {
       id: "wishlists",
       label: "Wishlist",
       icon: <Heart className="h-5 w-5" />,
-      href: "/my-wishlists",
+      href: "/wishlists",
       requiresAuth: true,
     },
     {

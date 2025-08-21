@@ -152,8 +152,8 @@ function AppContent() {
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/auth" element={<Auth />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />

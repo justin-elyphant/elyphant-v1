@@ -127,7 +127,6 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
             <div className="md:hidden flex items-center gap-3 ml-auto">
               {user && <UserButton />}
               {config.cartEnabled && <OptimizedShoppingCartButton />}
-              {!user && <AuthButtons />}
             </div>
           </div>
 

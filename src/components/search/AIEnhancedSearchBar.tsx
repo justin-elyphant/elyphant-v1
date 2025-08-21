@@ -463,20 +463,20 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? `text-base py-3 h-12 rounded-lg ${
-                    inputFocused ? 'pl-12 pr-16' : 'pl-32 pr-16'
-                  }` 
+                ? `text-base py-3 h-12 rounded-xl ${
+                    inputFocused ? 'pl-12 pr-20' : 'pl-32 pr-20'
+                  } shadow-sm` 
                 : "h-12 text-base pl-32 pr-32"
             } border-2 ${
               isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
-                : 'border-border focus:border-primary'
+                : mobile ? 'border-border/60 focus:border-primary bg-white' : 'border-border focus:border-primary'
             }`}
           />
           
           <div className="absolute right-2 flex items-center space-x-1">
             {/* Voice Input Button - Mobile only when voice is supported */}
-            {isMobile && isVoiceSupported && (
+            {isMobile && isVoiceSupported && !query && (
               <VoiceInputButton
                 isListening={isListening}
                 onVoiceInput={handleVoiceInput}
@@ -485,7 +485,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             )}
             
             {/* Clear Button */}
-            {query && (
+            {query && !isMobile && (
               <Button
                 type="button"
                 variant="ghost"
@@ -502,7 +502,32 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
               </Button>
             )}
             
-            {/* Search/Ask Button - Hidden on mobile */}
+            {/* Mobile Search Button - Modern prominent design */}
+            {isMobile && (
+              <Button 
+                type="submit" 
+                size="sm" 
+                className={`transition-all duration-300 h-8 px-4 rounded-lg font-medium shadow-sm ${
+                  isNicoleMode
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                }`}
+              >
+                {isNicoleMode ? (
+                  <>
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Ask
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-3 w-3 mr-1" />
+                    Search
+                  </>
+                )}
+              </Button>
+            )}
+            
+            {/* Desktop Search Button */}
             {!isMobile && (
               <Button 
                 type="submit" 

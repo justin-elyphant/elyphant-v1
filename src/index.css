@@ -32,6 +32,8 @@
   --surface-secondary: 210 40% 98%;
   --surface-elevated: 0 0% 100%;
   --surface-sunken: 210 40% 95%;
+  --surface-subtle: 210 40% 97%;
+  --border-subtle: 214.3 31.8% 95%;
   
   /* Typography Scale */
   --text-xs: 0.75rem;    /* 12px */
@@ -461,6 +463,14 @@ body {
   .surface-sunken {
     background-color: hsl(var(--surface-sunken));
     border: 1px solid hsl(var(--border));
+  }
+  
+  .surface-subtle {
+    background-color: hsl(var(--surface-subtle));
+  }
+  
+  .border-subtle {
+    border-color: hsl(var(--border-subtle));
   }
 
   /* Unified Card System */

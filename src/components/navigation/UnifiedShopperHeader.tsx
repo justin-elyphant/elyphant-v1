@@ -66,17 +66,17 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
   // Mode-specific configurations
   const modeConfig = {
     main: {
-      height: "h-20",
+      height: "h-16 md:h-20", // Reduced mobile height
       searchEnabled: shouldShowSearch,
       cartEnabled: shouldShowCart,
     },
     minimal: {
-      height: "h-16",
+      height: "h-14 md:h-16", // Reduced mobile height
       searchEnabled: false,
       cartEnabled: false,
     },
     "marketplace-focused": {
-      height: "h-20",
+      height: "h-16 md:h-20", // Reduced mobile height
       searchEnabled: true,
       cartEnabled: shouldShowCart,
     },
@@ -106,7 +106,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
         <div className="container-header">
           <div className={cn("flex items-center", config.height)}>
             {/* Logo */}
-            <div className="flex-shrink-0 w-48">
+            <div className="flex-shrink-0 w-32 md:w-48">
               <Logo />
             </div>
 
@@ -123,16 +123,20 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
-            {/* Mobile Right Side - Simplified for bottom nav */}
-            <div className="md:hidden flex items-center gap-tight">
+            {/* Mobile Right Side - Clean minimal layout */}
+            <div className="md:hidden flex items-center gap-2 ml-auto">
+              {user && <UserButton />}
               {config.cartEnabled && <OptimizedShoppingCartButton />}
+              {!user && <AuthButtons />}
             </div>
           </div>
 
-          {/* Mobile Search Bar - Below header */}
+          {/* Mobile Search Bar - Modern full-width design */}
           {config.searchEnabled && (
-            <div className="md:hidden touch-padding-sm pt-2">
-              <AIEnhancedSearchBar mobile />
+            <div className="md:hidden surface-subtle border-t border-subtle py-3">
+              <div className="px-4">
+                <AIEnhancedSearchBar mobile />
+              </div>
             </div>
           )}
         </div>

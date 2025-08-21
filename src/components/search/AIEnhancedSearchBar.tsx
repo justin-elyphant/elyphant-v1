@@ -361,7 +361,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const placeholderText = isNicoleMode 
     ? (isMobile ? "Ask Nicole about gifts..." : "Ask Nicole anything about gifts...")
-    : (isMobile ? "Find gifts and friends" : "Search brands, trending products, friends, and more...");
+    : (isMobile ? "Find gifts, friends, and more..." : "Search brands, trending products, friends, and more...");
 
   // Click outside detection
   useEffect(() => {
@@ -453,7 +453,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-20 pr-8 rounded-lg border border-border/50 focus:border-primary bg-white' 
+                ? 'text-base py-3 h-11 pl-24 pr-8 rounded-lg border border-border/50 focus:border-primary bg-white' 
                 : "h-12 text-base pl-32 pr-32"
             } ${
               !mobile && isNicoleMode 

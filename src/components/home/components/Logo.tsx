@@ -29,7 +29,7 @@ const Logo = () => {
       <img 
         src="/lovable-uploads/12c8902c-9c47-4b7f-8861-6cfd13ec628b.png" 
         alt="Elyphant" 
-        className="h-20 w-auto" 
+        className="h-28 w-auto" 
       />
     </div>
   );

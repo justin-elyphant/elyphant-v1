@@ -453,7 +453,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-24 pr-14 rounded-lg border border-border/50 focus:border-primary bg-white' 
+                ? 'text-base py-3 h-11 pl-24 pr-4 rounded-lg border border-border/50 focus:border-primary bg-white' 
                 : "h-12 text-base pl-32 pr-32"
             } ${
               !mobile && isNicoleMode 
@@ -467,14 +467,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
           />
           
           <div className="absolute right-2 flex items-center space-x-1">
-            {/* Voice Input Button - Mobile only when voice is supported and no query */}
-            {mobile && isVoiceSupported && !query && (
-              <VoiceInputButton
-                isListening={isListening}
-                onVoiceInput={handleVoiceInput}
-                mobile={true}
-              />
-            )}
             
             {/* Clear Button */}
             {query && !isMobile && (

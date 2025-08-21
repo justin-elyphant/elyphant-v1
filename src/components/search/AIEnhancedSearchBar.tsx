@@ -419,9 +419,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         <div className={`relative flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
-          {/* Mode Toggle - Keep search icon visible on mobile for clicking */}
-          <div className={`absolute left-3 flex items-center gap-2 z-10 transition-opacity duration-200 ${
-            isMobile && inputFocused ? 'opacity-100' : 'opacity-100'
+          {/* Simplified Mobile Mode Toggle */}
+          <div className={`absolute left-3 flex items-center gap-2 z-10 ${
+            mobile ? 'hidden' : ''
           }`}>
             <button
               type="button"
@@ -437,21 +437,23 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                 isNicoleMode ? 'text-purple-500' : 'text-gray-400'
               }`} />
             </button>
-            {/* Hide mode toggle on mobile when focused to save space */}
-            {!(isMobile && inputFocused) && (
-              <>
-                <IOSSwitch
-                  size="sm"
-                  checked={isNicoleMode}
-                  onCheckedChange={handleModeToggle}
-                  className="touch-manipulation"
-                />
-                <Bot className={`h-4 w-4 transition-colors duration-200 ${
-                  isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-                }`} />
-              </>
-            )}
+            <IOSSwitch
+              size="sm"
+              checked={isNicoleMode}
+              onCheckedChange={handleModeToggle}
+              className="touch-manipulation"
+            />
+            <Bot className={`h-4 w-4 transition-colors duration-200 ${
+              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
+            }`} />
           </div>
+          
+          {/* Mobile Simple Search Icon */}
+          {mobile && (
+            <div className="absolute left-3 z-10">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
           
           <Input
             ref={inputRef}
@@ -463,20 +465,18 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? `text-base py-3 h-12 rounded-xl ${
-                    inputFocused ? 'pl-12 pr-20' : 'pl-32 pr-20'
-                  } shadow-sm` 
+                ? 'text-base py-3 h-11 pl-10 pr-16 rounded-lg border border-border/50 focus:border-primary bg-white' 
                 : "h-12 text-base pl-32 pr-32"
-            } border-2 ${
-              isNicoleMode 
+            } ${
+              !mobile && isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
-                : mobile ? 'border-border/60 focus:border-primary bg-white' : 'border-border focus:border-primary'
+                : !mobile ? 'border-border focus:border-primary' : ''
             }`}
           />
           
           <div className="absolute right-2 flex items-center space-x-1">
-            {/* Voice Input Button - Mobile only when voice is supported */}
-            {isMobile && isVoiceSupported && !query && (
+            {/* Voice Input Button - Mobile only when voice is supported and no query */}
+            {mobile && isVoiceSupported && !query && (
               <VoiceInputButton
                 isListening={isListening}
                 onVoiceInput={handleVoiceInput}

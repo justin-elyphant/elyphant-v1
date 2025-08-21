@@ -66,17 +66,17 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
   // Mode-specific configurations
   const modeConfig = {
     main: {
-      height: "h-16 md:h-20", // Reduced mobile height
+      height: "h-16 md:h-20", // Better mobile touch targets
       searchEnabled: shouldShowSearch,
       cartEnabled: shouldShowCart,
     },
     minimal: {
-      height: "h-14 md:h-16", // Reduced mobile height
+      height: "h-16 md:h-16", // Consistent height
       searchEnabled: false,
       cartEnabled: false,
     },
     "marketplace-focused": {
-      height: "h-16 md:h-20", // Reduced mobile height
+      height: "h-16 md:h-20", // Better mobile touch targets
       searchEnabled: true,
       cartEnabled: shouldShowCart,
     },
@@ -124,16 +124,16 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
             </div>
 
             {/* Mobile Right Side - Clean minimal layout */}
-            <div className="md:hidden flex items-center gap-2 ml-auto">
+            <div className="md:hidden flex items-center gap-3 ml-auto">
               {user && <UserButton />}
               {config.cartEnabled && <OptimizedShoppingCartButton />}
               {!user && <AuthButtons />}
             </div>
           </div>
 
-          {/* Mobile Search Bar - Modern full-width design */}
+          {/* Mobile Search Bar - Clean design */}
           {config.searchEnabled && (
-            <div className="md:hidden surface-subtle border-t border-subtle py-3">
+            <div className="md:hidden bg-surface/30 border-t border-border/30 py-2">
               <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>

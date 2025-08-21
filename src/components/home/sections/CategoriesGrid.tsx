@@ -83,18 +83,20 @@ const PersonTypeCarousel = () => {
       className="intersection-target"
       contentPadding={false}
     >
-      {/* Header positioned absolutely over the carousel */}
+      {/* Header with improved background for better visibility */}
       <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
-        <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight md:mb-space-standard">
-          Gifts for Every Lifestyle
-        </h2>
-        <p className="text-body-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Discover thoughtfully curated gifts tailored to different lifestyles and personalities
-        </p>
+        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-6 md:p-8 mx-auto max-w-4xl border border-border/20">
+          <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight">
+            Gifts for Every Lifestyle
+          </h2>
+          <p className="text-body-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Discover thoughtfully curated gifts tailored to different lifestyles and personalities
+          </p>
+        </div>
       </div>
 
       {/* True full-bleed carousel */}
-      <div className="h-full pt-32 md:pt-40 lg:pt-44">
+      <div className="h-full pt-40 md:pt-48 lg:pt-52">
         <Carousel
           opts={{
             align: "start",

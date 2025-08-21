@@ -475,11 +475,15 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             ) : (
               <button
                 onClick={handleAddToCartClick}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+                className={cn(
+                  "flex items-center justify-center min-h-[44px] min-w-[44px] bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm",
+                  isMobile ? "px-2 py-2" : "gap-1.5 px-4 py-2"
+                )}
+                aria-label="Add to cart"
                 title="Add to cart"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Add
+                {!isMobile && <span>Add</span>}
               </button>
             )}
           </div>

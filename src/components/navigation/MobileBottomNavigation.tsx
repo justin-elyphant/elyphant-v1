@@ -1,9 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, ShoppingBag, Heart, User } from "lucide-react";
+import { Home, Users, ShoppingBag, Heart, User, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
+import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface BottomNavTab {
@@ -19,6 +20,7 @@ const MobileBottomNavigation: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { getItemCount } = useCart();
+  const pendingConnectionsCount = usePendingConnectionsCount();
   
   const cartItemCount = getItemCount();
 
@@ -40,10 +42,11 @@ const MobileBottomNavigation: React.FC = () => {
       href: "/marketplace",
     },
     {
-      id: "search",
-      label: "Search",
-      icon: <Search className="h-5 w-5" />,
-      href: "/search",
+      id: "connections",
+      label: "Connections",
+      icon: <Users className="h-5 w-5" />,
+      href: "/connections",
+      badge: user && pendingConnectionsCount > 0 ? pendingConnectionsCount : undefined,
     }
   ];
 
@@ -66,11 +69,10 @@ const MobileBottomNavigation: React.FC = () => {
 
   const getGuestTabs = (): BottomNavTab[] => [
     {
-      id: "cart",
-      label: "Cart",
-      icon: <ShoppingBag className="h-5 w-5" />,
-      href: "/cart",
-      badge: cartItemCount > 0 ? cartItemCount : undefined,
+      id: "discover",
+      label: "Discover",
+      icon: <Compass className="h-5 w-5" />,
+      href: "/discover",
     },
     {
       id: "auth",

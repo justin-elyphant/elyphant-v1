@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, TrendingUp, ArrowRight } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -211,37 +212,96 @@ const WishlistCreationCTA = () => {
         )}
       </div>
 
-      {/* Product Grid */}
+      {/* Product Display - Mobile Carousel / Desktop Grid */}
       <div className="relative">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] bg-muted/50 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {products.slice(0, 12).map((product) => (
-              <div key={product.product_id || product.id} className="w-full relative">
-                {product.categoryBadge && (
-                  <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
-                    {product.categoryBadge}
-                  </div>
-                )}
-                <UnifiedProductCard
-                  cardType="gifting"
-                  product={product}
-                  isGifteeView={true}
-                  onToggleWishlist={() => handleProductWishlistClick(product)}
-                  onAddToCart={handleAddToCart}
-                  onClick={() => {
-                    // Optional: navigate to product detail
-                    console.log("Product clicked:", product);
-                  }}
-                />
+          <>
+            {/* Mobile Loading */}
+            <div className="block md:hidden">
+              <div className="flex gap-4 overflow-hidden px-4 -mx-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex-none w-[70vw] aspect-[3/4] bg-muted/50 rounded-lg animate-pulse" />
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+            
+            {/* Desktop Loading */}
+            <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="aspect-[3/4] bg-muted/50 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Mobile Carousel with Edge Bleeding */}
+            <div className="block md:hidden">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: false,
+                  dragFree: true
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-4 pl-4">
+                  {products.slice(0, 8).map((product) => (
+                    <CarouselItem key={product.product_id || product.id} className="basis-[70vw] pl-4">
+                      <div className="relative h-full">
+                        {product.categoryBadge && (
+                          <div className="absolute top-3 left-3 z-10 bg-primary/95 text-primary-foreground text-xs px-2.5 py-1.5 rounded-md font-medium shadow-sm">
+                            {product.categoryBadge}
+                          </div>
+                        )}
+                        <div className="h-full">
+                          <UnifiedProductCard
+                            cardType="gifting"
+                            product={product}
+                            isGifteeView={true}
+                            onToggleWishlist={() => handleProductWishlistClick(product)}
+                            onAddToCart={handleAddToCart}
+                            onClick={() => {
+                              console.log("Product clicked:", product);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+              
+              {/* Mobile scroll indicator */}
+              <div className="flex justify-center mt-4 gap-1">
+                {Array.from({ length: Math.min(8, products.length) }).map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop Grid */}
+            <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {products.slice(0, 12).map((product) => (
+                <div key={product.product_id || product.id} className="w-full relative">
+                  {product.categoryBadge && (
+                    <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
+                      {product.categoryBadge}
+                    </div>
+                  )}
+                  <UnifiedProductCard
+                    cardType="gifting"
+                    product={product}
+                    isGifteeView={true}
+                    onToggleWishlist={() => handleProductWishlistClick(product)}
+                    onAddToCart={handleAddToCart}
+                    onClick={() => {
+                      console.log("Product clicked:", product);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
       </div>

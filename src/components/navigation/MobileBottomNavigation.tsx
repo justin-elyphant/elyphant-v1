@@ -98,57 +98,59 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
-      <div className="flex items-center justify-around px-safe">
-        {tabs.map((tab) => {
-          const isActive = isTabActive(tab);
-          
-          return (
-            <Link
-              key={tab.id}
-              to={tab.href}
-              onClick={() => handleTabPress(tab)}
-              className={cn(
-                "flex flex-col items-center justify-center py-2 px-1 min-h-[60px] transition-all duration-200 touch-manipulation",
-                "touch-target-44 relative group"
-              )}
-            >
-              {/* Icon with badge */}
-              <div className="relative">
-                <div className={cn(
-                  "transition-all duration-200 transform",
-                  isActive 
-                    ? "text-primary scale-110" 
-                    : "text-muted-foreground group-active:scale-95"
-                )}>
-                  {tab.icon}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-t border-border">
+      <div className="safe-area-bottom">
+        <div className="flex items-center justify-around px-safe py-1">
+          {tabs.map((tab) => {
+            const isActive = isTabActive(tab);
+            
+            return (
+              <Link
+                key={tab.id}
+                to={tab.href}
+                onClick={() => handleTabPress(tab)}
+                className={cn(
+                  "flex flex-col items-center justify-center py-2 px-1 min-h-[60px] transition-all duration-200 touch-manipulation",
+                  "touch-target-44 relative group flex-1"
+                )}
+              >
+                {/* Icon with badge */}
+                <div className="relative">
+                  <div className={cn(
+                    "transition-all duration-200 transform",
+                    isActive 
+                      ? "text-primary scale-110" 
+                      : "text-muted-foreground group-active:scale-95"
+                  )}>
+                    {tab.icon}
+                  </div>
+                  
+                  {/* Badge for cart or notifications */}
+                  {tab.badge && tab.badge > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {tab.badge > 99 ? "99+" : tab.badge}
+                    </div>
+                  )}
                 </div>
                 
-                {/* Badge for cart or notifications */}
-                {tab.badge && tab.badge > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {tab.badge > 99 ? "99+" : tab.badge}
-                  </div>
+                {/* Label */}
+                <span className={cn(
+                  "text-xs font-medium mt-1 transition-colors duration-200",
+                  isActive 
+                    ? "text-primary" 
+                    : "text-muted-foreground"
+                )}>
+                  {tab.label}
+                </span>
+                
+                {/* Active indicator */}
+                {isActive && (
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
                 )}
-              </div>
-              
-              {/* Label */}
-              <span className={cn(
-                "text-xs font-medium mt-1 transition-colors duration-200",
-                isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground"
-              )}>
-                {tab.label}
-              </span>
-              
-              {/* Active indicator */}
-              {isActive && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-              )}
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

@@ -15,6 +15,10 @@ import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 // Immediate load for critical pages
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import MobileBottomNavigation from "./components/navigation/MobileBottomNavigation";
+
+// Lazy load non-critical pages
+const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 // Lazy load non-critical pages
 const Cart = lazy(() => import("./pages/Cart"));
@@ -131,6 +135,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Import at top level */}
+      <MobileBottomNavigation />
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -145,6 +151,7 @@ function AppContent() {
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/auth" element={<Auth />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />

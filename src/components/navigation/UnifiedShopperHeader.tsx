@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import Logo from "@/components/home/components/Logo";
 import AuthButtons from "@/components/home/components/AuthButtons";
 import UserButton from "@/components/auth/UserButton";
-import MobileBottomNavigation from "@/components/navigation/MobileBottomNavigation";
+// Removed MobileBottomNavigation import - will be rendered at app level
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 // Direct imports to avoid dynamic import issues
@@ -137,8 +137,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
           )}
         </div>
 
-        {/* iOS-style Bottom Navigation */}
-        <MobileBottomNavigation />
+        {/* Bottom navigation removed from header - will be rendered at app level */}
       </nav>
     </header>
   );

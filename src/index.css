@@ -141,6 +141,27 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .safe-area-bottom {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .px-safe {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  /* iOS-style touch targets */
+  .touch-target-44 {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* iOS-style backdrop blur for bottom nav */
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
   .mobile-grid-optimized {
     touch-action: manipulation;
   }

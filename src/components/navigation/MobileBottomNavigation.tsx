@@ -1,0 +1,157 @@
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Home, Search, ShoppingBag, Heart, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth";
+import { useCart } from "@/contexts/CartContext";
+import { triggerHapticFeedback } from "@/utils/haptics";
+
+interface BottomNavTab {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  href: string;
+  badge?: number;
+  requiresAuth?: boolean;
+}
+
+const MobileBottomNavigation: React.FC = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+  const { getItemCount } = useCart();
+  
+  const cartItemCount = getItemCount();
+
+  const handleTabPress = (tab: BottomNavTab) => {
+    triggerHapticFeedback('selection');
+  };
+
+  const getBaseTabs = (): BottomNavTab[] => [
+    {
+      id: "home",
+      label: "Home",
+      icon: <Home className="h-5 w-5" />,
+      href: "/",
+    },
+    {
+      id: "marketplace",
+      label: "Shop",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      href: "/marketplace",
+    },
+    {
+      id: "search",
+      label: "Search",
+      icon: <Search className="h-5 w-5" />,
+      href: "/search",
+    }
+  ];
+
+  const getAuthenticatedTabs = (): BottomNavTab[] => [
+    {
+      id: "wishlists",
+      label: "Wishlist",
+      icon: <Heart className="h-5 w-5" />,
+      href: "/my-wishlists",
+      requiresAuth: true,
+    },
+    {
+      id: "account",
+      label: "Account",
+      icon: <User className="h-5 w-5" />,
+      href: "/profile",
+      requiresAuth: true,
+    }
+  ];
+
+  const getGuestTabs = (): BottomNavTab[] => [
+    {
+      id: "cart",
+      label: "Cart",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      href: "/cart",
+      badge: cartItemCount > 0 ? cartItemCount : undefined,
+    },
+    {
+      id: "auth",
+      label: "Sign In",
+      icon: <User className="h-5 w-5" />,
+      href: "/auth",
+    }
+  ];
+
+  const tabs = [
+    ...getBaseTabs(),
+    ...(user ? getAuthenticatedTabs() : getGuestTabs())
+  ];
+
+  const isTabActive = (tab: BottomNavTab): boolean => {
+    if (tab.href === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(tab.href);
+  };
+
+  // Don't show on auth pages to avoid clutter
+  if (location.pathname === "/auth" || location.pathname === "/reset-password") {
+    return null;
+  }
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
+      <div className="flex items-center justify-around px-safe">
+        {tabs.map((tab) => {
+          const isActive = isTabActive(tab);
+          
+          return (
+            <Link
+              key={tab.id}
+              to={tab.href}
+              onClick={() => handleTabPress(tab)}
+              className={cn(
+                "flex flex-col items-center justify-center py-2 px-1 min-h-[60px] transition-all duration-200 touch-manipulation",
+                "touch-target-44 relative group"
+              )}
+            >
+              {/* Icon with badge */}
+              <div className="relative">
+                <div className={cn(
+                  "transition-all duration-200 transform",
+                  isActive 
+                    ? "text-primary scale-110" 
+                    : "text-muted-foreground group-active:scale-95"
+                )}>
+                  {tab.icon}
+                </div>
+                
+                {/* Badge for cart or notifications */}
+                {tab.badge && tab.badge > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {tab.badge > 99 ? "99+" : tab.badge}
+                  </div>
+                )}
+              </div>
+              
+              {/* Label */}
+              <span className={cn(
+                "text-xs font-medium mt-1 transition-colors duration-200",
+                isActive 
+                  ? "text-primary" 
+                  : "text-muted-foreground"
+              )}>
+                {tab.label}
+              </span>
+              
+              {/* Active indicator */}
+              {isActive && (
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
+export default MobileBottomNavigation;

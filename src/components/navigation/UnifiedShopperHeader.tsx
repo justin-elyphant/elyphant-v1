@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import Logo from "@/components/home/components/Logo";
 import AuthButtons from "@/components/home/components/AuthButtons";
 import UserButton from "@/components/auth/UserButton";
-import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
+import MobileBottomNavigation from "@/components/navigation/MobileBottomNavigation";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 // Direct imports to avoid dynamic import issues
@@ -30,7 +30,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
   showCart,
 }) => {
   const authContext = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Remove mobile menu state as we're using bottom navigation
   const location = useLocation();
 
   // Handle case where AuthProvider context is not yet available
@@ -123,21 +123,9 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
-            {/* Mobile Right Side */}
+            {/* Mobile Right Side - Simplified for bottom nav */}
             <div className="md:hidden flex items-center gap-tight">
               {config.cartEnabled && <OptimizedShoppingCartButton />}
-              <Button
-                variant="ghost"
-                size="touch"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="touch-target-44"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </Button>
             </div>
           </div>
 
@@ -149,15 +137,8 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
           )}
         </div>
 
-        {/* Clean Mobile Menu */}
-        <CleanMobileNavMenu
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          onSignOut={signOut}
-          isAuthenticated={!!user}
-          marketplaceItems={marketplaceItems}
-          profileItems={profileItems}
-        />
+        {/* iOS-style Bottom Navigation */}
+        <MobileBottomNavigation />
       </nav>
     </header>
   );

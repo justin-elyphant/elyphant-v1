@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import ElyphantLogo from "@/components/ui/ElyphantLogo";
 
 const Logo = () => {
   const navigate = useNavigate();
@@ -27,7 +26,11 @@ const Logo = () => {
 
   return (
     <div onClick={handleLogoClick} className="cursor-pointer">
-      <ElyphantLogo size="lg" />
+      <img 
+        src="/lovable-uploads/12c8902c-9c47-4b7f-8861-6cfd13ec628b.png" 
+        alt="Elyphant" 
+        className="h-28 w-auto" 
+      />
     </div>
   );
 };

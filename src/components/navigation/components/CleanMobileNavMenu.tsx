@@ -1,5 +1,6 @@
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -50,7 +51,7 @@ const CleanMobileNavMenu = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm md:hidden animate-fade-in" onClick={onClose}>
       <div 
         className="fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-background shadow-2xl overflow-y-auto animate-slide-in-right"
@@ -382,7 +383,8 @@ const CleanMobileNavMenu = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

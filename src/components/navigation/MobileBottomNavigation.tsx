@@ -40,17 +40,18 @@ const MobileBottomNavigation: React.FC = () => {
       label: "Shop",
       icon: <ShoppingBag className="h-5 w-5" />,
       href: "/marketplace",
-    },
+    }
+  ];
+
+  const getAuthenticatedTabs = (): BottomNavTab[] => [
     {
       id: "connections",
       label: "Connections",
       icon: <Users className="h-5 w-5" />,
       href: "/connections",
-      badge: user && pendingConnectionsCount > 0 ? pendingConnectionsCount : undefined,
-    }
-  ];
-
-  const getAuthenticatedTabs = (): BottomNavTab[] => [
+      badge: pendingConnectionsCount > 0 ? pendingConnectionsCount : undefined,
+      requiresAuth: true,
+    },
     {
       id: "wishlists",
       label: "Wishlist",
@@ -60,7 +61,7 @@ const MobileBottomNavigation: React.FC = () => {
     },
     {
       id: "account",
-      label: "Account",
+      label: "Profile",
       icon: <User className="h-5 w-5" />,
       href: "/profile",
       requiresAuth: true,
@@ -73,6 +74,12 @@ const MobileBottomNavigation: React.FC = () => {
       label: "Discover",
       icon: <Compass className="h-5 w-5" />,
       href: "/discover",
+    },
+    {
+      id: "browse",
+      label: "Browse",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      href: "/marketplace?browse=all",
     },
     {
       id: "auth",

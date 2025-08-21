@@ -361,7 +361,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   const placeholderText = isNicoleMode 
     ? (isMobile ? "Ask Nicole about gifts..." : "Ask Nicole anything about gifts...")
-    : (isMobile ? "Find gifts..." : "Search brands, trending products, friends, and more...");
+    : (isMobile ? "Find gifts and friends" : "Search brands, trending products, friends, and more...");
 
   // Click outside detection
   useEffect(() => {
@@ -419,41 +419,29 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         <div className={`relative flex items-center transition-all duration-300 ${
           isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
         }`}>
-          {/* Simplified Mobile Mode Toggle */}
-          <div className={`absolute left-3 flex items-center gap-2 z-10 ${
-            mobile ? 'hidden' : ''
+          {/* Mobile and Desktop Mode Toggle */}
+          <div className={`absolute z-10 ${
+            mobile ? 'left-2 flex items-center gap-1.5' : 'left-3 flex items-center gap-2'
           }`}>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                if (isMobile) {
-                  handleSearch(e);
-                }
-              }}
-              className={`transition-colors duration-200 ${isMobile ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`}
-            >
-              <Search className={`h-4 w-4 transition-colors duration-200 ${
-                isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-              }`} />
-            </button>
+            <Search className={`transition-colors duration-200 ${
+              mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
+            } ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
             <IOSSwitch
               size="sm"
               checked={isNicoleMode}
               onCheckedChange={handleModeToggle}
-              className="touch-manipulation"
+              className={`touch-manipulation ${mobile ? 'scale-90' : ''}`}
             />
-            <Bot className={`h-4 w-4 transition-colors duration-200 ${
-              isNicoleMode ? 'text-purple-500' : 'text-gray-400'
-            }`} />
+            <Bot className={`transition-colors duration-200 ${
+              mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
+            } ${isNicoleMode ? 'text-purple-500' : 'text-gray-400'}`} />
+            {isNicoleMode && (
+              <Sparkles className={`text-purple-500 animate-pulse ${
+                mobile ? 'h-2.5 w-2.5' : 'h-3 w-3'
+              }`} />
+            )}
           </div>
           
-          {/* Mobile Simple Search Icon */}
-          {mobile && (
-            <div className="absolute left-3 z-10">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-          )}
           
           <Input
             ref={inputRef}
@@ -465,12 +453,16 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-10 pr-16 rounded-lg border border-border/50 focus:border-primary bg-white' 
+                ? 'text-base py-3 h-11 pl-20 pr-12 rounded-lg border border-border/50 focus:border-primary bg-white' 
                 : "h-12 text-base pl-32 pr-32"
             } ${
               !mobile && isNicoleMode 
                 ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
                 : !mobile ? 'border-border focus:border-primary' : ''
+            } ${
+              mobile && isNicoleMode 
+                ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
+                : ''
             }`}
           />
           

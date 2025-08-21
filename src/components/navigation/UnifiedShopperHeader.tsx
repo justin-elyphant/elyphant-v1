@@ -104,21 +104,21 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
     <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm", className)}>
       <nav className="bg-transparent">
         <div className="container-header">
-          <div className={cn("flex items-center justify-between", config.height)}>
+          <div className={cn("flex items-center", config.height)}>
             {/* Logo */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-48">
               <Logo />
             </div>
 
             {/* Desktop Search Bar */}
             {config.searchEnabled && (
-              <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-4">
+              <div className="hidden md:flex flex-1 mx-6">
                 <AIEnhancedSearchBar />
               </div>
             )}
 
             {/* Desktop Auth & Cart */}
-            <div className="hidden md:flex items-center gap-commerce">
+            <div className="hidden md:flex items-center gap-commerce flex-shrink-0">
               {config.cartEnabled && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>

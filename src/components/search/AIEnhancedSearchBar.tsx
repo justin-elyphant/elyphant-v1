@@ -453,7 +453,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onBlur={handleInputBlur}
             className={`transition-all duration-300 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-20 pr-12 rounded-lg border border-border/50 focus:border-primary bg-white' 
+                ? 'text-base py-3 h-11 pl-20 pr-8 rounded-lg border border-border/50 focus:border-primary bg-white' 
                 : "h-12 text-base pl-32 pr-32"
             } ${
               !mobile && isNicoleMode 
@@ -494,30 +494,6 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
               </Button>
             )}
             
-            {/* Mobile Search Button - Modern prominent design */}
-            {isMobile && (
-              <Button 
-                type="submit" 
-                size="sm" 
-                className={`transition-all duration-300 h-8 px-4 rounded-lg font-medium shadow-sm ${
-                  isNicoleMode
-                    ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0"
-                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                }`}
-              >
-                {isNicoleMode ? (
-                  <>
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Ask
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-3 w-3 mr-1" />
-                    Search
-                  </>
-                )}
-              </Button>
-            )}
             
             {/* Desktop Search Button */}
             {!isMobile && (

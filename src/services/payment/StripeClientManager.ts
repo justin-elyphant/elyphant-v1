@@ -39,12 +39,14 @@ class StripeClientManager {
     // Priority order for Stripe key detection - matching original client.ts pattern
     this.stripePublishableKey = 
       import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-      'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z';
+      'pk_test_51PxcV7JPK0Zkd1vcFKGP3fQRJ2M8vDYR3EpGxCFqPh69RQ1NlOvwjrnbZHxF2tYPMEjDY8x5Tqjwn5KhkKjOcU6L00CqJyxq1e';
 
     if (!this.stripePublishableKey) {
       console.warn('Stripe publishable key not found. Payment functionality will be limited.');
       return;
     }
+
+    console.log('Initializing Stripe with key:', this.stripePublishableKey.substring(0, 20) + '...');
 
     // Create single Stripe instance
     this.stripePromise = loadStripe(this.stripePublishableKey);

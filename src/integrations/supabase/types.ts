@@ -3654,6 +3654,10 @@ export type Database = {
         Args: { action_type: string }
         Returns: boolean
       }
+      is_business_admin: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
       is_group_admin: {
         Args: { group_id: string; user_id: string }
         Returns: boolean

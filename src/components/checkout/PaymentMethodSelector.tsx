@@ -144,12 +144,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           // Payment requires additional authentication
           const stripe = await stripeClientManager.getStripeInstance();
           if (stripe && data.client_secret) {
-            const { error, paymentIntent } = await stripe.confirmPayment({
-              clientSecret: data.client_secret,
-              confirmParams: {
-                return_url: `${window.location.origin}/payment-success`,
-              },
-            });
+            const { error, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
             
             if (error) {
               throw new Error(error.message);
@@ -164,12 +159,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           if (data.client_secret) {
             const stripe = await stripeClientManager.getStripeInstance();
             if (stripe) {
-              const { error, paymentIntent } = await stripe.confirmPayment({
-                clientSecret: data.client_secret,
-                confirmParams: {
-                  return_url: `${window.location.origin}/payment-success`,
-                },
-              });
+              const { error, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
               
               if (error) {
                 throw new Error(error.message);

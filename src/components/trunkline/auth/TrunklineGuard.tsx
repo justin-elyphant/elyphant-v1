@@ -95,11 +95,11 @@ export const TrunklineGuard: React.FC<TrunklineGuardProps> = ({ children }) => {
               you're in the wrong place!
             </p>
             <Button 
-              onClick={() => window.location.href = 'https://elyphant.com'}
+              onClick={() => window.location.href = 'https://elyphant.ai'}
               className="w-full"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Go to Elyphant.com
+              Go to Elyphant.ai
             </Button>
             <p className="text-xs text-slate-500 mt-4">
               Elyphant employees should use their @elyphant.com email to access Trunkline.
@@ -136,11 +136,11 @@ export const TrunklineGuard: React.FC<TrunklineGuardProps> = ({ children }) => {
               </Button>
               <Button 
                 variant="ghost"
-                onClick={() => window.location.href = 'https://elyphant.com'}
+                onClick={() => window.location.href = 'https://elyphant.ai'}
                 className="w-full"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Go to Elyphant.com
+                Go to Elyphant.ai
               </Button>
             </div>
           </CardContent>

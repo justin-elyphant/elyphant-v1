@@ -140,26 +140,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       // Handle different payment intent statuses
       if (data.status === 'succeeded') {
         onPaymentSuccess(data.payment_intent_id, selectedSavedMethod.stripe_payment_method_id);
-      } else if (data.status === 'requires_action') {
-        // Payment requires additional authentication
-        const stripe = await stripeClientManager.getStripeInstance();
-        if (stripe) {
-          const { error } = await stripe.confirmPayment({
-            clientSecret: data.client_secret,
-            confirmParams: {
-              return_url: `${window.location.origin}/payment-success`,
-            },
-          });
-          
-          if (error) {
-            throw new Error(error.message);
-          }
-        }
-      } else {
-        // For other statuses, use the client secret to confirm
-        if (data.client_secret) {
+        } else if (data.status === 'requires_action') {
+          // Payment requires additional authentication
           const stripe = await stripeClientManager.getStripeInstance();
-          if (stripe) {
+          if (stripe && data.client_secret) {
             const { error, paymentIntent } = await stripe.confirmPayment({
               clientSecret: data.client_secret,
               confirmParams: {
@@ -176,9 +160,29 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             }
           }
         } else {
-          throw new Error('Payment could not be processed');
+          // For other statuses, use the client secret to confirm
+          if (data.client_secret) {
+            const stripe = await stripeClientManager.getStripeInstance();
+            if (stripe) {
+              const { error, paymentIntent } = await stripe.confirmPayment({
+                clientSecret: data.client_secret,
+                confirmParams: {
+                  return_url: `${window.location.origin}/payment-success`,
+                },
+              });
+              
+              if (error) {
+                throw new Error(error.message);
+              }
+              
+              if (paymentIntent?.status === 'succeeded') {
+                onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
+              }
+            }
+          } else {
+            throw new Error('Payment could not be processed');
+          }
         }
-      }
     } catch (error: any) {
       console.error('Error processing existing payment method:', error);
       onPaymentError(error.message || 'Failed to process payment with saved card');

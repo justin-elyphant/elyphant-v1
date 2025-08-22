@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,8 +140,7 @@ const TrunklineLogin = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Password</label>
-                <Input 
-                  type="password" 
+                <PasswordInput 
                   placeholder="Enter your password"
                   className="w-full border-slate-300"
                   value={password}

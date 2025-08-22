@@ -43,6 +43,55 @@ import { DeliveryGroup } from "@/types/recipient";
 import { addressService } from "./addressService";
 import { FormAddress } from "@/utils/addressStandardization";
 
+/**
+ * UUID validation helper function
+ * Validates if a string is a proper UUID format
+ */
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+/**
+ * Converts recipient assignment values to database-compatible format
+ * Handles "self" assignments and validates UUIDs
+ */
+const sanitizeRecipientData = (connectionId: string | null | undefined, deliveryGroupId: string | null | undefined) => {
+  let sanitizedConnectionId = null;
+  let sanitizedDeliveryGroupId = null;
+  
+  // Handle connection ID
+  if (connectionId) {
+    if (connectionId === 'self') {
+      console.log('[ORDER SERVICE] Converting "self" connectionId to null for self-purchase');
+      sanitizedConnectionId = null;
+    } else if (isValidUUID(connectionId)) {
+      sanitizedConnectionId = connectionId;
+    } else {
+      console.warn('[ORDER SERVICE] Invalid UUID for connectionId, setting to null:', connectionId);
+      sanitizedConnectionId = null;
+    }
+  }
+  
+  // Handle delivery group ID
+  if (deliveryGroupId) {
+    if (deliveryGroupId === 'self') {
+      console.log('[ORDER SERVICE] Converting "self" deliveryGroupId to null for self-purchase');
+      sanitizedDeliveryGroupId = null;
+    } else if (isValidUUID(deliveryGroupId)) {
+      sanitizedDeliveryGroupId = deliveryGroupId;
+    } else {
+      console.warn('[ORDER SERVICE] Invalid UUID for deliveryGroupId, setting to null:', deliveryGroupId);
+      sanitizedDeliveryGroupId = null;
+    }
+  }
+  
+  return {
+    connectionId: sanitizedConnectionId,
+    deliveryGroupId: sanitizedDeliveryGroupId
+  };
+};
+
 // CRITICAL: Order creation data interface
 export interface CreateOrderData {
   cartItems: CartItem[];
@@ -180,12 +229,22 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
     const unitPrice = Number(item.product.price) || 0;
     const quantity = Number(item.quantity) || 1;
     
+    // CRITICAL: Sanitize recipient data to handle "self" assignments and validate UUIDs
+    const sanitizedRecipientData = sanitizeRecipientData(
+      recipientAssignment?.connectionId,
+      recipientAssignment?.deliveryGroupId
+    );
+    
     console.log('Creating order item:', {
       product_id: productId,
       product_name: productName,
       unit_price: unitPrice,
       quantity: quantity,
-      total_price: unitPrice * quantity
+      total_price: unitPrice * quantity,
+      original_connectionId: recipientAssignment?.connectionId,
+      sanitized_connectionId: sanitizedRecipientData.connectionId,
+      original_deliveryGroupId: recipientAssignment?.deliveryGroupId,
+      sanitized_deliveryGroupId: sanitizedRecipientData.deliveryGroupId
     });
     
     return {
@@ -197,8 +256,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       quantity: quantity,
       unit_price: unitPrice,
       total_price: unitPrice * quantity,
-      recipient_connection_id: recipientAssignment?.connectionId || null,
-      delivery_group_id: recipientAssignment?.deliveryGroupId || null,
+      recipient_connection_id: sanitizedRecipientData.connectionId,
+      delivery_group_id: sanitizedRecipientData.deliveryGroupId,
       recipient_gift_message: recipientAssignment?.giftMessage || null,
       scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
     };

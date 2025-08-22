@@ -3729,6 +3729,10 @@ export type Database = {
         Args: { note_order_id: string }
         Returns: boolean
       }
+      can_access_trunkline: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       can_access_wishlist: {
         Args: {
           privacy_level?: string
@@ -3878,6 +3882,10 @@ export type Database = {
       }
       is_business_admin: {
         Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_elyphant_domain: {
+        Args: { email_address: string }
         Returns: boolean
       }
       is_group_admin: {

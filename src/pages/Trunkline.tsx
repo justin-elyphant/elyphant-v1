@@ -1,27 +1,11 @@
 
 import React from "react";
-import { Routes, Route } from "react-router-dom";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TrunklineSidebar } from "@/components/trunkline/TrunklineSidebar";
 import TrunklineHeader from "@/components/trunkline/TrunklineHeader";
 import { TrunklineGuard } from "@/components/trunkline/auth/TrunklineGuard";
-import OverviewTab from "@/components/trunkline/dashboard/OverviewTab";
-import ReturnTrackingTab from "@/components/trunkline/dashboard/ReturnTrackingTab";
-import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
-import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab";
-import TrunklineSupportTab from "@/components/trunkline/TrunklineSupportTab";
-import TrunklineAmazonTab from "@/components/trunkline/TrunklineAmazonTab";
-import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
-import TrunklineZincDebuggerTab from "@/components/trunkline/TrunklineZincDebuggerTab";
-import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
-import BusinessPaymentMethodManager from "@/components/settings/BusinessPaymentMethodManager";
-import TrunklineAnalytics from "@/pages/trunkline/TrunklineAnalytics";
-import TrunklineMonitoring from "@/pages/trunkline/TrunklineMonitoring";
-import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
-import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
-import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
-import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
+import { TrunklineRouter } from "@/components/trunkline/TrunklineRouter";
 
 const Trunkline = () => {
   return (
@@ -33,24 +17,7 @@ const Trunkline = () => {
             <SidebarInset className="flex-1">
               <TrunklineHeader />
               <div className="p-6">
-                <Routes>
-                <Route path="/" element={<OverviewTab />} />
-                <Route path="/orders" element={<TrunklineOrdersTab />} />
-                <Route path="/customers" element={<TrunklineCustomersTab />} />
-                <Route path="/support" element={<TrunklineSupportTab />} />
-                <Route path="/returns" element={<ReturnTrackingTab />} />
-                <Route path="/amazon" element={<TrunklineAmazonTab />} />
-                <Route path="/business-payments" element={<BusinessPaymentMethodManager />} />
-                <Route path="/zinc" element={<TrunklineZincTab />} />
-                <Route path="/zinc-debugger" element={<TrunklineZincDebuggerTab />} />
-                <Route path="/vendors" element={<TrunklineVendorsTab />} />
-                <Route path="/analytics" element={<TrunklineAnalytics />} />
-                <Route path="/monitoring" element={<TrunklineMonitoring />} />
-                <Route path="/scaling" element={<TrunklineScaling />} />
-                <Route path="/production-hardening" element={<ProductionHardeningCenter />} />
-                <Route path="/communications/email-templates" element={<EmailTemplatesManager />} />
-                <Route path="/communications/email-analytics" element={<EmailAnalyticsDashboard />} />
-                </Routes>
+                <TrunklineRouter />
               </div>
             </SidebarInset>
           </div>

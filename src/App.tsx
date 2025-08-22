@@ -177,8 +177,23 @@ function AppContent() {
           <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
           <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
           
-          <Route path="/trunkline-login" element={<TrunklineLogin />} />
-          <Route path="/trunkline/*" element={<Trunkline />} />
+           <Route path="/trunkline-login" element={<TrunklineLogin />} />
+           <Route path="/trunkline" element={<Trunkline />} />
+           <Route path="/trunkline/orders" element={<Trunkline />} />
+           <Route path="/trunkline/customers" element={<Trunkline />} />
+           <Route path="/trunkline/support" element={<Trunkline />} />
+           <Route path="/trunkline/returns" element={<Trunkline />} />
+           <Route path="/trunkline/amazon" element={<Trunkline />} />
+           <Route path="/trunkline/business-payments" element={<Trunkline />} />
+           <Route path="/trunkline/zinc" element={<Trunkline />} />
+           <Route path="/trunkline/zinc-debugger" element={<Trunkline />} />
+           <Route path="/trunkline/vendors" element={<Trunkline />} />
+           <Route path="/trunkline/analytics" element={<Trunkline />} />
+           <Route path="/trunkline/monitoring" element={<Trunkline />} />
+           <Route path="/trunkline/scaling" element={<Trunkline />} />
+           <Route path="/trunkline/production-hardening" element={<Trunkline />} />
+           <Route path="/trunkline/communications/email-templates" element={<Trunkline />} />
+           <Route path="/trunkline/communications/email-analytics" element={<Trunkline />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />

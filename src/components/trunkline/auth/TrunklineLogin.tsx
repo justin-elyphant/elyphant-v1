@@ -32,6 +32,9 @@ const TrunklineLogin = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/trunkline`,
+          queryParams: {
+            hd: 'elyphant.com' // Restrict to elyphant.com domain
+          }
         }
       });
 

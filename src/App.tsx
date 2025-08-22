@@ -44,6 +44,7 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
+const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
 const NicoleAutoGiftingDashboard = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingDashboard"));
 
@@ -176,6 +177,7 @@ function AppContent() {
           <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
           <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
           
+          <Route path="/trunkline-login" element={<TrunklineLogin />} />
           <Route path="/trunkline/*" element={<Trunkline />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />

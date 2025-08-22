@@ -5,6 +5,7 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TrunklineSidebar } from "@/components/trunkline/TrunklineSidebar";
 import TrunklineHeader from "@/components/trunkline/TrunklineHeader";
+import { TrunklineGuard } from "@/components/trunkline/auth/TrunklineGuard";
 import OverviewTab from "@/components/trunkline/dashboard/OverviewTab";
 import ReturnTrackingTab from "@/components/trunkline/dashboard/ReturnTrackingTab";
 import TrunklineOrdersTab from "@/components/trunkline/TrunklineOrdersTab";
@@ -24,14 +25,15 @@ import EmailAnalyticsDashboard from "@/components/trunkline/communications/Email
 
 const Trunkline = () => {
   return (
-    <ProductProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <TrunklineSidebar />
-          <SidebarInset className="flex-1">
-            <TrunklineHeader />
-            <div className="p-6">
-              <Routes>
+    <TrunklineGuard>
+      <ProductProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            <TrunklineSidebar />
+            <SidebarInset className="flex-1">
+              <TrunklineHeader />
+              <div className="p-6">
+                <Routes>
                 <Route path="/" element={<OverviewTab />} />
                 <Route path="/orders" element={<TrunklineOrdersTab />} />
                 <Route path="/customers" element={<TrunklineCustomersTab />} />
@@ -48,12 +50,13 @@ const Trunkline = () => {
                 <Route path="/production-hardening" element={<ProductionHardeningCenter />} />
                 <Route path="/communications/email-templates" element={<EmailTemplatesManager />} />
                 <Route path="/communications/email-analytics" element={<EmailAnalyticsDashboard />} />
-              </Routes>
-            </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    </ProductProvider>
+                </Routes>
+              </div>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </ProductProvider>
+    </TrunklineGuard>
   );
 };
 

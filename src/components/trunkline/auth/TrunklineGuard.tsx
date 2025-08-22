@@ -17,38 +17,48 @@ export const TrunklineGuard: React.FC<TrunklineGuardProps> = ({ children }) => {
 
   useEffect(() => {
     const checkTrunklineAccess = async () => {
+      console.log('🔒 TrunklineGuard: Checking access...', { user: user?.email, isLoading });
+      
       if (isLoading) return;
       
       if (!user) {
+        console.log('🔒 TrunklineGuard: No user, redirecting to login');
         navigate('/trunkline-login');
         return;
       }
 
       try {
+        console.log('🔒 TrunklineGuard: User email:', user.email);
+        
         // Check if user has @elyphant.com domain
         if (!user.email?.endsWith('@elyphant.com')) {
+          console.log('🔒 TrunklineGuard: Invalid domain, should show redirect screen');
           setAccessStatus('invalid-domain');
           return;
         }
 
         // Check if user can access Trunkline via database function
+        console.log('🔒 TrunklineGuard: Checking database access for user:', user.id);
         const { data, error } = await supabase.rpc('can_access_trunkline', {
           user_uuid: user.id
         });
 
         if (error) {
-          console.error('Error checking Trunkline access:', error);
+          console.error('🔒 TrunklineGuard: Error checking Trunkline access:', error);
           setAccessStatus('denied');
           return;
         }
 
+        console.log('🔒 TrunklineGuard: Database access result:', data);
         if (data) {
+          console.log('🔒 TrunklineGuard: Access granted');
           setAccessStatus('allowed');
         } else {
+          console.log('🔒 TrunklineGuard: Access denied by database');
           setAccessStatus('denied');
         }
       } catch (error) {
-        console.error('Error in Trunkline access check:', error);
+        console.error('🔒 TrunklineGuard: Error in access check:', error);
         setAccessStatus('denied');
       }
     };

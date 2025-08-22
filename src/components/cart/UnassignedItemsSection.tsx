@@ -63,12 +63,17 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
 
         <div className="space-y-2">
           {unassignedItems.map((item) => (
-            <div key={item.product.product_id} className="flex items-center gap-3 p-2 bg-white rounded border">
-              <img 
-                src={item.product.image || "/placeholder.svg"} 
-                alt={item.product.name || item.product.title}
-                className="w-10 h-10 object-cover rounded bg-gray-100"
-              />
+            <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border">
+              <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                <img 
+                  src={item.product.image || "/placeholder.svg"} 
+                  alt={item.product.name || item.product.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
                   {item.product.name || item.product.title}

@@ -105,6 +105,7 @@ export interface CreateOrderData {
   shippingInfo: ShippingInfo;
   giftOptions: GiftOptions;
   paymentIntentId?: string;
+  stripeSessionId?: string; // Add this field
   deliveryGroups?: DeliveryGroup[];
   billingInfo?: {
     cardholderName: string;
@@ -204,6 +205,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       scheduled_delivery_date: orderData.giftOptions.scheduledDeliveryDate || null,
       is_surprise_gift: orderData.giftOptions.isSurpriseGift,
       stripe_payment_intent_id: orderData.paymentIntentId,
+      stripe_session_id: orderData.stripeSessionId, // Add this line
       status: 'pending',
       payment_status: 'pending',
       has_multiple_recipients: hasMultipleRecipients,

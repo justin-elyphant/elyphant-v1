@@ -863,6 +863,59 @@ export type Database = {
         }
         Relationships: []
       }
+      email_analytics: {
+        Row: {
+          bounced_at: string | null
+          clicked_at: string | null
+          created_at: string
+          delivery_status: string
+          id: string
+          opened_at: string | null
+          recipient_email: string
+          resend_message_id: string | null
+          sent_at: string
+          template_id: string | null
+          template_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          opened_at?: string | null
+          recipient_email: string
+          resend_message_id?: string | null
+          sent_at?: string
+          template_id?: string | null
+          template_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          opened_at?: string | null
+          recipient_email?: string
+          resend_message_id?: string | null
+          sent_at?: string
+          template_id?: string | null
+          template_type?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_analytics_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_approval_tokens: {
         Row: {
           approved_at: string | null
@@ -947,6 +1000,175 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_preferences: {
+        Row: {
+          created_at: string
+          email_type: string
+          frequency: string | null
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          error_message: string | null
+          id: string
+          max_attempts: number
+          recipient_email: string
+          recipient_name: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          template_variables: Json | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          recipient_email: string
+          recipient_name?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          template_variables?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          recipient_email?: string
+          recipient_name?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          template_variables?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_template_variables: {
+        Row: {
+          created_at: string
+          default_value: string | null
+          description: string | null
+          id: string
+          is_required: boolean
+          template_id: string | null
+          variable_name: string
+          variable_type: string
+        }
+        Insert: {
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          template_id?: string | null
+          variable_name: string
+          variable_type: string
+        }
+        Update: {
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          template_id?: string | null
+          variable_name?: string
+          variable_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_variables_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          html_template: string
+          id: string
+          is_active: boolean
+          name: string
+          subject_template: string
+          template_type: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_template: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject_template: string
+          template_type: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_template?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject_template?: string
+          template_type?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       funding_campaigns: {
         Row: {

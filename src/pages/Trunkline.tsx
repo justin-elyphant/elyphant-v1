@@ -19,6 +19,8 @@ import TrunklineAnalytics from "@/pages/trunkline/TrunklineAnalytics";
 import TrunklineMonitoring from "@/pages/trunkline/TrunklineMonitoring";
 import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
 import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
+import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
+import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
 
 const Trunkline = () => {
   return (
@@ -44,6 +46,8 @@ const Trunkline = () => {
                 <Route path="/monitoring" element={<TrunklineMonitoring />} />
                 <Route path="/scaling" element={<TrunklineScaling />} />
                 <Route path="/production-hardening" element={<ProductionHardeningCenter />} />
+                <Route path="/communications/email-templates" element={<EmailTemplatesManager />} />
+                <Route path="/communications/email-analytics" element={<EmailAnalyticsDashboard />} />
               </Routes>
             </div>
           </SidebarInset>

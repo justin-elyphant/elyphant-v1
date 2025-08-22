@@ -15,7 +15,8 @@ import {
   Activity,
   Monitor,
   TrendingUp,
-  TestTube
+  TestTube,
+  Mail
 } from "lucide-react";
 import {
   Sidebar,
@@ -64,6 +65,19 @@ const navigationItems = [
     url: "/trunkline/support",
     icon: MessageSquare,
     badge: "12",
+  },
+];
+
+const communicationItems = [
+  {
+    title: "Email Templates",
+    url: "/trunkline/communications/email-templates",
+    icon: Mail,
+  },
+  {
+    title: "Email Analytics",
+    url: "/trunkline/communications/email-analytics",
+    icon: BarChart3,
   },
 ];
 
@@ -196,6 +210,32 @@ export function TrunklineSidebar() {
                           )}
                         </>
                       )}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Communications</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {communicationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    className={isActive(item.url) ? "bg-slate-100 text-slate-900 font-medium" : ""}
+                  >
+                    <button
+                      onClick={() => navigate(item.url)}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{item.title}</span>}
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

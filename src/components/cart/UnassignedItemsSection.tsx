@@ -66,10 +66,16 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
             <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border">
               <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
                 <img 
-                  src={item.product.image || "/placeholder.svg"} 
+                  src={(() => {
+                    // Prioritize images array first, then fallback to single image property
+                    const imageUrl = (item.product.images?.length > 0 ? item.product.images[0] : item.product.image) || "/placeholder.svg";
+                    console.log(`[UNASSIGNED IMAGE] Product: ${item.product.title}, Image URL: ${imageUrl}`);
+                    return imageUrl;
+                  })()} 
                   alt={item.product.name || item.product.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
+                    console.log(`[UNASSIGNED IMAGE] Image failed to load: ${e.currentTarget.src}`);
                     e.currentTarget.src = "/placeholder.svg";
                   }}
                 />

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -19,11 +19,55 @@ import { toast } from "sonner";
 
 const TrunklineLogin = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Bypass auth for testing
-    navigate("/trunkline");
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    // Check if email is from elyphant.com domain
+    if (!email.toLowerCase().endsWith('@elyphant.com')) {
+      toast.error("Access restricted to @elyphant.com email addresses");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Sign in error:', error);
+        
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Please check your email and confirm your account');
+        } else {
+          toast.error('Failed to sign in. Please try again.');
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast.success('Signed in successfully');
+        // The TrunklineGuard will handle the access check and navigation
+      }
+    } catch (err) {
+      console.error('Sign in error:', err);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -88,6 +132,9 @@ const TrunklineLogin = () => {
                   type="email" 
                   placeholder="Enter your email"
                   className="w-full border-slate-300"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -96,13 +143,17 @@ const TrunklineLogin = () => {
                   type="password" 
                   placeholder="Enter your password"
                   className="w-full border-slate-300"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
               <Button 
                 type="submit" 
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isLoading}
               >
-                Sign In
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
           </CardContent>

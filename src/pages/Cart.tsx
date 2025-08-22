@@ -16,6 +16,7 @@ import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
 import MultiDestinationSummary from "@/components/cart/MultiDestinationSummary";
 import ItemGiftMessageSection from "@/components/cart/ItemGiftMessageSection";
 import RecipientPackagePreview from "@/components/cart/RecipientPackagePreview";
+import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -176,6 +177,7 @@ const Cart = () => {
 
   return (
     <SidebarLayout>
+      <ZincMetadataDebugger />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">

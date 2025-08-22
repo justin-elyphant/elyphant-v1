@@ -15,6 +15,7 @@ const PaymentSuccess = () => {
   const { clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(true);
   const [orderNumber, setOrderNumber] = useState<string>('');
+  const [processingStatus, setProcessingStatus] = useState<string>('Verifying payment...');
 
   useEffect(() => {
     const processPaymentSuccess = async () => {
@@ -27,6 +28,27 @@ const PaymentSuccess = () => {
       }
 
       try {
+        setProcessingStatus('Verifying payment...');
+        
+        // First check if we already processed this session
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id, order_number, status, payment_status, zinc_order_id')
+          .eq('stripe_session_id', sessionId)
+          .single();
+
+        if (existingOrder?.payment_status === 'succeeded') {
+          // Order already processed successfully
+          clearCart();
+          setOrderNumber(existingOrder.order_number || '');
+          setProcessingStatus('Order confirmed!');
+          toast.success('Payment successful! Your order has been confirmed.');
+          setIsProcessing(false);
+          return;
+        }
+
+        setProcessingStatus('Processing payment with Stripe...');
+        
         // Verify payment with Stripe and update order
         const { data, error } = await supabase.functions.invoke('verify-checkout-session', {
           body: { session_id: sessionId }
@@ -39,12 +61,14 @@ const PaymentSuccess = () => {
         if (data?.success) {
           clearCart();
           setOrderNumber(data.order_number || '');
-          toast.success('Payment successful! Your order has been confirmed.');
+          setProcessingStatus('Order confirmed!');
+          toast.success('Payment successful! Your order has been confirmed and is being processed.');
         } else {
           throw new Error('Payment verification failed');
         }
       } catch (error) {
         console.error('Payment verification error:', error);
+        setProcessingStatus('Error processing payment');
         toast.error('There was an issue verifying your payment. Please contact support.');
       } finally {
         setIsProcessing(false);
@@ -61,8 +85,8 @@ const PaymentSuccess = () => {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin mx-auto" />
-            <h2 className="text-xl font-semibold">Processing your payment...</h2>
-            <p className="text-muted-foreground">Please wait while we confirm your order.</p>
+            <h2 className="text-xl font-semibold">{processingStatus}</h2>
+            <p className="text-muted-foreground">Please wait while we confirm your order and process it with our fulfillment partner.</p>
           </div>
         </main>
         <Footer />

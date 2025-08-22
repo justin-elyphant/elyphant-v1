@@ -88,32 +88,54 @@ serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://your-domain.com';
     
     if (useExistingPaymentMethod && paymentMethodId && customer_id) {
-      // First, attach the payment method to the customer if not already attached
+      // Enhanced payment method handling with better error recovery
       try {
         const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
-        if (!paymentMethod.customer) {
-          await stripe.paymentMethods.attach(paymentMethodId, {
-            customer: customer_id,
-          });
-          console.log('🔗 Attached payment method to customer');
+        console.log('🔍 Retrieved payment method:', {
+          id: paymentMethod.id,
+          customer: paymentMethod.customer,
+          type: paymentMethod.type
+        });
+        
+        // Check if payment method belongs to a different customer
+        if (paymentMethod.customer && paymentMethod.customer !== customer_id) {
+          console.log('⚠️ Payment method belongs to different customer, creating new payment intent for manual attachment');
+          // Don't auto-attach, let frontend handle this case
+          paymentIntentData.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: 'never',
+          };
+        } else {
+          // Payment method is either unattached or belongs to correct customer
+          if (!paymentMethod.customer) {
+            await stripe.paymentMethods.attach(paymentMethodId, {
+              customer: customer_id,
+            });
+            console.log('🔗 Successfully attached payment method to customer');
+          }
+          
+          // Use existing payment method with confirmation
+          paymentIntentData.payment_method = paymentMethodId;
+          paymentIntentData.confirmation_method = 'manual';
+          paymentIntentData.confirm = true;
+          paymentIntentData.return_url = `${origin}/payment-success`;
         }
       } catch (attachError) {
-        console.log('⚠️ Payment method attachment error:', attachError);
-        // Continue with payment intent creation even if attachment fails
+        console.log('⚠️ Payment method attachment/retrieval error:', attachError);
+        console.log('📋 Falling back to manual payment method selection');
+        
+        // Fallback: Create payment intent without auto-attachment
+        paymentIntentData.automatic_payment_methods = {
+          enabled: true,
+          allow_redirects: 'never',
+        };
       }
-      
-      // Use existing payment method with confirmation
-      paymentIntentData.payment_method = paymentMethodId;
-      paymentIntentData.confirmation_method = 'manual';
-      paymentIntentData.confirm = true;
-      paymentIntentData.return_url = `${origin}/payment-success`;
     } else {
-      // Allow new payment method without return_url (we'll handle redirect in frontend)
+      // New payment method or missing required parameters
       paymentIntentData.automatic_payment_methods = {
         enabled: true,
         allow_redirects: 'never',
       };
-      // Do not set return_url when confirm is not true
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);

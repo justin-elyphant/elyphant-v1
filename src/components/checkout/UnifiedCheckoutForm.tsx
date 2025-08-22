@@ -177,18 +177,13 @@ const UnifiedCheckoutForm: React.FC = () => {
   /*
    * 🔗 CRITICAL: Payment Success Handler
    * 
-   * This function processes successful payments and creates orders.
-   * It integrates with multiple systems and must handle complex data flows.
-   * 
-   * DO NOT simplify this function - it handles:
-   * - Order creation in database
-   * - Address saving to profile
-   * - Cart clearing
-   * - Navigation to confirmation
+   * Enhanced to handle order creation errors gracefully and provide
+   * better error recovery and user feedback.
    */
   const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
       setIsProcessing(true);
+      console.log('🎉 Payment successful, creating order...', { paymentIntentId, paymentMethodId });
       
       // CRITICAL: Order creation with all necessary data including gifting fee details
       const orderData = {
@@ -212,21 +207,53 @@ const UnifiedCheckoutForm: React.FC = () => {
         deliveryGroups: []
       };
 
-      // Create order via service layer
+      console.log('📋 Creating order with data:', {
+        paymentIntentId,
+        totalAmount,
+        itemCount: cartItems.length,
+        shippingInfo: checkoutData.shippingInfo
+      });
+
+      // Create order via service layer with enhanced error handling
       const order = await createOrder(orderData);
+      console.log('✅ Order created successfully:', order.id);
       
       // Save address to profile if needed
-      await saveCurrentAddressToProfile('Checkout Address', false);
+      try {
+        await saveCurrentAddressToProfile('Checkout Address', false);
+        console.log('📍 Address saved to profile');
+      } catch (addressError) {
+        console.warn('⚠️ Failed to save address to profile:', addressError);
+        // Don't fail the order for address saving issues
+      }
       
       // Clear cart and navigate to confirmation
       clearCart();
-      navigate(`/order-confirmation/${order.id}`);
+      console.log('🛒 Cart cleared');
       
+      navigate(`/order-confirmation/${order.id}`);
       toast.success('Order placed successfully!');
       
-    } catch (error) {
-      console.error('Error processing order:', error);
-      toast.error('Failed to process order. Please contact support.');
+    } catch (error: any) {
+      console.error('💥 Order creation error:', error);
+      
+      // Provide specific error messages based on the error type
+      let errorMessage = 'Failed to process order. Please contact support.';
+      
+      if (error.message?.includes('order_items')) {
+        errorMessage = 'There was an issue with your cart items. Please refresh the page and try again.';
+      } else if (error.message?.includes('payment')) {
+        errorMessage = 'Payment was successful but order creation failed. Please contact support with your payment confirmation.';
+      } else if (error.message?.includes('address') || error.message?.includes('shipping')) {
+        errorMessage = 'There was an issue with your shipping information. Please verify and try again.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      toast.error(errorMessage);
+      
+      // Provide recovery options in the UI
+      setClientSecret(''); // Reset to allow retry
     } finally {
       setIsProcessing(false);
     }

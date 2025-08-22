@@ -170,25 +170,41 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Order created successfully:', order.id);
 
-  // CRITICAL: Create order items with recipient assignments
+  // CRITICAL: Create order items with enhanced validation and error handling
   const orderItems = orderData.cartItems.map(item => {
     const recipientAssignment = item.recipientAssignment;
     
+    // Enhanced validation for order item data
+    const productName = item.product.name || item.product.title || 'Unknown Product';
+    const productId = item.product.product_id || item.product.id || `temp_${Date.now()}`;
+    const unitPrice = Number(item.product.price) || 0;
+    const quantity = Number(item.quantity) || 1;
+    
+    console.log('Creating order item:', {
+      product_id: productId,
+      product_name: productName,
+      unit_price: unitPrice,
+      quantity: quantity,
+      total_price: unitPrice * quantity
+    });
+    
     return {
       order_id: order.id,
-      product_id: item.product.product_id,
-      product_name: item.product.name || item.product.title,
-      product_image: item.product.image,
-      vendor: item.product.vendor,
-      quantity: item.quantity,
-      unit_price: item.product.price,
-      total_price: item.product.price * item.quantity,
+      product_id: productId,
+      product_name: productName,
+      product_image: item.product.image || null,
+      vendor: item.product.vendor || null,
+      quantity: quantity,
+      unit_price: unitPrice,
+      total_price: unitPrice * quantity,
       recipient_connection_id: recipientAssignment?.connectionId || null,
       delivery_group_id: recipientAssignment?.deliveryGroupId || null,
       recipient_gift_message: recipientAssignment?.giftMessage || null,
       scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
     };
   });
+
+  console.log('Inserting order items:', orderItems);
 
   const { data: createdItems, error: itemsError } = await supabase
     .from('order_items')

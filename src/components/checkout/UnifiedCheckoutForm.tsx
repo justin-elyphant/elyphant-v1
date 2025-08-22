@@ -178,7 +178,8 @@ const UnifiedCheckoutForm: React.FC = () => {
    * 🔗 CRITICAL: Payment Success Handler
    * 
    * Enhanced to handle order creation errors gracefully and provide
-   * better error recovery and user feedback.
+   * better error recovery and user feedback. Now includes automatic
+   * Zinc/ZMA processing for Amazon products.
    */
   const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
@@ -225,6 +226,48 @@ const UnifiedCheckoutForm: React.FC = () => {
       } catch (addressError) {
         console.warn('⚠️ Failed to save address to profile:', addressError);
         // Don't fail the order for address saving issues
+      }
+
+      // 🚀 NEW: Check for Amazon products and process through ZMA
+      const hasAmazonProducts = cartItems.some(item => {
+        const product = item.product;
+        return product.isZincApiProduct || 
+               product.productSource === 'zinc_api' ||
+               product.vendor === 'Amazon' ||
+               product.retailer === 'amazon' ||
+               product.retailer === 'Amazon';
+      });
+
+      if (hasAmazonProducts) {
+        console.log('🛒 Amazon products detected, processing through ZMA...');
+        toast.info('Processing with fulfillment partner...');
+        
+        try {
+          // Call the existing process-zma-order edge function
+          const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
+            body: {
+              orderId: order.id,
+              debugMode: false,
+              isTestMode: false
+            }
+          });
+
+          if (zmaError) {
+            console.error('❌ ZMA processing error:', zmaError);
+            toast.error('Order created but fulfillment processing failed. Support will follow up.');
+            // Don't throw - order was created successfully, just fulfillment had issues
+          } else if (zmaResult?.success) {
+            console.log('✅ ZMA processing successful:', zmaResult);
+            toast.success('Order successfully submitted to fulfillment partner!');
+          } else {
+            console.warn('⚠️ ZMA processing had issues:', zmaResult);
+            toast.warning('Order created but fulfillment may be delayed. Support will follow up.');
+          }
+        } catch (zmaProcessingError) {
+          console.error('💥 ZMA processing exception:', zmaProcessingError);
+          toast.error('Order created but fulfillment processing failed. Support will follow up.');
+          // Don't throw - order was created successfully
+        }
       }
       
       // Clear cart and navigate to confirmation

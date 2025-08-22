@@ -137,11 +137,47 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       if (error) throw error;
 
-      // If payment is successful, call the success handler
+      // Handle different payment intent statuses
       if (data.status === 'succeeded') {
         onPaymentSuccess(data.payment_intent_id, selectedSavedMethod.stripe_payment_method_id);
+      } else if (data.status === 'requires_action') {
+        // Payment requires additional authentication
+        const stripe = await stripeClientManager.getStripeInstance();
+        if (stripe) {
+          const { error } = await stripe.confirmPayment({
+            clientSecret: data.client_secret,
+            confirmParams: {
+              return_url: `${window.location.origin}/payment-success`,
+            },
+          });
+          
+          if (error) {
+            throw new Error(error.message);
+          }
+        }
       } else {
-        throw new Error('Payment was not successful');
+        // For other statuses, use the client secret to confirm
+        if (data.client_secret) {
+          const stripe = await stripeClientManager.getStripeInstance();
+          if (stripe) {
+            const { error, paymentIntent } = await stripe.confirmPayment({
+              clientSecret: data.client_secret,
+              confirmParams: {
+                return_url: `${window.location.origin}/payment-success`,
+              },
+            });
+            
+            if (error) {
+              throw new Error(error.message);
+            }
+            
+            if (paymentIntent?.status === 'succeeded') {
+              onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
+            }
+          }
+        } else {
+          throw new Error('Payment could not be processed');
+        }
       }
     } catch (error: any) {
       console.error('Error processing existing payment method:', error);

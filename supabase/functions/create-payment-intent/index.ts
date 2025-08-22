@@ -40,16 +40,22 @@ serve(async (req) => {
       }
     };
 
+    // Get origin for return URL
+    const origin = req.headers.get('origin') || 'https://your-domain.com';
+    
     if (useExistingPaymentMethod && paymentMethodId) {
       // Use existing payment method
       paymentIntentData.payment_method = paymentMethodId;
       paymentIntentData.confirmation_method = 'manual';
       paymentIntentData.confirm = true;
+      paymentIntentData.return_url = `${origin}/payment-success`;
     } else {
       // Allow new payment method
       paymentIntentData.automatic_payment_methods = {
         enabled: true,
+        allow_redirects: 'never',
       };
+      paymentIntentData.return_url = `${origin}/payment-success`;
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);

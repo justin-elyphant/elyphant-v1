@@ -281,7 +281,10 @@ const Cart = () => {
                             </p>
                             
                             <p className="text-lg font-semibold text-green-600">
-                              {formatPrice(item.product.price)}
+                              {formatPrice(item.product.price, {
+                                productSource: item.product.productSource || (item.product.isZincApiProduct ? 'zinc_api' : undefined),
+                                skipCentsDetection: item.product.skipCentsDetection
+                              })}
                             </p>
                             
                             <div className="flex items-center justify-between mt-3">

@@ -97,12 +97,22 @@ export function formatPrice(
   }
   
   // Auto-detect if price is in cents (for Zinc API and legacy products)
-  if (shouldDetectCents && numPrice > 1000 && Number.isInteger(numPrice)) {
-    // Likely in cents if it's a whole number > 1000
-    const possibleDollarAmount = numPrice / 100;
-    if (possibleDollarAmount < 10000) { // Reasonable upper limit
-      finalPrice = possibleDollarAmount;
-      console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice} (source: ${productSource || 'auto-detected'})`);
+  if (shouldDetectCents && Number.isInteger(numPrice)) {
+    // For Zinc API products, detect cents more intelligently
+    if (productSource === 'zinc_api') {
+      // Zinc API prices are ALWAYS in cents, convert all integer values
+      const possibleDollarAmount = numPrice / 100;
+      if (possibleDollarAmount < 10000) { // Reasonable upper limit
+        finalPrice = possibleDollarAmount;
+        console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice} (source: ${productSource})`);
+      }
+    } else if (numPrice > 1000) {
+      // For other sources, use the old logic for backward compatibility
+      const possibleDollarAmount = numPrice / 100;
+      if (possibleDollarAmount < 10000) { // Reasonable upper limit
+        finalPrice = possibleDollarAmount;
+        console.debug(`[Price Conversion] Converted ${numPrice} cents to $${finalPrice} (source: ${productSource || 'auto-detected'})`);
+      }
     }
   }
 
@@ -123,10 +133,11 @@ export function validateAndNormalizePrice(priceData: any): number | null {
     return null;
   }
 
-  // Auto-detect cents vs dollars
-  if (numPrice > 1000 && Number.isInteger(numPrice)) {
+  // Auto-detect cents vs dollars - improved logic
+  if (Number.isInteger(numPrice)) {
+    // If it's a whole number, it's likely in cents for values that make sense as cents
     const dollarsAmount = numPrice / 100;
-    if (dollarsAmount < 10000) { // Reasonable upper limit
+    if (dollarsAmount >= 0.01 && dollarsAmount < 10000) { // Reasonable range for dollars
       return dollarsAmount;
     }
   }

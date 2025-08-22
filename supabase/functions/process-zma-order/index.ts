@@ -336,10 +336,14 @@ serve(async (req) => {
       throw new Error('No active default ZMA account found');
     }
 
-    console.log('✅ ZMA credentials retrieved');
+    console.log(`✅ ZMA credentials retrieved - API Key: ${zmaAccount.api_key.substring(0, 8)}...`);
 
     // Step 6: Prepare Zinc API order data
     console.log('📥 Step 6: Preparing Zinc API request...');
+    console.log(`🔍 Order items to process: ${orderItems.length}`);
+    orderItems.forEach((item, index) => {
+      console.log(`  Item ${index + 1}: ${item.product_id} (qty: ${item.quantity})`);
+    });
     
     // Extract billing information
     let billingInfo = null;
@@ -461,8 +465,11 @@ serve(async (req) => {
     // Step 7: Call Zinc API
     console.log('📥 Step 7: Calling Zinc API...');
     if (!zmaAccount.api_key) {
+      console.error('❌ ZMA account API key not configured');
       throw new Error('ZMA account API key not configured');
     }
+    
+    console.log(`🔐 Using API key: ${zmaAccount.api_key.substring(0, 8)}... for Zinc API call`);
 
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',

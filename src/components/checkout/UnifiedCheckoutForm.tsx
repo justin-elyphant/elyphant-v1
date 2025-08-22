@@ -239,21 +239,35 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       const amazonProducts = cartItems.filter(item => {
         const product = item.product;
-        const isAmazon = product.isZincApiProduct || 
-                        product.productSource === 'zinc_api' ||
-                        (product.vendor && product.vendor.toLowerCase().includes('amazon')) ||
-                        (product.retailer && product.retailer.toLowerCase().includes('amazon')) ||
-                        product.retailer === 'Amazon' ||
-                        product.vendor === 'Amazon';
+        // ENHANCED: Comprehensive Zinc product detection with multiple fallback paths
+        const isZinc = 
+          // Primary indicators
+          product.productSource === 'zinc_api' ||
+          product.isZincApiProduct === true ||
+          // Secondary indicators
+          product.retailer === 'Amazon' ||
+          product.vendor === 'Amazon' ||
+          product.vendor === 'Amazon via Zinc' ||
+          // Fallback case-insensitive checks
+          (product.retailer && product.retailer.toLowerCase().includes('amazon')) ||
+          (product.vendor && (product.vendor.toLowerCase().includes('amazon') || product.vendor.toLowerCase().includes('zinc')));
         
-        console.log(`📦 Product ${product.product_id}: Amazon=${isAmazon}`, {
+        console.log(`📦 Product ${product.product_id}: Zinc=${isZinc}`, {
           retailer: product.retailer,
           vendor: product.vendor,
           productSource: product.productSource,
-          isZincApiProduct: product.isZincApiProduct
+          isZincApiProduct: product.isZincApiProduct,
+          detectionPaths: {
+            productSource: product.productSource === 'zinc_api',
+            isZincFlag: product.isZincApiProduct === true,
+            retailerExact: product.retailer === 'Amazon',
+            vendorExact: product.vendor === 'Amazon' || product.vendor === 'Amazon via Zinc',
+            retailerIncludes: product.retailer && product.retailer.toLowerCase().includes('amazon'),
+            vendorIncludes: product.vendor && (product.vendor.toLowerCase().includes('amazon') || product.vendor.toLowerCase().includes('zinc'))
+          }
         });
         
-        return isAmazon;
+        return isZinc;
       });
 
       const hasAmazonProducts = amazonProducts.length > 0;

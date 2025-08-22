@@ -16,13 +16,18 @@ export const convertZincProductToProduct = (zincProduct: ZincProduct): Product =
     image: zincProduct.image || zincProduct.images?.[0] || "/placeholder.svg",
     images: zincProduct.images || (zincProduct.image ? [zincProduct.image] : ["/placeholder.svg"]),
     vendor: "Amazon via Zinc",
+    retailer: "Amazon",
     description: zincProduct.description || `${zincProduct.title} - A quality product from ${zincProduct.brand || 'the manufacturer'}`,
     rating: typeof zincProduct.rating === 'number' ? zincProduct.rating : 0,
     stars: typeof zincProduct.rating === 'number' ? zincProduct.rating : 0,
     reviewCount: typeof zincProduct.review_count === 'number' ? zincProduct.review_count : 0,
     num_reviews: typeof zincProduct.review_count === 'number' ? zincProduct.review_count : 0,
     brand: zincProduct.brand || "Unknown",
-    category: zincProduct.category || "Electronics"
+    category: zincProduct.category || "Electronics",
+    // CRITICAL: Zinc product identification metadata
+    productSource: 'zinc_api',
+    isZincApiProduct: true,
+    skipCentsDetection: false
   });
 };
 
@@ -64,7 +69,7 @@ export const convertMockToZincProduct = (mockProduct: any): ZincProduct => {
     description: mockProduct.description || `${mockProduct.title || mockProduct.name} - A quality product`,
     brand: mockProduct.brand || "Unknown",
     category: mockProduct.category || mockProduct.category_name || "General",
-    retailer: mockProduct.vendor || mockProduct.retailer || "Amazon via Zinc",
+    retailer: "Amazon",
     rating: mockProduct.rating || mockProduct.stars || 0,
     review_count: mockProduct.reviewCount || mockProduct.num_reviews || 0,
     features: mockProduct.features || [],

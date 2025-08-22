@@ -219,13 +219,21 @@ class UnifiedPaymentService {
   private migrateCartData(cartItems: CartItem[], fromVersion: number): CartItem[] {
     try {
       return cartItems.map(item => {
-        // Re-standardize the product to fix pricing issues
+        // Re-standardize the product to fix pricing issues AND preserve Zinc metadata
         const standardizedProduct = standardizeProduct(item.product);
         
         // Log price changes for debugging
         if (item.product.price !== standardizedProduct.price) {
           console.log(`Price migration: ${item.product.title} - ${item.product.price} → ${standardizedProduct.price}`);
         }
+        
+        // Log Zinc metadata preservation
+        console.log(`Zinc metadata migration for ${item.product.title}:`, {
+          productSource: standardizedProduct.productSource,
+          isZincApiProduct: standardizedProduct.isZincApiProduct,
+          retailer: standardizedProduct.retailer,
+          vendor: standardizedProduct.vendor
+        });
         
         return {
           ...item,
@@ -329,10 +337,11 @@ class UnifiedPaymentService {
         throw new Error('Product not found');
       }
 
-      // Standardize the product to ensure correct pricing
+      // Standardize the product to ensure correct pricing AND preserve Zinc metadata
       const product = standardizeProduct(rawProduct);
       console.log(`[CART DEBUG] Standardized product:`, product);
       console.log(`[CART DEBUG] Price conversion: ${rawProduct.price} -> ${product.price}`);
+      console.log(`[CART DEBUG] Zinc metadata: productSource=${product.productSource}, isZincApiProduct=${product.isZincApiProduct}`);
 
       const existingItemIndex = this.cartItems.findIndex(
         item => item.product.product_id === productId

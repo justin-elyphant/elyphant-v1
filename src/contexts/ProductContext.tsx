@@ -41,6 +41,11 @@ export type Product = {
   tags?: string[];
   fromWishlist?: boolean;
   fromPreferences?: boolean;
+  
+  // CRITICAL: Zinc product identification metadata
+  productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+  isZincApiProduct?: boolean;
+  skipCentsDetection?: boolean;
 };
 
 type ProductContextType = {

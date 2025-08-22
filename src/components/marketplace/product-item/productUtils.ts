@@ -106,25 +106,33 @@ export const getProductImages = (product: Product): string[] => {
 export const standardizeProduct = (product: any): any => {
   if (!product) return {};
   
-  // Smart price conversion using unified pricing system
-  let normalizedPrice = 19.99;
-  if (product.price) {
-    const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
-    
-    if (rawPrice > 0) {
-      // Determine if this is a Zinc API product that needs cents conversion
-      const isZincProduct = product.retailer === 'amazon' || product.vendor === 'Amazon' || product.source === 'zinc';
+    // ENHANCED: Smart price conversion with Zinc metadata preservation
+    let normalizedPrice = 19.99;
+    if (product.price) {
+      const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
       
-      if (isZincProduct && Number.isInteger(rawPrice) && rawPrice >= 100) {
-        // Convert from cents to dollars for Zinc API products
-        normalizedPrice = rawPrice / 100;
+      if (rawPrice > 0) {
+        // ENHANCED: More comprehensive Zinc product detection for pricing
+        const isZincProduct = 
+          product.retailer === 'Amazon' || 
+          product.retailer === 'amazon' ||
+          product.vendor === 'Amazon' || 
+          product.vendor === 'Amazon via Zinc' ||
+          product.source === 'zinc' ||
+          product.productSource === 'zinc_api' ||
+          product.isZincApiProduct === true;
+        
+        if (isZincProduct && Number.isInteger(rawPrice) && rawPrice >= 100) {
+          // Convert from cents to dollars for Zinc API products
+          normalizedPrice = rawPrice / 100;
+          console.log(`[ZINC PRICING] Converted ${rawPrice} cents to $${normalizedPrice} for Zinc product`);
+        } else {
+          normalizedPrice = rawPrice;
+        }
       } else {
-        normalizedPrice = rawPrice;
+        normalizedPrice = 19.99; // fallback
       }
-    } else {
-      normalizedPrice = 19.99; // fallback
     }
-  }
   
   return {
     // Spread the original product first
@@ -170,10 +178,24 @@ export const standardizeProduct = (product: any): any => {
       return [product.image || "/placeholder.svg"];
     })(),
     
-    // Mark as Zinc API product and set product source for unified pricing
-    isZincApiProduct: product.retailer === 'amazon' || product.vendor === 'Amazon' || product.source === 'zinc',
+    // CRITICAL: Enhanced Zinc API product identification with multiple detection paths
+    isZincApiProduct: (() => {
+      const retailerCheck = product.retailer === 'Amazon' || product.retailer === 'amazon';
+      const vendorCheck = product.vendor === 'Amazon' || product.vendor === 'Amazon via Zinc';
+      const sourceCheck = product.source === 'zinc' || product.productSource === 'zinc_api';
+      const existingCheck = product.isZincApiProduct === true;
+      return retailerCheck || vendorCheck || sourceCheck || existingCheck;
+    })(),
     productSource: (() => {
-      if (product.retailer === 'amazon' || product.vendor === 'Amazon' || product.source === 'zinc') {
+      // Preserve existing productSource if valid
+      if (product.productSource && ['zinc_api', 'shopify', 'vendor_portal', 'manual'].includes(product.productSource)) {
+        return product.productSource;
+      }
+      
+      // Detect source from multiple indicators
+      if (product.retailer === 'Amazon' || product.retailer === 'amazon' || 
+          product.vendor === 'Amazon' || product.vendor === 'Amazon via Zinc' ||
+          product.source === 'zinc' || product.isZincApiProduct === true) {
         return 'zinc_api';
       } else if (product.retailer === 'Shopify' || product.vendor === 'Shopify') {
         return 'shopify';

@@ -10,19 +10,21 @@ interface CarouselItemsProps {
   images: string[];
   productName: string;
   onImageError: (index: number) => void;
+  onImageClick?: (index: number) => void;
 }
 
-const CarouselItems = ({ images, productName, onImageError }: CarouselItemsProps) => {
+const CarouselItems = ({ images, productName, onImageError, onImageClick }: CarouselItemsProps) => {
   return (
     <CarouselContent>
       {images.map((img, idx) => (
         <CarouselItem key={`image-${idx}-${img.slice(-20)}`}>
-          <div className="aspect-square relative">
+          <div className="aspect-square relative group">
             <img 
               src={img} 
               alt={`${productName} view ${idx + 1}`}
-              className="w-full h-full object-contain rounded-md"
+              className="w-full h-full object-contain rounded-md cursor-pointer transition-transform hover:scale-105"
               onError={() => onImageError(idx)}
+              onClick={() => onImageClick?.(idx)}
             />
             <Badge 
               variant="secondary" 

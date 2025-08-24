@@ -11,6 +11,8 @@ import { NicoleStateProvider } from "./contexts/nicole/NicoleStateContext";
 import { QueryProvider } from "./providers/QueryProvider";
 import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
+import { EmployeeRouteGuard } from "./components/auth/EmployeeRouteGuard";
+import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandler";
 
 // Immediate load for critical pages
 import Home from "./pages/Home";
@@ -95,7 +97,10 @@ function App() {
                   <EventsProvider>
                     <NicoleStateProvider>
                       <Router>
-                        <AppContent />
+                        <EmployeeRouteGuard>
+                          <EmployeeRedirectHandler />
+                          <AppContent />
+                        </EmployeeRouteGuard>
                       </Router>
                     </NicoleStateProvider>
                   </EventsProvider>

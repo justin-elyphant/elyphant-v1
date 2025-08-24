@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { EmployeeDetectionService } from "@/services/employee/EmployeeDetectionService";
 
 interface UseAuthSessionReturn {
   user: User | null;
@@ -49,6 +50,11 @@ export function useAuthSession(): UseAuthSessionReturn {
               if (data.session.user.email) {
                 localStorage.setItem("verifiedEmail", data.session.user.email);
               }
+            }
+
+            // Handle employee routing after OAuth
+            if (data.session.user) {
+              handleEmployeeRoutingAfterOAuth(data.session.user);
             }
           }
         } catch (e) {
@@ -127,6 +133,21 @@ export function useAuthSession(): UseAuthSessionReturn {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Handle employee routing after OAuth completion
+  const handleEmployeeRoutingAfterOAuth = async (user: User) => {
+    try {
+      const detection = await EmployeeDetectionService.detectEmployee(user);
+      
+      if (detection.isEmployee) {
+        console.log('Employee detected after OAuth, setting redirect flag');
+        localStorage.setItem('pendingEmployeeRedirect', 'true');
+        localStorage.setItem('employeeRedirectReason', detection.reason);
+      }
+    } catch (error) {
+      console.error('Error handling employee routing after OAuth:', error);
+    }
+  };
 
   return { user, session, isLoading, isProcessingToken };
 }

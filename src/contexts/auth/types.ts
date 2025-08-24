@@ -11,6 +11,7 @@ export interface AuthContextProps extends AuthState {
   signOut: () => Promise<void>;
   deleteUser: () => Promise<void>;
   isDebugMode: boolean;
+  isEmployee: boolean | null;
   signIn?: (email: string, password: string) => Promise<{
     error: Error | null;
     data: Session | null;

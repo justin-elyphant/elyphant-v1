@@ -17,53 +17,66 @@ const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
   
   useEffect(() => {
+    let isMounted = true;
     const startTime = performance.now();
-    console.log("HomeContent: Starting component mount and data operations");
     
-    try {
-      // Check if user just completed signup for welcome messaging
-      const justCompletedSignup = localStorage.getItem('justCompletedSignup');
-      if (justCompletedSignup) {
-        console.log("🎉 New user detected - setting up welcome context");
-        localStorage.removeItem('justCompletedSignup');
+    // Debounce to prevent multiple rapid executions during page refresh
+    const timeoutId = setTimeout(() => {
+      if (!isMounted) return;
+      
+      try {
+        // Check if user just completed signup for welcome messaging
+        const justCompletedSignup = localStorage.getItem('justCompletedSignup');
+        if (justCompletedSignup) {
+          localStorage.removeItem('justCompletedSignup');
+          
+          // Set Nicole context to be helpful for new users
+          LocalStorageService.setNicoleContext({
+            source: 'new_user_homepage',
+            currentPage: '/',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          // Clear any lingering onboarding state for returning users
+          LocalStorageService.clearProfileCompletionState();
+          LocalStorageService.cleanupDeprecatedKeys();
+          
+          // Set fresh context for homepage visit
+          LocalStorageService.setNicoleContext({
+            source: 'homepage_visit',
+            currentPage: '/',
+            timestamp: new Date().toISOString()
+          });
+        }
         
-        // Set Nicole context to be helpful for new users
-        LocalStorageService.setNicoleContext({
-          source: 'new_user_homepage',
-          currentPage: '/',
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        // Clear any lingering onboarding state for returning users
-        LocalStorageService.clearProfileCompletionState();
-        LocalStorageService.cleanupDeprecatedKeys();
-        
-        // Set fresh context for homepage visit
-        LocalStorageService.setNicoleContext({
-          source: 'homepage_visit',
-          currentPage: '/',
-          timestamp: new Date().toISOString()
-        });
+        // Preload likely next pages and critical assets during idle time
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            if (isMounted) {
+              preloadRoutes();
+              preloadCriticalImages([]);
+            }
+          });
+        } else {
+          preloadRoutes();
+          preloadCriticalImages([]);
+        }
+      } catch (error) {
+        console.warn('LocalStorage operations failed (possibly in iframe):', error);
       }
       
-      // Preload likely next pages and critical assets
-      preloadRoutes();
-      
-      // Preload critical images (add your most important image URLs here)
-      preloadCriticalImages([
-        // Add URLs of hero images or other critical assets
-      ]);
-    } catch (error) {
-      console.warn('LocalStorage operations failed (possibly in iframe):', error);
-    }
+      // Only track performance outside of iframe to avoid interference
+      if (!isInIframe() && isMounted) {
+        const setupTime = performance.now() - startTime;
+        trackRender("HomeContent", startTime);
+      }
+    }, 50); // Small delay to prevent rapid re-execution
     
-    // Only track performance outside of iframe to avoid interference
-    if (!isInIframe()) {
-      const setupTime = performance.now() - startTime;
-      console.log(`HomeContent: Setup completed in ${setupTime.toFixed(2)}ms`);
-      trackRender("HomeContent", startTime);
-    }
-  }, [trackRender]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, []); // Remove trackRender dependency to prevent re-execution
 
   return (
     <div className="min-h-screen">

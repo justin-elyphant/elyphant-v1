@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSearchParams } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
+import SecondaryHeaderManager from "@/components/navigation/SecondaryHeaderManager";
 
 interface ResultsSummaryBarProps {
   totalItems?: number;
@@ -59,7 +60,10 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 sticky top-[80px] z-40 transition-all duration-300">
+    <SecondaryHeaderManager 
+      priority={1} 
+      className="bg-white border-b border-gray-200 shadow-sm"
+    >
       <div className="w-full px-4 py-2">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -86,7 +90,7 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </SecondaryHeaderManager>
   );
 };
 

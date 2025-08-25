@@ -9,6 +9,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import SecondaryHeaderManager from "@/components/navigation/SecondaryHeaderManager";
 
 interface StickyFiltersBarProps {
   showFilters: boolean;
@@ -29,19 +30,22 @@ const StickyFiltersBar = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const { recentSearches } = useUserSearchHistory();
   
-  // Track scroll position to apply sticky styling
+  // Track scroll position for enhanced styling
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 180);
     };
     
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div 
-      className={`sticky top-[116px] z-20 bg-white border-b py-4 transition-shadow mb-6 ${isScrolled ? "shadow-md" : ""}`}
+    <SecondaryHeaderManager 
+      priority={2}
+      className={`bg-white border-b py-4 mb-6 transition-all duration-300 ${
+        isScrolled ? 'shadow-md bg-white/95 backdrop-blur-sm' : ''
+      }`}
     >
       <div className="container mx-auto flex flex-col gap-2">
         {/* Filter Toggle - only show if not in recent searches area */}
@@ -51,7 +55,7 @@ const StickyFiltersBar = ({
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 transition-all duration-200 hover:scale-105"
             >
               <Filter className="h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
@@ -59,7 +63,7 @@ const StickyFiltersBar = ({
           </div>
         )}
 
-        {/* Recent searches - separate from filter toggle */}
+        {/* Recent searches - enhanced with modern styling */}
         {recentSearches.length > 0 && (
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -77,7 +81,7 @@ const StickyFiltersBar = ({
                 {recentSearches.map((term, idx) => (
                   <CarouselItem key={term + idx} className="pl-2 basis-auto">
                     <button
-                      className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-purple-700 font-semibold text-xs shadow-sm border border-purple-200 hover:bg-purple-200 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap"
+                      className="inline-flex items-center rounded-full bg-gradient-to-r from-purple-100 to-blue-100 px-3 py-1 text-purple-700 font-semibold text-xs shadow-sm border border-purple-200 hover:from-purple-200 hover:to-blue-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap transform hover:scale-105"
                       type="button"
                       style={{ lineHeight: 1.2 }}
                       onClick={() => onRecentSearchClick?.(term)}
@@ -102,13 +106,13 @@ const StickyFiltersBar = ({
           </div>
           
           {totalItems > 0 && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 transition-all duration-200">
               {totalItems} products found
             </div>
           )}
         </div>
       </div>
-    </div>
+    </SecondaryHeaderManager>
   );
 };
 

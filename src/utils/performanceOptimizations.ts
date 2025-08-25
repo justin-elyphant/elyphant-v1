@@ -130,3 +130,30 @@ export const createEventCleanupManager = () => {
   
   return { addEventListenerWithCleanup, cleanup };
 };
+
+// Performance budget monitoring for e-commerce
+export const createPerformanceBudget = () => {
+  const budgets = {
+    headerHeight: 80,
+    maxZIndex: 100,
+    maxScrollHandlers: 5,
+    maxTransitionDuration: 500
+  };
+
+  const violations: string[] = [];
+
+  return {
+    checkHeaderHeight: (height: number) => {
+      if (height > budgets.headerHeight) {
+        violations.push(`Header height ${height}px exceeds budget of ${budgets.headerHeight}px`);
+      }
+    },
+    checkZIndex: (zIndex: number) => {
+      if (zIndex > budgets.maxZIndex) {
+        violations.push(`Z-index ${zIndex} exceeds budget of ${budgets.maxZIndex}`);
+      }
+    },
+    getViolations: () => violations,
+    reset: () => violations.length = 0
+  };
+};

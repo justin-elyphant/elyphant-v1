@@ -68,30 +68,30 @@ const DashboardGrid = () => {
       <QuickGiftCTA />
 
       {/* Quick Stats Overview - Mobile Optimized */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-2 sm:px-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{connectionStats.accepted}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Friends</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-2 sm:px-6">
+        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{wishlistCount}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Lists</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-2 sm:px-6">
+        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{totalWishlistItems}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Items</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-2 sm:px-6">
+        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-600 line-clamp-1">{connectionStats.pending}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Pending</div>
           </CardContent>
@@ -99,7 +99,7 @@ const DashboardGrid = () => {
       </div>
 
       {/* Quick Access Cards - Mobile Optimized with Swipe Support */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6">
         {/* Gifting Hub */}
         <SwipeableCard 
           className={cn(
@@ -110,7 +110,7 @@ const DashboardGrid = () => {
           onSwipeRight={() => handleCardSwipe('right', 'gifting')}
           disabled={!isMobile}
         >
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Gifting Hub</span>
@@ -119,16 +119,16 @@ const DashboardGrid = () => {
               Events, auto-gifting & groups
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 Schedule gifts, set up automation, and coordinate group gifts
               </div>
-              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/gifting">
-                  <span className="hidden sm:inline">Open Gifting Hub</span>
-                  <span className="sm:hidden">Open Hub</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/gifting" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">Open Gifting Hub</span>
+                  <span className="sm:hidden truncate">Gifting</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -145,7 +145,7 @@ const DashboardGrid = () => {
           onSwipeRight={() => handleCardSwipe('right', 'social')}
           disabled={!isMobile}
         >
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Social Hub</span>
@@ -159,16 +159,16 @@ const DashboardGrid = () => {
               Friends & connections
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 View activity, manage connections, and send messages
               </div>
-              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/social">
-                  <span className="hidden sm:inline">Open Social Hub</span>
-                  <span className="sm:hidden">Open Social</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/social" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">Open Social Hub</span>
+                  <span className="sm:hidden truncate">Social</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -180,7 +180,7 @@ const DashboardGrid = () => {
           "hover:shadow-lg transition-all duration-200 cursor-pointer group",
           "touch-manipulation min-h-[140px] sm:min-h-[130px]"
         )}>
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Nicole AI</span>
@@ -189,16 +189,16 @@ const DashboardGrid = () => {
               AI gift assistant
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 Get personalized recommendations and insights
               </div>
-              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/nicole">
-                  <span className="hidden sm:inline">Chat with Nicole</span>
-                  <span className="sm:hidden">Chat</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/nicole" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">Chat with Nicole</span>
+                  <span className="sm:hidden truncate">Nicole</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -210,7 +210,7 @@ const DashboardGrid = () => {
           "hover:shadow-lg transition-all duration-200 cursor-pointer group",
           "touch-manipulation min-h-[140px] sm:min-h-[130px]"
         )}>
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Marketplace</span>
@@ -219,16 +219,16 @@ const DashboardGrid = () => {
               Shop for gifts
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 Browse products and find the perfect gifts
               </div>
-              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/marketplace">
-                  <span className="hidden sm:inline">Browse Products</span>
-                  <span className="sm:hidden">Browse</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/marketplace" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">Browse Products</span>
+                  <span className="sm:hidden truncate">Browse</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -240,7 +240,7 @@ const DashboardGrid = () => {
           "hover:shadow-lg transition-all duration-200 cursor-pointer group",
           "touch-manipulation min-h-[140px] sm:min-h-[130px]"
         )}>
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Wishlists</span>
@@ -249,16 +249,16 @@ const DashboardGrid = () => {
               Your collections
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 Create and share wishlists with friends
               </div>
-              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/wishlists">
-                  <span className="hidden sm:inline">View Wishlists</span>
-                  <span className="sm:hidden">View Lists</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/wishlists" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">View Wishlists</span>
+                  <span className="sm:hidden truncate">Lists</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>
@@ -270,7 +270,7 @@ const DashboardGrid = () => {
           "hover:shadow-lg transition-all duration-200 cursor-pointer group",
           "touch-manipulation min-h-[140px] sm:min-h-[130px]"
         )}>
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
               <span className="line-clamp-1">Account</span>
@@ -279,16 +279,16 @@ const DashboardGrid = () => {
               Settings & privacy
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
                 Update profile, privacy, and preferences
               </div>
-              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-8 sm:h-10">
-                <Link to="/account">
-                  <span className="hidden sm:inline">Account Settings</span>
-                  <span className="sm:hidden">Settings</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/account" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">Account Settings</span>
+                  <span className="sm:hidden truncate">Settings</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
             </div>

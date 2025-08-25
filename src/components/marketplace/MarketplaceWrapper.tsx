@@ -17,7 +17,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useAuth } from "@/contexts/auth";
 import { useProducts } from "@/contexts/ProductContext";
-import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
+import { MarketplaceSearchProvider } from "@/contexts/MarketplaceSearchContext";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 
@@ -39,11 +39,6 @@ const MarketplaceWrapper = () => {
   
   // Use Enhanced Zinc API System for product management
   const { products } = useProducts();
-  const {
-    isLoading,
-    error,
-    filteredProducts
-  } = useEnhancedMarketplaceSearch(1);
   
   // Enhanced retry mechanism for failed operations
   const { execute: executeWithRetry, isRetrying } = useRetry({
@@ -214,7 +209,8 @@ const MarketplaceWrapper = () => {
 
   return (
     <MarketplaceErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
+      <MarketplaceSearchProvider currentPage={1}>
+        <div className="min-h-screen bg-gray-50">
         {/* Search and Categories - full width for better mobile experience */}
         <FullWidthSection>
           <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
@@ -253,20 +249,13 @@ const MarketplaceWrapper = () => {
         {/* Main Content - full bleed layout */}
         <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
           <div ref={resultsRef}>
-        {isLoading && products.length === 0 ? (
-          <LoadingFallback type="marketplace" />
-        ) : (
-          <MarketplaceContent
-            products={filteredProducts.length > 0 ? filteredProducts : products}
-            isLoading={isLoading}
-            searchTerm={searchTerm}
-            onProductView={handleProductView}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            error={error}
-            onRefresh={handleRefresh}
-          />
-        )}
+            <MarketplaceContent
+              searchTerm={searchTerm}
+              onProductView={handleProductView}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              onRefresh={handleRefresh}
+            />
           </div>
         </FullWidthSection>
 
@@ -283,7 +272,8 @@ const MarketplaceWrapper = () => {
           />
         )}
         */}
-      </div>
+        </div>
+      </MarketplaceSearchProvider>
     </MarketplaceErrorBoundary>
   );
 };

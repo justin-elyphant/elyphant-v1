@@ -9,34 +9,28 @@ import AdvancedFilterDrawer from "./filters/AdvancedFilterDrawer";
 import MobileMarketplaceLayout from "./mobile/MobileMarketplaceLayout";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
-import { useEnhancedMarketplaceSearch } from "./hooks/useEnhancedMarketplaceSearch";
+import { useMarketplaceSearch } from "@/contexts/MarketplaceSearchContext";
 
 interface MarketplaceContentProps {
-  products: Product[];
-  isLoading: boolean;
   searchTerm: string;
   onProductView: (productId: string) => void;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  error?: string | null;
   onRefresh?: () => void;
 }
 
 const MarketplaceContent = ({
-  products,
-  isLoading: externalLoading,
   searchTerm: externalSearchTerm,
   onProductView,
   showFilters,
   setShowFilters,
-  error: externalError,
   onRefresh,
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Use enhanced search and filters
+  // Use the unified marketplace search context
   const {
     filteredProducts,
     availableCategories,
@@ -45,19 +39,16 @@ const MarketplaceContent = ({
     clearFilters,
     filters,
     isSearching,
-    error: searchError,
+    isLoading,
+    error,
     handleRetrySearch
-  } = useEnhancedMarketplaceSearch(currentPage);
-
-  // Combine loading states
-  const isLoading = externalLoading || isSearching;
-  const error = externalError || searchError;
+  } = useMarketplaceSearch();
 
   // Use mobile layout for mobile devices
   if (isMobile) {
     return (
       <MobileMarketplaceLayout
-        products={filteredProducts} // Use filteredProducts from enhanced search
+        products={filteredProducts}
         isLoading={isLoading}
         searchTerm={externalSearchTerm}
         onProductView={onProductView}
@@ -83,7 +74,7 @@ const MarketplaceContent = ({
                 Try Again
               </Button>
             )}
-            {searchError && (
+            {error && (
               <Button onClick={handleRetrySearch} variant="outline" size="touch">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Search

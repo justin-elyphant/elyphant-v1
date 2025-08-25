@@ -339,7 +339,7 @@ export const useConnectionsAdapter = () => {
             status: conn.status
           };
           
-          console.log(`✅ [useConnectionsAdapter] Transformed pending invitation:`, transformedConnection);
+          console.log(`🎯 [useConnectionsAdapter] ✅ FIXED: Transformed pending invitation for ${conn.pending_recipient_name}:`, transformedConnection);
           return transformedConnection;
         } else {
           // This is a regular connection request with actual user profiles

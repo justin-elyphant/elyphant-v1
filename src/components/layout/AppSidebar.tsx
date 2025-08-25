@@ -20,6 +20,10 @@ import {
   Heart,
   Package,
   Gift,
+  Users,
+  Brain,
+  LayoutGrid,
+  User,
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
@@ -28,22 +32,26 @@ const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Core e-commerce functions - always visible
-  const mainMenuItems = [
+  // Personal dashboard and features
+  const personalItems = [
     {
-      title: "Home",
-      url: "/",
-      icon: Home,
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutGrid,
     },
+    {
+      title: "Account",
+      url: "/account",
+      icon: User,
+    },
+  ];
+
+  // Shopping and commerce
+  const shoppingItems = [
     {
       title: "Marketplace",
       url: "/marketplace",
       icon: ShoppingBag,
-    },
-    {
-      title: "Cart",
-      url: "/cart",
-      icon: ShoppingCart,
     },
     {
       title: "Wishlists",
@@ -51,14 +59,33 @@ const AppSidebar = () => {
       icon: Heart,
     },
     {
+      title: "Cart",
+      url: "/cart",
+      icon: ShoppingCart,
+    },
+    {
       title: "Orders",
       url: "/orders",
       icon: Package,
+    },
+  ];
+
+  // Social and AI features
+  const socialItems = [
+    {
+      title: "Social Hub",
+      url: "/social",
+      icon: Users,
     },
     {
       title: "Gifting Hub",
       url: "/gifting",
       icon: Gift,
+    },
+    {
+      title: "Nicole AI",
+      url: "/nicole",
+      icon: Brain,
     },
   ];
 
@@ -75,11 +102,50 @@ const AppSidebar = () => {
         <Logo />
       </SidebarHeader>
       <SidebarContent>
+        {/* Personal Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>E-commerce</SidebarGroupLabel>
+          <SidebarGroupLabel>Personal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item) => (
+              {personalItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Shopping Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Shopping</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {shoppingItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Social & AI Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Social & AI</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {socialItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
                     <Link to={item.url}>

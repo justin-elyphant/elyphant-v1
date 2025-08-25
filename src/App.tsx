@@ -47,6 +47,12 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
 
+// New dedicated feature pages
+const GiftingHub = lazy(() => import("./pages/GiftingHub"));
+const Nicole = lazy(() => import("./pages/Nicole"));
+const Account = lazy(() => import("./pages/Account"));
+const Social = lazy(() => import("./pages/Social"));
+
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
@@ -163,6 +169,12 @@ function AppContent() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/auth" element={<Auth />} />
+          
+          {/* New dedicated feature pages */}
+          <Route path="/gifting" element={<GiftingHub />} />
+          <Route path="/nicole" element={<Nicole />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/social" element={<Social />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

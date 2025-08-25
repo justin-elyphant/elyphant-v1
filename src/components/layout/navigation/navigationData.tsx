@@ -5,9 +5,10 @@ import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 export const getDefaultLinks = () => [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Connections", href: "/connections" },
-  { label: "Profile", href: "/auth?intent=complete-profile" },
-  { label: "Wishlists", href: "/wishlists" }
+  { label: "Gifting Hub", href: "/gifting" },
+  { label: "Social Hub", href: "/social" },
+  { label: "Nicole AI", href: "/nicole" },
+  { label: "Account", href: "/account" }
 ];
 
 export const getMarketplaceItems = (): NavDropdownItem[] => [

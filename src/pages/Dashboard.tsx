@@ -95,7 +95,7 @@ const Dashboard = () => {
             Welcome {firstName ? `${firstName} ` : ''}to Elyphant
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Explore your dashboard to connect with friends, schedule gifts, or build your wishlists to share
+            Your quick overview and access to all features. Click on any card to explore detailed functionality.
           </p>
         </div>
         

@@ -27,6 +27,7 @@ export interface Connection {
   isPending?: boolean; // For pending connections from quick gift wizard
   recipientEmail?: string; // Email for pending connections
   isIncoming?: boolean; // For incoming connection requests
+  status?: string; // Connection status (pending, pending_invitation, accepted, etc.)
 }
 
 export type ConnectionRequest = {

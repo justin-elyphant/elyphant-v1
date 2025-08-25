@@ -9,6 +9,8 @@ import { Clock, Send, Inbox, Gift } from "lucide-react";
 import { Connection } from "@/types/connections";
 import IncomingConnectionRequests from "./IncomingConnectionRequests";
 import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];
@@ -23,9 +25,9 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState("incoming");
 
-  // Filter gift-based pending connections
+  // Filter gift-based pending connections (including pending_invitation status)
   const giftBasedPending = pendingConnections.filter(conn => 
-    conn.isPending && conn.recipientEmail
+    conn.isPending && (conn.recipientEmail || conn.status === 'pending_invitation')
   );
 
   return (
@@ -127,6 +129,37 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                             <Gift className="h-3 w-3 mr-1" />
                             Gift Invitation
                           </Badge>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const { error } = await supabase.functions.invoke('send-invitation-email', {
+                                  body: {
+                                    recipientEmail: connection.recipientEmail,
+                                    recipientName: connection.name,
+                                    senderName: 'You',
+                                    occasion: 'friendship',
+                                    personalMessage: `Hi ${connection.name}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
+                                    relationshipType: connection.relationship || 'friend'
+                                  }
+                                });
+                                
+                                if (error) {
+                                  toast.error('Failed to resend invitation');
+                                } else {
+                                  toast.success('Invitation resent successfully!');
+                                }
+                              } catch (error) {
+                                console.error('Error resending invitation:', error);
+                                toast.error('Failed to resend invitation');
+                              }
+                            }}
+                            className="text-xs h-6"
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Resend
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

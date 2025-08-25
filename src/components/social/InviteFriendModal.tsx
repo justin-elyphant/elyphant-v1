@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Slider } from "@/components/ui/slider";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // 🚨 MIGRATION NOTICE: Now using UnifiedGiftManagementService instead of pendingGiftsService
@@ -77,6 +78,7 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         gift_preferences: {}
       };
 
+      // Create the pending connection in database
       await unifiedGiftManagementService.createPendingConnection(
         formData.email,
         fullName,
@@ -86,7 +88,24 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         relationshipContext
       );
 
-      toast.success(`Invitation sent to ${formData.firstName}! They'll be notified to join and build their wishlist.`);
+      // Send invitation email via edge function
+      const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          recipientEmail: formData.email,
+          recipientName: fullName,
+          senderName: 'You', // You could get this from user profile
+          occasion: 'friendship',
+          personalMessage: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`,
+          relationshipType: formData.relationshipType
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast.warning(`Connection created but email failed to send. You can resend from the Pending tab.`);
+      } else {
+        toast.success(`Invitation sent to ${formData.firstName}! They'll receive an email to join and build their wishlist.`);
+      }
       
       // Reset form
       setFormData({

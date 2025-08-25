@@ -240,12 +240,12 @@ export const useConnectionsAdapter = () => {
 
       console.log('🔍 [useConnectionsAdapter] Fetching pending connections for user:', currentUser.user.id);
 
-      // First get the pending connections - use a simpler query without joins
+      // First get the pending connections - check both 'pending' and 'pending_invitation' statuses
       const { data: connections, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, recipient_email')
         .or(`connected_user_id.eq.${currentUser.user.id},user_id.eq.${currentUser.user.id}`)
-        .eq('status', 'pending');
+        .in('status', ['pending', 'pending_invitation']);
 
       if (connectionsError) throw connectionsError;
 
@@ -304,7 +304,9 @@ export const useConnectionsAdapter = () => {
           bio: otherProfile?.bio,
           isPending: true,
           isIncoming,
-          connectionDate: conn.created_at
+          connectionDate: conn.created_at,
+          recipientEmail: conn.recipient_email,
+          status: conn.status
         };
       });
     } catch (error) {

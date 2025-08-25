@@ -85,6 +85,11 @@ class UnifiedMarketplaceService {
       this.toastHistory.delete(toastKey);
     }, this.TOAST_COOLDOWN);
 
+    // Dismiss any existing loading toasts when showing success/error
+    if (type === 'success' || type === 'error') {
+      toast.dismiss();
+    }
+
     if (type === 'loading') {
       toast.loading(message, { description });
     } else if (type === 'error') {

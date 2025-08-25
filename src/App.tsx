@@ -14,7 +14,7 @@ import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 import { EmployeeRouteGuard } from "./components/auth/EmployeeRouteGuard";
 import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandler";
 import { Toaster } from "@/components/ui/toaster";
-import HeaderTestSuite from "@/components/navigation/HeaderTestSuite";
+
 
 // Immediate load for critical pages
 import Home from "./pages/Home";
@@ -221,7 +221,7 @@ function AppContent() {
         </Routes>
       </Suspense>
       <Toaster />
-      <HeaderTestSuite />
+      
     </div>
   );
 }

@@ -48,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${notificationType} email to ${recipientEmail}`);
 
     const emailResponse = await resend.emails.send({
-      from: "Nicole AI <notifications@yourgiftplatform.com>", // Update with your domain
+      from: "Nicole AI <hello@elyphant.ai>",
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,

@@ -83,7 +83,7 @@ serve(async (req) => {
     `;
 
     const email = await resend.emails.send({
-      from: "Elyphant <no-reply@resend.dev>",
+      from: "Elyphant <hello@elyphant.ai>",
       to: [payload.recipientEmail],
       subject,
       html,

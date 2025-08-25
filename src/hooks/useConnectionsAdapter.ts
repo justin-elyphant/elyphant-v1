@@ -240,16 +240,37 @@ export const useConnectionsAdapter = () => {
 
       console.log('🔍 [useConnectionsAdapter] Fetching pending connections for user:', currentUser.user.id);
 
-      // First get the pending connections - check both 'pending' and 'pending_invitation' statuses
-      const { data: connections, error: connectionsError } = await supabase
+      // Query 1: Get outgoing pending invitations (where user_id matches current user)
+      const { data: outgoingInvitations, error: outgoingError } = await supabase
         .from('user_connections')
         .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name')
-        .or(`connected_user_id.eq.${currentUser.user.id},user_id.eq.${currentUser.user.id}`)
+        .eq('user_id', currentUser.user.id)
         .in('status', ['pending', 'pending_invitation']);
 
-      if (connectionsError) throw connectionsError;
+      if (outgoingError) {
+        console.error('❌ [useConnectionsAdapter] Error fetching outgoing invitations:', outgoingError);
+        throw outgoingError;
+      }
 
-      console.log('✅ [useConnectionsAdapter] Found pending connections:', connections?.length || 0);
+      // Query 2: Get incoming connection requests (where connected_user_id matches current user)
+      const { data: incomingRequests, error: incomingError } = await supabase
+        .from('user_connections')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name')
+        .eq('connected_user_id', currentUser.user.id)
+        .eq('status', 'pending');
+
+      if (incomingError) {
+        console.error('❌ [useConnectionsAdapter] Error fetching incoming requests:', incomingError);
+        throw incomingError;
+      }
+
+      // Combine both results
+      const connections = [...(outgoingInvitations || []), ...(incomingRequests || [])];
+
+      console.log('✅ [useConnectionsAdapter] Found outgoing invitations:', outgoingInvitations?.length || 0);
+      console.log('✅ [useConnectionsAdapter] Found incoming requests:', incomingRequests?.length || 0);
+      console.log('✅ [useConnectionsAdapter] Total pending connections:', connections.length);
+      console.log('🔍 [useConnectionsAdapter] Raw connections data:', connections);
 
       if (!connections || connections.length === 0) {
         return [];
@@ -282,11 +303,20 @@ export const useConnectionsAdapter = () => {
       }
 
       // Transform connections to pending connection objects
-      return connections.map(conn => {
+      const transformedConnections = connections.map((conn, index) => {
+        console.log(`🔍 [useConnectionsAdapter] Processing connection ${index + 1}:`, {
+          id: conn.id,
+          status: conn.status,
+          user_id: conn.user_id,
+          connected_user_id: conn.connected_user_id,
+          pending_recipient_name: conn.pending_recipient_name,
+          pending_recipient_email: conn.pending_recipient_email
+        });
+
         // Handle pending invitations vs actual connection requests differently
         if (conn.status === 'pending_invitation' && !conn.connected_user_id) {
           // This is a pending invitation (like Heather) - use pending_recipient_* fields
-          return {
+          const transformedConnection = {
             id: `pending_${conn.id}`, // Use unique ID for pending invitations
             connectionId: conn.id,
             name: conn.pending_recipient_name || 'Unknown Recipient',
@@ -308,13 +338,16 @@ export const useConnectionsAdapter = () => {
             recipientEmail: conn.pending_recipient_email,
             status: conn.status
           };
+          
+          console.log(`✅ [useConnectionsAdapter] Transformed pending invitation:`, transformedConnection);
+          return transformedConnection;
         } else {
           // This is a regular connection request with actual user profiles
           const isIncoming = conn.connected_user_id === currentUser.user.id;
           const otherUserId = isIncoming ? conn.user_id : conn.connected_user_id;
           const otherProfile = profileMap.get(otherUserId);
           
-          return {
+          const transformedConnection = {
             id: otherUserId,
             connectionId: conn.id,
             name: otherProfile?.name || 'Unknown',
@@ -336,8 +369,14 @@ export const useConnectionsAdapter = () => {
             recipientEmail: conn.pending_recipient_email,
             status: conn.status
           };
+          
+          console.log(`✅ [useConnectionsAdapter] Transformed connection request:`, transformedConnection);
+          return transformedConnection;
         }
       });
+
+      console.log('🎯 [useConnectionsAdapter] Final transformed pending connections:', transformedConnections);
+      return transformedConnections;
     } catch (error) {
       console.error('❌ [useConnectionsAdapter] Error fetching pending connections:', error);
       return [];

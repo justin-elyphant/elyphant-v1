@@ -243,7 +243,7 @@ export const useConnectionsAdapter = () => {
       // First get the pending connections - check both 'pending' and 'pending_invitation' statuses
       const { data: connections, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at, recipient_email')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name')
         .or(`connected_user_id.eq.${currentUser.user.id},user_id.eq.${currentUser.user.id}`)
         .in('status', ['pending', 'pending_invitation']);
 
@@ -255,59 +255,88 @@ export const useConnectionsAdapter = () => {
         return [];
       }
 
-      // Get all unique profile IDs we need to fetch
+      // Get all unique profile IDs we need to fetch (only for connections with actual connected_user_id)
       const profileIds = new Set<string>();
       connections.forEach(conn => {
-        profileIds.add(conn.user_id);
-        profileIds.add(conn.connected_user_id);
+        if (conn.user_id) profileIds.add(conn.user_id);
+        if (conn.connected_user_id) profileIds.add(conn.connected_user_id);
       });
 
       // Remove current user ID as we don't need their own profile
       profileIds.delete(currentUser.user.id);
 
-      // Fetch all profiles in one query
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, username, profile_image, bio')
-        .in('id', Array.from(profileIds));
+      // Fetch profiles only for existing users (not pending invitations)
+      let profileMap = new Map();
+      if (profileIds.size > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name, username, profile_image, bio')
+          .in('id', Array.from(profileIds));
 
-      if (profilesError) throw profilesError;
+        if (profilesError) throw profilesError;
 
-      // Create a map for easy profile lookup
-      const profileMap = new Map();
-      profiles?.forEach(profile => {
-        profileMap.set(profile.id, profile);
-      });
+        // Create a map for easy profile lookup
+        profiles?.forEach(profile => {
+          profileMap.set(profile.id, profile);
+        });
+      }
 
       // Transform connections to pending connection objects
       return connections.map(conn => {
-        // Determine if this is an incoming or outgoing request
-        const isIncoming = conn.connected_user_id === currentUser.user.id;
-        const otherUserId = isIncoming ? conn.user_id : conn.connected_user_id;
-        const otherProfile = profileMap.get(otherUserId);
-        
-        return {
-          id: otherUserId,
-          connectionId: conn.id,
-          name: otherProfile?.name || 'Unknown',
-          username: otherProfile?.username || '',
-          imageUrl: otherProfile?.profile_image || '',
-          mutualFriends: 0,
-          type: 'friend' as const,
-          lastActive: 'recently',
-          relationship: conn.relationship_type as RelationshipType,
-          dataStatus: {
-            shipping: 'missing' as const,
-            birthday: 'missing' as const,
-            email: 'missing' as const
-          },
-          bio: otherProfile?.bio,
-          isPending: true,
-          isIncoming,
-          connectionDate: conn.created_at,
-          recipientEmail: conn.recipient_email,
-          status: conn.status
-        };
+        // Handle pending invitations vs actual connection requests differently
+        if (conn.status === 'pending_invitation' && !conn.connected_user_id) {
+          // This is a pending invitation (like Heather) - use pending_recipient_* fields
+          return {
+            id: `pending_${conn.id}`, // Use unique ID for pending invitations
+            connectionId: conn.id,
+            name: conn.pending_recipient_name || 'Unknown Recipient',
+            username: conn.pending_recipient_email ? `@${conn.pending_recipient_email.split('@')[0]}` : '@unknown',
+            imageUrl: '/placeholder.svg',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: '',
+            isPending: true,
+            isIncoming: false, // These are outgoing invitations
+            connectionDate: conn.created_at,
+            recipientEmail: conn.pending_recipient_email,
+            status: conn.status
+          };
+        } else {
+          // This is a regular connection request with actual user profiles
+          const isIncoming = conn.connected_user_id === currentUser.user.id;
+          const otherUserId = isIncoming ? conn.user_id : conn.connected_user_id;
+          const otherProfile = profileMap.get(otherUserId);
+          
+          return {
+            id: otherUserId,
+            connectionId: conn.id,
+            name: otherProfile?.name || 'Unknown',
+            username: otherProfile?.username || '',
+            imageUrl: otherProfile?.profile_image || '/placeholder.svg',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus: {
+              shipping: 'missing' as const,
+              birthday: 'missing' as const,
+              email: 'missing' as const
+            },
+            bio: otherProfile?.bio,
+            isPending: true,
+            isIncoming,
+            connectionDate: conn.created_at,
+            recipientEmail: conn.pending_recipient_email,
+            status: conn.status
+          };
+        }
       });
     } catch (error) {
       console.error('❌ [useConnectionsAdapter] Error fetching pending connections:', error);

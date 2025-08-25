@@ -23,19 +23,8 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
   showBreadcrumbs = false,
 }) => {
   const authContext = useAuth();
-  const { headerState, isScrollingUp, config, scrollY } = useHeaderState();
+  const { isScrolled, config } = useHeaderState();
   const headerRef = useRef<HTMLElement>(null);
-
-  // Performance optimization: Add will-change for smooth transforms
-  useEffect(() => {
-    const header = headerRef.current;
-    if (header) {
-      header.style.willChange = 'transform, height, opacity';
-      return () => {
-        header.style.willChange = 'auto';
-      };
-    }
-  }, []);
 
   // Handle case where AuthProvider context is not yet available
   if (!authContext) {
@@ -68,48 +57,38 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
     <header 
       ref={headerRef}
       className={cn(
-        "sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border transition-all duration-300 ease-out",
-        // Transform for smooth hide/show behavior
-        headerState === 'minimal' && !isScrollingUp && scrollY > 300 
-          ? 'transform -translate-y-2 shadow-lg' 
-          : 'transform translate-y-0 shadow-sm',
+        "sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border transition-shadow duration-300",
+        // Only subtle shadow change on scroll
+        isScrolled ? 'shadow-md' : 'shadow-sm',
         className
       )}
-      style={{
-        // CSS custom properties for smooth transitions
-        '--header-height': config.height.includes('20') ? '80px' : config.height.includes('16') ? '64px' : '56px'
-      } as React.CSSProperties}
     >
       <nav className="bg-transparent">
         <div className="container-header">
           <div className={cn(
-            "flex items-center transition-all duration-300",
+            "flex items-center",
             config.height
           )}>
-            {/* Progressive Logo */}
+            {/* Logo - always consistent size */}
             <div className={cn(
-              "flex-shrink-0 transition-all duration-300",
+              "flex-shrink-0",
               config.logoSize
             )}>
               <Logo />
             </div>
 
-            {/* Progressive Search Bar - Expands on scroll up */}
+            {/* Search Bar - always visible on desktop */}
             {config.showSearch && (
               <div className={cn(
-                "hidden md:flex transition-all duration-300",
-                config.searchWidth,
-                // Search expansion on scroll up
-                isScrollingUp && headerState !== 'full' 
-                  ? 'transform scale-105 opacity-100' 
-                  : 'transform scale-100 opacity-90'
+                "hidden md:flex",
+                config.searchWidth
               )}>
                 <AIEnhancedSearchBar />
               </div>
             )}
 
             {/* Breadcrumbs for deep pages */}
-            {showBreadcrumbs && headerState === 'full' && (
+            {showBreadcrumbs && (
               <div className="hidden lg:flex items-center text-sm text-muted-foreground mx-4">
                 <Link to="/" className="hover:text-primary transition-colors">Home</Link>
                 <span className="mx-2">/</span>
@@ -117,38 +96,24 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               </div>
             )}
 
-            {/* Desktop Auth & Cart */}
+            {/* Desktop Auth & Cart - always visible */}
             <div className="hidden md:flex items-center gap-commerce flex-shrink-0">
               {config.showCart && (
-                <div className="relative group">
-                  <OptimizedShoppingCartButton />
-                  {/* Cart preview on hover - for Phase 5 enhancement */}
-                  <div className="absolute top-full right-0 w-80 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 mt-2 z-50">
-                    <div className="p-4 text-sm text-muted-foreground">
-                      Cart preview coming soon
-                    </div>
-                  </div>
-                </div>
+                <OptimizedShoppingCartButton />
               )}
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
-            {/* Mobile Right Side - Adaptive to header state */}
-            <div className={cn(
-              "md:hidden flex items-center ml-auto transition-all duration-300",
-              headerState === 'minimal' ? 'gap-1' : 'gap-3'
-            )}>
-              {user && headerState !== 'minimal' && <UserButton />}
+            {/* Mobile Right Side - always consistent */}
+            <div className="md:hidden flex items-center ml-auto gap-3">
+              {user && <UserButton />}
               {config.showCart && <OptimizedShoppingCartButton />}
             </div>
           </div>
 
-          {/* Mobile Search Bar - Responsive to header state */}
+          {/* Mobile Search Bar - always visible */}
           {config.showSearch && (
-            <div className={cn(
-              "md:hidden bg-surface/30 border-t border-border/30 transition-all duration-300",
-              headerState === 'minimal' ? 'py-1' : 'py-2'
-            )}>
+            <div className="md:hidden bg-surface/30 border-t border-border/30 py-2">
               <div className="px-2">
                 <AIEnhancedSearchBar mobile />
               </div>

@@ -227,9 +227,15 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       // Enhanced error messages based on error type
       let userFriendlyMessage = 'Failed to create recipient. Please try again.';
       
-      if (error?.message?.includes('not authenticated')) {
+      if (error?.message?.includes('Authentication') || error?.message?.includes('session') || error?.message?.includes('sign in')) {
+        userFriendlyMessage = 'Please sign in again to continue.';
+        console.error('🔐 [AUTH_ERROR] Authentication/session error');
+      } else if (error?.message?.includes('not authenticated')) {
         userFriendlyMessage = 'Please sign in again to continue.';
         console.error('🔐 [AUTH_ERROR] User not authenticated');
+      } else if (error?.message?.includes('JWT') || error?.message?.includes('token')) {
+        userFriendlyMessage = 'Session expired. Please sign in again.';
+        console.error('🔐 [TOKEN_ERROR] JWT/token error');
       } else if (error?.message?.includes('duplicate') || error?.code === '23505') {
         userFriendlyMessage = 'A recipient with this email already exists.';
         console.error('🔄 [DUPLICATE_ERROR] Duplicate recipient email');

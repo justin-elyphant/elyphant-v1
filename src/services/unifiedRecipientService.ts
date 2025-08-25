@@ -176,6 +176,53 @@ export const unifiedRecipientService = {
     console.log('🔄 [UNIFIED_RECIPIENT] Creating pending recipient via unified service:', recipientData);
     
     try {
+      // Authentication validation FIRST
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('💥 [AUTH] Session error:', sessionError);
+        throw new Error('Authentication session error. Please sign in again.');
+      }
+      
+      if (!session) {
+        console.error('💥 [AUTH] No active session found');
+        throw new Error('You must be signed in to create recipients. Please sign in again.');
+      }
+      
+      if (!session.user) {
+        console.error('💥 [AUTH] No user in session');
+        throw new Error('Invalid authentication session. Please sign in again.');
+      }
+      
+      console.log('✅ [AUTH] Session validation passed:', {
+        userId: session.user.id,
+        email: session.user.email,
+        expiresAt: session.expires_at,
+        tokenPresent: !!session.access_token
+      });
+      
+      // Check if session is about to expire (within 5 minutes)
+      if (session.expires_at) {
+        const expiresAt = new Date(session.expires_at * 1000);
+        const now = new Date();
+        const timeToExpiry = expiresAt.getTime() - now.getTime();
+        const fiveMinutesInMs = 5 * 60 * 1000;
+        
+        if (timeToExpiry < fiveMinutesInMs) {
+          console.warn('⚠️ [AUTH] Session expires soon, refreshing...', {
+            expiresAt: expiresAt.toISOString(),
+            timeToExpiry: `${Math.round(timeToExpiry / 1000)}s`
+          });
+          
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('💥 [AUTH] Session refresh failed:', refreshError);
+            throw new Error('Session expired. Please sign in again.');
+          }
+          
+          console.log('✅ [AUTH] Session refreshed successfully');
+        }
+      }
+      
       // Enhanced validation
       if (!recipientData.name?.trim()) {
         throw new Error('Recipient name is required');
@@ -203,10 +250,29 @@ export const unifiedRecipientService = {
       
     } catch (error: any) {
       console.error('💥 [UNIFIED_RECIPIENT] Error creating pending recipient:', {
-        error,
+        error: {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        },
         recipientData,
         timestamp: new Date().toISOString()
       });
+      
+      // Provide specific error messages for common auth issues
+      if (error.message?.includes('auth') || error.message?.includes('session')) {
+        throw new Error('Authentication issue: ' + error.message);
+      }
+      
+      if (error.message?.includes('JWT') || error.message?.includes('token')) {
+        throw new Error('Session expired. Please sign in again.');
+      }
+      
+      if (error.code === 'PGRST301') {
+        throw new Error('Permission denied. Please check your authentication.');
+      }
+      
       throw error;
     }
   },

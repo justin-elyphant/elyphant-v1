@@ -58,8 +58,40 @@ export const pendingGiftsService = {
     birthday?: string | null,
     relationshipContext?: any
   ) {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) throw new Error('User not authenticated');
+    console.log('🔄 [PENDING_GIFTS] Creating pending connection with enhanced auth validation');
+    
+    // Enhanced authentication validation
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('💥 [PENDING_GIFTS] Session error:', sessionError);
+      throw new Error(`Session error: ${sessionError.message}. Please sign in again.`);
+    }
+    
+    if (!session) {
+      console.error('💥 [PENDING_GIFTS] No active session');
+      throw new Error('No active session found. Please sign in to continue.');
+    }
+    
+    if (!session.user) {
+      console.error('💥 [PENDING_GIFTS] No user in session');
+      throw new Error('Invalid session. Please sign in again.');
+    }
+    
+    // Validate session token
+    if (!session.access_token) {
+      console.error('💥 [PENDING_GIFTS] No access token in session');
+      throw new Error('Invalid authentication token. Please sign in again.');
+    }
+    
+    console.log('✅ [PENDING_GIFTS] Authentication validated:', {
+      userId: session.user.id,
+      email: session.user.email,
+      tokenPresent: !!session.access_token,
+      expiresAt: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'never'
+    });
+    
+    const user = { user: session.user };
 
     // Extract phone number from shipping address if provided
     const recipientPhone = shippingAddress?.phone || null;

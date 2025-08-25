@@ -59,7 +59,7 @@ export const EmployeeRouteGuard: React.FC<EmployeeRouteGuardProps> = ({ children
     };
 
     checkAndRedirectIfNeeded();
-  }, [user, isLoading, location.pathname, navigate, isChecking]);
+  }, [user, isLoading, location.pathname, navigate]); // Removed isChecking to prevent infinite loop
 
   // Show loading state while checking employee status
   if (isChecking) {

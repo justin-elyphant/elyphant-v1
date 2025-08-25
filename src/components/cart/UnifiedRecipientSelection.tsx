@@ -93,49 +93,155 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const handleNewRecipientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 [RECIPIENT_CREATION] Starting recipient creation process');
+    console.log('📝 [RECIPIENT_CREATION] Form data:', {
+      name: newRecipientForm.name,
+      email: newRecipientForm.email,
+      relationship_type: newRecipientForm.relationship_type,
+      address: newRecipientForm.address
+    });
+
+    // Enhanced validation with detailed logging
     if (!newRecipientForm.name.trim()) {
+      console.error('❌ [VALIDATION] Name validation failed - empty name');
       toast.error('Please enter a recipient name');
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!newRecipientForm.email.trim()) {
+      console.error('❌ [VALIDATION] Email validation failed - empty email');
       toast.error('Email is required');
       return;
     }
-
-    // Validate that all required address fields are filled
-    const address = newRecipientForm.address;
-    if (!address?.street || !address?.city || !address?.state || !address?.zipCode || !address?.country) {
-      toast.error('Street address, city, state, ZIP code, and country are required');
+    
+    if (!emailRegex.test(newRecipientForm.email.trim())) {
+      console.error('❌ [VALIDATION] Email validation failed - invalid format:', newRecipientForm.email);
+      toast.error('Please enter a valid email address');
       return;
     }
 
+    // Enhanced address validation
+    const address = newRecipientForm.address;
+    console.log('🏠 [VALIDATION] Address validation:', address);
+    
+    if (!address?.street?.trim()) {
+      console.error('❌ [VALIDATION] Address validation failed - missing street');
+      toast.error('Street address is required');
+      return;
+    }
+    
+    if (!address?.city?.trim()) {
+      console.error('❌ [VALIDATION] Address validation failed - missing city');
+      toast.error('City is required');
+      return;
+    }
+    
+    if (!address?.state?.trim()) {
+      console.error('❌ [VALIDATION] Address validation failed - missing state');
+      toast.error('State is required');
+      return;
+    }
+    
+    if (!address?.zipCode?.trim()) {
+      console.error('❌ [VALIDATION] Address validation failed - missing ZIP code');
+      toast.error('ZIP code is required');
+      return;
+    }
+    
+    if (!address?.country?.trim()) {
+      console.error('❌ [VALIDATION] Address validation failed - missing country');
+      toast.error('Country is required');
+      return;
+    }
+
+    // Relationship type validation
+    const validRelationshipTypes = ['friend', 'family', 'colleague', 'partner', 'other'];
+    if (!validRelationshipTypes.includes(newRecipientForm.relationship_type)) {
+      console.error('❌ [VALIDATION] Invalid relationship type:', newRecipientForm.relationship_type);
+      toast.error('Please select a valid relationship type');
+      return;
+    }
+
+    console.log('✅ [VALIDATION] All validations passed');
+
     try {
-      const newPendingRecipient = await unifiedRecipientService.createPendingRecipient({
-        name: newRecipientForm.name,
-        email: newRecipientForm.email,
+      console.log('📡 [API_CALL] Creating pending recipient...');
+      
+      const sanitizedData = {
+        name: newRecipientForm.name.trim(),
+        email: newRecipientForm.email.trim().toLowerCase(),
         relationship_type: newRecipientForm.relationship_type,
-        address: newRecipientForm.address
-      });
+        address: {
+          street: address.street.trim(),
+          address_line2: address.address_line2?.trim() || '',
+          city: address.city.trim(),
+          state: address.state.trim(),
+          zipCode: address.zipCode.trim(),
+          country: address.country.trim()
+        }
+      };
+      
+      console.log('🧹 [DATA_SANITIZATION] Sanitized data:', sanitizedData);
+      
+      const newPendingRecipient = await unifiedRecipientService.createPendingRecipient(sanitizedData);
+      
+      console.log('✅ [API_SUCCESS] Pending recipient created:', newPendingRecipient);
       
       const unifiedRecipient: UnifiedRecipient = {
         id: newPendingRecipient.id,
-        name: newRecipientForm.name,
-        email: newRecipientForm.email,
-        address: newRecipientForm.address,
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        address: sanitizedData.address,
         source: 'pending',
-        relationship_type: newRecipientForm.relationship_type,
+        relationship_type: sanitizedData.relationship_type,
         status: 'pending_invitation'
       };
+      
+      console.log('🎯 [RECIPIENT_CREATION] Unified recipient object:', unifiedRecipient);
       
       onRecipientSelect(unifiedRecipient);
       toast.success('Invitation sent to recipient');
       
       setShowNewRecipientForm(false);
       resetNewRecipientForm();
-    } catch (error) {
-      console.error('Error creating recipient:', error);
-      toast.error('Failed to create recipient');
+      
+      console.log('🎉 [RECIPIENT_CREATION] Process completed successfully');
+      
+    } catch (error: any) {
+      console.error('💥 [ERROR] Failed to create recipient:', {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        errorHint: error?.hint,
+        timestamp: new Date().toISOString(),
+        formData: {
+          name: newRecipientForm.name,
+          email: newRecipientForm.email,
+          relationship_type: newRecipientForm.relationship_type
+        }
+      });
+      
+      // Enhanced error messages based on error type
+      let userFriendlyMessage = 'Failed to create recipient. Please try again.';
+      
+      if (error?.message?.includes('not authenticated')) {
+        userFriendlyMessage = 'Please sign in again to continue.';
+        console.error('🔐 [AUTH_ERROR] User not authenticated');
+      } else if (error?.message?.includes('duplicate') || error?.code === '23505') {
+        userFriendlyMessage = 'A recipient with this email already exists.';
+        console.error('🔄 [DUPLICATE_ERROR] Duplicate recipient email');
+      } else if (error?.message?.includes('network') || error?.code === 'PGRST301') {
+        userFriendlyMessage = 'Network error. Please check your connection and try again.';
+        console.error('🌐 [NETWORK_ERROR] Network connectivity issue');
+      } else if (error?.message?.includes('permission') || error?.code === '42501') {
+        userFriendlyMessage = 'Permission denied. Please contact support.';
+        console.error('🚫 [PERMISSION_ERROR] Database permission denied');
+      }
+      
+      toast.error(userFriendlyMessage);
     }
   };
 

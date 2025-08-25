@@ -895,59 +895,182 @@ class UnifiedGiftManagementService {
     birthday?: string | null,
     relationshipContext?: any
   ) {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) throw new Error('User not authenticated');
+    console.log('🚀 [UNIFIED_SERVICE] Creating pending connection:', {
+      recipientEmail,
+      recipientName,
+      relationshipType,
+      hasShippingAddress: !!shippingAddress,
+      hasBirthday: !!birthday,
+      hasRelationshipContext: !!relationshipContext,
+      timestamp: new Date().toISOString()
+    });
+
+    // Enhanced authentication check
+    const { data: user, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('🔐 [AUTH_ERROR] Failed to get user:', authError);
+      throw new Error(`Authentication error: ${authError.message}`);
+    }
+    
+    if (!user?.user) {
+      console.error('🔐 [AUTH_ERROR] No authenticated user found');
+      throw new Error('User not authenticated');
+    }
+
+    console.log('✅ [AUTH_SUCCESS] User authenticated:', {
+      userId: user.user.id,
+      email: user.user.email
+    });
+
+    // Input validation and sanitization
+    if (!recipientEmail?.trim()) {
+      console.error('❌ [VALIDATION] Invalid recipient email:', recipientEmail);
+      throw new Error('Recipient email is required');
+    }
+
+    if (!recipientName?.trim()) {
+      console.error('❌ [VALIDATION] Invalid recipient name:', recipientName);
+      throw new Error('Recipient name is required');
+    }
+
+    const validRelationshipTypes = ['friend', 'family', 'colleague', 'partner', 'other'];
+    if (!validRelationshipTypes.includes(relationshipType)) {
+      console.error('❌ [VALIDATION] Invalid relationship type:', relationshipType);
+      throw new Error(`Invalid relationship type: ${relationshipType}`);
+    }
 
     const recipientPhone = shippingAddress?.phone || null;
+    const sanitizedEmail = recipientEmail.trim().toLowerCase();
+    const sanitizedName = recipientName.trim();
 
-    const { data: existingConnection } = await supabase
-      .from('user_connections')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .eq('pending_recipient_email', recipientEmail)
-      .eq('status', 'pending_invitation')
-      .maybeSingle();
+    console.log('🧹 [DATA_SANITIZATION] Sanitized inputs:', {
+      sanitizedEmail,
+      sanitizedName,
+      relationshipType,
+      recipientPhone
+    });
 
-    if (existingConnection) {
-      const { data, error } = await supabase
+    try {
+      // Check for existing pending connection
+      console.log('🔍 [DB_QUERY] Checking for existing pending connection...');
+      
+      const { data: existingConnection, error: existingError } = await supabase
         .from('user_connections')
-        .update({
+        .select('*')
+        .eq('user_id', user.user.id)
+        .eq('pending_recipient_email', sanitizedEmail)
+        .eq('status', 'pending_invitation')
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('💥 [DB_ERROR] Error checking existing connection:', existingError);
+        throw new Error(`Database error while checking existing connection: ${existingError.message}`);
+      }
+
+      if (existingConnection) {
+        console.log('🔄 [UPDATE] Updating existing pending connection:', existingConnection.id);
+        
+        const updateData = {
           relationship_type: relationshipType,
-          pending_recipient_name: recipientName,
+          pending_recipient_name: sanitizedName,
           pending_recipient_phone: recipientPhone,
           pending_shipping_address: shippingAddress,
           pending_recipient_dob: birthday,
           relationship_context: relationshipContext,
-          invitation_sent_at: new Date().toISOString()
-        })
-        .eq('id', existingConnection.id)
-        .select()
-        .single();
+          invitation_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
 
-      if (error) throw error;
-      return data;
-    }
+        console.log('📝 [UPDATE_DATA] Update payload:', updateData);
 
-    const { data, error } = await supabase
-      .from('user_connections')
-      .insert({
+        const { data, error } = await supabase
+          .from('user_connections')
+          .update(updateData)
+          .eq('id', existingConnection.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('💥 [UPDATE_ERROR] Failed to update existing connection:', {
+            error,
+            connectionId: existingConnection.id,
+            updateData
+          });
+          throw new Error(`Failed to update existing connection: ${error.message}`);
+        }
+
+        console.log('✅ [UPDATE_SUCCESS] Updated existing connection:', data);
+        return data;
+      }
+
+      // Create new pending connection
+      console.log('➕ [CREATE] Creating new pending connection...');
+      
+      const insertData = {
         user_id: user.user.id,
         connected_user_id: null,
-        status: 'pending_invitation',
+        status: 'pending_invitation' as const,
         relationship_type: relationshipType,
-        pending_recipient_email: recipientEmail,
-        pending_recipient_name: recipientName,
+        pending_recipient_email: sanitizedEmail,
+        pending_recipient_name: sanitizedName,
         pending_recipient_phone: recipientPhone,
         pending_shipping_address: shippingAddress,
         pending_recipient_dob: birthday,
         relationship_context: relationshipContext,
-        invitation_sent_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+        invitation_sent_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      };
 
-    if (error) throw error;
-    return data;
+      console.log('📝 [INSERT_DATA] Insert payload:', insertData);
+
+      const { data, error } = await supabase
+        .from('user_connections')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('💥 [INSERT_ERROR] Failed to create pending connection:', {
+          error,
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          insertData
+        });
+        
+        // Enhanced error handling with specific error types
+        if (error.code === '23505') { // Unique constraint violation
+          throw new Error('A pending invitation already exists for this email address');
+        } else if (error.code === '23503') { // Foreign key constraint violation
+          throw new Error('Invalid user reference. Please try signing in again.');
+        } else if (error.code === '42501') { // Insufficient privilege
+          throw new Error('Permission denied. Please contact support.');
+        } else {
+          throw new Error(`Database error: ${error.message}`);
+        }
+      }
+
+      console.log('✅ [CREATE_SUCCESS] Created new pending connection:', data);
+      return data;
+
+    } catch (error: any) {
+      console.error('💥 [CRITICAL_ERROR] Unhandled error in createPendingConnection:', {
+        error,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name,
+        stack: error?.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Re-throw with enhanced context
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error(`Unexpected error during connection creation: ${String(error)}`);
+      }
+    }
   }
 
   async createAutoGiftRuleForPending(

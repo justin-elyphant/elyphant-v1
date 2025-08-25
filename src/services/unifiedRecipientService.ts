@@ -173,12 +173,42 @@ export const unifiedRecipientService = {
     address?: any;
     relationship_type?: string;
   }): Promise<any> {
-    return pendingGiftsService.createPendingConnection(
-      recipientData.email,
-      recipientData.name,
-      recipientData.relationship_type || 'friend',
-      recipientData.address
-    );
+    console.log('🔄 [UNIFIED_RECIPIENT] Creating pending recipient via unified service:', recipientData);
+    
+    try {
+      // Enhanced validation
+      if (!recipientData.name?.trim()) {
+        throw new Error('Recipient name is required');
+      }
+      
+      if (!recipientData.email?.trim()) {
+        throw new Error('Recipient email is required');
+      }
+      
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recipientData.email.trim())) {
+        throw new Error('Invalid email format');
+      }
+      
+      const result = await pendingGiftsService.createPendingConnection(
+        recipientData.email,
+        recipientData.name,
+        recipientData.relationship_type || 'friend',
+        recipientData.address
+      );
+      
+      console.log('✅ [UNIFIED_RECIPIENT] Successfully created pending recipient:', result);
+      return result;
+      
+    } catch (error: any) {
+      console.error('💥 [UNIFIED_RECIPIENT] Error creating pending recipient:', {
+        error,
+        recipientData,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
   },
 
   async upgradeAddressBookToConnection(addressBookId: string, email: string): Promise<void> {

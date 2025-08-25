@@ -41,7 +41,7 @@ const StickyFiltersBar = ({
 
   return (
     <div 
-      className={`sticky top-0 z-30 bg-white border-b py-4 transition-shadow mb-6 ${isScrolled ? "shadow-md" : ""}`}
+      className={`sticky top-[109px] z-20 bg-white border-b py-4 transition-shadow mb-6 ${isScrolled ? "shadow-md" : ""}`}
     >
       <div className="container mx-auto flex flex-col gap-2">
         {/* Filter Toggle - only show if not in recent searches area */}

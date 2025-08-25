@@ -98,7 +98,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
   ];
 
   return (
-    <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm", className)}>
+    <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm transition-all duration-300", className)}>
       <nav className="bg-transparent">
         <div className="container-header">
           <div className={cn("flex items-center", config.height)}>
@@ -136,8 +136,6 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
             </div>
           )}
         </div>
-
-        {/* Bottom navigation removed from header - will be rendered at app level */}
       </nav>
     </header>
   );

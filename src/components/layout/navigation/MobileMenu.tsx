@@ -76,7 +76,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         
         {/* Mobile Marketplace Menu */}
         <div className="space-y-1 border-t pt-2">
-          <p className="px-3 py-1 text-sm font-semibold text-muted-foreground">Marketplace</p>
+          <p className="px-3 py-1 text-sm font-semibold text-muted-foreground">Shopping</p>
           {marketplaceItems.map((item, index) => (
             <Link
               key={index}
@@ -90,6 +90,25 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               {item.label}
             </Link>
           ))}
+          <Link
+            to="/orders"
+            className={`py-2 px-4 rounded-md flex items-center ${isActive('/orders')
+              ? "bg-primary/10 text-primary font-semibold" 
+              : "hover:bg-muted"}`}
+            onClick={onClose}
+          >
+            Order History
+          </Link>
+          <Link
+            to="/payments"
+            className={`py-2 px-4 rounded-md flex items-center ${isActive('/payments')
+              ? "bg-primary/10 text-primary font-semibold" 
+              : "hover:bg-muted"}`}
+            onClick={onClose}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Payment Methods
+          </Link>
         </div>
         
         {/* Mobile Connections Menu (for logged in users) */}

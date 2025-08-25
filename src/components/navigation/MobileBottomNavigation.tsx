@@ -99,6 +99,10 @@ const MobileBottomNavigation: React.FC = () => {
     if (tab.href === "/") {
       return location.pathname === "/";
     }
+    // Handle route consistency - account should match both /account and /profile
+    if (tab.id === "account") {
+      return location.pathname.startsWith("/account") || location.pathname.startsWith("/profile");
+    }
     return location.pathname.startsWith(tab.href);
   };
 

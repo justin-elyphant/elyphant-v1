@@ -55,7 +55,50 @@ const MobileNavMenu = ({
         {isAuthenticated && (
           <>
             <div className="space-y-1 pt-2 border-t border-border">
-              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">My Account</p>
+              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Personal</p>
+              <Link
+                to="/dashboard"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/account"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Account
+              </Link>
+            </div>
+            
+            <div className="space-y-1 pt-2">
+              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Social & AI</p>
+              <Link
+                to="/social"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Social Hub
+              </Link>
+              <Link
+                to="/gifting"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Gifting Hub
+              </Link>
+              <Link
+                to="/nicole"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Nicole AI
+              </Link>
+            </div>
+            
+            <div className="space-y-1 pt-2">
+              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Quick Access</p>
               {profileItems.map((item, index) => (
                 <Link
                   key={index}

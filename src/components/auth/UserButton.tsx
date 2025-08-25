@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings, Heart, MessageSquare, LayoutDashboard, Users, CreditCard, Package } from "lucide-react";
+import { User, LogOut, Settings, Heart, MessageSquare, LayoutDashboard, Users, CreditCard, Package, Gift, Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -150,10 +150,39 @@ const UserButton = () => {
           </span>
         </DropdownMenuItem>
 
+        <DropdownMenuItem onClick={() => navigate("/gifting")}>
+          <Gift className="mr-2 h-4 w-4" />
+          <span>Gifting Hub</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/social")}>
+          <Users className="mr-2 h-4 w-4" />
+          <span>Social Hub</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/nicole")}>
+          <Brain className="mr-2 h-4 w-4" />
+          <span>Nicole AI</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem onClick={handleProfileClick}>
           <User className="mr-2 h-4 w-4" />
           <span>My Profile</span>
         </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/account")}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Account Settings</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => navigate("/wishlists")}>
+          <Heart className="mr-2 h-4 w-4" />
+          <span>{wishlistsLabel}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={() => navigate("/messages")}>
           <MessageSquare className="mr-2 h-4 w-4" />
@@ -166,21 +195,6 @@ const UserButton = () => {
               />
             )}
           </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/connections")}>
-          <Users className="mr-2 h-4 w-4" />
-          <span>Connections</span>
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onClick={() => navigate("/wishlists")}>
-          <Heart className="mr-2 h-4 w-4" />
-          <span>{wishlistsLabel}</span>
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onClick={() => navigate("/settings")}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/orders")}>

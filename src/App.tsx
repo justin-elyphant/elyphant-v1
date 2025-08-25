@@ -52,6 +52,7 @@ const GiftingHub = lazy(() => import("./pages/GiftingHub"));
 const Nicole = lazy(() => import("./pages/Nicole"));
 const Account = lazy(() => import("./pages/Account"));
 const Social = lazy(() => import("./pages/Social"));
+const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
@@ -175,6 +176,7 @@ function AppContent() {
           <Route path="/nicole" element={<Nicole />} />
           <Route path="/account" element={<Account />} />
           <Route path="/social" element={<Social />} />
+          <Route path="/profile/complete" element={<ProfileComplete />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

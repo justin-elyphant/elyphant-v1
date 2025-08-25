@@ -88,13 +88,13 @@ const Dashboard = () => {
 
   return (
     <SidebarLayout>
-      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
-        {/* Welcome Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+      <div className="container max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-2 sm:px-3 md:px-4">
+        {/* Welcome Header - Mobile Optimized */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">
             Welcome {firstName ? `${firstName} ` : ''}to Elyphant
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-3">
             Your quick overview and access to all features. Click on any card to explore detailed functionality.
           </p>
         </div>

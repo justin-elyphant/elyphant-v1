@@ -158,6 +158,29 @@ body {
     min-width: 44px;
   }
 
+  /* Mobile-optimized touch targets */
+  .touch-target-mobile {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  /* Enhanced touch manipulation */
+  .touch-manipulation {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Mobile-first responsive text sizing */
+  .text-mobile-responsive {
+    font-size: clamp(0.75rem, 2vw, 1rem);
+  }
+
+  .text-mobile-heading {
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+
   /* iOS-style backdrop blur for bottom nav */
   .backdrop-blur-lg {
     backdrop-filter: blur(16px);

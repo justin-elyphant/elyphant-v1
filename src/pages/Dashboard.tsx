@@ -88,7 +88,7 @@ const Dashboard = () => {
 
   return (
     <SidebarLayout>
-      <div className="container max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-2 sm:px-3 md:px-4">
+      <div className="container max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-2 sm:px-3 md:px-4 mobile-content-spacing">
         {/* Welcome Header - Mobile Optimized */}
         <div className="mb-4 sm:mb-6 md:mb-8">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">

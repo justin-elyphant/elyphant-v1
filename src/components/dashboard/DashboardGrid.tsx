@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,23 +13,51 @@ import {
   ShoppingBag, 
   Calendar,
   ArrowRight,
-  Zap
+  Zap,
+  Plus,
+  Search
 } from "lucide-react";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 import QuickGiftCTA from "./QuickGiftCTA";
 import { useAuth } from "@/contexts/auth";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SwipeableCard } from "@/components/mobile/SwipeableCard";
+import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { MobileActionBar } from "@/components/mobile/MobileActionBar";
 import { cn } from "@/lib/utils";
 
 const DashboardGrid = () => {
   const { user } = useAuth();
   const { connectionStats } = useActivityFeed(5);
   const { wishlists } = useUnifiedWishlistSystem();
+  const isMobile = useIsMobile();
+  const [showQuickActions, setShowQuickActions] = useState(false);
   
   const wishlistCount = wishlists?.length || 0;
   const totalWishlistItems = wishlists?.reduce((total, wishlist) => 
     total + (wishlist.items?.length || 0), 0) || 0;
+
+  const handleCardSwipe = (direction: 'left' | 'right', cardType: string) => {
+    console.log(`Swiped ${direction} on ${cardType} card`);
+    // Could implement quick actions based on swipe direction
+  };
+
+  const quickActions = [
+    {
+      label: 'Quick Gift',
+      icon: <Gift className="h-4 w-4" />,
+      onClick: () => setShowQuickActions(false),
+      primary: true,
+    },
+    {
+      label: 'Browse',
+      icon: <Search className="h-4 w-4" />,
+      onClick: () => setShowQuickActions(false),
+      variant: 'outline' as const,
+    },
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -70,13 +98,18 @@ const DashboardGrid = () => {
         </Card>
       </div>
 
-      {/* Quick Access Cards - Mobile Optimized */}
+      {/* Quick Access Cards - Mobile Optimized with Swipe Support */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         {/* Gifting Hub */}
-        <Card className={cn(
-          "hover:shadow-lg transition-all duration-200 cursor-pointer group",
-          "touch-manipulation min-h-[140px] sm:min-h-[130px]"
-        )}>
+        <SwipeableCard 
+          className={cn(
+            "hover:shadow-lg transition-all duration-200 cursor-pointer group",
+            "touch-manipulation min-h-[140px] sm:min-h-[130px]"
+          )}
+          onSwipeLeft={() => handleCardSwipe('left', 'gifting')}
+          onSwipeRight={() => handleCardSwipe('right', 'gifting')}
+          disabled={!isMobile}
+        >
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -100,13 +133,18 @@ const DashboardGrid = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
+        </SwipeableCard>
 
         {/* Social Hub */}
-        <Card className={cn(
-          "hover:shadow-lg transition-all duration-200 cursor-pointer group",
-          "touch-manipulation min-h-[140px] sm:min-h-[130px]"
-        )}>
+        <SwipeableCard 
+          className={cn(
+            "hover:shadow-lg transition-all duration-200 cursor-pointer group",
+            "touch-manipulation min-h-[140px] sm:min-h-[130px]"
+          )}
+          onSwipeLeft={() => handleCardSwipe('left', 'social')}
+          onSwipeRight={() => handleCardSwipe('right', 'social')}
+          disabled={!isMobile}
+        >
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -135,7 +173,7 @@ const DashboardGrid = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
+        </SwipeableCard>
 
         {/* Nicole AI */}
         <Card className={cn(
@@ -257,6 +295,70 @@ const DashboardGrid = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mobile Action Bar - One-handed use optimization */}
+      {isMobile && (
+        <>
+          <MobileActionBar
+            actions={[
+              {
+                label: 'Quick Actions',
+                icon: <Plus className="h-4 w-4" />,
+                onClick: () => setShowQuickActions(true),
+                primary: true,
+              },
+              {
+                label: 'Search',
+                icon: <Search className="h-4 w-4" />,
+                onClick: () => {/* Navigate to search */},
+                variant: 'outline',
+              },
+            ]}
+          />
+
+          {/* Mobile Bottom Sheet for Quick Actions */}
+          <MobileBottomSheet
+            isOpen={showQuickActions}
+            onClose={() => setShowQuickActions(false)}
+            title="Quick Actions"
+            snapPoints={[40, 70]}
+            initialSnapPoint={0}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild className="h-16 flex-col gap-1 touch-target-44">
+                  <Link to="/gifting">
+                    <Gift className="h-6 w-6" />
+                    <span className="text-xs">New Gift</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-16 flex-col gap-1 touch-target-44">
+                  <Link to="/marketplace">
+                    <Search className="h-6 w-6" />
+                    <span className="text-xs">Browse</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-16 flex-col gap-1 touch-target-44">
+                  <Link to="/social">
+                    <Users className="h-6 w-6" />
+                    <span className="text-xs">Friends</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-16 flex-col gap-1 touch-target-44">
+                  <Link to="/nicole">
+                    <Brain className="h-6 w-6" />
+                    <span className="text-xs">Ask Nicole</span>
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground text-center mt-4">
+                💡 Swipe left or right on cards above for quick actions
+              </div>
+            </div>
+          </MobileBottomSheet>
+        </>
+      )}
     </div>
   );
 };

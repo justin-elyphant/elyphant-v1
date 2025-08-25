@@ -33,7 +33,7 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
   // Remove mobile menu state as we're using bottom navigation
   const location = useLocation();
 
-  // Handle case where AuthProvider context is not yet available
+  // Handle case where AuthProvider context is not yet available - return minimal static header
   if (!authContext) {
     return (
       <header className={cn("sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm", className)}>
@@ -43,12 +43,9 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
               <div className="flex-shrink-0">
                 <Logo />
               </div>
-              <div className="hidden md:flex items-center space-x-4">
-                <div className="h-10 w-20 surface-secondary rounded animate-pulse" />
-              </div>
-              <div className="md:hidden">
-                <div className="h-10 w-10 surface-secondary rounded animate-pulse" />
-              </div>
+              {/* No pulsing placeholders to avoid flashing - just show empty space */}
+              <div className="hidden md:flex items-center space-x-4" />
+              <div className="md:hidden" />
             </div>
           </div>
         </nav>

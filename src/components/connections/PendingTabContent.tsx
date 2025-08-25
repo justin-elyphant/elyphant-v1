@@ -23,12 +23,25 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
   searchTerm, 
   onRefresh 
 }) => {
-  const [activeTab, setActiveTab] = useState("incoming");
+  const [activeTab, setActiveTab] = useState("gifts"); // Start with gifts tab to see Heather
+
+  console.log('🔍 [PendingTabContent] Received pendingConnections:', pendingConnections);
+  console.log('🔍 [PendingTabContent] pendingConnections length:', pendingConnections.length);
 
   // Filter gift-based pending connections (including pending_invitation status)
-  const giftBasedPending = pendingConnections.filter(conn => 
-    conn.isPending && (conn.recipientEmail || conn.status === 'pending_invitation')
-  );
+  const giftBasedPending = pendingConnections.filter(conn => {
+    const matches = conn.isPending && (conn.recipientEmail || conn.status === 'pending_invitation');
+    console.log(`🔍 [PendingTabContent] Connection ${conn.name}:`, {
+      isPending: conn.isPending,
+      recipientEmail: conn.recipientEmail,
+      status: conn.status,
+      matches: matches
+    });
+    return matches;
+  });
+
+  console.log('🔍 [PendingTabContent] Filtered giftBasedPending:', giftBasedPending);
+  console.log('🔍 [PendingTabContent] giftBasedPending length:', giftBasedPending.length);
 
   return (
     <div className="space-y-6">

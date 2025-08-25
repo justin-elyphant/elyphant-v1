@@ -72,6 +72,8 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     notes: ''
   });
   const [addressValue, setAddressValue] = useState('');
+  const [isCreatingRecipient, setIsCreatingRecipient] = useState(false);
+  const [creationProgress, setCreationProgress] = useState('');
 
   useEffect(() => {
     fetchRecipients();
@@ -94,6 +96,9 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     e.preventDefault();
     
     console.log('🚀 [RECIPIENT_CREATION] Starting recipient creation process');
+    setIsCreatingRecipient(true);
+    setCreationProgress('Validating form data...');
+    
     console.log('📝 [RECIPIENT_CREATION] Form data:', {
       name: newRecipientForm.name,
       email: newRecipientForm.email,
@@ -105,6 +110,8 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     if (!newRecipientForm.name.trim()) {
       console.error('❌ [VALIDATION] Name validation failed - empty name');
       toast.error('Please enter a recipient name');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
 
@@ -113,12 +120,16 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     if (!newRecipientForm.email.trim()) {
       console.error('❌ [VALIDATION] Email validation failed - empty email');
       toast.error('Email is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
     
     if (!emailRegex.test(newRecipientForm.email.trim())) {
       console.error('❌ [VALIDATION] Email validation failed - invalid format:', newRecipientForm.email);
       toast.error('Please enter a valid email address');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
 
@@ -129,30 +140,40 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     if (!address?.street?.trim()) {
       console.error('❌ [VALIDATION] Address validation failed - missing street');
       toast.error('Street address is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
     
     if (!address?.city?.trim()) {
       console.error('❌ [VALIDATION] Address validation failed - missing city');
       toast.error('City is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
     
     if (!address?.state?.trim()) {
       console.error('❌ [VALIDATION] Address validation failed - missing state');
       toast.error('State is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
     
     if (!address?.zipCode?.trim()) {
       console.error('❌ [VALIDATION] Address validation failed - missing ZIP code');
       toast.error('ZIP code is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
     
     if (!address?.country?.trim()) {
       console.error('❌ [VALIDATION] Address validation failed - missing country');
       toast.error('Country is required');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
 
@@ -161,10 +182,13 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     if (!validRelationshipTypes.includes(newRecipientForm.relationship_type)) {
       console.error('❌ [VALIDATION] Invalid relationship type:', newRecipientForm.relationship_type);
       toast.error('Please select a valid relationship type');
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
       return;
     }
 
     console.log('✅ [VALIDATION] All validations passed');
+    setCreationProgress('Checking authentication...');
 
     try {
       console.log('📡 [API_CALL] Creating pending recipient...');
@@ -184,6 +208,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       };
       
       console.log('🧹 [DATA_SANITIZATION] Sanitized data:', sanitizedData);
+      setCreationProgress('Creating recipient invitation...');
       
       const newPendingRecipient = await unifiedRecipientService.createPendingRecipient(sanitizedData);
       
@@ -201,6 +226,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       
       console.log('🎯 [RECIPIENT_CREATION] Unified recipient object:', unifiedRecipient);
       
+      setCreationProgress('Finalizing...');
       onRecipientSelect(unifiedRecipient);
       toast.success('Invitation sent to recipient');
       
@@ -248,6 +274,9 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       }
       
       toast.error(userFriendlyMessage);
+    } finally {
+      setIsCreatingRecipient(false);
+      setCreationProgress('');
     }
   };
 
@@ -453,11 +482,17 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                 </div>
               </div>
             ) : (
-              /* New Recipient Form */
+                /* New Recipient Form */
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5" />
                   <h3 className="font-medium">Add New Recipient</h3>
+                  {isCreatingRecipient && (
+                    <div className="flex items-center gap-2 ml-auto">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-sm text-muted-foreground">{creationProgress}</span>
+                    </div>
+                  )}
                 </div>
 
                 <form onSubmit={handleNewRecipientSubmit} className="space-y-6">
@@ -575,8 +610,16 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     type="submit" 
                     className="flex-1"
                     onClick={handleNewRecipientSubmit}
+                    disabled={isCreatingRecipient}
                   >
-                    Send Invitation
+                    {isCreatingRecipient ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Creating...
+                      </div>
+                    ) : (
+                      'Send Invitation'
+                    )}
                   </Button>
                   <Button 
                     type="button" 
@@ -585,6 +628,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                       setShowNewRecipientForm(false);
                       resetNewRecipientForm();
                     }}
+                    disabled={isCreatingRecipient}
                   >
                     Cancel
                   </Button>

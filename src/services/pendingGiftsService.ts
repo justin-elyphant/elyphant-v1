@@ -58,38 +58,65 @@ export const pendingGiftsService = {
     birthday?: string | null,
     relationshipContext?: any
   ) {
-    console.log('🔄 [PENDING_GIFTS] Creating pending connection with enhanced auth validation');
+    console.log('🔄 [PENDING_GIFTS] Creating pending connection with database-level debugging');
     
-    // Enhanced authentication validation
+    // Phase 1: Database-Level Authentication Debugging
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.error('💥 [PENDING_GIFTS] Session error:', sessionError);
+      console.error('💥 [DB_AUTH] Session error:', sessionError);
       throw new Error(`Session error: ${sessionError.message}. Please sign in again.`);
     }
     
-    if (!session) {
-      console.error('💥 [PENDING_GIFTS] No active session');
+    if (!session?.user?.id) {
+      console.error('💥 [DB_AUTH] No user ID in session:', { session });
       throw new Error('No active session found. Please sign in to continue.');
     }
     
-    if (!session.user) {
-      console.error('💥 [PENDING_GIFTS] No user in session');
-      throw new Error('Invalid session. Please sign in again.');
-    }
-    
-    // Validate session token
     if (!session.access_token) {
-      console.error('💥 [PENDING_GIFTS] No access token in session');
+      console.error('💥 [DB_AUTH] No access token in session');
       throw new Error('Invalid authentication token. Please sign in again.');
     }
     
-    console.log('✅ [PENDING_GIFTS] Authentication validated:', {
-      userId: session.user.id,
-      email: session.user.email,
-      tokenPresent: !!session.access_token,
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'never'
-    });
+    // Test database auth context BEFORE attempting insert
+    console.log('🧪 [DB_AUTH] Testing database auth context...');
+    try {
+      const { data: authTest, error: authTestError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (authTestError) {
+        console.error('💥 [DB_AUTH] Auth test failed:', authTestError);
+        throw new Error(`Database authentication failed: ${authTestError.message}`);
+      }
+      
+      console.log('✅ [DB_AUTH] Database auth context verified:', {
+        userId: session.user.id,
+        userExists: !!authTest,
+        tokenExpiry: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'never'
+      });
+    } catch (error) {
+      console.error('💥 [DB_AUTH] Database auth test failed:', error);
+      throw new Error('Database authentication failed. Please sign in again.');
+    }
+    
+    // Phase 2: Data Validation and Constraint Checking
+    console.log('🔍 [DB_VALIDATION] Validating input constraints...');
+    
+    if (!recipientEmail?.trim() || !recipientName?.trim()) {
+      throw new Error('Recipient email and name are required');
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail.trim())) {
+      throw new Error('Invalid email format');
+    }
+    
+    if (!relationshipType || !['friend', 'family', 'colleague', 'partner', 'other'].includes(relationshipType)) {
+      throw new Error('Invalid relationship type');
+    }
     
     const user = { user: session.user };
 
@@ -126,27 +153,91 @@ export const pendingGiftsService = {
       return data;
     }
 
-    // Create a new connection if none exists
-    const { data, error } = await supabase
-      .from('user_connections')
-      .insert({
-        user_id: user.user.id,
-        connected_user_id: null, // Will be set when invitation is accepted
-        status: 'pending_invitation',
-        relationship_type: relationshipType,
-        pending_recipient_email: recipientEmail,
-        pending_recipient_name: recipientName,
-        pending_recipient_phone: recipientPhone,
-        pending_shipping_address: shippingAddress,
-        pending_recipient_dob: birthday,
-        relationship_context: relationshipContext,
-        invitation_sent_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+    // Phase 3: Transaction-Based Database Operation with Enhanced Error Handling
+    console.log('💾 [DB_INSERT] Attempting database insert with transaction...');
+    
+    const insertData = {
+      user_id: user.user.id,
+      connected_user_id: null,
+      status: 'pending_invitation',
+      relationship_type: relationshipType,
+      pending_recipient_email: recipientEmail.trim().toLowerCase(),
+      pending_recipient_name: recipientName.trim(),
+      pending_recipient_phone: recipientPhone,
+      pending_shipping_address: shippingAddress,
+      pending_recipient_dob: birthday,
+      relationship_context: relationshipContext,
+      invitation_sent_at: new Date().toISOString()
+    };
+    
+    console.log('📋 [DB_INSERT] Insert data prepared:', {
+      ...insertData,
+      user_id: insertData.user_id ? 'SET' : 'MISSING',
+      pending_recipient_email: insertData.pending_recipient_email || 'MISSING',
+      pending_recipient_name: insertData.pending_recipient_name || 'MISSING'
+    });
+    
+    // Attempt insert with enhanced error context
+    try {
+      console.log('🚀 [DB_INSERT] Executing insert operation...');
+      
+      const { data, error } = await supabase
+        .from('user_connections')
+        .insert(insertData)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('💥 [DB_INSERT] Database insert error:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          insertData: {
+            ...insertData,
+            user_id: insertData.user_id ? 'SET' : 'MISSING'
+          }
+        });
+        
+        // Enhanced error analysis
+        if (error.code === 'PGRST301') {
+          throw new Error('Database permission denied. This may be an authentication issue. Please sign in again.');
+        } else if (error.code === '23503') {
+          throw new Error('Foreign key constraint violation. User authentication may be invalid.');
+        } else if (error.code === '23505') {
+          throw new Error('A pending invitation already exists for this email address.');
+        } else if (error.message?.includes('JWT')) {
+          throw new Error('Authentication token expired. Please sign in again.');
+        } else if (error.message?.includes('row-level security')) {
+          throw new Error('Permission denied due to security policies. Please verify your authentication.');
+        } else {
+          throw new Error(`Database operation failed: ${error.message}`);
+        }
+      }
+      
+      console.log('✅ [DB_INSERT] Successfully created pending connection:', {
+        id: data.id,
+        user_id: data.user_id,
+        status: data.status,
+        pending_recipient_email: data.pending_recipient_email
+      });
+      
+      return data;
+      
+    } catch (dbError: any) {
+      console.error('💥 [DB_INSERT] Critical database error:', {
+        error: dbError,
+        message: dbError.message,
+        code: dbError.code,
+        timestamp: new Date().toISOString(),
+        userId: user.user.id,
+        recipientEmail: recipientEmail
+      });
+      
+      // Re-throw with context
+      throw new Error(`Database operation failed: ${dbError.message || 'Unknown database error'}`);
+    }
   },
 
   async createAutoGiftRuleForPending(

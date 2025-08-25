@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { pendingGiftsService } from "./pendingGiftsService";
+import { authDebugService } from "./authDebugService";
 
 export interface UnifiedRecipient {
   id: string;
@@ -173,55 +174,65 @@ export const unifiedRecipientService = {
     address?: any;
     relationship_type?: string;
   }): Promise<any> {
-    console.log('🔄 [UNIFIED_RECIPIENT] Creating pending recipient via unified service:', recipientData);
+    console.log('🔄 [UNIFIED_RECIPIENT] Creating pending recipient with comprehensive diagnostics:', recipientData);
     
     try {
-      // Authentication validation FIRST
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('💥 [AUTH] Session error:', sessionError);
-        throw new Error('Authentication session error. Please sign in again.');
-      }
+      // Phase 1: Comprehensive Pre-Operation Diagnostics
+      console.log('🏥 [DIAGNOSTICS] Running comprehensive auth and RLS diagnostics...');
       
-      if (!session) {
-        console.error('💥 [AUTH] No active session found');
-        throw new Error('You must be signed in to create recipients. Please sign in again.');
-      }
+      const diagnosis = await authDebugService.diagnoseUserConnectionsIssue();
       
-      if (!session.user) {
-        console.error('💥 [AUTH] No user in session');
-        throw new Error('Invalid authentication session. Please sign in again.');
-      }
-      
-      console.log('✅ [AUTH] Session validation passed:', {
-        userId: session.user.id,
-        email: session.user.email,
-        expiresAt: session.expires_at,
-        tokenPresent: !!session.access_token
+      console.log('📊 [DIAGNOSTICS] Diagnosis results:', {
+        authValid: diagnosis.authValid,
+        rlsErrors: diagnosis.rlsStatus.errors,
+        recommendations: diagnosis.recommendations
       });
       
-      // Check if session is about to expire (within 5 minutes)
-      if (session.expires_at) {
-        const expiresAt = new Date(session.expires_at * 1000);
-        const now = new Date();
-        const timeToExpiry = expiresAt.getTime() - now.getTime();
-        const fiveMinutesInMs = 5 * 60 * 1000;
+      // Handle critical authentication issues
+      if (!diagnosis.authValid) {
+        console.error('💥 [DIAGNOSTICS] Authentication validation failed');
         
-        if (timeToExpiry < fiveMinutesInMs) {
-          console.warn('⚠️ [AUTH] Session expires soon, refreshing...', {
-            expiresAt: expiresAt.toISOString(),
-            timeToExpiry: `${Math.round(timeToExpiry / 1000)}s`
-          });
+        // Attempt session refresh if recommended
+        if (diagnosis.recommendations.some(r => r.includes('session refresh'))) {
+          console.log('🔄 [DIAGNOSTICS] Attempting session refresh...');
           
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error('💥 [AUTH] Session refresh failed:', refreshError);
-            throw new Error('Session expired. Please sign in again.');
+          const refreshResult = await authDebugService.refreshAndValidateSession();
+          
+          if (!refreshResult.success) {
+            throw new Error(`Authentication failed: ${refreshResult.error || 'Session refresh failed'}`);
           }
           
-          console.log('✅ [AUTH] Session refreshed successfully');
+          console.log('✅ [DIAGNOSTICS] Session refresh successful');
+        } else {
+          throw new Error('Authentication failed. Please sign in again.');
         }
       }
+      
+      // Handle RLS policy issues
+      if (diagnosis.rlsStatus.errors.length > 0) {
+        console.error('💥 [DIAGNOSTICS] RLS policy errors detected:', diagnosis.rlsStatus.errors);
+        throw new Error('Database permission denied. Please check your authentication status.');
+      }
+      
+      // Warning for RLS issues that don't block operation
+      if (diagnosis.rlsStatus.warnings.length > 0) {
+        console.warn('⚠️ [DIAGNOSTICS] RLS warnings:', diagnosis.rlsStatus.warnings);
+      }
+      
+      // Phase 2: Final Authentication State Validation
+      const authInfo = await authDebugService.debugAuthentication();
+      
+      if (!authInfo.sessionValid || !authInfo.dbAuthTest) {
+        console.error('💥 [AUTH] Final auth validation failed:', authInfo);
+        throw new Error('Authentication state is invalid. Please sign in again.');
+      }
+      
+      console.log('✅ [AUTH] All authentication checks passed:', {
+        userId: authInfo.userId,
+        email: authInfo.email,
+        tokenExpiry: authInfo.tokenExpiry,
+        dbAuthTest: authInfo.dbAuthTest
+      });
       
       // Enhanced validation
       if (!recipientData.name?.trim()) {

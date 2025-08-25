@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, ShoppingBag, Heart, User, Compass } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, Bot, User, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
@@ -45,41 +45,42 @@ const MobileBottomNavigation: React.FC = () => {
 
   const getAuthenticatedTabs = (): BottomNavTab[] => [
     {
-      id: "connections",
-      label: "Connections",
-      icon: <Users className="h-5 w-5" />,
-      href: "/connections",
-      badge: pendingConnectionsCount > 0 ? pendingConnectionsCount : undefined,
-      requiresAuth: true,
+      id: "cart",
+      label: "Cart",
+      icon: <ShoppingCart className="h-5 w-5" />,
+      href: "/cart",
+      badge: cartItemCount > 0 ? cartItemCount : undefined,
+      requiresAuth: false,
     },
     {
-      id: "wishlists",
-      label: "Wishlist",
-      icon: <Heart className="h-5 w-5" />,
-      href: "/wishlists",
-      requiresAuth: true,
+      id: "nicole",
+      label: "Nicole AI",
+      icon: <Bot className="h-5 w-5" />,
+      href: "/nicole",
+      requiresAuth: false,
     },
     {
       id: "account",
-      label: "Profile",
+      label: "Account",
       icon: <User className="h-5 w-5" />,
-      href: "/profile",
+      href: "/account",
       requiresAuth: true,
     }
   ];
 
   const getGuestTabs = (): BottomNavTab[] => [
     {
-      id: "discover",
-      label: "Discover",
-      icon: <Compass className="h-5 w-5" />,
-      href: "/discover",
+      id: "cart",
+      label: "Cart",
+      icon: <ShoppingCart className="h-5 w-5" />,
+      href: "/cart",
+      badge: cartItemCount > 0 ? cartItemCount : undefined,
     },
     {
-      id: "browse",
-      label: "Browse",
-      icon: <ShoppingBag className="h-5 w-5" />,
-      href: "/marketplace?browse=all",
+      id: "nicole",
+      label: "Nicole AI",
+      icon: <Bot className="h-5 w-5" />,
+      href: "/nicole",
     },
     {
       id: "auth",
@@ -136,7 +137,12 @@ const MobileBottomNavigation: React.FC = () => {
                   
                   {/* Badge for cart or notifications */}
                   {tab.badge && tab.badge > 0 && (
-                    <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    <div className={cn(
+                      "absolute -top-2 -right-2 text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1",
+                      tab.id === "cart" 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-destructive text-destructive-foreground"
+                    )}>
                       {tab.badge > 99 ? "99+" : tab.badge}
                     </div>
                   )}

@@ -98,6 +98,49 @@ const MobileNavMenu = ({
             </div>
             
             <div className="space-y-1 pt-2">
+              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Shopping</p>
+              <Link
+                to="/cart"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Cart
+              </Link>
+              <Link
+                to="/wishlists"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Wishlists
+              </Link>
+              <Link
+                to="/orders"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Order History
+              </Link>
+            </div>
+            
+            <div className="space-y-1 pt-2">
+              <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Connections</p>
+              <Link
+                to="/connections"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                My Connections
+              </Link>
+              <Link
+                to="/connections/find"
+                className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
+                onClick={onClose}
+              >
+                Find Friends
+              </Link>
+            </div>
+            
+            <div className="space-y-1 pt-2">
               <p className="px-4 py-1 text-sm font-semibold text-muted-foreground">Quick Access</p>
               {profileItems.map((item, index) => (
                 <Link

@@ -195,6 +195,7 @@ function AppContent() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />
+          <Route path="/auto-gift-approval" element={<AutoGiftApprovalPage />} />
           <Route path="/auto-gifts/approve/:token" element={<AutoGiftApprovalPage />} />
           
           {/* Nicole Auto-Gifting Test Routes */}

@@ -544,6 +544,7 @@ export type Database = {
       }
       automated_gift_executions: {
         Row: {
+          address_metadata: Json | null
           ai_agent_source: Json | null
           created_at: string | null
           error_message: string | null
@@ -561,6 +562,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
           error_message?: string | null
@@ -578,6 +580,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
           error_message?: string | null

@@ -57,7 +57,7 @@ export interface UnifiedGiftExecution {
   event_id: string;
   user_id: string;
   execution_date: Date;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'address_required' | 'pending_address';
   selected_products?: any[];
   total_amount?: number;
   order_id?: string;
@@ -68,6 +68,13 @@ export interface UnifiedGiftExecution {
   updated_at: Date;
   // Selection tier used for this execution
   selection_tier?: 'wishlist' | 'preferences' | 'metadata' | 'ai_guess';
+  // Address resolution metadata
+  address_metadata?: {
+    source?: 'user_verified' | 'giver_provided' | 'missing';
+    is_verified?: boolean;
+    needs_confirmation?: boolean;
+    connection_id?: string;
+  };
   // Optional joined fields
   auto_gifting_rules?: any;
   user_special_dates?: any;
@@ -625,10 +632,7 @@ class UnifiedGiftAutomationService {
               total_amount: totalAmount,
               selection_tier: giftSelection.tier,
               status: execution.auto_gifting_rules.auto_approve_gifts ? 'processing' : 'pending',
-              ai_agent_source: {
-                ...execution.ai_agent_source,
-                address_resolution: addressResult.addressMeta
-              },
+              address_metadata: addressResult.addressMeta,
               updated_at: new Date().toISOString()
             })
             .eq('id', execution.id);

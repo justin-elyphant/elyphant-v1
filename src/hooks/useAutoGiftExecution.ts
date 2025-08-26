@@ -73,13 +73,13 @@ export const useAutoGiftExecution = () => {
       // Get execution details including address resolution
       const { data: execution } = await supabase
         .from('automated_gift_executions')
-        .select('ai_agent_source')
+        .select('address_metadata')
         .eq('id', executionId)
         .single();
 
       let shippingAddress = undefined;
-      if (execution?.ai_agent_source?.address_resolution) {
-        const addressMeta = execution.ai_agent_source.address_resolution;
+      if (execution?.address_metadata) {
+        const addressMeta = execution.address_metadata;
         shippingAddress = {
           address: addressMeta.address || {},
           source: addressMeta.source as 'user_verified' | 'giver_provided' | 'missing',

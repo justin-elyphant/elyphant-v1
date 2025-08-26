@@ -2,7 +2,7 @@
 import React from "react";
 import { EventsProvider } from "./events/context/EventsContext";
 import EnhancedEventsContainer from "./events/views/EnhancedEventsContainer";
-import { GiftSetupWizard } from "./GiftSetupWizard";
+import AutoGiftSetupFlow from "./auto-gift/AutoGiftSetupFlow";
 import { useEvents } from "./events/context/EventsContext";
 import { ExtendedEventData } from "./events/types";
 
@@ -41,10 +41,9 @@ const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingE
         onAddEvent={onAddEvent} 
         events={eventsToDisplay}
       />
-      <GiftSetupWizard
+      <AutoGiftSetupFlow
         open={isGiftWizardOpen}
         onOpenChange={handleGiftWizardClose}
-        initialData={giftWizardInitialData}
       />
     </div>
   );

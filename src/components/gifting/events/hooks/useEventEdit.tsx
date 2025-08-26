@@ -1,6 +1,6 @@
 
 import { useEvents } from "../context/EventsContext";
-import { GiftSetupData } from "@/components/gifting/GiftSetupWizard";
+import { GiftSetupData } from "@/types/unified-gift-data";
 
 export const useEventEdit = () => {
   const { 

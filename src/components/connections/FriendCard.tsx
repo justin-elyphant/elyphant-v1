@@ -13,7 +13,7 @@ import { getRelationshipIcon, getRelationshipLabel } from "./RelationshipUtils";
 import { AutoGiftToggle } from "./AutoGiftToggle";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
 import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { AutoGiftStatusBadge } from "./AutoGiftStatusBadge";
 import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 
@@ -28,7 +28,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
   const { profile } = useProfile();
   const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
   const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
-  const [showGiftWizard, setShowGiftWizard] = useState(false);
+  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
   
   // Auto-gift permission checking
   const { permissionResult, loading: permissionLoading } = useAutoGiftPermission(friend);
@@ -79,7 +79,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
   const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {
     switch (intent) {
       case "ai-gift":
-        setShowGiftWizard(true);
+        setShowAutoGiftSetup(true);
         break;
       case "marketplace-browse":
         navigate(`/marketplace?friend=${friend.id}&name=${encodeURIComponent(friend.name)}&mode=nicole&open=true&greeting=friend-gift&first_name=${encodeURIComponent(friend.name)}`);
@@ -238,15 +238,11 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
         connection={friend}
       />
 
-      {/* Gift Setup Wizard */}
-      <GiftSetupWizard 
-        open={showGiftWizard}
-        onOpenChange={setShowGiftWizard}
-        prefilledRecipient={{
-          name: friend.name,
-          relationship: friend.relationship || 'friend',
-          connectionId: friend.id
-        }}
+      {/* Auto-Gift Setup Flow */}
+      <AutoGiftSetupFlow 
+        open={showAutoGiftSetup}
+        onOpenChange={setShowAutoGiftSetup}
+        recipientId={friend.id}
       />
     </>
   );

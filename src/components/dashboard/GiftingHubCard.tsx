@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
+import { MyGiftsDashboard } from "@/components/gifting/unified/MyGiftsDashboard";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,10 +33,9 @@ const SmartGiftingTab = () => {
   const { events, isLoading: eventsLoading } = useEvents();
   const { pendingInvitations, loading: connectionsLoading } = useEnhancedConnections();
   const { user } = useAuth();
-  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [giftSetupInitialData, setGiftSetupInitialData] = useState<any>(null);
-  const [giftWizardOpen, setGiftWizardOpen] = useState(false);
+  const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -63,175 +64,16 @@ const SmartGiftingTab = () => {
 
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
-    
-    // Transform data for pending invitations
-    if (event.isPendingInvitation) {
-      // Find the full invitation data to get shipping address
-      const fullInvitation = pendingInvitations.find(inv => inv.id === event.id);
-      
-      try {
-        // Fetch existing auto-gifting rules for this recipient
-        const { data: existingRules } = await supabase
-          .from('auto_gifting_rules')
-          .select('*')
-          .eq('pending_recipient_email', event.recipientEmail);
-        
-        const existingRule = existingRules?.[0];
-        
-        const newInitialData = {
-          recipientName: event.person,
-          recipientEmail: event.recipientEmail,
-          relationshipType: event.relationshipType,
-          shippingAddress: fullInvitation?.pending_shipping_address || null,
-          // Transfer existing event data if available
-          giftingEvents: existingRule ? [{
-            dateType: existingRule.date_type,
-            date: existingRule.date_type === 'christmas' ? '2024-12-25' : '', // Default Christmas to Dec 25
-            isRecurring: true
-          }] : [{
-            dateType: event.type || 'Birthday',
-            date: '',
-            isRecurring: true
-          }],
-          // Transfer existing preferences
-          autoGiftingEnabled: existingRule?.is_active || true,
-          scheduledGiftingEnabled: existingRule?.notification_preferences?.enabled || false,
-          budgetLimit: existingRule?.budget_limit || undefined,
-          giftCategories: existingRule?.gift_selection_criteria?.categories || [],
-          notificationDays: existingRule?.notification_preferences?.days_before || [7, 3, 1]
-        };
-        
-        console.log('GiftingHubCard: Setting initial data:', newInitialData);
-        console.log('GiftingHubCard: Full invitation data:', fullInvitation);
-        console.log('GiftingHubCard: Existing rule data:', existingRule);
-        
-        setGiftSetupInitialData(newInitialData);
-      } catch (error) {
-        console.error('Error fetching existing rule data:', error);
-        // Fallback to basic data
-        setGiftSetupInitialData({
-          recipientName: event.person,
-          recipientEmail: event.recipientEmail,
-          relationshipType: event.relationshipType,
-          shippingAddress: fullInvitation?.pending_shipping_address || null,
-          giftingEvents: [{
-            dateType: event.type || 'Birthday',
-            date: '',
-            isRecurring: true
-          }]
-        });
-      }
-    } else {
-      // Handle regular events (non-pending invitations)
-      console.log('GiftingHubCard: Setting up regular event data:', event);
-      
-      try {
-        // Fetch existing auto-gifting rules for this recipient (by email or recipient_id)
-        let existingRules = null;
-        if (event.recipientEmail) {
-          const { data: rulesByEmail } = await supabase
-            .from('auto_gifting_rules')
-            .select('*')
-            .eq('pending_recipient_email', event.recipientEmail);
-          existingRules = rulesByEmail;
-        }
-        
-        // If no rules by email, try by recipient_id if available
-        if (!existingRules?.length && event.connectionId) {
-          const { data: rulesByRecipient } = await supabase
-            .from('auto_gifting_rules')
-            .select('*')
-            .eq('recipient_id', event.connectionId);
-          existingRules = rulesByRecipient;
-        }
-        
-        const existingRule = existingRules?.[0];
-        
-        // Fetch connection data for shipping address if connectionId is available
-        let connectionData = null;
-        if (event.connectionId) {
-          const { data: connection } = await supabase
-            .from('user_connections')
-            .select(`
-              id,
-              pending_recipient_name,
-              pending_recipient_email,
-              pending_shipping_address,
-              relationship_type,
-              status,
-              profiles:connected_user_id (
-                first_name,
-                last_name,
-                email,
-                profile_image,
-                shipping_address
-              )
-            `)
-            .eq('id', event.connectionId)
-            .single();
-          connectionData = connection;
-        }
-        
-        // Transform regular event data for the wizard with comprehensive data
-        const regularEventData = {
-          recipientName: event.person,
-          recipientEmail: event.recipientEmail || '',
-          relationshipType: event.relationshipType || 'friend',
-          shippingAddress: connectionData?.pending_shipping_address || 
-                          connectionData?.profiles?.shipping_address || null,
-          giftingEvents: [{
-            dateType: event.type || 'Birthday',
-            date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
-            isRecurring: event.isRecurring || false
-          }],
-          // Use existing rule data if available, otherwise use event data
-          autoGiftingEnabled: existingRule?.is_active ?? (event.autoGiftEnabled || false),
-          scheduledGiftingEnabled: existingRule ? !existingRule.is_active : !(event.autoGiftEnabled || false),
-          budgetLimit: existingRule?.budget_limit ?? (event.autoGiftAmount || 50),
-          giftCategories: existingRule?.gift_selection_criteria?.categories ?? (event.giftCategories || []),
-          notificationDays: existingRule?.notification_preferences?.days_before ?? (event.notificationDays || [7, 3, 1]),
-          
-          // Additional data from existing rules
-          giftPreferences: existingRule?.gift_preferences || {},
-          paymentMethodId: existingRule?.payment_method_id || null,
-          
-          // Connection details
-          connectionId: event.connectionId,
-          connectionStatus: event.connectionStatus
-        };
-        
-        console.log('GiftingHubCard: Regular event comprehensive data:', regularEventData);
-        console.log('GiftingHubCard: Connection data:', connectionData);
-        console.log('GiftingHubCard: Existing rule data:', existingRule);
-        
-        setGiftSetupInitialData(regularEventData);
-      } catch (error) {
-        console.error('Error fetching comprehensive event data:', error);
-        // Fallback to basic data if fetch fails
-        const basicEventData = {
-          recipientName: event.person,
-          recipientEmail: event.recipientEmail || '',
-          relationshipType: event.relationshipType || 'friend',
-          giftingEvents: [{
-            dateType: event.type || 'Birthday',
-            date: event.dateObj ? event.dateObj.toISOString().split('T')[0] : '',
-            isRecurring: event.isRecurring || false
-          }],
-          autoGiftingEnabled: event.autoGiftEnabled || false,
-          scheduledGiftingEnabled: !(event.autoGiftEnabled || false),
-          budgetLimit: event.autoGiftAmount || 50,
-          giftCategories: event.giftCategories || [],
-          notificationDays: event.notificationDays || [7, 3, 1]
-        };
-        setGiftSetupInitialData(basicEventData);
-      }
-    }
-    
-    setSetupDialogOpen(true);
+    setSelectedEventForSetup(event);
+    setAutoGiftSetupOpen(true);
   };
 
-  const handleSaveAutoGiftSettings = (settings: any) => {
-    console.log('Auto-gift settings saved for event:', selectedEvent?.id, settings);
+  const handlePathSelection = (path: 'ai-autopilot' | 'manual-control') => {
+    if (path === 'ai-autopilot') {
+      setAutoGiftSetupOpen(true);
+    } else {
+      window.location.href = '/marketplace';
+    }
   };
 
   if (eventsLoading) {
@@ -251,6 +93,17 @@ const SmartGiftingTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Gift Path Selector */}
+      <div>
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">How would you like to give gifts?</h3>
+          <p className="text-sm text-muted-foreground">
+            Choose your preferred approach to gift-giving
+          </p>
+        </div>
+        <GiftPathSelector onSelectPath={handlePathSelection} />
+      </div>
+
       {/* Auto-Gift Hub Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -258,22 +111,6 @@ const SmartGiftingTab = () => {
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
             Upcoming Events
           </h3>
-          {/* GiftSetupWizard - only for pending invitations */}
-          {selectedEvent?.isPendingInvitation && (
-            <GiftSetupWizard 
-              open={setupDialogOpen} 
-              onOpenChange={setSetupDialogOpen}
-              initialData={giftSetupInitialData}
-            />
-          )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setGiftWizardOpen(true)}
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            Schedule A Gift
-          </Button>
         </div>
         
         {upcomingEvents.length > 0 ? (
@@ -325,7 +162,7 @@ const SmartGiftingTab = () => {
                       onClick={() => handleSetupAutoGift(event)}
                       className="h-8 sm:h-7 touch-manipulation"
                     >
-                      Edit Event
+                      {event.autoGiftEnabled ? 'Edit' : 'Set Up AI'}
                     </Button>
                   </div>
                 </div>
@@ -339,14 +176,13 @@ const SmartGiftingTab = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Add special occasions to set up automated gifting
             </p>
-            <Button onClick={() => setGiftWizardOpen(true)}>
+            <Button onClick={() => setAutoGiftSetupOpen(true)}>
               <Zap className="h-4 w-4 mr-2" />
-              Schedule A Gift
+              Set Up Auto-Gifting
             </Button>
           </div>
         )}
       </div>
-
 
       {/* Nicole AI Quick Access */}
       <div className="p-4 sm:p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">
@@ -371,22 +207,14 @@ const SmartGiftingTab = () => {
         </div>
       </div>
 
-      {/* Gift Setup Wizard - for regular events */}
-      {selectedEvent && !selectedEvent.isPendingInvitation && (
-        <GiftSetupWizard
-          open={setupDialogOpen}
-          onOpenChange={setSetupDialogOpen}
-          initialData={giftSetupInitialData}
-        />
-      )}
-      
-      {/* Main Gift Setup Wizard - for general setup */}
-      <GiftSetupWizard 
-        open={giftWizardOpen}
-        onOpenChange={setGiftWizardOpen}
-        initialData={null}
+      {/* Auto-Gift Setup Flow */}
+      <AutoGiftSetupFlow
+        open={autoGiftSetupOpen}
+        onOpenChange={setAutoGiftSetupOpen}
+        eventId={selectedEventForSetup?.id}
+        eventType={selectedEventForSetup?.type}
+        recipientId={selectedEventForSetup?.connectionId}
       />
-      
     </div>
   );
 };
@@ -423,8 +251,14 @@ const MyCollectionsTab = () => {
       image: item.image_url,
       image_url: item.image_url,
       brand: item.brand,
-      description: item.description || `${item.name || item.title} from ${item.wishlistName}`,
-      vendor: item.brand
+      description: item.description,
+      features: item.features || [],
+      specifications: item.specifications || {},
+      category: item.category,
+      tags: item.tags || [],
+      rating: item.rating,
+      review_count: item.review_count,
+      availability: item.availability || 'in_stock'
     };
     
     setSelectedProduct(productData);
@@ -434,289 +268,177 @@ const MyCollectionsTab = () => {
   if (loading) {
     return (
       <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="p-4 border rounded-lg animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-2" />
-            <div className="h-3 bg-gray-200 rounded" />
-          </div>
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="p-4 border rounded-lg animate-pulse">
+              <div className="w-full h-32 bg-gray-200 rounded mb-3" />
+              <div className="h-4 bg-gray-200 rounded mb-2" />
+              <div className="h-3 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Wishlists Overview */}
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-primary">{wishlistCount}</p>
+                <p className="text-sm text-muted-foreground">Total Wishlists</p>
+              </div>
+              <Heart className="h-8 w-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-primary">{totalItems}</p>
+                <p className="text-sm text-muted-foreground">Total Items</p>
+              </div>
+              <Gift className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-primary">
+                  ${allItems.reduce((total, item) => total + (item.price || 0), 0).toFixed(0)}
+                </p>
+                <p className="text-sm text-muted-foreground">Total Value</p>
+              </div>
+              <Target className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Items */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Heart className="h-5 w-5 mr-2 text-pink-500" />
-            My Wishlists ({wishlistCount})
-          </h3>
+          <h3 className="text-lg font-semibold">Recent Items</h3>
           <Button variant="outline" size="sm" asChild>
-            <Link to="/wishlists">Manage All</Link>
+            <Link to="/wishlists">
+              <Eye className="h-4 w-4 mr-2" />
+              View All Lists
+            </Link>
           </Button>
         </div>
-
-        {wishlistCount > 0 ? (
-          <div className="space-y-4">
-            {/* Wishlist Folders */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {wishlists.slice(0, 4).map((wishlist) => (
-                <div key={wishlist.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow touch-manipulation">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{wishlist.title}</h4>
-                    <Badge variant="outline">{wishlist.items?.length || 0} items</Badge>
-                  </div>
-                  {wishlist.description && (
-                    <p className="text-sm text-muted-foreground mb-3">{wishlist.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    {wishlist.category && (
-                      <Badge variant="secondary" className="text-xs">{wishlist.category}</Badge>
-                    )}
-                    <Button variant="ghost" size="sm" asChild className="h-8 w-8 touch-manipulation">
-                      <Link to={`/wishlist/${wishlist.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Recent Items */}
-            {totalItems > 0 && (
-              <div>
-                <h4 className="font-medium mb-3">Recent Items</h4>
-                <ScrollArea className="h-64">
-                  <div className="space-y-2 pr-4">
-                    {allItems.slice(0, 8).map((item, index) => (
-                      <div 
-                        key={`${item.id}-${index}`} 
-                        className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => handleProductClick(item)}
-                      >
-                        {item.image_url && (
-                          <img 
-                            src={item.image_url} 
-                            alt={item.name || item.title} 
-                            className="w-10 h-10 rounded object-cover flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{item.name || item.title}</p>
-                          <p className="text-xs text-muted-foreground">{item.wishlistName}</p>
-                        </div>
-                        {item.price && (
-                          <p className="text-sm font-medium">${item.price}</p>
-                        )}
+        
+        {allItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allItems.slice(0, 6).map((item) => (
+              <Card 
+                key={item.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleProductClick(item)}
+              >
+                <CardContent className="p-4">
+                  <div className="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-12 w-12 text-gray-400" />
                       </div>
-                    ))}
+                    )}
                   </div>
-                </ScrollArea>
-              </div>
-            )}
+                  <h4 className="font-medium line-clamp-2 mb-1">{item.name}</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    From: {item.wishlistName}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-primary">
+                      {formatPrice(item.price || 0)}
+                    </span>
+                    <Badge variant="outline" className="text-xs">
+                      {format(item.addedDate, 'MMM d')}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <Gift className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h4 className="font-medium mb-2">Create Your First Wishlist</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Organize items you'd love to receive or give as gifts
+          <div className="text-center py-12 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h4 className="font-medium mb-2">No wishlist items yet</h4>
+            <p className="text-sm text-muted-foreground mb-6">
+              Start adding items to your wishlists to see them here
             </p>
             <Button asChild>
-              <Link to="/wishlists">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Wishlist
+              <Link to="/marketplace">
+                <Search className="h-4 w-4 mr-2" />
+                Browse Products
               </Link>
             </Button>
           </div>
         )}
       </div>
 
-      {/* Browse Marketplace */}
-      <div className="p-4 border rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-semibold flex items-center">
-              <Search className="h-5 w-5 mr-2 text-emerald-500" />
-              Discover New Items
-            </h4>
-            <p className="text-sm text-muted-foreground">Browse curated gifts and add to your wishlists</p>
-          </div>
-          <Button asChild>
-            <Link to="/marketplace">Browse Marketplace</Link>
-          </Button>
-        </div>
-      </div>
-
       {/* Product Details Dialog */}
-      <ProductDetailsDialog
-        product={selectedProduct}
-        open={showProductDetails}
-        onOpenChange={setShowProductDetails}
-        userData={user}
-        onWishlistChange={() => {}}
+      {selectedProduct && (
+        <ProductDetailsDialog
+          product={selectedProduct}
+          open={showProductDetails}
+          onOpenChange={setShowProductDetails}
+          userData={user}
+        />
+      )}
+    </div>
+  );
+};
+
+// My Gifts Tab Component (Unified Dashboard)
+const MyGiftsTab = () => {
+  const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
+
+  const handleEditRule = (ruleId: string) => {
+    console.log('Edit rule:', ruleId);
+    setAutoGiftSetupOpen(true);
+  };
+
+  const handleScheduleGift = () => {
+    window.location.href = '/marketplace';
+  };
+
+  return (
+    <div className="space-y-6">
+      <MyGiftsDashboard 
+        onEditRule={handleEditRule}
+        onScheduleGift={handleScheduleGift}
+      />
+      
+      <AutoGiftSetupFlow
+        open={autoGiftSetupOpen}
+        onOpenChange={setAutoGiftSetupOpen}
       />
     </div>
   );
 };
 
-// Gift Activity Tab Component  
-const GiftActivityTab = () => {
-  const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const userOrders = await getUserOrders();
-        setOrders(userOrders.slice(0, 5)); // Show latest 5 orders
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError('Failed to load orders');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [user]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  // Use centralized formatPrice from utils
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'delivered':
-        return 'text-green-600 bg-green-50';
-      case 'shipped':
-        return 'text-blue-600 bg-blue-50';
-      case 'processing':
-        return 'text-yellow-600 bg-yellow-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="p-4 border rounded-lg animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-2" />
-            <div className="h-3 bg-gray-200 rounded" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
+// Group Projects Tab Component
+const GroupProjectsTab = () => {
   return (
     <div className="space-y-6">
-      {/* Recent Orders */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Package className="h-5 w-5 mr-2 text-blue-500" />
-            Recent Orders
-          </h3>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/orders">View All</Link>
-          </Button>
-        </div>
-
-        {orders.length > 0 ? (
-          <div className="space-y-3">
-            {orders.map((order) => (
-              <div key={order.id} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h4 className="font-medium">{order.order_number}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(order.created_at)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatPrice(order.total_amount)}</p>
-                    <Badge className={`text-xs ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {order.is_gift && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Gift className="h-4 w-4 text-pink-500" />
-                    <span className="text-sm text-pink-600">Gift Order</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h4 className="font-medium mb-2">No Recent Orders</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Your order history will appear here
-            </p>
-            <Button asChild>
-              <Link to="/marketplace">Start Shopping</Link>
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Group Projects Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <div className="flex items-center mb-4">
-            <Users className="h-5 w-5 mr-2 text-blue-500" />
-            <h3 className="text-lg font-semibold">Active Group Projects</h3>
-          </div>
-          <div className="p-6 bg-card rounded-lg border">
-            <ActiveGroupProjectsWidget />
-          </div>
-        </div>
-        
-        <div>
-          <div className="flex items-center mb-4">
-            <Target className="h-5 w-5 mr-2 text-purple-500" />
-            <h3 className="text-lg font-semibold">Group Gift Analytics</h3>
-          </div>
-          <div className="p-6 bg-card rounded-lg border">
-            <GroupGiftAnalytics />
-          </div>
-        </div>
-      </div>
-
-      {/* Gift Analytics Placeholder */}
-      <div className="p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-        <div className="text-center">
-          <h4 className="font-semibold mb-2">Gift Analytics</h4>
-          <p className="text-sm text-muted-foreground mb-4">
-            Track your gifting patterns and success rates
-          </p>
-          <Button variant="outline" disabled>
-            Coming Soon
-          </Button>
-        </div>
+        <ActiveGroupProjectsWidget />
+        <GroupGiftAnalytics />
       </div>
     </div>
   );
@@ -724,66 +446,48 @@ const GiftActivityTab = () => {
 
 // Main Gifting Hub Card Component
 const GiftingHubCard = () => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return null;
-  }
+  const [activeTab, setActiveTab] = useState("smart-gifting");
 
   return (
-    <Card className="border-2 border-gradient-to-r from-purple-200 to-pink-200">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <Gift className="h-6 w-6 mr-2 text-purple-500" />
-              Gifting Hub
-            </CardTitle>
-            <CardDescription>
-              Your central hub for all things gifting - from auto-gifts to wishlists and orders
-            </CardDescription>
-          </div>
-          <Button asChild variant="outline">
-            <Link to="/marketplace">
-              <Search className="h-4 w-4 mr-2" />
-              Go To Marketplace
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="smart-gifting" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
-            <TabsTrigger value="smart-gifting" className="text-xs sm:text-sm h-10 sm:h-auto">
-              <Zap className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
-              Smart Gifting
-            </TabsTrigger>
-            <TabsTrigger value="collections" className="text-xs sm:text-sm h-10 sm:h-auto">
-              <Heart className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
-              My Collections
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs sm:text-sm h-10 sm:h-auto">
-              <Package className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
-              Gift Activity
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="smart-gifting" className="mt-6">
-            <EventsProvider>
+    <EventsProvider>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-6 w-6 text-purple-600" />
+            Gifting Hub
+          </CardTitle>
+          <CardDescription>
+            Your comprehensive gift management center
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="smart-gifting">Smart Gifting</TabsTrigger>
+              <TabsTrigger value="my-gifts">My Gifts</TabsTrigger>
+              <TabsTrigger value="my-collections">Collections</TabsTrigger>
+              <TabsTrigger value="group-projects">Group Projects</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="smart-gifting" className="mt-6">
               <SmartGiftingTab />
-            </EventsProvider>
-          </TabsContent>
-
-          <TabsContent value="collections" className="mt-6">
-            <MyCollectionsTab />
-          </TabsContent>
-
-          <TabsContent value="activity" className="mt-6">
-            <GiftActivityTab />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            </TabsContent>
+            
+            <TabsContent value="my-gifts" className="mt-6">
+              <MyGiftsTab />
+            </TabsContent>
+            
+            <TabsContent value="my-collections" className="mt-6">
+              <MyCollectionsTab />
+            </TabsContent>
+            
+            <TabsContent value="group-projects" className="mt-6">
+              <GroupProjectsTab />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </EventsProvider>
   );
 };
 

@@ -6,7 +6,7 @@ import { ArrowRight, Gift, List } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 // Legacy modal removed - using Nicole unified interface
 import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
 

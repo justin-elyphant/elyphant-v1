@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useAuth } from "@/contexts/auth";
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 
 interface UpcomingEventsCardContentProps {
   onAddEvent?: () => void;
@@ -229,22 +229,14 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
         </CardContent>
       </Card>
 
-      {/* Gift Setup Wizard */}
-      {selectedEvent && (
-        <GiftSetupWizard
-          open={setupDialogOpen}
-          onOpenChange={setSetupDialogOpen}
-          initialData={{
-            recipientName: selectedEvent.person,
-            relationshipType: selectedEvent.relationshipType,
-            giftingEvents: [{
-              dateType: selectedEvent.type,
-              date: selectedEvent.date,
-              isRecurring: true
-            }]
-          }}
-        />
-      )}
+      {/* Auto-Gift Setup Flow */}
+      <AutoGiftSetupFlow
+        open={setupDialogOpen}
+        onOpenChange={setSetupDialogOpen}
+        eventId={selectedEvent?.id}
+        eventType={selectedEvent?.type}
+        recipientId={selectedEvent?.connectionId}
+      />
     </>
   );
 };

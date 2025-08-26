@@ -14,7 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 // Legacy modal removed - using Nicole unified interface
-import { GiftSetupWizard } from "@/components/gifting/GiftSetupWizard";
+import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
 

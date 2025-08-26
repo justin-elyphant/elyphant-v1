@@ -228,25 +228,21 @@ const UnifiedPaymentForm: React.FC<UnifiedPaymentFormProps> = ({
 
   const savePaymentMethod = async (paymentMethod: any) => {
     try {
-      if (!user || !paymentMethod?.card) return;
+      if (!user || !paymentMethod?.id) return;
 
-      const { error } = await supabase
-        .from('payment_methods')
-        .insert({
-          user_id: user.id,
-          payment_method_id: paymentMethod.id,
-          last_four: paymentMethod.card.last4,
-          card_type: paymentMethod.card.brand,
-          exp_month: paymentMethod.card.exp_month,
-          exp_year: paymentMethod.card.exp_year,
-          is_default: false
-        });
+      // Use the edge function instead of direct database access
+      const { data, error } = await supabase.functions.invoke('save-payment-method', {
+        body: { 
+          paymentMethodId: paymentMethod.id,
+          makeDefault: false 
+        }
+      });
 
       if (error) {
         console.error('Error saving payment method:', error);
         toast.error('Payment processed but failed to save card for future use');
       } else {
-        toast.success('Payment method saved for future use');
+        console.log('Payment method saved successfully:', data);
       }
     } catch (error) {
       console.error('Error saving payment method:', error);

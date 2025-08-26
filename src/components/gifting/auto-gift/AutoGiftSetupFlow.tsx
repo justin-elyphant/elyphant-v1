@@ -366,7 +366,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                         <Sparkles className="h-4 w-4" />
                         <div>
                           <p className="font-medium">AI Recommendations</p>
-                          <p className="text-sm text-muted-foreground">Let AI suggest gifts via Zinc API</p>
+                          <p className="text-sm text-muted-foreground">Let our AI shopper Nicole suggest gifts from the Elyphant Marketplace</p>
                         </div>
                       </div>
                     </div>

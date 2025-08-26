@@ -1,7 +1,10 @@
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { preloadCriticalRoutes } from './utils/lazyComponentLoader'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+
+// Register service worker for performance optimizations
+import "./utils/serviceWorkerRegistration";
 
 // Enhanced performance tracking
 const startTime = performance.now();
@@ -11,7 +14,11 @@ const container = document.getElementById("root")!;
 const root = createRoot(container);
 
 // Use concurrent rendering for better performance
-root.render(<App />);
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
 
 // Track comprehensive load metrics
 const trackLoadMetrics = () => {
@@ -33,6 +40,9 @@ const trackLoadMetrics = () => {
 setTimeout(trackLoadMetrics, 0);
 window.addEventListener('load', () => {
   trackLoadMetrics();
-  // Preload critical routes after initial load
-  preloadCriticalRoutes();
+  
+  // Preload critical marketplace components after initial load
+  import('./components/marketplace/bundles/MarketplaceBundles').then(({ preloadMarketplaceComponents }) => {
+    preloadMarketplaceComponents();
+  });
 });

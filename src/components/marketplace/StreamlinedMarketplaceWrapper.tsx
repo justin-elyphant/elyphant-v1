@@ -5,7 +5,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
 import MarketplaceQuickFilters from "./MarketplaceQuickFilters";
 import { AirbnbStyleCategorySections } from "./AirbnbStyleCategorySections";
-import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,6 +23,10 @@ import { getCategoryByValue } from "@/constants/categories";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
 import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
 import { batchDOMUpdates } from "@/utils/performanceOptimizations";
+import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
+import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteractions";
+import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
+import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {
@@ -48,6 +51,30 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();
   const { addToCart } = useCart();
+  
+  // Performance monitoring
+  const { 
+    startTimer, 
+    endTimer, 
+    trackCacheEvent, 
+    budgetViolations,
+    getPerformanceReport 
+  } = usePerformanceMonitoring();
+  
+  // Container ref for touch and intersection optimization
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Optimized touch interactions for mobile
+  const { gesture, isInteracting } = useOptimizedTouchInteractions(containerRef, {
+    preventDefaultScroll: true,
+    tapDelay: 200
+  });
+  
+  // Intersection observer for lazy loading optimization
+  const { isVisible, ref: intersectionRef } = useOptimizedIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: '100px'
+  });
 
   // Memoized show search info calculation
   const showSearchInfo = useMemo(() => 
@@ -61,6 +88,12 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       const { searchTerm, nicoleContext } = event.detail;
       if (searchTerm) {
         console.log('🎯 Marketplace search update received:', { searchTerm, nicoleContext });
+        
+        // Track search for background prefetching
+        backgroundPrefetchingService.trackSearch(searchTerm, 'nicole');
+        
+        // Start performance timer
+        startTimer('nicole-search');
         
         // Store Nicole context for the search
         if (nicoleContext) {
@@ -82,7 +115,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return () => {
       window.removeEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
     };
-  }, []);
+  }, [startTimer]);
 
   // Server-side load more function
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
@@ -263,8 +296,14 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // Show error state
   if (error) {
-    return (
-      <div className="container mx-auto px-4 py-6">
+  return (
+    <div 
+      ref={(el) => {
+        containerRef.current = el;
+        intersectionRef(el);
+      }}
+      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''}`}
+    >
         <MarketplaceHeader />
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
@@ -275,6 +314,14 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       </div>
     );
   }
+
+  
+  // Performance monitoring for search completion
+  useEffect(() => {
+    if (!isLoading && showSearchInfo) {
+      endTimer('search-operation', 'searchTime');
+    }
+  }, [isLoading, showSearchInfo, endTimer]);
 
   // Use virtualized grid for large product lists
   const shouldUseVirtualization = paginatedProducts.length > 50;

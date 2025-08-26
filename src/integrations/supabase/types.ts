@@ -3897,6 +3897,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      initialize_default_auto_gifting_settings: {
+        Args: { target_user_id: string }
+        Returns: string
+      }
       is_authorized_for_payment_methods: {
         Args: { action_type: string }
         Returns: boolean

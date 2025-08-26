@@ -721,14 +721,52 @@ class UnifiedGiftManagementService {
   // ============= SETTINGS MANAGEMENT (Enhanced) =============
 
   async getSettings(userId: string): Promise<UnifiedGiftSettings | null> {
-    const { data, error } = await supabase
-      .from('auto_gifting_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    try {
+      let { data, error } = await supabase
+        .from('auto_gifting_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (error) throw error;
-    return data;
+      // If no settings exist, create default ones
+      if (!data && !error) {
+        console.log(`🔧 Creating default settings for user ${userId}`);
+        const { data: newSettings, error: createError } = await supabase
+          .from('auto_gifting_settings')
+          .insert({
+            user_id: userId,
+            default_budget_limit: 50,
+            default_notification_days: [7, 3, 1],
+            email_notifications: true,
+            push_notifications: false,
+            auto_approve_gifts: false,
+            default_gift_source: 'wishlist',
+            has_payment_method: false,
+            budget_tracking: {
+              monthly_limit: null,
+              annual_limit: null,
+              spent_this_month: 0,
+              spent_this_year: 0
+            }
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating default settings:', createError);
+          throw createError;
+        }
+        data = newSettings;
+      } else if (error) {
+        console.error('Error fetching auto-gifting settings:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getSettings:', error);
+      throw error;
+    }
   }
 
   async upsertSettings(settings: Omit<UnifiedGiftSettings, 'id' | 'created_at' | 'updated_at'>): Promise<UnifiedGiftSettings> {

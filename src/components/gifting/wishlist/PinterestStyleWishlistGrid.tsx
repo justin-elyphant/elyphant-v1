@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ShoppingBag, MoreHorizontal, Eye, Share2 } from "lucide-react";
+import { Heart, ShoppingBag, MoreHorizontal, Eye, Share2, Trash2 } from "lucide-react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
 import { cn, formatPrice, validateAndNormalizePrice } from "@/lib/utils";
@@ -94,6 +94,15 @@ const WishlistMasonryCard: React.FC<{
             onClick={handleEdit}
           >
             <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background text-red-500 hover:text-red-700"
+            onClick={handleDelete}
+            aria-label={`Delete ${wishlist.title} wishlist`}
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
         

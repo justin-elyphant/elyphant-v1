@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Gift, DollarSign, Calendar, Users, Sparkles, 
-  CheckCircle, ArrowRight, Bell, ShoppingCart 
+  CheckCircle, ArrowRight, Bell, ShoppingCart, CreditCard 
 } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
@@ -21,6 +21,7 @@ import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
 import { DatePicker } from "@/components/ui/date-picker";
+import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -62,7 +63,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     autoApprove: false,
     emailNotifications: true,
     notificationDays: [7, 3, 1],
-    giftMessage: ""
+    giftMessage: "",
+    selectedPaymentMethodId: ""
   });
 
   const steps: SetupStep[] = [
@@ -133,6 +135,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       return;
     }
 
+    if (!formData.selectedPaymentMethodId) {
+      toast.error("Please select a payment method for auto-gifting");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -169,6 +176,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           categories: formData.categories,
           exclude_items: [],
         },
+        payment_method_id: formData.selectedPaymentMethodId,
       };
 
       await createRule(ruleData);
@@ -468,6 +476,27 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     </div>
                   </div>
                 )}
+
+                <Separator />
+
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Payment Method
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Select which payment method to use for auto-gifting purchases
+                  </p>
+                  <UnifiedPaymentMethodManager
+                    mode="selection"
+                    onSelectMethod={(method) => 
+                      setFormData(prev => ({ ...prev, selectedPaymentMethodId: method.id }))
+                    }
+                    selectedMethodId={formData.selectedPaymentMethodId}
+                    showAddNew={true}
+                    allowSelection={true}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -571,7 +600,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   (currentStep === 0 && (!formData.recipientId || !formData.eventType || 
                     (formData.eventType === "holiday" && !formData.specificHoliday) ||
                     (formData.eventType === "other" && !formData.selectedDate))) ||
-                  (currentStep === 1 && formData.budgetLimit < 5)
+                  (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
                 }
               >
                 Next
@@ -582,7 +611,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                 onClick={handleSubmit} 
                 disabled={isLoading || !formData.recipientId || !formData.eventType ||
                   (formData.eventType === "holiday" && !formData.specificHoliday) ||
-                  (formData.eventType === "other" && !formData.selectedDate)}
+                  (formData.eventType === "other" && !formData.selectedDate) ||
+                  !formData.selectedPaymentMethodId}
               >
                 {isLoading ? "Creating..." : "Create Auto-Gift Rule"}
                 <CheckCircle className="ml-2 h-4 w-4" />

@@ -175,23 +175,47 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
   rule.auto_gifting_settings = settings
 
   try {
-    // Select gifts using the enhanced Zinc API
+    // Select gifts using the enhanced Zinc API with detailed logging
+    console.log(`🎁 [EXECUTION ${execution.id}] Starting gift selection process`)
     const selectedProducts = await selectGiftsForExecution(supabaseClient, rule, event)
     
+    console.log(`🎁 [EXECUTION ${execution.id}] Gift selection completed:`, {
+      productCount: selectedProducts?.length || 0,
+      products: selectedProducts?.map(p => ({ title: p.title, price: p.price, source: p.fromWishlist ? 'wishlist' : 'search' })) || []
+    })
+    
     const totalAmount = selectedProducts.reduce((sum: number, product: any) => sum + (product.price || 0), 0)
+    console.log(`💰 [EXECUTION ${execution.id}] Calculated total amount: $${totalAmount}`)
 
     // Update execution with selected products
-    await supabaseClient
-      .from('automated_gift_executions')
-      .update({
-        selected_products: selectedProducts,
-        total_amount: totalAmount,
-        status: rule.auto_gifting_settings?.auto_approve_gifts ? 'processing' : 'pending_approval',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', execution.id)
+    console.log(`📝 [EXECUTION ${execution.id}] Updating execution with selected products...`)
+    const updateData = {
+      selected_products: selectedProducts,
+      total_amount: totalAmount,
+      status: rule.auto_gifting_settings?.auto_approve_gifts ? 'processing' : 'pending_approval',
+      updated_at: new Date().toISOString()
+    }
+    
+    console.log(`📝 [EXECUTION ${execution.id}] Update data:`, {
+      productCount: selectedProducts?.length,
+      totalAmount,
+      status: updateData.status,
+      autoApprove: rule.auto_gifting_settings?.auto_approve_gifts
+    })
 
-    console.log(`✅ Updated execution ${execution.id} with ${selectedProducts.length} selected products (total: $${totalAmount})`)
+    const { data: updatedExecution, error: updateError } = await supabaseClient
+      .from('automated_gift_executions')
+      .update(updateData)
+      .eq('id', execution.id)
+      .select()
+
+    if (updateError) {
+      console.error(`❌ [EXECUTION ${execution.id}] Failed to update execution:`, updateError)
+      throw new Error(`Execution update failed: ${updateError.message}`)
+    }
+
+    console.log(`✅ [EXECUTION ${execution.id}] Successfully updated with ${selectedProducts.length} products (total: $${totalAmount})`)
+    console.log(`✅ [EXECUTION ${execution.id}] Updated execution result:`, updatedExecution)
 
     // Create auto-gift notification
     await createAutoGiftNotification(supabaseClient, execution.id, event, rule, selectedProducts, totalAmount)
@@ -319,64 +343,156 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 }
 
 async function selectGiftsFromWishlist(supabaseClient: any, rule: any, maxBudget: number) {
-  console.log(`🎯 Checking recipient's wishlist for gifts under $${maxBudget}`)
+  console.log(`🎯 [WISHLIST SELECTION] Starting for recipient ${rule.recipient_id} with budget $${maxBudget}`)
   
-  // Get the recipient's wishlists (both public and private for connected users)
-  const { data: wishlists, error: wishlistError } = await supabaseClient
-    .from('wishlists')
-    .select(`
-      id,
-      title,
-      is_public,
-      wishlist_items (
-        product_id,
+  try {
+    // STEP 1: Query wishlists with enhanced logging
+    console.log(`🎯 [WISHLIST QUERY] Fetching wishlists for recipient ${rule.recipient_id}`)
+    
+    const { data: wishlists, error: wishlistError } = await supabaseClient
+      .from('wishlists')
+      .select(`
+        id,
         title,
-        price,
-        image_url,
-        product_source
+        is_public,
+        wishlist_items (
+          product_id,
+          title,
+          price,
+          image_url,
+          product_source,
+          product_url
+        )
+      `)
+      .eq('user_id', rule.recipient_id)
+      .not('wishlist_items', 'is', null)
+
+    console.log(`🎯 [WISHLIST QUERY] Query completed. Error:`, wishlistError)
+    console.log(`🎯 [WISHLIST QUERY] Result:`, { 
+      hasData: !!wishlists, 
+      count: wishlists?.length,
+      wishlists: wishlists?.map(w => ({ id: w.id, title: w.title, itemCount: w.wishlist_items?.length }))
+    })
+
+    if (wishlistError) {
+      console.error('❌ [WISHLIST ERROR] Database query failed:', wishlistError)
+      throw new Error(`Wishlist fetch failed: ${wishlistError.message}`)
+    }
+
+    if (!wishlists || wishlists.length === 0) {
+      console.log('⚠️ [WISHLIST EMPTY] No wishlists found for recipient')
+      return []
+    }
+
+    // STEP 2: Process wishlist items with detailed logging
+    console.log(`🎯 [WISHLIST PROCESS] Processing ${wishlists.length} wishlists`)
+    
+    const allWishlistItems = wishlists.flatMap(wishlist => {
+      const items = wishlist.wishlist_items || []
+      console.log(`🎯 [WISHLIST ITEMS] Wishlist "${wishlist.title}" has ${items.length} items:`, 
+        items.map(item => ({ title: item.title, price: item.price, id: item.product_id }))
       )
-    `)
-    .eq('user_id', rule.recipient_id)
-    .not('wishlist_items', 'is', null)
+      return items
+    })
 
-  if (wishlistError) {
-    console.error('Error fetching wishlists:', wishlistError)
-    throw new Error(`Wishlist fetch failed: ${wishlistError.message}`)
+    console.log(`🎯 [WISHLIST TOTAL] Found ${allWishlistItems.length} total wishlist items`)
+
+    // STEP 3: Filter by budget with detailed logging
+    const affordableItems = allWishlistItems.filter(item => {
+      const hasPrice = item.price && !isNaN(parseFloat(item.price))
+      const isAffordable = hasPrice && parseFloat(item.price) <= maxBudget
+      
+      console.log(`🎯 [BUDGET FILTER] Item "${item.title}": price=${item.price}, hasPrice=${hasPrice}, affordable=${isAffordable}`)
+      
+      return isAffordable
+    })
+
+    console.log(`🎯 [BUDGET RESULT] ${affordableItems.length} items within $${maxBudget} budget:`, 
+      affordableItems.map(item => ({ title: item.title, price: item.price }))
+    )
+
+    if (affordableItems.length === 0) {
+      console.log('⚠️ [WISHLIST BUDGET] No wishlist items found within budget')
+      return []
+    }
+
+    // STEP 4: Convert to product format with enhanced logging
+    console.log(`🎯 [PRODUCT FORMAT] Converting ${affordableItems.length} items to product format`)
+    
+    const wishlistProducts = affordableItems.map((item, index) => {
+      const product = {
+        product_id: item.product_id || `wishlist-${index}`,
+        id: item.product_id || `wishlist-${index}`,
+        title: item.title || 'Untitled Item',
+        name: item.title || 'Untitled Item',
+        price: parseFloat(item.price) || 0,
+        image: item.image_url || '',
+        product_url: item.product_url || '',
+        fromWishlist: true,
+        category: 'wishlist-item',
+        retailer: item.product_source || 'unknown',
+        // Add default ratings for wishlist items since they don't have reviews
+        stars: 4.5, // Default good rating for wishlist items
+        num_reviews: 10 // Default review count
+      }
+      
+      console.log(`🎯 [PRODUCT CONVERT] Item ${index + 1}:`, product)
+      return product
+    })
+
+    // STEP 5: Apply wishlist-specific filtering
+    console.log(`🎯 [WISHLIST FILTER] Applying wishlist-specific filtering to ${wishlistProducts.length} products`)
+    const selectedProducts = filterWishlistProducts(wishlistProducts, maxBudget)
+    
+    console.log(`✅ [WISHLIST SUCCESS] Selected ${selectedProducts.length} products from wishlist`)
+    return selectedProducts
+
+  } catch (error) {
+    console.error('❌ [WISHLIST ERROR] Exception in selectGiftsFromWishlist:', error)
+    throw error
   }
+}
 
-  if (!wishlists || wishlists.length === 0) {
-    console.log('No public wishlists found for recipient')
+// New wishlist-specific filtering function
+function filterWishlistProducts(products: any[], maxBudget: number): any[] {
+  console.log(`🎯 [WISHLIST FILTER] Filtering ${products.length} wishlist products with budget $${maxBudget}`)
+  
+  // Filter by budget (already done, but double-check)
+  const budgetFiltered = products.filter(product => {
+    const price = parseFloat(product.price) || 0
+    const isValid = price > 0 && price <= maxBudget
+    console.log(`🎯 [BUDGET CHECK] "${product.title}": $${price} - ${isValid ? 'VALID' : 'INVALID'}`)
+    return isValid
+  })
+
+  console.log(`🎯 [BUDGET FINAL] ${budgetFiltered.length} products pass budget filter`)
+
+  if (budgetFiltered.length === 0) {
+    console.log('⚠️ [WISHLIST FILTER] No products passed budget filter')
     return []
   }
 
-  // Flatten all wishlist items and filter by budget
-  const allWishlistItems = wishlists.flatMap(wishlist => wishlist.wishlist_items || [])
-  const affordableItems = allWishlistItems.filter(item => 
-    item.price && item.price <= maxBudget
-  )
+  // Sort wishlist items by preference (higher price = more wanted?)
+  const sorted = budgetFiltered.sort((a, b) => {
+    const priceA = parseFloat(a.price) || 0
+    const priceB = parseFloat(b.price) || 0
+    return priceB - priceA // Higher price first (assuming more desired items cost more)
+  })
 
-  console.log(`Found ${allWishlistItems.length} total wishlist items, ${affordableItems.length} within budget`)
+  console.log(`🎯 [SORT RESULT] Sorted products:`, sorted.map(p => ({ title: p.title, price: p.price })))
 
-  if (affordableItems.length === 0) {
-    console.log('No wishlist items found within budget')
-    return []
-  }
-
-  // Convert wishlist items to the expected product format
-  const wishlistProducts = affordableItems.map(item => ({
-    product_id: item.product_id,
-    id: item.product_id,
-    title: item.title,
-    name: item.title,
-    price: item.price,
-    image: item.image_url || '',
-    product_url: item.product_url || '',
-    fromWishlist: true,
-    category: 'wishlist-item'
+  // Select up to 3 products, prioritizing variety
+  const selected = sorted.slice(0, 3).map((product, index) => ({
+    ...product,
+    selected: true,
+    selection_reason: `Wishlist item ${index + 1}: Direct recipient preference`
   }))
 
-  // Apply product filtering and selection
-  return filterAndSelectProducts(wishlistProducts, maxBudget, {})
+  console.log(`✅ [SELECTION FINAL] Selected ${selected.length} wishlist products:`, 
+    selected.map(p => ({ title: p.title, price: p.price, reason: p.selection_reason }))
+  )
+
+  return selected
 }
 
 async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {

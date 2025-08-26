@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { optimizedMarketplaceService } from "@/services/marketplace/OptimizedMarketplaceService";
 import ProductDetailsDialog from "./ProductDetailsDialog";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import BrandHeroSection from "./BrandHeroSection";
@@ -20,11 +20,13 @@ import CategoryHeroSection from "./CategoryHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
-import { useCallback } from "react";
 import { getCategoryByValue } from "@/constants/categories";
+import OptimizedProductGrid from "./components/OptimizedProductGrid";
+import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
+import { batchDOMUpdates } from "@/utils/performanceOptimizations";
 
 
-const StreamlinedMarketplaceWrapper = () => {
+const StreamlinedMarketplaceWrapper = memo(() => {
   const {
     products,
     isLoading,
@@ -46,6 +48,12 @@ const StreamlinedMarketplaceWrapper = () => {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();
   const { addToCart } = useCart();
+
+  // Memoized show search info calculation
+  const showSearchInfo = useMemo(() => 
+    !!(urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType),
+    [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]
+  );
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
@@ -139,7 +147,7 @@ const StreamlinedMarketplaceWrapper = () => {
       const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
       const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
       
-      // For other search types, use unified marketplace
+      // For other search types, use optimized marketplace service
       const searchOptions = {
         page,
         limit: 20,
@@ -153,8 +161,8 @@ const StreamlinedMarketplaceWrapper = () => {
       };
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
-      console.log('🔍 Searching with options:', searchOptions);
-      const result = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
+      console.log('🔍 Optimized searching with options:', searchOptions);
+      const result = await optimizedMarketplaceService.searchProducts(searchTerm, searchOptions);
       
       return result || [];
     } catch (error) {
@@ -187,14 +195,14 @@ const StreamlinedMarketplaceWrapper = () => {
     showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType
   });
 
-  // Product interaction handlers
-  const handleProductClick = (product: any) => {
+  // Memoized product interaction handlers to prevent recreation
+  const handleProductClick = useCallback((product: any) => {
     console.log('Product clicked:', product);
     setSelectedProduct(product);
     setShowProductDetails(true);
-  };
+  }, []);
 
-  const handleAddToCart = async (product: any) => {
+  const handleAddToCart = useCallback(async (product: any) => {
     console.log('Add to cart:', product);
     try {
       await addToCart(product, 1);
@@ -203,12 +211,12 @@ const StreamlinedMarketplaceWrapper = () => {
       console.error('Failed to add to cart:', error);
       toast.error("Failed to add item to cart. Please try again.");
     }
-  };
+  }, [addToCart]);
 
-  const handleShare = (product: any) => {
+  const handleShare = useCallback((product: any) => {
     console.log('Share product:', product);
     // TODO: Implement share functionality
-  };
+  }, []);
 
   const toggleWishlist = (productId: string) => {
     console.log('Toggle wishlist for product:', productId);
@@ -220,7 +228,8 @@ const StreamlinedMarketplaceWrapper = () => {
     return false;
   };
 
-  const getProductStatus = (product: any): { badge: string; color: string } | null => {
+  // Memoized product status calculation
+  const getProductStatus = useCallback((product: any): { badge: string; color: string } | null => {
     if (product.vendor === "Local Vendor") {
       return { badge: "Local", color: "bg-blue-100 text-blue-800 border-blue-200" };
     }
@@ -231,7 +240,7 @@ const StreamlinedMarketplaceWrapper = () => {
       return { badge: "New", color: "bg-green-100 text-green-800 border-green-200" };
     }
     return null;
-  };
+  }, []);
 
   // Show loading skeleton
   if (isLoading) {
@@ -267,8 +276,8 @@ const StreamlinedMarketplaceWrapper = () => {
     );
   }
 
-  // Show search results info
-  const showSearchInfo = urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType;
+  // Use virtualized grid for large product lists
+  const shouldUseVirtualization = paginatedProducts.length > 50;
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -353,18 +362,29 @@ const StreamlinedMarketplaceWrapper = () => {
       {/* Products Grid (when search is active or as fallback) */}
       {(showSearchInfo || !products.length) && paginatedProducts.length > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-            {paginatedProducts.map((product, index) => (
-              <AirbnbStyleProductCard
-                key={product.id || product.product_id || index}
-                product={product}
-                onProductClick={() => handleProductClick(product)}
-                statusBadge={getProductStatus(product)}
-                onAddToCart={handleAddToCart}
-                onShare={handleShare}
-              />
-            ))}
-          </div>
+          {shouldUseVirtualization ? (
+            <VirtualizedProductGrid
+              products={paginatedProducts}
+              viewMode={viewMode}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onShare={handleShare}
+              getProductStatus={getProductStatus}
+              className="mb-8"
+              containerHeight={600}
+              itemHeight={400}
+            />
+          ) : (
+            <OptimizedProductGrid
+              products={paginatedProducts}
+              viewMode={viewMode}
+              onProductClick={handleProductClick}
+              onAddToCart={handleAddToCart}
+              onShare={handleShare}
+              getProductStatus={getProductStatus}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch mb-8"
+            />
+          )}
 
           {/* Load More Button */}
           {hasMore && showSearchInfo && (
@@ -423,6 +443,8 @@ const StreamlinedMarketplaceWrapper = () => {
       )}
     </div>
   );
-};
+});
+
+StreamlinedMarketplaceWrapper.displayName = "StreamlinedMarketplaceWrapper";
 
 export default StreamlinedMarketplaceWrapper;

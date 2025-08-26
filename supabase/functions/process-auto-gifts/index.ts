@@ -267,10 +267,20 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 
   if (error) {
     console.error('Error searching for products:', error)
-    throw new Error(`Product search failed: ${error.message}`)
+    throw new Error(`Product search failed: ${error.message || 'Unknown API error'}`)
   }
 
-  if (!searchResults?.products || searchResults.products.length === 0) {
+  console.log('Search results received:', { 
+    hasProducts: !!searchResults?.products, 
+    hasResults: !!searchResults?.results,
+    productsLength: searchResults?.products?.length || 0,
+    resultsLength: searchResults?.results?.length || 0
+  })
+
+  // Check both 'products' and 'results' for compatibility
+  const products = searchResults?.products || searchResults?.results || []
+  
+  if (products.length === 0) {
     // Try fallback search
     console.log('No products found, trying fallback search')
     const fallbackQuery = buildFallbackQuery(event.event_type)
@@ -284,14 +294,22 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
       }
     })
 
-    if (fallbackError || !fallbackResults?.products || fallbackResults.products.length === 0) {
-      throw new Error('No suitable products found for auto-gifting')
+    if (fallbackError) {
+      console.error('Fallback search error:', fallbackError)
+      throw new Error(`Fallback search failed: ${fallbackError.message || 'Unknown error'}`)
     }
 
-    return filterAndSelectProducts(fallbackResults.products, maxBudget, criteria)
+    const fallbackProducts = fallbackResults?.products || fallbackResults?.results || []
+    if (fallbackProducts.length === 0) {
+      throw new Error('No suitable products found for auto-gifting after fallback search')
+    }
+
+    console.log(`Found ${fallbackProducts.length} products from fallback search`)
+    return filterAndSelectProducts(fallbackProducts, maxBudget, criteria)
   }
 
-  return filterAndSelectProducts(searchResults.products, maxBudget, criteria)
+  console.log(`Found ${products.length} products from primary search`)
+  return filterAndSelectProducts(products, maxBudget, criteria)
 }
 
 async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {

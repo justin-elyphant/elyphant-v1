@@ -220,7 +220,8 @@ const searchCategoryBatch = async (
     console.log(`${batchName} category search complete: ${paginatedResults.length} products returned (page ${page})`);
     
     return {
-      results: paginatedResults,
+      products: paginatedResults, // Changed from 'results' to 'products' for consistency
+      results: paginatedResults,  // Keep 'results' for backward compatibility  
       total: paginatedResults.length,
       hasMore: allResults.length > limit || page <= 5,
       currentPage: page,
@@ -378,7 +379,8 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
       }
       
       return {
-        results: filteredResults,
+        products: filteredResults, // Changed from 'results' to 'products' for consistency
+        results: filteredResults,  // Keep 'results' for backward compatibility
         total: filteredResults.length
       };
     } catch (error) {
@@ -622,8 +624,8 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify({
-        ...data,
-        results: filteredResults,
+        products: filteredResults, // Changed from 'results' to 'products' for consistency
+        results: filteredResults,  // Keep 'results' for backward compatibility
         total: filteredResults.length,
         originalTotal: data.total || 0,
         priceFiltered: (filters?.min_price || filters?.max_price) ? true : false
@@ -632,9 +634,15 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     } catch(error) {
-      console.log('Error', error);
+      console.error('Error in get-products function:', error);
       return new Response(
-        JSON.stringify({success: false, message: 'Internal server error.'}), 
+        JSON.stringify({
+          success: false, 
+          error: 'Product search failed',
+          message: error.message || 'Internal server error',
+          products: [], // Ensure empty products array for consistent response format
+          results: []   // Keep results for backward compatibility
+        }), 
         { 
           status: 500, 
           headers: { "Content-Type": "application/json", ...corsHeaders }

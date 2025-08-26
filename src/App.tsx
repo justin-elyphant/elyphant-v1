@@ -46,6 +46,7 @@ const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSet
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
+const AutoGiftApprovalPage = lazy(() => import("./components/auto-gifts/AutoGiftApprovalPage"));
 
 // New dedicated feature pages
 const GiftingHub = lazy(() => import("./pages/GiftingHub"));
@@ -194,6 +195,7 @@ function AppContent() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />
+          <Route path="/auto-gifts/approve/:token" element={<AutoGiftApprovalPage />} />
           
           {/* Nicole Auto-Gifting Test Routes */}
           <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />

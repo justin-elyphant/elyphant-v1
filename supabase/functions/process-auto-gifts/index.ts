@@ -77,31 +77,57 @@ serve(async (req) => {
 })
 
 async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
-  console.log(`Processing auto-gift for event ${event.event_id}`)
+  console.log(`Processing auto-gift for event ${event.event_id}, type: ${event.event_type}`)
 
-  // Check if execution already exists
-  const { data: existingExecution } = await supabaseClient
-    .from('automated_gift_executions')
-    .select('id, status')
-    .eq('event_id', event.event_id)
-    .eq('rule_id', event.rule_id)
-    .single()
+  // For "just_because" events, use a different check strategy since event_id might be synthetic
+  let existingExecution = null;
+  
+  if (event.event_type === 'just_because') {
+    // Check for recent executions for this rule within the last 24 hours
+    const { data: recentExecution } = await supabaseClient
+      .from('automated_gift_executions')
+      .select('id, status, execution_date')
+      .eq('rule_id', event.rule_id)
+      .gte('execution_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .in('status', ['pending', 'processing', 'completed'])
+      .single()
+    
+    if (recentExecution) {
+      console.log(`Recent execution exists for just_because rule ${event.rule_id}: ${recentExecution.id}`)
+      return
+    }
+  } else {
+    // Check if execution already exists for calendar-based events
+    const { data: calendarExecution } = await supabaseClient
+      .from('automated_gift_executions')
+      .select('id, status')
+      .eq('event_id', event.event_id)
+      .eq('rule_id', event.rule_id)
+      .single()
 
-  if (existingExecution && existingExecution.status !== 'failed') {
-    console.log(`Execution already exists for event ${event.event_id}`)
-    return
+    if (calendarExecution && calendarExecution.status !== 'failed') {
+      console.log(`Execution already exists for event ${event.event_id}`)
+      return
+    }
+    existingExecution = calendarExecution
   }
 
-  // Create new execution record
+  // Create new execution record with proper event_id handling
+  const executionData: any = {
+    rule_id: event.rule_id,
+    user_id: event.user_id,
+    execution_date: event.event_date,
+    status: 'pending'
+  };
+
+  // Only set event_id for non-synthetic events (calendar-based events)
+  if (event.event_type !== 'just_because') {
+    executionData.event_id = event.event_id;
+  }
+
   const { data: execution, error: executionError } = await supabaseClient
     .from('automated_gift_executions')
-    .insert({
-      rule_id: event.rule_id,
-      event_id: event.event_id,
-      user_id: event.user_id,
-      execution_date: event.event_date,
-      status: 'pending'
-    })
+    .insert(executionData)
     .select()
     .single()
 
@@ -110,7 +136,7 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
     throw executionError
   }
 
-  console.log(`Created execution ${execution.id} for event ${event.event_id}`)
+  console.log(`✅ Created execution ${execution.id} for ${event.event_type} event (rule: ${event.rule_id})`)
 
   // Get the auto-gifting rule details
   const { data: rule, error: ruleError } = await supabaseClient
@@ -137,16 +163,23 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
       .update({
         selected_products: selectedProducts,
         total_amount: totalAmount,
-        status: rule.auto_gifting_settings?.auto_approve_gifts ? 'processing' : 'pending',
+        status: rule.auto_gifting_settings?.auto_approve_gifts ? 'processing' : 'pending_approval',
         updated_at: new Date().toISOString()
       })
       .eq('id', execution.id)
 
-    console.log(`Updated execution ${execution.id} with ${selectedProducts.length} selected products`)
+    console.log(`✅ Updated execution ${execution.id} with ${selectedProducts.length} selected products (total: $${totalAmount})`)
+
+    // Create auto-gift notification
+    await createAutoGiftNotification(supabaseClient, execution.id, event, rule, selectedProducts, totalAmount)
 
     // If auto-approve is enabled, proceed with order creation
     if (rule.auto_gifting_settings?.auto_approve_gifts && selectedProducts.length > 0) {
+      console.log(`🚀 Auto-approving gift execution ${execution.id}`)
       await createAutoGiftOrder(supabaseClient, execution.id, selectedProducts, rule)
+    } else {
+      console.log(`📧 Sending approval request for execution ${execution.id}`)
+      await sendApprovalRequest(supabaseClient, execution.id, event, rule, selectedProducts, totalAmount)
     }
 
   } catch (error) {
@@ -456,14 +489,187 @@ function filterAndSelectProducts(products: any[], maxBudget: number, criteria: a
 }
 
 async function createAutoGiftOrder(supabaseClient: any, executionId: string, products: any[], rule: any) {
-  console.log(`Creating auto-gift order for execution ${executionId}`)
+  console.log(`🛒 Creating auto-gift order for execution ${executionId}`)
   
-  // This would integrate with your existing order processing system
-  // For now, we'll just update the execution status to indicate processing
-  await updateExecutionStatus(supabaseClient, executionId, 'processing', 'Order creation initiated')
+  try {
+    // Update execution status to processing
+    await updateExecutionStatus(supabaseClient, executionId, 'processing', 'Auto-approved order creation initiated')
+    
+    // Get recipient shipping address
+    const { data: recipientProfile } = await supabaseClient
+      .from('profiles')
+      .select('shipping_address, email, name')
+      .eq('id', rule.recipient_id)
+      .single()
+
+    if (!recipientProfile?.shipping_address) {
+      throw new Error('Recipient shipping address not available')
+    }
+
+    // Create order record for tracking
+    const totalAmount = products.reduce((sum: number, product: any) => sum + (product.price || 0), 0)
+    
+    const { data: order, error: orderError } = await supabaseClient
+      .from('orders')
+      .insert({
+        user_id: rule.user_id,
+        status: 'processing',
+        payment_status: 'succeeded', // Auto-approved orders use saved payment method
+        total_amount: totalAmount,
+        shipping_address: recipientProfile.shipping_address,
+        is_gift: true,
+        gift_message: rule.gift_message || 'A thoughtful gift selected just for you!',
+        recipient_email: recipientProfile.email,
+        recipient_name: recipientProfile.name,
+        order_items: products.map(product => ({
+          product_id: product.product_id,
+          quantity: 1,
+          price: product.price,
+          title: product.title,
+          image: product.image
+        })),
+        execution_id: executionId
+      })
+      .select()
+      .single()
+
+    if (orderError) {
+      throw new Error(`Order creation failed: ${orderError.message}`)
+    }
+
+    // Update execution with order ID
+    await supabaseClient
+      .from('automated_gift_executions')
+      .update({
+        order_id: order.id,
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId)
+
+    console.log(`✅ Auto-gift order ${order.id} created successfully for execution ${executionId}`)
+    
+    // Send completion notification
+    await createAutoGiftNotification(supabaseClient, executionId, null, rule, products, totalAmount, 'order_created')
+
+  } catch (error) {
+    console.error(`❌ Auto-gift order creation failed for execution ${executionId}:`, error)
+    await updateExecutionStatus(supabaseClient, executionId, 'failed', `Order creation failed: ${error.message}`)
+  }
+}
+
+async function createAutoGiftNotification(supabaseClient: any, executionId: string, event: AutoGiftEvent | null, rule: any, products: any[], totalAmount: number, type: string = 'execution_created') {
+  console.log(`📢 Creating auto-gift notification for execution ${executionId}, type: ${type}`)
   
-  // TODO: Integrate with actual order creation logic
-  // This would involve creating an order record and processing payment
+  try {
+    let title = '';
+    let message = '';
+    
+    switch (type) {
+      case 'execution_created':
+        title = '🎁 Auto-Gift Selected';
+        message = `We found ${products.length} perfect gift${products.length > 1 ? 's' : ''} for ${event?.event_type} (Total: $${totalAmount}). ${rule.auto_gifting_settings?.auto_approve_gifts ? 'Order will be placed automatically.' : 'Approval required.'}`;
+        break;
+      case 'order_created':
+        title = '✅ Auto-Gift Order Placed';
+        message = `Your auto-gift order has been placed successfully! Total: $${totalAmount}. The recipient will receive their gift soon.`;
+        break;
+      case 'approval_needed':
+        title = '👀 Auto-Gift Approval Needed';
+        message = `Please review and approve the selected gifts for ${event?.event_type} (Total: $${totalAmount}). Check your email for details.`;
+        break;
+    }
+
+    await supabaseClient
+      .from('auto_gift_notifications')
+      .insert({
+        user_id: rule.user_id,
+        execution_id: executionId,
+        notification_type: type,
+        title,
+        message,
+        email_sent: false,
+        is_read: false
+      });
+
+    console.log(`✅ Auto-gift notification created for execution ${executionId}`);
+  } catch (error) {
+    console.error(`❌ Failed to create notification for execution ${executionId}:`, error);
+  }
+}
+
+async function sendApprovalRequest(supabaseClient: any, executionId: string, event: AutoGiftEvent, rule: any, products: any[], totalAmount: number) {
+  console.log(`📧 Sending approval request for execution ${executionId}`)
+  
+  try {
+    // Generate approval token
+    const token = crypto.randomUUID().replace(/-/g, '');
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours from now
+
+    const { data: approvalToken, error: tokenError } = await supabaseClient
+      .from('email_approval_tokens')
+      .insert({
+        user_id: rule.user_id,
+        execution_id: executionId,
+        token,
+        expires_at: expiresAt.toISOString(),
+        email_sent_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (tokenError) {
+      throw new Error(`Failed to create approval token: ${tokenError.message}`);
+    }
+
+    // Get user profile for email
+    const { data: userProfile } = await supabaseClient
+      .from('profiles')
+      .select('email, name')
+      .eq('id', rule.user_id)
+      .single();
+
+    if (!userProfile?.email) {
+      throw new Error('User email not found for approval request');
+    }
+
+    // Queue approval email
+    const emailTemplate = {
+      recipient_email: userProfile.email,
+      recipient_name: userProfile.name || 'Gift Giver',
+      template_type: 'auto_gift_approval',
+      template_variables: {
+        user_name: userProfile.name || 'Gift Giver',
+        event_type: event.event_type,
+        recipient_name: 'Recipient', // Could be enhanced with actual recipient name
+        total_amount: totalAmount,
+        product_count: products.length,
+        products: products.map(p => ({
+          title: p.title,
+          price: p.price,
+          image: p.image
+        })),
+        approval_url: `${Deno.env.get('SITE_URL')}/auto-gifts/approve/${token}`,
+        expires_at: expiresAt.toISOString()
+      }
+    };
+
+    await supabaseClient
+      .from('email_queue')
+      .insert({
+        ...emailTemplate,
+        scheduled_for: new Date().toISOString()
+      });
+
+    // Create approval needed notification
+    await createAutoGiftNotification(supabaseClient, executionId, event, rule, products, totalAmount, 'approval_needed');
+
+    console.log(`✅ Approval request sent for execution ${executionId}, token: ${token}`);
+    
+  } catch (error) {
+    console.error(`❌ Failed to send approval request for execution ${executionId}:`, error);
+    await updateExecutionStatus(supabaseClient, executionId, 'failed', `Approval request failed: ${error.message}`);
+  }
 }
 
 async function updateExecutionStatus(supabaseClient: any, executionId: string, status: string, errorMessage?: string) {

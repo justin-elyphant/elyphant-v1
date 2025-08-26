@@ -1,358 +1,251 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-interface ApprovalRequest {
-  token: string;
-  action: 'approve' | 'reject' | 'review';
-  rejectionReason?: string;
-  customizations?: {
-    selectedProducts?: string[];
-    giftMessage?: string;
-    deliveryDate?: string;
-  };
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    let requestData: ApprovalRequest;
-    
-    // Handle both GET (URL params) and POST (JSON body) requests
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      requestData = {
-        token: url.searchParams.get("token") || "",
-        action: (url.searchParams.get("action") || "review") as ApprovalRequest["action"],
-        rejectionReason: url.searchParams.get("reason") || undefined,
-      };
-    } else {
-      requestData = await req.json();
-    }
+    const { token, action, selectedProductIds, rejectionReason } = await req.json()
 
-    const { token, action, rejectionReason, customizations } = requestData;
+    console.log(`🎯 Processing auto-gift approval: ${action} for token ${token}`)
 
-    if (!token) {
-      throw new Error("Approval token is required");
-    }
+    // Validate approval token
+    const { data: approvalToken, error: tokenError } = await supabaseClient
+      .from('email_approval_tokens')
+      .select('*, automated_gift_executions(*)')
+      .eq('token', token)
+      .gt('expires_at', new Date().toISOString())
+      .is('approved_at', null)
+      .is('rejected_at', null)
+      .single()
 
-    // Validate and retrieve approval token
-    const { data: tokenData, error: tokenError } = await supabase
-      .from("email_approval_tokens")
-      .select(`
-        *,
-        automated_gift_executions (
-          id,
-          user_id,
-          event_id,
-          rule_id,
-          selected_products,
-          total_amount,
-          execution_date,
-          status
-        )
-      `)
-      .eq("token", token)
-      .gt("expires_at", new Date().toISOString())
-      .is("approved_at", null)
-      .is("rejected_at", null)
-      .single();
-
-    if (tokenError || !tokenData) {
-      console.error("Token validation error:", tokenError);
-      
-      // For GET requests (email clicks), return HTML error page
-      if (req.method === "GET") {
-        return new Response(
-          `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Invalid or Expired Token</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                     margin: 0; padding: 40px; background-color: #f8fafc; text-align: center; }
-              .container { max-width: 500px; margin: 0 auto; background: white; 
-                          padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-              .error { color: #ef4444; font-size: 24px; margin-bottom: 16px; }
-              .message { color: #64748b; margin-bottom: 24px; }
-              .button { background-color: #6366f1; color: white; padding: 12px 24px; 
-                       border-radius: 8px; text-decoration: none; display: inline-block; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="error">⚠️ Invalid or Expired Token</div>
-              <p class="message">This approval link is invalid or has expired. Please check your dashboard for active approvals.</p>
-              <a href="/" class="button">Go to Dashboard</a>
-            </div>
-          </body>
-          </html>
-          `,
-          {
-            headers: { ...corsHeaders, "Content-Type": "text/html" },
-            status: 400,
-          }
-        );
-      }
-      
-      throw new Error("Invalid or expired approval token");
-    }
-
-    const execution = tokenData.automated_gift_executions;
-    if (!execution) {
-      throw new Error("Associated gift execution not found");
-    }
-
-    // Log the approval action
-    await supabase
-      .from("email_delivery_logs")
-      .insert({
-        token_id: tokenData.id,
-        delivery_status: action,
-        event_data: { 
-          action,
-          rejectionReason,
-          customizations,
-          timestamp: new Date().toISOString()
+    if (tokenError || !approvalToken) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid or expired approval token' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
         }
-      });
+      )
+    }
 
-    let responseHtml = '';
-    let redirectUrl = '/dashboard?tab=auto-gifts';
+    const execution = approvalToken.automated_gift_executions
 
-    if (action === 'review') {
-      // For review action, redirect to dashboard with the execution ID
-      redirectUrl = `/dashboard?tab=auto-gifts&review=${execution.id}&token=${token}`;
+    if (action === 'approve') {
+      console.log(`✅ Approving auto-gift execution ${execution.id}`)
       
-      responseHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Redirecting to Review...</title>
-          <meta http-equiv="refresh" content="0; url=${redirectUrl}">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                   margin: 0; padding: 40px; background-color: #f8fafc; text-align: center; }
-            .container { max-width: 500px; margin: 0 auto; background: white; 
-                        padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .loading { color: #6366f1; font-size: 18px; margin-bottom: 16px; }
-            .spinner { border: 3px solid #e2e8f0; border-top: 3px solid #6366f1; 
-                      border-radius: 50%; width: 40px; height: 40px; 
-                      animation: spin 1s linear infinite; margin: 20px auto; }
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="spinner"></div>
-            <div class="loading">Taking you to review your gift...</div>
-            <p>If you're not redirected automatically, <a href="${redirectUrl}">click here</a>.</p>
-          </div>
-        </body>
-        </html>
-      `;
-
-    } else if (action === 'approve') {
-      // Update token as approved
-      await supabase
-        .from("email_approval_tokens")
+      // Update approval token
+      await supabaseClient
+        .from('email_approval_tokens')
         .update({
           approved_at: new Date().toISOString(),
-          approved_via: 'email'
+          approved_via: 'email_approval'
         })
-        .eq("id", tokenData.id);
+        .eq('id', approvalToken.id)
 
-      // Update execution status to approved with approval method tracking
-      await supabase
-        .from("automated_gift_executions")
-        .update({
-          status: 'approved',
-          approval_method: 'email',
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", execution.id);
-
-      // Trigger the actual gift processing
-      try {
-        await supabase.functions.invoke('process-auto-gifts', {
-          body: { 
-            executionId: execution.id,
-            approvalMethod: 'email',
-            customizations 
-          }
-        });
-      } catch (processError) {
-        console.error("Error triggering gift processing:", processError);
-        // Don't fail the approval, just log the error
+      // Filter selected products if provided
+      let productsToOrder = execution.selected_products
+      if (selectedProductIds && selectedProductIds.length > 0) {
+        productsToOrder = execution.selected_products.filter((product: any) =>
+          selectedProductIds.includes(product.product_id)
+        )
       }
 
-      responseHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Gift Approved Successfully!</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                   margin: 0; padding: 40px; background-color: #f8fafc; text-align: center; }
-            .container { max-width: 500px; margin: 0 auto; background: white; 
-                        padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .success { color: #10b981; font-size: 24px; margin-bottom: 16px; }
-            .message { color: #64748b; margin-bottom: 24px; line-height: 1.6; }
-            .button { background-color: #6366f1; color: white; padding: 12px 24px; 
-                     border-radius: 8px; text-decoration: none; display: inline-block; margin: 8px; }
-            .details { background-color: #f8fafc; padding: 16px; border-radius: 8px; margin: 16px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="success">🎉 Gift Approved Successfully!</div>
-            <p class="message">Your auto-gift has been approved and is being processed. The recipient will receive their gift soon!</p>
-            <div class="details">
-              <strong>Total Amount:</strong> $${execution.total_amount}<br>
-              <strong>Execution Date:</strong> ${execution.execution_date}
-            </div>
-            <a href="${redirectUrl}" class="button">View Dashboard</a>
-            <a href="/orders" class="button">Track Orders</a>
-          </div>
-        </body>
-        </html>
-      `;
+      // Get rule details for order creation
+      const { data: rule } = await supabaseClient
+        .from('auto_gifting_rules')
+        .select('*')
+        .eq('id', execution.rule_id)
+        .single()
+
+      // Create order
+      await createApprovedGiftOrder(supabaseClient, execution.id, productsToOrder, rule)
+
+      // Create approval notification
+      await createApprovalNotification(supabaseClient, execution.id, execution.user_id, 'approved', productsToOrder)
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Auto-gift approved and order created',
+          executionId: execution.id
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
 
     } else if (action === 'reject') {
-      // Update token as rejected
-      await supabase
-        .from("email_approval_tokens")
+      console.log(`❌ Rejecting auto-gift execution ${execution.id}`)
+      
+      // Update approval token
+      await supabaseClient
+        .from('email_approval_tokens')
         .update({
           rejected_at: new Date().toISOString(),
-          rejection_reason: rejectionReason || 'Rejected via email'
+          rejection_reason: rejectionReason || 'User rejected auto-gift selection'
         })
-        .eq("id", tokenData.id);
+        .eq('id', approvalToken.id)
 
-      // Update execution status to rejected
-      await supabase
-        .from("automated_gift_executions")
+      // Update execution status
+      await supabaseClient
+        .from('automated_gift_executions')
         .update({
-          status: 'rejected',
-          error_message: rejectionReason || 'Rejected by user via email',
+          status: 'cancelled',
+          error_message: rejectionReason || 'Rejected by user',
           updated_at: new Date().toISOString()
         })
-        .eq("id", execution.id);
+        .eq('id', execution.id)
 
-      responseHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Gift Rejected</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                   margin: 0; padding: 40px; background-color: #f8fafc; text-align: center; }
-            .container { max-width: 500px; margin: 0 auto; background: white; 
-                        padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .warning { color: #f59e0b; font-size: 24px; margin-bottom: 16px; }
-            .message { color: #64748b; margin-bottom: 24px; line-height: 1.6; }
-            .button { background-color: #6366f1; color: white; padding: 12px 24px; 
-                     border-radius: 8px; text-decoration: none; display: inline-block; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="warning">❌ Gift Rejected</div>
-            <p class="message">This auto-gift has been rejected and will not be processed. No charges have been made.</p>
-            <a href="${redirectUrl}" class="button">View Dashboard</a>
-          </div>
-        </body>
-        </html>
-      `;
-    }
+      // Create rejection notification
+      await createApprovalNotification(supabaseClient, execution.id, execution.user_id, 'rejected', [])
 
-    // For GET requests (email clicks), return HTML response
-    if (req.method === "GET") {
-      return new Response(responseHtml, {
-        headers: { ...corsHeaders, "Content-Type": "text/html" },
-        status: 200,
-      });
-    }
-
-    // For API requests, return JSON
-    return new Response(
-      JSON.stringify({
-        success: true,
-        action,
-        executionId: execution.id,
-        status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'review',
-        redirectUrl
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-
-  } catch (error) {
-    console.error("Error in approve-auto-gift:", error);
-    
-    // For GET requests, return HTML error page
-    if (req.method === "GET") {
       return new Response(
-        `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Error Processing Approval</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                   margin: 0; padding: 40px; background-color: #f8fafc; text-align: center; }
-            .container { max-width: 500px; margin: 0 auto; background: white; 
-                        padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .error { color: #ef4444; font-size: 24px; margin-bottom: 16px; }
-            .message { color: #64748b; margin-bottom: 24px; }
-            .button { background-color: #6366f1; color: white; padding: 12px 24px; 
-                     border-radius: 8px; text-decoration: none; display: inline-block; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="error">⚠️ Error</div>
-            <p class="message">${error.message}</p>
-            <a href="/dashboard" class="button">Go to Dashboard</a>
-          </div>
-        </body>
-        </html>
-        `,
+        JSON.stringify({
+          success: true,
+          message: 'Auto-gift rejected',
+          executionId: execution.id
+        }),
         {
-          headers: { ...corsHeaders, "Content-Type": "text/html" },
-          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
         }
-      );
+      )
     }
 
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        success: false 
+        success: false, 
+        error: 'Invalid action' 
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      }
+    )
+
+  } catch (error) {
+    console.error('Auto-gift approval error:', error)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    );
+    )
   }
-});
+})
+
+async function createApprovedGiftOrder(supabaseClient: any, executionId: string, products: any[], rule: any) {
+  console.log(`🛒 Creating approved gift order for execution ${executionId}`)
+  
+  try {
+    // Get recipient shipping address
+    const { data: recipientProfile } = await supabaseClient
+      .from('profiles')
+      .select('shipping_address, email, name')
+      .eq('id', rule.recipient_id)
+      .single()
+
+    if (!recipientProfile?.shipping_address) {
+      throw new Error('Recipient shipping address not available')
+    }
+
+    const totalAmount = products.reduce((sum: number, product: any) => sum + (product.price || 0), 0)
+    
+    const { data: order, error: orderError } = await supabaseClient
+      .from('orders')
+      .insert({
+        user_id: rule.user_id,
+        status: 'processing',
+        payment_status: 'succeeded',
+        total_amount: totalAmount,
+        shipping_address: recipientProfile.shipping_address,
+        is_gift: true,
+        gift_message: rule.gift_message || 'A thoughtful gift selected just for you!',
+        recipient_email: recipientProfile.email,
+        recipient_name: recipientProfile.name,
+        order_items: products.map(product => ({
+          product_id: product.product_id,
+          quantity: 1,
+          price: product.price,
+          title: product.title,
+          image: product.image
+        })),
+        execution_id: executionId
+      })
+      .select()
+      .single()
+
+    if (orderError) {
+      throw new Error(`Order creation failed: ${orderError.message}`)
+    }
+
+    // Update execution with order ID
+    await supabaseClient
+      .from('automated_gift_executions')
+      .update({
+        order_id: order.id,
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId)
+
+    console.log(`✅ Approved gift order ${order.id} created successfully`)
+    
+  } catch (error) {
+    console.error(`❌ Approved order creation failed:`, error)
+    await supabaseClient
+      .from('automated_gift_executions')
+      .update({
+        status: 'failed',
+        error_message: `Approved order creation failed: ${error.message}`,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId)
+  }
+}
+
+async function createApprovalNotification(supabaseClient: any, executionId: string, userId: string, action: string, products: any[]) {
+  const title = action === 'approved' ? '✅ Auto-Gift Approved' : '❌ Auto-Gift Rejected'
+  const message = action === 'approved' 
+    ? `Your auto-gift selection has been approved! Order for ${products.length} item${products.length > 1 ? 's' : ''} is being processed.`
+    : 'Your auto-gift selection has been rejected. No order was placed.'
+
+  try {
+    await supabaseClient
+      .from('auto_gift_notifications')
+      .insert({
+        user_id: userId,
+        execution_id: executionId,
+        notification_type: `approval_${action}`,
+        title,
+        message,
+        email_sent: false,
+        is_read: false
+      })
+
+    console.log(`✅ Approval notification created for execution ${executionId}`)
+  } catch (error) {
+    console.error(`❌ Failed to create approval notification:`, error)
+  }
+}

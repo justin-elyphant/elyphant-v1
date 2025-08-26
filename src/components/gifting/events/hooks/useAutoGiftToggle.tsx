@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useEvents } from "../context/EventsContext";
 
 export const useAutoGiftToggle = () => {
-  const { events, setEvents, openGiftWizardForEvent } = useEvents();
+  const { events, setEvents, openAutoGiftSetupForEvent } = useEvents();
 
   const handleToggleAutoGift = async (id: string) => {
     console.log(`Toggle auto-gift for event ${id}`);
@@ -15,7 +15,7 @@ export const useAutoGiftToggle = () => {
     
     // If enabling auto-gift and no setup exists, open the wizard
     if (newStatus && !event.autoGiftAmount) {
-      openGiftWizardForEvent(event);
+      openAutoGiftSetupForEvent(event);
       return;
     }
     

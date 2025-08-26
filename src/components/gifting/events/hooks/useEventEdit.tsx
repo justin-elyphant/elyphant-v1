@@ -6,8 +6,8 @@ export const useEventEdit = () => {
   const { 
     events, 
     setCurrentEvent, 
-    setIsGiftWizardOpen,
-    setGiftWizardInitialData 
+    setIsAutoGiftSetupOpen,
+    setAutoGiftSetupInitialData
   } = useEvents();
 
   const transformEventToGiftSetupData = (event: any): any => {
@@ -71,11 +71,11 @@ export const useEventEdit = () => {
       const giftSetupData = transformEventToGiftSetupData(eventToEdit);
       console.log('🔍 Transformed data for wizard:', giftSetupData); // Debug log
       
-      // Set the initial data for the gift wizard
-      setGiftWizardInitialData(giftSetupData);
+      // Set the initial data for the auto gift setup
+      setAutoGiftSetupInitialData(giftSetupData);
       
-      // Open the gift wizard
-      setIsGiftWizardOpen(true);
+      // Open the auto gift setup
+      setIsAutoGiftSetupOpen(true);
     } else {
       console.log('🚫 Event not found with id:', id);
     }

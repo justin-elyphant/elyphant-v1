@@ -78,24 +78,24 @@ const Events = () => {
 };
 
 const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
-  const { events, isGiftWizardOpen, setIsGiftWizardOpen, giftWizardInitialData, setGiftWizardInitialData } = useEvents();
+  const { events, isAutoGiftSetupOpen, setIsAutoGiftSetupOpen, autoGiftSetupInitialData, setAutoGiftSetupInitialData } = useEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Check for action=add parameter on page load
   useEffect(() => {
     const action = searchParams.get("action");
     if (action === "add") {
-      setIsGiftWizardOpen(true);
+      setIsAutoGiftSetupOpen(true);
       // Clear the action parameter after opening the dialog
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete("action");
       setSearchParams(newSearchParams);
     }
-  }, [searchParams, setSearchParams, setIsGiftWizardOpen]);
+  }, [searchParams, setSearchParams, setIsAutoGiftSetupOpen]);
 
   const handleAddEventWithContext = () => {
     console.log("Set up gifting button clicked");
-    setIsGiftWizardOpen(true);
+    setIsAutoGiftSetupOpen(true);
   };
   
   // Get default tab from URL parameter

@@ -10,11 +10,11 @@ interface EventsContextType {
   error: string | null;
   currentEvent: ExtendedEventData | null;
   setCurrentEvent: (event: ExtendedEventData | null) => void;
-  isGiftWizardOpen: boolean;
-  setIsGiftWizardOpen: (open: boolean) => void;
-  giftWizardInitialData: any | null;
-  setGiftWizardInitialData: (data: any | null) => void;
-  openGiftWizardForEvent: (event: ExtendedEventData) => void;
+  isAutoGiftSetupOpen: boolean;
+  setIsAutoGiftSetupOpen: (open: boolean) => void;
+  autoGiftSetupInitialData: any | null;
+  setAutoGiftSetupInitialData: (data: any | null) => void;
+  openAutoGiftSetupForEvent: (event: ExtendedEventData) => void;
   refreshEvents: () => Promise<void>;
   updateEvent: (eventId: string, updates: any) => Promise<void>;
   deleteEvent: (eventId: string, options: any) => Promise<void>;
@@ -31,12 +31,12 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentEvent, setCurrentEvent] = useState<ExtendedEventData | null>(null);
-  const [isGiftWizardOpen, setIsGiftWizardOpen] = useState(false);
-  const [giftWizardInitialData, setGiftWizardInitialData] = useState<any | null>(null);
+  const [isAutoGiftSetupOpen, setIsAutoGiftSetupOpen] = useState(false);
+  const [autoGiftSetupInitialData, setAutoGiftSetupInitialData] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "calendar" | "list">("cards");
   const [selectedEventType, setSelectedEventType] = useState<string>("all");
 
-  const openGiftWizardForEvent = (event: ExtendedEventData) => {
+  const openAutoGiftSetupForEvent = (event: ExtendedEventData) => {
     const initialData = {
       recipientName: event.person,
       relationshipType: event.relationshipType || 'Friend',
@@ -46,8 +46,8 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
         isRecurring: true
       }]
     };
-    setGiftWizardInitialData(initialData);
-    setIsGiftWizardOpen(true);
+    setAutoGiftSetupInitialData(initialData);
+    setIsAutoGiftSetupOpen(true);
   };
 
   useEffect(() => {
@@ -107,11 +107,11 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     error,
     currentEvent,
     setCurrentEvent,
-    isGiftWizardOpen,
-    setIsGiftWizardOpen,
-    giftWizardInitialData,
-    setGiftWizardInitialData,
-    openGiftWizardForEvent,
+    isAutoGiftSetupOpen,
+    setIsAutoGiftSetupOpen,
+    autoGiftSetupInitialData,
+    setAutoGiftSetupInitialData,
+    openAutoGiftSetupForEvent,
     refreshEvents,
     updateEvent,
     deleteEvent,

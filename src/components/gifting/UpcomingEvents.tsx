@@ -14,25 +14,25 @@ interface UpcomingEventsProps {
 const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingEventsProps) => {
   const { 
     events: allEvents,
-    isGiftWizardOpen,
-    setIsGiftWizardOpen,
-    giftWizardInitialData,
-    setGiftWizardInitialData,
+    isAutoGiftSetupOpen,
+    setIsAutoGiftSetupOpen,
+    autoGiftSetupInitialData,
+    setAutoGiftSetupInitialData,
     refreshEvents
   } = useEvents();
 
   // Use provided events or fall back to all events
   const eventsToDisplay = filteredEvents || allEvents;
 
-  const handleGiftWizardClose = () => {
-    setIsGiftWizardOpen(false);
-    setGiftWizardInitialData(null);
+  const handleAutoGiftSetupClose = () => {
+    setIsAutoGiftSetupOpen(false);
+    setAutoGiftSetupInitialData(null);
   };
 
-  const handleGiftWizardComplete = async () => {
-    // Refresh events after wizard completion
+  const handleAutoGiftSetupComplete = async () => {
+    // Refresh events after setup completion
     await refreshEvents();
-    handleGiftWizardClose();
+    handleAutoGiftSetupClose();
   };
 
   return (
@@ -42,8 +42,8 @@ const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingE
         events={eventsToDisplay}
       />
       <AutoGiftSetupFlow
-        open={isGiftWizardOpen}
-        onOpenChange={handleGiftWizardClose}
+        open={isAutoGiftSetupOpen}
+        onOpenChange={handleAutoGiftSetupClose}
       />
     </div>
   );

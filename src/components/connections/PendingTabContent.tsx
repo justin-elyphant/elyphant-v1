@@ -30,13 +30,21 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
 
   // Filter gift-based pending connections (including pending_invitation status)
   const giftBasedPending = pendingConnections.filter(conn => {
-    const matches = conn.isPending && (conn.recipientEmail || conn.status === 'pending_invitation');
-    console.log(`🔍 [PendingTabContent] Connection ${conn.name}:`, {
+    console.log(`🎯 [PendingTabContent] DETAILED CHECK for ${conn.name}:`, {
       isPending: conn.isPending,
       recipientEmail: conn.recipientEmail,
       status: conn.status,
-      matches: matches
+      type: conn.type,
+      isIncoming: conn.isIncoming,
+      connectionId: conn.connectionId,
+      id: conn.id
     });
+    
+    // Updated logic: Check for pending_invitation status OR has recipientEmail (gift invitations)
+    const isGiftInvitation = conn.status === 'pending_invitation' || (conn.recipientEmail && conn.recipientEmail.trim() !== '');
+    const matches = isGiftInvitation;
+    
+    console.log(`🎯 [PendingTabContent] ${conn.name} - isGiftInvitation: ${isGiftInvitation}, matches: ${matches}`);
     return matches;
   });
 

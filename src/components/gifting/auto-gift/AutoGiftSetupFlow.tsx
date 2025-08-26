@@ -43,7 +43,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   recipientId
 }) => {
   const { createRule, settings } = useAutoGifting();
-  const { connections } = useEnhancedConnections();
+  const { connections, pendingInvitations } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
@@ -121,8 +121,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     setIsLoading(true);
 
     try {
-      // Find the selected recipient to get proper data
-      const selectedConnection = connections.find(conn => 
+      // Find the selected recipient from both accepted connections and pending invitations
+      const allConnections = [...connections, ...pendingInvitations];
+      const selectedConnection = allConnections.find(conn => 
         conn.id === formData.recipientId || 
         conn.display_user_id === formData.recipientId || 
         conn.connected_user_id === formData.recipientId
@@ -257,8 +258,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       ))}
                       
                       {/* Pending Invitations */}
-                      {connections
-                        .filter(conn => conn.status === 'pending_invitation')
+                      {pendingInvitations
                         .map((connection) => (
                         <SelectItem key={connection.id} value={connection.id}>
                           <div className="flex items-center gap-2">

@@ -375,41 +375,39 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       />
 
       {/* Category Title and Description */}
-      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (
-        (() => {
-          const categoryParam = searchParams.get("category");
-          const category = categoryParam ? getCategoryByValue(categoryParam) : null;
-          
-          // Don't show title/description for flowers category
-          if (categoryParam === "flowers") {
-            return (
-              <div className="mb-8">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">
-                    {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-                  </p>
-                </div>
-              </div>
-            );
-          }
-          
+      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (() => {
+        const categoryParam = searchParams.get("category");
+        const category = categoryParam ? getCategoryByValue(categoryParam) : null;
+        
+        // Don't show title/description for flowers category
+        if (categoryParam === "flowers") {
           return (
             <div className="mb-8">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  {category ? (category.displayName || category.name) : "Search Results"}
-                </h1>
-                <p className="text-lg text-muted-foreground mb-4">
-                  {category ? category.description : "Browse our curated selection"}
-                </p>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">
                   {totalCount} {totalCount === 1 ? 'product' : 'products'} found
                 </p>
               </div>
             </div>
           );
-        })()
-      )}
+        }
+        
+        return (
+          <div className="mb-8">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                {category ? (category.displayName || category.name) : "Search Results"}
+              </h1>
+              <p className="text-lg text-muted-foreground mb-4">
+                {category ? category.description : "Browse our curated selection"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+              </p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Quick Filters */}
       <MarketplaceQuickFilters />

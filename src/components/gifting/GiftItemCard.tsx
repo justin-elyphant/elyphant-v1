@@ -1,3 +1,8 @@
+/**
+ * @deprecated This component has been replaced by EnhancedWishlistCard
+ * Please use EnhancedWishlistCard instead for all new implementations.
+ * This file is kept for reference but should not be imported or used.
+ */
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -32,6 +37,9 @@ interface GiftItemCardProps {
   skipCentsDetection?: boolean;
 }
 
+/**
+ * @deprecated Use EnhancedWishlistCard instead
+ */
 const GiftItemCard = ({ 
   name, 
   price, 
@@ -47,6 +55,8 @@ const GiftItemCard = ({
   isZincApiProduct,
   skipCentsDetection
 }: GiftItemCardProps) => {
+  console.warn('⚠️ DEPRECATED: GiftItemCard is deprecated. Use EnhancedWishlistCard instead.');
+  
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {

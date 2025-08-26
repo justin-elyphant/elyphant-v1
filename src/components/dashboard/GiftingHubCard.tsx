@@ -28,6 +28,9 @@ import { supabase } from "@/integrations/supabase/client";
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
 import GroupGiftAnalytics from "./GroupGiftAnalytics";
 
+// Import automation component
+import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
+
 // Smart Gifting Tab Component
 const SmartGiftingTab = () => {
   const { events, isLoading: eventsLoading } = useEvents();
@@ -444,6 +447,11 @@ const GroupProjectsTab = () => {
   );
 };
 
+// Automation Tab Component
+const AutomationTab = () => {
+  return <AutomatedGiftingTabContent />;
+};
+
 // Main Gifting Hub Card Component
 const GiftingHubCard = () => {
   const [activeTab, setActiveTab] = useState("smart-gifting");
@@ -462,11 +470,12 @@ const GiftingHubCard = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="smart-gifting">Smart Gifting</TabsTrigger>
               <TabsTrigger value="my-gifts">My Gifts</TabsTrigger>
               <TabsTrigger value="my-collections">Collections</TabsTrigger>
               <TabsTrigger value="group-projects">Group Projects</TabsTrigger>
+              <TabsTrigger value="automation">Automation</TabsTrigger>
             </TabsList>
             
             <TabsContent value="smart-gifting" className="mt-6">
@@ -483,6 +492,10 @@ const GiftingHubCard = () => {
             
             <TabsContent value="group-projects" className="mt-6">
               <GroupProjectsTab />
+            </TabsContent>
+            
+            <TabsContent value="automation" className="mt-6">
+              <AutomationTab />
             </TabsContent>
           </Tabs>
         </CardContent>

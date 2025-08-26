@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Users, UserPlus, Clock, AlertCircle } from "lucide-react";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 
 // Lazy load heavy components
 const FriendsTabContent = lazy(() => import("@/components/connections/FriendsTabContent"));
@@ -57,6 +58,13 @@ const Connections = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
+  
+  // Get connections data
+  const { 
+    pendingConnections, 
+    loading: connectionsLoading,
+    refreshPendingConnections 
+  } = useConnectionsAdapter();
   
   // Check URL params for tab selection
   const searchParams = new URLSearchParams(window.location.search);
@@ -159,13 +167,11 @@ const Connections = () => {
                     ))}
                   </div>
                 }>
-                  <div className="text-center py-12">
-                    <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No pending requests</h3>
-                    <p className="text-muted-foreground">
-                      Pending connection requests will appear here
-                    </p>
-                  </div>
+                  <PendingTabContent
+                    pendingConnections={pendingConnections}
+                    searchTerm={searchTerm}
+                    onRefresh={refreshPendingConnections}
+                  />
                 </Suspense>
               </TabsContent>
               

@@ -148,7 +148,7 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
   // Get the auto-gifting rule details
   const { data: rule, error: ruleError } = await supabaseClient
     .from('auto_gifting_rules')
-    .select('*, auto_gifting_settings(*)')
+    .select('*')
     .eq('id', event.rule_id)
     .single()
 
@@ -157,6 +157,22 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
     await updateExecutionStatus(supabaseClient, execution.id, 'failed', 'Failed to fetch rule details')
     return
   }
+
+  // Get the auto-gifting settings for this user
+  const { data: settings, error: settingsError } = await supabaseClient
+    .from('auto_gifting_settings')
+    .select('*')
+    .eq('user_id', rule.user_id)
+    .single()
+
+  if (settingsError) {
+    console.error('Error fetching settings:', settingsError)
+    await updateExecutionStatus(supabaseClient, execution.id, 'failed', 'Failed to fetch settings details')
+    return
+  }
+
+  // Attach settings to rule for backward compatibility
+  rule.auto_gifting_settings = settings
 
   try {
     // Select gifts using the enhanced Zinc API

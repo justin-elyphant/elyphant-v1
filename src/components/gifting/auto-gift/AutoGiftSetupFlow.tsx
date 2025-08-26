@@ -19,6 +19,7 @@ import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import NewRecipientForm from "@/components/shared/NewRecipientForm";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
+import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -51,6 +52,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const [formData, setFormData] = useState({
     recipientId: recipientId || "",
     eventType: eventType || "",
+    specificHoliday: "",
+    calculatedDate: null as string | null,
     budgetLimit: settings?.default_budget_limit || 50,
     giftSource: "wishlist" as "wishlist" | "ai" | "both",
     categories: [] as string[],
@@ -118,6 +121,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       return;
     }
 
+    if (formData.eventType === "holiday" && !formData.specificHoliday) {
+      toast.error("Please select a specific holiday");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -135,7 +143,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       const ruleData = {
         // Always include recipient_id (use connection ID for pending invitations)
         recipient_id: isPendingInvitation ? selectedConnection?.id || formData.recipientId : formData.recipientId,
-        date_type: formData.eventType,
+        date_type: formData.eventType === "holiday" ? formData.specificHoliday : formData.eventType,
         event_id: eventId,
         is_active: true,
         budget_limit: formData.budgetLimit,
@@ -287,7 +295,12 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   <Label htmlFor="eventType">Event Type</Label>
                   <Select 
                     value={formData.eventType} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, eventType: value }))}
+                    onValueChange={(value) => setFormData(prev => ({ 
+                      ...prev, 
+                      eventType: value,
+                      specificHoliday: value === "holiday" ? prev.specificHoliday : "",
+                      calculatedDate: value === "holiday" ? prev.calculatedDate : null
+                    }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select event type" />
@@ -301,6 +314,23 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {formData.eventType === "holiday" && (
+                  <HolidaySelector
+                    value={formData.specificHoliday}
+                    onChange={(holiday) => setFormData(prev => ({ ...prev, specificHoliday: holiday }))}
+                    onDateCalculated={(date) => setFormData(prev => ({ ...prev, calculatedDate: date }))}
+                  />
+                )}
+
+                {formData.eventType === "holiday" && formData.calculatedDate && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 inline mr-1" />
+                      Auto-gifting will trigger for: {new Date(formData.calculatedDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

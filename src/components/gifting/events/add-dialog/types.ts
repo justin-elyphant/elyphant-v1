@@ -4,6 +4,7 @@ export interface EventFormData {
   description?: string;
   date: Date | null;
   dateType?: string;
+  specificHoliday?: string;
   personId?: string;
   eventType: string;
   personName: string;
@@ -22,6 +23,7 @@ export interface AddEventFormValues {
   eventType: string;
   personName: string;
   date: Date | null;
+  specificHoliday?: string;
   privacyLevel: "public" | "private" | "shared";
   autoGiftEnabled: boolean;
   giftBudget: number;

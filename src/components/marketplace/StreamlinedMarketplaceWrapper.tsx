@@ -296,14 +296,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // Show error state
   if (error) {
-  return (
-    <div 
-      ref={(el) => {
-        containerRef.current = el;
-        intersectionRef(el);
-      }}
-      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''}`}
-    >
+    return (
+      <div className="container mx-auto px-4 py-6">
         <MarketplaceHeader />
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
@@ -315,7 +309,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     );
   }
 
-  
   // Performance monitoring for search completion
   useEffect(() => {
     if (!isLoading && showSearchInfo) {
@@ -326,8 +319,26 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Use virtualized grid for large product lists
   const shouldUseVirtualization = paginatedProducts.length > 50;
   
+  // Debug logging for giftsUnder50 specifically
+  useEffect(() => {
+    console.log('🐛 StreamlinedMarketplaceWrapper Debug:', {
+      giftsUnder50,
+      showSearchInfo,
+      productsLength: products?.length,
+      paginatedProductsLength: paginatedProducts?.length,
+      isLoading,
+      error
+    });
+  }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
+  
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div 
+      ref={(el) => {
+        containerRef.current = el;
+        intersectionRef(el);
+      }}
+      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''}`}
+    >
       {/* Conditional Hero Section */}
       {brandCategories ? (
         <BrandHeroSection 
@@ -364,39 +375,41 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       />
 
       {/* Category Title and Description */}
-      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (() => {
-        const categoryParam = searchParams.get("category");
-        const category = categoryParam ? getCategoryByValue(categoryParam) : null;
-        
-        // Don't show title/description for flowers category
-        if (categoryParam === "flowers") {
+      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (
+        (() => {
+          const categoryParam = searchParams.get("category");
+          const category = categoryParam ? getCategoryByValue(categoryParam) : null;
+          
+          // Don't show title/description for flowers category
+          if (categoryParam === "flowers") {
+            return (
+              <div className="mb-8">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">
+                    {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+                  </p>
+                </div>
+              </div>
+            );
+          }
+          
           return (
             <div className="mb-8">
-              <div className="text-right">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  {category ? (category.displayName || category.name) : "Search Results"}
+                </h1>
+                <p className="text-lg text-muted-foreground mb-4">
+                  {category ? category.description : "Browse our curated selection"}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {totalCount} {totalCount === 1 ? 'product' : 'products'} found
                 </p>
               </div>
             </div>
           );
-        }
-        
-        return (
-          <div className="mb-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                {category ? (category.displayName || category.name) : "Search Results"}
-              </h1>
-              <p className="text-lg text-muted-foreground mb-4">
-                {category ? category.description : "Browse our curated selection"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+        })()
+      )}
 
       {/* Quick Filters */}
       <MarketplaceQuickFilters />

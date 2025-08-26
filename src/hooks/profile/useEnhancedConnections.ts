@@ -137,23 +137,26 @@ export const useEnhancedConnections = () => {
       const uniqueConnections = new Map<string, typeof enhancedConnections[0]>();
       
       enhancedConnections.forEach(conn => {
-        const otherUserId = conn.user_id === user.id ? conn.connected_user_id : conn.user_id;
+        // For pending invitations, use connection id since connected_user_id is null
+        const uniqueKey = conn.status === 'pending_invitation' 
+          ? conn.id 
+          : (conn.user_id === user.id ? conn.connected_user_id : conn.user_id);
         
-        if (!otherUserId) {
-          console.log('🔍 [useEnhancedConnections] Skipping connection with no other user:', conn.id);
+        if (!uniqueKey) {
+          console.log('🔍 [useEnhancedConnections] Skipping connection with no unique key:', conn.id);
           return;
         }
         
-        // Check if we already have this user
-        if (uniqueConnections.has(otherUserId)) {
-          console.log('🔍 [useEnhancedConnections] Skipping duplicate connection for user:', otherUserId, conn.profile_name);
+        // Check if we already have this connection
+        if (uniqueConnections.has(uniqueKey)) {
+          console.log('🔍 [useEnhancedConnections] Skipping duplicate connection for key:', uniqueKey, conn.profile_name);
           return;
         }
         
-        // Only include connections that have the current user as one of the participants
-        if (conn.user_id === user.id || conn.connected_user_id === user.id) {
-          console.log('🔍 [useEnhancedConnections] Adding unique connection for user:', otherUserId, conn.profile_name);
-          uniqueConnections.set(otherUserId, conn);
+        // Include all connections involving the current user
+        if (conn.user_id === user.id || conn.connected_user_id === user.id || conn.status === 'pending_invitation') {
+          console.log('🔍 [useEnhancedConnections] Adding unique connection for key:', uniqueKey, conn.profile_name);
+          uniqueConnections.set(uniqueKey, conn);
         } else {
           console.log('🔍 [useEnhancedConnections] Skipping connection not involving current user:', conn.id);
         }

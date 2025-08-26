@@ -220,14 +220,16 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
 
 
-  // Debug logging for the current state
-  console.log('StreamlinedMarketplaceWrapper render state:', {
-    productsLength: products?.length || 0,
-    paginatedProductsLength: paginatedProducts.length,
-    hasMore,
-    isPaginationLoading,
-    showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType
-  });
+  // Debug logging for the current state - MOVED TO useEffect
+  useEffect(() => {
+    console.log('StreamlinedMarketplaceWrapper render state:', {
+      productsLength: products?.length || 0,
+      paginatedProductsLength: paginatedProducts?.length || 0,
+      hasMore,
+      isPaginationLoading,
+      showSearchInfo: urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType
+    });
+  }, [products, paginatedProducts, hasMore, isPaginationLoading, urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]);
 
   // Memoized product interaction handlers to prevent recreation
   const handleProductClick = useCallback((product: any) => {

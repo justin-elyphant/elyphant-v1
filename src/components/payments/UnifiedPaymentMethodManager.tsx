@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, CreditCard, Trash2, Star, StarOff, CheckCircle, AlertCircle, Shield } from 'lucide-react';
+import { Plus, CreditCard, Trash2, Star, StarOff, CheckCircle, AlertCircle, Shield, ArrowLeft } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from "@/services/payment/StripeClientManager";
 import { useAuth } from "@/contexts/AuthContext";
@@ -304,7 +304,7 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
         
         {paymentMethods.map(renderPaymentMethodCard)}
         
-        {mode === 'selection' && showAddNew && (
+        {showAddNew && (
           <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
             <CardContent className="p-6 text-center">
               <Button 
@@ -343,42 +343,31 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="saved" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Saved Methods
-              {paymentMethods.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {paymentMethods.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            {showAddNew && (
-              <TabsTrigger value="add" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add New
-              </TabsTrigger>
-            )}
-          </TabsList>
-          
-          <TabsContent value="saved" className="mt-6">
-            {renderSavedMethods()}
-          </TabsContent>
-          
-          {showAddNew && (
-            <TabsContent value="add" className="mt-6">
-              <Elements stripe={stripeClientManager.getStripePromise()}>
-                <UnifiedPaymentForm
-                  mode="setup"
-                  amount={0}
-                  onSuccess={handleAddSuccess}
-                  allowSaveCard={false}
-                />
-              </Elements>
-            </TabsContent>
-          )}
-        </Tabs>
+        {activeTab === "add" ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-4 border-b">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setActiveTab("saved")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Saved Methods
+              </Button>
+            </div>
+            <Elements stripe={stripeClientManager.getStripePromise()}>
+              <UnifiedPaymentForm
+                mode="setup"
+                amount={0}
+                onSuccess={handleAddSuccess}
+                allowSaveCard={false}
+              />
+            </Elements>
+          </div>
+        ) : (
+          renderSavedMethods()
+        )}
       </CardContent>
     </Card>
   );

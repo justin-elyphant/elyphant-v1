@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gift, Users, Calendar, CreditCard, Heart } from "lucide-react";
-import GiftItemCard from "./GiftItemCard";
+import EnhancedWishlistCard from "./wishlist/EnhancedWishlistCard";
 
 // Mock data for friends and their wishlists
 const friends = [
@@ -102,13 +102,20 @@ const FriendsWishlists = () => {
                   <h4 className="font-medium text-sm mb-2">{wishlist.title}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {wishlist.items.map((item) => (
-                      <GiftItemCard 
+                      <EnhancedWishlistCard 
                         key={item.id}
-                        name={item.name}
-                        price={item.price}
-                        brand={item.brand}
-                        imageUrl={item.imageUrl}
-                        mini
+                        item={{
+                          id: item.id.toString(),
+                          name: item.name,
+                          price: item.price,
+                          brand: item.brand,
+                          image_url: item.imageUrl,
+                          wishlist_id: '',
+                          product_id: '',
+                          title: item.name,
+                          created_at: ''
+                        }}
+                        className="min-h-[100px]"
                       />
                     ))}
                   </div>

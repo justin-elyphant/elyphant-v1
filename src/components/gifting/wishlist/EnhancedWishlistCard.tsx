@@ -34,6 +34,8 @@ interface EnhancedWishlistCardProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onSelectionChange?: (itemId: string, selected: boolean) => void;
+  // Style props
+  className?: string;
 }
 
 const EnhancedWishlistCard = ({ 
@@ -44,7 +46,8 @@ const EnhancedWishlistCard = ({
   onScheduleGift,
   isSelectionMode = false,
   isSelected = false,
-  onSelectionChange
+  onSelectionChange,
+  className
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -88,7 +91,7 @@ const EnhancedWishlistCard = ({
     <>
       <Card className={`group relative overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/20 ${
         isSelected ? 'ring-2 ring-primary border-primary' : ''
-      }`}>
+      } ${className || ''}`}>
         {/* Selection checkbox */}
         {isSelectionMode && (
           <div className="absolute top-3 left-3 z-20">

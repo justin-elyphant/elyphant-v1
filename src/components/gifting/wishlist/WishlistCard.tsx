@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, ShoppingBag, Trash2, Loader2, Eye } from "lucide-react";
-import GiftItemCard from "../GiftItemCard";
+import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
@@ -147,28 +147,13 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
           {wishlist.items.slice(0, 4).map((item) => (
-            <div key={item.id} className="relative group">
-              <GiftItemCard 
-                name={item.name}
-                price={item.price || 0}
-                brand={item.brand || ""}
-                imageUrl={item.image_url || "/placeholder.svg"}
-                mini
-              />
-              {removingItemId === item.id ? (
-                <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
-                  <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => handleRemoveItem(item.id, e)}
-                  className="absolute top-1 right-1 bg-white/80 hover:bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label={`Remove ${item.name} from wishlist`}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </button>
-              )}
-            </div>
+            <EnhancedWishlistCard
+              key={item.id}
+              item={item}
+              onRemove={() => handleRemoveItem(item.id, { stopPropagation: () => {} } as React.MouseEvent)}
+              isRemoving={removingItemId === item.id}
+              className="min-h-[100px]"
+            />
           ))}
         </div>
         {wishlist.items.length > 4 && (

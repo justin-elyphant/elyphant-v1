@@ -126,6 +126,12 @@ export interface WishlistItem {
   added_at?: string;
   price?: number;
   image_url?: string;
+  // Product source detection fields
+  product_source?: string;
+  vendor?: string;
+  retailer?: string;
+  isZincApiProduct?: boolean;
+  skipCentsDetection?: boolean;
 }
 
 // Helper functions for normalization
@@ -306,7 +312,13 @@ export function normalizeWishlistItem(item: any): WishlistItem {
     image_url: item.image_url || '',
     brand: item.brand || '',
     price: item.price || null,
-    added_at: item.added_at || item.created_at || new Date().toISOString()
+    added_at: item.added_at || item.created_at || new Date().toISOString(),
+    // Product source fields for pricing
+    product_source: item.product_source,
+    vendor: item.vendor,
+    retailer: item.retailer,
+    isZincApiProduct: item.isZincApiProduct,
+    skipCentsDetection: item.skipCentsDetection
   };
 }
 

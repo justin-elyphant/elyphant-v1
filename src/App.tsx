@@ -173,6 +173,7 @@ function AppContent() {
           
           {/* New dedicated feature pages */}
           <Route path="/gifting" element={<GiftingHub />} />
+          <Route path="/events" element={<GiftingHub />} />
           <Route path="/nicole" element={<Nicole />} />
           <Route path="/account" element={<Account />} />
           <Route path="/social" element={<Social />} />

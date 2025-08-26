@@ -15,6 +15,9 @@ interface InvitationPayload {
   occasion: string;
   personalMessage?: string;
   giftorName?: string;
+  invitationType?: 'manual_connection' | 'auto_gift' | 'nicole_initiated';
+  sourceContext?: 'checkout_flow' | 'scheduled_event' | 'manual_invite' | 'nicole_conversation';
+  completionRedirectUrl?: string;
 }
 
 serve(async (req) => {
@@ -48,7 +51,7 @@ serve(async (req) => {
     const payload: InvitationPayload = await req.json();
     const giftorFirstName = payload.giftorName || user.user_metadata?.first_name || user.user_metadata?.name?.split(" ")[0] || "A friend";
 
-    // Insert analytics row first
+    // Insert analytics row first with invitation context
     const { data: analyticsRow, error: analyticsError } = await supabase
       .from("gift_invitation_analytics")
       .insert({
@@ -57,6 +60,9 @@ serve(async (req) => {
         recipient_name: payload.recipientName,
         relationship_type: payload.relationship,
         occasion: payload.occasion,
+        invitation_type: payload.invitationType || 'manual_connection',
+        source_context: payload.sourceContext || 'manual_invite',
+        completion_redirect_url: payload.completionRedirectUrl,
         metadata: { personalMessage: payload.personalMessage || null }
       })
       .select()
@@ -69,15 +75,25 @@ serve(async (req) => {
 
     const resend = new Resend(resendApiKey);
 
+    // Generate contextual invitation URL
+    const invitationUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/handle-invitation-acceptance?invitation_id=${analyticsRow.id}`;
+    
+    // Customize email content based on invitation type
+    const isAutoGift = payload.invitationType === 'auto_gift' || payload.invitationType === 'nicole_initiated';
+    const actionText = isAutoGift ? 'Share Gift Preferences' : 'Accept Invitation';
+    const descriptionText = isAutoGift 
+      ? 'Share your preferences with Nicole to get perfect gifts automatically.'
+      : 'Join with one click to share your preferences and make gifting easy.';
+
     const subject = `${giftorFirstName} invited you to join Elyphant for ${payload.occasion} 🎁`;
     const html = `
       <div style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6; color:#0f172a;">
         <h2>Hey ${payload.recipientName} 👋</h2>
         <p><strong>${giftorFirstName}</strong> wants to get you the perfect ${payload.occasion} gift on Elyphant.</p>
         ${payload.personalMessage ? `<blockquote style="margin: 16px 0; padding: 12px 16px; background:#f1f5f9; border-left:4px solid #6366f1; border-radius:8px;">${payload.personalMessage}</blockquote>` : ''}
-        <p>Join with one click to share your preferences and make gifting easy.</p>
-        <p><a href="https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/nicole-chatgpt-agent?invitation_id=${analyticsRow.id}"
-              style="display:inline-block; background:#6366f1; color:white; padding:12px 18px; border-radius:999px; text-decoration:none;">Accept Invitation</a></p>
+        <p>${descriptionText}</p>
+        <p><a href="${invitationUrl}"
+              style="display:inline-block; background:#6366f1; color:white; padding:12px 18px; border-radius:999px; text-decoration:none;">${actionText}</a></p>
         <p style="font-size:12px; color:#64748b;">If you didn't expect this, you can ignore this email.</p>
       </div>
     `;

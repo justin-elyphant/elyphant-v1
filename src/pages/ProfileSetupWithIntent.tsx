@@ -8,6 +8,7 @@ import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfile
 // Legacy modal removed - using Nicole unified interface
 import { Loader2 } from "lucide-react";
 import { createBirthdayImportantDate } from "@/utils/profileDataMapper";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfileSetupWithIntent = () => {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ const ProfileSetupWithIntent = () => {
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
 
   const intentFromUrl = searchParams.get('intent');
+  const invitationId = searchParams.get('invitation_id');
+  const invitationSource = searchParams.get('source');
 
   useEffect(() => {
     // Redirect if not logged in
@@ -118,6 +121,26 @@ const ProfileSetupWithIntent = () => {
 
       await updateProfile(profileData);
       setHasCompletedProfile(true);
+
+      // Handle invitation completion tracking
+      if (invitationId && invitationSource === 'invitation') {
+        try {
+          await supabase.from("invitation_conversion_events").insert({
+            invitation_id: invitationId,
+            event_type: "profile_setup_completed",
+            event_data: { 
+              completion_time: new Date().toISOString(),
+              has_auto_gift_intent: intentFromUrl === 'auto-gift'
+            }
+          });
+          console.log('ProfileSetupWithIntent: Tracked invitation profile completion');
+          toast.success("Welcome to Elyphant! Your connection has been established.");
+          navigate('/connections', { replace: true });
+          return;
+        } catch (error) {
+          console.error('Error tracking invitation completion:', error);
+        }
+      }
 
       // Check if we have an intent to navigate directly
       const storedIntent = LocalStorageService.getNicoleContext()?.selectedIntent;

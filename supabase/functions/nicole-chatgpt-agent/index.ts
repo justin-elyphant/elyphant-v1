@@ -16,6 +16,11 @@ serve(async (req) => {
   }
 
   try {
+    // Handle GET requests for invitation acceptance
+    if (req.method === 'GET') {
+      return handleInvitationAcceptance(req);
+    }
+
     const { message, context, sessionId } = await req.json();
 
     console.log('Nicole ChatGPT Agent:', { message, context, sessionId });
@@ -232,4 +237,53 @@ function isReadyForSearch(context: any): boolean {
   
   // For other intents, basic info is sufficient
   return hasBasicInfo;
+}
+
+async function handleInvitationAcceptance(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const invitationId = url.searchParams.get("invitation_id");
+  const mode = url.searchParams.get("mode");
+  const recipientEmail = url.searchParams.get("recipient_email");
+  const recipientName = url.searchParams.get("recipient_name");
+
+  if (!invitationId || mode !== "invitation_acceptance") {
+    return new Response("Invalid invitation parameters", { 
+      status: 400, 
+      headers: corsHeaders 
+    });
+  }
+
+  // Create initial context for invitation-based conversation
+  const initialContext = {
+    conversationPhase: 'invitation_acceptance',
+    invitationId: invitationId,
+    recipientEmail: recipientEmail,
+    recipientName: recipientName,
+    selectedIntent: 'auto-gift',
+    giftCollectionPhase: 'greeting',
+    isInvitationFlow: true
+  };
+
+  const welcomeMessage = `Hi ${recipientName}! 👋 
+
+I'm Nicole, your personal gift assistant! Someone invited you to set up automatic gifting preferences so they can surprise you with perfect gifts.
+
+This takes just 2 minutes - I'll ask about your interests, sizes, and preferences. Then when special occasions come up, you'll get thoughtful gifts instead of random ones!
+
+Ready to get started? What kinds of things do you love receiving as gifts?`;
+
+  return new Response(JSON.stringify({
+    message: welcomeMessage,
+    context: initialContext,
+    capability: 'gift_preference_collection',
+    actions: ['start_preference_collection'],
+    showSearchButton: false,
+    isInvitationFlow: true,
+    metadata: {
+      invitationId: invitationId,
+      stage: 'welcome'
+    }
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }

@@ -1,13 +1,18 @@
 
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
+import { InvitationSignupFlow } from "@/components/auth/InvitationSignupFlow";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isLoading } = useAuth();
+  
+  // Check if this is an invitation flow
+  const isInvitationFlow = searchParams.has('invitation_id');
 
   // Redirect authenticated users to homepage
   useEffect(() => {
@@ -28,6 +33,11 @@ const Auth = () => {
         </div>
       </MainLayout>
     );
+  }
+
+  // Show invitation-specific flow if applicable
+  if (isInvitationFlow) {
+    return <InvitationSignupFlow />;
   }
 
   return (

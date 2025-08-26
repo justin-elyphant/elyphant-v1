@@ -1251,12 +1251,15 @@ export type Database = {
       gift_invitation_analytics: {
         Row: {
           auto_gift_activated_at: string | null
+          completion_redirect_url: string | null
           conversion_status: string
           created_at: string
           email_clicked_at: string | null
           email_opened_at: string | null
           id: string
           invitation_sent_at: string
+          invitation_type: string | null
+          invited_user_id: string | null
           metadata: Json | null
           occasion: string | null
           profile_completed_at: string | null
@@ -1264,17 +1267,21 @@ export type Database = {
           recipient_name: string
           relationship_type: string
           signup_completed_at: string | null
+          source_context: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           auto_gift_activated_at?: string | null
+          completion_redirect_url?: string | null
           conversion_status?: string
           created_at?: string
           email_clicked_at?: string | null
           email_opened_at?: string | null
           id?: string
           invitation_sent_at?: string
+          invitation_type?: string | null
+          invited_user_id?: string | null
           metadata?: Json | null
           occasion?: string | null
           profile_completed_at?: string | null
@@ -1282,17 +1289,21 @@ export type Database = {
           recipient_name: string
           relationship_type?: string
           signup_completed_at?: string | null
+          source_context?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           auto_gift_activated_at?: string | null
+          completion_redirect_url?: string | null
           conversion_status?: string
           created_at?: string
           email_clicked_at?: string | null
           email_opened_at?: string | null
           id?: string
           invitation_sent_at?: string
+          invitation_type?: string | null
+          invited_user_id?: string | null
           metadata?: Json | null
           occasion?: string | null
           profile_completed_at?: string | null
@@ -1300,6 +1311,7 @@ export type Database = {
           recipient_name?: string
           relationship_type?: string
           signup_completed_at?: string | null
+          source_context?: string | null
           updated_at?: string
           user_id?: string
         }

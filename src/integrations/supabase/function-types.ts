@@ -4,5 +4,8 @@ export enum SUPABASE_FUNCTIONS {
   GET_PRODUCTS = "get-products",
   GET_PRODUCT_DETAIL = "get-product-detail",
   TEST_ZINC_API_KEY = "test-zinc-api-key",
-  SMS_GIFTEE_DISCOVERY = "sms-giftee-discovery"
+  SMS_GIFTEE_DISCOVERY = "sms-giftee-discovery",
+  SEND_INVITATION_EMAIL = "send-invitation-email",
+  HANDLE_INVITATION_ACCEPTANCE = "handle-invitation-acceptance",
+  NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent"
 }

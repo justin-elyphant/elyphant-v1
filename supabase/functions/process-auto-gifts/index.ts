@@ -321,23 +321,22 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 async function selectGiftsFromWishlist(supabaseClient: any, rule: any, maxBudget: number) {
   console.log(`🎯 Checking recipient's wishlist for gifts under $${maxBudget}`)
   
-  // Get the recipient's public wishlists
+  // Get the recipient's wishlists (both public and private for connected users)
   const { data: wishlists, error: wishlistError } = await supabaseClient
     .from('wishlists')
     .select(`
       id,
-      name,
-      visibility,
+      title,
+      is_public,
       wishlist_items (
         product_id,
-        product_name,
-        product_price,
-        product_image,
-        product_url
+        title,
+        price,
+        image_url,
+        product_source
       )
     `)
     .eq('user_id', rule.recipient_id)
-    .eq('visibility', 'public')
     .not('wishlist_items', 'is', null)
 
   if (wishlistError) {
@@ -353,7 +352,7 @@ async function selectGiftsFromWishlist(supabaseClient: any, rule: any, maxBudget
   // Flatten all wishlist items and filter by budget
   const allWishlistItems = wishlists.flatMap(wishlist => wishlist.wishlist_items || [])
   const affordableItems = allWishlistItems.filter(item => 
-    item.product_price && item.product_price <= maxBudget
+    item.price && item.price <= maxBudget
   )
 
   console.log(`Found ${allWishlistItems.length} total wishlist items, ${affordableItems.length} within budget`)
@@ -367,10 +366,10 @@ async function selectGiftsFromWishlist(supabaseClient: any, rule: any, maxBudget
   const wishlistProducts = affordableItems.map(item => ({
     product_id: item.product_id,
     id: item.product_id,
-    title: item.product_name,
-    name: item.product_name,
-    price: item.product_price,
-    image: item.product_image || '',
+    title: item.title,
+    name: item.title,
+    price: item.price,
+    image: item.image_url || '',
     product_url: item.product_url || '',
     fromWishlist: true,
     category: 'wishlist-item'

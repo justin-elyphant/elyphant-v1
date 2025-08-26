@@ -82,43 +82,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]
   );
 
-
-  // Listen for Nicole search events and trigger marketplace search
-  useEffect(() => {
-    const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
-      const { searchTerm, nicoleContext } = event.detail;
-      if (searchTerm) {
-        console.log('🎯 Marketplace search update received:', { searchTerm, nicoleContext });
-        
-        // Track search for background prefetching
-        backgroundPrefetchingService.trackSearch(searchTerm, 'nicole');
-        
-        // Start performance timer
-        startTimer('nicole-search');
-        
-        // Store Nicole context for the search
-        if (nicoleContext) {
-          sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
-          console.log('💰 Stored Nicole context in session storage:', nicoleContext);
-        }
-        
-        // Update URL without page reload
-        const newSearchParams = new URLSearchParams(window.location.search);
-        newSearchParams.set('search', searchTerm);
-        window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
-        
-        // Let the useUnifiedMarketplace hook handle the search automatically via URL change
-        // No need to dispatch additional events that could cause loops
-      }
-    };
-
-    window.addEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
-    return () => {
-      window.removeEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
-    };
-  }, [startTimer]);
-
-  // Server-side load more function
+  // Server-side load more function - MOVED BEFORE useOptimizedProducts
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
     try {
       console.log(`handleLoadMore called for page ${page}`);
@@ -205,7 +169,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     }
   }, [searchParams]);
 
-  // Use optimized products hook for pagination and loading
+  // Use optimized products hook for pagination and loading - MOVED BEFORE EARLY RETURNS
   const {
     products: paginatedProducts,
     isLoading: isPaginationLoading,
@@ -219,6 +183,42 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     onLoadMore: handleLoadMore,
     hasMoreFromServer: true, // Always assume there might be more until we get less than a full page
   });
+  // Listen for Nicole search events and trigger marketplace search
+  useEffect(() => {
+    const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
+      const { searchTerm, nicoleContext } = event.detail;
+      if (searchTerm) {
+        console.log('🎯 Marketplace search update received:', { searchTerm, nicoleContext });
+        
+        // Track search for background prefetching
+        backgroundPrefetchingService.trackSearch(searchTerm, 'nicole');
+        
+        // Start performance timer
+        startTimer('nicole-search');
+        
+        // Store Nicole context for the search
+        if (nicoleContext) {
+          sessionStorage.setItem('nicole-search-context', JSON.stringify(nicoleContext));
+          console.log('💰 Stored Nicole context in session storage:', nicoleContext);
+        }
+        
+        // Update URL without page reload
+        const newSearchParams = new URLSearchParams(window.location.search);
+        newSearchParams.set('search', searchTerm);
+        window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
+        
+        // Let the useUnifiedMarketplace hook handle the search automatically via URL change
+        // No need to dispatch additional events that could cause loops
+      }
+    };
+
+    window.addEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
+    return () => {
+      window.removeEventListener('marketplace-search-updated', handleMarketplaceSearchUpdate as EventListener);
+    };
+  }, [startTimer]);
+
+
 
   // Debug logging for the current state
   console.log('StreamlinedMarketplaceWrapper render state:', {

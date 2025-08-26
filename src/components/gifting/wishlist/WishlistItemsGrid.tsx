@@ -1,17 +1,17 @@
 
 import React from "react";
 import { Gift } from "lucide-react";
-import GiftItemCard from "@/components/gifting/GiftItemCard";
+import EnhancedWishlistCard from "@/components/gifting/wishlist/EnhancedWishlistCard";
 import { WishlistItem } from "@/types/profile";
-import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 
 interface WishlistItemsGridProps {
   items: WishlistItem[];
   onSaveItem: (item: WishlistItem) => void;
   savingItemId: string | null;
+  onGiftNow?: (item: WishlistItem) => void;
 }
 
-const WishlistItemsGrid = ({ items, onSaveItem, savingItemId }: WishlistItemsGridProps) => {
+const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow }: WishlistItemsGridProps) => {
   if (items.length === 0) {
     return (
       <div className="text-center py-8">
@@ -22,30 +22,16 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId }: WishlistItemsGri
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.map((item) => {
-        // Enhance item with product source detection for correct pricing
-        const enhancedItem = enhanceWishlistItemWithSource(item);
-        
-        return (
-          <div key={item.id} className="relative">
-            <GiftItemCard
-              name={item.name || item.title || "Unknown Item"}
-              price={item.price || 0}
-              brand={item.brand || ""}
-              imageUrl={item.image_url || "/placeholder.svg"}
-              onRemove={() => onSaveItem(item)}
-              isRemoving={savingItemId === item.id}
-              // Pass detected product source for unified pricing
-              productSource={enhancedItem.productSource}
-              vendor={(item as any).vendor}
-              retailer={(item as any).retailer}
-              isZincApiProduct={(item as any).isZincApiProduct}
-              skipCentsDetection={(item as any).skipCentsDetection}
-            />
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {items.map((item) => (
+        <EnhancedWishlistCard
+          key={item.id}
+          item={item}
+          onRemove={() => onSaveItem(item)}
+          isRemoving={savingItemId === item.id}
+          onGiftNow={onGiftNow}
+        />
+      ))}
     </div>
   );
 };

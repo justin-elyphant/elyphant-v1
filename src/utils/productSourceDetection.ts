@@ -88,7 +88,8 @@ export function formatPriceWithDetection(product: {
  * Enhance wishlist item with detected product source
  */
 export function enhanceWishlistItemWithSource(item: any): any {
-  const productSource = detectProductSource(item);
+  // Use database product_source if available, otherwise detect
+  const productSource = item.product_source || detectProductSource(item);
   
   return {
     ...item,

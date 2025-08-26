@@ -215,37 +215,43 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
   const criteria = rule.gift_selection_criteria || {}
   const maxBudget = rule.budget_limit || 50
 
-  console.log(`🎁 Selecting gifts for execution with Nicole enhancement`)
+  console.log(`🎁 Selecting gifts for execution with hierarchical selection`)
 
+  // STEP 1: Try wishlist selection first (highest priority)
   try {
-    // Check if Nicole AI enhancement is available and enabled
-    const shouldUseNicole = true; // Can be made configurable per rule
-    
-    if (shouldUseNicole) {
-      // Try Nicole-enhanced selection first
-      const nicoleSelection = await selectGiftsWithNicoleAI(supabaseClient, rule, event)
-      if (nicoleSelection && nicoleSelection.products.length > 0) {
-        console.log(`✅ Nicole selected ${nicoleSelection.products.length} gifts with ${nicoleSelection.confidence} confidence`)
-        
-        // Update execution with Nicole attribution
-        await supabaseClient
-          .from('automated_gift_executions')
-          .update({
-            ai_agent_source: nicoleSelection.aiAttribution,
-            updated_at: new Date().toISOString()
-          })
-          .eq('event_id', event.event_id)
-          .eq('rule_id', event.rule_id)
-        
-        return nicoleSelection.products
-      }
+    const wishlistProducts = await selectGiftsFromWishlist(supabaseClient, rule, maxBudget)
+    if (wishlistProducts && wishlistProducts.length > 0) {
+      console.log(`✅ Found ${wishlistProducts.length} gifts from recipient's wishlist`)
+      return wishlistProducts
     }
-  } catch (nicoleError) {
-    console.error('Nicole selection failed, falling back to original system:', nicoleError)
+  } catch (wishlistError) {
+    console.log('Wishlist selection failed, continuing to next method:', wishlistError.message)
   }
 
-  // Fallback to original selection system
-  console.log('🔄 Using original gift selection system')
+  // STEP 2: Try Nicole AI enhancement
+  try {
+    const nicoleSelection = await selectGiftsWithNicoleAI(supabaseClient, rule, event)
+    if (nicoleSelection && nicoleSelection.products.length > 0) {
+      console.log(`✅ Nicole selected ${nicoleSelection.products.length} gifts with ${nicoleSelection.confidence} confidence`)
+      
+      // Update execution with Nicole attribution
+      await supabaseClient
+        .from('automated_gift_executions')
+        .update({
+          ai_agent_source: nicoleSelection.aiAttribution,
+          updated_at: new Date().toISOString()
+        })
+        .eq('event_id', event.event_id)
+        .eq('rule_id', event.rule_id)
+      
+      return nicoleSelection.products
+    }
+  } catch (nicoleError) {
+    console.log('Nicole selection failed, falling back to generic search:', nicoleError.message)
+  }
+
+  // STEP 3: Fallback to generic product search
+  console.log('🔄 Using generic product search as final fallback')
   
   // Build search query based on event type and criteria
   let searchQuery = buildSearchQuery(criteria, event)
@@ -310,6 +316,68 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 
   console.log(`Found ${products.length} products from primary search`)
   return filterAndSelectProducts(products, maxBudget, criteria)
+}
+
+async function selectGiftsFromWishlist(supabaseClient: any, rule: any, maxBudget: number) {
+  console.log(`🎯 Checking recipient's wishlist for gifts under $${maxBudget}`)
+  
+  // Get the recipient's public wishlists
+  const { data: wishlists, error: wishlistError } = await supabaseClient
+    .from('wishlists')
+    .select(`
+      id,
+      name,
+      visibility,
+      wishlist_items (
+        product_id,
+        product_name,
+        product_price,
+        product_image,
+        product_url
+      )
+    `)
+    .eq('user_id', rule.recipient_id)
+    .eq('visibility', 'public')
+    .not('wishlist_items', 'is', null)
+
+  if (wishlistError) {
+    console.error('Error fetching wishlists:', wishlistError)
+    throw new Error(`Wishlist fetch failed: ${wishlistError.message}`)
+  }
+
+  if (!wishlists || wishlists.length === 0) {
+    console.log('No public wishlists found for recipient')
+    return []
+  }
+
+  // Flatten all wishlist items and filter by budget
+  const allWishlistItems = wishlists.flatMap(wishlist => wishlist.wishlist_items || [])
+  const affordableItems = allWishlistItems.filter(item => 
+    item.product_price && item.product_price <= maxBudget
+  )
+
+  console.log(`Found ${allWishlistItems.length} total wishlist items, ${affordableItems.length} within budget`)
+
+  if (affordableItems.length === 0) {
+    console.log('No wishlist items found within budget')
+    return []
+  }
+
+  // Convert wishlist items to the expected product format
+  const wishlistProducts = affordableItems.map(item => ({
+    product_id: item.product_id,
+    id: item.product_id,
+    title: item.product_name,
+    name: item.product_name,
+    price: item.product_price,
+    image: item.product_image || '',
+    product_url: item.product_url || '',
+    fromWishlist: true,
+    category: 'wishlist-item'
+  }))
+
+  // Apply product filtering and selection
+  return filterAndSelectProducts(wishlistProducts, maxBudget, {})
 }
 
 async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {

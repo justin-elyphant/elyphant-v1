@@ -45,7 +45,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   eventType,
   recipientId
 }) => {
-  const { createRule, settings } = useAutoGifting();
+  const { createRule, settings, updateSettings } = useAutoGifting();
   const { connections, pendingInvitations } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -172,7 +172,15 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         payment_method_id: formData.selectedPaymentMethodId,
       };
 
+      // Create the rule first
       await createRule(ruleData);
+
+      // Update settings to include the auto-approve preference
+      if (settings) {
+        await updateSettings({
+          auto_approve_gifts: formData.autoApprove
+        });
+      }
 
       toast.success("Auto-gifting rule created successfully!", {
         description: "You'll be notified when gift suggestions are ready for approval"

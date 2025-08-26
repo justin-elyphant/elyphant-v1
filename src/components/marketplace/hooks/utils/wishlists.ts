@@ -2,6 +2,7 @@
 import { WishlistItem, Wishlist, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { detectProductSource } from "@/utils/productSourceDetection";
 
 // Create a new wishlist
 export async function createWishlist(userId: string, title: string, description?: string): Promise<Wishlist | null> {
@@ -82,7 +83,10 @@ export async function addToWishlist(
       return null;
     }
     
-    // Create new item
+    // Detect product source for unified pricing
+    const productSource = detectProductSource(product);
+    
+    // Create new item with product source
     const newItem: WishlistItem = normalizeWishlistItem({
       id: crypto.randomUUID(),
       wishlist_id: wishlistId,
@@ -92,6 +96,11 @@ export async function addToWishlist(
       price: product.price,
       brand: product.brand,
       image_url: product.image || product.image_url,
+      product_source: productSource,
+      vendor: product.vendor,
+      retailer: product.retailer,
+      isZincApiProduct: product.isZincApiProduct,
+      skipCentsDetection: product.skipCentsDetection,
       added_at: new Date().toISOString(),
       created_at: new Date().toISOString()
     });

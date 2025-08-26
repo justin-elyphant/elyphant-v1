@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatPriceWithDetection } from "@/utils/productSourceDetection";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,12 @@ interface GiftItemCardProps {
   className?: string;
   onRemove?: () => void;
   isRemoving?: boolean;
+  // Additional props for product source detection
+  vendor?: string;
+  retailer?: string;
+  productSource?: string;
+  isZincApiProduct?: boolean;
+  skipCentsDetection?: boolean;
 }
 
 const GiftItemCard = ({ 
@@ -33,7 +40,12 @@ const GiftItemCard = ({
   mini = false,
   className,
   onRemove,
-  isRemoving = false
+  isRemoving = false,
+  vendor,
+  retailer,
+  productSource,
+  isZincApiProduct,
+  skipCentsDetection
 }: GiftItemCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -46,6 +58,17 @@ const GiftItemCard = ({
     onRemove?.();
     setShowDeleteDialog(false);
   };
+
+  // Use intelligent pricing with source detection
+  const formattedPrice = formatPriceWithDetection({
+    price,
+    image_url: imageUrl,
+    vendor,
+    retailer,
+    productSource,
+    isZincApiProduct,
+    skipCentsDetection
+  });
 
   if (mini) {
     return (
@@ -77,7 +100,7 @@ const GiftItemCard = ({
         </div>
         <div className="p-2 text-xs">
           <p className="font-medium line-clamp-1">{name}</p>
-          <p className="text-muted-foreground">{formatPrice(price)}</p>
+          <p className="text-muted-foreground">{formattedPrice}</p>
         </div>
       </div>
     );
@@ -120,7 +143,7 @@ const GiftItemCard = ({
           <p className="text-sm text-muted-foreground">{brand}</p>
           <h3 className="font-medium mb-2 line-clamp-2">{name}</h3>
           <div className="flex justify-between items-center">
-            <p className="font-bold">{formatPrice(price)}</p>
+            <p className="font-bold">{formattedPrice}</p>
             <Button size="sm" variant="secondary">
               <ShoppingCart className="h-4 w-4 mr-1" />
               Add

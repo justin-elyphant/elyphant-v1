@@ -3473,6 +3473,7 @@ export type Database = {
           name: string | null
           price: number | null
           product_id: string
+          product_source: string | null
           title: string | null
           wishlist_id: string
         }
@@ -3485,6 +3486,7 @@ export type Database = {
           name?: string | null
           price?: number | null
           product_id: string
+          product_source?: string | null
           title?: string | null
           wishlist_id: string
         }
@@ -3497,6 +3499,7 @@ export type Database = {
           name?: string | null
           price?: number | null
           product_id?: string
+          product_source?: string | null
           title?: string | null
           wishlist_id?: string
         }

@@ -58,8 +58,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     calculatedDate: null as string | null,
     selectedDate: undefined as Date | undefined,
     budgetLimit: settings?.default_budget_limit || 50,
-    giftSource: "wishlist" as "wishlist" | "ai" | "both",
-    categories: [] as string[],
     autoApprove: false,
     emailNotifications: true,
     notificationDays: [7, 3, 1],
@@ -76,8 +74,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     },
     {
       id: "budget",
-      title: "Set Budget & Preferences",
-      description: "Configure your budget and gift selection preferences",
+      title: "Budget & Payment",
+      description: "Set your budget and payment method for automatic gifts",
       icon: DollarSign
     },
     {
@@ -86,11 +84,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       description: "Set up notifications and approval preferences",
       icon: Bell
     }
-  ];
-
-  const availableCategories = [
-    "Electronics", "Fashion", "Books", "Home & Garden", 
-    "Sports", "Beauty", "Toys", "Jewelry", "Art", "Kitchen"
   ];
 
   const eventTypes = [
@@ -170,10 +163,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           push: false,
         },
         gift_selection_criteria: {
-          source: formData.giftSource,
+          source: "both" as const, // Use "both" to leverage the smart cascading logic
           max_price: formData.budgetLimit,
           min_price: Math.max(1, formData.budgetLimit * 0.1),
-          categories: formData.categories,
+          categories: [], // Let the backend handle category preferences automatically
           exclude_items: [],
         },
         payment_method_id: formData.selectedPaymentMethodId,
@@ -196,14 +189,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     }
   };
 
-  const toggleCategory = (category: string) => {
-    setFormData(prev => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
-        : [...prev.categories, category]
-    }));
-  };
 
   const getCurrentStepIcon = () => {
     const Icon = steps[currentStep].icon;
@@ -376,19 +361,29 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
             </Card>
           </TabsContent>
 
-          {/* Step 2: Budget & Preferences */}
+          {/* Step 2: Budget & Payment */}
           <TabsContent value="1" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Budget & Gift Preferences
+                  Budget & Payment Method
                 </CardTitle>
                 <CardDescription>
-                  Set your budget and how gifts should be selected
+                  Set your budget and payment method. Our AI will automatically select the best gifts by checking wishlist items first, then preferences, then smart recommendations.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="font-medium text-sm">Smart Gift Selection</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Our system automatically finds the perfect gift by checking: 1) Recipient's wishlist items 2) Their preferences and interests 3) AI-powered smart recommendations if needed
+                  </p>
+                </div>
+
                 <div>
                   <Label htmlFor="budget">Budget Limit ($)</Label>
                   <Input
@@ -406,76 +401,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     Recommended: $25-100 depending on your relationship
                   </p>
                 </div>
-
-                <Separator />
-
-                <div>
-                  <Label>Gift Selection Method</Label>
-                  <div className="grid grid-cols-1 gap-3 mt-2">
-                    <div 
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        formData.giftSource === "wishlist" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, giftSource: "wishlist" }))}
-                    >
-                      <div className="flex items-center gap-3">
-                        <ShoppingCart className="h-4 w-4" />
-                        <div>
-                          <p className="font-medium">From Wishlist</p>
-                          <p className="text-sm text-muted-foreground">Choose from recipient's wishlist items</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        formData.giftSource === "ai" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, giftSource: "ai" }))}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Sparkles className="h-4 w-4" />
-                        <div>
-                          <p className="font-medium">AI Recommendations</p>
-                          <p className="text-sm text-muted-foreground">Let our AI shopper Nicole suggest gifts from the Elyphant Marketplace</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        formData.giftSource === "both" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, giftSource: "both" }))}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Gift className="h-4 w-4" />
-                        <div>
-                          <p className="font-medium">Smart Combination</p>
-                          <p className="text-sm text-muted-foreground">Wishlist first, AI backup if needed</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {(formData.giftSource === "ai" || formData.giftSource === "both") && (
-                  <div>
-                    <Label>Preferred Categories (for AI selection)</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {availableCategories.map((category) => (
-                        <Badge
-                          key={category}
-                          variant={formData.categories.includes(category) ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => toggleCategory(category)}
-                        >
-                          {category}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <Separator />
 

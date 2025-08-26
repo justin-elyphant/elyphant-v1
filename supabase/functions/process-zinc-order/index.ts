@@ -95,9 +95,29 @@ serve(async (req) => {
       console.error('❌ Failed to fetch business payment method:', pmFetchError);
     }
 
-    // Prepare Zinc order data
-    const shippingAddress = order.shipping_info;
+    // Prepare Zinc order data - check for auto-gift execution address resolution
+    let shippingAddress = order.shipping_info;
     const billingInfo = order.billing_info;
+    
+    // For auto-gift orders, check if we have resolved address metadata
+    if (order.execution_id) {
+      console.log(`🎁 Auto-gift order detected, checking for resolved address...`);
+      
+      const { data: execution } = await supabaseClient
+        .from('automated_gift_executions')
+        .select('ai_agent_source')
+        .eq('id', order.execution_id)
+        .single();
+        
+      if (execution?.ai_agent_source?.address_resolution) {
+        console.log(`📍 Using resolved address from auto-gift execution`);
+        const addressMeta = execution.ai_agent_source.address_resolution;
+        
+        // If we have address metadata, the shipping address should already be resolved
+        // Just log the source for audit purposes
+        console.log(`Address source: ${addressMeta.source}, verified: ${addressMeta.is_verified}`);
+      }
+    }
     
     // Parse shipping name into first and last name
     const shippingNameParts = (shippingAddress.name || "").split(" ");

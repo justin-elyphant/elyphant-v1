@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { protectedAutoGiftingService } from "./protected-auto-gifting-service";
 import { unifiedProfileService } from "./profiles/UnifiedProfileService";
+import { recipientAddressResolver } from "./recipientAddressResolver";
 import { toast } from "sonner";
 
 // Core Interfaces
@@ -555,7 +556,7 @@ class UnifiedGiftAutomationService {
   // ============= EXECUTION MANAGEMENT ============= 
 
   /**
-   * Process pending executions with hierarchical selection
+   * Process pending executions with hierarchical selection and address resolution
    */
   async processPendingExecutions(userId: string): Promise<void> {
     console.log(`🔄 Processing pending auto-gift executions for user ${userId}`);
@@ -578,7 +579,34 @@ class UnifiedGiftAutomationService {
         try {
           console.log(`📦 Processing execution ${execution.id}`);
           
-          // Use hierarchical gift selection with user context for proper rate limiting
+          // Step 1: Validate recipient address availability
+          const addressResult = await this.validateRecipientAddress(
+            userId, 
+            execution.auto_gifting_rules.recipient_id
+          );
+          
+          if (!addressResult.hasAddress) {
+            console.log(`📍 No address available for execution ${execution.id}, status: ${addressResult.status}`);
+            
+            // Update execution status based on address availability
+            await supabase
+              .from('automated_gift_executions')
+              .update({
+                status: addressResult.status,
+                error_message: addressResult.message,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', execution.id);
+              
+            // Send address request if needed
+            if (addressResult.needsAddressRequest && addressResult.recipientInfo) {
+              await this.sendAddressRequest(userId, addressResult.recipientInfo);
+            }
+            
+            continue;
+          }
+          
+          // Step 2: Use hierarchical gift selection with user context for proper rate limiting
           const giftSelection = await this.selectGiftForRecipient(
             execution.auto_gifting_rules.recipient_id,
             execution.auto_gifting_rules.budget_limit || 50,
@@ -589,7 +617,7 @@ class UnifiedGiftAutomationService {
           
           const totalAmount = giftSelection.products.reduce((sum, product) => sum + product.price, 0);
           
-          // Update execution with selected products and tier used
+          // Step 3: Update execution with selected products, tier used, and resolved address
           await supabase
             .from('automated_gift_executions')
             .update({
@@ -597,20 +625,25 @@ class UnifiedGiftAutomationService {
               total_amount: totalAmount,
               selection_tier: giftSelection.tier,
               status: execution.auto_gifting_rules.auto_approve_gifts ? 'processing' : 'pending',
+              ai_agent_source: {
+                ...execution.ai_agent_source,
+                address_resolution: addressResult.addressMeta
+              },
               updated_at: new Date().toISOString()
             })
             .eq('id', execution.id);
             
           console.log(`✅ Updated execution ${execution.id} with ${giftSelection.products.length} products from ${giftSelection.tier} tier`);
           
-          // Send notification
+          // Step 4: Send notification
           await this.sendGiftNotification(userId, {
             type: 'gift_suggestions_ready',
             executionId: execution.id,
             tier: giftSelection.tier,
             productCount: giftSelection.products.length,
             confidence: giftSelection.confidence,
-            reasoning: giftSelection.reasoning
+            reasoning: giftSelection.reasoning,
+            addressSource: addressResult.addressMeta?.source
           });
           
         } catch (error) {
@@ -770,6 +803,112 @@ class UnifiedGiftAutomationService {
       gift.scheduledDate >= new Date() &&
       gift.status === 'scheduled'
     );
+  }
+
+  // ============= ADDRESS RESOLUTION ============= 
+
+  /**
+   * Validate recipient address availability for auto-gift execution
+   */
+  private async validateRecipientAddress(userId: string, recipientId: string): Promise<{
+    hasAddress: boolean;
+    status: 'pending' | 'address_required' | 'pending_address';
+    message?: string;
+    addressMeta?: any;
+    needsAddressRequest?: boolean;
+    recipientInfo?: { email: string; name: string };
+  }> {
+    const addressResult = await recipientAddressResolver.resolveRecipientAddress(userId, recipientId);
+    
+    if (addressResult.success && addressResult.address) {
+      return {
+        hasAddress: true,
+        status: 'pending',
+        addressMeta: {
+          source: addressResult.address.source,
+          is_verified: addressResult.address.is_verified,
+          needs_confirmation: addressResult.address.needs_confirmation || false
+        }
+      };
+    }
+    
+    if (addressResult.requiresAddressRequest) {
+      // Get recipient info for address request
+      const recipientInfo = await this.getRecipientContactInfo(userId, recipientId);
+      
+      return {
+        hasAddress: false,
+        status: 'address_required',
+        message: 'Shipping address required from recipient',
+        needsAddressRequest: true,
+        recipientInfo
+      };
+    }
+    
+    return {
+      hasAddress: false,
+      status: 'address_required',
+      message: addressResult.error || 'Address validation failed'
+    };
+  }
+
+  /**
+   * Get recipient contact information for address requests
+   */
+  private async getRecipientContactInfo(userId: string, recipientId: string): Promise<{ email: string; name: string } | undefined> {
+    // First try to get from accepted connection
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select(`
+        profiles!user_connections_connected_user_id_fkey(email, name, first_name, last_name)
+      `)
+      .eq('user_id', userId)
+      .eq('connected_user_id', recipientId)
+      .eq('status', 'accepted')
+      .single();
+
+    if (connection?.profiles) {
+      const profile = Array.isArray(connection.profiles) ? connection.profiles[0] : connection.profiles;
+      return {
+        email: profile.email,
+        name: profile.name || `${profile.first_name} ${profile.last_name}`.trim()
+      };
+    }
+
+    // Try pending connection
+    const { data: pendingConnection } = await supabase
+      .from('user_connections')
+      .select('pending_recipient_email, pending_recipient_name')
+      .eq('user_id', userId)
+      .eq('status', 'pending_invitation')
+      .single();
+
+    if (pendingConnection) {
+      return {
+        email: pendingConnection.pending_recipient_email,
+        name: pendingConnection.pending_recipient_name
+      };
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Send address request to recipient
+   */
+  private async sendAddressRequest(userId: string, recipientInfo: { email: string; name: string }): Promise<void> {
+    const result = await recipientAddressResolver.requestAddressFromRecipient(
+      userId,
+      recipientInfo.email,
+      recipientInfo.name,
+      `Hi ${recipientInfo.name}, I'd like to send you an auto-gift! Could you please share your shipping address?`
+    );
+
+    if (result.success) {
+      console.log(`📤 Address request sent to ${recipientInfo.email}`);
+    } else {
+      console.error(`❌ Failed to send address request: ${result.error}`);
+    }
   }
 
   // ============= PROTECTION MEASURES ============= 

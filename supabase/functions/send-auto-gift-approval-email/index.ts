@@ -23,6 +23,11 @@ interface EmailApprovalRequest {
     }>;
   };
   deliveryDate?: string;
+  shippingAddress?: {
+    address: any;
+    source: 'user_verified' | 'giver_provided' | 'missing';
+    needs_confirmation: boolean;
+  };
 }
 
 serve(async (req) => {
@@ -131,6 +136,27 @@ serve(async (req) => {
               <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
               ${emailRequest.deliveryDate ? `<p><strong>Delivery Date:</strong> ${emailRequest.deliveryDate}</p>` : ''}
             </div>
+
+            ${emailRequest.shippingAddress ? `
+            <div class="gift-card">
+              <h3>📍 Shipping Address</h3>
+              <div style="background-color: ${emailRequest.shippingAddress.source === 'user_verified' ? '#ecfdf5' : '#fef3c7'}; padding: 12px; border-radius: 8px; margin: 8px 0;">
+                <div style="font-weight: 600; margin-bottom: 8px;">
+                  ${emailRequest.shippingAddress.source === 'user_verified' ? '✅ Recipient Verified Address' : '📋 Giver Provided Address'}
+                </div>
+                <div style="font-family: monospace; font-size: 14px;">
+                  ${emailRequest.shippingAddress.address.address_line1}<br>
+                  ${emailRequest.shippingAddress.address.address_line2 ? emailRequest.shippingAddress.address.address_line2 + '<br>' : ''}
+                  ${emailRequest.shippingAddress.address.city}, ${emailRequest.shippingAddress.address.state} ${emailRequest.shippingAddress.address.zip_code}
+                </div>
+                ${emailRequest.shippingAddress.needs_confirmation ? `
+                <div style="margin-top: 8px; padding: 8px; background-color: #fef3c7; border-radius: 6px; font-size: 12px;">
+                  ⚠️ This address was provided by you. The recipient can update it when they join.
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
 
             <div class="gift-card">
               <h3>Selected Gifts</h3>

@@ -70,13 +70,31 @@ export const useAutoGiftExecution = () => {
     deliveryDate?: string
   ) => {
     try {
+      // Get execution details including address resolution
+      const { data: execution } = await supabase
+        .from('automated_gift_executions')
+        .select('ai_agent_source')
+        .eq('id', executionId)
+        .single();
+
+      let shippingAddress = undefined;
+      if (execution?.ai_agent_source?.address_resolution) {
+        const addressMeta = execution.ai_agent_source.address_resolution;
+        shippingAddress = {
+          address: addressMeta.address || {},
+          source: addressMeta.source as 'user_verified' | 'giver_provided' | 'missing',
+          needs_confirmation: addressMeta.needs_confirmation || false
+        };
+      }
+
       const { data, error } = await supabase.functions.invoke('send-auto-gift-approval-email', {
         body: {
           executionId,
           recipientEmail,
           recipientName,
           giftDetails,
-          deliveryDate
+          deliveryDate,
+          shippingAddress
         }
       });
 

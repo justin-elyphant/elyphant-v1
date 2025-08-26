@@ -25,6 +25,7 @@ export const useAutoGifting = () => {
         unifiedGiftManagementService.getUserRules(user.id)
       ]);
 
+      // Settings will now auto-create if they don't exist
       setSettings(settingsData);
       setRules(rulesData);
     } catch (err) {

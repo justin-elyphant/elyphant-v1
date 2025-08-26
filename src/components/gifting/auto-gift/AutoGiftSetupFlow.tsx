@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
+import NewRecipientForm from "@/components/shared/NewRecipientForm";
+import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 
 interface AutoGiftSetupFlowProps {
@@ -44,6 +46,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const { connections } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
 
   const [formData, setFormData] = useState({
     recipientId: recipientId || "",
@@ -118,8 +121,19 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     setIsLoading(true);
 
     try {
-      await createRule({
-        recipient_id: formData.recipientId,
+      // Find the selected recipient to get proper data
+      const selectedConnection = connections.find(conn => 
+        conn.id === formData.recipientId || 
+        conn.display_user_id === formData.recipientId || 
+        conn.connected_user_id === formData.recipientId
+      );
+
+      // Determine if this is a pending invitation or accepted connection
+      const isPendingInvitation = selectedConnection?.status === 'pending_invitation';
+      
+      const ruleData = {
+        // Always include recipient_id (use connection ID for pending invitations)
+        recipient_id: isPendingInvitation ? selectedConnection?.id || formData.recipientId : formData.recipientId,
         date_type: formData.eventType,
         event_id: eventId,
         is_active: true,
@@ -137,7 +151,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           categories: formData.categories,
           exclude_items: [],
         },
-      });
+      };
+
+      await createRule(ruleData);
 
       toast.success("Auto-gifting rule created successfully!", {
         description: "You'll be notified when gift suggestions are ready for approval"
@@ -214,24 +230,55 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   <Label htmlFor="recipient">Recipient</Label>
                   <Select 
                     value={formData.recipientId} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, recipientId: value }))}
+                    onValueChange={(value) => {
+                      if (value === "__add_new__") {
+                        setShowNewRecipientForm(true);
+                      } else {
+                        setFormData(prev => ({ ...prev, recipientId: value }));
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a connection" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* Accepted Connections */}
                       {connections
                         .filter(conn => conn.status === 'accepted')
                         .map((connection) => (
-                        <SelectItem key={connection.id} value={connection.connected_user_id}>
+                        <SelectItem key={connection.id} value={connection.display_user_id || connection.connected_user_id}>
                           <div className="flex items-center gap-2">
-                            <span>{connection.connected_user_id || 'Unknown'}</span>
+                            <span>{connection.profile_name || 'Unknown'}</span>
                             <Badge variant="outline" className="text-xs">
                               {connection.relationship_type}
                             </Badge>
                           </div>
                         </SelectItem>
                       ))}
+                      
+                      {/* Pending Invitations */}
+                      {connections
+                        .filter(conn => conn.status === 'pending_invitation')
+                        .map((connection) => (
+                        <SelectItem key={connection.id} value={connection.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{connection.profile_name || connection.pending_recipient_name || 'Unknown'}</span>
+                            <Badge variant="outline" className="text-xs text-orange-600">
+                              Pending
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {connection.relationship_type}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                      
+                      <SelectItem value="__add_new__">
+                        <div className="flex items-center gap-2 text-primary">
+                          <Users className="h-4 w-4" />
+                          <span>Add New Recipient</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -476,6 +523,25 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
             )}
           </div>
         </div>
+
+        {/* New Recipient Form Modal */}
+        {showNewRecipientForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <NewRecipientForm
+              onRecipientCreate={(recipient) => {
+                // Add to form data as pending recipient
+                setFormData(prev => ({ 
+                  ...prev, 
+                  recipientId: recipient.id 
+                }));
+                setShowNewRecipientForm(false);
+                toast.success(`Added ${recipient.name} as recipient`);
+              }}
+              onCancel={() => setShowNewRecipientForm(false)}
+              title="Add New Auto-Gift Recipient"
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

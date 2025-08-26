@@ -77,54 +77,61 @@ serve(async (req) => {
 })
 
 async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
-  console.log(`Processing auto-gift for event ${event.event_id}, type: ${event.event_type}`)
+  console.log(`🎁 Processing auto-gift for event ${event.event_id}, type: ${event.event_type}`)
 
-  // For "just_because" events, use a different check strategy since event_id might be synthetic
+  // Check for existing executions with improved logic
   let existingExecution = null;
   
   if (event.event_type === 'just_because') {
-    // Check for recent executions for this rule within the last 24 hours
-    const { data: recentExecution } = await supabaseClient
+    // For just_because events, check for recent executions (prevent spam)
+    const { data: recentExecutions } = await supabaseClient
       .from('automated_gift_executions')
       .select('id, status, execution_date')
       .eq('rule_id', event.rule_id)
       .gte('execution_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0])
       .in('status', ['pending', 'processing', 'completed'])
-      .single()
     
-    if (recentExecution) {
-      console.log(`Recent execution exists for just_because rule ${event.rule_id}: ${recentExecution.id}`)
+    if (recentExecutions && recentExecutions.length > 0) {
+      console.log(`⏸️ Recent execution exists for just_because rule ${event.rule_id}, skipping`)
       return
     }
   } else {
-    // Check if execution already exists for calendar-based events
+    // For calendar events, check specific event_id
     const { data: calendarExecution } = await supabaseClient
       .from('automated_gift_executions')
       .select('id, status')
       .eq('event_id', event.event_id)
       .eq('rule_id', event.rule_id)
-      .single()
+      .maybeSingle()
 
-    if (calendarExecution && calendarExecution.status !== 'failed') {
-      console.log(`Execution already exists for event ${event.event_id}`)
+    if (calendarExecution && ['pending', 'processing', 'completed'].includes(calendarExecution.status)) {
+      console.log(`⏸️ Execution already exists for event ${event.event_id} with status ${calendarExecution.status}`)
       return
     }
     existingExecution = calendarExecution
   }
 
-  // Create new execution record with proper event_id handling
+  // Create new execution record
   const executionData: any = {
     rule_id: event.rule_id,
     user_id: event.user_id,
     execution_date: event.event_date,
-    status: 'pending'
+    status: 'pending',
+    ai_agent_source: {
+      agent: 'unified_automation',
+      data_sources: ['rule_configuration'],
+      confidence_score: 0.8,
+      discovery_method: event.event_type === 'just_because' ? 'scheduled_automation' : 'calendar_event'
+    }
   };
 
-  // Only set event_id for non-synthetic events (calendar-based events)
+  // Set event_id for calendar events (null for just_because)
   if (event.event_type !== 'just_because') {
     executionData.event_id = event.event_id;
   }
 
+  console.log(`📝 Creating execution for ${event.event_type} event...`)
+  
   const { data: execution, error: executionError } = await supabaseClient
     .from('automated_gift_executions')
     .insert(executionData)
@@ -132,7 +139,7 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
     .single()
 
   if (executionError) {
-    console.error('Error creating execution:', executionError)
+    console.error('❌ Error creating execution:', executionError)
     throw executionError
   }
 
@@ -273,91 +280,97 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 
 async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {
   try {
-    // Get recipient profile for Nicole context
+    console.log(`🤖 Attempting Nicole AI gift selection for recipient ${rule.recipient_id}`)
+    
+    // Get recipient profile with enhanced data
     const { data: recipientProfile } = await supabaseClient
       .from('profiles')
-      .select('*')
+      .select('name, interests, gift_preferences, bio, age_range')
       .eq('id', rule.recipient_id)
       .single()
 
-    // Build Nicole context
-    const nicoleContext = {
-      recipientId: rule.recipient_id,
-      budget: rule.budget_limit || 50,
-      occasion: event.event_type,
-      relationshipType: rule.relationship_context?.relationshipType,
-      recipientProfile,
-      userPreferences: rule.gift_selection_criteria
+    if (!recipientProfile) {
+      console.log('⚠️ No recipient profile found, cannot use Nicole AI')
+      return null
     }
 
-    // Call Nicole AI service for enhanced selection
-    const { data: nicoleResponse, error } = await supabaseClient.functions.invoke('nicole-chat', {
+    // Build enhanced context for Nicole
+    const nicoleContext = {
+      recipientName: recipientProfile.name,
+      interests: recipientProfile.interests || [],
+      giftPreferences: recipientProfile.gift_preferences || [],
+      budget: rule.budget_limit || 50,
+      occasion: event.event_type,
+      relationshipType: rule.relationship_context?.closeness_level || 'friend',
+      bio: recipientProfile.bio,
+      ageRange: recipientProfile.age_range
+    }
+
+    console.log(`🧠 Nicole context: ${JSON.stringify(nicoleContext, null, 2)}`)
+
+    // Use enhanced gift recommendations instead of direct Nicole chat
+    const { data: enhancedResponse, error } = await supabaseClient.functions.invoke('enhanced-gift-recommendations', {
       body: {
-        message: `Select thoughtful gifts for ${event.event_type} with budget $${rule.budget_limit || 50}`,
-        context: {
-          conversationPhase: 'gift_selection',
-          capability: 'gift_advisor',
-          recipient: rule.recipient_id,
+        searchContext: {
+          budget: [Math.floor((rule.budget_limit || 50) * 0.7), rule.budget_limit || 50],
           occasion: event.event_type,
-          budget: [rule.budget_limit * 0.8, rule.budget_limit * 1.2],
-          userPreferences: nicoleContext
+          relationship: rule.relationship_context?.closeness_level || 'friend',
+          preferences: recipientProfile.interests || [],
+          giftHistory: [],
+          timeline: 'immediate'
         },
-        capability: 'gift_advisor',
-        sessionId: `auto-gift-${event.event_id}-${Date.now()}`
+        recipientIdentifier: rule.recipient_id,
+        executionId: null,
+        options: {
+          includeRecommendations: true,
+          maxResults: 15,
+          confidenceThreshold: 0.6
+        }
       }
     })
 
     if (error) {
-      console.error('Nicole AI selection error:', error)
+      console.error('❌ Enhanced recommendations error:', error)
       return null
     }
 
-    // Parse Nicole's response and search for products
-    const searchQuery = nicoleResponse.searchQuery || 
-      `${event.event_type} gift ${rule.relationship_context?.relationshipType || ''} budget ${rule.budget_limit}`
-
-    console.log(`🤖 Nicole suggested search: "${searchQuery}"`)
-
-    const { data: searchResults, error: searchError } = await supabaseClient.functions.invoke('get-products', {
-      body: {
-        query: searchQuery,
-        page: 1,
-        limit: 25,
-        filters: {
-          max_price: rule.budget_limit || 50,
-          min_price: Math.max(10, (rule.budget_limit || 50) * 0.2)
-        },
-        enhanced: true,
-        nicole_enhanced: true
-      }
-    })
-
-    if (searchError || !searchResults?.products || searchResults.products.length === 0) {
-      console.log('Nicole search yielded no results')
+    if (!enhancedResponse?.recommendations || enhancedResponse.recommendations.length === 0) {
+      console.log('⚠️ Enhanced recommendations returned no results')
       return null
     }
 
-    // Apply Nicole's ranking and selection
-    const selectedProducts = filterAndSelectProductsWithNicole(
-      searchResults.products, 
-      rule.budget_limit || 50, 
-      nicoleResponse
-    )
+    console.log(`✅ Nicole found ${enhancedResponse.recommendations.length} recommendations`)
+
+    // Format products for execution
+    const selectedProducts = enhancedResponse.recommendations.slice(0, 3).map((rec: any) => ({
+      product_id: rec.product?.id || rec.id,
+      title: rec.product?.title || rec.title,
+      price: parseFloat(rec.product?.price || rec.price || 0),
+      image: rec.product?.image || rec.image,
+      category: rec.product?.category || rec.category,
+      retailer: rec.product?.retailer || rec.retailer || 'marketplace',
+      rating: parseFloat(rec.product?.rating || rec.rating || 0),
+      review_count: parseInt(rec.product?.review_count || rec.reviewCount || 0),
+      selected: true,
+      nicole_enhanced: true,
+      confidence_score: rec.confidence || 0.75,
+      ai_reasoning: rec.reasoning || `Selected by Nicole AI for ${event.event_type}`
+    }))
 
     return {
       products: selectedProducts,
-      confidence: nicoleResponse.metadata?.confidence || 0.75,
+      confidence: enhancedResponse.confidence || 0.75,
       aiAttribution: {
         agent: 'nicole',
-        confidence_score: nicoleResponse.metadata?.confidence || 0.75,
-        data_sources: ['recipient_profile', 'relationship_context', 'ai_analysis'],
-        discovery_method: 'contextual_ai_selection',
-        reasoning: nicoleResponse.message
+        confidence_score: enhancedResponse.confidence || 0.75,
+        data_sources: ['recipient_profile', 'enhanced_recommendations', 'contextual_ai'],
+        discovery_method: 'nicole_enhanced_selection',
+        reasoning: `Nicole AI selected ${selectedProducts.length} gifts based on recipient interests and preferences`
       }
     }
 
   } catch (error) {
-    console.error('Error in Nicole AI gift selection:', error)
+    console.error('❌ Error in Nicole AI gift selection:', error)
     return null
   }
 }

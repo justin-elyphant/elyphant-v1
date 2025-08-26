@@ -410,6 +410,7 @@ export type Database = {
           recipient_id: string | null
           recipient_lifestyle_factors: Json | null
           relationship_context: Json | null
+          scheduled_date: string | null
           seasonal_adjustment_factors: Json | null
           success_metrics: Json | null
           updated_at: string | null
@@ -431,6 +432,7 @@ export type Database = {
           recipient_id?: string | null
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
+          scheduled_date?: string | null
           seasonal_adjustment_factors?: Json | null
           success_metrics?: Json | null
           updated_at?: string | null
@@ -452,6 +454,7 @@ export type Database = {
           recipient_id?: string | null
           recipient_lifestyle_factors?: Json | null
           relationship_context?: Json | null
+          scheduled_date?: string | null
           seasonal_adjustment_factors?: Json | null
           success_metrics?: Json | null
           updated_at?: string | null

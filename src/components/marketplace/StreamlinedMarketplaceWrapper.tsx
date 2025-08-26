@@ -82,6 +82,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]
   );
 
+
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
     const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
@@ -275,6 +276,28 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return null;
   }, []);
 
+  // Performance monitoring for search completion - MOVED BEFORE EARLY RETURNS
+  useEffect(() => {
+    if (!isLoading && showSearchInfo) {
+      endTimer('search-operation', 'searchTime');
+    }
+  }, [isLoading, showSearchInfo, endTimer]);
+
+  // Debug logging for giftsUnder50 specifically - MOVED BEFORE EARLY RETURNS
+  useEffect(() => {
+    console.log('🐛 StreamlinedMarketplaceWrapper Debug:', {
+      giftsUnder50,
+      showSearchInfo,
+      productsLength: products?.length,
+      paginatedProductsLength: paginatedProducts?.length,
+      isLoading,
+      error
+    });
+  }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
+
+  // Use virtualized grid for large product lists - MOVED BEFORE EARLY RETURNS
+  const shouldUseVirtualization = paginatedProducts.length > 50;
+
   // Show loading skeleton
   if (isLoading) {
     return (
@@ -308,28 +331,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       </div>
     );
   }
-
-  // Performance monitoring for search completion
-  useEffect(() => {
-    if (!isLoading && showSearchInfo) {
-      endTimer('search-operation', 'searchTime');
-    }
-  }, [isLoading, showSearchInfo, endTimer]);
-
-  // Use virtualized grid for large product lists
-  const shouldUseVirtualization = paginatedProducts.length > 50;
-  
-  // Debug logging for giftsUnder50 specifically
-  useEffect(() => {
-    console.log('🐛 StreamlinedMarketplaceWrapper Debug:', {
-      giftsUnder50,
-      showSearchInfo,
-      productsLength: products?.length,
-      paginatedProductsLength: paginatedProducts?.length,
-      isLoading,
-      error
-    });
-  }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
   
   return (
     <div 

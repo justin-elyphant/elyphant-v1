@@ -98,24 +98,56 @@ serve(async (req) => {
     // Prepare Zinc order data - check for auto-gift execution address resolution
     let shippingAddress = order.shipping_info;
     const billingInfo = order.billing_info;
+    let addressSource = 'user_provided';
+    let isAddressVerified = false;
     
-    // For auto-gift orders, check if we have resolved address metadata
+    // For auto-gift orders, use resolved address from address_metadata
     if (order.execution_id) {
       console.log(`🎁 Auto-gift order detected, checking for resolved address...`);
       
-      const { data: execution } = await supabaseClient
+      const { data: execution, error: executionError } = await supabaseClient
         .from('automated_gift_executions')
-        .select('ai_agent_source')
+        .select('address_metadata')
         .eq('id', order.execution_id)
         .single();
         
-      if (execution?.ai_agent_source?.address_resolution) {
-        console.log(`📍 Using resolved address from auto-gift execution`);
-        const addressMeta = execution.ai_agent_source.address_resolution;
+      if (executionError) {
+        console.error('❌ Failed to get execution address metadata:', executionError);
+        throw new Error(`Auto-gift execution not found: ${order.execution_id}`);
+      }
         
-        // If we have address metadata, the shipping address should already be resolved
-        // Just log the source for audit purposes
-        console.log(`Address source: ${addressMeta.source}, verified: ${addressMeta.is_verified}`);
+      if (execution?.address_metadata) {
+        const addressMeta = execution.address_metadata;
+        console.log(`📍 Using resolved address from auto-gift execution:`, JSON.stringify(addressMeta, null, 2));
+        
+        // Validate address availability
+        if (addressMeta.source === 'missing') {
+          console.error('❌ Cannot process order: Recipient address is required but not available');
+          throw new Error('Cannot process order: Recipient address is required but not available');
+        }
+        
+        // Use the resolved address if available
+        if (addressMeta.address) {
+          shippingAddress = addressMeta.address;
+          addressSource = addressMeta.source || 'unknown';
+          isAddressVerified = addressMeta.is_verified || false;
+          
+          console.log(`✅ Using ${addressSource} address for auto-gift order (verified: ${isAddressVerified})`);
+          
+          // Add address source to order notes for audit trail
+          await supabaseClient
+            .from('order_notes')
+            .insert({
+              order_id: order.id,
+              note_content: `Auto-gift order using ${addressSource} address (verified: ${isAddressVerified}). Needs confirmation: ${addressMeta.needs_confirmation || false}`,
+              note_type: 'system',
+              is_internal: true
+            });
+        } else {
+          console.warn('⚠️ Address metadata exists but no address found');
+        }
+      } else {
+        console.warn('⚠️ No address metadata found for auto-gift execution');
       }
     }
     

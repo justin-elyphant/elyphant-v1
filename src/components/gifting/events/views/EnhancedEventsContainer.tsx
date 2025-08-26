@@ -166,10 +166,7 @@ const EnhancedEventsContainer = ({ onAddEvent, events: providedEvents }: Enhance
         onOpenChange={setIsExportImportOpen}
       />
 
-      <GiftSetupWizard
-        open={isAddEventOpen}
-        onOpenChange={setIsAddEventOpen}
-      />
+      {/* Gift Setup integrated into Nicole AI flow */}
     </div>
   );
 };

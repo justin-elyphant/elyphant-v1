@@ -200,16 +200,7 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
         </TabsContent>
       </Tabs>
       
-      <GiftSetupWizard 
-        open={isGiftWizardOpen} 
-        onOpenChange={(open) => {
-          setIsGiftWizardOpen(open);
-          if (!open) {
-            setGiftWizardInitialData(null);
-          }
-        }}
-        initialData={giftWizardInitialData}
-      />
+      {/* Gift Setup integrated into Nicole AI flow */}
     </>
   );
 };

@@ -143,11 +143,7 @@ const Hero = () => {
 
       {/* Legacy intent modal removed - Nicole handles all intent selection now */}
 
-      {/* Gift Setup Wizard */}
-      <GiftSetupWizard 
-        open={showGiftWizard}
-        onOpenChange={setShowGiftWizard}
-      />
+      {/* Gift Setup integrated into Nicole AI flow */}
 
       {/* Nicole Auto-Gifting Test Section (Development) */}
       {process.env.NODE_ENV === 'development' && (

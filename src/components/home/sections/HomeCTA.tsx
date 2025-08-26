@@ -94,11 +94,7 @@ const HomeCTA = () => {
 
       {/* Legacy intent modal removed - Nicole handles all intent selection now */}
 
-      {/* Gift Setup Wizard */}
-      <GiftSetupWizard 
-        open={showGiftWizard}
-        onOpenChange={setShowGiftWizard}
-      />
+      {/* Gift Setup integrated into Nicole AI flow */}
 
       {/* Create Wishlist Dialog */}
       <CreateWishlistDialog

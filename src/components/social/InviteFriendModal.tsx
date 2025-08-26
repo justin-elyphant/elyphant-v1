@@ -93,10 +93,12 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         body: {
           recipientEmail: formData.email,
           recipientName: fullName,
-          senderName: 'You', // You could get this from user profile
+          giftorName: 'You', // You could get this from user profile
+          relationship: formData.relationshipType,
           occasion: 'friendship',
           personalMessage: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`,
-          relationshipType: formData.relationshipType
+          invitationType: 'manual_connection',
+          sourceContext: 'manual_invite'
         }
       });
 

@@ -76,6 +76,33 @@ export const InvitationSignupFlow: React.FC = () => {
         }
       });
 
+      // Get the inviter's user ID from the invitation
+      const { data: invitationDetails } = await supabase
+        .from("gift_invitation_analytics")
+        .select("user_id, relationship_type")
+        .eq("id", invitationData.invitation_id)
+        .single();
+
+      if (invitationDetails) {
+        // Create the user connection between inviter and invitee
+        const { error: connectionError } = await supabase
+          .from("user_connections")
+          .insert({
+            user_id: invitationDetails.user_id, // The inviter
+            connected_user_id: user.id, // The new user who just signed up
+            status: 'accepted', // Auto-accept invitation connections
+            relationship_type: invitationDetails.relationship_type || 'friend',
+            created_at: new Date().toISOString()
+          });
+
+        if (connectionError) {
+          console.error("Error creating user connection:", connectionError);
+          // Don't fail the flow for this, just log it
+        } else {
+          console.log("Successfully created user connection");
+        }
+      }
+
       // Navigate to profile setup with invitation context
       navigate(`/profile-setup?invitation_id=${invitationData.invitation_id}&source=invitation`);
     } catch (error) {

@@ -107,7 +107,7 @@ serve(async (req) => {
       
       const { data: execution, error: executionError } = await supabaseClient
         .from('automated_gift_executions')
-        .select('address_metadata')
+        .select('address_metadata, ai_agent_source')
         .eq('id', order.execution_id)
         .single();
         
@@ -116,14 +116,34 @@ serve(async (req) => {
         throw new Error(`Auto-gift execution not found: ${order.execution_id}`);
       }
         
+      // Try new address_metadata first, fall back to old ai_agent_source for backward compatibility
+      let addressMeta = null;
       if (execution?.address_metadata) {
-        const addressMeta = execution.address_metadata;
-        console.log(`📍 Using resolved address from auto-gift execution:`, JSON.stringify(addressMeta, null, 2));
-        
+        addressMeta = execution.address_metadata;
+        console.log(`📍 Using new address_metadata format:`, JSON.stringify(addressMeta, null, 2));
+      } else if (execution?.ai_agent_source?.address_resolution) {
+        // Backward compatibility for old format
+        addressMeta = execution.ai_agent_source.address_resolution;
+        console.log(`📍 Using legacy ai_agent_source.address_resolution format:`, JSON.stringify(addressMeta, null, 2));
+      }
+      
+      if (addressMeta) {
         // Validate address availability
         if (addressMeta.source === 'missing') {
-          console.error('❌ Cannot process order: Recipient address is required but not available');
-          throw new Error('Cannot process order: Recipient address is required but not available');
+          const errorMsg = 'Cannot process order: Recipient address is required but not available';
+          console.error('❌', errorMsg);
+          
+          // Log detailed error for customer service
+          await supabaseClient
+            .from('order_notes')
+            .insert({
+              order_id: order.id,
+              note_content: `Auto-gift order failed: ${errorMsg}. Address resolution status: ${addressMeta.source}. Execution ID: ${order.execution_id}`,
+              note_type: 'error',
+              is_internal: true
+            });
+          
+          throw new Error(errorMsg);
         }
         
         // Use the resolved address if available
@@ -134,20 +154,42 @@ serve(async (req) => {
           
           console.log(`✅ Using ${addressSource} address for auto-gift order (verified: ${isAddressVerified})`);
           
-          // Add address source to order notes for audit trail
+          // Add comprehensive address source audit trail
           await supabaseClient
             .from('order_notes')
             .insert({
               order_id: order.id,
-              note_content: `Auto-gift order using ${addressSource} address (verified: ${isAddressVerified}). Needs confirmation: ${addressMeta.needs_confirmation || false}`,
+              note_content: `Auto-gift order using ${addressSource} address (verified: ${isAddressVerified}). Needs confirmation: ${addressMeta.needs_confirmation || false}. Connection ID: ${addressMeta.connection_id || 'N/A'}`,
               note_type: 'system',
               is_internal: true
             });
         } else {
-          console.warn('⚠️ Address metadata exists but no address found');
+          const errorMsg = 'Address metadata exists but no valid address found';
+          console.warn('⚠️', errorMsg);
+          
+          // Log warning for investigation
+          await supabaseClient
+            .from('order_notes')
+            .insert({
+              order_id: order.id,
+              note_content: `Auto-gift order warning: ${errorMsg}. Falling back to order shipping_info. Address metadata: ${JSON.stringify(addressMeta)}`,
+              note_type: 'warning',
+              is_internal: true
+            });
         }
       } else {
-        console.warn('⚠️ No address metadata found for auto-gift execution');
+        const errorMsg = 'No address metadata found for auto-gift execution';
+        console.warn('⚠️', errorMsg);
+        
+        // Log missing address metadata for investigation
+        await supabaseClient
+          .from('order_notes')
+          .insert({
+            order_id: order.id,
+            note_content: `Auto-gift order warning: ${errorMsg}. Using order shipping_info. Execution ID: ${order.execution_id}`,
+            note_type: 'warning',
+            is_internal: true
+          });
       }
     }
     
@@ -314,12 +356,17 @@ serve(async (req) => {
         console.log(`🐛 Full error response body:`, errorResponse);
       }
       
-      // Log the error details
+      // Log the error details with address context for auto-gifts
+      let errorNoteContent = `Zinc order submission failed. Status: ${zincResponse.status}. Error: ${errorResponse}. Test mode: ${isTestMode}.`;
+      if (order.execution_id) {
+        errorNoteContent += ` Auto-gift execution: ${order.execution_id}. Address source: ${addressSource}. Address verified: ${isAddressVerified}.`;
+      }
+      
       await supabaseClient
         .from('order_notes')
         .insert({
           order_id: orderId,
-          note_content: `Zinc order submission failed. Status: ${zincResponse.status}. Error: ${errorResponse}. Test mode: ${isTestMode}.`,
+          note_content: errorNoteContent,
           note_type: 'error',
           is_internal: true
         });
@@ -348,11 +395,17 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
       
+      // Include address resolution context in critical error logs for auto-gifts
+      let errorNoteContent = `Critical error during Zinc order processing: ${error.message}`;
+      if (error.message.includes('address') || error.message.includes('execution')) {
+        errorNoteContent += ` (This may be related to auto-gift address resolution)`;
+      }
+      
       await supabaseClient
         .from('order_notes')
         .insert({
           order_id: orderId,
-          note_content: `Critical error during Zinc order processing: ${error.message}`,
+          note_content: errorNoteContent,
           note_type: 'error',
           is_internal: true
         }).catch(console.error);

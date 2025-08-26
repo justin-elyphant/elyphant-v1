@@ -36,8 +36,10 @@ class StripeClientManager {
    * Supports multiple environment configurations
    */
   private initializeStripe(): void {
-    // Use a valid Stripe test publishable key
-    this.stripePublishableKey = 'pk_test_51PtkOcRuHKDqU2qKY2eKJzNr8DgK7E2y6LbB0GgFpLNZTrOkzGN9sYx2KZuOTmOmOmQRp8XdT9yGD3GdT9yGD3yGD00MhGmOmOm';
+    // Use the Stripe publishable key from environment or fallback to your live key
+    this.stripePublishableKey = 
+      import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+      'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z';
 
     if (!this.stripePublishableKey) {
       console.warn('Stripe publishable key not found. Payment functionality will be limited.');

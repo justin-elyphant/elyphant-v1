@@ -9,6 +9,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlistSkeleton";
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
 import SharedWishlistView from "@/components/gifting/wishlist/SharedWishlistView";
+import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 
 const SharedWishlist = () => {
   const { wishlistId } = useParams();
@@ -63,7 +64,7 @@ const SharedWishlist = () => {
           // Still show wishlist even if items fail to load
         }
         
-        // Transform to match expected Wishlist type
+        // Transform to match expected Wishlist type with enhanced product source detection
         const transformedWishlist: Wishlist = {
           id: wishlistData.id,
           user_id: wishlistData.user_id,
@@ -72,18 +73,27 @@ const SharedWishlist = () => {
           category: wishlistData.category,
           is_public: wishlistData.is_public,
           created_at: wishlistData.created_at,
-          items: (items || []).map(item => ({
-            id: item.id,
-            wishlist_id: item.wishlist_id,
-            product_id: item.product_id,
-            name: item.name,
-            title: item.title || item.name,
-            brand: item.brand,
-            price: item.price,
-            image_url: item.image_url,
-            added_at: item.created_at,
-            created_at: item.created_at
-          }))
+          items: (items || []).map(item => {
+            // Enhance each item with product source detection for proper pricing
+            const baseItem = {
+              id: item.id,
+              wishlist_id: item.wishlist_id,
+              product_id: item.product_id,
+              name: item.name,
+              title: item.title || item.name,
+              brand: item.brand,
+              price: item.price,
+              image_url: item.image_url,
+              added_at: item.created_at,
+              created_at: item.created_at,
+              vendor: item.vendor,
+              retailer: item.retailer,
+              isZincApiProduct: item.isZincApiProduct,
+              productSource: item.productSource
+            };
+            
+            return enhanceWishlistItemWithSource(baseItem);
+          })
         };
         
         const ownerInfo = {

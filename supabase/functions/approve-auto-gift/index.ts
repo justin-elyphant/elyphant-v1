@@ -47,9 +47,10 @@ serve(async (req) => {
       );
     }
 
-    if (execution.status !== 'pending_approval') {
+    // Accept both pending_approval and processing statuses to support unified system workflow
+    if (execution.status !== 'pending_approval' && execution.status !== 'processing') {
       return new Response(
-        JSON.stringify({ error: 'Execution is not in pending_approval status' }),
+        JSON.stringify({ error: `Execution is not in an approvable status. Current status: ${execution.status}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

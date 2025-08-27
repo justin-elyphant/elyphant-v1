@@ -411,7 +411,7 @@ Focus on actionable insights that can improve gift success and user satisfaction
     return {
       user_id: context.userId,
       date_type: 'birthday', // Would be extracted from Nicole's analysis
-      budget_limit: 50, // Would be extracted from Nicole's analysis
+      budget_limit: 50, // Default budget - would be extracted from Nicole's analysis in production
       gift_selection_criteria: {
         source: 'both',
         categories: [],

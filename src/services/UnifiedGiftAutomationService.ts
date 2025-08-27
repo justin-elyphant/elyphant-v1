@@ -177,7 +177,7 @@ class UnifiedGiftAutomationService {
         };
       }
       
-      // Tier 4: AI-powered best guess with user context
+      // Tier 4: AI-powered best guess with user context and enhanced budget context
       const aiGifts = await this.getAIGuessedGifts(recipientId, budget, occasion, categories, userId);
       console.log(`✅ Tier 4: Generated ${aiGifts.length} AI-suggested items`);
       return {
@@ -466,33 +466,72 @@ class UnifiedGiftAutomationService {
 
   /**
    * Enforce budget limit by selecting products that fit within the budget
+   * Enhanced version with strict budget validation and better logging
    */
   private enforceGiftBudget(products: any[], budgetLimit: number): any[] {
-    if (!products || products.length === 0) return [];
+    console.log(`💰 [Budget Enforcement] Starting with ${products?.length || 0} products, budget limit: $${budgetLimit}`);
     
-    // Sort products by price (ascending) to prioritize affordable options
-    const sortedProducts = [...products].sort((a, b) => a.price - b.price);
+    if (!products || products.length === 0) {
+      console.log(`💰 [Budget Enforcement] No products provided, returning empty array`);
+      return [];
+    }
+    
+    // Filter out products that exceed budget individually
+    const affordableProducts = products.filter(product => {
+      const isAffordable = product.price <= budgetLimit;
+      if (!isAffordable) {
+        console.log(`💰 [Budget Enforcement] Filtering out expensive product: ${product.title} ($${product.price} > $${budgetLimit})`);
+      }
+      return isAffordable;
+    });
+    
+    if (affordableProducts.length === 0) {
+      console.log(`💰 [Budget Enforcement] No affordable products found within budget $${budgetLimit}`);
+      return [];
+    }
+    
+    // Sort by confidence/rating for better selection quality
+    const sortedProducts = [...affordableProducts].sort((a, b) => {
+      // Prioritize higher confidence first, then lower price
+      const confidenceDiff = (b.confidence || 0) - (a.confidence || 0);
+      if (Math.abs(confidenceDiff) > 0.1) return confidenceDiff;
+      return a.price - b.price;
+    });
+    
     const selectedProducts = [];
     let currentTotal = 0;
     
+    // Use greedy algorithm to select products within budget
     for (const product of sortedProducts) {
-      if (currentTotal + product.price <= budgetLimit) {
-        selectedProducts.push(product);
-        currentTotal += product.price;
-      }
+      const newTotal = currentTotal + product.price;
       
-      // Stop if we have enough products or reached a reasonable selection
-      if (selectedProducts.length >= 3) break;
-    }
-    
-    // If no products fit, try to find the single most affordable option
-    if (selectedProducts.length === 0 && sortedProducts.length > 0) {
-      const cheapestProduct = sortedProducts[0];
-      if (cheapestProduct.price <= budgetLimit) {
-        selectedProducts.push(cheapestProduct);
+      if (newTotal <= budgetLimit) {
+        selectedProducts.push(product);
+        currentTotal = newTotal;
+        console.log(`💰 [Budget Enforcement] Selected: ${product.title} ($${product.price}), running total: $${currentTotal}`);
+        
+        // Stop if we have enough products or are close to budget
+        if (selectedProducts.length >= 3 || currentTotal > budgetLimit * 0.8) {
+          console.log(`💰 [Budget Enforcement] Stopping selection - have ${selectedProducts.length} products or close to budget limit`);
+          break;
+        }
+      } else {
+        console.log(`💰 [Budget Enforcement] Skipping product (would exceed budget): ${product.title} ($${product.price}), would make total: $${newTotal}`);
       }
     }
     
+    // Final validation - ensure total is within budget
+    const finalTotal = selectedProducts.reduce((sum, product) => sum + product.price, 0);
+    if (finalTotal > budgetLimit) {
+      console.error(`💰 [Budget Enforcement] ERROR: Final total $${finalTotal} exceeds budget $${budgetLimit}!`);
+      // Remove products until we're within budget
+      while (selectedProducts.length > 0 && selectedProducts.reduce((sum, p) => sum + p.price, 0) > budgetLimit) {
+        const removed = selectedProducts.pop();
+        console.log(`💰 [Budget Enforcement] Removed product to fit budget: ${removed?.title}`);
+      }
+    }
+    
+    console.log(`💰 [Budget Enforcement] Final selection: ${selectedProducts.length} products, total: $${selectedProducts.reduce((sum, p) => sum + p.price, 0)}`);
     return selectedProducts;
   }
 
@@ -752,9 +791,11 @@ class UnifiedGiftAutomationService {
             continue;
           }
           
-          // Step 2: Force budget re-enforcement for existing executions
+          // Step 2: Clear existing over-budget selections and force strict budget enforcement
           const budgetLimit = execution.auto_gifting_rules.budget_limit || 50;
-          let shouldReselectProducts = true; // Always re-select to ensure budget compliance
+          
+          // Always clear existing products for fresh selection with proper budget enforcement
+          console.log(`🔄 [Force Reset] Execution ${execution.id}: Clearing existing products for fresh budget-compliant selection`);
           
           if (execution.selected_products && execution.selected_products.length > 0) {
             const currentTotal = execution.selected_products.reduce((sum: number, product: any) => sum + (product.price || 0), 0);
@@ -763,12 +804,7 @@ class UnifiedGiftAutomationService {
             console.log(`  - Current total: $${currentTotal}`);
             console.log(`  - Budget limit: $${budgetLimit}`);
             console.log(`  - Current products: ${execution.selected_products.length}`);
-            
-            if (currentTotal > budgetLimit) {
-              console.log(`💰 [Budget Enforcement] Execution ${execution.id} exceeds budget ($${currentTotal} > $${budgetLimit}), forcing re-selection`);
-            } else {
-              console.log(`💰 [Budget Enforcement] Execution ${execution.id} within budget but forcing re-selection to ensure compliance`);
-            }
+            console.log(`  - Resetting to ensure strict budget compliance`);
           } else {
             console.log(`🆕 [New Selection] Execution ${execution.id} has no products, selecting new ones`);
           }
@@ -796,7 +832,31 @@ class UnifiedGiftAutomationService {
           // Ensure the selection is within budget (safety check)
           if (totalAmount > budgetLimit) {
             console.error(`❌ [Budget Error] Gift selection still exceeds budget: $${totalAmount} > $${budgetLimit}`);
-            // Skip this execution to prevent over-budget selections
+            
+            // Mark execution as failed rather than skip to avoid confusion
+            await supabase
+              .from('automated_gift_executions')
+              .update({
+                status: 'failed',
+                error_message: `Budget enforcement failed: Selected products total $${totalAmount} exceeds limit $${budgetLimit}`,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', execution.id);
+            continue;
+          }
+          
+          // Double-check: if no products were selected, mark as failed
+          if (giftSelection.products.length === 0) {
+            console.error(`❌ [Selection Error] No products selected for execution ${execution.id} within budget $${budgetLimit}`);
+            
+            await supabase
+              .from('automated_gift_executions')
+              .update({
+                status: 'failed',
+                error_message: `No suitable products found within budget limit of $${budgetLimit}`,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', execution.id);
             continue;
           }
           

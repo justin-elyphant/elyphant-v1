@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { normalizeProductForDisplay } from "@/utils/productDataTransforms";
+import { migrateExecutionProductData } from "@/utils/executionDataMigration";
 
 interface AutoGiftExecutionCardProps {
   execution: any;
@@ -29,12 +30,45 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
   onReviewProducts 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Auto-migrate product data if needed
+  useEffect(() => {
+    const migrateIfNeeded = async () => {
+      if (execution.selected_products && 
+          Array.isArray(execution.selected_products) &&
+          typeof execution.selected_products[0] === 'string' &&
+          !isUpdating) {
+        setIsUpdating(true);
+        await migrateExecutionProductData(execution.id);
+        setIsUpdating(false);
+        // Note: The parent component should handle reloading the data
+      }
+    };
+    
+    migrateIfNeeded();
+  }, [execution.id, execution.selected_products, isUpdating]);
   
   // Normalize products for display
   const normalizedProducts = useMemo(() => {
     if (!execution.selected_products) return [];
+    
+    // If selected_products is array of strings (IDs), show loading state
+    if (typeof execution.selected_products[0] === 'string') {
+      return execution.selected_products.map((productId: string) => ({
+        id: productId,
+        product_id: productId,
+        title: isUpdating ? 'Updating product details...' : 'Loading product details...',
+        name: isUpdating ? 'Updating product details...' : 'Loading product details...',
+        price: 0,
+        image: '',
+        productSource: 'manual'
+      }));
+    }
+    
+    // If already objects, normalize them
     return execution.selected_products.map((product: any) => normalizeProductForDisplay(product));
-  }, [execution.selected_products]);
+  }, [execution.selected_products, isUpdating]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

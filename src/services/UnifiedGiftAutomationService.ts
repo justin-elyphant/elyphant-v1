@@ -752,13 +752,29 @@ class UnifiedGiftAutomationService {
             continue;
           }
           
-          // Step 2: Use hierarchical gift selection with user context for proper rate limiting
+          // Step 2: Check if existing products exceed budget and need re-selection
+          const budgetLimit = execution.auto_gifting_rules.budget_limit || 50;
+          let shouldReselectProducts = false;
+          
+          if (execution.selected_products && execution.selected_products.length > 0) {
+            const currentTotal = execution.selected_products.reduce((sum: number, product: any) => sum + (product.price || 0), 0);
+            
+            if (currentTotal <= budgetLimit) {
+              console.log(`✅ Execution ${execution.id} already has products within budget ($${currentTotal}), skipping re-selection`);
+              continue;
+            } else {
+              console.log(`💰 Execution ${execution.id} products exceed budget ($${currentTotal} > $${budgetLimit}), re-selecting products`);
+              shouldReselectProducts = true;
+            }
+          }
+          
+          // Step 3: Use hierarchical gift selection with user context for proper rate limiting
           // Handle both calendar-based events and "just_because" rules without events
           const occasionType = execution.user_special_dates?.date_type || execution.auto_gifting_rules.date_type || 'birthday';
           
           const giftSelection = await this.selectGiftForRecipient(
             execution.auto_gifting_rules.recipient_id,
-            execution.auto_gifting_rules.budget_limit || 50,
+            budgetLimit,
             occasionType,
             execution.auto_gifting_rules.gift_selection_criteria?.categories || [],
             userId

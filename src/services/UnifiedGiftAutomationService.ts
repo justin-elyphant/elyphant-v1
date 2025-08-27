@@ -694,10 +694,13 @@ class UnifiedGiftAutomationService {
           }
           
           // Step 2: Use hierarchical gift selection with user context for proper rate limiting
+          // Handle both calendar-based events and "just_because" rules without events
+          const occasionType = execution.user_special_dates?.date_type || execution.auto_gifting_rules.date_type || 'birthday';
+          
           const giftSelection = await this.selectGiftForRecipient(
             execution.auto_gifting_rules.recipient_id,
             execution.auto_gifting_rules.budget_limit || 50,
-            execution.user_special_dates.date_type || 'birthday',
+            occasionType,
             execution.auto_gifting_rules.gift_selection_criteria?.categories || [],
             userId
           );
@@ -772,8 +775,7 @@ class UnifiedGiftAutomationService {
           user_special_dates:event_id (
             id,
             date_type,
-            date,
-            person_name
+            date
           )
         `)
         .eq('user_id', userId)

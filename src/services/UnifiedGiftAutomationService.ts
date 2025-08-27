@@ -666,6 +666,33 @@ class UnifiedGiftAutomationService {
         try {
           console.log(`📦 Processing execution ${execution.id}`);
           
+          // Validate execution has required data
+          if (!execution.auto_gifting_rules) {
+            console.error(`❌ Missing rule data for execution ${execution.id}`);
+            await supabase
+              .from('automated_gift_executions')
+              .update({
+                status: 'failed',
+                error_message: 'Auto-gifting rule no longer exists or is invalid',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', execution.id);
+            continue;
+          }
+          
+          if (!execution.auto_gifting_rules.recipient_id) {
+            console.error(`❌ Missing recipient for execution ${execution.id}`);
+            await supabase
+              .from('automated_gift_executions')
+              .update({
+                status: 'failed', 
+                error_message: 'Recipient information is missing or invalid',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', execution.id);
+            continue;
+          }
+          
           // Step 1: Validate recipient address availability
           const addressResult = await this.validateRecipientAddress(
             userId, 

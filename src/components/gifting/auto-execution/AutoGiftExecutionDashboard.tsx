@@ -16,6 +16,20 @@ const AutoGiftExecutionDashboard = () => {
   const pendingExecutions = executions.filter(exec => exec.status === 'pending' && exec.selected_products?.length > 0);
   const recentExecutions = executions.slice(0, 5);
 
+  const transformProductsForReview = (products: any[]) => {
+    return products?.map(product => ({
+      product_id: product.id || product.product_id || '',
+      title: product.wishlist_title || product.title || product.name || 'Unknown Product',
+      price: product.price || 0,
+      image: product.image_url || product.image || '/placeholder.svg',
+      category: product.category || product.category_name || 'General',
+      retailer: product.retailer || product.vendor || 'Amazon',
+      rating: product.rating || product.stars || 0,
+      review_count: product.review_count || product.num_reviews || 0,
+      selected: product.selected || false
+    })) || [];
+  };
+
   const handleReviewProducts = (execution: any) => {
     setSelectedExecution(execution);
     setReviewModalOpen(true);
@@ -145,7 +159,7 @@ const AutoGiftExecutionDashboard = () => {
         <AutoGiftProductReview
           open={reviewModalOpen}
           onOpenChange={setReviewModalOpen}
-          products={selectedExecution.selected_products || []}
+          products={transformProductsForReview(selectedExecution.selected_products)}
           totalBudget={selectedExecution.total_amount || 0}
           eventType={selectedExecution.event_type || 'Event'}
           onApprove={handleApproveProducts}

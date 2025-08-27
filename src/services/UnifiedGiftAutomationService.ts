@@ -560,7 +560,83 @@ class UnifiedGiftAutomationService {
     return data;
   }
 
-  // ============= EXECUTION MANAGEMENT ============= 
+  /**
+   * Recover stuck executions for a specific user
+   */
+  private async recoverUserStuckExecutions(userId: string): Promise<void> {
+    console.log(`🔧 Checking for stuck executions for user ${userId}`);
+    
+    try {
+      // Find executions that have been in "processing" status for more than 30 minutes
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      
+      const { data: stuckExecutions, error } = await supabase
+        .from('automated_gift_executions')
+        .select('id, rule_id, status, created_at, updated_at, retry_count')
+        .eq('user_id', userId)
+        .eq('status', 'processing')
+        .lt('updated_at', thirtyMinutesAgo);
+
+      if (error) {
+        console.error('❌ Error querying stuck executions:', error);
+        return;
+      }
+
+      if (!stuckExecutions || stuckExecutions.length === 0) {
+        console.log('✅ No stuck executions found for user');
+        return;
+      }
+
+      console.log(`🔧 Found ${stuckExecutions.length} stuck execution(s) for user ${userId}`);
+
+      for (const execution of stuckExecutions) {
+        const maxRetries = 3;
+        const shouldRetry = (execution.retry_count || 0) < maxRetries;
+        
+        if (shouldRetry) {
+          // Reset to pending for retry
+          console.log(`🔄 Scheduling retry for execution ${execution.id}`);
+          
+          const { error: updateError } = await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'pending',
+              retry_count: (execution.retry_count || 0) + 1,
+              error_message: 'Recovered from stuck processing state',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', execution.id);
+
+          if (updateError) {
+            console.error(`❌ Failed to update execution ${execution.id}:`, updateError);
+          } else {
+            console.log(`✅ Execution ${execution.id} reset to pending for retry`);
+          }
+        } else {
+          // Mark as failed after max retries
+          console.log(`❌ Marking execution ${execution.id} as failed after ${maxRetries} retries`);
+          
+          const { error: failError } = await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'failed',
+              error_message: `Processing stuck and exceeded ${maxRetries} retry attempts`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', execution.id);
+
+          if (failError) {
+            console.error(`❌ Failed to mark execution ${execution.id} as failed:`, failError);
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Error in user stuck execution recovery:', error);
+    }
+  }
+
+  // ============= EXECUTION MANAGEMENT =============
 
   /**
    * Process pending executions with hierarchical selection and address resolution
@@ -569,6 +645,10 @@ class UnifiedGiftAutomationService {
     console.log(`🔄 Processing pending auto-gift executions for user ${userId}`);
     
     try {
+      // First check for stuck executions for this user
+      await this.recoverUserStuckExecutions(userId);
+      
+      // Then process normally
       // Get all pending executions for this user
       const { data: executions, error } = await supabase
         .from('automated_gift_executions')

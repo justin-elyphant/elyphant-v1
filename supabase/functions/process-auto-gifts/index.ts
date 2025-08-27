@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { recoverStuckExecutions } from './stuck-execution-recovery.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +31,9 @@ serve(async (req) => {
     )
 
     console.log('🎁 Processing auto-gift events...')
+
+    // First, check for and recover stuck executions
+    await recoverStuckExecutions(supabaseClient)
 
     // Get upcoming events that need auto-gifting
     const { data: upcomingEvents, error: eventsError } = await supabaseClient
@@ -282,8 +286,12 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 
   console.log(`Searching for gifts with query: "${searchQuery}", budget: $${maxBudget}`)
 
-  // Use the enhanced Zinc API via the get-products function
-  const { data: searchResults, error } = await supabaseClient.functions.invoke('get-products', {
+  // Use the enhanced Zinc API via the get-products function with timeout
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Product search timed out after 15 seconds')), 15000)
+  })
+
+  const searchPromise = supabaseClient.functions.invoke('get-products', {
     body: {
       query: searchQuery,
       page: 1,
@@ -294,6 +302,11 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
       }
     }
   })
+
+  const { data: searchResults, error } = await Promise.race([
+    searchPromise,
+    timeoutPromise
+  ]) as any
 
   if (error) {
     console.error('Error searching for products:', error)

@@ -248,7 +248,7 @@ serve(async (req) => {
           const finalStatus = shouldAutoApprove ? 'approved' : 'pending_approval';
 
           // Update execution with selected products
-          await supabase
+          const { data: updateResult, error: updateError } = await supabase
             .from('automated_gift_executions')
             .update({
               status: finalStatus,
@@ -262,7 +262,13 @@ serve(async (req) => {
                 discovery_method: 'wishlist_optimization'
               }
             })
-            .eq('id', execution.id);
+            .eq('id', execution.id)
+            .select();
+
+          if (updateError) {
+            console.error(`❌ Failed to update execution ${execution.id}:`, updateError);
+            throw new Error(`Database update failed: ${updateError.message}`);
+          }
 
           console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
 

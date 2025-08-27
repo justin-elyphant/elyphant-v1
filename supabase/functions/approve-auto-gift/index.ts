@@ -112,7 +112,7 @@ serve(async (req) => {
 
     console.log(`✅ Execution ${executionId} approved with ${finalProducts.length} products`);
 
-    // Proceed to order placement
+    // Proceed to order placement with payment processing
     try {
       // Get recipient profile for shipping info
       const { data: recipientProfile, error: profileError } = await supabase
@@ -125,15 +125,55 @@ serve(async (req) => {
         throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
       }
 
-      // First create the order record to get a proper order ID
+      // Get payment method for processing
+      const { data: paymentMethod, error: paymentError } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('id', execution.auto_gifting_rules.payment_method_id)
+        .single();
+
+      if (paymentError || !paymentMethod) {
+        throw new Error(`Payment method not found: ${paymentError?.message || 'No payment method configured'}`);
+      }
+
+      console.log(`💳 Using payment method: **** ${paymentMethod.last_four} (${paymentMethod.card_type})`);
+
+      // Process payment first using the stored payment method
       const orderTotal = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
       
+      console.log(`💰 Processing payment of $${orderTotal.toFixed(2)} using saved payment method`);
+      
+      // Call create-payment-session function to process payment
+      const { data: paymentResult, error: paymentProcessError } = await supabase.functions.invoke('create-payment-session', {
+        body: {
+          amount: orderTotal,
+          currency: 'usd',
+          useExistingPaymentMethod: true,
+          paymentMethodId: paymentMethod.stripe_payment_method_id,
+          metadata: {
+            auto_gift_execution_id: executionId,
+            recipient_id: execution.auto_gifting_rules.recipient_id,
+            rule_id: execution.auto_gifting_rules.id,
+            is_auto_gift: true
+          }
+        }
+      });
+
+      if (paymentProcessError || !paymentResult?.success) {
+        throw new Error(`Payment processing failed: ${paymentProcessError?.message || 'Payment failed'}`);
+      }
+
+      console.log(`✅ Payment processed successfully: ${paymentResult.payment_intent_id}`);
+
+      // Create the order record with payment information
       const { data: newOrder, error: createOrderError } = await supabase
         .from('orders')
         .insert({
           user_id: execution.user_id,
           total_amount: orderTotal,
-          status: 'pending',
+          status: 'processing',
+          payment_status: 'succeeded',
+          payment_intent_id: paymentResult.payment_intent_id,
           order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
           shipping_info: recipientProfile.shipping_address || {},
           is_gift: true,
@@ -141,7 +181,8 @@ serve(async (req) => {
           order_metadata: {
             auto_gift_execution_id: executionId,
             recipient_id: execution.auto_gifting_rules.recipient_id,
-            rule_id: execution.auto_gifting_rules.id
+            rule_id: execution.auto_gifting_rules.id,
+            payment_method_used: paymentMethod.id
           }
         })
         .select()
@@ -188,7 +229,9 @@ serve(async (req) => {
             products: finalProducts,
             total_amount: orderTotal,
             shipping_info: recipientProfile.shipping_address || {},
-            budget_limit: execution.auto_gifting_rules.budget_limit
+            budget_limit: execution.auto_gifting_rules.budget_limit,
+            payment_processed: true,
+            payment_intent_id: paymentResult.payment_intent_id
           }
         }
       });

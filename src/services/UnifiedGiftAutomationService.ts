@@ -673,28 +673,64 @@ class UnifiedGiftAutomationService {
   }
 
   /**
-   * Get executions for a user
+   * Get executions for a user with better error handling
    */
   async getUserExecutions(userId: string): Promise<UnifiedGiftExecution[]> {
-    const { data, error } = await supabase
-      .from('automated_gift_executions')
-      .select(`
-        *,
-        auto_gifting_rules (*),
-        user_special_dates (*)
-      `)
-      .eq('user_id', userId)
-      .order('execution_date', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('automated_gift_executions')
+        .select(`
+          *,
+          auto_gifting_rules:rule_id (
+            id,
+            date_type,
+            budget_limit,
+            gift_selection_criteria,
+            recipient_id,
+            is_active
+          ),
+          user_special_dates:event_id (
+            id,
+            date_type,
+            date,
+            person_name
+          )
+        `)
+        .eq('user_id', userId)
+        .order('execution_date', { ascending: false });
 
-    if (error) throw error;
-    
-    return (data || []).map(execution => ({
-      ...execution,
-      execution_date: new Date(execution.execution_date),
-      next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
-      created_at: new Date(execution.created_at),
-      updated_at: new Date(execution.updated_at)
-    }));
+      if (error) {
+        console.error('Error fetching user executions:', error);
+        // Return executions without rule details instead of throwing
+        const { data: basicData, error: basicError } = await supabase
+          .from('automated_gift_executions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('execution_date', { ascending: false });
+          
+        if (basicError) throw basicError;
+        
+        return (basicData || []).map(execution => ({
+          ...execution,
+          execution_date: new Date(execution.execution_date),
+          next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
+          created_at: new Date(execution.created_at),
+          updated_at: new Date(execution.updated_at),
+          error_message: execution.error_message || 'Failed to fetch rule details'
+        }));
+      }
+      
+      return (data || []).map(execution => ({
+        ...execution,
+        execution_date: new Date(execution.execution_date),
+        next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
+        created_at: new Date(execution.created_at),
+        updated_at: new Date(execution.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getUserExecutions:', error);
+      throw error;
+    }
   }
 
   /**

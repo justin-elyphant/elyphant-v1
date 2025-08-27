@@ -51,7 +51,20 @@ export const useAutoGiftExecution = () => {
         console.log('Successfully reset failed executions to pending');
       }
 
-      await unifiedGiftAutomationService.processPendingExecutions(user.id);
+      // Call the edge function directly
+      console.log('🚀 Calling process-auto-gifts edge function...');
+      const { data, error } = await supabase.functions.invoke('process-auto-gifts', {
+        body: { userId: user.id }
+      });
+
+      if (error) {
+        console.error('❌ Error calling process-auto-gifts function:', error);
+        throw error;
+      }
+
+      console.log('✅ Process auto-gifts completed:', data);
+      toast.success(data?.message || 'Auto-gift processing completed');
+      
       await loadExecutions(); // Refresh the list
     } catch (error) {
       console.error("Error processing executions:", error);

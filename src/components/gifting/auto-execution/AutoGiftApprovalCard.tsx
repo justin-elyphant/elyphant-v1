@@ -87,10 +87,10 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border">
-                {primaryProduct?.image ? (
+                {(primaryProduct?.image || primaryProduct?.image_url) ? (
                   <img 
-                    src={primaryProduct.image} 
-                    alt={primaryProduct.title}
+                    src={primaryProduct.image || primaryProduct.image_url} 
+                    alt={primaryProduct.title || primaryProduct.product_name}
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
@@ -105,7 +105,7 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-sm mb-1">
-                {primaryProduct?.title || 'Selected Gift'}
+                {primaryProduct?.title || primaryProduct?.product_name || 'Selected Gift'}
               </h4>
               <p className="text-sm text-muted-foreground mb-2">
                 {additionalProductsCount > 0 

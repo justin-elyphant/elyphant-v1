@@ -157,11 +157,15 @@ serve(async (req) => {
               if (totalCost + (item.price || 0) <= budgetLimit) {
                 selectedProducts.push({
                   id: item.id,
-                  product_name: item.product_name,
+                  title: item.product_name,
+                  product_name: item.product_name, // Keep for backward compatibility
                   price: item.price,
-                  image_url: item.image_url,
+                  image: item.image_url,
+                  image_url: item.image_url, // Keep for backward compatibility
                   source: 'wishlist',
-                  wishlist_title: item.wishlist_title
+                  marketplace: 'Wishlist',
+                  wishlist_title: item.wishlist_title,
+                  description: item.description || `From ${item.wishlist_title || 'wishlist'}`
                 });
                 totalCost += item.price || 0;
                 
@@ -176,35 +180,60 @@ serve(async (req) => {
             // For now, just create a placeholder recommendation
             selectedProducts = [{
               id: `ai-${Date.now()}`,
+              title: `AI Recommended Gift for ${rule.date_type}`,
               product_name: `AI Recommended Gift for ${rule.date_type}`,
               price: Math.min(rule.budget_limit || 50, 25),
+              image: null,
               image_url: null,
               source: 'ai_recommendation',
+              marketplace: 'AI Recommendation',
               description: `AI-generated gift suggestion for ${rule.date_type} occasion`
             }];
           }
+
+          // Check auto-approve setting
+          const { data: settings } = await supabase
+            .from('auto_gifting_settings')
+            .select('auto_approve_gifts')
+            .eq('user_id', userId)
+            .single();
+
+          const shouldAutoApprove = settings?.auto_approve_gifts || false;
+          const finalStatus = shouldAutoApprove ? 'approved' : 'pending_approval';
 
           // Update execution with selected products
           await supabase
             .from('automated_gift_executions')
             .update({
-              status: 'completed',
+              status: finalStatus,
               selected_products: selectedProducts,
               total_amount: selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
+              ai_agent_source: {
+                agent: 'nicole',
+                data_sources: selectedProducts.map(p => p.source),
+                confidence_score: 0.85,
+                discovery_method: 'wishlist_optimization'
+              }
             })
             .eq('id', execution.id);
 
           console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
           
-          // Create notification for user
+          // Create appropriate notification
+          const notificationType = shouldAutoApprove ? 'gift_auto_approved' : 'gift_suggestions_ready';
+          const title = shouldAutoApprove ? 'Gift Auto-Approved & Scheduled' : 'Gift Suggestions Ready for Review';
+          const message = shouldAutoApprove 
+            ? `Auto-approved ${selectedProducts.length} gift(s) totaling $${selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0).toFixed(2)}`
+            : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget - review needed`;
+
           await supabase
             .from('auto_gift_notifications')
             .insert({
               user_id: userId,
-              notification_type: 'gift_suggestions_ready',
-              title: 'Gift Suggestions Ready',
-              message: `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget`,
+              notification_type: notificationType,
+              title: title,
+              message: message,
               execution_id: execution.id
             });
 

@@ -35,6 +35,10 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'processing':
         return <AlertCircle className="h-4 w-4 text-blue-500" />;
+      case 'pending_approval':
+        return <AlertCircle className="h-4 w-4 text-orange-500" />;
+      case 'approved':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'failed':
@@ -52,6 +56,10 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
         return 'yellow';
       case 'processing':
         return 'blue';
+      case 'pending_approval':
+        return 'orange';
+      case 'approved':
+        return 'green';
       case 'completed':
         return 'green';
       case 'failed':
@@ -121,7 +129,7 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               </div>
             )}
             
-            {execution.status === 'pending' && execution.selected_products && onReviewProducts && (
+            {(execution.status === 'pending_approval' || execution.status === 'pending') && execution.selected_products && onReviewProducts && (
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -220,15 +228,17 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
                   <div className="space-y-2">
                     {execution.selected_products.slice(0, 3).map((product: any, index: number) => (
                       <div key={index} className="flex items-center gap-3 p-2 bg-background rounded border">
-                        {product.image && (
+                        {(product.image || product.image_url) && (
                           <img 
-                            src={product.image} 
-                            alt={product.title}
+                            src={product.image || product.image_url} 
+                            alt={product.title || product.product_name}
                             className="w-10 h-10 object-cover rounded"
                           />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{product.title}</p>
+                          <p className="text-sm font-medium truncate">
+                            {product.title || product.product_name || 'Gift Item'}
+                          </p>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-green-600 font-medium">
                               {formatCurrency(product.price)}
@@ -236,6 +246,11 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
                             {product.marketplace && (
                               <Badge variant="outline" className="text-xs">
                                 {product.marketplace}
+                              </Badge>
+                            )}
+                            {product.source && (
+                              <Badge variant="secondary" className="text-xs">
+                                {product.source}
                               </Badge>
                             )}
                           </div>

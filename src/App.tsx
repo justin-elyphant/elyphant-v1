@@ -60,7 +60,6 @@ const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
 const NicoleAutoGiftingDashboard = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingDashboard"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
-const TestZincOrder = lazy(() => import("./pages/TestZincOrder"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -206,7 +205,6 @@ function AppContent() {
           
           {/* ZMA Testing Routes */}
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
-          <Route path="/test-zinc-order" element={<TestZincOrder />} />
           
            <Route path="/trunkline-login" element={<TrunklineLogin />} />
            <Route path="/trunkline" element={<Trunkline />} />

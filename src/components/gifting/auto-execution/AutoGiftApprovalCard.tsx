@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gift, Heart, Clock, DollarSign, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { useAutoGiftApproval } from "@/hooks/useAutoGiftApproval";
+import { toast } from "sonner";
 
 interface AutoGiftApprovalCardProps {
   executionId: string;
@@ -14,9 +16,10 @@ interface AutoGiftApprovalCardProps {
   executionDate: string;
   selectedProducts: any[];
   totalAmount: number;
-  onQuickApprove: () => void;
+  onQuickApprove?: () => void;
   onReview: () => void;
   onReject?: () => void;
+  onApprovalComplete?: (executionId: string) => void;
   className?: string;
 }
 
@@ -31,8 +34,11 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
   onQuickApprove,
   onReview,
   onReject,
+  onApprovalComplete,
   className = ""
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { approveExecution, rejectExecution } = useAutoGiftApproval();
   const primaryProduct = selectedProducts[0];
   const additionalProductsCount = selectedProducts.length - 1;
   
@@ -53,6 +59,43 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleQuickApprove = async () => {
+    setIsLoading(true);
+    try {
+      const selectedProductIds = selectedProducts.map(p => p.id);
+      const result = await approveExecution(executionId, selectedProductIds);
+      if (result.success) {
+        toast.success(`Gifts approved and ${result.status === 'order_placed' ? 'order placed' : 'ready for processing'}!`);
+      } else {
+        toast.error(result.error || "Failed to approve gifts");
+      }
+      onApprovalComplete?.(executionId);
+    } catch (error) {
+      console.error('Error approving execution:', error);
+      toast.error("Failed to approve gifts. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuickReject = async () => {
+    setIsLoading(true);
+    try {
+      const result = await rejectExecution(executionId, "User rejected the gift selection");
+      if (result.success) {
+        toast.success("Gift selection rejected successfully");
+      } else {
+        toast.error(result.error || "Failed to reject gifts");
+      }
+      onApprovalComplete?.(executionId);
+    } catch (error) {
+      console.error('Error rejecting execution:', error);
+      toast.error("Failed to reject gifts. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -135,31 +178,32 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
         {/* Action buttons */}
         <div className="flex gap-3">
           <Button 
-            onClick={onQuickApprove}
+            onClick={onQuickApprove || handleQuickApprove}
+            disabled={isLoading}
             className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-medium py-3"
           >
             <Gift className="h-4 w-4 mr-2" />
-            Approve & Send
+            {isLoading ? 'Processing...' : 'Approve & Send'}
           </Button>
           
           <Button 
             variant="outline" 
             onClick={onReview}
+            disabled={isLoading}
             className="flex items-center gap-2 px-6 border-2 hover:bg-secondary/50"
           >
             <Eye className="h-4 w-4" />
             Review
           </Button>
           
-          {onReject && (
-            <Button 
-              variant="ghost" 
-              onClick={onReject}
-              className="px-4 text-muted-foreground hover:text-destructive"
-            >
-              Skip
-            </Button>
-          )}
+          <Button 
+            variant="ghost" 
+            onClick={onReject || handleQuickReject}
+            disabled={isLoading}
+            className="px-4 text-muted-foreground hover:text-destructive"
+          >
+            Skip
+          </Button>
         </div>
       </CardContent>
     </Card>

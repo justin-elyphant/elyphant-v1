@@ -39,6 +39,10 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
         return <AlertCircle className="h-4 w-4 text-orange-500" />;
       case 'approved':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'order_placed':
+        return <Package className="h-4 w-4 text-blue-500" />;
+      case 'order_failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'failed':
@@ -60,6 +64,10 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
         return 'orange';
       case 'approved':
         return 'green';
+      case 'order_placed':
+        return 'blue';
+      case 'order_failed':
+        return 'red';
       case 'completed':
         return 'green';
       case 'failed':
@@ -140,6 +148,18 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               >
                 Review
               </Button>
+            )}
+            
+            {execution.status === 'order_placed' && (
+              <Badge variant="outline" className="text-blue-700 bg-blue-50">
+                Order Processing
+              </Badge>
+            )}
+            
+            {execution.status === 'order_failed' && (
+              <Badge variant="outline" className="text-red-700 bg-red-50">
+                Order Failed
+              </Badge>
             )}
             
             {isExpanded ? (
@@ -312,6 +332,49 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
                 <div className="border rounded-lg p-3 bg-green-50 border-green-200">
                   <p className="text-sm text-green-800">
                     📦 Order placed: {execution.order_id}
+                  </p>
+                </div>
+              )}
+
+              {/* Status-specific information */}
+              {execution.status === 'order_placed' && (
+                <div className="border rounded-lg p-3 bg-blue-50 border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    🚚 Order is being processed and will be shipped soon
+                  </p>
+                </div>
+              )}
+
+              {execution.status === 'order_failed' && (
+                <div className="border rounded-lg p-3 bg-red-50 border-red-200">
+                  <p className="text-sm text-red-800">
+                    ❌ Order placement failed - please contact support
+                  </p>
+                  {execution.error_message && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Error: {execution.error_message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {execution.status === 'rejected' && (
+                <div className="border rounded-lg p-3 bg-gray-50 border-gray-200">
+                  <p className="text-sm text-gray-800">
+                    🚫 Gift selection was rejected
+                  </p>
+                  {execution.error_message && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      Reason: {execution.error_message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {execution.status === 'cancelled' && (
+                <div className="border rounded-lg p-3 bg-gray-50 border-gray-200">
+                  <p className="text-sm text-gray-800">
+                    ⏹️ Execution was cancelled (likely due to duplicate)
                   </p>
                 </div>
               )}

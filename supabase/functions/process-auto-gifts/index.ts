@@ -47,6 +47,20 @@ serve(async (req) => {
       console.error('❌ Error resetting stuck executions:', resetError);
     }
 
+    // Check for existing executions to prevent duplicates
+    console.log('🔍 Checking for existing executions to prevent duplicates...');
+    const { data: existingExecutions, error: existingError } = await supabase
+      .from('automated_gift_executions')
+      .select('id, rule_id, event_id, execution_date, status')
+      .eq('user_id', userId)
+      .gte('execution_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]); // Last 24 hours
+
+    if (existingError) {
+      console.error('❌ Error checking existing executions:', existingError);
+    } else {
+      console.log(`📊 Found ${existingExecutions?.length || 0} existing executions in last 24 hours`);
+    }
+
     // Get all pending executions for this user
     const { data: executions, error } = await supabase
       .from('automated_gift_executions')
@@ -69,6 +83,29 @@ serve(async (req) => {
     for (const execution of executions || []) {
       try {
         console.log(`📦 Processing execution ${execution.id}`);
+        
+        // Check for duplicate execution (prevent multiple executions for same rule/event/date)
+        const duplicateKey = `${execution.rule_id}-${execution.event_id || 'no-event'}-${execution.execution_date}`;
+        const existingDuplicate = existingExecutions?.find(e => 
+          e.rule_id === execution.rule_id && 
+          e.event_id === execution.event_id && 
+          e.execution_date === execution.execution_date &&
+          e.id !== execution.id &&
+          ['processing', 'pending_approval', 'approved', 'completed'].includes(e.status)
+        );
+
+        if (existingDuplicate) {
+          console.log(`⚠️ Duplicate execution detected for ${duplicateKey}, skipping execution ${execution.id}`);
+          await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'cancelled',
+              error_message: `Duplicate execution - another execution exists for this rule/event/date (ID: ${existingDuplicate.id})`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', execution.id);
+          continue;
+        }
         
         // Mark as processing
         await supabase
@@ -219,6 +256,63 @@ serve(async (req) => {
             .eq('id', execution.id);
 
           console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
+
+          // If auto-approved, proceed to order placement
+          if (shouldAutoApprove && selectedProducts.length > 0) {
+            console.log(`🛒 Auto-approved execution ${execution.id}, proceeding to order placement...`);
+            
+            try {
+              // Call process-zma-order edge function to handle order placement
+              const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
+                body: {
+                  orderId: execution.id, // Use execution ID as order reference
+                  isAutoGift: true,
+                  executionData: {
+                    execution_id: execution.id,
+                    user_id: userId,
+                    recipient_id: rule.recipient_id,
+                    products: selectedProducts,
+                    total_amount: selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+                    shipping_info: recipientProfile.shipping_address || {},
+                    budget_limit: rule.budget_limit
+                  }
+                }
+              });
+
+              if (orderPlacementResponse.error) {
+                console.error(`❌ Order placement failed for execution ${execution.id}:`, orderPlacementResponse.error);
+                // Update execution status to indicate order failure
+                await supabase
+                  .from('automated_gift_executions')
+                  .update({
+                    status: 'order_failed',
+                    error_message: `Order placement failed: ${orderPlacementResponse.error.message}`,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', execution.id);
+              } else {
+                console.log(`✅ Order placement initiated for execution ${execution.id}`);
+                // Update execution status to order_placed
+                await supabase
+                  .from('automated_gift_executions')
+                  .update({
+                    status: 'order_placed',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', execution.id);
+              }
+            } catch (orderError) {
+              console.error(`❌ Error placing order for execution ${execution.id}:`, orderError);
+              await supabase
+                .from('automated_gift_executions')
+                .update({
+                  status: 'order_failed',
+                  error_message: `Order placement error: ${orderError.message}`,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', execution.id);
+            }
+          }
           
           // Create appropriate notification
           const notificationType = shouldAutoApprove ? 'gift_auto_approved' : 'gift_suggestions_ready';

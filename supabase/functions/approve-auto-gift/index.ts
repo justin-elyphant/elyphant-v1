@@ -1,251 +1,242 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const { token, action, selectedProductIds, rejectionReason } = await req.json()
+    const { executionId, selectedProductIds, approvalDecision, rejectionReason } = await req.json();
 
-    console.log(`🎯 Processing auto-gift approval: ${action} for token ${token}`)
-
-    // Validate approval token
-    const { data: approvalToken, error: tokenError } = await supabaseClient
-      .from('email_approval_tokens')
-      .select('*, automated_gift_executions(*)')
-      .eq('token', token)
-      .gt('expires_at', new Date().toISOString())
-      .is('approved_at', null)
-      .is('rejected_at', null)
-      .single()
-
-    if (tokenError || !approvalToken) {
+    if (!executionId) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Invalid or expired approval token' 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
+        JSON.stringify({ error: 'Execution ID is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const execution = approvalToken.automated_gift_executions
+    console.log(`🔄 Processing approval for execution ${executionId}, decision: ${approvalDecision}`);
 
-    if (action === 'approve') {
-      console.log(`✅ Approving auto-gift execution ${execution.id}`)
-      
-      // Update approval token
-      await supabaseClient
-        .from('email_approval_tokens')
-        .update({
-          approved_at: new Date().toISOString(),
-          approved_via: 'email_approval'
-        })
-        .eq('id', approvalToken.id)
+    // Get the execution record
+    const { data: execution, error: executionError } = await supabase
+      .from('automated_gift_executions')
+      .select(`
+        *,
+        auto_gifting_rules (*)
+      `)
+      .eq('id', executionId)
+      .single();
 
-      // Filter selected products if provided
-      let productsToOrder = execution.selected_products
-      if (selectedProductIds && selectedProductIds.length > 0) {
-        productsToOrder = execution.selected_products.filter((product: any) =>
-          selectedProductIds.includes(product.product_id)
-        )
-      }
-
-      // Get rule details for order creation
-      const { data: rule } = await supabaseClient
-        .from('auto_gifting_rules')
-        .select('*')
-        .eq('id', execution.rule_id)
-        .single()
-
-      // Create order
-      await createApprovedGiftOrder(supabaseClient, execution.id, productsToOrder, rule)
-
-      // Create approval notification
-      await createApprovalNotification(supabaseClient, execution.id, execution.user_id, 'approved', productsToOrder)
-
+    if (executionError || !execution) {
+      console.error('❌ Error fetching execution:', executionError);
       return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Auto-gift approved and order created',
-          executionId: execution.id
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
+        JSON.stringify({ error: 'Execution not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    } else if (action === 'reject') {
-      console.log(`❌ Rejecting auto-gift execution ${execution.id}`)
-      
-      // Update approval token
-      await supabaseClient
-        .from('email_approval_tokens')
-        .update({
-          rejected_at: new Date().toISOString(),
-          rejection_reason: rejectionReason || 'User rejected auto-gift selection'
-        })
-        .eq('id', approvalToken.id)
+    if (execution.status !== 'pending_approval') {
+      return new Response(
+        JSON.stringify({ error: 'Execution is not in pending_approval status' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-      // Update execution status
-      await supabaseClient
+    if (approvalDecision === 'rejected') {
+      // Handle rejection
+      await supabase
         .from('automated_gift_executions')
         .update({
-          status: 'cancelled',
-          error_message: rejectionReason || 'Rejected by user',
+          status: 'rejected',
+          error_message: rejectionReason || 'User rejected the gift selection',
           updated_at: new Date().toISOString()
         })
-        .eq('id', execution.id)
+        .eq('id', executionId);
 
-      // Create rejection notification
-      await createApprovalNotification(supabaseClient, execution.id, execution.user_id, 'rejected', [])
+      // Create notification
+      await supabase
+        .from('auto_gift_notifications')
+        .insert({
+          user_id: execution.user_id,
+          notification_type: 'gift_rejected',
+          title: 'Gift Selection Rejected',
+          message: rejectionReason || 'You have rejected the auto-gift selection',
+          execution_id: executionId
+        });
+
+      console.log(`✅ Execution ${executionId} rejected successfully`);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Gift selection rejected successfully',
+          status: 'rejected'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Handle approval
+    let finalProducts = execution.selected_products;
+    
+    // If specific product IDs were selected, filter the products
+    if (selectedProductIds && selectedProductIds.length > 0) {
+      finalProducts = execution.selected_products?.filter(product => 
+        selectedProductIds.includes(product.id)
+      ) || [];
+    }
+
+    // Update execution to approved status
+    await supabase
+      .from('automated_gift_executions')
+      .update({
+        status: 'approved',
+        selected_products: finalProducts,
+        total_amount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', executionId);
+
+    console.log(`✅ Execution ${executionId} approved with ${finalProducts.length} products`);
+
+    // Proceed to order placement
+    try {
+      // Get recipient profile for shipping info
+      const { data: recipientProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', execution.auto_gifting_rules.recipient_id)
+        .single();
+
+      if (profileError || !recipientProfile) {
+        throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
+      }
+
+      // Call process-zma-order edge function to handle order placement
+      const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
+        body: {
+          orderId: executionId, // Use execution ID as order reference
+          isAutoGift: true,
+          executionData: {
+            execution_id: executionId,
+            user_id: execution.user_id,
+            recipient_id: execution.auto_gifting_rules.recipient_id,
+            products: finalProducts,
+            total_amount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+            shipping_info: recipientProfile.shipping_address || {},
+            budget_limit: execution.auto_gifting_rules.budget_limit
+          }
+        }
+      });
+
+      if (orderPlacementResponse.error) {
+        console.error(`❌ Order placement failed for execution ${executionId}:`, orderPlacementResponse.error);
+        
+        // Update execution status to indicate order failure
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'order_failed',
+            error_message: `Order placement failed: ${orderPlacementResponse.error.message}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', executionId);
+
+        // Create failure notification
+        await supabase
+          .from('auto_gift_notifications')
+          .insert({
+            user_id: execution.user_id,
+            notification_type: 'order_failed',
+            title: 'Order Placement Failed',
+            message: `Failed to place order for approved gifts: ${orderPlacementResponse.error.message}`,
+            execution_id: executionId
+          });
+
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Order placement failed',
+            details: orderPlacementResponse.error.message
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        console.log(`✅ Order placement initiated for execution ${executionId}`);
+        
+        // Update execution status to order_placed
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'order_placed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', executionId);
+
+        // Create success notification
+        await supabase
+          .from('auto_gift_notifications')
+          .insert({
+            user_id: execution.user_id,
+            notification_type: 'order_placed',
+            title: 'Gift Order Placed',
+            message: `Your approved gifts have been ordered and will be delivered soon`,
+            execution_id: executionId
+          });
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Gift approved and order placed successfully',
+            status: 'order_placed',
+            productCount: finalProducts.length,
+            totalAmount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0)
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (orderError) {
+      console.error(`❌ Error in order placement for execution ${executionId}:`, orderError);
+      
+      await supabase
+        .from('automated_gift_executions')
+        .update({
+          status: 'order_failed',
+          error_message: `Order placement error: ${orderError.message}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', executionId);
 
       return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Auto-gift rejected',
-          executionId: execution.id
+        JSON.stringify({ 
+          success: false,
+          error: 'Order placement failed',
+          details: orderError.message
         }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
+  } catch (error) {
+    console.error('❌ Error in approve-auto-gift function:', error);
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: 'Invalid action' 
+        error: 'Internal server error',
+        details: error.message 
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    )
-
-  } catch (error) {
-    console.error('Auto-gift approval error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    )
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-})
-
-async function createApprovedGiftOrder(supabaseClient: any, executionId: string, products: any[], rule: any) {
-  console.log(`🛒 Creating approved gift order for execution ${executionId}`)
-  
-  try {
-    // Get recipient shipping address
-    const { data: recipientProfile } = await supabaseClient
-      .from('profiles')
-      .select('shipping_address, email, name')
-      .eq('id', rule.recipient_id)
-      .single()
-
-    if (!recipientProfile?.shipping_address) {
-      throw new Error('Recipient shipping address not available')
-    }
-
-    const totalAmount = products.reduce((sum: number, product: any) => sum + (product.price || 0), 0)
-    
-    const { data: order, error: orderError } = await supabaseClient
-      .from('orders')
-      .insert({
-        user_id: rule.user_id,
-        status: 'processing',
-        payment_status: 'succeeded',
-        total_amount: totalAmount,
-        shipping_address: recipientProfile.shipping_address,
-        is_gift: true,
-        gift_message: rule.gift_message || 'A thoughtful gift selected just for you!',
-        recipient_email: recipientProfile.email,
-        recipient_name: recipientProfile.name,
-        order_items: products.map(product => ({
-          product_id: product.product_id,
-          quantity: 1,
-          price: product.price,
-          title: product.title,
-          image: product.image
-        })),
-        execution_id: executionId
-      })
-      .select()
-      .single()
-
-    if (orderError) {
-      throw new Error(`Order creation failed: ${orderError.message}`)
-    }
-
-    // Update execution with order ID
-    await supabaseClient
-      .from('automated_gift_executions')
-      .update({
-        order_id: order.id,
-        status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', executionId)
-
-    console.log(`✅ Approved gift order ${order.id} created successfully`)
-    
-  } catch (error) {
-    console.error(`❌ Approved order creation failed:`, error)
-    await supabaseClient
-      .from('automated_gift_executions')
-      .update({
-        status: 'failed',
-        error_message: `Approved order creation failed: ${error.message}`,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', executionId)
-  }
-}
-
-async function createApprovalNotification(supabaseClient: any, executionId: string, userId: string, action: string, products: any[]) {
-  const title = action === 'approved' ? '✅ Auto-Gift Approved' : '❌ Auto-Gift Rejected'
-  const message = action === 'approved' 
-    ? `Your auto-gift selection has been approved! Order for ${products.length} item${products.length > 1 ? 's' : ''} is being processed.`
-    : 'Your auto-gift selection has been rejected. No order was placed.'
-
-  try {
-    await supabaseClient
-      .from('auto_gift_notifications')
-      .insert({
-        user_id: userId,
-        execution_id: executionId,
-        notification_type: `approval_${action}`,
-        title,
-        message,
-        email_sent: false,
-        is_read: false
-      })
-
-    console.log(`✅ Approval notification created for execution ${executionId}`)
-  } catch (error) {
-    console.error(`❌ Failed to create approval notification:`, error)
-  }
-}
+});

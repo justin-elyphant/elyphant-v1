@@ -42,7 +42,8 @@ class ProtectedAutoGiftingService {
     userId: string, 
     query: string, 
     maxResults: number = 10,
-    priority: 'high' | 'normal' = 'normal'
+    priority: 'high' | 'normal' = 'normal',
+    budget?: number
   ): Promise<any[]> {
     console.log(`🛡️ Protected auto-gifting search for user ${userId}: "${query}"`);
     
@@ -68,8 +69,18 @@ class ProtectedAutoGiftingService {
       }
 
       // Phase 3: Use budget-protected optimized service
-      console.log(`✅ Using optimized Zinc service for protected search`);
-      const results = await unifiedMarketplaceService.searchProducts(query, { maxResults });
+      console.log(`✅ Using optimized Zinc service for protected search with budget: $${budget || 'unlimited'}`);
+      
+      // Create search options with budget context
+      const searchOptions: any = { maxResults };
+      if (budget) {
+        searchOptions.maxPrice = budget;
+        // Add budget context to the query for better filtering  
+        query = `${query} under $${budget}`;
+        console.log(`🛡️ Protected search with budget constraint: max $${budget}`);
+      }
+      
+      const results = await unifiedMarketplaceService.searchProducts(query, searchOptions);
       
       // Phase 4: Track usage and update limits
       await this.trackApiUsage(userId);

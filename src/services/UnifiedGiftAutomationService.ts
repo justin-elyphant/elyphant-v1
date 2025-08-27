@@ -289,7 +289,8 @@ class UnifiedGiftAutomationService {
         userId || 'system',
         query, 
         15,
-        priority
+        priority,
+        budget
       );
       
       if (!searchResults || searchResults.length === 0) return [];
@@ -351,7 +352,8 @@ class UnifiedGiftAutomationService {
         userId || 'system',
         query, 
         15,
-        priority
+        priority,
+        budget
       );
         const filteredProducts = searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
         return this.enforceGiftBudget(filteredProducts, budget);
@@ -363,7 +365,8 @@ class UnifiedGiftAutomationService {
           userId || 'system',
           query, 
           15,
-          priority
+          priority,
+          budget
         );
       
       const filteredProducts = searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
@@ -403,7 +406,8 @@ class UnifiedGiftAutomationService {
         userId || 'system',
         query, 
         20,
-        priority
+        priority,
+        budget
       );
       
       if (!searchResults || searchResults.length === 0) {
@@ -412,7 +416,8 @@ class UnifiedGiftAutomationService {
           userId || 'system',
           'gift popular', 
           10,
-          priority
+          priority,
+          budget
         );
         const filteredProducts = fallbackResults ? this.filterAndRankProducts(fallbackResults, budget, 'ai_guess') : [];
         return this.enforceGiftBudget(filteredProducts, budget);

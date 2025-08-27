@@ -207,8 +207,7 @@ class UnifiedGiftAutomationService {
             product_id,
             name,
             price,
-            image_url,
-            is_purchased
+            image_url
           )
         `)
         .eq('user_id', recipientId)
@@ -221,7 +220,7 @@ class UnifiedGiftAutomationService {
       wishlists.forEach(wishlist => {
         if (wishlist.wishlist_items) {
           wishlist.wishlist_items.forEach((item: any) => {
-            if (!item.is_purchased && item.price && item.price <= budget) {
+            if (item.price && item.price <= budget) {
               wishlistItems.push({
                 product_id: item.product_id,
                 title: item.name,
@@ -238,7 +237,7 @@ class UnifiedGiftAutomationService {
         }
       });
 
-      return wishlistItems.slice(0, 5); // Top 5 wishlist items
+      return this.enforceGiftBudget(wishlistItems, budget);
     } catch (error) {
       console.error('Error fetching wishlist gifts:', error);
       return [];
@@ -354,7 +353,8 @@ class UnifiedGiftAutomationService {
         15,
         priority
       );
-        return searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
+        const filteredProducts = searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
+        return this.enforceGiftBudget(filteredProducts, budget);
       }
 
       const query = `${searchTerms.slice(0, 3).join(' ')} gift`;
@@ -366,7 +366,8 @@ class UnifiedGiftAutomationService {
           priority
         );
       
-      return searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
+      const filteredProducts = searchResults ? this.filterAndRankProducts(searchResults, budget, 'metadata') : [];
+      return this.enforceGiftBudget(filteredProducts, budget);
     } catch (error) {
       console.error('Error fetching metadata-based gifts:', error);
       return [];
@@ -413,10 +414,12 @@ class UnifiedGiftAutomationService {
           10,
           priority
         );
-        return fallbackResults ? this.filterAndRankProducts(fallbackResults, budget, 'ai_guess') : [];
+        const filteredProducts = fallbackResults ? this.filterAndRankProducts(fallbackResults, budget, 'ai_guess') : [];
+        return this.enforceGiftBudget(filteredProducts, budget);
       }
 
-      return this.filterAndRankProducts(searchResults, budget, 'ai_guess');
+      const filteredProducts = this.filterAndRankProducts(searchResults, budget, 'ai_guess');
+      return this.enforceGiftBudget(filteredProducts, budget);
     } catch (error) {
       console.error('Error generating AI gift suggestions:', error);
       return [];
@@ -459,6 +462,38 @@ class UnifiedGiftAutomationService {
       source,
       confidence: source === 'wishlist' ? 0.95 : source === 'preferences' ? 0.75 : source === 'metadata' ? 0.60 : 0.40
     }));
+  }
+
+  /**
+   * Enforce budget limit by selecting products that fit within the budget
+   */
+  private enforceGiftBudget(products: any[], budgetLimit: number): any[] {
+    if (!products || products.length === 0) return [];
+    
+    // Sort products by price (ascending) to prioritize affordable options
+    const sortedProducts = [...products].sort((a, b) => a.price - b.price);
+    const selectedProducts = [];
+    let currentTotal = 0;
+    
+    for (const product of sortedProducts) {
+      if (currentTotal + product.price <= budgetLimit) {
+        selectedProducts.push(product);
+        currentTotal += product.price;
+      }
+      
+      // Stop if we have enough products or reached a reasonable selection
+      if (selectedProducts.length >= 3) break;
+    }
+    
+    // If no products fit, try to find the single most affordable option
+    if (selectedProducts.length === 0 && sortedProducts.length > 0) {
+      const cheapestProduct = sortedProducts[0];
+      if (cheapestProduct.price <= budgetLimit) {
+        selectedProducts.push(cheapestProduct);
+      }
+    }
+    
+    return selectedProducts;
   }
 
   // ============= RULE MANAGEMENT ============= 

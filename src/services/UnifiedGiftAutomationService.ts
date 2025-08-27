@@ -142,7 +142,7 @@ class UnifiedGiftAutomationService {
     
     try {
       // Tier 1: Check recipient's public wishlist first
-      const wishlistGifts = await this.getWishlistGifts(recipientId, budget);
+      const wishlistGifts = await this.getWishlistGifts(recipientId, budget, userId);
       if (wishlistGifts.length > 0) {
         console.log(`✅ Tier 1: Found ${wishlistGifts.length} wishlist items`);
         return {
@@ -194,11 +194,13 @@ class UnifiedGiftAutomationService {
   }
 
   /**
-   * Tier 1: Get gifts from recipient's public wishlist
+   * Tier 1: Get gifts from recipient's wishlist (public or connected user's private)
    */
-  private async getWishlistGifts(recipientId: string, budget: number): Promise<any[]> {
+  private async getWishlistGifts(recipientId: string, budget: number, userId?: string): Promise<any[]> {
     try {
-      const { data: wishlists, error } = await supabase
+      console.log(`🎁 [Wishlist Gifts] Searching wishlists for recipient ${recipientId}, user ${userId}, budget $${budget}`);
+      
+      let wishlistQuery = supabase
         .from('wishlists')
         .select(`
           *,
@@ -211,13 +213,51 @@ class UnifiedGiftAutomationService {
           )
         `)
         .eq('user_id', recipientId)
-        .eq('is_public', true)
         .eq('is_active', true);
 
-      if (error || !wishlists) return [];
+      // If we have a user context, check for connection-based access
+      if (userId && userId !== recipientId) {
+        // Check if users are connected (for private wishlist access)
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('status')
+          .or(`and(user_id.eq.${userId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${userId})`)
+          .eq('status', 'accepted')
+          .limit(1)
+          .single();
+
+        if (connection) {
+          console.log(`🎁 [Wishlist Gifts] Found connection - accessing both public and private wishlists`);
+          // Users are connected, can access both public and private wishlists
+          // (No additional filter needed, will get all active wishlists)
+        } else {
+          console.log(`🎁 [Wishlist Gifts] No connection found - accessing only public wishlists`);
+          // Not connected, only access public wishlists
+          wishlistQuery = wishlistQuery.eq('is_public', true);
+        }
+      } else {
+        console.log(`🎁 [Wishlist Gifts] Same user or no user context - accessing only public wishlists`);
+        // No user context or same user, only access public wishlists
+        wishlistQuery = wishlistQuery.eq('is_public', true);
+      }
+
+      const { data: wishlists, error } = await wishlistQuery;
+
+      if (error) {
+        console.error('Error fetching wishlists:', error);
+        return [];
+      }
+
+      if (!wishlists || wishlists.length === 0) {
+        console.log(`🎁 [Wishlist Gifts] No accessible wishlists found for recipient ${recipientId}`);
+        return [];
+      }
+
+      console.log(`🎁 [Wishlist Gifts] Found ${wishlists.length} accessible wishlists`);
 
       const wishlistItems: any[] = [];
       wishlists.forEach(wishlist => {
+        console.log(`🎁 [Wishlist Gifts] Processing wishlist: ${wishlist.title} (public: ${wishlist.is_public}, items: ${wishlist.wishlist_items?.length || 0})`);
         if (wishlist.wishlist_items) {
           wishlist.wishlist_items.forEach((item: any) => {
             if (item.price && item.price <= budget) {
@@ -226,17 +266,19 @@ class UnifiedGiftAutomationService {
                 title: item.name,
                 price: parseFloat(item.price),
                 image: item.image_url,
-                category: 'Wishlist Item', // Default category for wishlist items
-                brand: 'Unknown', // Default brand
-                retailer: 'Unknown', // Default retailer
+                category: 'Wishlist Item',
+                brand: 'Unknown',
+                retailer: 'Unknown',
                 source: 'wishlist',
                 confidence: 0.95
               });
+              console.log(`🎁 [Wishlist Gifts] Added wishlist item: ${item.name} ($${item.price})`);
             }
           });
         }
       });
 
+      console.log(`🎁 [Wishlist Gifts] Found ${wishlistItems.length} affordable wishlist items`);
       return this.enforceGiftBudget(wishlistItems, budget);
     } catch (error) {
       console.error('Error fetching wishlist gifts:', error);
@@ -295,7 +337,8 @@ class UnifiedGiftAutomationService {
       
       if (!searchResults || searchResults.length === 0) return [];
 
-      return this.filterAndRankProducts(searchResults, budget, 'preferences');
+      const filteredProducts = this.filterAndRankProducts(searchResults, budget, 'preferences');
+      return this.enforceGiftBudget(filteredProducts, budget);
     } catch (error) {
       console.error('Error fetching preference-based gifts:', error);
       return [];
@@ -470,11 +513,13 @@ class UnifiedGiftAutomationService {
   }
 
   /**
-   * Enforce budget limit by selecting products that fit within the budget
-   * Enhanced version with strict budget validation and better logging
+   * Enforce budget limit by selecting optimal product combinations within budget
+   * Enhanced version with combination optimization and 80% budget targeting
    */
   private enforceGiftBudget(products: any[], budgetLimit: number): any[] {
     console.log(`💰 [Budget Enforcement] Starting with ${products?.length || 0} products, budget limit: $${budgetLimit}`);
+    const targetAmount = budgetLimit * 0.8; // 80% of budget target
+    console.log(`🎯 [Budget Target] Aiming for $${targetAmount} (80% of $${budgetLimit})`);
     
     if (!products || products.length === 0) {
       console.log(`💰 [Budget Enforcement] No products provided, returning empty array`);
@@ -495,7 +540,7 @@ class UnifiedGiftAutomationService {
       return [];
     }
     
-    // Sort by confidence/rating for better selection quality
+    // Sort by confidence/rating for priority ordering
     const sortedProducts = [...affordableProducts].sort((a, b) => {
       // Prioritize higher confidence first, then lower price
       const confidenceDiff = (b.confidence || 0) - (a.confidence || 0);
@@ -503,41 +548,103 @@ class UnifiedGiftAutomationService {
       return a.price - b.price;
     });
     
-    const selectedProducts = [];
-    let currentTotal = 0;
+    console.log(`🔍 [Combination Search] Exploring optimal combinations from ${sortedProducts.length} products`);
     
-    // Use greedy algorithm to select products within budget
+    // Find the best combination (1-3 products) that maximizes budget utilization
+    let bestCombination: any[] = [];
+    let bestScore = -1;
+    let bestTotal = 0;
+    
+    // Try single products first (highest confidence items)
     for (const product of sortedProducts) {
-      const newTotal = currentTotal + product.price;
-      
-      if (newTotal <= budgetLimit) {
-        selectedProducts.push(product);
-        currentTotal = newTotal;
-        console.log(`💰 [Budget Enforcement] Selected: ${product.title} ($${product.price}), running total: $${currentTotal}`);
-        
-        // Stop if we have enough products or are close to budget
-        if (selectedProducts.length >= 3 || currentTotal > budgetLimit * 0.8) {
-          console.log(`💰 [Budget Enforcement] Stopping selection - have ${selectedProducts.length} products or close to budget limit`);
-          break;
+      if (product.price <= budgetLimit) {
+        const score = this.calculateCombinationScore([product], budgetLimit, targetAmount);
+        if (score > bestScore) {
+          bestScore = score;
+          bestCombination = [product];
+          bestTotal = product.price;
+          console.log(`💎 [Single Product] New best: ${product.title} ($${product.price}) - Score: ${score.toFixed(2)}`);
         }
-      } else {
-        console.log(`💰 [Budget Enforcement] Skipping product (would exceed budget): ${product.title} ($${product.price}), would make total: $${newTotal}`);
       }
     }
     
-    // Final validation - ensure total is within budget
-    const finalTotal = selectedProducts.reduce((sum, product) => sum + product.price, 0);
-    if (finalTotal > budgetLimit) {
-      console.error(`💰 [Budget Enforcement] ERROR: Final total $${finalTotal} exceeds budget $${budgetLimit}!`);
-      // Remove products until we're within budget
-      while (selectedProducts.length > 0 && selectedProducts.reduce((sum, p) => sum + p.price, 0) > budgetLimit) {
-        const removed = selectedProducts.pop();
-        console.log(`💰 [Budget Enforcement] Removed product to fit budget: ${removed?.title}`);
+    // Try 2-product combinations
+    for (let i = 0; i < sortedProducts.length && i < 8; i++) {
+      for (let j = i + 1; j < sortedProducts.length && j < 8; j++) {
+        const combination = [sortedProducts[i], sortedProducts[j]];
+        const total = combination.reduce((sum, p) => sum + p.price, 0);
+        
+        if (total <= budgetLimit) {
+          const score = this.calculateCombinationScore(combination, budgetLimit, targetAmount);
+          if (score > bestScore) {
+            bestScore = score;
+            bestCombination = combination;
+            bestTotal = total;
+            console.log(`💎 [Two Products] New best: ${combination.map(p => p.title).join(' + ')} ($${total}) - Score: ${score.toFixed(2)}`);
+          }
+        }
       }
     }
     
-    console.log(`💰 [Budget Enforcement] Final selection: ${selectedProducts.length} products, total: $${selectedProducts.reduce((sum, p) => sum + p.price, 0)}`);
-    return selectedProducts;
+    // Try 3-product combinations (limited to top products for performance)
+    for (let i = 0; i < Math.min(sortedProducts.length, 5); i++) {
+      for (let j = i + 1; j < Math.min(sortedProducts.length, 5); j++) {
+        for (let k = j + 1; k < Math.min(sortedProducts.length, 5); k++) {
+          const combination = [sortedProducts[i], sortedProducts[j], sortedProducts[k]];
+          const total = combination.reduce((sum, p) => sum + p.price, 0);
+          
+          if (total <= budgetLimit) {
+            const score = this.calculateCombinationScore(combination, budgetLimit, targetAmount);
+            if (score > bestScore) {
+              bestScore = score;
+              bestCombination = combination;
+              bestTotal = total;
+              console.log(`💎 [Three Products] New best: ${combination.map(p => p.title).join(' + ')} ($${total}) - Score: ${score.toFixed(2)}`);
+            }
+          }
+        }
+      }
+    }
+    
+    // Final validation
+    if (bestTotal > budgetLimit) {
+      console.error(`💰 [Budget Enforcement] ERROR: Best combination total $${bestTotal} exceeds budget $${budgetLimit}!`);
+      return [];
+    }
+    
+    const utilizationPercent = ((bestTotal / budgetLimit) * 100).toFixed(1);
+    console.log(`✅ [Budget Enforcement] Optimal selection: ${bestCombination.length} products, total: $${bestTotal} (${utilizationPercent}% of budget)`);
+    console.log(`📋 [Selected Products] ${bestCombination.map(p => `${p.title} ($${p.price})`).join(', ')}`);
+    
+    return bestCombination;
+  }
+
+  /**
+   * Calculate a score for a product combination based on budget utilization and product confidence
+   */
+  private calculateCombinationScore(combination: any[], budgetLimit: number, targetAmount: number): number {
+    const total = combination.reduce((sum, p) => sum + p.price, 0);
+    const avgConfidence = combination.reduce((sum, p) => sum + (p.confidence || 0), 0) / combination.length;
+    
+    // Budget utilization score (higher is better, peaks at 80% of budget)
+    const utilizationScore = total <= targetAmount 
+      ? (total / targetAmount) * 0.8  // Scale to 0.8 max if under target
+      : 0.8 - ((total - targetAmount) / (budgetLimit - targetAmount)) * 0.3; // Penalty for over target
+    
+    // Confidence score (0-1)
+    const confidenceScore = avgConfidence;
+    
+    // Wishlist bonus (prioritize wishlist items heavily)
+    const wishlistBonus = combination.some(p => p.source === 'wishlist') ? 0.3 : 0;
+    
+    // Size penalty (slight preference for fewer items at same value)
+    const sizePenalty = combination.length > 2 ? 0.05 : 0;
+    
+    const finalScore = utilizationScore + confidenceScore + wishlistBonus - sizePenalty;
+    
+    console.log(`🧮 [Score Calc] ${combination.map(p => p.title).join(' + ')}: utilization=${utilizationScore.toFixed(2)}, confidence=${confidenceScore.toFixed(2)}, wishlist=${wishlistBonus}, final=${finalScore.toFixed(2)}`);
+    
+    return finalScore;
   }
 
   // ============= RULE MANAGEMENT ============= 

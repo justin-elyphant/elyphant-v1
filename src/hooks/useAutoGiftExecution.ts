@@ -31,6 +31,26 @@ export const useAutoGiftExecution = () => {
 
     try {
       setProcessing(true);
+      
+      // First, reset recent failed executions to pending so they can be reprocessed
+      console.log('Resetting failed executions to pending status...');
+      const { error: resetError } = await supabase
+        .from('automated_gift_executions')
+        .update({ 
+          status: 'pending',
+          error_message: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('status', 'failed')
+        .eq('user_id', user.id)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()); // Last 7 days
+
+      if (resetError) {
+        console.error('Error resetting failed executions:', resetError);
+      } else {
+        console.log('Successfully reset failed executions to pending');
+      }
+
       await unifiedGiftAutomationService.processPendingExecutions(user.id);
       await loadExecutions(); // Refresh the list
     } catch (error) {

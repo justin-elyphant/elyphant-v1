@@ -208,9 +208,6 @@ class UnifiedGiftAutomationService {
             name,
             price,
             image_url,
-            category,
-            brand,
-            retailer,
             is_purchased
           )
         `)
@@ -230,9 +227,9 @@ class UnifiedGiftAutomationService {
                 title: item.name,
                 price: parseFloat(item.price),
                 image: item.image_url,
-                category: item.category,
-                brand: item.brand,
-                retailer: item.retailer,
+                category: 'Wishlist Item', // Default category for wishlist items
+                brand: 'Unknown', // Default brand
+                retailer: 'Unknown', // Default retailer
                 source: 'wishlist',
                 confidence: 0.95
               });
@@ -734,13 +731,12 @@ class UnifiedGiftAutomationService {
           
           const totalAmount = giftSelection.products.reduce((sum, product) => sum + product.price, 0);
           
-          // Step 3: Update execution with selected products, tier used, and resolved address
+          // Step 3: Update execution with selected products and resolved address
           await supabase
             .from('automated_gift_executions')
             .update({
               selected_products: giftSelection.products,
               total_amount: totalAmount,
-              selection_tier: giftSelection.tier,
               status: execution.auto_gifting_rules.auto_approve_gifts ? 'processing' : 'pending',
               address_metadata: addressResult.addressMeta,
               updated_at: new Date().toISOString()

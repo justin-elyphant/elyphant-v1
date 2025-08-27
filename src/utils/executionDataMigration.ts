@@ -21,8 +21,10 @@ export const migrateExecutionProductData = async (executionId: string) => {
     // Check if selected_products needs migration (contains string IDs)
     if (!execution.selected_products || 
         !Array.isArray(execution.selected_products) ||
+        execution.selected_products.length === 0 ||
+        execution.selected_products[0] === "" ||
         typeof execution.selected_products[0] !== 'string') {
-      console.log('Execution already has complete product data');
+      console.log('Execution already has complete product data or empty products');
       return { success: true, alreadyMigrated: true };
     }
 

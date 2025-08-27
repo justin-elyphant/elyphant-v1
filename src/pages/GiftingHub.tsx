@@ -2,6 +2,7 @@ import React from "react";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import GiftingHubCard from "@/components/dashboard/GiftingHubCard";
 import { EventsProvider } from "@/components/gifting/events/context/EventsContext";
+import AutoGiftTestTrigger from "@/components/test/AutoGiftTestTrigger";
 
 const GiftingHub = () => {
   return (
@@ -17,6 +18,7 @@ const GiftingHub = () => {
         </div>
         
         <EventsProvider>
+          <AutoGiftTestTrigger />
           <GiftingHubCard />
         </EventsProvider>
       </div>

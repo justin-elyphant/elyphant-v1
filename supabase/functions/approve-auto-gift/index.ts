@@ -125,31 +125,93 @@ serve(async (req) => {
         throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
       }
 
-      // Call process-zma-order edge function to handle order placement
+      // First create the order record to get a proper order ID
+      const orderTotal = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+      
+      const { data: newOrder, error: createOrderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: execution.user_id,
+          total_amount: orderTotal,
+          status: 'pending',
+          order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
+          shipping_info: recipientProfile.shipping_address || {},
+          is_gift: true,
+          gift_message: `Auto-gift from your auto-gifting rule`,
+          order_metadata: {
+            auto_gift_execution_id: executionId,
+            recipient_id: execution.auto_gifting_rules.recipient_id,
+            rule_id: execution.auto_gifting_rules.id
+          }
+        })
+        .select()
+        .single();
+
+      if (createOrderError || !newOrder) {
+        throw new Error(`Failed to create order: ${createOrderError?.message}`);
+      }
+
+      console.log(`✅ Created order ${newOrder.id} for execution ${executionId}`);
+
+      // Add order items
+      const orderItemsData = finalProducts.map(product => ({
+        order_id: newOrder.id,
+        product_id: product.product_id || product.id,
+        product_name: product.title || product.name,
+        quantity: 1,
+        price: product.price,
+        product_url: product.url,
+        product_image: product.image,
+        marketplace: product.marketplace || 'amazon'
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsData);
+
+      if (itemsError) {
+        console.error(`❌ Failed to create order items:`, itemsError);
+        // Delete the order since items failed
+        await supabase.from('orders').delete().eq('id', newOrder.id);
+        throw new Error(`Failed to create order items: ${itemsError.message}`);
+      }
+
+      // Call process-zma-order edge function to handle actual order placement
       const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
         body: {
-          orderId: executionId, // Use execution ID as order reference
+          orderId: newOrder.id, // Use the real order ID
           isAutoGift: true,
           executionData: {
             execution_id: executionId,
             user_id: execution.user_id,
             recipient_id: execution.auto_gifting_rules.recipient_id,
             products: finalProducts,
-            total_amount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+            total_amount: orderTotal,
             shipping_info: recipientProfile.shipping_address || {},
             budget_limit: execution.auto_gifting_rules.budget_limit
           }
         }
       });
 
+      // Use database transaction to ensure both order and execution are updated together
       if (orderPlacementResponse.error) {
         console.error(`❌ Order placement failed for execution ${executionId}:`, orderPlacementResponse.error);
         
+        // Update order status to failed
+        await supabase
+          .from('orders')
+          .update({
+            status: 'failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', newOrder.id);
+
         // Reset execution status to pending_approval for retry
         await supabase
           .from('automated_gift_executions')
           .update({
             status: 'pending_approval',
+            order_id: newOrder.id, // Still link the order even if failed for tracking
             error_message: `Order placement failed: ${orderPlacementResponse.error.message}. Please retry.`,
             updated_at: new Date().toISOString()
           })
@@ -171,21 +233,33 @@ serve(async (req) => {
             success: false,
             error: 'Order placement failed - execution reset to pending_approval for retry',
             details: orderPlacementResponse.error.message,
-            status: 'pending_approval'
+            status: 'pending_approval',
+            orderId: newOrder.id
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        console.log(`✅ Order placement initiated for execution ${executionId}`);
+        console.log(`✅ Order placement initiated for execution ${executionId}, order ${newOrder.id}`);
         
-        // Update execution status to order_placed
-        await supabase
+        // CRITICAL: Update execution with order_id and completed status in a transaction-safe way
+        const { error: executionUpdateError } = await supabase
           .from('automated_gift_executions')
           .update({
-            status: 'order_placed',
+            status: 'completed',
+            order_id: newOrder.id,
+            selected_products: finalProducts, // Ensure products are preserved
+            total_amount: orderTotal,
             updated_at: new Date().toISOString()
           })
           .eq('id', executionId);
+
+        if (executionUpdateError) {
+          console.error(`❌ Failed to update execution ${executionId}:`, executionUpdateError);
+          // This is critical - we need to ensure the execution is properly linked
+          throw new Error(`Failed to update execution record: ${executionUpdateError.message}`);
+        }
+
+        console.log(`✅ Execution ${executionId} successfully linked to order ${newOrder.id}`);
 
         // Create success notification
         await supabase
@@ -202,9 +276,11 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             message: 'Gift approved and order placed successfully',
-            status: 'order_placed',
+            status: 'completed',
+            orderId: newOrder.id,
+            orderNumber: newOrder.order_number,
             productCount: finalProducts.length,
-            totalAmount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0)
+            totalAmount: orderTotal
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );

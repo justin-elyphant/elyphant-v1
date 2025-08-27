@@ -752,20 +752,25 @@ class UnifiedGiftAutomationService {
             continue;
           }
           
-          // Step 2: Check if existing products exceed budget and need re-selection
+          // Step 2: Force budget re-enforcement for existing executions
           const budgetLimit = execution.auto_gifting_rules.budget_limit || 50;
-          let shouldReselectProducts = false;
+          let shouldReselectProducts = true; // Always re-select to ensure budget compliance
           
           if (execution.selected_products && execution.selected_products.length > 0) {
             const currentTotal = execution.selected_products.reduce((sum: number, product: any) => sum + (product.price || 0), 0);
             
-            if (currentTotal <= budgetLimit) {
-              console.log(`✅ Execution ${execution.id} already has products within budget ($${currentTotal}), skipping re-selection`);
-              continue;
+            console.log(`🔍 [Budget Check] Execution ${execution.id}:`);
+            console.log(`  - Current total: $${currentTotal}`);
+            console.log(`  - Budget limit: $${budgetLimit}`);
+            console.log(`  - Current products: ${execution.selected_products.length}`);
+            
+            if (currentTotal > budgetLimit) {
+              console.log(`💰 [Budget Enforcement] Execution ${execution.id} exceeds budget ($${currentTotal} > $${budgetLimit}), forcing re-selection`);
             } else {
-              console.log(`💰 Execution ${execution.id} products exceed budget ($${currentTotal} > $${budgetLimit}), re-selecting products`);
-              shouldReselectProducts = true;
+              console.log(`💰 [Budget Enforcement] Execution ${execution.id} within budget but forcing re-selection to ensure compliance`);
             }
+          } else {
+            console.log(`🆕 [New Selection] Execution ${execution.id} has no products, selecting new ones`);
           }
           
           // Step 3: Use hierarchical gift selection with user context for proper rate limiting
@@ -781,6 +786,19 @@ class UnifiedGiftAutomationService {
           );
           
           const totalAmount = giftSelection.products.reduce((sum, product) => sum + product.price, 0);
+          
+          console.log(`💝 [Gift Selection Result] Execution ${execution.id}:`);
+          console.log(`  - Selected ${giftSelection.products.length} products`);
+          console.log(`  - New total: $${totalAmount}`);
+          console.log(`  - Budget limit: $${budgetLimit}`);
+          console.log(`  - Within budget: ${totalAmount <= budgetLimit ? 'YES' : 'NO'}`);
+          
+          // Ensure the selection is within budget (safety check)
+          if (totalAmount > budgetLimit) {
+            console.error(`❌ [Budget Error] Gift selection still exceeds budget: $${totalAmount} > $${budgetLimit}`);
+            // Skip this execution to prevent over-budget selections
+            continue;
+          }
           
           // Step 3: Update execution with selected products and resolved address
           await supabase

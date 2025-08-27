@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
   Info
 } from "lucide-react";
 import { format } from "date-fns";
+import { normalizeProductForDisplay } from "@/utils/productDataTransforms";
 
 interface AutoGiftExecutionCardProps {
   execution: any;
@@ -28,6 +29,12 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
   onReviewProducts 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Normalize products for display
+  const normalizedProducts = useMemo(() => {
+    if (!execution.selected_products) return [];
+    return execution.selected_products.map((product: any) => normalizeProductForDisplay(product));
+  }, [execution.selected_products]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -116,9 +123,9 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               <p className="text-sm text-muted-foreground">
                 Execution date: {format(execution.execution_date, 'MMM d, yyyy')}
               </p>
-              {execution.selected_products && execution.selected_products.length > 0 && (
+              {normalizedProducts.length > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {execution.selected_products.length} products • {formatCurrency(execution.total_amount || 0)}
+                  {normalizedProducts.length} products • {formatCurrency(execution.total_amount || 0)}
                 </p>
               )}
               {execution.error_message && (
@@ -254,47 +261,47 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               )}
 
               {/* Selected Products */}
-              {execution.selected_products && execution.selected_products.length > 0 && (
+              {normalizedProducts.length > 0 && (
                 <div className="border rounded-lg p-3 bg-muted/30">
                   <div className="flex items-center gap-2 mb-3">
                     <Package className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-medium">Selected Products ({execution.selected_products.length})</p>
+                    <p className="text-sm font-medium">Selected Products ({normalizedProducts.length})</p>
                   </div>
                   <div className="space-y-2">
-                    {execution.selected_products.slice(0, 3).map((product: any, index: number) => (
+                    {normalizedProducts.slice(0, 3).map((product: any, index: number) => (
                       <div key={index} className="flex items-center gap-3 p-2 bg-background rounded border">
-                        {(product.image || product.image_url) && (
+                        {product.image && (
                           <img 
-                            src={product.image || product.image_url} 
-                            alt={product.title || product.product_name}
+                            src={product.image} 
+                            alt={product.title}
                             className="w-10 h-10 object-cover rounded"
                           />
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {product.title || product.product_name || 'Gift Item'}
+                            {product.title || 'Gift Item'}
                           </p>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-green-600 font-medium">
-                              {formatCurrency(product.price)}
+                              {formatCurrency(product.price || 0)}
                             </p>
                             {product.marketplace && (
                               <Badge variant="outline" className="text-xs">
                                 {product.marketplace}
                               </Badge>
                             )}
-                            {product.source && (
+                            {product.productSource && (
                               <Badge variant="secondary" className="text-xs">
-                                {product.source}
+                                {product.productSource}
                               </Badge>
                             )}
                           </div>
                         </div>
                       </div>
                     ))}
-                    {execution.selected_products.length > 3 && (
+                    {normalizedProducts.length > 3 && (
                       <p className="text-sm text-muted-foreground text-center">
-                        +{execution.selected_products.length - 3} more products
+                        +{normalizedProducts.length - 3} more products
                       </p>
                     )}
                   </div>

@@ -194,15 +194,21 @@ serve(async (req) => {
               if (totalCost + (item.price || 0) <= budgetLimit) {
                 selectedProducts.push({
                   id: item.id,
+                  product_id: item.product_id || item.id,
                   title: item.product_name,
-                  product_name: item.product_name, // Keep for backward compatibility
+                  product_name: item.product_name,
+                  name: item.product_name, // Additional alias
                   price: item.price,
                   image: item.image_url,
-                  image_url: item.image_url, // Keep for backward compatibility
+                  image_url: item.image_url,
                   source: 'wishlist',
                   marketplace: 'Wishlist',
+                  category: item.category,
+                  brand: item.brand,
                   wishlist_title: item.wishlist_title,
-                  description: item.description || `From ${item.wishlist_title || 'wishlist'}`
+                  description: item.description || `From ${item.wishlist_title || 'wishlist'}`,
+                  product_details: item.product_details,
+                  features: item.features
                 });
                 totalCost += item.price || 0;
                 
@@ -217,13 +223,16 @@ serve(async (req) => {
             // For now, just create a placeholder recommendation
             selectedProducts = [{
               id: `ai-${Date.now()}`,
+              product_id: `ai-${Date.now()}`,
               title: `AI Recommended Gift for ${rule.date_type}`,
               product_name: `AI Recommended Gift for ${rule.date_type}`,
+              name: `AI Recommended Gift for ${rule.date_type}`,
               price: Math.min(rule.budget_limit || 50, 25),
               image: null,
               image_url: null,
               source: 'ai_recommendation',
               marketplace: 'AI Recommendation',
+              category: rule.date_type,
               description: `AI-generated gift suggestion for ${rule.date_type} occasion`
             }];
           }

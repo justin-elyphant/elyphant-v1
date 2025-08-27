@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gift, Heart, Clock, DollarSign, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useAutoGiftApproval } from "@/hooks/useAutoGiftApproval";
+import { normalizeProductForDisplay } from "@/utils/productDataTransforms";
 import { toast } from "sonner";
 
 interface AutoGiftApprovalCardProps {
@@ -39,8 +40,14 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { approveExecution, rejectExecution } = useAutoGiftApproval();
-  const primaryProduct = selectedProducts[0];
-  const additionalProductsCount = selectedProducts.length - 1;
+  
+  // Normalize products for display
+  const normalizedProducts = useMemo(() => {
+    return selectedProducts.map(product => normalizeProductForDisplay(product));
+  }, [selectedProducts]);
+  
+  const primaryProduct = normalizedProducts[0];
+  const additionalProductsCount = normalizedProducts.length - 1;
   
   const getEventIcon = (eventType: string) => {
     switch (eventType.toLowerCase()) {
@@ -64,7 +71,7 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
   const handleQuickApprove = async () => {
     setIsLoading(true);
     try {
-      const selectedProductIds = selectedProducts.map(p => p.id);
+      const selectedProductIds = normalizedProducts.map(p => p.id || p.product_id);
       const result = await approveExecution(executionId, selectedProductIds);
       if (result.success) {
         if (result.status === 'order_placed') {
@@ -133,19 +140,19 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
 
         {/* Selected gift preview */}
         <div className="bg-white rounded-lg p-4 mb-4 border border-border/50">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border">
-                {(primaryProduct?.image || primaryProduct?.image_url) ? (
-                  <img 
-                    src={primaryProduct.image || primaryProduct.image_url} 
-                    alt={primaryProduct.title || primaryProduct.product_name}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <Gift className="h-8 w-8 text-gray-400" />
-                )}
-              </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border">
+                  {primaryProduct?.image ? (
+                    <img 
+                      src={primaryProduct.image} 
+                      alt={primaryProduct.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <Gift className="h-8 w-8 text-gray-400" />
+                  )}
+                </div>
               {additionalProductsCount > 0 && (
                 <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">
                   +{additionalProductsCount}
@@ -154,11 +161,11 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-sm mb-1">
-                {primaryProduct?.title || primaryProduct?.product_name || 'Selected Gift'}
+                {primaryProduct?.title || 'Selected Gift'}
               </h4>
               <p className="text-sm text-muted-foreground mb-2">
                 {additionalProductsCount > 0 
-                  ? `${selectedProducts.length} items selected` 
+                  ? `${normalizedProducts.length} items selected` 
                   : primaryProduct?.category || 'Perfect match based on interests'
                 }
               </p>

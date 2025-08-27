@@ -212,8 +212,7 @@ class UnifiedGiftAutomationService {
             image_url
           )
         `)
-        .eq('user_id', recipientId)
-        .eq('is_active', true);
+        .eq('user_id', recipientId);
 
       // If we have a user context, check for connection-based access
       if (userId && userId !== recipientId) {

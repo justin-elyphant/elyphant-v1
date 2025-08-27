@@ -95,31 +95,107 @@ serve(async (req) => {
 
         const rule = execution.auto_gifting_rules;
         
-        // Call the existing unified-gift-automation function which contains the core logic
-        const { data: result, error: processError } = await supabase.functions.invoke('unified-gift-automation', {
-          body: {
-            action: 'process_execution',
-            executionId: execution.id,
-            userId: execution.user_id,
-            recipientId: rule.recipient_id,
-            budget: rule.budget_limit,
-            occasion: rule.date_type,
-            preferences: rule.gift_preferences
-          }
-        });
+        // Core gift automation logic integrated directly here
+        console.log(`🎁 Processing gift for recipient ${rule.recipient_id}, budget: ${rule.budget_limit}, occasion: ${rule.date_type}`);
+        
+        try {
+          // Get recipient profile and wishlist
+          const { data: recipientProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', rule.recipient_id)
+            .single();
 
-        if (processError) {
-          console.error(`❌ Error processing execution ${execution.id}:`, processError);
+          if (profileError || !recipientProfile) {
+            throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
+          }
+
+          // Get recipient's wishlists (should work with updated RLS policy)
+          const { data: wishlists, error: wishlistError } = await supabase
+            .from('wishlists')
+            .select(`
+              *,
+              wishlist_items (
+                *
+              )
+            `)
+            .eq('user_id', rule.recipient_id);
+
+          if (wishlistError) {
+            console.error(`❌ Error fetching wishlists:`, wishlistError);
+            throw new Error(`Failed to fetch recipient wishlists: ${wishlistError.message}`);
+          }
+
+          console.log(`📋 Found ${wishlists?.length || 0} wishlists for recipient`);
+          
+          // Collect all wishlist items within budget
+          const allWishlistItems = [];
+          for (const wishlist of wishlists || []) {
+            for (const item of wishlist.wishlist_items || []) {
+              if (item.price && item.price <= (rule.budget_limit || 50)) {
+                allWishlistItems.push({
+                  ...item,
+                  wishlist_title: wishlist.title
+                });
+              }
+            }
+          }
+
+          console.log(`🛍️ Found ${allWishlistItems.length} wishlist items within budget`);
+
+          let selectedProducts = [];
+          
+          if (allWishlistItems.length > 0) {
+            // Sort by price to find best budget combination
+            allWishlistItems.sort((a, b) => (b.price || 0) - (a.price || 0));
+            
+            // Simple budget optimization: try to get close to budget limit
+            let totalCost = 0;
+            const budgetLimit = rule.budget_limit || 50;
+            
+            for (const item of allWishlistItems) {
+              if (totalCost + (item.price || 0) <= budgetLimit) {
+                selectedProducts.push({
+                  id: item.id,
+                  product_name: item.product_name,
+                  price: item.price,
+                  image_url: item.image_url,
+                  source: 'wishlist',
+                  wishlist_title: item.wishlist_title
+                });
+                totalCost += item.price || 0;
+                
+                // Stop if we're at or very close to budget
+                if (totalCost >= budgetLimit * 0.85) break;
+              }
+            }
+            
+            console.log(`💰 Selected ${selectedProducts.length} products totaling $${totalCost.toFixed(2)} (${Math.round(totalCost/budgetLimit*100)}% of $${budgetLimit} budget)`);
+          } else {
+            console.log(`📝 No wishlist items found, will need AI recommendations`);
+            // For now, just create a placeholder recommendation
+            selectedProducts = [{
+              id: `ai-${Date.now()}`,
+              product_name: `AI Recommended Gift for ${rule.date_type}`,
+              price: Math.min(rule.budget_limit || 50, 25),
+              image_url: null,
+              source: 'ai_recommendation',
+              description: `AI-generated gift suggestion for ${rule.date_type} occasion`
+            }];
+          }
+
+          // Update execution with selected products
           await supabase
             .from('automated_gift_executions')
             .update({
-              status: 'failed',
-              error_message: `Processing failed: ${processError.message}`,
+              status: 'completed',
+              selected_products: selectedProducts,
+              total_amount: selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
               updated_at: new Date().toISOString()
             })
             .eq('id', execution.id);
-        } else {
-          console.log(`✅ Successfully processed execution ${execution.id}`);
+
+          console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
           
           // Create notification for user
           await supabase
@@ -128,9 +204,20 @@ serve(async (req) => {
               user_id: userId,
               notification_type: 'gift_suggestions_ready',
               title: 'Gift Suggestions Ready',
-              message: result?.message || 'New gift suggestions are ready for your review',
+              message: `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget`,
               execution_id: execution.id
             });
+
+        } catch (processError) {
+          console.error(`❌ Error in gift processing for execution ${execution.id}:`, processError);
+          await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'failed',
+              error_message: `Processing failed: ${processError.message}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', execution.id);
         }
 
       } catch (executionError) {

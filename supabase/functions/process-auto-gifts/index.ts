@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getEmergencyFallbackProducts, logExecutionError } from './emergency-fallback.ts'
 
 // Recovery functionality for stuck executions
 async function recoverStuckExecutions(supabaseClient: any) {
@@ -286,9 +287,18 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
   rule.auto_gifting_settings = settings
 
   try {
-    // Select gifts using the enhanced Zinc API with detailed logging
-    console.log(`🎁 [EXECUTION ${execution.id}] Starting gift selection process`)
-    const selectedProducts = await selectGiftsForExecution(supabaseClient, rule, event)
+    // Add overall 5-minute timeout for the entire gift selection process
+    const overallTimeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Gift selection process timed out after 5 minutes')), 5 * 60 * 1000)
+    })
+
+    const giftSelectionPromise = performGiftSelection(supabaseClient, rule, event)
+    
+    // Race between timeout and actual selection
+    const selectedProducts = await Promise.race([
+      giftSelectionPromise,
+      overallTimeoutPromise
+    ]) as any[]
     
     console.log(`🎁 [EXECUTION ${execution.id}] Gift selection completed:`, {
       productCount: selectedProducts?.length || 0,
@@ -342,8 +352,16 @@ async function processAutoGiftEvent(supabaseClient: any, event: AutoGiftEvent) {
 
   } catch (error) {
     console.error(`Error processing gifts for execution ${execution.id}:`, error)
+    
+    // Log detailed error information to database
+    await logExecutionError(supabaseClient, execution.id, error, event)
+    
     await updateExecutionStatus(supabaseClient, execution.id, 'failed', error.message)
   }
+}
+
+async function performGiftSelection(supabaseClient: any, rule: any, event: AutoGiftEvent) {
+  return await selectGiftsForExecution(supabaseClient, rule, event)
 }
 
 async function selectGiftsForExecution(supabaseClient: any, rule: any, event: AutoGiftEvent) {
@@ -388,6 +406,21 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
   // STEP 3: Fallback to generic product search
   console.log('🔄 Using generic product search as final fallback')
   
+  try {
+    const searchResults = await performGenericProductSearch(supabaseClient, criteria, event, maxBudget)
+    if (searchResults && searchResults.length > 0) {
+      return searchResults
+    }
+  } catch (searchError) {
+    console.log('Generic search failed, using emergency fallback:', searchError.message)
+  }
+
+  // STEP 4: Emergency fallback - mock/default products
+  console.log('🚨 Using emergency default products as final safety net')
+  return getEmergencyFallbackProducts(maxBudget, event.event_type)
+}
+
+async function performGenericProductSearch(supabaseClient: any, criteria: any, event: AutoGiftEvent, maxBudget: number) {
   // Build search query based on event type and criteria
   let searchQuery = buildSearchQuery(criteria, event)
 
@@ -451,7 +484,9 @@ async function selectGiftsForExecution(supabaseClient: any, rule: any, event: Au
 
     const fallbackProducts = fallbackResults?.products || fallbackResults?.results || []
     if (fallbackProducts.length === 0) {
-      throw new Error('No suitable products found for auto-gifting after fallback search')
+      // Final emergency fallback
+      console.log('🚨 No products found even after fallback search, using emergency defaults')
+      return getEmergencyFallbackProducts(maxBudget, event.event_type)
     }
 
     console.log(`Found ${fallbackProducts.length} products from fallback search`)
@@ -616,99 +651,86 @@ function filterWishlistProducts(products: any[], maxBudget: number): any[] {
 }
 
 async function selectGiftsWithNicoleAI(supabaseClient: any, rule: any, event: AutoGiftEvent) {
+  console.log(`🤖 [NICOLE AI] Starting enhanced gift selection for rule ${rule.id}`)
+  
   try {
-    console.log(`🤖 Attempting Nicole AI gift selection for recipient ${rule.recipient_id}`)
-    
-    // Get recipient profile with enhanced data
-    const { data: recipientProfile } = await supabaseClient
-      .from('profiles')
-      .select('name, interests, gift_preferences, bio, age_range')
-      .eq('id', rule.recipient_id)
-      .single()
+    // Add timeout wrapper for Nicole AI call
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Nicole AI selection timed out after 30 seconds')), 30000)
+    })
 
-    if (!recipientProfile) {
-      console.log('⚠️ No recipient profile found, cannot use Nicole AI')
-      return null
-    }
-
-    // Build enhanced context for Nicole
-    const nicoleContext = {
-      recipientName: recipientProfile.name,
-      interests: recipientProfile.interests || [],
-      giftPreferences: recipientProfile.gift_preferences || [],
-      budget: rule.budget_limit || 50,
-      occasion: event.event_type,
-      relationshipType: rule.relationship_context?.closeness_level || 'friend',
-      bio: recipientProfile.bio,
-      ageRange: recipientProfile.age_range
-    }
-
-    console.log(`🧠 Nicole context: ${JSON.stringify(nicoleContext, null, 2)}`)
-
-    // Use enhanced gift recommendations instead of direct Nicole chat
-    const { data: enhancedResponse, error } = await supabaseClient.functions.invoke('enhanced-gift-recommendations', {
+    const nicolePromise = supabaseClient.functions.invoke('nicole-chatgpt-agent', {
       body: {
-        searchContext: {
-          budget: [Math.floor((rule.budget_limit || 50) * 0.7), rule.budget_limit || 50],
+        message: `Please help me find the perfect gift for someone. Here are the details:
+- Budget: $${rule.budget_limit || 50}
+- Occasion: ${event.event_type}
+- Recipient ID: ${rule.recipient_id}
+- Gift preferences: ${JSON.stringify(rule.gift_selection_criteria || {})}
+- Event date: ${event.event_date}
+
+Please suggest 3-5 thoughtful gift options within the budget.`,
+        userId: rule.user_id,
+        context: 'auto_gift_execution',
+        executionId: event.event_id || `rule-${rule.id}`,
+        metadata: {
+          rule_id: rule.id,
+          recipient_id: rule.recipient_id,
+          budget: rule.budget_limit,
           occasion: event.event_type,
-          relationship: rule.relationship_context?.closeness_level || 'friend',
-          preferences: recipientProfile.interests || [],
-          giftHistory: [],
-          timeline: 'immediate'
-        },
-        recipientIdentifier: rule.recipient_id,
-        executionId: null,
-        options: {
-          includeRecommendations: true,
-          maxResults: 15,
-          confidenceThreshold: 0.6
+          selection_criteria: rule.gift_selection_criteria
         }
       }
     })
 
-    if (error) {
-      console.error('❌ Enhanced recommendations error:', error)
-      return null
+    // Race between timeout and actual call
+    const { data: nicoleResponse, error: nicoleError } = await Promise.race([
+      nicolePromise,
+      timeoutPromise
+    ]) as any
+
+    if (nicoleError) {
+      console.error('❌ [NICOLE AI] Error calling Nicole agent:', nicoleError)
+      throw new Error(`Nicole AI selection failed: ${nicoleError.message || 'Unknown error'}`)
     }
 
-    if (!enhancedResponse?.recommendations || enhancedResponse.recommendations.length === 0) {
-      console.log('⚠️ Enhanced recommendations returned no results')
-      return null
+    console.log('🤖 [NICOLE AI] Raw response received:', { hasData: !!nicoleResponse, data: nicoleResponse })
+
+    // Extract products from Nicole's response
+    const products = nicoleResponse?.products || []
+    
+    if (!products || products.length === 0) {
+      console.log('🤖 [NICOLE AI] No products returned from Nicole')
+      return { products: [], confidence: 0, aiAttribution: null }
     }
 
-    console.log(`✅ Nicole found ${enhancedResponse.recommendations.length} recommendations`)
-
-    // Format products for execution
-    const selectedProducts = enhancedResponse.recommendations.slice(0, 3).map((rec: any) => ({
-      product_id: rec.product?.id || rec.id,
-      title: rec.product?.title || rec.title,
-      price: parseFloat(rec.product?.price || rec.price || 0),
-      image: rec.product?.image || rec.image,
-      category: rec.product?.category || rec.category,
-      retailer: rec.product?.retailer || rec.retailer || 'marketplace',
-      rating: parseFloat(rec.product?.rating || rec.rating || 0),
-      review_count: parseInt(rec.product?.review_count || rec.reviewCount || 0),
-      selected: true,
-      nicole_enhanced: true,
-      confidence_score: rec.confidence || 0.75,
-      ai_reasoning: rec.reasoning || `Selected by Nicole AI for ${event.event_type}`
-    }))
-
-    return {
-      products: selectedProducts,
-      confidence: enhancedResponse.confidence || 0.75,
-      aiAttribution: {
-        agent: 'nicole',
-        confidence_score: enhancedResponse.confidence || 0.75,
-        data_sources: ['recipient_profile', 'enhanced_recommendations', 'contextual_ai'],
-        discovery_method: 'nicole_enhanced_selection',
-        reasoning: `Nicole AI selected ${selectedProducts.length} gifts based on recipient interests and preferences`
+    console.log(`🤖 [NICOLE AI] Successfully selected ${products.length} products with Nicole's help`)
+    
+    const aiAttribution = {
+      agent: 'nicole',
+      data_sources: ['ai_analysis', 'preference_matching'],
+      confidence_score: nicoleResponse.confidence || 0.85,
+      discovery_method: 'nicole_ai_selection',
+      selection_context: {
+        budget: rule.budget_limit,
+        occasion: event.event_type,
+        criteria: rule.gift_selection_criteria,
+        response_quality: products.length > 0 ? 'high' : 'low'
       }
     }
 
+    return {
+      products: products.slice(0, 5), // Limit to 5 products
+      confidence: nicoleResponse.confidence || 0.85,
+      aiAttribution
+    }
+
   } catch (error) {
-    console.error('❌ Error in Nicole AI gift selection:', error)
-    return null
+    console.error('❌ [NICOLE AI] Exception in Nicole selection:', error)
+    // If it's a timeout error, log specifically
+    if (error.message?.includes('timed out')) {
+      console.error('⏰ [NICOLE AI] Selection timed out - this execution may be stuck')
+    }
+    throw error
   }
 }
 

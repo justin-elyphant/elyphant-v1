@@ -7,5 +7,6 @@ export enum SUPABASE_FUNCTIONS {
   SMS_GIFTEE_DISCOVERY = "sms-giftee-discovery",
   SEND_INVITATION_EMAIL = "send-invitation-email",
   HANDLE_INVITATION_ACCEPTANCE = "handle-invitation-acceptance",
-  NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent"
+  NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
+  PROCESS_ZMA_ORDER = "process-zma-order"
 }

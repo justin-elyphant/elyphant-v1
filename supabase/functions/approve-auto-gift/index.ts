@@ -145,12 +145,12 @@ serve(async (req) => {
       if (orderPlacementResponse.error) {
         console.error(`❌ Order placement failed for execution ${executionId}:`, orderPlacementResponse.error);
         
-        // Update execution status to indicate order failure
+        // Reset execution status to pending_approval for retry
         await supabase
           .from('automated_gift_executions')
           .update({
-            status: 'order_failed',
-            error_message: `Order placement failed: ${orderPlacementResponse.error.message}`,
+            status: 'pending_approval',
+            error_message: `Order placement failed: ${orderPlacementResponse.error.message}. Please retry.`,
             updated_at: new Date().toISOString()
           })
           .eq('id', executionId);
@@ -169,10 +169,11 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false,
-            error: 'Order placement failed',
-            details: orderPlacementResponse.error.message
+            error: 'Order placement failed - execution reset to pending_approval for retry',
+            details: orderPlacementResponse.error.message,
+            status: 'pending_approval'
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
         console.log(`✅ Order placement initiated for execution ${executionId}`);
@@ -214,8 +215,8 @@ serve(async (req) => {
       await supabase
         .from('automated_gift_executions')
         .update({
-          status: 'order_failed',
-          error_message: `Order placement error: ${orderError.message}`,
+          status: 'pending_approval',
+          error_message: `Order placement error: ${orderError.message}. Please retry.`,
           updated_at: new Date().toISOString()
         })
         .eq('id', executionId);
@@ -223,10 +224,11 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Order placement failed',
-          details: orderError.message
+          error: 'Order placement failed - execution reset to pending_approval for retry',
+          details: orderError.message,
+          status: 'pending_approval'
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -29,11 +29,11 @@ export const useAutoGiftApproval = () => {
       }
 
       console.log('✅ Approval processed successfully:', data);
-      return data;
+      return { success: true, ...data };
 
     } catch (error) {
       console.error('❌ Error in approval process:', error);
-      throw error;
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     } finally {
       setLoading(false);
     }

@@ -137,6 +137,7 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               </div>
             )}
             
+            {/* Status-specific action buttons */}
             {(execution.status === 'pending_approval' || execution.status === 'pending') && execution.selected_products && onReviewProducts && (
               <Button 
                 size="sm" 
@@ -147,6 +148,20 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
                 }}
               >
                 Review
+              </Button>
+            )}
+            
+            {/* Retry button for processing executions that might be stuck or failed */}
+            {(execution.status === 'processing' || execution.status === 'order_failed') && execution.selected_products && onReviewProducts && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReviewProducts(execution);
+                }}
+              >
+                Retry
               </Button>
             )}
             
@@ -348,13 +363,21 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               {execution.status === 'order_failed' && (
                 <div className="border rounded-lg p-3 bg-red-50 border-red-200">
                   <p className="text-sm text-red-800">
-                    ❌ Order placement failed - please contact support
+                    ❌ Order placement failed - use Retry button to re-approve and try again
                   </p>
                   {execution.error_message && (
                     <p className="text-xs text-red-600 mt-1">
                       Error: {execution.error_message}
                     </p>
                   )}
+                </div>
+              )}
+
+              {execution.status === 'processing' && (
+                <div className="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    🔄 Processing - if stuck for more than 10 minutes, use Retry button
+                  </p>
                 </div>
               )}
 

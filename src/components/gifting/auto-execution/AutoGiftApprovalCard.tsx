@@ -67,7 +67,13 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
       const selectedProductIds = selectedProducts.map(p => p.id);
       const result = await approveExecution(executionId, selectedProductIds);
       if (result.success) {
-        toast.success(`Gifts approved and ${result.status === 'order_placed' ? 'order placed' : 'ready for processing'}!`);
+        if (result.status === 'order_placed') {
+          toast.success('Gifts approved and order placed successfully!');
+        } else if (result.status === 'pending_approval') {
+          toast.warning('Order placement failed, but execution is ready for retry');
+        } else {
+          toast.success('Gifts approved successfully!');
+        }
       } else {
         toast.error(result.error || "Failed to approve gifts");
       }
@@ -84,10 +90,10 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
     setIsLoading(true);
     try {
       const result = await rejectExecution(executionId, "User rejected the gift selection");
-      if (result.success) {
+      if (result && result.success) {
         toast.success("Gift selection rejected successfully");
       } else {
-        toast.error(result.error || "Failed to reject gifts");
+        toast.error(result?.error || "Failed to reject gifts");
       }
       onApprovalComplete?.(executionId);
     } catch (error) {

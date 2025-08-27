@@ -261,57 +261,9 @@ serve(async (req) => {
           if (shouldAutoApprove && selectedProducts.length > 0) {
             console.log(`🛒 Auto-approved execution ${execution.id}, proceeding to order placement...`);
             
-            try {
-              // Call process-zma-order edge function to handle order placement
-              const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
-                body: {
-                  orderId: execution.id, // Use execution ID as order reference
-                  isAutoGift: true,
-                  executionData: {
-                    execution_id: execution.id,
-                    user_id: userId,
-                    recipient_id: rule.recipient_id,
-                    products: selectedProducts,
-                    total_amount: selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
-                    shipping_info: recipientProfile.shipping_address || {},
-                    budget_limit: rule.budget_limit
-                  }
-                }
-              });
-
-              if (orderPlacementResponse.error) {
-                console.error(`❌ Order placement failed for execution ${execution.id}:`, orderPlacementResponse.error);
-                // Update execution status to indicate order failure
-                await supabase
-                  .from('automated_gift_executions')
-                  .update({
-                    status: 'order_failed',
-                    error_message: `Order placement failed: ${orderPlacementResponse.error.message}`,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', execution.id);
-              } else {
-                console.log(`✅ Order placement initiated for execution ${execution.id}`);
-                // Update execution status to order_placed
-                await supabase
-                  .from('automated_gift_executions')
-                  .update({
-                    status: 'order_placed',
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', execution.id);
-              }
-            } catch (orderError) {
-              console.error(`❌ Error placing order for execution ${execution.id}:`, orderError);
-              await supabase
-                .from('automated_gift_executions')
-                .update({
-                  status: 'order_failed',
-                  error_message: `Order placement error: ${orderError.message}`,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', execution.id);
-            }
+            // DON'T auto-place orders yet - just leave as 'approved' for manual order placement
+            // This ensures proper order flow through the existing approve-auto-gift function
+            console.log(`✅ Execution ${execution.id} auto-approved but will require manual order placement via approve-auto-gift`);
           }
           
           // Create appropriate notification

@@ -3,6 +3,7 @@ import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import GiftingHubCard from "@/components/dashboard/GiftingHubCard";
 import { EventsProvider } from "@/components/gifting/events/context/EventsContext";
 import AutoGiftTestTrigger from "@/components/test/AutoGiftTestTrigger";
+import HybridAutoGiftTestSuite from "@/components/test/HybridAutoGiftTestSuite";
 
 const GiftingHub = () => {
   return (
@@ -19,6 +20,7 @@ const GiftingHub = () => {
         
         <EventsProvider>
           <AutoGiftTestTrigger />
+          <HybridAutoGiftTestSuite />
           <GiftingHubCard />
         </EventsProvider>
       </div>

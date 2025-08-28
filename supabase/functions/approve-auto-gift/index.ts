@@ -7,29 +7,48 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 [approve-auto-gift] Function invoked');
+  console.log('📊 [approve-auto-gift] Request method:', req.method);
+  console.log('🔧 [approve-auto-gift] Request headers:', Object.fromEntries(req.headers.entries()));
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('🔑 [approve-auto-gift] Creating Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { executionId, selectedProductIds, approvalDecision, rejectionReason } = await req.json();
+    console.log('📦 [approve-auto-gift] Parsing request body...');
+    const requestBody = await req.json();
+    console.log('📋 [approve-auto-gift] Raw request body:', JSON.stringify(requestBody, null, 2));
+    
+    const { executionId, selectedProductIds, approvalDecision, rejectionReason } = requestBody;
+    
+    console.log('🎯 [approve-auto-gift] Processing approval request:');
+    console.log('   - Execution ID:', executionId);
+    console.log('   - Selected Product IDs:', selectedProductIds);
+    console.log('   - Approval Decision:', approvalDecision);
+    console.log('   - Rejection Reason:', rejectionReason);
+
+    console.log('✅ [approve-auto-gift] Request body parsed successfully');
 
     if (!executionId) {
+      console.error('❌ [approve-auto-gift] Missing execution ID');
       return new Response(
         JSON.stringify({ error: 'Execution ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`🔄 Processing approval for execution ${executionId}, decision: ${approvalDecision}`);
+    console.log(`🔄 [approve-auto-gift] Processing approval for execution ${executionId}, decision: ${approvalDecision}`);
 
     // Get the execution record
+    console.log('🔍 [approve-auto-gift] Fetching execution details for ID:', executionId);
     const { data: execution, error: executionError } = await supabase
       .from('automated_gift_executions')
       .select(`
@@ -40,15 +59,24 @@ serve(async (req) => {
       .single();
 
     if (executionError || !execution) {
-      console.error('❌ Error fetching execution:', executionError);
+      console.error('❌ [approve-auto-gift] Error fetching execution:', executionError);
       return new Response(
         JSON.stringify({ error: 'Execution not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('📋 [approve-auto-gift] Current execution details:');
+    console.log('   - Status:', execution.status);
+    console.log('   - User ID:', execution.user_id);
+    console.log('   - Rule ID:', execution.rule_id);
+    console.log('   - Selected Products:', execution.selected_products?.length || 0, 'products');
+    console.log('   - Order ID:', execution.order_id);
+
     // Accept both pending_approval and processing statuses to support unified system workflow
+    console.log('🔍 [approve-auto-gift] Checking execution status...');
     if (execution.status !== 'pending_approval' && execution.status !== 'processing') {
+      console.log(`ℹ️ [approve-auto-gift] Execution not in approvable status: ${execution.status}`);
       return new Response(
         JSON.stringify({ error: `Execution is not in an approvable status. Current status: ${execution.status}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,6 +84,7 @@ serve(async (req) => {
     }
 
     if (approvalDecision === 'rejected') {
+      console.log('❌ [approve-auto-gift] Processing rejection...');
       // Handle rejection
       await supabase
         .from('automated_gift_executions')
@@ -77,7 +106,7 @@ serve(async (req) => {
           execution_id: executionId
         });
 
-      console.log(`✅ Execution ${executionId} rejected successfully`);
+      console.log(`✅ [approve-auto-gift] Execution ${executionId} rejected successfully`);
       
       return new Response(
         JSON.stringify({ 
@@ -90,31 +119,42 @@ serve(async (req) => {
     }
 
     // Handle approval
+    console.log('✅ [approve-auto-gift] Processing approval...');
     let finalProducts = execution.selected_products;
     
     // If specific product IDs were selected, filter the products
+    console.log('📦 [approve-auto-gift] Processing product selection...');
     if (selectedProductIds && selectedProductIds.length > 0) {
+      console.log('🎯 [approve-auto-gift] Filtering to selected products:', selectedProductIds);
       finalProducts = execution.selected_products?.filter(product => 
         selectedProductIds.includes(product.id)
       ) || [];
     }
+    
+    console.log('📋 [approve-auto-gift] Final products to order:', JSON.stringify(finalProducts, null, 2));
 
     // Update execution to approved status
+    console.log('📝 [approve-auto-gift] Updating execution to approved status...');
+    const totalAmount = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+    console.log('💰 [approve-auto-gift] Total amount:', totalAmount);
+    
     await supabase
       .from('automated_gift_executions')
       .update({
         status: 'approved',
         selected_products: finalProducts,
-        total_amount: finalProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+        total_amount: totalAmount,
         updated_at: new Date().toISOString()
       })
       .eq('id', executionId);
 
-    console.log(`✅ Execution ${executionId} approved with ${finalProducts.length} products`);
+    console.log(`✅ [approve-auto-gift] Execution ${executionId} approved with ${finalProducts.length} products`);
 
     // Proceed to order placement with payment processing
+    console.log('🛒 [approve-auto-gift] Starting order placement process...');
     try {
       // Get recipient profile for shipping info
+      console.log('👤 [approve-auto-gift] Fetching recipient profile...');
       const { data: recipientProfile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -122,8 +162,11 @@ serve(async (req) => {
         .single();
 
       if (profileError || !recipientProfile) {
+        console.error('❌ [approve-auto-gift] Failed to fetch recipient profile:', profileError);
         throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
       }
+      
+      console.log('✅ [approve-auto-gift] Recipient profile fetched successfully');
 
       // For auto-gifts, we'll skip payment processing for now and proceed with order placement
       // This allows testing the complete flow without requiring payment methods setup
@@ -327,12 +370,22 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('❌ Error in approve-auto-gift function:', error);
+    console.error('💥 [approve-auto-gift] Caught exception:', error);
+    console.error('🔍 [approve-auto-gift] Exception details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    
+    const errorResponse = { 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    };
+    
+    console.log('📤 [approve-auto-gift] Sending error response:', JSON.stringify(errorResponse, null, 2));
+    
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        details: error.message 
-      }),
+      JSON.stringify(errorResponse),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

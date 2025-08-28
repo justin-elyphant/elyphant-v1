@@ -192,6 +192,21 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               </Button>
             )}
             
+            {/* TEMPORARY: Send Gift button for approved executions to test ZMA routing */}
+            {execution.status === 'approved' && execution.selected_products && onReviewProducts && (
+              <Button 
+                size="sm" 
+                variant="default" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReviewProducts(execution);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Send Gift
+              </Button>
+            )}
+            
             {/* Retry button for processing executions that might be stuck or failed */}
             {(execution.status === 'processing' || execution.status === 'order_failed') && execution.selected_products && onReviewProducts && (
               <Button 

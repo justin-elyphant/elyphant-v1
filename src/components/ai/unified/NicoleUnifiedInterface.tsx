@@ -61,8 +61,11 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   // Recommendations hook
   const { generateRecommendations, trackRecommendationEvent, lastResponse: recLastResponse } = useEnhancedGiftRecommendations();
   
-  // Search hook for product tiles
+  // Search hook for product tiles and marketplace intelligence
   const { searchProducts } = useUnifiedSearch({ maxResults: 12 });
+  
+  // Nicole marketplace intelligence integration
+  const [nicoleIntelligenceActive, setNicoleIntelligenceActive] = useState(false);
   // Convert string capability to proper NicoleCapability type
   const getCapabilityFromString = (capabilityString?: string): NicoleCapability => {
     switch (capabilityString) {
@@ -120,21 +123,89 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       // Handle product tiles display when Nicole provides search context
       if (response.showProductTiles) {
         const query = response.searchQuery || 'popular gifts';
-        console.log('🛍️ Fetching products for tiles with query:', query);
+        console.log('🛍️ [NICOLE MARKETPLACE] Fetching products for tiles with query:', query);
+        
         try {
-          const products = await searchProducts(query, { maxResults: 12 });
-          console.log('🎯 Found', products.length, 'products for tiles');
-          if (products.length > 0) {
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              type: 'product_tiles',
-              payload: { products }
-            }]);
+          // Check if we should use Nicole's marketplace intelligence
+          const currentContext = getConversationContext();
+          setNicoleIntelligenceActive(true);
+          
+          // Use enhanced marketplace intelligence if context is available
+          if (currentContext && (currentContext.recipient || currentContext.occasion)) {
+            console.log('🤖 Using Nicole marketplace intelligence with context:', currentContext);
+            
+            // Import and use Nicole marketplace intelligence
+            const { nicoleMarketplaceIntelligenceService } = await import('@/services/gifting/NicoleMarketplaceIntelligenceService');
+            
+            const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
+              recipient_id: currentContext.recipient,
+              recipient_name: currentContext.recipient,
+              relationship: currentContext.relationship,
+              occasion: currentContext.occasion,
+              budget: currentContext.budget,
+              interests: currentContext.interests,
+              conversation_history: messages.filter(m => m.role === 'user').map(m => m.content || ''),
+              confidence_threshold: 0.4
+            });
+            
+            if (intelligenceResult.recommendations.length > 0) {
+              console.log(`🎯 Nicole Intelligence found ${intelligenceResult.recommendations.length} curated products`);
+              
+              // Convert recommendations to products for display
+              const curatedProducts = intelligenceResult.recommendations.map(rec => rec.product);
+              
+              setMessages(prev => [...prev, {
+                role: 'assistant',
+                type: 'product_tiles',
+                payload: { 
+                  products: curatedProducts,
+                  nicoleIntelligence: true,
+                  intelligenceSource: intelligenceResult.intelligence_source,
+                  totalAnalyzed: intelligenceResult.total_products_analyzed
+                }
+              }]);
+            } else {
+              // Fallback to regular search if no intelligent recommendations
+              const products = await searchProducts(query, { maxResults: 12 });
+              if (products.length > 0) {
+                setMessages(prev => [...prev, {
+                  role: 'assistant',
+                  type: 'product_tiles',
+                  payload: { products }
+                }]);
+              }
+            }
           } else {
-            console.warn('No products found for tiles, query:', query);
+            // Regular product search without intelligence
+            const products = await searchProducts(query, { maxResults: 12 });
+            console.log('🎯 Found', products.length, 'products for tiles');
+            if (products.length > 0) {
+              setMessages(prev => [...prev, {
+                role: 'assistant',
+                type: 'product_tiles',
+                payload: { products }
+              }]);
+            } else {
+              console.warn('No products found for tiles, query:', query);
+            }
           }
         } catch (error) {
           console.error('Failed to fetch products for tiles:', error);
+          // Fallback to regular search on error
+          try {
+            const products = await searchProducts(query, { maxResults: 12 });
+            if (products.length > 0) {
+              setMessages(prev => [...prev, {
+                role: 'assistant',
+                type: 'product_tiles',
+                payload: { products }
+              }]);
+            }
+          } catch (fallbackError) {
+            console.error('Fallback search also failed:', fallbackError);
+          }
+        } finally {
+          setNicoleIntelligenceActive(false);
         }
       }
       

@@ -3,6 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,9 +26,16 @@ serve(async (req) => {
       return handleInvitationAcceptance(req);
     }
 
-    const { message, context, sessionId } = await req.json();
+    const { message, context, sessionId, userId } = await req.json();
 
-    console.log('Nicole ChatGPT Agent:', { message, context, sessionId });
+    console.log('Nicole ChatGPT Agent:', { message, context, sessionId, userId });
+
+    // Check if we should use agent model for this conversation
+    const useAgentModel = shouldUseAgentModel(context);
+    
+    if (useAgentModel) {
+      return await handleAgentModelConversation(message, context, sessionId, userId);
+    }
 
     // Natural, friend-like Nicole personality for gift conversations
     const systemPrompt = `Hey! You're Nicole, and you're totally obsessed with finding the perfect gifts. You're like that friend who's amazing at gift-giving and just loves helping people find something special. 
@@ -286,4 +298,598 @@ Ready to get started? What kinds of things do you love receiving as gifts?`;
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+// ============= AGENT MODEL INTEGRATION =============
+
+function shouldUseAgentModel(context: any): boolean {
+  // Use agent model for complex auto-gifting workflows and conversations requiring memory
+  return !!(
+    context.selectedIntent === 'auto-gift' ||
+    context.capability === 'auto_gifting' ||
+    context.giftCollectionPhase ||
+    context.conversationPhase === 'invitation_acceptance' ||
+    context.autoGiftIntelligence?.hasIntelligence
+  );
+}
+
+async function handleAgentModelConversation(
+  message: string, 
+  context: any, 
+  sessionId: string,
+  userId?: string
+): Promise<Response> {
+  try {
+    console.log('🤖 Using OpenAI Agent Model for conversation');
+    
+    // Get or create assistant
+    const assistantId = await getOrCreateNicoleAssistant();
+    
+    // Get or create conversation thread
+    const threadId = await getOrCreateConversationThread(sessionId, userId);
+    
+    // Add message to thread
+    await addMessageToThread(threadId, message, context);
+    
+    // Run the assistant
+    const run = await runAssistant(threadId, assistantId, context);
+    
+    // Get the response
+    const response = await getAssistantResponse(threadId, run.id);
+    
+    // Analyze and update context
+    const updatedContext = analyzeResponseAndUpdateContext(response.message, message, context);
+    
+    return new Response(JSON.stringify({
+      message: response.message,
+      context: updatedContext,
+      capability: 'gift_advisor',
+      actions: determineAvailableActions(updatedContext),
+      showSearchButton: isReadyForSearch(updatedContext),
+      metadata: {
+        confidence: 0.95,
+        contextUpdates: updatedContext,
+        threadId: threadId,
+        agentModel: true
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    
+  } catch (error) {
+    console.error('Agent model conversation error:', error);
+    // Fallback to traditional chat completions
+    return await handleTraditionalConversation(message, context, sessionId);
+  }
+}
+
+async function getOrCreateNicoleAssistant(): Promise<string> {
+  try {
+    // Check if assistant already exists in Supabase
+    const { data: existingAssistant } = await supabase
+      .from('ai_assistants')
+      .select('assistant_id')
+      .eq('name', 'nicole-gift-advisor')
+      .single();
+    
+    if (existingAssistant?.assistant_id) {
+      return existingAssistant.assistant_id;
+    }
+    
+    // Create new assistant with Nicole's personality and tools
+    const response = await fetch('https://api.openai.com/v1/assistants', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        name: "Nicole - Gift Advisor",
+        instructions: `You're Nicole, an enthusiastic gift advisor who's amazing at finding perfect gifts. You're like that friend who's incredible at gift-giving and loves helping people find something special.
+
+PERSONALITY:
+- Talk like a casual, enthusiastic friend (use "Oh!", "Sweet!", "Love it!")
+- Use contractions naturally ("I'll", "you're", "let's")
+- Be genuinely excited about gift-giving
+- Sound confident but not robotic ("I'm pretty good at this gift thing!")
+- Occasionally use emojis for warmth
+- React naturally to what they tell you ("That sounds perfect for them!")
+- Ask ONE thing at a time so it feels like a real conversation
+
+CORE CAPABILITIES:
+1. **Auto-Gift Intelligence**: Analyze user patterns and suggest optimal gift setups
+2. **Recipient Analysis**: Learn about recipients through conversation and stored data
+3. **Budget Optimization**: Suggest smart budget ranges based on relationships and occasions
+4. **Product Discovery**: Find perfect products using advanced search capabilities
+5. **Memory & Learning**: Remember preferences and improve suggestions over time
+
+CONVERSATION FLOW:
+1. **Getting to know the recipient**: "Ooh, who's this gift for? Tell me about them!"
+2. **Finding out the occasion**: "What's the occasion? Birthday? Anniversary? Or just because they're awesome?"
+3. **Budget discussion**: "What feels comfortable to spend? I can work with any budget!"
+4. **Contact info (auto-gifts only)**: "Perfect! What's their phone number? I'll coordinate everything!"
+5. **Ready to find gifts**: "Okay, I've got everything I need! Let me find some amazing options! 😊"
+
+INTELLIGENCE FEATURES:
+- Use conversation history to provide personalized suggestions
+- Learn from user preferences and past gifting patterns  
+- Suggest optimal auto-gift setups based on relationship analysis
+- Provide confident budget recommendations using intelligence data
+- Remember recipient details across conversations
+
+Always maintain enthusiasm while being helpful and efficient!`,
+        model: "gpt-4.1-2025-04-14",
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "analyze_recipient_preferences",
+              description: "Analyze and store recipient preferences for better gift recommendations",
+              parameters: {
+                type: "object",
+                properties: {
+                  recipientName: { type: "string" },
+                  interests: { type: "array", items: { type: "string" } },
+                  relationship: { type: "string" },
+                  occasion: { type: "string" },
+                  budgetRange: { type: "array", items: { type: "number" } }
+                },
+                required: ["recipientName"]
+              }
+            }
+          },
+          {
+            type: "function", 
+            function: {
+              name: "search_products",
+              description: "Search for gift products based on preferences",
+              parameters: {
+                type: "object",
+                properties: {
+                  query: { type: "string" },
+                  budget: { type: "array", items: { type: "number" } },
+                  interests: { type: "array", items: { type: "string" } }
+                },
+                required: ["query"]
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
+              name: "create_auto_gift_rule",
+              description: "Create an automated gifting rule for the user",
+              parameters: {
+                type: "object", 
+                properties: {
+                  recipientName: { type: "string" },
+                  occasion: { type: "string" },
+                  budget: { type: "array", items: { type: "number" } },
+                  phone: { type: "string" },
+                  relationship: { type: "string" }
+                },
+                required: ["recipientName", "occasion", "budget"]
+              }
+            }
+          }
+        ],
+        temperature: 0.7,
+        top_p: 1.0
+      })
+    });
+    
+    const assistantData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create assistant: ${assistantData.error?.message || 'Unknown error'}`);
+    }
+    
+    // Store assistant ID in Supabase for future use
+    await supabase
+      .from('ai_assistants')
+      .upsert({
+        name: 'nicole-gift-advisor',
+        assistant_id: assistantData.id,
+        created_at: new Date().toISOString()
+      });
+    
+    console.log('✅ Created new Nicole assistant:', assistantData.id);
+    return assistantData.id;
+    
+  } catch (error) {
+    console.error('Failed to get/create Nicole assistant:', error);
+    throw error;
+  }
+}
+
+async function getOrCreateConversationThread(sessionId: string, userId?: string): Promise<string> {
+  try {
+    // Check if thread exists for this session
+    const { data: existingThread } = await supabase
+      .from('conversation_threads')
+      .select('thread_id')
+      .eq('session_id', sessionId)
+      .single();
+    
+    if (existingThread?.thread_id) {
+      return existingThread.thread_id;
+    }
+    
+    // Create new thread
+    const response = await fetch('https://api.openai.com/v1/threads', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        metadata: {
+          sessionId: sessionId,
+          userId: userId || 'anonymous',
+          createdAt: new Date().toISOString()
+        }
+      })
+    });
+    
+    const threadData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create thread: ${threadData.error?.message || 'Unknown error'}`);
+    }
+    
+    // Store thread ID in Supabase
+    await supabase
+      .from('conversation_threads')
+      .insert({
+        session_id: sessionId,
+        thread_id: threadData.id,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      });
+    
+    console.log('✅ Created new conversation thread:', threadData.id);
+    return threadData.id;
+    
+  } catch (error) {
+    console.error('Failed to get/create conversation thread:', error);
+    throw error;
+  }
+}
+
+async function addMessageToThread(threadId: string, message: string, context: any): Promise<void> {
+  try {
+    // Add context information to the message for better agent understanding
+    const contextualMessage = `${message}
+
+CURRENT CONTEXT:
+- Collection Phase: ${context.giftCollectionPhase || 'recipient'}
+- Selected Intent: ${context.selectedIntent || 'unknown'}
+- Recipient: ${context.recipientInfo?.name || 'Not specified'}
+- Relationship: ${context.relationship || 'Not specified'}
+- Occasion: ${context.occasion || 'Not specified'}
+- Budget: ${context.budget ? `$${context.budget[0]}-$${context.budget[1]}` : 'Not specified'}
+- Phone: ${context.recipientInfo?.phone || 'Not provided'}`;
+
+    const response = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        role: 'user',
+        content: contextualMessage
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to add message to thread: ${error.error?.message || 'Unknown error'}`);
+    }
+    
+  } catch (error) {
+    console.error('Failed to add message to thread:', error);
+    throw error;
+  }
+}
+
+async function runAssistant(threadId: string, assistantId: string, context: any): Promise<any> {
+  try {
+    const response = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        assistant_id: assistantId,
+        additional_instructions: `Current conversation phase: ${context.giftCollectionPhase || 'recipient'}. User intent: ${context.selectedIntent || 'unknown'}.`
+      })
+    });
+    
+    const runData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Failed to run assistant: ${runData.error?.message || 'Unknown error'}`);
+    }
+    
+    // Wait for completion
+    return await waitForRunCompletion(threadId, runData.id);
+    
+  } catch (error) {
+    console.error('Failed to run assistant:', error);
+    throw error;
+  }
+}
+
+async function waitForRunCompletion(threadId: string, runId: string): Promise<any> {
+  const maxAttempts = 30;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'OpenAI-Beta': 'assistants=v2'
+        }
+      });
+      
+      const runData = await response.json();
+      
+      if (runData.status === 'completed') {
+        return runData;
+      } else if (runData.status === 'failed') {
+        throw new Error(`Run failed: ${runData.last_error?.message || 'Unknown error'}`);
+      } else if (runData.status === 'requires_action') {
+        // Handle tool calls
+        await handleToolCalls(threadId, runId, runData.required_action);
+        continue;
+      }
+      
+      // Wait before next check
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+      
+    } catch (error) {
+      console.error('Error checking run status:', error);
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  throw new Error('Run timed out');
+}
+
+async function handleToolCalls(threadId: string, runId: string, requiredAction: any): Promise<void> {
+  try {
+    const toolCalls = requiredAction.submit_tool_outputs.tool_calls;
+    const toolOutputs = [];
+    
+    for (const toolCall of toolCalls) {
+      const { id, function: func } = toolCall;
+      const { name, arguments: args } = func;
+      
+      let output = '';
+      const parsedArgs = JSON.parse(args);
+      
+      switch (name) {
+        case 'analyze_recipient_preferences':
+          output = await handleAnalyzeRecipientPreferences(parsedArgs);
+          break;
+        case 'search_products':
+          output = await handleSearchProducts(parsedArgs);
+          break;
+        case 'create_auto_gift_rule':
+          output = await handleCreateAutoGiftRule(parsedArgs);
+          break;
+        default:
+          output = JSON.stringify({ error: `Unknown function: ${name}` });
+      }
+      
+      toolOutputs.push({
+        tool_call_id: id,
+        output: output
+      });
+    }
+    
+    // Submit tool outputs
+    await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        tool_outputs: toolOutputs
+      })
+    });
+    
+  } catch (error) {
+    console.error('Failed to handle tool calls:', error);
+    throw error;
+  }
+}
+
+async function handleAnalyzeRecipientPreferences(args: any): Promise<string> {
+  try {
+    // Store recipient preferences in Supabase
+    const { data, error } = await supabase
+      .from('recipient_preferences')
+      .upsert({
+        recipient_name: args.recipientName,
+        interests: args.interests || [],
+        relationship: args.relationship,
+        occasion: args.occasion,
+        budget_range: args.budgetRange,
+        updated_at: new Date().toISOString()
+      });
+    
+    if (error) {
+      return JSON.stringify({ error: error.message });
+    }
+    
+    return JSON.stringify({ 
+      success: true,
+      message: `Analyzed and stored preferences for ${args.recipientName}`
+    });
+  } catch (error) {
+    return JSON.stringify({ error: error.message });
+  }
+}
+
+async function handleSearchProducts(args: any): Promise<string> {
+  try {
+    // Call existing product search service
+    const response = await supabase.functions.invoke('search-products', {
+      body: {
+        query: args.query,
+        budget: args.budget,
+        interests: args.interests
+      }
+    });
+    
+    return JSON.stringify(response.data || { products: [] });
+  } catch (error) {
+    return JSON.stringify({ error: error.message });
+  }
+}
+
+async function handleCreateAutoGiftRule(args: any): Promise<string> {
+  try {
+    // Call existing auto-gift setup service
+    const response = await supabase.functions.invoke('setup-auto-gift', {
+      body: {
+        recipientName: args.recipientName,
+        occasion: args.occasion,
+        budget: args.budget,
+        phone: args.phone,
+        relationship: args.relationship
+      }
+    });
+    
+    return JSON.stringify(response.data || { success: true });
+  } catch (error) {
+    return JSON.stringify({ error: error.message });
+  }
+}
+
+async function getAssistantResponse(threadId: string, runId: string): Promise<{ message: string }> {
+  try {
+    // Get messages from thread
+    const response = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'OpenAI-Beta': 'assistants=v2'
+      }
+    });
+    
+    const messagesData = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get messages: ${messagesData.error?.message || 'Unknown error'}`);
+    }
+    
+    // Get the latest assistant message
+    const assistantMessage = messagesData.data.find((msg: any) => 
+      msg.role === 'assistant' && msg.run_id === runId
+    );
+    
+    if (!assistantMessage) {
+      throw new Error('No assistant response found');
+    }
+    
+    const messageContent = assistantMessage.content[0]?.text?.value || 'I apologize, but I had trouble generating a response.';
+    
+    return { message: messageContent };
+    
+  } catch (error) {
+    console.error('Failed to get assistant response:', error);
+    throw error;
+  }
+}
+
+async function handleTraditionalConversation(message: string, context: any, sessionId: string): Promise<Response> {
+  // Fallback to the existing chat completions implementation
+  console.log('🔄 Falling back to traditional chat completions');
+  
+  const systemPrompt = `Hey! You're Nicole, and you're totally obsessed with finding the perfect gifts. You're like that friend who's amazing at gift-giving and just loves helping people find something special. 
+
+CURRENT COLLECTION PHASE: ${context.giftCollectionPhase || 'recipient'}
+CONVERSATION TYPE: ${context.conversationPhase || 'standard'}
+USER INTENT: ${context.selectedIntent || 'unknown'}
+
+Your natural conversation flow:
+
+**Getting to know the recipient** 
+- Ask casually: "Ooh, who's this gift for? Tell me about them!"
+- Or: "Sweet! Who are we shopping for? What's your relationship like?"
+- You want: recipient name, relationship
+
+**Finding out the occasion**
+- Ask naturally: "What's the occasion? Birthday? Anniversary? Or just because they're awesome?"
+- Be excited about whatever it is!
+- You want: occasion, any special dates
+
+**Budget chat**
+- Ask friendly: "What feels comfortable to spend? I can work with any budget - whether it's like $20 or $200!"
+- Make them feel good about whatever they say
+- You want: budget range as [min, max]
+
+**Getting contact info (only for auto-gifting)**
+- Ask casually: "Perfect! What's their phone number? I'll coordinate everything so it's a total surprise!"
+- You want: phone number
+
+**Ready to find gifts!**
+- Get excited: "Okay, I've got everything I need! Let me find some amazing options for them 😊"
+- Show enthusiasm about helping
+
+Talk like their friend who happens to be amazing at gifts, and naturally guide the conversation to get what you need!`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-2025-04-14',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    const data = await response.json();
+    const aiMessage = data.choices[0].message.content;
+
+    const updatedContext = analyzeResponseAndUpdateContext(aiMessage, message, context);
+
+    return new Response(JSON.stringify({
+      message: aiMessage,
+      context: updatedContext,
+      capability: 'gift_advisor',
+      actions: determineAvailableActions(updatedContext),
+      showSearchButton: isReadyForSearch(updatedContext),
+      metadata: {
+        confidence: 0.9,
+        contextUpdates: updatedContext,
+        agentModel: false
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Traditional conversation fallback failed:', error);
+    throw error;
+  }
 }

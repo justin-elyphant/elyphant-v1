@@ -10,6 +10,7 @@ import NotificationSettingsSection from "./NotificationSettingsSection";
 import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
 import ActiveRulesSection from "./ActiveRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
+import AutoGiftExecutionProcessor from "@/components/auto-gifting/AutoGiftExecutionProcessor";
 import AutoGiftSetupFlow from "../../auto-gift/AutoGiftSetupFlow";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -125,6 +126,7 @@ const AutomatedGiftingTabContent = () => {
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-4">
+          <AutoGiftExecutionProcessor className="mb-6" />
           <AutoGiftExecutionDashboard />
         </TabsContent>
       </Tabs>

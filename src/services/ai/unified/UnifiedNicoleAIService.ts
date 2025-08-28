@@ -104,16 +104,16 @@ export class UnifiedNicoleAIService {
 
       // Route to specialized capabilities or use ChatGPT Agent 
       if (capability === 'auto_gifting' || enhancedContext.selectedIntent === 'auto-gift') {
-        // Use ChatGPT Agent for auto-gifting flows
-        console.log('🎁 Routing to ChatGPT Agent for auto-gifting');
+        // Use ChatGPT Agent for auto-gifting flows with enhanced agent model
+        console.log('🎁 Routing to ChatGPT Agent for auto-gifting (Enhanced Agent Model)');
         response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
       } else if (capability === 'gift_advisor' && enhancedContext.recipient) {
-        // Use ChatGPT Agent for gift advisor with recipient
-        console.log('🎁 Routing to ChatGPT Agent for gift advisor');
+        // Use ChatGPT Agent for gift advisor with recipient (Enhanced Agent Model)
+        console.log('🎁 Routing to ChatGPT Agent for gift advisor (Enhanced Agent Model)');
         response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
       } else if (isDynamicGreeting || capability === 'conversation' || capability === 'search') {
-        // Use ChatGPT Agent for dynamic greetings and general conversation
-        console.log('💬 Routing to ChatGPT Agent for conversation');
+        // Use ChatGPT Agent for dynamic greetings and general conversation (Enhanced Agent Model)
+        console.log('💬 Routing to ChatGPT Agent for conversation (Enhanced Agent Model)');
         response = await this.handleChatGPTAgentFlow(message, enhancedContext, sessionId);
       } else {
         // Route to specialized capabilities
@@ -587,7 +587,7 @@ export class UnifiedNicoleAIService {
 
 
   /**
-   * Handle ChatGPT Agent flow for quick gift collection
+   * Enhanced ChatGPT Agent integration with OpenAI Assistants API
    */
   private async handleChatGPTAgentFlow(
     message: string,
@@ -648,53 +648,54 @@ export class UnifiedNicoleAIService {
 
       // Get current conversation history (already includes the user message)
       const conversationState = this.getConversationState(sessionId);
+      console.log('🤖 Using Enhanced ChatGPT Agent with OpenAI Assistants API');
       
-      const response = await supabase.functions.invoke('nicole-chat', {
-        body: { 
-          message, 
+      const response = await supabase.functions.invoke('nicole-chatgpt-agent', {
+        body: {
+          message,
           context: agentContext,
-          conversationHistory: conversationState.conversationHistory,
-          enhancedFeatures: {
-            multiCategorySearch: true,
-            brandCategoryMapping: true,
-            groupedResults: true,
-            conversationEnhancement: true,
-            connectionIntegration: true,
-            wishlistIntegration: true
-          },
-          hasConnections: userConnections.length > 0,
-          hasWishlists: false // We can add wishlist support later
+          sessionId,
+          userId: context.currentUserId
         }
       });
-
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('Enhanced ChatGPT Agent error:', response.error);
+        throw new Error(response.error.message || 'Enhanced ChatGPT Agent request failed');
       }
 
-      // Convert ChatGPT Agent response to unified format
-      const agentData = response.data;
-      const actionsFromAgent = agentData.actions || [];
-
-      // Proactively offer auto-gifting when recipient and occasion are present
-      const shouldOfferAutoGifting = Boolean((agentData.context || context)?.recipient && (agentData.context || context)?.occasion);
-      const mergedActions = shouldOfferAutoGifting && !actionsFromAgent.includes('offer_auto_gifting')
-        ? [...actionsFromAgent, 'offer_auto_gifting']
-        : actionsFromAgent;
-
       return {
-        message: agentData.message || agentData.response,
-        context: agentData.context || context,
-        capability: (context.selectedIntent === 'auto-gift' ? 'auto_gifting' : 'gift_advisor') as NicoleCapability,
-        actions: mergedActions,
-        searchQuery: agentData.searchQuery || '',
-        showSearchButton: agentData.showSearchButton || false,
-        metadata: agentData.metadata
+        message: response.data.message,
+        context: { ...context, ...response.data.context },
+        capability: response.data.capability as NicoleCapability,
+        actions: response.data.actions || [],
+        searchQuery: this.generateSearchQuery(context),
+        showSearchButton: response.data.showSearchButton || false,
+        metadata: {
+          confidence: response.data.metadata?.confidence || 0.95,
+          suggestedFollowups: response.data.metadata?.suggestedFollowups,
+          contextUpdates: response.data.metadata?.contextUpdates,
+          agentModel: response.data.metadata?.agentModel || false,
+          threadId: response.data.metadata?.threadId
+        }
       };
+
     } catch (error) {
-      console.error('ChatGPT Agent error, falling back to original Nicole:', error);
+      console.error('Enhanced ChatGPT Agent flow error:', error);
       
-      // Fallback to original gift advisor capability
-      return await this.handleGiftAdvisorCapability(message, context);
+      // Fallback to basic conversation
+      return {
+        message: "I'm having a little trouble right now, but I'm still here to help! What would you like to know about gifting?",
+        context,
+        capability: 'conversation',
+        actions: ['continue_conversation'],
+        searchQuery: '',
+        showSearchButton: false,
+        metadata: {
+          confidence: 0.5,
+          agentModel: false,
+          fallback: true
+        }
+      };
     }
   }
 }

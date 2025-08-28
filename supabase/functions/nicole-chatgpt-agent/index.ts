@@ -118,7 +118,8 @@ Talk like their friend who happens to be amazing at gifts, and naturally guide t
       showSearchButton: isReadyForSearch(updatedContext),
       metadata: {
         confidence: 0.9,
-        contextUpdates: updatedContext
+        contextUpdates: updatedContext,
+        agentModel: false
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

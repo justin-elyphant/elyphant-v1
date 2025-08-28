@@ -127,6 +127,9 @@ export interface NicoleResponse {
     confidence?: number;
     suggestedFollowups?: string[];
     contextUpdates?: Partial<UnifiedNicoleContext>;
+    agentModel?: boolean;
+    threadId?: string;
+    fallback?: boolean;
   };
 }
 

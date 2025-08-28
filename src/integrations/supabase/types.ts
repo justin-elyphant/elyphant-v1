@@ -160,6 +160,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_assistants: {
+        Row: {
+          assistant_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_gift_searches: {
         Row: {
           budget_range: Json | null
@@ -823,6 +850,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conversation_threads: {
+        Row: {
+          assistant_name: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          thread_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assistant_name?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          thread_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assistant_name?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          thread_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       elyphant_amazon_credentials: {
         Row: {
@@ -2890,6 +2950,48 @@ export type Database = {
           profile_data?: Json
           recipient_identifier?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      recipient_preferences: {
+        Row: {
+          budget_range: number[] | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          interests: string[] | null
+          occasion: string | null
+          preferences_data: Json | null
+          recipient_name: string
+          relationship: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          budget_range?: number[] | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          occasion?: string | null
+          preferences_data?: Json | null
+          recipient_name: string
+          relationship?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          budget_range?: number[] | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          occasion?: string | null
+          preferences_data?: Json | null
+          recipient_name?: string
+          relationship?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

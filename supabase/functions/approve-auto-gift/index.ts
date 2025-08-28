@@ -236,20 +236,20 @@ serve(async (req) => {
       }
 
       // Call process-zma-order edge function to handle actual order placement
+      console.log(`🔄 [approve-auto-gift] Invoking process-zma-order for auto-gift order ${newOrder.id}`);
       const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderId: newOrder.id, // Use the real order ID
+          isTestMode: false, // Set to false for production auto-gifts
+          debugMode: false,
+          retryAttempt: false,
           isAutoGift: true,
-          executionData: {
+          executionMetadata: {
             execution_id: executionId,
             user_id: execution.user_id,
             recipient_id: execution.auto_gifting_rules.recipient_id,
-            products: finalProducts,
-            total_amount: orderTotal,
-            shipping_info: recipientProfile.shipping_address || {},
             budget_limit: execution.auto_gifting_rules.budget_limit,
-            payment_processed: true,
-            payment_intent_id: paymentResult.payment_intent_id
+            auto_approved: true
           }
         }
       });

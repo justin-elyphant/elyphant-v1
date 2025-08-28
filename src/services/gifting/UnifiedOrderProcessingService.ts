@@ -313,42 +313,51 @@ class UnifiedOrderProcessingService {
   }
 
   /**
-   * Fulfill order via Zinc API
+   * Fulfill order via ZMA API for auto-gifts
    */
   private async fulfillExecutionOrder(execution: AutoGiftExecution, order: any): Promise<void> {
-    console.log(`📦 Fulfilling order via Zinc: ${order.id}`);
+    console.log(`📦 Fulfilling auto-gift order via ZMA: ${order.id}`);
 
     try {
-      // Call the existing process-zinc-order edge function
-      const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+      // Call the ZMA order processing function for auto-gifts
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderId: order.id,
-          executionId: execution.id,
-          autoGift: true
+          isTestMode: false,
+          debugMode: false,
+          retryAttempt: false,
+          isAutoGift: true,
+          executionMetadata: {
+            execution_id: execution.id,
+            user_id: execution.user_id,
+            auto_approved: true
+          }
         }
       });
 
       if (error) {
-        console.error('Zinc order processing error:', error);
-        throw new Error(`Zinc fulfillment failed: ${error.message}`);
+        console.error('ZMA order processing error:', error);
+        throw new Error(`ZMA fulfillment failed: ${error.message}`);
       }
 
-      console.log(`✅ Zinc order processing initiated:`, data);
+      console.log(`✅ ZMA order processing initiated:`, data);
 
-      // Update order with Zinc details if provided
-      if (data?.zinc_order_id) {
+      // Update order with ZMA details if provided
+      if (data?.zincRequestId) {
         await supabase
           .from('orders')
           .update({
-            zinc_order_id: data.zinc_order_id,
-            zinc_status: data.zinc_status || 'processing',
+            zma_order_id: data.zincRequestId,
+            zinc_order_id: data.zincRequestId, // For backward compatibility
+            zinc_status: 'processing',
+            zma_account_used: data.zmaAccount,
             updated_at: new Date().toISOString()
           })
           .eq('id', order.id);
       }
 
     } catch (error) {
-      console.error('Error in Zinc fulfillment:', error);
+      console.error('Error in ZMA fulfillment:', error);
       throw new Error(`Order fulfillment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

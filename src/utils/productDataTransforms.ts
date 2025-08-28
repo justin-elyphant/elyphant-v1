@@ -17,6 +17,8 @@ export const transformProductIdsToObjects = async (
   }
 
   try {
+    console.log('Fetching product data for IDs:', productIds);
+    
     // Fetch full product data from wishlist_items
     const { data: wishlistItems, error } = await supabase
       .from('wishlist_items')
@@ -28,8 +30,15 @@ export const transformProductIdsToObjects = async (
       return [];
     }
 
+    if (!wishlistItems || wishlistItems.length === 0) {
+      console.error('No wishlist items found for IDs:', productIds);
+      return [];
+    }
+
+    console.log('Found wishlist items:', wishlistItems);
+
     // Transform to Product interface format
-    return wishlistItems.map((item: any) => ({
+    const products = wishlistItems.map((item: any) => ({
       product_id: item.id,
       id: item.id,
       title: item.title || item.name || 'Gift Item',
@@ -37,13 +46,15 @@ export const transformProductIdsToObjects = async (
       price: parseFloat(item.price) || 0,
       image: item.image_url || item.image,
       image_url: item.image_url || item.image,
-      category: item.category,
       brand: item.brand,
       description: item.description,
       product_details: item.product_details,
       features: item.features,
-      productSource: 'wishlist'
+      productSource: 'wishlist' as const
     }));
+
+    console.log('Transformed products:', products);
+    return products;
   } catch (error) {
     console.error('Error transforming product IDs:', error);
     return [];

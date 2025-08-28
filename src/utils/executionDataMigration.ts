@@ -21,11 +21,21 @@ export const migrateExecutionProductData = async (executionId: string) => {
     // Check if selected_products needs migration (contains string IDs)
     if (!execution.selected_products || 
         !Array.isArray(execution.selected_products) ||
-        execution.selected_products.length === 0 ||
-        execution.selected_products[0] === "" ||
-        typeof execution.selected_products[0] !== 'string') {
-      console.log('Execution already has complete product data or empty products');
+        execution.selected_products.length === 0) {
+      console.log('Execution has no product data to migrate');
       return { success: true, alreadyMigrated: true };
+    }
+
+    // Check if products are already objects (migrated)
+    if (typeof execution.selected_products[0] === 'object' && execution.selected_products[0].title) {
+      console.log('Execution already has complete product data');
+      return { success: true, alreadyMigrated: true };
+    }
+
+    // If they are string IDs, proceed with migration
+    if (typeof execution.selected_products[0] !== 'string') {
+      console.log('Unexpected product data format');
+      return { success: false, error: 'Unexpected product data format' };
     }
 
     // Transform product IDs to complete objects

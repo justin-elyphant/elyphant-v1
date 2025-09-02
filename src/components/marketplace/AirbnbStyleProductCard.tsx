@@ -366,7 +366,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       <div className={cn(
         "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
         isInCategorySection && "max-h-36",
-        isMobile && "p-2 space-y-1"
+        isMobile && "p-3 space-y-2"
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (

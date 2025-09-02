@@ -183,17 +183,38 @@ serve(async (req) => {
 
       console.log(`✅ Payment simulation completed for auto-gift: ${paymentResult.payment_intent_id}`);
 
-      // Create the order record with payment information
+      // Calculate order breakdown for required fields
+      const subtotal = orderTotal;
+      const shippingCost = 0; // Auto-gifts have free shipping
+      const taxAmount = 0; // Auto-gifts are tax-free for now
+      const currency = 'USD';
+      
+      // Ensure shipping info has required fields
+      const shippingInfo = recipientProfile.shipping_address || {};
+      if (!shippingInfo.address_line1) {
+        console.warn('⚠️ [approve-auto-gift] Missing shipping address, using fallback');
+        shippingInfo.address_line1 = 'Address to be provided';
+        shippingInfo.city = 'City TBD';
+        shippingInfo.state = 'State TBD';
+        shippingInfo.zip_code = '00000';
+        shippingInfo.country = 'US';
+      }
+
+      // Create the order record with all required fields
       const { data: newOrder, error: createOrderError } = await supabase
         .from('orders')
         .insert({
           user_id: execution.user_id,
           total_amount: orderTotal,
+          subtotal: subtotal,
+          shipping_cost: shippingCost,
+          tax_amount: taxAmount,
+          currency: currency,
           status: 'processing',
           payment_status: 'succeeded',
           stripe_payment_intent_id: paymentResult.payment_intent_id,
           order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
-          shipping_info: recipientProfile.shipping_address || {},
+          shipping_info: shippingInfo,
           is_gift: true,
           gift_message: `Auto-gift from your auto-gifting rule`,
           gift_options: {

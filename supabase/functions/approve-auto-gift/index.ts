@@ -233,17 +233,21 @@ serve(async (req) => {
 
       console.log(`✅ Created order ${newOrder.id} for execution ${executionId}`);
 
-      // Add order items
-      const orderItemsData = finalProducts.map(product => ({
-        order_id: newOrder.id,
-        product_id: product.product_id || product.id,
-        product_name: product.title || product.name,
-        quantity: 1,
-        price: product.price,
-        product_url: product.url,
-        product_image: product.image,
-        marketplace: product.marketplace || 'amazon'
-      }));
+      // Add order items using correct schema columns (matching marketplace orders)
+      const orderItemsData = finalProducts.map(product => {
+        const unitPrice = product.price;
+        const quantity = 1;
+        return {
+          order_id: newOrder.id,
+          product_id: product.product_id || product.id,
+          product_name: product.title || product.name,
+          quantity: quantity,
+          unit_price: unitPrice,
+          total_price: unitPrice * quantity,
+          product_image: product.image,
+          vendor: product.marketplace || product.vendor || 'amazon'
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')

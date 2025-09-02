@@ -230,14 +230,16 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         viewMode === "list" ? "w-32 h-32 flex-shrink-0 rounded-l-xl" : 
         isInCategorySection ? "aspect-[4/3] rounded-t-xl" : "aspect-square rounded-t-xl"
       )}>
-        <OptimizedImage
+        <img
           src={getProductImage()}
           alt={getProductTitle()}
-          className="group-hover:scale-105 transition-transform duration-300"
-          aspectRatio={isInCategorySection ? "portrait" : "square"}
-          priority={false} // Change to lazy loading to prevent flashing
-          quality={80}
-          sizes="300px"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          onError={(e) => {
+            console.log('Image failed to load:', getProductImage());
+            (e.target as HTMLImageElement).src = '/placeholder.svg';
+          }}
+          onLoad={() => console.log('Image loaded successfully:', getProductImage())}
         />
         
         {/* Image Navigation Arrows */}

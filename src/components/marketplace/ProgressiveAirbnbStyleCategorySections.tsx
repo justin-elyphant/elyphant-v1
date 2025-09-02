@@ -282,30 +282,42 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
   onProductClick
 }) => {
   const { isVisible, ref } = useOptimizedIntersectionObserver({
-    threshold: 0.1,
-    rootMargin: '300px', // Increased to trigger earlier
+    threshold: 0.01, // Lower threshold to trigger earlier
+    rootMargin: '800px', // Much larger margin to preload well before visible
     triggerOnce: true
   });
 
-  console.log(`👁️ LazyloadedCategorySection - ${category.key}: isVisible=${isVisible}`);
+  // Force visibility for categories beyond immediate load to ensure they render
+  const shouldForceLoad = React.useRef(false);
+  
+  React.useEffect(() => {
+    // Auto-trigger loading after a short delay for better UX
+    const timer = setTimeout(() => {
+      if (!data.hasLoaded && !data.isLoading) {
+        console.log(`⏰ Auto-triggering load for delayed category: ${category.key}`);
+        shouldForceLoad.current = true;
+        onLoadCategory();
+      }
+    }, 2000); // Auto-load after 2 seconds if not triggered
+    
+    return () => clearTimeout(timer);
+  }, [data.hasLoaded, data.isLoading, onLoadCategory, category.key]);
 
-  // Load category when it becomes visible - add loading check to prevent duplicate calls
+  console.log(`👁️ LazyloadedCategorySection - ${category.key}: isVisible=${isVisible}, hasLoaded=${data.hasLoaded}`);
+
+  // Load category when it becomes visible or after timeout
   useEffect(() => {
     console.log(`🔍 LazyloadedCategorySection useEffect - Category: ${category.key}`, {
       isVisible,
       hasLoaded: data.hasLoaded,
-      isLoading: data.isLoading
+      isLoading: data.isLoading,
+      shouldForceLoad: shouldForceLoad.current
     });
     
-    if (isVisible && !data.hasLoaded && !data.isLoading) {
-      console.log(`🚀 Triggering load for category: ${category.key}`);
-      // Add small delay to prevent rapid firing
-      const timer = setTimeout(() => {
-        if (!data.hasLoaded && !data.isLoading) {
-          onLoadCategory();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
+    if ((isVisible || shouldForceLoad.current) && !data.hasLoaded && !data.isLoading) {
+      console.log(`🚀 Triggering load for category: ${category.key} (isVisible: ${isVisible}, forced: ${shouldForceLoad.current})`);
+      // Immediate trigger, no delay for better UX
+      onLoadCategory();
     }
   }, [isVisible, data.hasLoaded, data.isLoading, onLoadCategory, category.key]);
 
@@ -318,7 +330,7 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
         title={category.title}
         subtitle={category.subtitle}
         products={data.products}
-        isLoading={data.isLoading || (isVisible && !data.hasLoaded)}
+        isLoading={data.isLoading}
         onSeeAll={() => onSeeAll(category.key)}
         onProductClick={onProductClick}
         showSeeAll={data.products.length > 0}

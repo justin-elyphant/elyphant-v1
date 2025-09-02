@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.send-invitation-email]
 verify_jwt = true
+
+[functions.cleanup-incomplete-payments]
+verify_jwt = false
+
+[functions.approve-auto-gift]
+verify_jwt = true

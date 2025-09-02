@@ -183,7 +183,26 @@ serve(async (req) => {
       console.log(`💳 Using payment method: ${paymentMethodId}`);
       
       // Create real payment intent using stored payment method
-      const paymentResponse = await supabase.functions.invoke('create-payment-intent', {
+      // Get the original authorization header to pass to create-payment-intent
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('No authorization header found for payment processing');
+      }
+
+      // Create a separate supabase client for the payment call that includes auth
+      const supabaseWithAuth = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: {
+              Authorization: authHeader
+            }
+          }
+        }
+      );
+
+      const paymentResponse = await supabaseWithAuth.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(orderTotal * 100), // Convert to cents
           currency: 'usd',

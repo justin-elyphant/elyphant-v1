@@ -9,7 +9,7 @@ import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersecti
 import { optimizedMarketplaceService } from "@/services/marketplace/OptimizedMarketplaceService";
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
-import ProgressiveLoadingIndicator from "./ui/ProgressiveLoadingIndicator";
+import SimpleLoadingIndicator from "./ui/SimpleLoadingIndicator";
 import { devLog } from "@/utils/performanceOptimizations";
 
 interface ProgressiveAirbnbStyleCategorySectionsProps {
@@ -194,15 +194,13 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
 
   return (
     <div className={`space-y-8 ${className}`}>
-      {/* Progressive Loading Indicator - only show during loading */}
+      {/* Progressive Loading Indicator */}
       {(loadingCount > 0 || loadedCount < totalCategories) && (
-        <ProgressiveLoadingIndicator
+        <SimpleLoadingIndicator
           totalItems={totalCategories}
           loadedCount={loadedCount}
           loadingCount={loadingCount}
-          erroredCount={erroredCount}
-          averageLoadTime={progressStats.averageLoadTime}
-          className="mx-auto max-w-md"
+          className="mx-auto max-w-md mb-4"
         />
       )}
       {CATEGORIES.map((category, index) => {

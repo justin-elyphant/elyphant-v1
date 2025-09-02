@@ -29,14 +29,15 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   onShare
 }) => {
   // Memoize product cards for better performance - reduced to 5 for single row
-  const memoizedProducts = useMemo(() => 
-    products.slice(0, 5).map((product, index) => ({ 
+  const memoizedProducts = useMemo(() => {
+    const limitedProducts = products.slice(0, 5);
+    console.log(`CategorySection "${title}": Rendering ${limitedProducts.length} of ${products.length} products`);
+    return limitedProducts.map((product, index) => ({ 
       product, 
       index,
       key: product.product_id || product.id || index 
-    })),
-    [products]
-  );
+    }));
+  }, [products, title]);
   if (isLoading) {
     return (
       <div className="space-y-6 border-b border-border/20 pb-8 last:border-b-0">
@@ -96,14 +97,16 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
       </div>
       
       <div className="relative">
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth" style={{ flexWrap: 'nowrap' }}>
           {memoizedProducts.map(({ product, index, key }) => (
             <div 
               key={key}
               className="flex-shrink-0 w-52 h-80 transition-transform duration-200 hover:scale-105"
               style={{ 
                 animationDelay: `${index * 50}ms`,
-                willChange: 'transform'
+                willChange: 'transform',
+                minWidth: '208px', // Ensures minimum width is maintained
+                maxWidth: '208px'  // Prevents expansion
               }}
             >
               <UnifiedProductCard

@@ -365,7 +365,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       {/* Content Section - Clean Airbnb Style */}
       <div className={cn(
         "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
-        isInCategorySection && "max-h-36"
+        isInCategorySection && "max-h-36",
+        isMobile && "pb-2"
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
@@ -471,7 +472,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 product={product}
                 variant="luxury"
                 size="sm"
-                className="min-w-[80px]"
+                className={cn("min-w-[80px]", isMobile && "shrink-0")}
                 onClick={handleAddToCartClick}
               />
             ) : (

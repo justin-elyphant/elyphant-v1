@@ -245,7 +245,7 @@ serve(async (req) => {
           unit_price: unitPrice,
           total_price: unitPrice * quantity,
           product_image: product.image,
-          vendor: product.marketplace || product.vendor || 'amazon'
+          vendor: product.vendor || product.retailer || 'amazon'
         };
       });
 

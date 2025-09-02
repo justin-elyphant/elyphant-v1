@@ -538,19 +538,36 @@ serve(async (req) => {
 
     // Step 8: Update order with Zinc request ID (only on success)
     console.log('📥 Step 8: Updating order with Zinc data...');
-    const { error: updateError } = await supabase
+    const { data: orderUpdateData, error: updateError } = await supabase
       .from('orders')
       .update({
-        zma_order_id: zincResult.request_id,
+        zinc_order_id: zincResult.request_id, // Use zinc_order_id (not zma_order_id)
+        zma_order_id: zincResult.request_id,  // Keep for compatibility
         status: 'processing',
+        zinc_status: 'submitted',
         zma_account_used: zmaAccount.account_id,
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId);
+      .eq('id', orderId)
+      .select();
 
     if (updateError) {
-      console.error('❌ Order update error:', updateError);
-      throw new Error(`Failed to update order: ${updateError.message}`);
+      console.error('❌ Critical Error: Failed to update order with Zinc ID:', updateError);
+      // This is critical - we need to track this zinc_order_id for status monitoring
+      console.error('🚨 Manual intervention needed: Order', orderId, 'has Zinc request ID', zincResult.request_id, 'but failed to save to database');
+      
+      // Still throw error but provide actionable information
+      throw new Error(`Critical: Order submitted to Zinc (${zincResult.request_id}) but failed to update database: ${updateError.message}`);
+    }
+
+    if (!orderUpdateData || orderUpdateData.length === 0) {
+      console.error('❌ Warning: Order update succeeded but no data returned. Zinc ID:', zincResult.request_id);
+    } else {
+      console.log('✅ Order successfully updated with Zinc data:', { 
+        orderId, 
+        zinc_order_id: zincResult.request_id,
+        updated_rows: orderUpdateData.length 
+      });
     }
 
     // Track successful order for security metrics

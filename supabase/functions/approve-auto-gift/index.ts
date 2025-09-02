@@ -168,20 +168,42 @@ serve(async (req) => {
       
       console.log('✅ [approve-auto-gift] Recipient profile fetched successfully');
 
-      // For auto-gifts, we'll skip payment processing for now and proceed with order placement
-      // This allows testing the complete flow without requiring payment methods setup
+      // Process real payment using stored payment method
       const orderTotal = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
       
-      console.log(`💰 Processing auto-gift order of $${orderTotal.toFixed(2)} (payment handling deferred for unified system)`);
+      console.log(`💰 Processing auto-gift order of $${orderTotal.toFixed(2)} with real Stripe payment`);
       
-      // For demo/testing purposes, we'll simulate successful payment
-      const paymentResult = {
-        success: true,
-        payment_intent_id: `pi_test_auto_gift_${executionId.slice(0, 8)}`,
-        status: 'succeeded'
-      };
-
-      console.log(`✅ Payment simulation completed for auto-gift: ${paymentResult.payment_intent_id}`);
+      // Get the payment method from the auto-gifting rule
+      const paymentMethodId = execution.auto_gifting_rules.payment_method_id;
+      
+      if (!paymentMethodId) {
+        throw new Error('No payment method configured for this auto-gifting rule. Please update your auto-gift settings.');
+      }
+      
+      console.log(`💳 Using payment method: ${paymentMethodId}`);
+      
+      // Create real payment intent using stored payment method
+      const paymentResponse = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: Math.round(orderTotal * 100), // Convert to cents
+          currency: 'usd',
+          metadata: {
+            useExistingPaymentMethod: true,
+            paymentMethodId: paymentMethodId,
+            auto_gift_execution_id: executionId,
+            user_id: execution.user_id,
+            order_type: 'auto_gift'
+          }
+        }
+      });
+      
+      if (paymentResponse.error) {
+        console.error('❌ Payment intent creation failed:', paymentResponse.error);
+        throw new Error(`Payment processing failed: ${paymentResponse.error.message}`);
+      }
+      
+      const paymentResult = paymentResponse.data;
+      console.log(`✅ Real payment processed for auto-gift: ${paymentResult.payment_intent_id}`);
 
       // Calculate order breakdown for required fields
       const subtotal = orderTotal;
@@ -241,7 +263,7 @@ serve(async (req) => {
             auto_gift_execution_id: executionId,
             recipient_id: execution.auto_gifting_rules.recipient_id,
             rule_id: execution.auto_gifting_rules.id,
-            payment_method_used: 'auto_gift_simulation'
+            payment_method_used: paymentMethodId
           }
         })
         .select()

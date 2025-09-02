@@ -191,12 +191,12 @@ serve(async (req) => {
           total_amount: orderTotal,
           status: 'processing',
           payment_status: 'succeeded',
-          payment_intent_id: paymentResult.payment_intent_id,
+          stripe_payment_intent_id: paymentResult.payment_intent_id,
           order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
           shipping_info: recipientProfile.shipping_address || {},
           is_gift: true,
           gift_message: `Auto-gift from your auto-gifting rule`,
-          order_metadata: {
+          gift_options: {
             auto_gift_execution_id: executionId,
             recipient_id: execution.auto_gifting_rules.recipient_id,
             rule_id: execution.auto_gifting_rules.id,

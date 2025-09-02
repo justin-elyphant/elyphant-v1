@@ -205,20 +205,27 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
       )}
       {CATEGORIES.map((category, index) => {
         const data = categoryData[category.key];
-        if (!data) return null;
+        if (!data) {
+          console.log(`❌ No data for category: ${category.key}`);
+          return null;
+        }
 
         const hasBackground = index % 2 === 1;
-        const shouldShowSection = index < IMMEDIATE_LOAD_COUNT || data.hasLoaded;
+        console.log(`🔄 Rendering category ${index}: ${category.key}, hasLoaded: ${data.hasLoaded}, isLoading: ${data.isLoading}`);
 
         // For lazy-loaded categories, use intersection observer
-        if (index >= IMMEDIATE_LOAD_COUNT && !data.hasLoaded) {
+        if (index >= IMMEDIATE_LOAD_COUNT) {
+          console.log(`📦 Rendering lazy category: ${category.key} (index ${index})`);
           return (
             <LazyloadedCategorySection
               key={category.key}
               category={category}
               data={data}
               hasBackground={hasBackground}
-              onLoadCategory={() => loadCategoryData(category.key)}
+              onLoadCategory={() => {
+                console.log(`🔥 onLoadCategory called for: ${category.key}`);
+                loadCategoryData(category.key);
+              }}
               onSeeAll={handleSeeAll}
               onProductClick={handleProductClick}
             />
@@ -276,13 +283,22 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
 }) => {
   const { isVisible, ref } = useOptimizedIntersectionObserver({
     threshold: 0.1,
-    rootMargin: '150px', // Reduced from 200px to prevent premature loading
+    rootMargin: '300px', // Increased to trigger earlier
     triggerOnce: true
   });
 
+  console.log(`👁️ LazyloadedCategorySection - ${category.key}: isVisible=${isVisible}`);
+
   // Load category when it becomes visible - add loading check to prevent duplicate calls
   useEffect(() => {
+    console.log(`🔍 LazyloadedCategorySection useEffect - Category: ${category.key}`, {
+      isVisible,
+      hasLoaded: data.hasLoaded,
+      isLoading: data.isLoading
+    });
+    
     if (isVisible && !data.hasLoaded && !data.isLoading) {
+      console.log(`🚀 Triggering load for category: ${category.key}`);
       // Add small delay to prevent rapid firing
       const timer = setTimeout(() => {
         if (!data.hasLoaded && !data.isLoading) {
@@ -291,7 +307,7 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, data.hasLoaded, data.isLoading, onLoadCategory]);
+  }, [isVisible, data.hasLoaded, data.isLoading, onLoadCategory, category.key]);
 
   return (
     <div 

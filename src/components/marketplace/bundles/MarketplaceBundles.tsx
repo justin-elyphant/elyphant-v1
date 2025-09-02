@@ -20,8 +20,8 @@ export const LazyProductDetailsDialog = lazy(() =>
 );
 
 export const LazyAirbnbStyleCategorySections = lazy(() => 
-  import('../AirbnbStyleCategorySections').then(module => ({
-    default: module.AirbnbStyleCategorySections
+  import('../ProgressiveAirbnbStyleCategorySections').then(module => ({
+    default: module.ProgressiveAirbnbStyleCategorySections
   }))
 );
 

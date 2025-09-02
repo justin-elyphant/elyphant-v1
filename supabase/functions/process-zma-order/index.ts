@@ -360,15 +360,15 @@ serve(async (req) => {
     }
     
     const shippingAddress = {
-      first_name: orderData.shipping_info.name?.split(' ')[0] || 'Customer',
-      last_name: orderData.shipping_info.name?.split(' ').slice(1).join(' ') || 'Name',
-      address_line1: orderData.shipping_info.address || '',
-      address_line2: orderData.shipping_info.addressLine2 || '',
-      zip_code: orderData.shipping_info.zipCode || '',
+      first_name: orderData.shipping_info.first_name || 'Customer',
+      last_name: orderData.shipping_info.last_name || 'Name',
+      address_line1: orderData.shipping_info.address_line1 || '',
+      address_line2: orderData.shipping_info.address_line2 || '',
+      zip_code: orderData.shipping_info.zip_code || '',
       city: orderData.shipping_info.city || '',
       state: orderData.shipping_info.state || '',
       country: orderData.shipping_info.country === 'United States' ? 'US' : (orderData.shipping_info.country || 'US'),
-      phone_number: orderData.shipping_info.phone || '5551234567' // Use order phone or default
+      phone_number: orderData.shipping_info.phone_number || '5551234567'
     };
     
     // Prepare billing address - use billing info if available, otherwise fallback to shipping

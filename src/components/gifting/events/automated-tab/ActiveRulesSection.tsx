@@ -10,9 +10,10 @@ import { useAutoGifting } from "@/hooks/useAutoGifting";
 
 interface ActiveRulesSectionProps {
   rules: UnifiedGiftRule[];
+  onEditRule?: (ruleId: string) => void;
 }
 
-const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
+const ActiveRulesSection = ({ rules, onEditRule }: ActiveRulesSectionProps) => {
   const { updateRule, deleteRule } = useAutoGifting();
 
   const handleToggleRule = async (ruleId: string, isActive: boolean) => {
@@ -92,7 +93,11 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
                 </div>
 
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onEditRule?.(rule.id)}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Edit
                   </Button>

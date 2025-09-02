@@ -29,6 +29,8 @@ interface AutoGiftSetupFlowProps {
   eventId?: string;
   eventType?: string;
   recipientId?: string;
+  initialData?: any; // For editing existing rules
+  ruleId?: string; // For updating existing rules
 }
 
 interface SetupStep {
@@ -43,9 +45,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   onOpenChange,
   eventId,
   eventType,
-  recipientId
+  recipientId,
+  initialData,
+  ruleId
 }) => {
-  const { createRule, settings, updateSettings } = useAutoGifting();
+  const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
   const { connections, pendingInvitations } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,7 +102,21 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   useEffect(() => {
     if (recipientId) setFormData(prev => ({ ...prev, recipientId }));
     if (eventType) setFormData(prev => ({ ...prev, eventType }));
-  }, [recipientId, eventType]);
+    
+    // Populate form with initial data for editing
+    if (initialData) {
+      setFormData(prev => ({
+        ...prev,
+        recipientId: initialData.recipientId || prev.recipientId,
+        eventType: initialData.eventType || prev.eventType,
+        budgetLimit: initialData.budgetLimit || prev.budgetLimit,
+        selectedPaymentMethodId: initialData.selectedPaymentMethodId || prev.selectedPaymentMethodId,
+        emailNotifications: initialData.emailNotifications ?? prev.emailNotifications,
+        notificationDays: initialData.notificationDays || prev.notificationDays,
+        autoApprove: initialData.autoApprove ?? prev.autoApprove
+      }));
+    }
+  }, [recipientId, eventType, initialData]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -172,8 +190,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         payment_method_id: formData.selectedPaymentMethodId,
       };
 
-      // Create the rule first
-      await createRule(ruleData);
+      // Create or update the rule
+      if (ruleId) {
+        await updateRule(ruleId, ruleData);
+        toast.success("Auto-gifting rule updated successfully!");
+      } else {
+        await createRule(ruleData);
+        toast.success("Auto-gifting rule created successfully!", {
+          description: "You'll be notified when gift suggestions are ready for approval"
+        });
+      }
 
       // Update settings to include the auto-approve preference
       if (settings) {
@@ -182,9 +208,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         });
       }
 
-      toast.success("Auto-gifting rule created successfully!", {
-        description: "You'll be notified when gift suggestions are ready for approval"
-      });
       
       onOpenChange(false);
       setCurrentStep(0);
@@ -209,7 +232,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            Set Up Auto-Gifting
+            {ruleId ? 'Edit Auto-Gifting Rule' : 'Set Up Auto-Gifting'}
           </DialogTitle>
         </DialogHeader>
 

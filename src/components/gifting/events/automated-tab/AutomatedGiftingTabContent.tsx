@@ -21,6 +21,7 @@ const AutomatedGiftingTabContent = () => {
   const { settings, rules, loading, updateSettings } = useAutoGifting();
   const { triggerAutoGiftProcessing, triggering } = useAutoGiftTrigger();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<any>(null);
 
   if (!user) {
     return (
@@ -93,7 +94,26 @@ const AutomatedGiftingTabContent = () => {
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
-          <ActiveRulesSection rules={rules} />
+          <ActiveRulesSection 
+            rules={rules} 
+            onEditRule={(ruleId) => {
+              const rule = rules.find(r => r.id === ruleId);
+              if (rule) {
+                // Transform rule data to match setup form format
+                const initialData = {
+                  recipientId: rule.recipient_id,
+                  eventType: rule.date_type,
+                  budgetLimit: rule.budget_limit || 50,
+                  selectedPaymentMethodId: '', // Payment method needs to be fetched separately
+                  emailNotifications: rule.notification_preferences?.email ?? true,
+                  notificationDays: rule.notification_preferences?.days_before || [7, 3, 1],
+                  autoApprove: false // This comes from settings, not the rule
+                };
+                setEditingRule({ id: ruleId, initialData });
+                setSetupDialogOpen(true);
+              }
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
@@ -134,7 +154,14 @@ const AutomatedGiftingTabContent = () => {
       {/* Auto-Gift Setup Dialog */}
       <AutoGiftSetupFlow
         open={setupDialogOpen}
-        onOpenChange={setSetupDialogOpen}
+        onOpenChange={(open) => {
+          setSetupDialogOpen(open);
+          if (!open) {
+            setEditingRule(null);
+          }
+        }}
+        initialData={editingRule?.initialData}
+        ruleId={editingRule?.id}
       />
     </div>
   );

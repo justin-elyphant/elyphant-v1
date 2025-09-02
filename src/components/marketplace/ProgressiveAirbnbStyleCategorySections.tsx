@@ -84,9 +84,9 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
       startTimer(`category-${categoryKey}-load`);
       console.log(`Loading products for category: ${categoryKey}`);
       
-      // Check cache first using optimized service
+      // Check cache first using optimized service - reduced limit for single row
       const cachedResults = await optimizedMarketplaceService.searchProducts(category.searchTerm, {
-        limit: 10
+        limit: 5
       });
 
       let products: Product[] = [];
@@ -95,8 +95,8 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
         products = cachedResults;
         console.log(`Using cached results for ${categoryKey}: ${products.length} products`);
       } else {
-        // Fallback to Enhanced Zinc API
-        const response = await enhancedZincApiService.searchBestSellingByCategory(categoryKey, 10);
+        // Fallback to Enhanced Zinc API - reduced to 5 products for single row
+        const response = await enhancedZincApiService.searchBestSellingByCategory(categoryKey, 5);
         
         if (response.error) {
           throw new Error(response.error);

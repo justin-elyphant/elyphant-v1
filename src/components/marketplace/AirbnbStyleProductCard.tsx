@@ -366,7 +366,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       <div className={cn(
         "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
         isInCategorySection && "max-h-36",
-        isMobile && "p-3 space-y-2"
+        isMobile && "p-2 space-y-1.5"
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
@@ -376,26 +376,26 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
         )}
 
+        {/* Brand Name First (Amazon Style) */}
+        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+          {(product.brand && product.brand.trim()) || "AMAZON"}
+        </p>
+
         {/* Product Title - Fixed to exactly 2 lines */}
         <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug max-h-[2.5rem] overflow-hidden">
           {getProductTitle()}
         </h3>
 
-        {/* Brand and Rating Combined Row */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-            {(product.brand && product.brand.trim()) || "AMAZON"}
-          </p>
-          {getRating() > 0 && (
-            <div className="flex items-center text-xs">
-              <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
-              <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
-              {getReviewCount() > 0 && (
-                <span className="text-gray-500 ml-1">({getReviewCount()})</span>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Rating Row */}
+        {getRating() > 0 && (
+          <div className="flex items-center text-xs mt-0.5">
+            <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
+            <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
+            {getReviewCount() > 0 && (
+              <span className="text-gray-500 ml-1">({getReviewCount()})</span>
+            )}
+          </div>
+        )}
 
         {/* Tags Display - Only show in non-category sections and non-mobile */}
         {!isInCategorySection && !isMobile && product.tags && product.tags.length > 0 && (

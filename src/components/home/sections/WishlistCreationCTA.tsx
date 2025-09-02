@@ -235,27 +235,39 @@ const WishlistCreationCTA = () => {
               </div>
             </div>
 
-            {/* Desktop Grid */}
-            <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {products.slice(0, 12).map((product) => (
-                <div key={product.product_id || product.id} className="w-full relative">
-                  {product.categoryBadge && (
-                    <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
-                      {product.categoryBadge}
-                    </div>
-                  )}
-                  <UnifiedProductCard
-                    cardType="gifting"
-                    product={product}
-                    isGifteeView={true}
-                    onToggleWishlist={() => handleProductWishlistClick(product)}
-                    onAddToCart={handleAddToCart}
-                    onClick={() => {
-                      console.log("Product clicked:", product);
+            {/* Desktop Horizontal Scroll - Single Row */}
+            <div className="hidden md:block relative">
+              <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth" style={{ flexWrap: 'nowrap' }}>
+                {products.slice(0, 12).map((product) => (
+                  <div 
+                    key={product.product_id || product.id} 
+                    className="flex-shrink-0 w-52 h-80 relative transition-transform duration-200 hover:scale-105"
+                    style={{ 
+                      minWidth: '208px',
+                      maxWidth: '208px'
                     }}
-                  />
-                </div>
-              ))}
+                  >
+                    {product.categoryBadge && (
+                      <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
+                        {product.categoryBadge}
+                      </div>
+                    )}
+                    <UnifiedProductCard
+                      cardType="gifting"
+                      product={product}
+                      isGifteeView={true}
+                      onToggleWishlist={() => handleProductWishlistClick(product)}
+                      onAddToCart={handleAddToCart}
+                      onClick={() => {
+                        console.log("Product clicked:", product);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Enhanced gradient fade for overflow indication */}
+              <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none" />
             </div>
           </>
         )}

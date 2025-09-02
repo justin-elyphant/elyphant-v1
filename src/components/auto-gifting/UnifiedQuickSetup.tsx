@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, ArrowLeft, DollarSign, Calendar, Gift, CheckCircle, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft, DollarSign, Calendar, Gift, CheckCircle, Sparkles, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { toast } from "sonner";
@@ -35,6 +37,12 @@ interface SetupData {
     amount: number;
     giftSource: string;
   };
+  notifications: {
+    autoApprove: boolean;
+    emailNotifications: boolean;
+    notificationDays: number[];
+    giftMessage?: string;
+  };
 }
 
 const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
@@ -49,6 +57,12 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
     budget: {
       amount: 50,
       giftSource: "wishlist"
+    },
+    notifications: {
+      autoApprove: false,
+      emailNotifications: true,
+      notificationDays: [7, 3, 1],
+      giftMessage: ""
     }
   });
 
@@ -82,15 +96,42 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
     }));
   };
 
+  const handleNotificationChange = (field: string, value: any) => {
+    setSetupData(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [field]: value
+      }
+    }));
+  };
+
   const canProceedToStep2 = setupData.recipient.connectionId;
   const canProceedToStep3 = canProceedToStep2 && setupData.timing.dateType;
-  const canComplete = canProceedToStep3 && setupData.budget.amount > 0;
+  const canProceedToStep4 = canProceedToStep3 && setupData.budget.amount > 0;
+  const canComplete = canProceedToStep4;
 
   const handleComplete = async () => {
     if (!user || !canComplete) return;
 
     setIsSubmitting(true);
     try {
+      // Update auto-gifting settings first
+      await unifiedGiftManagementService.upsertSettings({
+        user_id: user.id,
+        auto_approve_gifts: setupData.notifications.autoApprove,
+        email_notifications: setupData.notifications.emailNotifications,
+        push_notifications: false,
+        default_notification_days: setupData.notifications.notificationDays,
+        default_budget_limit: setupData.budget.amount,
+        default_gift_source: setupData.budget.giftSource as "wishlist" | "ai" | "both" | "specific",
+        has_payment_method: false,
+        budget_tracking: {
+          spent_this_month: 0,
+          spent_this_year: 0
+        }
+      });
+
       // Create the auto-gift rule using the unified service
       const ruleData = {
         user_id: user.id,
@@ -100,9 +141,9 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
         budget_limit: setupData.budget.amount,
         is_active: true,
         notification_preferences: {
-          enabled: true,
-          days_before: [7, 3, 1],
-          email: true,
+          enabled: setupData.notifications.emailNotifications,
+          days_before: setupData.notifications.notificationDays,
+          email: setupData.notifications.emailNotifications,
           push: false
         },
         gift_selection_criteria: {
@@ -135,7 +176,7 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
   };
 
   const nextStep = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -150,7 +191,7 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
     <div className="space-y-6">
       {/* Progress Bar */}
       <div className="flex items-center justify-between">
-        {[1, 2, 3].map((step) => (
+        {[1, 2, 3, 4].map((step) => (
           <div key={step} className="flex items-center">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step <= currentStep 
@@ -159,8 +200,8 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
             }`}>
               {step < currentStep ? <CheckCircle className="h-4 w-4" /> : step}
             </div>
-            {step < 3 && (
-              <div className={`h-1 w-16 mx-2 ${
+            {step < 4 && (
+              <div className={`h-1 w-12 mx-2 ${
                 step < currentStep ? "bg-primary" : "bg-muted"
               }`} />
             )}
@@ -288,16 +329,108 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Step 4: Notifications & Approval</Label>
+              
+              <div className="space-y-6">
+                {/* Auto-approval section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Bell className="h-4 w-4" />
+                    <span>Gift approval method</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <p className="font-medium">Auto-approve gifts</p>
+                      <p className="text-sm text-muted-foreground">
+                        Automatically send gifts without manual approval
+                      </p>
+                    </div>
+                    <Switch
+                      checked={setupData.notifications.autoApprove}
+                      onCheckedChange={(checked) => handleNotificationChange("autoApprove", checked)}
+                    />
+                  </div>
+                  
+                  {setupData.notifications.autoApprove && (
+                    <div className="bg-yellow-50 p-3 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> Gifts will be automatically purchased and sent. 
+                        Make sure you have a valid payment method configured.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Email notifications */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <p className="font-medium">Email notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Get notified about upcoming gifts and deliveries
+                      </p>
+                    </div>
+                    <Switch
+                      checked={setupData.notifications.emailNotifications}
+                      onCheckedChange={(checked) => handleNotificationChange("emailNotifications", checked)}
+                    />
+                  </div>
+                </div>
+
+                {/* Notification timing */}
+                {setupData.notifications.emailNotifications && (
+                  <div className="space-y-3">
+                    <Label>Notification timing (days before occasion)</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[1, 3, 7, 14].map((days) => (
+                        <Button
+                          key={days}
+                          variant={setupData.notifications.notificationDays.includes(days) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            const current = setupData.notifications.notificationDays;
+                            const updated = current.includes(days)
+                              ? current.filter(d => d !== days)
+                              : [...current, days].sort((a, b) => b - a);
+                            handleNotificationChange("notificationDays", updated);
+                          }}
+                        >
+                          {days}d
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Optional gift message */}
+                <div className="space-y-3">
+                  <Label htmlFor="giftMessage">Custom gift message (optional)</Label>
+                  <Textarea
+                    id="giftMessage"
+                    placeholder="Add a personal message that will be included with your gifts..."
+                    value={setupData.notifications.giftMessage}
+                    onChange={(e) => handleNotificationChange("giftMessage", e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
 
                 {/* Summary */}
                 <Separator />
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-green-900 mb-2">Auto-Gift Summary</h3>
+                  <h3 className="font-medium text-green-900 mb-2">Complete Auto-Gift Setup</h3>
                   <div className="space-y-1 text-sm text-green-800">
                     <p><strong>Who:</strong> {setupData.recipient.recipientName}</p>
                     <p><strong>When:</strong> {setupData.timing.dateType}</p>
                     <p><strong>Budget:</strong> ${setupData.budget.amount}</p>
                     <p><strong>Source:</strong> {setupData.budget.giftSource}</p>
+                    <p><strong>Approval:</strong> {setupData.notifications.autoApprove ? "Automatic" : "Manual"}</p>
                   </div>
                   {setupData.recipient.pendingInvitation && (
                     <Badge variant="outline" className="mt-2">
@@ -323,12 +456,13 @@ const UnifiedQuickSetup = ({ onComplete }: UnifiedQuickSetupProps) => {
         </Button>
 
         <div className="flex gap-2">
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             <Button
               onClick={nextStep}
               disabled={
                 (currentStep === 1 && !canProceedToStep2) ||
-                (currentStep === 2 && !canProceedToStep3)
+                (currentStep === 2 && !canProceedToStep3) ||
+                (currentStep === 3 && !canProceedToStep4)
               }
             >
               Next

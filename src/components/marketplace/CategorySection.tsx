@@ -107,7 +107,6 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
               }}
             >
               <UnifiedProductCard
-                key={`${key}-category-${Date.now()}`}
                 cardType="general"
                 product={product}
                 onClick={() => onProductClick?.(product)}

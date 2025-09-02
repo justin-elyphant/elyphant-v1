@@ -128,14 +128,6 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
       endTimer(`category-${categoryKey}-load`, 'searchTime');
       devLog(`✅ Category ${categoryKey} loaded in ${Math.round(loadTime)}ms with ${products.length} products`);
 
-      // Update progress stats
-      const totalTime = loadTimes.current.reduce((sum, time) => sum + time, 0);
-      setProgressStats({
-        totalLoadTime: totalTime,
-        averageLoadTime: totalTime / loadTimes.current.length,
-        loadedCount: loadedCategories.current.size
-      });
-
       // Update state with loaded data
       setCategoryData(prev => ({
         ...prev,
@@ -286,14 +278,20 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
 }) => {
   const { isVisible, ref } = useOptimizedIntersectionObserver({
     threshold: 0.1,
-    rootMargin: '200px', // Start loading 200px before it comes into view
+    rootMargin: '150px', // Reduced from 200px to prevent premature loading
     triggerOnce: true
   });
 
-  // Load category when it becomes visible
+  // Load category when it becomes visible - add loading check to prevent duplicate calls
   useEffect(() => {
     if (isVisible && !data.hasLoaded && !data.isLoading) {
-      onLoadCategory();
+      // Add small delay to prevent rapid firing
+      const timer = setTimeout(() => {
+        if (!data.hasLoaded && !data.isLoading) {
+          onLoadCategory();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isVisible, data.hasLoaded, data.isLoading, onLoadCategory]);
 

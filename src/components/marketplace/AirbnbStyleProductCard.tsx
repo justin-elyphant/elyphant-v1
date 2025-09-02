@@ -235,7 +235,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           alt={getProductTitle()}
           className="group-hover:scale-105 transition-transform duration-300"
           aspectRatio={isInCategorySection ? "portrait" : "square"}
-          priority={currentImageIndex === 0}
+          priority={false} // Change to lazy loading to prevent flashing
           quality={80}
           sizes="300px"
         />

@@ -202,7 +202,7 @@ serve(async (req) => {
                   image: item.image_url,
                   image_url: item.image_url,
                   source: 'wishlist',
-                  marketplace: 'Wishlist',
+                  vendor: 'Wishlist',
                   category: item.category,
                   brand: item.brand,
                   wishlist_title: item.wishlist_title,
@@ -231,7 +231,7 @@ serve(async (req) => {
               image: null,
               image_url: null,
               source: 'ai_recommendation',
-              marketplace: 'AI Recommendation',
+              vendor: 'AI Recommendation',
               category: rule.date_type,
               description: `AI-generated gift suggestion for ${rule.date_type} occasion`
             }];

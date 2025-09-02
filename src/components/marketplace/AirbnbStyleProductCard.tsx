@@ -366,7 +366,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       <div className={cn(
         "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
         isInCategorySection && "max-h-36",
-        isMobile && "pb-2"
+        isMobile && "p-2 space-y-1"
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
@@ -397,8 +397,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           )}
         </div>
 
-        {/* Tags Display - Only show in non-category sections */}
-        {!isInCategorySection && product.tags && product.tags.length > 0 && (
+        {/* Tags Display - Only show in non-category sections and non-mobile */}
+        {!isInCategorySection && !isMobile && product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {product.tags.slice(0, 2).map((tag: string, i: number) => (
               <span 
@@ -467,26 +467,33 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             )}
             
             {/* Add to Cart Button */}
-            {viewMode === "list" || isMobile ? (
+            {isMobile ? (
+              // Mobile: Quick Add Button (+ icon only)
+              <button
+                onClick={handleAddToCartClick}
+                className="flex items-center justify-center w-8 h-8 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0"
+                aria-label="Add to cart"
+                title="Add to cart"
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </button>
+            ) : viewMode === "list" ? (
               <AddToCartButton
                 product={product}
                 variant="luxury"
                 size="sm"
-                className={cn("min-w-[80px]", isMobile && "shrink-0")}
+                className="min-w-[80px]"
                 onClick={handleAddToCartClick}
               />
             ) : (
               <button
                 onClick={handleAddToCartClick}
-                className={cn(
-                  "flex items-center justify-center min-h-[44px] min-w-[44px] bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm",
-                  isMobile ? "px-2 py-2" : "gap-1.5 px-4 py-2"
-                )}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
                 aria-label="Add to cart"
                 title="Add to cart"
               >
                 <ShoppingCart className="h-4 w-4" />
-                {!isMobile && <span>Add</span>}
+                <span>Add</span>
               </button>
             )}
           </div>

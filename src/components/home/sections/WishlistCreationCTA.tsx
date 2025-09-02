@@ -194,22 +194,24 @@ const WishlistCreationCTA = () => {
             <div className="block md:hidden">
               <div className="grid grid-cols-2 gap-4 px-4 -mx-4">
                 {products.slice(0, 6).map((product) => (
-                  <div key={product.product_id || product.id} className="relative">
+                  <div key={product.product_id || product.id} className="relative h-full min-h-[320px]">
                     {product.categoryBadge && (
                       <div className="absolute top-2 left-2 z-10 bg-primary/95 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium shadow-sm">
                         {product.categoryBadge}
                       </div>
                     )}
-                    <UnifiedProductCard
-                      cardType="gifting"
-                      product={product}
-                      isGifteeView={true}
-                      onToggleWishlist={() => handleProductWishlistClick(product)}
-                      onAddToCart={handleAddToCart}
-                      onClick={() => {
-                        console.log("Product clicked:", product);
-                      }}
-                    />
+                    <div className="h-full">
+                      <UnifiedProductCard
+                        cardType="gifting"
+                        product={product}
+                        isGifteeView={true}
+                        onToggleWishlist={() => handleProductWishlistClick(product)}
+                        onAddToCart={handleAddToCart}
+                        onClick={() => {
+                          console.log("Product clicked:", product);
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

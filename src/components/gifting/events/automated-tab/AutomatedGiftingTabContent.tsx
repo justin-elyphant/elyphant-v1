@@ -97,6 +97,7 @@ const AutomatedGiftingTabContent = () => {
           <ActiveRulesSection 
             rules={rules} 
             onEditRule={(ruleId) => {
+              console.log('onEditRule called with ID:', ruleId);
               const rule = rules.find(r => r.id === ruleId);
               if (rule) {
                 // Transform rule data to match setup form format

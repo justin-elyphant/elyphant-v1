@@ -96,7 +96,10 @@ const ActiveRulesSection = ({ rules, onEditRule }: ActiveRulesSectionProps) => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => onEditRule?.(rule.id)}
+                    onClick={() => {
+                      console.log('Edit button clicked for rule:', rule.id);
+                      onEditRule?.(rule.id);
+                    }}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Edit

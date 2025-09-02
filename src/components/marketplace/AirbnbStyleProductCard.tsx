@@ -364,9 +364,9 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
 
       {/* Content Section - Clean Airbnb Style */}
       <div className={cn(
-        "p-3 space-y-1.5 flex-1 flex flex-col justify-between",
+        "p-3 flex-1 flex flex-col justify-between",
         isInCategorySection && "max-h-36",
-        isMobile && "p-2 space-y-1.5"
+        isMobile && "p-2"
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
@@ -382,13 +382,13 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         </p>
 
         {/* Product Title - Fixed to exactly 2 lines */}
-        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug max-h-[2.5rem] overflow-hidden">
+        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug max-h-[2.5rem] overflow-hidden mt-0.5">
           {getProductTitle()}
         </h3>
 
         {/* Rating Row */}
         {getRating() > 0 && (
-          <div className="flex items-center text-xs mt-0.5">
+          <div className="flex items-center text-xs mt-1">
             <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
             <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
             {getReviewCount() > 0 && (

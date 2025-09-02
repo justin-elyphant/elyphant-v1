@@ -203,7 +203,14 @@ serve(async (req) => {
       }
       
       const paymentResult = paymentResponse.data;
-      console.log(`✅ Real payment processed for auto-gift: ${paymentResult.payment_intent_id}`);
+      
+      // Verify payment was successful before proceeding
+      if (paymentResult.status !== 'succeeded') {
+        console.error('❌ Payment not confirmed:', paymentResult);
+        throw new Error(`Payment failed with status: ${paymentResult.status}. Please check your payment method.`);
+      }
+      
+      console.log(`✅ Real payment confirmed for auto-gift: ${paymentResult.payment_intent_id}`);
 
       // Calculate order breakdown for required fields
       const subtotal = orderTotal;
@@ -416,21 +423,44 @@ serve(async (req) => {
     } catch (orderError) {
       console.error(`❌ Error in order placement for execution ${executionId}:`, orderError);
       
+      // Check if this is a payment-related error and provide specific messaging
+      let errorMessage = orderError.message;
+      let shouldRetry = true;
+      
+      if (errorMessage.includes('Payment')) {
+        // Payment-specific error handling
+        console.log('💳 Payment error detected, may need payment method update');
+        shouldRetry = false; // Don't auto-retry payment failures
+      }
+      
       await supabase
         .from('automated_gift_executions')
         .update({
-          status: 'pending_approval',
-          error_message: `Order placement error: ${orderError.message}. Please retry.`,
+          status: shouldRetry ? 'pending_approval' : 'failed',
+          error_message: `${shouldRetry ? 'Order placement error' : 'Payment error'}: ${errorMessage}. ${shouldRetry ? 'Please retry.' : 'Please check your payment method.'}`,
           updated_at: new Date().toISOString()
         })
         .eq('id', executionId);
 
+      // Create appropriate notification based on error type
+      await supabase
+        .from('auto_gift_notifications')
+        .insert({
+          user_id: execution.user_id,
+          notification_type: shouldRetry ? 'order_failed' : 'payment_failed',
+          title: shouldRetry ? 'Order Processing Failed' : 'Payment Failed',
+          message: shouldRetry 
+            ? `Order processing failed: ${errorMessage}. Please try again.`
+            : `Payment failed: ${errorMessage}. Please check your payment method and auto-gift settings.`,
+          execution_id: executionId
+        });
+
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Order placement failed - execution reset to pending_approval for retry',
-          details: orderError.message,
-          status: 'pending_approval'
+          error: shouldRetry ? 'Order placement failed - execution reset to pending_approval for retry' : 'Payment failed - please check payment method',
+          details: errorMessage,
+          status: shouldRetry ? 'pending_approval' : 'failed'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

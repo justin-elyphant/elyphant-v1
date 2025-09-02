@@ -189,15 +189,35 @@ serve(async (req) => {
       const taxAmount = 0; // Auto-gifts are tax-free for now
       const currency = 'USD';
       
-      // Ensure shipping info has required fields
-      const shippingInfo = recipientProfile.shipping_address || {};
+      // Extract shipping address with proper field mapping
+      const rawAddress = recipientProfile.shipping_address || {};
+      console.log('🏠 [approve-auto-gift] Raw shipping address:', JSON.stringify(rawAddress, null, 2));
+      
+      // Extract recipient name parts
+      const fullName = recipientProfile.name || 'Recipient';
+      const nameParts = fullName.split(' ');
+      const firstName = nameParts[0] || 'Recipient';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Proper address field mapping with multiple fallback options
+      const shippingInfo = {
+        first_name: firstName,
+        last_name: lastName,
+        address_line1: rawAddress.street || rawAddress.address_line1 || '',
+        address_line2: rawAddress.line2 || rawAddress.address_line2 || '',
+        city: rawAddress.city || '',
+        state: rawAddress.state || '',
+        zip_code: rawAddress.zipCode || rawAddress.zip_code || '',
+        country: rawAddress.country || 'US',
+        phone_number: recipientProfile.phone || '5551234567'
+      };
+      
+      console.log('📦 [approve-auto-gift] Mapped shipping info:', JSON.stringify(shippingInfo, null, 2));
+      
+      // Validate required fields
       if (!shippingInfo.address_line1) {
-        console.warn('⚠️ [approve-auto-gift] Missing shipping address, using fallback');
-        shippingInfo.address_line1 = 'Address to be provided';
-        shippingInfo.city = 'City TBD';
-        shippingInfo.state = 'State TBD';
-        shippingInfo.zip_code = '00000';
-        shippingInfo.country = 'US';
+        console.error('❌ [approve-auto-gift] Missing required shipping field: address_line1');
+        throw new Error('Missing required shipping address information');
       }
 
       // Create the order record with all required fields

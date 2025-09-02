@@ -1079,21 +1079,30 @@ class UnifiedGiftAutomationService {
   }
 
   /**
-   * Approve execution with selected products
+   * Approve execution with selected products via edge function
    */
   async approveExecution(executionId: string, selectedProductIds: string[]): Promise<void> {
-    const { error } = await supabase
-      .from('automated_gift_executions')
-      .update({
-        status: 'processing',
-        selected_products: selectedProductIds,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', executionId);
-
-    if (error) throw error;
+    console.log(`🔄 Approving execution ${executionId} with products:`, selectedProductIds);
     
-    console.log(`✅ Auto-gift execution ${executionId} approved for processing`);
+    const { data, error } = await supabase.functions.invoke('approve-auto-gift', {
+      body: {
+        executionId,
+        selectedProductIds,
+        approvalDecision: 'approved'
+      }
+    });
+
+    if (error) {
+      console.error('❌ Error calling approve-auto-gift function:', error);
+      throw new Error(`Failed to approve auto-gift: ${error.message}`);
+    }
+
+    if (!data.success) {
+      console.error('❌ Auto-gift approval failed:', data.error);
+      throw new Error(data.error || 'Failed to approve auto-gift');
+    }
+
+    console.log(`✅ Auto-gift execution ${executionId} approved successfully:`, data);
   }
 
   // ============= TIMING AND SCHEDULING ============= 

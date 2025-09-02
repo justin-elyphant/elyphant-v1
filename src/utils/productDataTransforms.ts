@@ -1,6 +1,46 @@
 import { Product } from '@/types/product';
 
 /**
+ * Transforms auto-gift execution data to valid product objects
+ */
+export const transformAutoGiftProducts = (execution: any): Product[] => {
+  if (!execution?.selected_products) {
+    return [];
+  }
+
+  let products = execution.selected_products;
+
+  // Handle string array legacy format (from old execution records)
+  if (Array.isArray(products) && typeof products[0] === 'string') {
+    console.warn('Legacy string array product format detected, creating fallback products');
+    return products.map((productId: string, index: number) => 
+      createFallbackProduct(productId, execution.id, index)
+    );
+  }
+
+  // Handle JSON string format
+  if (typeof products === 'string') {
+    try {
+      products = JSON.parse(products);
+    } catch (error) {
+      console.error('Failed to parse selected_products JSON:', error);
+      return [];
+    }
+  }
+
+  // Ensure we have an array
+  if (!Array.isArray(products)) {
+    console.error('Selected products is not an array:', products);
+    return [];
+  }
+
+  // Transform and validate each product
+  return products
+    .filter(p => p && typeof p === 'object')
+    .map(p => normalizeProductForDisplay(p));
+};
+
+/**
  * Transforms legacy product ID arrays to full product objects by fetching from wishlist_items
  */
 export const transformProductIdsToObjects = async (
@@ -82,17 +122,42 @@ export const normalizeProductForDisplay = (product: any): Product => {
 };
 
 /**
+ * Validates product data for auto-gift processing
+ */
+export const validateProductForZMA = (product: Product): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (!product.product_id && !product.id) {
+    errors.push('Missing product ID');
+  }
+
+  if (!product.title && !product.name) {
+    errors.push('Missing product name/title');
+  }
+
+  if (!product.price || product.price <= 0) {
+    errors.push('Invalid or missing price');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
  * Fallback product for when data is missing
  */
-export const createFallbackProduct = (productId: string, executionId: string): Product => {
+export const createFallbackProduct = (productId: string, executionId: string, index: number = 0): Product => {
   return {
     product_id: productId,
     id: productId,
-    title: 'Gift Item',
-    name: 'Gift Item',
-    price: 0,
+    title: `Gift Item ${index + 1}`,
+    name: `Gift Item ${index + 1}`,
+    price: 35.99, // Default reasonable price for fallback
     image: '',
     description: `Gift item from execution ${executionId.slice(0, 8)}`,
-    productSource: 'manual' as const
+    productSource: 'manual' as const,
+    category: 'Gift'
   };
 };

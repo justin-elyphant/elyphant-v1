@@ -492,6 +492,9 @@ serve(async (req) => {
     if (isZincError) {
       console.error('❌ Zinc API rejected the order:', zincResult);
       
+      // Extract error message
+      const errorMessage = zincResult.message || zincResult.data?.validator_errors?.[0]?.message || 'Unknown validation error';
+      
       // Update order status to failed with error details
       const { error: updateError } = await supabase
         .from('orders')
@@ -506,7 +509,25 @@ serve(async (req) => {
         console.error('❌ Failed to update order status to failed:', updateError);
       }
 
-      throw new Error(`Zinc API rejected order: ${zincResult.message || zincResult.data?.validator_errors?.[0]?.message || 'Unknown validation error'}`);
+      // Track the failure for security monitoring
+      await trackZmaOrderFailure(orderData.user_id, orderId, 'zinc_api_error', errorMessage, supabase);
+
+      // CRITICAL: If this is from an auto-gift execution, reset it for retry
+      if (body.isAutoGift && body.executionMetadata?.execution_id) {
+        console.log('🔄 Resetting auto-gift execution for retry due to ZMA failure...');
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'pending_approval',
+            error_message: `ZMA processing failed: ${errorMessage}. Please retry.`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', body.executionMetadata.execution_id);
+        
+        console.log(`✅ Auto-gift execution ${body.executionMetadata.execution_id} reset to pending_approval for retry`);
+      }
+
+      throw new Error(`Zinc API rejected order: ${errorMessage}`);
     }
 
     // Only proceed if Zinc actually accepted the order

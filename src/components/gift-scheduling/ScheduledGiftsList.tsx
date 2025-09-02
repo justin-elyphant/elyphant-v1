@@ -4,6 +4,7 @@ import { ScheduledGift } from "@/types/gift-scheduling";
 import ScheduledGiftCard from "./ScheduledGiftCard";
 import EmptyStateDisplay from "./EmptyStateDisplay";
 import { useNicoleExecutions } from "@/hooks/useNicoleExecutions";
+import { transformAutoGiftProducts } from "@/utils/productDataTransforms";
 
 interface ScheduledGiftsListProps {
   gifts: ScheduledGift[];
@@ -19,9 +20,11 @@ const ScheduledGiftsList: React.FC<ScheduledGiftsListProps> = ({ gifts, type }) 
 
   // Helper function to find Nicole attribution for a gift
   const getNicoleAttribution = (giftId: string) => {
-    const execution = executions.find(exec => 
-      exec.selected_products?.some((product: any) => product.id === giftId)
-    );
+    const execution = executions.find(exec => {
+      // Transform products to ensure proper structure before checking
+      const products = transformAutoGiftProducts(exec);
+      return products.some((product: any) => product.id === giftId || product.product_id === giftId);
+    });
     return execution?.ai_agent_source;
   };
   

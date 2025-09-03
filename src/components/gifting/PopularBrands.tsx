@@ -87,7 +87,7 @@ const PopularBrands = () => {
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8">{/* Grid layout instead of carousel */}
       <div className="text-center mb-space-loose md:mb-space-xl">
         <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight md:mb-space-standard">
           Featured Brands

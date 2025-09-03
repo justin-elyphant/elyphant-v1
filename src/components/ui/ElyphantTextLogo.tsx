@@ -2,43 +2,21 @@ import React from "react";
 
 const ElyphantTextLogo = () => {
   return (
-    <svg
-      width="180"
-      height="64"
-      viewBox="0 0 180 64"
-      className="h-16 w-auto opacity-100"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ opacity: 1 }}
-    >
-      <defs>
-        <linearGradient
-          id="elyphantGradient"
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="0%"
-        >
-          <stop offset="0%" stopColor="#9333ea" />
-          <stop offset="50%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#0ea5e9" />
-        </linearGradient>
-      </defs>
-      
-      <text
-        x="50%"
-        y="50%"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fontSize="28"
-        fontWeight="700"
-        fontFamily="Inter, system-ui, sans-serif"
-        fill="url(#elyphantGradient)"
-        letterSpacing="-0.02em"
-        style={{ opacity: 1 }}
+    <div className="h-16 w-auto opacity-100 flex items-center justify-center">
+      <span
+        className="text-4xl font-bold tracking-tight"
+        style={{
+          background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          letterSpacing: '-0.02em',
+        }}
       >
         Elyphant
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 };
 

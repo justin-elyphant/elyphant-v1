@@ -7,7 +7,7 @@ import { CreditCard } from "lucide-react";
 const Payments = () => {
   return (
     <SidebarLayout>
-      <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+      <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-3 sm:px-4 overflow-x-hidden">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
             <CreditCard className="h-6 w-6 sm:h-8 sm:w-8" />
@@ -18,16 +18,18 @@ const Payments = () => {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>
-              Add, edit, or remove payment methods for your purchases
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <UnifiedPaymentMethodManager />
-          </CardContent>
-        </Card>
+        <div className="w-full overflow-x-hidden">
+          <Card className="w-full max-w-full">
+            <CardHeader>
+              <CardDescription>
+                Add, edit, or remove payment methods for your purchases
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-hidden">
+              <UnifiedPaymentMethodManager />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </SidebarLayout>
   );

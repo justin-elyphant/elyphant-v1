@@ -180,35 +180,35 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
     return (
       <Card 
         key={method.id} 
-        className={`cursor-pointer transition-all duration-200 touch-manipulation ios-scroll ${
+        className={`cursor-pointer transition-all duration-200 touch-manipulation ios-scroll w-full max-w-full overflow-hidden ${
           isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:shadow-md'
         } ${isExpired ? 'opacity-60' : ''}`}
         onClick={() => allowSelection && handleSelectMethod(method)}
       >
-        <CardHeader className="py-3">
-          <CardTitle className="text-base">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <CreditCard className="h-5 w-5 flex-shrink-0" />
-                <span className="capitalize">{method.card_type}</span>
-                <span>•••• {method.last_four}</span>
+        <CardHeader className="py-2 sm:py-3 px-3 sm:px-6">
+          <CardTitle className="text-sm sm:text-base">
+            <div className="flex flex-col gap-2 w-full min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="capitalize text-sm sm:text-base truncate">{method.card_type}</span>
+                <span className="text-sm sm:text-base">•••• {method.last_four}</span>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 {method.is_default && (
-                  <Badge variant="default" className="text-xs">
-                    <Star className="h-3 w-3 mr-1" />
+                  <Badge variant="default" className="text-xs px-1 py-0">
+                    <Star className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                     Default
                   </Badge>
                 )}
                 {isSelected && (
-                  <Badge variant="secondary" className="text-xs">
-                    <CheckCircle className="h-3 w-3 mr-1" />
+                  <Badge variant="secondary" className="text-xs px-1 py-0">
+                    <CheckCircle className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                     Selected
                   </Badge>
                 )}
                 {isExpired && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertCircle className="h-3 w-3 mr-1" />
+                  <Badge variant="destructive" className="text-xs px-1 py-0">
+                    <AlertCircle className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                     Expired
                   </Badge>
                 )}
@@ -216,20 +216,20 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="py-3 pt-0">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <div className="text-sm text-muted-foreground">
+        <CardContent className="py-2 sm:py-3 pt-0 px-3 sm:px-6">
+          <div className="flex flex-col gap-3 w-full min-w-0">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
-              {isExpired && <span className="text-destructive ml-2">- Update required</span>}
+              {isExpired && <span className="text-destructive ml-1 sm:ml-2 block sm:inline">- Update required</span>}
             </div>
             
             {mode === 'management' && (
-              <div className="flex space-x-2 touch-manipulation">
+              <div className="flex gap-2 touch-manipulation flex-wrap">
                 {!method.is_default && !isExpired && (
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="min-h-[44px] min-w-[44px] text-xs sm:text-sm"
+                    className="min-h-[44px] px-2 sm:px-3 text-xs flex-shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSetDefault(method.id);
@@ -244,14 +244,14 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
                 <Button 
                   variant="destructive" 
                   size="sm"
-                  className="min-h-[44px] min-w-[44px]"
+                  className="min-h-[44px] min-w-[44px] px-2 flex-shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRemove(method.id);
                   }}
                   disabled={isProcessing}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             )}
@@ -299,9 +299,9 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
     }
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 w-full overflow-x-hidden">
         {mode === 'selection' && (
-          <Alert>
+          <Alert className="mx-0">
             <Shield className="h-4 w-4" />
             <AlertDescription>
               Select a saved payment method or add a new one below.
@@ -309,19 +309,21 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
           </Alert>
         )}
         
-        {paymentMethods.map(renderPaymentMethodCard)}
+        <div className="w-full space-y-4 overflow-x-hidden">
+          {paymentMethods.map(renderPaymentMethodCard)}
+        </div>
         
         {showAddNew && (
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
-            <CardContent className="p-6 text-center">
+          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors w-full max-w-full">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Button 
                 variant="ghost" 
-                className="w-full h-auto p-4 flex flex-col items-center gap-2"
+                className="w-full h-auto p-3 sm:p-4 flex flex-col items-center gap-2 touch-manipulation"
                 onClick={() => setActiveTab("add")}
               >
-                <Plus className="h-8 w-8 text-muted-foreground" />
-                <span className="font-medium">Add New Payment Method</span>
-                <span className="text-sm text-muted-foreground">
+                <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
+                <span className="font-medium text-sm sm:text-base">Add New Payment Method</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   Securely save a new card for future use
                 </span>
               </Button>
@@ -342,19 +344,20 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
   }
 
   return (
-    <Card className="w-full">
-      <CardContent className="pt-6">
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="w-full">
         {activeTab === "add" ? (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full overflow-x-hidden">
             <div className="flex items-center gap-2 pb-4 border-b">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setActiveTab("saved")}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 touch-manipulation"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Saved Methods
+                <span className="hidden sm:inline">Back to Saved Methods</span>
+                <span className="sm:hidden">Back</span>
               </Button>
             </div>
             <Elements stripe={stripeClientManager.getStripePromise()}>
@@ -369,8 +372,8 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
         ) : (
           renderSavedMethods()
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

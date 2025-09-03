@@ -28,39 +28,25 @@ const Hero = () => {
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
-  // Handler for Start Gifting: triggers Nicole AI on homepage or shows auth
+  // Handler for Start Gifting: routes to gifting approach selection
   const handleStartGifting = () => {
-    LocalStorageService.setNicoleContext({ selectedIntent: "giftor", source: 'hero_cta' });
     if (user) {
-      // Authenticated user: switch to Nicole mode and trigger it
-      navigate("/?mode=nicole");
-      
-      // If we're already on homepage, trigger Nicole directly
-      if (window.location.pathname === '/') {
-        // Dispatch a custom event to trigger Nicole
-        window.dispatchEvent(new CustomEvent('triggerNicole', { 
-          detail: { 
-            capability: 'auto_gifting',
-            conversationPhase: 'greeting'
-          }
-        }));
-      }
+      // Navigate directly to gifting approach selection
+      navigate('/gifting');
     } else {
-      // Not logged in: send to signup
-      navigate("/auth");
+      // Redirect to auth with gifting as the next destination
+      navigate('/auth?redirect=/gifting');
     }
   };
 
   // Enhanced handler for Create Wishlist CTA
   const handleCreateWishlist = () => {
-    LocalStorageService.setNicoleContext({ selectedIntent: "giftee", source: 'hero_cta' });
     if (user) {
       navigate("/wishlists");
     } else {
-      navigate("/auth");
+      navigate("/auth?redirect=/wishlists");
     }
   };
-
   // Legacy intent handlers removed - Nicole handles all intent selection now
 
   // Handle wishlist creation

@@ -1,9 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 // Mock data for popular brands with real logos
 const popularBrands = [
@@ -54,50 +56,7 @@ const popularBrands = [
 const PopularBrands = () => {
   const [loadingBrand, setLoadingBrand] = useState<string | null>(null);
   const navigate = useNavigate();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Create infinite scroll data by duplicating brands
-  const infiniteBrands = [...popularBrands, ...popularBrands, ...popularBrands];
-
-  // Carousel scroll functions with infinite scrolling logic
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const cardWidth = 180 + 16; // card width + gap
-      const newScrollLeft = container.scrollLeft - cardWidth;
-      
-      // If we're at the beginning, jump to the end of the first set
-      if (newScrollLeft < 0) {
-        container.scrollLeft = popularBrands.length * cardWidth + newScrollLeft;
-      } else {
-        container.scrollBy({ left: -cardWidth, behavior: 'smooth' });
-      }
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const cardWidth = 180 + 16; // card width + gap
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      const newScrollLeft = container.scrollLeft + cardWidth;
-      
-      // If we're near the end, jump back to the beginning of the second set
-      if (newScrollLeft >= maxScroll - cardWidth) {
-        container.scrollLeft = popularBrands.length * cardWidth;
-      } else {
-        container.scrollBy({ left: cardWidth, behavior: 'smooth' });
-      }
-    }
-  };
-
-  // Initialize scroll position to the middle set for infinite effect
-  React.useEffect(() => {
-    if (scrollContainerRef.current) {
-      const cardWidth = 180 + 16;
-      scrollContainerRef.current.scrollLeft = popularBrands.length * cardWidth;
-    }
-  }, []);
+  const isMobile = useIsMobile();
   
   const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
     e.preventDefault(); // Prevent default navigation
@@ -137,64 +96,59 @@ const PopularBrands = () => {
           Discover trusted brands our customers love - quality guaranteed
         </p>
       </div>
-      <div className="flex justify-between items-center mb-6">
-        <div></div>
-        <div className="flex gap-2">
-          <button
-            onClick={scrollLeft}
-            className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="h-4 w-4 text-gray-600" />
-          </button>
-          <button
-            onClick={scrollRight}
-            className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="h-4 w-4 text-gray-600" />
-          </button>
-        </div>
-      </div>
       
-      <div 
-        ref={scrollContainerRef}
-        className="flex space-x-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {infiniteBrands.map((brand, index) => (
-            <Link 
-              to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`} 
-              key={`${brand.id}-${index}`} 
-              onClick={(e) => handleBrandClick(e, brand.name)}
-              className={loadingBrand === brand.name ? "pointer-events-none opacity-70" : ""}
-            >
-              <Card className="min-w-[180px] hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 overflow-hidden p-2">
-                    <img 
-                      src={brand.logoUrl} 
-                      alt={brand.name} 
-                      className="max-w-full max-h-full object-contain"
-                      loading="lazy"
-                      onError={(e) => {
-                        // Fallback in case image fails to load
-                        (e.target as HTMLImageElement).src = "/placeholder.svg";
-                        console.log(`Brand image fallback used for: ${brand.name}`);
-                      }}
-                    />
-                  </div>
-                  <h3 className="font-medium text-center">{brand.name}</h3>
-                  <p className="text-sm text-gray-500 text-center">
-                    {brand.productCount} Products
-                  </p>
-                  {loadingBrand === brand.name && (
-                    <div className="mt-2 text-xs text-blue-500">Loading...</div>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+      {/* Grid layout for mobile-first approach */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 md:gap-4">
+        {popularBrands.map((brand) => (
+          <Link 
+            to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`} 
+            key={brand.id}
+            onClick={(e) => handleBrandClick(e, brand.name)}
+            className={cn(
+              loadingBrand === brand.name ? "pointer-events-none opacity-70" : "",
+              "block"
+            )}
+          >
+            <Card className={cn(
+              "hover:shadow-md transition-shadow touch-target-48 touch-manipulation",
+              isMobile ? "min-h-[140px]" : "min-h-[120px]"
+            )}>
+              <CardContent className={cn(
+                "flex flex-col items-center justify-center",
+                isMobile ? "p-4" : "p-3 md:p-4 lg:p-6"
+              )}>
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 md:mb-4 overflow-hidden p-2">
+                  <img 
+                    src={brand.logoUrl} 
+                    alt={brand.name} 
+                    className="max-w-full max-h-full object-contain opacity-80 hover:opacity-100 transition-opacity"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback in case image fails to load
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      console.log(`Brand image fallback used for: ${brand.name}`);
+                    }}
+                  />
+                </div>
+                <h3 className={cn(
+                  "font-medium text-center leading-tight",
+                  isMobile ? "text-sm" : "text-xs md:text-sm"
+                )}>
+                  {brand.name}
+                </h3>
+                <p className={cn(
+                  "text-gray-500 text-center",
+                  isMobile ? "text-xs mt-1" : "text-xs mt-1"
+                )}>
+                  {brand.productCount} Products
+                </p>
+                {loadingBrand === brand.name && (
+                  <div className="mt-2 text-xs text-blue-500">Loading...</div>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
       
       {/* Shop All Brands Button */}

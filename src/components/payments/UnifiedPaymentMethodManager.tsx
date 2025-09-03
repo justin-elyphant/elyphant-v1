@@ -336,13 +336,7 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          {mode === 'selection' ? 'Select Payment Method' : 'Payment Methods'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {activeTab === "add" ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-4 border-b">

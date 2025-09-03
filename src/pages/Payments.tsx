@@ -20,7 +20,6 @@ const Payments = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Payment Methods</CardTitle>
             <CardDescription>
               Add, edit, or remove payment methods for your purchases
             </CardDescription>

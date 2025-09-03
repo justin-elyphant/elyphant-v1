@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompactProfileHeader from "./CompactProfileHeader";
-import ResponsiveProductGrid from "./ResponsiveProductGrid";
+import SocialProductGrid from "./SocialProductGrid";
 
 
 interface InstagramProfileLayoutProps {
@@ -58,9 +58,12 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
 
   return (
-    <div className="w-full bg-background">
+    <div 
+      className="w-full bg-background"
+      style={{ width: '100vw', maxWidth: '100vw', overflow: 'hidden' }}
+    >
       {/* Compact Profile Header (Instagram-style) */}
-      <div className="w-full">
+      <div className="w-full" style={{ maxWidth: '100%' }}>
         <CompactProfileHeader
           userData={userData}
           isCurrentUser={isCurrentUser}
@@ -78,27 +81,27 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
         />
       </div>
 
-      {/* Main Content Container - Responsive with max width */}
-      <div className="w-full py-6">
-        {/* Responsive Product Grid - Primary Focus */}
-        <div className="mb-8">
-          <ResponsiveProductGrid profile={profile} isOwnProfile={isCurrentUser} />
+      {/* Main Content Container - Full Width */}
+      <div className="w-full py-4">
+        {/* Social Product Grid - Primary Focus */}
+        <div className="mb-6 w-full">
+          <SocialProductGrid profile={profile} isOwnProfile={isCurrentUser} />
         </div>
 
         {/* Expandable Secondary Content */}
         {secondaryContent && (
-          <div className="w-full max-w-7xl mx-auto px-4">
+          <div className="w-full px-4">
             <Card>
               <CardContent className="p-0">
                 {/* Expandable Header */}
                 <Button
                   variant="ghost"
                   onClick={() => setShowSecondaryContent(!showSecondaryContent)}
-                  className="w-full h-auto p-6 flex items-center justify-between text-left"
+                  className="w-full h-auto p-4 flex items-center justify-between text-left min-w-0"
                 >
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-lg">{secondaryTitle}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <h3 className="font-medium truncate">{secondaryTitle}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 truncate">
                       {showSecondaryContent ? "Hide" : "Show"} additional profile information
                     </p>
                   </div>
@@ -116,7 +119,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
                   "overflow-hidden transition-all duration-300",
                   showSecondaryContent ? "max-h-none" : "max-h-0"
                 )}>
-                  <div className="p-6 pt-0 border-t">
+                  <div className="p-4 pt-0 border-t">
                     {secondaryContent}
                   </div>
                 </div>

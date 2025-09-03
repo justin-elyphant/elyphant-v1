@@ -59,11 +59,11 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 
   return (
     <div 
-      className="w-full bg-background overflow-x-hidden"
-      style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+      className="w-full bg-background"
+      style={{ maxWidth: '100vw', overflow: 'hidden' }}
     >
       {/* Compact Profile Header (Instagram-style) */}
-      <div className="w-full overflow-x-hidden">
+      <div className="w-full" style={{ maxWidth: '100%' }}>
         <CompactProfileHeader
           userData={userData}
           isCurrentUser={isCurrentUser}

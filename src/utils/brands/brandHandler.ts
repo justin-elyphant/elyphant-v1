@@ -27,7 +27,7 @@ export const handleBrandProducts = async (
   console.log(`Looking for products for brand: ${brandName}`);
   
   // Show loading toast
-  toast.loading(`Looking for ${brandName} products...`, { id: "loading-brand-products" });
+  // Silently look for products - no toast needed
   
   try {
     // Check if we already have products for this brand to avoid duplicate API calls
@@ -38,7 +38,7 @@ export const handleBrandProducts = async (
     
     if (existingProducts.length >= MIN_PRODUCTS_COUNT) {
       console.log(`Using ${existingProducts.length} existing products for ${brandName}`);
-      toast.success(`Found ${existingProducts.length} ${brandName} products`, { id: "loading-brand-products" });
+      // Silently complete - no toast needed
       return existingProducts;
     }
     
@@ -91,7 +91,7 @@ export const handleBrandProducts = async (
           console.log(`Updated products context with ${newProducts.length} total products, ${brandProducts.length} for ${brandName}`);
           
           // Dismiss the loading toast and show success
-          toast.success(`Found ${brandProducts.length} ${brandName} products`, { id: "loading-brand-products" });
+          // Silently complete - no toast needed
           
           return newProducts;
         });
@@ -127,7 +127,7 @@ export const handleBrandProducts = async (
         );
         
         const newProducts = [...filteredProducts, ...fallbackAppleProducts];
-        toast.success(`Found ${fallbackAppleProducts.length} Apple products`, { id: "loading-brand-products" });
+        // Silently complete - no toast needed
         return newProducts;
       });
       

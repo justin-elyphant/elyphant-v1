@@ -310,7 +310,7 @@ class UnifiedMarketplaceService {
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         if (!silent) {
-          this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
+          // Silently execute brand category search - no toast needed
         }
         response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {

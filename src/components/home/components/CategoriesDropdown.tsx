@@ -27,20 +27,12 @@ const CategoriesDropdownWithoutProvider: React.FC<CategoriesDropdownProps> = ({
   const navigate = useNavigate();
 
   const handleCategorySelect = async (category: string, searchTerm: string) => {
-    // Show loading toast with unique ID
-    const loadingToastId = `category-search-${category}`;
-    toast.loading(`Loading ${searchTerm} products...`, {
-      id: loadingToastId,
-    });
+    // Silently load products - no toast needed
+    console.log(`Loading ${searchTerm} products for category: ${category}`);
     
     // Navigate to marketplace with both category and search parameters so it gets saved to recent searches
     navigate(`/marketplace?category=${category}&search=${encodeURIComponent(searchTerm)}`);
     onOpenChange(false);
-    
-    // Dismiss the loading toast after navigation
-    setTimeout(() => {
-      toast.dismiss(loadingToastId);
-    }, 1000);
   };
 
   return (

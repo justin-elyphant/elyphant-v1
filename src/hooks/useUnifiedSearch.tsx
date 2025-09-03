@@ -107,11 +107,9 @@ export const useUnifiedSearch = (options: UseUnifiedSearchOptions = {}) => {
           searchHistory: newHistory
         });
 
-        // Show success toast if results found
+        // Silently show search results - no toast needed for normal searches
         if (results.total > 0 && query.trim()) {
-          toast.success(`Found ${results.total} results`, {
-            description: `${results.friends.length} friends, ${results.products.length} products, ${results.brands.length} brands`,
-          });
+          console.log(`Found ${results.total} results: ${results.friends.length} friends, ${results.products.length} products, ${results.brands.length} brands`);
         }
       }
 

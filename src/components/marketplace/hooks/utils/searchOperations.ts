@@ -155,15 +155,8 @@ export const handleSearch = async (
             console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
             setProducts(searchResults);
             
-            // Show success toast with price range info
-            const priceInfo = enhancedNicoleContext.budget ? ` ($${enhancedNicoleContext.budget[0]}-$${enhancedNicoleContext.budget[1]})` : '';
-            setTimeout(() => {
-              if (searchIdRef.current.includes(term)) {
-                toast.success(`Found ${searchResults.length} products for "${term}"${priceInfo}`, {
-                  id: `search-success-${term}`,
-                });
-              }
-            }, 300);
+            // Silently show products with price filtering - no toast needed
+            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
             return;
           }
         } catch (error) {
@@ -183,17 +176,8 @@ export const handleSearch = async (
     
     console.log(`MarketplaceWrapper: Found ${mockResults.length} results for "${term}"`);
     
-    // Show success toast with standard message for non-Nicole searches
-    if (term.length > 3 && !nicoleContext) {
-      setTimeout(() => {
-        // Check if this is still the current search
-        if (searchIdRef.current.includes(term)) {
-          toast.success(`Found ${mockResults.length} products for "${term}"`, {
-            id: `search-success-${term}`,
-          });
-        }
-      }, 300);
-    }
+    // Silently show search results - no toast needed for normal searches
+    console.log(`Found ${mockResults.length} products for "${term}"`);
     
   } catch (error) {
     console.error('Error searching for products:', error);
@@ -258,14 +242,8 @@ export const handleMultiInterestSearch = async (
     
     setProducts(products);
     
-    // Show success toast
-    setTimeout(() => {
-      if (searchIdRef.current.includes(interests.join(' '))) {
-        toast.success(`Found ${searchResult.totalResults} products across ${interests.length} interests`, {
-          id: `multi-search-success-${interests.join('-')}`,
-        });
-      }
-    }, 300);
+    // Silently complete multi-interest search - no toast needed
+    console.log(`Found ${searchResult.totalResults} products across ${interests.length} interests`);
     
   } catch (error) {
     console.error('🎯 Multi-Interest Search: Error:', error);

@@ -19,6 +19,7 @@ import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 import { getNavigationConfig } from "@/components/navigation/config/navigationConfig";
 import { navigationStyles } from "@/components/navigation/shared/NavigationStyles";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const UserButton = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const UserButton = () => {
   const { unreadCount: notificationsCount } = useNotifications();
   const unreadMessagesCount = useUnreadMessagesCount();
   const pendingConnectionsCount = usePendingConnectionsCount();
+  const isMobile = useIsMobile();
 
   // Get unified navigation configuration
   const badges = {
@@ -115,7 +117,43 @@ const UserButton = () => {
   const handleMarketplaceClick = () => {
     navigate("/marketplace");
   };
+
+  const handleAvatarClick = () => {
+    if (isMobile) {
+      navigate("/dashboard");
+    }
+  };
   
+  // On mobile, render a simple button that navigates to dashboard
+  if (isMobile) {
+    return (
+      <button 
+        onClick={handleAvatarClick}
+        className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation"
+      >
+        <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+          <AvatarImage 
+            src={
+              profile?.profile_image || 
+              user?.user_metadata?.avatar_url || 
+              user?.user_metadata?.picture
+            } 
+          />
+          <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+            {userInitials}
+          </AvatarFallback>
+        </Avatar>
+        {totalNotificationCount > 0 && (
+          <NotificationBadge 
+            count={totalNotificationCount}
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs shadow-md"
+          />
+        )}
+      </button>
+    );
+  }
+  
+  // Desktop dropdown menu
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

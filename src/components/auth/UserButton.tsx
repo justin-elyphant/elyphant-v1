@@ -120,7 +120,7 @@ const UserButton = () => {
 
   const handleAvatarClick = () => {
     if (isMobile) {
-      navigate("/dashboard");
+      handleProfileClick();
     }
   };
   

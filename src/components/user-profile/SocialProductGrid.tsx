@@ -374,168 +374,131 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square bg-muted rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full overflow-x-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-4">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square bg-muted rounded-lg animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (products.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
+      <div className="w-full overflow-x-hidden p-4">
+        <div className="text-center py-8">
           <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
             {isOwnProfile 
               ? "Start building your social grid by adding items to your wishlists!"
               : "No products to display yet."}
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {products.map((product) => {
-            const isWishlisted = wishlistedProducts.includes(product.product_id);
-            const SourceIcon = product.sourceIcon;
+    <div className="w-full overflow-x-hidden">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-4">
+        {products.map((product) => {
+          const isWishlisted = wishlistedProducts.includes(product.product_id);
+          const SourceIcon = product.sourceIcon;
 
-            return (
-              <div
-                key={product.product_id}
-                className="group relative aspect-square cursor-pointer"
-                onClick={() => handleProductClick(product)}
-              >
-                {/* Product Image */}
-                <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
+          return (
+            <div
+              key={product.product_id}
+              className="group relative aspect-square cursor-pointer min-w-0"
+              onClick={() => handleProductClick(product)}
+            >
+              {/* Product Image */}
+              <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
                   
-                  {/* Source Badge */}
-                  <Badge
-                    className={cn(
-                      "absolute top-2 left-2 text-xs px-2 py-1",
-                      product.sourceColor
-                    )}
-                  >
-                    <SourceIcon className="w-3 h-3 mr-1" />
-                    {product.sourceLabel}
-                  </Badge>
-
-                  {/* Price Badge */}
-                  {product.price > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute bottom-2 left-2 text-xs"
-                    >
-                      {formatPrice(product.price)}
-                    </Badge>
+                {/* Source Badge */}
+                <Badge
+                  className={cn(
+                    "absolute top-1 left-1 text-xs px-1.5 py-0.5 scale-90",
+                    product.sourceColor
                   )}
+                >
+                  <SourceIcon className="w-2.5 h-2.5 mr-0.5" />
+                  <span className="hidden sm:inline">{product.sourceLabel}</span>
+                </Badge>
 
-                  {/* Action Buttons - Context Aware */}
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    {product.source === 'wishlist' && isOwnProfile ? (
-                      // Show remove button for own wishlist items
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500"
-                        onClick={(e) => handleRemoveFromWishlist(e, product)}
-                      >
-                        <Trash2 className="h-4 w-4 text-white" />
-                      </Button>
-                    ) : (
-                      // Show wishlist heart for other products
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                {/* Price Badge */}
+                {product.price > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute bottom-1 left-1 text-xs px-1.5 py-0.5 scale-90"
+                  >
+                    {formatPrice(product.price)}
+                  </Badge>
+                 )}
+
+                {/* Action Buttons - Context Aware */}
+                <div className="absolute top-1 right-1 flex gap-1">
+                  {product.source === 'wishlist' && isOwnProfile ? (
+                    // Show remove button for own wishlist items
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 sm:h-8 sm:w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500"
+                      onClick={(e) => handleRemoveFromWishlist(e, product)}
+                    >
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                    </Button>
+                  ) : (
+                    // Show wishlist heart for other products
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-6 w-6 sm:h-8 sm:w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
+                        isWishlisted && "opacity-100"
+                      )}
+                      onClick={(e) => handleWishlistAction(e, product)}
+                    >
+                      <Heart
                         className={cn(
-                          "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
-                          isWishlisted && "opacity-100"
+                          "h-3 w-3 sm:h-4 sm:w-4",
+                          isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
                         )}
-                        onClick={(e) => handleWishlistAction(e, product)}
-                      >
-                        <Heart
-                          className={cn(
-                            "h-4 w-4",
-                            isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                          )}
-                        />
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white p-2">
-                      <p className="text-sm font-medium line-clamp-2">{product.title}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button size="sm" variant="secondary" className="text-xs">
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          {product.source === 'wishlist' && isOwnProfile ? 'Manage' : 'View'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                      />
+                    </Button>
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Grid Stats */}
-        <div className="mt-6 flex flex-wrap gap-2 justify-center">
-          {[
-            { source: 'wishlist', icon: Heart, label: 'Wishlist', color: 'text-red-600' },
-            { source: 'interests', icon: Target, label: 'Interests', color: 'text-blue-600' },
-            { source: 'ai', icon: Bot, label: 'AI Picks', color: 'text-purple-600' },
-            { source: 'trending', icon: TrendingUp, label: 'Trending', color: 'text-orange-600' }
-          ].map(({ source, icon: Icon, label, color }) => {
-            const count = products.filter(p => p.source === source).length;
-            if (count === 0) return null;
-            
-            return (
-              <Badge key={source} variant="outline" className="text-xs">
-                <Icon className={cn("w-3 h-3 mr-1", color)} />
-                {count} {label}
-              </Badge>
-            );
-          })}
-        </div>
+      {/* Dialogs */}
+      <ProductDetailsDialog
+        product={selectedProduct}
+        open={showProductDialog}
+        onOpenChange={setShowProductDialog}
+        userData={profile}
+        source={selectedProduct?.source}
+        onWishlistChange={handleItemRemoved}
+      />
 
-        {/* Dialogs */}
-        <ProductDetailsDialog
-          product={selectedProduct}
-          open={showProductDialog}
-          onOpenChange={setShowProductDialog}
-          userData={profile}
-          source={selectedProduct?.source}
-          onWishlistChange={handleItemRemoved}
-        />
-
-        <WishlistItemManagementDialog
-          item={selectedWishlistItem}
-          open={showWishlistItemDialog}
-          onOpenChange={setShowWishlistItemDialog}
-          onItemRemoved={handleItemRemoved}
-        />
-      </CardContent>
-    </Card>
+      <WishlistItemManagementDialog
+        item={selectedWishlistItem}
+        open={showWishlistItemDialog}
+        onOpenChange={setShowWishlistItemDialog}
+        onItemRemoved={handleItemRemoved}
+      />
+    </div>
   );
 };
 

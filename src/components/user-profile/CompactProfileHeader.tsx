@@ -147,10 +147,10 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   return (
     <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500">
       <div className="absolute inset-0 bg-black/20" />
-      <div className="relative flex items-center justify-between p-4 lg:px-6">
-        <div className="flex items-center gap-4">
+      <div className="relative flex items-center justify-between p-4 lg:px-6 min-w-0 overflow-x-hidden">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Profile Avatar */}
-          <Avatar className="w-16 h-16 border-2 border-white shadow-lg">
+          <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-white shadow-lg flex-shrink-0">
             <AvatarImage src={userData?.profile_image} alt={userData?.name} />
             <AvatarFallback className="text-lg font-bold bg-white text-gray-900">
               {userData?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
@@ -159,35 +159,37 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
 
           {/* Profile Info */}
           <div className="text-white min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl lg:text-2xl font-bold truncate">{userData?.name || 'User'}</h1>
-              {connectionData?.isAutoGiftEnabled && (
-                <Badge variant="secondary" className="bg-green-500/20 text-green-100 border-green-300/30 text-xs">
-                  Auto-Gift
-                </Badge>
-              )}
-              {!isCurrentUser && !canConnect && (
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                  <Lock className="h-3 w-3 mr-1" />
-                  Private
-                </Badge>
-              )}
+            <div className="flex items-center gap-2 mb-1 min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate min-w-0">{userData?.name || 'User'}</h1>
+              <div className="flex gap-1 flex-shrink-0">
+                {connectionData?.isAutoGiftEnabled && (
+                  <Badge variant="secondary" className="bg-green-500/20 text-green-100 border-green-300/30 text-xs">
+                    Auto-Gift
+                  </Badge>
+                )}
+                {!isCurrentUser && !canConnect && (
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Private
+                  </Badge>
+                )}
+              </div>
             </div>
             
             {userData?.username && (
-              <p className="text-sm opacity-90 mb-2">@{userData.username}</p>
+              <p className="text-sm opacity-90 mb-1 truncate">@{userData.username}</p>
             )}
             
             {/* Bio - single line with truncation */}
             {userData?.bio && (
-              <p className="text-sm opacity-90 truncate max-w-md">{userData.bio}</p>
+              <p className="text-sm opacity-90 truncate">{userData.bio}</p>
             )}
             
             {/* Connection relationship info */}
             {connectionData?.relationship && (
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 min-w-0">
                 {getRelationshipIcon(connectionData.relationship as any)}
-                <span className="text-xs font-medium opacity-90">
+                <span className="text-xs font-medium opacity-90 truncate">
                   {getRelationshipLabel(connectionData.relationship as any, connectionData.customRelationship)}
                 </span>
               </div>
@@ -196,7 +198,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
         </div>
 
         {/* Stats and Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           {/* Stats */}
           <div className="hidden sm:flex items-center gap-4 text-white">
             <button className="text-center hover:opacity-80 transition-opacity">
@@ -210,7 +212,9 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          {renderActionButtons()}
+          <div className="flex gap-1 sm:gap-2">
+            {renderActionButtons()}
+          </div>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 
 interface InstagramProfileLayoutProps {
   // Profile data
@@ -57,7 +58,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Compact Profile Header (Instagram-style) */}
       <CompactProfileHeader
         userData={userData}
@@ -76,7 +77,12 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
       />
 
       {/* Main Content Container */}
-      <div className="container mx-auto px-4 py-6">
+      <ResponsiveContainer 
+        className="py-4"
+        fullWidthOnMobile={true}
+        maxWidth="7xl"
+        padding="minimal"
+      >
         {/* Social Product Grid - Primary Focus */}
         <div className="mb-6">
           <SocialProductGrid profile={profile} isOwnProfile={isCurrentUser} />
@@ -90,19 +96,21 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
               <Button
                 variant="ghost"
                 onClick={() => setShowSecondaryContent(!showSecondaryContent)}
-                className="w-full h-auto p-4 flex items-center justify-between text-left"
+                className="w-full h-auto p-4 flex items-center justify-between text-left min-w-0"
               >
-                <div>
-                  <h3 className="font-medium">{secondaryTitle}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium truncate">{secondaryTitle}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 truncate">
                     {showSecondaryContent ? "Hide" : "Show"} additional profile information
                   </p>
                 </div>
-                {showSecondaryContent ? (
-                  <ChevronUp className="h-5 w-5" />
-                ) : (
-                  <ChevronDown className="h-5 w-5" />
-                )}
+                <div className="ml-4 flex-shrink-0">
+                  {showSecondaryContent ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </div>
               </Button>
 
               {/* Expandable Content */}
@@ -117,7 +125,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
             </CardContent>
           </Card>
         )}
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 };

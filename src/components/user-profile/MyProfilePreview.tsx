@@ -47,7 +47,7 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
 
   if (!profile) {
     return (
-      <div className="container mx-auto py-10 px-4">
+      <div className="w-full py-10 px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
           <p className="text-muted-foreground">Unable to load your profile data.</p>
@@ -87,7 +87,7 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
       <div className="mb-6">
         <PrivacyNotice 
           level="public" 
-          className="max-w-4xl mx-auto"
+          className="w-full"
         />
       </div>
       
@@ -106,8 +106,8 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   return (
     <>
       {/* Preview Mode Indicator */}
-      <div className="bg-primary/10 border-b border-primary/20 w-full overflow-x-hidden">
-        <div className="w-full max-w-full px-4 py-3 overflow-x-hidden">
+      <div className="bg-primary/10 border-b border-primary/20 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
+        <div className="w-full px-4 py-3 overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
           <div className="flex items-center justify-between min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Eye className="h-5 w-5 text-primary flex-shrink-0" />

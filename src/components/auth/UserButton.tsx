@@ -119,8 +119,8 @@ const UserButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center space-x-1 hover:opacity-80 transition-opacity relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 rounded-full">
-          <Avatar className="h-8 w-8 border border-gray-200">
+        <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary rounded-full p-1 -m-1 touch-manipulation">
+          <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
             <AvatarImage 
               src={
                 profile?.profile_image || 
@@ -128,14 +128,14 @@ const UserButton = () => {
                 user?.user_metadata?.picture
               } 
             />
-            <AvatarFallback className="bg-purple-100 text-purple-800 text-sm font-medium">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           {totalNotificationCount > 0 && (
             <NotificationBadge 
               count={totalNotificationCount}
-              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs"
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs shadow-md animate-pulse"
             />
           )}
         </button>

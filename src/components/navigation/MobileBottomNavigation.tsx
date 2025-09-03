@@ -82,47 +82,55 @@ const MobileBottomNavigation: React.FC = () => {
                 to={tab.href}
                 onClick={() => handleTabPress(tab)}
                 className={cn(
-                  "flex flex-col items-center justify-center py-2 px-1 min-h-[60px] transition-all duration-200 touch-manipulation",
-                  "touch-target-44 relative group flex-1"
+                  "flex flex-col items-center justify-center py-2 px-1 min-h-[60px] transition-all duration-200 touch-manipulation relative group flex-1 rounded-lg",
+                  // Enhanced active and focus states
+                  isActive 
+                    ? "text-primary bg-primary/5" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                  // Focus and accessibility
+                  "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+                  // Touch interaction feedback
+                  "active:scale-95"
                 )}
               >
                 {/* Icon with badge */}
                 <div className="relative">
                   <div className={cn(
-                    "transition-all duration-200 transform",
+                    "transition-all duration-200 transform relative",
                     isActive 
-                      ? "text-primary scale-110" 
-                      : "text-muted-foreground group-active:scale-95"
+                      ? "text-primary scale-110 drop-shadow-sm" 
+                      : "text-muted-foreground group-hover:text-foreground group-active:scale-95"
                   )}>
                     {tab.icon}
                   </div>
                   
-                  {/* Badge for cart or notifications */}
+                  {/* Enhanced Badge with better positioning and animation */}
                   {tab.badge && tab.badge > 0 && (
                     <div className={cn(
-                      "absolute -top-2 -right-2 text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1",
+                      "absolute -top-1 -right-1 text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md transition-all duration-200",
+                      "animate-pulse",
                       tab.id === "cart" 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-destructive text-destructive-foreground"
+                        ? "bg-primary text-primary-foreground border border-background" 
+                        : "bg-destructive text-destructive-foreground border border-background"
                     )}>
                       {tab.badge > 99 ? "99+" : tab.badge}
                     </div>
                   )}
                 </div>
                 
-                {/* Label */}
+                {/* Enhanced Label with better typography */}
                 <span className={cn(
-                  "text-xs font-medium mt-1 transition-colors duration-200",
+                  "text-xs font-medium mt-1 transition-all duration-200 text-center leading-tight",
                   isActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground"
+                    ? "text-primary font-semibold" 
+                    : "text-muted-foreground group-hover:text-foreground"
                 )}>
                   {tab.label}
                 </span>
                 
-                {/* Active indicator */}
+                {/* Enhanced Active indicator with glow effect */}
                 {isActive && (
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                  <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-2 h-0.5 bg-primary rounded-full shadow-lg animate-pulse" />
                 )}
               </Link>
             );

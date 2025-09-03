@@ -5,11 +5,7 @@ import { handleBrandProducts } from "@/utils/brandUtils";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+// Removed carousel imports for grid layout
 
 const PopularBrandsSection = () => {
   const navigate = useNavigate();
@@ -213,63 +209,47 @@ const PopularBrandsSection = () => {
           </p>
         </div>
         
-        <div className="relative">
-          <Carousel
-            opts={{
-              align: "start",
-              loop: false,
-            }}
-            className="w-full swipe-container will-change-scroll"
-          >
-            <CarouselContent className={isMobile ? "-ml-2" : "-ml-4"}>
-              {brands.map((brand) => (
-                <CarouselItem key={brand.name} className={`${isMobile ? "pl-2 basis-1/2" : "pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6"} swipe-item`}>
-                  <div
-                    className={cn(
-                      "relative flex flex-col items-center justify-center rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback",
-                      isMobile ? "p-4 mx-2 min-h-[140px]" : "p-3 md:p-4 lg:p-6 min-h-[100px]",
-                      loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-gray-50" : ""
-                    )}
-                    onClick={() => handleBrandClick(brand.name)}
-                  >
-                    <img
-                      src={brand.logo}
-                      alt={`${brand.name} logo`}
-                      className={cn(
-                        "max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity",
-                        isMobile ? "max-h-12" : "max-h-6 md:max-h-8 lg:max-h-12",
-                        loadingBrand === brand.name ? "grayscale animate-pulse" : ""
-                      )}
-                      loading="lazy"
-                      style={{ aspectRatio: "3/1", objectFit: "contain" }}
-                    />
-                    <span className={cn(
-                      "font-medium text-gray-700 text-center leading-tight",
-                      isMobile ? "text-sm mt-3" : "text-xs md:text-sm mt-2 md:mt-3",
-                      loadingBrand === brand.name ? "text-gray-500" : ""
-                    )}>
-                      {brand.name}
-                    </span>
-                    {loadingBrand === brand.name && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-xs text-purple-700 font-medium px-2 py-1 bg-white/80 rounded">
-                          Loading...
-                        </div>
-                      </div>
-                    )}
+        {/* Grid layout for mobile-first approach */}
+        <div className={`${isMobile ? "px-4" : ""}`}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {brands.map((brand) => (
+              <div
+                key={brand.name}
+                className={cn(
+                  "relative flex flex-col items-center justify-center rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback",
+                  isMobile ? "p-4 min-h-[140px]" : "p-3 md:p-4 lg:p-6 min-h-[120px]",
+                  loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-gray-50" : ""
+                )}
+                onClick={() => handleBrandClick(brand.name)}
+              >
+                <img
+                  src={brand.logo}
+                  alt={`${brand.name} logo`}
+                  className={cn(
+                    "max-w-12 md:max-w-16 lg:max-w-20 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity",
+                    isMobile ? "max-h-12" : "max-h-6 md:max-h-8 lg:max-h-12",
+                    loadingBrand === brand.name ? "grayscale animate-pulse" : ""
+                  )}
+                  loading="lazy"
+                  style={{ aspectRatio: "3/1", objectFit: "contain" }}
+                />
+                <span className={cn(
+                  "font-medium text-gray-700 text-center leading-tight",
+                  isMobile ? "text-sm mt-3" : "text-xs md:text-sm mt-2 md:mt-3",
+                  loadingBrand === brand.name ? "text-gray-500" : ""
+                )}>
+                  {brand.name}
+                </span>
+                {loadingBrand === brand.name && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-xs text-purple-700 font-medium px-2 py-1 bg-white/80 rounded">
+                      Loading...
+                    </div>
                   </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-          
-          {/* Mobile edge gradients for visual depth */}
-          {isMobile && (
-            <>
-              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
-              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
-            </>
-          )}
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

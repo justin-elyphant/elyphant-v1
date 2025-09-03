@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -8,17 +7,14 @@ import { publicProfileService } from "@/services/publicProfileService";
 import { connectionService } from "@/services/connectionService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
-import MainLayout from "@/components/layout/MainLayout";
 import PublicProfileLayout from "@/components/layout/PublicProfileLayout";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import UserProfileView from "@/components/user-profile/UserProfileView";
-import PublicProfileView from "@/components/user-profile/PublicProfileView";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import ProfileDataRouter from "@/components/user-profile/ProfileDataRouter";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import type { ConnectionProfile } from "@/services/connectionService";
 
-const Profile = () => {
+const Profile: React.FC = () => {
   const { identifier } = useParams();
   const [searchParams] = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
@@ -231,7 +227,6 @@ const Profile = () => {
       )}
     </Layout>
   );
-
 };
 
 export default Profile;

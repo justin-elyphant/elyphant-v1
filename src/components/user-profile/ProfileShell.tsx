@@ -1,0 +1,119 @@
+import React, { useState } from "react";
+import { toast } from "sonner";
+import MyProfilePreview from "./MyProfilePreview";
+import UserProfileView from "./UserProfileView";
+import InstagramProfileLayout from "./InstagramProfileLayout";
+import ProfileTabs from "./ProfileTabs";
+import type { PublicProfileData } from "@/services/publicProfileService";
+import type { ConnectionProfile } from "@/services/connectionService";
+
+interface ProfileShellProps {
+  isOwnProfile: boolean;
+  isConnectionProfile: boolean;
+  publicProfile?: PublicProfileData | null;
+  connectionProfile?: ConnectionProfile | null;
+  ownProfile?: any;
+  onSendGift?: () => void;
+  onRemoveConnection?: () => void;
+  onRefreshConnection?: () => void;
+}
+
+/**
+ * PROFILE SHELL
+ * 
+ * Consolidated profile rendering component that replaces ProfileDataRouter
+ * and eliminates the multiple view component layers. Renders profiles directly
+ * with appropriate layouts based on profile type.
+ */
+const ProfileShell: React.FC<ProfileShellProps> = ({
+  isOwnProfile,
+  isConnectionProfile,
+  publicProfile,
+  connectionProfile,
+  ownProfile,
+  onSendGift,
+  onRemoveConnection,
+  onRefreshConnection
+}) => {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Own profile - render the social proof dashboard
+  if (isOwnProfile && ownProfile) {
+    return (
+      <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+        <MyProfilePreview profile={ownProfile} />
+      </div>
+    );
+  }
+
+  // Connection profile - render enhanced profile view with connection features
+  if (isConnectionProfile && connectionProfile) {
+    return (
+      <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+        <UserProfileView 
+          profile={connectionProfile.profile} 
+          connectionData={connectionProfile.connectionData}
+          onSendGift={onSendGift}
+          onRemoveConnection={onRemoveConnection}
+          onRefreshConnection={onRefreshConnection}
+        />
+      </div>
+    );
+  }
+
+  // Public profile - render conversion-optimized Instagram-style layout
+  if (publicProfile) {
+    const handleShare = () => {
+      const profileUrl = window.location.origin + `/profile/${publicProfile.username || publicProfile.id}`;
+      navigator.clipboard.writeText(profileUrl);
+      toast.success("Profile link copied to clipboard!");
+    };
+
+    const handleConnect = () => {
+      console.log("Connect clicked for user:", publicProfile.id);
+    };
+
+    // Secondary content (collapsed by default)
+    const secondaryContent = (
+      <ProfileTabs
+        profile={publicProfile}
+        isOwnProfile={false}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isPublicView={true}
+      />
+    );
+
+    return (
+      <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+        <InstagramProfileLayout
+          userData={publicProfile}
+          profile={publicProfile}
+          isCurrentUser={false}
+          isConnected={publicProfile.is_connected}
+          onConnect={handleConnect}
+          onShare={handleShare}
+          connectionCount={publicProfile.connection_count || 0}
+          wishlistCount={publicProfile.wishlist_count}
+          canConnect={publicProfile.can_connect}
+          canMessage={publicProfile.can_message}
+          isAnonymousUser={true}
+          secondaryContent={secondaryContent}
+          secondaryTitle="Profile Details"
+        />
+      </div>
+    );
+  }
+
+  // Fallback - should not reach here
+  return (
+    <div className="w-full py-10 px-4 flex-grow flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
+        <p className="text-muted-foreground">Unable to load profile data.</p>
+      </div>
+    </div>
+  );
+};
+
+export default ProfileShell;

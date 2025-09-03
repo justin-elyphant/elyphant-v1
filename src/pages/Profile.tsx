@@ -7,10 +7,9 @@ import { publicProfileService } from "@/services/publicProfileService";
 import { connectionService } from "@/services/connectionService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
 import { usePostSignupAction } from "@/hooks/usePostSignupAction";
-import PublicProfileLayout from "@/components/layout/PublicProfileLayout";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import UnifiedProfileLayout from "@/components/layout/UnifiedProfileLayout";
 import SignupCTA from "@/components/user-profile/SignupCTA";
-import ProfileDataRouter from "@/components/user-profile/ProfileDataRouter";
+import ProfileShell from "@/components/user-profile/ProfileShell";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import type { ConnectionProfile } from "@/services/connectionService";
 
@@ -156,17 +155,13 @@ const Profile: React.FC = () => {
   if (authLoading) {
     console.log("Showing auth loading state");
     return (
-      <PublicProfileLayout>
-        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+      <UnifiedProfileLayout isOwnProfile={false}>
+        <div className="w-full py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
           <div>Loading...</div>
         </div>
-      </PublicProfileLayout>
+      </UnifiedProfileLayout>
     );
   }
-
-  // Unified profile routing using ProfileDataRouter
-  const layoutComponent = isOwnProfile ? SidebarLayout : PublicProfileLayout;
-  const Layout = layoutComponent;
 
   // Handle loading states
   if ((isOwnProfile && ownProfileLoading) || (isConnectionProfile && isLoadingConnection) || (shouldLoadPublicProfile && isLoadingPublic)) {
@@ -177,11 +172,11 @@ const Profile: React.FC = () => {
         : "Loading profile...";
 
     return (
-      <Layout>
-        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+      <UnifiedProfileLayout isOwnProfile={isOwnProfile}>
+        <div className="w-full py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
           <div>{loadingMessage}</div>
         </div>
-      </Layout>
+      </UnifiedProfileLayout>
     );
   }
 
@@ -194,21 +189,21 @@ const Profile: React.FC = () => {
       : "The profile you're looking for doesn't exist or isn't public.";
 
     return (
-      <Layout>
-        <div className="container mx-auto py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
+      <UnifiedProfileLayout isOwnProfile={isOwnProfile}>
+        <div className="w-full py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{errorTitle}</h1>
-            <p className="text-gray-600">{errorMessage}</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">{errorTitle}</h1>
+            <p className="text-muted-foreground">{errorMessage}</p>
           </div>
         </div>
-      </Layout>
+      </UnifiedProfileLayout>
     );
   }
 
-  // Render the appropriate profile view using ProfileDataRouter
+  // Render the appropriate profile view using unified shell
   return (
-    <Layout>
-      <ProfileDataRouter
+    <UnifiedProfileLayout isOwnProfile={isOwnProfile}>
+      <ProfileShell
         isOwnProfile={isOwnProfile}
         isConnectionProfile={isConnectionProfile}
         publicProfile={publicProfile}
@@ -225,7 +220,7 @@ const Profile: React.FC = () => {
           onDismiss={dismissCTA} 
         />
       )}
-    </Layout>
+    </UnifiedProfileLayout>
   );
 };
 

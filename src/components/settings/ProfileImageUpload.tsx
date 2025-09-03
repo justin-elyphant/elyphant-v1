@@ -2,10 +2,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Camera, Loader2, X, Upload, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { useProfileImage } from "@/hooks/settings/profile/useProfileImage";
+import { CameraCapture } from "@/components/ui/camera-capture";
 import { toast } from "sonner";
 
 interface ProfileImageUploadProps {
@@ -25,6 +27,7 @@ const ProfileImageUpload = ({
 }: ProfileImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { handleProfileImageUpdate, handleRemoveImage } = useProfileImage();
@@ -34,10 +37,9 @@ const ProfileImageUpload = ({
     setPreview(currentImage);
   }, [currentImage]);
   
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    console.log("File selected:", file);
+  const uploadFile = async (file: File) => {
     if (!file || !user) return;
+    console.log("File selected:", file);
     
     // Validate file type and size
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -148,6 +150,29 @@ const ProfileImageUpload = ({
       setUploading(false);
     }
   };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
+    }
+  };
+
+  const handleCameraCapture = async (blob: Blob) => {
+    // Convert blob to file
+    const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+      type: 'image/jpeg'
+    });
+    await uploadFile(file);
+  };
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
+  const openCamera = () => {
+    setShowCameraCapture(true);
+  };
   
   const handleRemoveImageClick = async () => {
     if (!user) return;
@@ -184,33 +209,39 @@ const ProfileImageUpload = ({
         </Avatar>
         
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-          <Button 
-            type="button"
-            size="sm" 
-            variant="ghost" 
-            className="text-white p-1 h-8 w-8"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Camera className="h-5 w-5" />
-            )}
-          </Button>
-          
-          {preview && (
-            <Button 
-              type="button"
-              size="sm" 
-              variant="ghost" 
-              className="text-white p-1 h-8 w-8 ml-1"
-              onClick={handleRemoveImageClick}
-              disabled={uploading}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                type="button"
+                size="sm" 
+                variant="ghost" 
+                className="text-white p-1 h-8 w-8"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-48">
+              <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-2" />
+                Choose from Library
+              </DropdownMenuItem>
+              {preview && (
+                <DropdownMenuItem onClick={handleRemoveImageClick} className="cursor-pointer text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove Photo
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -224,16 +255,35 @@ const ProfileImageUpload = ({
       />
       
       <div className="text-center">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="text-xs mt-2"
-        >
-          {uploading ? "Uploading..." : "Change profile picture"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={uploading}
+              className="text-xs mt-2"
+            >
+              {uploading ? "Uploading..." : "Change profile picture"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-48">
+            <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
+              <Camera className="h-4 w-4 mr-2" />
+              Take Photo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
+              <Upload className="h-4 w-4 mr-2" />
+              Choose from Library
+            </DropdownMenuItem>
+            {preview && (
+              <DropdownMenuItem onClick={handleRemoveImageClick} className="cursor-pointer text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove Photo
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         {showMandatoryIndicator && (
           <p className="text-xs mt-1 text-muted-foreground">
@@ -241,6 +291,12 @@ const ProfileImageUpload = ({
           </p>
         )}
       </div>
+
+      <CameraCapture
+        isOpen={showCameraCapture}
+        onClose={() => setShowCameraCapture(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 };

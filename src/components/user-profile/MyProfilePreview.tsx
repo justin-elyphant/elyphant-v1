@@ -105,7 +105,8 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
 
   return (
     <>
-      {/* Preview Mode Indicator */}
+      {/* REMOVED: Preview Mode Indicator - Testing for width constraints */}
+      {/* REMOVED: Preview Mode Indicator - Testing for width constraints 
       <div className="bg-primary/10 border-b border-primary/20 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
         <div className="w-full px-4 py-3 overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
           <div className="flex items-center justify-between min-w-0">
@@ -127,6 +128,7 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
           </div>
         </div>
       </div>
+      */}
 
       {/* Instagram-style Layout for Profile Preview */}
       <InstagramProfileLayout

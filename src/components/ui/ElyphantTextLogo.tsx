@@ -9,7 +9,7 @@ const ElyphantTextLogo = () => {
         className="h-8 md:h-12 w-auto"
       />
       <span
-        className="text-2xl md:text-4xl font-bold tracking-tight"
+        className="text-xl md:text-2xl font-bold tracking-tight"
         style={{
           background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)',
           WebkitBackgroundClip: 'text',

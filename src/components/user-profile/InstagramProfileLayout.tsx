@@ -80,10 +80,10 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 
       {/* Main Content Container */}
       <ResponsiveContainer 
-        className="py-4"
+        className="py-4 overflow-x-hidden"
         fullWidthOnMobile={true}
         maxWidth="7xl"
-        padding="minimal"
+        padding="none"
       >
         {/* Social Product Grid - Primary Focus */}
         <div className="mb-6">

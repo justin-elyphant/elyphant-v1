@@ -443,7 +443,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               onAddToCart={handleAddToCart}
               onShare={handleShare}
               getProductStatus={getProductStatus}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch mb-8"
+              className="mb-8"
             />
           )}
 

@@ -1,55 +1,34 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import React from "react";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreditCard } from "lucide-react";
 
 const Payments = () => {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/signin" replace />;
-  }
-
   return (
     <SidebarLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Payment Methods</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your payment methods for orders and auto-gifting
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <UnifiedPaymentMethodManager mode="management" />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Auto-Gifting Payments</CardTitle>
-                <CardDescription>
-                  Payment methods configured here will be used for automatic gift purchases when you have auto-gifting rules set up.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Your default payment method will be used for auto-gifting unless specified otherwise in your gifting rules.
-                  You'll always receive notifications before any auto-purchase is made.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+      <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
+            <CreditCard className="h-6 w-6 sm:h-8 sm:w-8" />
+            Payment Methods
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Manage your payment methods and billing information
+          </p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Payment Methods</CardTitle>
+            <CardDescription>
+              Add, edit, or remove payment methods for your purchases
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UnifiedPaymentMethodManager />
+          </CardContent>
+        </Card>
       </div>
     </SidebarLayout>
   );

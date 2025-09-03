@@ -52,6 +52,7 @@ const AutoGiftApprovalPage = lazy(() => import("./components/auto-gifts/AutoGift
 const GiftingHub = lazy(() => import("./pages/GiftingHub"));
 const Nicole = lazy(() => import("./pages/Nicole"));
 const Account = lazy(() => import("./pages/Account"));
+const Payments = lazy(() => import("./pages/Payments"));
 const Social = lazy(() => import("./pages/Social"));
 const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
@@ -185,6 +186,7 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/payments" element={<Payments />} />
           <Route path="/order-status" element={<OrderStatusDashboard />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/:userId" element={<Chat />} />

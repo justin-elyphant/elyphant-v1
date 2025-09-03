@@ -89,14 +89,30 @@ const Dashboard = () => {
   return (
     <SidebarLayout>
       <div className="w-full max-w-none sm:max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-3 sm:px-4 md:px-6 mobile-content-spacing">
-        {/* Welcome Header - Mobile Optimized */}
+        {/* Account Header - User-Centric Design */}
         <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">
-            Welcome {firstName ? `${firstName} ` : ''}to Elyphant
-          </h1>
-          <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-3">
-            Your quick overview and access to all features. Click on any card to explore detailed functionality.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">
+                {firstName ? `${firstName}'s Account` : 'My Account'}
+              </h1>
+              <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-3">
+                Your central hub for all Elyphant features. Explore gifting, social connections, and more.
+              </p>
+            </div>
+            {profile && (
+              <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-medium text-foreground">
+                    {profile.display_name || `${firstName || 'User'}`}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         
         <DashboardGrid />

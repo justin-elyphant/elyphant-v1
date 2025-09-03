@@ -98,42 +98,66 @@ const DashboardGrid = () => {
         </Card>
       </div>
 
-      {/* Quick Access Cards - Mobile Optimized with Swipe Support */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6">
-        {/* Gifting Hub */}
-        <SwipeableCard 
-          className={cn(
+      {/* Main Features - Account-Centric Layout */}
+      <div className="space-y-6">
+        {/* Primary Actions - Top Priority */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          {/* Marketplace */}
+          <Card className={cn(
             "hover:shadow-lg transition-all duration-200 cursor-pointer group",
-            "touch-manipulation min-h-[140px] sm:min-h-[130px]"
-          )}
-          onSwipeLeft={() => handleCardSwipe('left', 'gifting')}
-          onSwipeRight={() => handleCardSwipe('right', 'gifting')}
-          disabled={!isMobile}
-        >
-          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-            <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
-              <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
-              <span className="line-clamp-1">Gifting Hub</span>
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm line-clamp-2">
-              Events, auto-gifting & groups
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="space-y-2 sm:space-y-3">
-              <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-                Schedule gifts, set up automation, and coordinate group gifts
-              </div>
-              <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
-                <Link to="/gifting" className="flex items-center justify-center truncate">
-                  <span className="hidden sm:inline truncate">Open Gifting Hub</span>
-                  <span className="sm:hidden truncate">Gifting</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+            "touch-manipulation min-h-[120px] sm:min-h-[140px] border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10"
+          )}>
+            <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-lg sm:text-xl">
+                <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
+                <span className="line-clamp-1">Browse & Shop</span>
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base line-clamp-2">
+                Discover products & find perfect gifts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <Button asChild className="w-full touch-target-44 text-sm h-10 min-w-0">
+                <Link to="/marketplace" className="flex items-center justify-center gap-2">
+                  <span>Explore Marketplace</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
-            </div>
-          </CardContent>
-        </SwipeableCard>
+            </CardContent>
+          </Card>
+
+          {/* Gifting Hub */}
+          <SwipeableCard 
+            className={cn(
+              "hover:shadow-lg transition-all duration-200 cursor-pointer group",
+              "touch-manipulation min-h-[120px] sm:min-h-[140px] border-2 border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10"
+            )}
+            onSwipeLeft={() => handleCardSwipe('left', 'gifting')}
+            onSwipeRight={() => handleCardSwipe('right', 'gifting')}
+            disabled={!isMobile}
+          >
+            <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-lg sm:text-xl">
+                <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
+                <span className="line-clamp-1">Gifting Hub</span>
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base line-clamp-2">
+                Events, auto-gifting & groups
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <Button asChild className="w-full touch-target-44 text-sm h-10 min-w-0">
+                <Link to="/gifting" className="flex items-center justify-center gap-2">
+                  <span>Open Gifting</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </Link>
+              </Button>
+            </CardContent>
+          </SwipeableCard>
+        </div>
+
+        {/* Secondary Features */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6">
 
         {/* Social Hub */}
         <SwipeableCard 
@@ -205,35 +229,6 @@ const DashboardGrid = () => {
           </CardContent>
         </Card>
 
-        {/* Marketplace */}
-        <Card className={cn(
-          "hover:shadow-lg transition-all duration-200 cursor-pointer group",
-          "touch-manipulation min-h-[140px] sm:min-h-[130px]"
-        )}>
-          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-            <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
-              <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
-              <span className="line-clamp-1">Marketplace</span>
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm line-clamp-2">
-              Shop for gifts
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="space-y-2 sm:space-y-3">
-              <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-                Browse products and find the perfect gifts
-              </div>
-              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
-                <Link to="/marketplace" className="flex items-center justify-center truncate">
-                  <span className="hidden sm:inline truncate">Browse Products</span>
-                  <span className="sm:hidden truncate">Browse</span>
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Wishlists */}
         <Card className={cn(
@@ -273,10 +268,10 @@ const DashboardGrid = () => {
           <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
-              <span className="line-clamp-1">Account</span>
+              <span className="line-clamp-1">Account Settings</span>
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm line-clamp-2">
-              Settings & privacy
+              Profile, privacy & preferences
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -294,6 +289,7 @@ const DashboardGrid = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
 
       {/* Mobile Action Bar - One-handed use optimization */}

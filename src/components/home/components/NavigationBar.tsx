@@ -1,14 +1,10 @@
 
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import Logo from "./Logo";
 import AuthButtons from "./AuthButtons";
 import UserButton from "@/components/auth/UserButton";
-import CleanMobileNavMenu from "@/components/navigation/components/CleanMobileNavMenu";
-import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 // Import directly instead of lazy loading to avoid context issues
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
@@ -16,7 +12,6 @@ import OptimizedShoppingCartButton from "@/components/marketplace/components/Opt
 
 const NavigationBar = () => {
   const authContext = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   // Handle case where AuthProvider context is not yet available
@@ -47,22 +42,6 @@ const NavigationBar = () => {
   const shouldShowSearch = !isAuthPage;
   const shouldShowCart = !isAuthPage;
 
-  const marketplaceItems: NavDropdownItem[] = [
-    { label: "All Products", href: "/marketplace" },
-    { label: "Electronics", href: "/marketplace?category=electronics" },
-    { label: "Fashion", href: "/marketplace?category=fashion" },
-    { label: "Home & Garden", href: "/marketplace?category=home-garden" },
-    { label: "Sports & Outdoors", href: "/marketplace?category=sports" },
-    { label: "Books & Media", href: "/marketplace?category=books" },
-  ];
-
-  const profileItems: NavDropdownItem[] = [
-    { label: "Profile", href: "/profile" },
-    { label: "Settings", href: "/settings" },
-    { label: "Orders", href: "/orders" },
-    { label: "Wishlists", href: "/my-wishlists" },
-  ];
-
   return (
     <nav className="bg-transparent">
       <div className="container-header">
@@ -85,21 +64,10 @@ const NavigationBar = () => {
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
-          {/* Mobile Right Side - Only Cart and Menu */}
+          {/* Mobile Right Side - Only Cart and User */}
           <div className="md:hidden flex items-center gap-tight">
             {shouldShowCart && <OptimizedShoppingCartButton />}
-            <Button
-              variant="ghost"
-              size="touch"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="touch-target-44"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
+            {user && <UserButton />}
           </div>
         </div>
 
@@ -111,15 +79,6 @@ const NavigationBar = () => {
         )}
       </div>
 
-      {/* Clean Mobile Menu */}
-      <CleanMobileNavMenu
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        onSignOut={signOut}
-        isAuthenticated={!!user}
-        marketplaceItems={marketplaceItems}
-        profileItems={profileItems}
-      />
     </nav>
   );
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { User } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
@@ -46,10 +47,10 @@ const MobileBottomNavigation: React.FC = () => {
     // Add Nicole AI and Account/Auth from features/account sections
     ...(user ? [
       featuresSection?.items.find(i => i.id === 'nicole'),
-      { id: 'account', label: 'Account', href: '/settings', icon: primarySection?.items[0]?.icon, section: 'account' as const }
+      { id: 'account', label: 'Account', href: '/dashboard', icon: <User className="h-5 w-5" />, section: 'account' as const }
     ].filter(Boolean) as NavigationItem[] : [
       featuresSection?.items.find(i => i.id === 'nicole'),
-      { id: 'auth', label: 'Sign In', href: '/auth', icon: primarySection?.items[0]?.icon }
+      { id: 'auth', label: 'Sign In', href: '/auth', icon: <User className="h-5 w-5" /> }
     ].filter(Boolean) as NavigationItem[])
   ];
 
@@ -57,9 +58,9 @@ const MobileBottomNavigation: React.FC = () => {
     if (tab.href === "/") {
       return location.pathname === "/";
     }
-    // Handle route consistency - account should match settings and profile
+    // Handle route consistency - account should match dashboard, settings and profile
     if (tab.id === "account") {
-      return location.pathname.startsWith("/settings") || location.pathname.startsWith("/profile");
+      return location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/settings") || location.pathname.startsWith("/profile");
     }
     return location.pathname.startsWith(tab.href);
   };

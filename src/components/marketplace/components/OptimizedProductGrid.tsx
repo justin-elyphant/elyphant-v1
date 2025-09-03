@@ -26,12 +26,13 @@ const OptimizedProductGrid: React.FC<OptimizedProductGridProps> = memo(({
   
   // Memoized grid classes to prevent recalculation
   const gridClasses = useMemo(() => {
-    if (viewMode === "grid") {
-      return isMobile
-        ? "grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 items-stretch"
-        : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch";
+    if (viewMode === "list") {
+      return "space-y-4";
     }
-    return "space-y-4";
+    // Default to grid layout for "grid", "modern", or any other viewMode
+    return isMobile
+      ? "grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 items-stretch"
+      : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch";
   }, [viewMode, isMobile]);
 
   // Memoized product click handlers to prevent recreation

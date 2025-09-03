@@ -46,7 +46,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   } = useUnifiedMarketplace();
 
   const isMobile = useIsMobile();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("modern");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();

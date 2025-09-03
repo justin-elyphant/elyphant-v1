@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import MyProfilePreview from "./MyProfilePreview";
-
 import InstagramProfileLayout from "./InstagramProfileLayout";
 import ProfileTabs from "./ProfileTabs";
+import ProfileSharingDialog from "./ProfileSharingDialog";
+import { useProfileSharing } from "@/hooks/useProfileSharing";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import type { ConnectionProfile } from "@/services/connectionService";
 
@@ -37,6 +38,20 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Enhanced sharing for connection profiles
+  const connectionSharing = useProfileSharing({
+    profileId: connectionProfile?.profile?.id || '',
+    profileName: connectionProfile?.profile?.name || 'User',
+    profileUsername: connectionProfile?.profile?.username
+  });
+
+  // Enhanced sharing for public profiles
+  const publicSharing = useProfileSharing({
+    profileId: publicProfile?.id || '',
+    profileName: publicProfile?.name || 'User',
+    profileUsername: publicProfile?.username
+  });
+
   // Own profile - render the social proof dashboard
   if (isOwnProfile && ownProfile) {
     return (
@@ -49,9 +64,12 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
   // Connection profile - render enhanced profile view with connection features  
   if (isConnectionProfile && connectionProfile) {
     const handleShare = () => {
-      const profileUrl = window.location.origin + `/profile/${connectionProfile.profile.username || connectionProfile.profile.id}`;
-      navigator.clipboard.writeText(profileUrl);
-      toast.success("Profile link copied to clipboard!");
+      // Use enhanced sharing - mobile gets native share, desktop gets dialog
+      if (navigator.share) {
+        connectionSharing.quickShare();
+      } else {
+        connectionSharing.openSharingDialog();
+      }
     };
 
     const handleConnect = () => {
@@ -76,6 +94,15 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
           onSendGift={onSendGift}
           onRemoveConnection={onRemoveConnection}
         />
+        
+        {/* Enhanced Profile Sharing Dialog */}
+        <ProfileSharingDialog
+          open={connectionSharing.sharingDialogOpen}
+          onOpenChange={connectionSharing.closeSharingDialog}
+          profileUrl={connectionSharing.profileUrl}
+          profileName={connectionProfile.profile.name || 'User'}
+          profileUsername={connectionProfile.profile.username}
+        />
       </div>
     );
   }
@@ -83,9 +110,12 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
   // Public profile - render conversion-optimized Instagram-style layout
   if (publicProfile) {
     const handleShare = () => {
-      const profileUrl = window.location.origin + `/profile/${publicProfile.username || publicProfile.id}`;
-      navigator.clipboard.writeText(profileUrl);
-      toast.success("Profile link copied to clipboard!");
+      // Use enhanced sharing - mobile gets native share, desktop gets dialog
+      if (navigator.share) {
+        publicSharing.quickShare();
+      } else {
+        publicSharing.openSharingDialog();
+      }
     };
 
     const handleConnect = () => {
@@ -119,6 +149,15 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
           isAnonymousUser={true}
           secondaryContent={secondaryContent}
           secondaryTitle="Profile Details"
+        />
+        
+        {/* Enhanced Profile Sharing Dialog */}
+        <ProfileSharingDialog
+          open={publicSharing.sharingDialogOpen}
+          onOpenChange={publicSharing.closeSharingDialog}
+          profileUrl={publicSharing.profileUrl}
+          profileName={publicProfile.name || 'User'}
+          profileUsername={publicProfile.username}
         />
       </div>
     );

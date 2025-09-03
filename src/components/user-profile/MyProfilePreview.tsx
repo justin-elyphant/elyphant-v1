@@ -4,8 +4,10 @@ import { publicProfileService } from "@/services/publicProfileService";
 import PublicProfileTabs from "./PublicProfileTabs";
 import PrivacyNotice from "./PrivacyNotice";
 import InstagramProfileLayout from "./InstagramProfileLayout";
+import ProfileSharingDialog from "./ProfileSharingDialog";
 import { Badge } from "@/components/ui/badge";
 import { Eye, AlertTriangle } from "lucide-react";
+import { useProfileSharing } from "@/hooks/useProfileSharing";
 import type { PublicProfileData } from "@/services/publicProfileService";
 
 interface MyProfilePreviewProps {
@@ -23,6 +25,19 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   const [activeTab, setActiveTab] = useState("public-overview");
   const [publicViewData, setPublicViewData] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+
+  // Enhanced profile sharing functionality
+  const {
+    sharingDialogOpen,
+    openSharingDialog,
+    closeSharingDialog,
+    quickShare,
+    profileUrl
+  } = useProfileSharing({
+    profileId: profile?.id || '',
+    profileName: (profile as any)?.display_name || (profile as any)?.first_name || (profile as any)?.name || 'User',
+    profileUsername: profile?.username
+  });
 
   // Fetch how the profile appears publicly to get accurate privacy-filtered data
   useEffect(() => {
@@ -57,9 +72,12 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   }
 
   const handleShare = () => {
-    const profileUrl = window.location.origin + `/profile/${profile.username || profile.id}`;
-    navigator.clipboard.writeText(profileUrl);
-    // Could add toast notification here
+    // Use enhanced sharing - mobile gets native share, desktop gets dialog
+    if (navigator.share) {
+      quickShare();
+    } else {
+      openSharingDialog();
+    }
   };
 
   // Calculate profile completeness for social proof
@@ -145,6 +163,15 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         isAnonymousUser={false}
         secondaryContent={secondaryContent}
         secondaryTitle="Profile Details & Privacy Settings"
+      />
+
+      {/* Enhanced Profile Sharing Dialog */}
+      <ProfileSharingDialog
+        open={sharingDialogOpen}
+        onOpenChange={closeSharingDialog}
+        profileUrl={profileUrl}
+        profileName={(profile as any)?.display_name || (profile as any)?.first_name || (profile as any)?.name || 'User'}
+        profileUsername={profile?.username}
       />
     </>
   );

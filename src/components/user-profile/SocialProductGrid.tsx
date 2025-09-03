@@ -398,8 +398,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   if (products.length === 0) {
     return (
       <div 
-        className="w-full overflow-x-hidden p-1"
-        style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+        className="w-full overflow-x-hidden"
+        style={{ width: '100%', maxWidth: 'none', minWidth: 0, boxSizing: 'border-box' }}
       >
         <div className="text-center py-8">
           <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -416,11 +416,11 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   return (
     <div 
       className="w-full"
-      style={{ maxWidth: '100%' }}
+      style={{ width: '100%', maxWidth: 'none' }}
     >
       <div 
-        className="grid grid-cols-2 gap-2 px-2" 
-        style={{ width: '100%' }}
+        className="grid grid-cols-2 gap-2" 
+        style={{ width: '100%', maxWidth: 'none' }}
       >
         {products.map((product) => {
           const isWishlisted = wishlistedProducts.includes(product.product_id);

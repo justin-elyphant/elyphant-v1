@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
-import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+
 
 interface InstagramProfileLayoutProps {
   // Profile data
@@ -81,56 +81,53 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
         />
       </div>
 
-      {/* Main Content Container */}
-      <ResponsiveContainer 
-        className="py-4"
-        fullWidthOnMobile={true}
-        maxWidth="full"
-        padding="none"
-      >
+      {/* Main Content Container - Full Width */}
+      <div className="w-full py-4">
         {/* Social Product Grid - Primary Focus */}
-        <div className="mb-6">
+        <div className="mb-6 w-full">
           <SocialProductGrid profile={profile} isOwnProfile={isCurrentUser} />
         </div>
 
         {/* Expandable Secondary Content */}
         {secondaryContent && (
-          <Card>
-            <CardContent className="p-0">
-              {/* Expandable Header */}
-              <Button
-                variant="ghost"
-                onClick={() => setShowSecondaryContent(!showSecondaryContent)}
-                className="w-full h-auto p-4 flex items-center justify-between text-left min-w-0"
-              >
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-medium truncate">{secondaryTitle}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 truncate">
-                    {showSecondaryContent ? "Hide" : "Show"} additional profile information
-                  </p>
-                </div>
-                <div className="ml-4 flex-shrink-0">
-                  {showSecondaryContent ? (
-                    <ChevronUp className="h-5 w-5" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5" />
-                  )}
-                </div>
-              </Button>
+          <div className="w-full px-4">
+            <Card>
+              <CardContent className="p-0">
+                {/* Expandable Header */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowSecondaryContent(!showSecondaryContent)}
+                  className="w-full h-auto p-4 flex items-center justify-between text-left min-w-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium truncate">{secondaryTitle}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 truncate">
+                      {showSecondaryContent ? "Hide" : "Show"} additional profile information
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    {showSecondaryContent ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
+                  </div>
+                </Button>
 
-              {/* Expandable Content */}
-              <div className={cn(
-                "overflow-hidden transition-all duration-300",
-                showSecondaryContent ? "max-h-none" : "max-h-0"
-              )}>
-                <div className="p-4 pt-0 border-t">
-                  {secondaryContent}
+                {/* Expandable Content */}
+                <div className={cn(
+                  "overflow-hidden transition-all duration-300",
+                  showSecondaryContent ? "max-h-none" : "max-h-0"
+                )}>
+                  <div className="p-4 pt-0 border-t">
+                    {secondaryContent}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         )}
-      </ResponsiveContainer>
+      </div>
     </div>
   );
 };

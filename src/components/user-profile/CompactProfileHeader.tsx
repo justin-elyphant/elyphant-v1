@@ -145,9 +145,9 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full max-w-full overflow-x-hidden">
+    <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
       <div className="absolute inset-0 bg-black/20" />
-      <div className="relative flex items-center justify-between p-4 lg:px-6 min-w-0 overflow-x-hidden max-w-full w-full">
+      <div className="relative flex items-center justify-between p-4 lg:px-6 min-w-0 overflow-x-hidden w-full" style={{ width: '100%', maxWidth: 'none' }}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Profile Avatar */}
           <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-white shadow-lg flex-shrink-0">

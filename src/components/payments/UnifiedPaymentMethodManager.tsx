@@ -314,7 +314,7 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
         </div>
         
         {showAddNew && (
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors w-full max-w-full">
+          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors w-full max-w-full mb-6 sm:mb-4">
             <CardContent className="p-4 sm:p-6 text-center">
               <Button 
                 variant="ghost" 

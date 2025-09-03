@@ -49,20 +49,6 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
 
-  // Debug logging to understand layout issues
-  useEffect(() => {
-    const logDimensions = () => {
-      console.log('[SocialProductGrid Debug]');
-      console.log('Window width:', window.innerWidth);
-      console.log('Document body width:', document.body.clientWidth);
-      console.log('Document scrollWidth:', document.body.scrollWidth);
-      console.log('Viewport width:', window.visualViewport?.width || 'N/A');
-    };
-    
-    logDimensions();
-    window.addEventListener('resize', logDimensions);
-    return () => window.removeEventListener('resize', logDimensions);
-  }, []);
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();

@@ -61,6 +61,23 @@ const DashboardGrid = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Onboarding Hint for New Navigation */}
+      {user && (
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-foreground mb-1">Welcome to your Account Hub!</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                All your features are now accessible from this central dashboard. Tap the Account tab at the bottom to return here anytime.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile Data Integrity Panel - Top Priority */}
       <ProfileDataIntegrityPanel />
 
@@ -286,6 +303,37 @@ const DashboardGrid = () => {
                   <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity & Quick Actions */}
+        <Card className={cn(
+          "hover:shadow-lg transition-all duration-200 cursor-pointer group",
+          "touch-manipulation min-h-[140px] sm:min-h-[130px] border-dashed border-muted-foreground/30"
+        )}>
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
+              <span className="line-clamp-1">Quick Actions</span>
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm line-clamp-2">
+              Recent items & shortcuts
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
+                Access recently viewed items and quick shortcuts
+              </div>
+              <div className="flex gap-2">
+                <Button asChild variant="outline" size="sm" className="flex-1 text-xs h-8">
+                  <Link to="/recently-viewed">Recent</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="flex-1 text-xs h-8">
+                  <Link to="/search">Search</Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

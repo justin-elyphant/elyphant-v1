@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { User } from "lucide-react";
+import { User, Search, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
@@ -42,17 +42,49 @@ const MobileBottomNavigation: React.FC = () => {
   const primarySection = sections.find(s => s.id === 'primary');
   const featuresSection = sections.find(s => s.id === 'features');
   
+  // Optimized 5-tab structure following industry standards: Home, Browse/Shop, Search, Favorites, Account
   const tabs: NavigationItem[] = [
-    ...(primarySection?.items || []),
-    // Add Nicole AI and Account/Auth from features/account sections
-    ...(user ? [
-      featuresSection?.items.find(i => i.id === 'nicole'),
-      { id: 'account', label: 'Account', href: '/dashboard', icon: <User className="h-5 w-5" />, section: 'account' as const }
-    ].filter(Boolean) as NavigationItem[] : [
-      featuresSection?.items.find(i => i.id === 'nicole'),
-      { id: 'auth', label: 'Sign In', href: '/auth', icon: <User className="h-5 w-5" /> }
-    ].filter(Boolean) as NavigationItem[])
-  ];
+    // Core navigation from primary section (Home, Shop, Cart)
+    ...(primarySection?.items || []).slice(0, 2), // Home and Shop only
+    
+    // Add Search as a dedicated tab (industry standard)
+    {
+      id: 'search',
+      label: 'Search',
+      href: '/search',
+      icon: <Search className="h-5 w-5" />,
+      section: 'primary' as const
+    },
+    
+    // Add Favorites/Saved (Wishlists) - industry standard 4th tab
+    ...(user ? [{
+      id: 'favorites',
+      label: 'Saved',
+      href: '/wishlists',
+      icon: <Heart className="h-5 w-5" />,
+      section: 'primary' as const
+    }] : [{
+      id: 'favorites',
+      label: 'Saved',
+      href: '/auth',
+      icon: <Heart className="h-5 w-5" />,
+      section: 'primary' as const
+    }]),
+    
+    // Account tab - always 5th position (industry standard)
+    ...(user ? [{
+      id: 'account',
+      label: 'Account',
+      href: '/dashboard',
+      icon: <User className="h-5 w-5" />,
+      section: 'account' as const
+    }] : [{
+      id: 'auth',
+      label: 'Sign In',
+      href: '/auth',
+      icon: <User className="h-5 w-5" />
+    }])
+  ].filter(Boolean) as NavigationItem[];
 
   const isTabActive = (tab: NavigationItem): boolean => {
     if (tab.href === "/") {
@@ -61,6 +93,14 @@ const MobileBottomNavigation: React.FC = () => {
     // Handle route consistency - account should match dashboard, settings and profile
     if (tab.id === "account") {
       return location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/settings") || location.pathname.startsWith("/profile");
+    }
+    // Handle favorites/saved consistency
+    if (tab.id === "favorites") {
+      return location.pathname.startsWith("/wishlists") || location.pathname.startsWith("/saved");
+    }
+    // Handle search consistency
+    if (tab.id === "search") {
+      return location.pathname.startsWith("/search") || location.pathname.startsWith("/discover");
     }
     return location.pathname.startsWith(tab.href);
   };

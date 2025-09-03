@@ -49,6 +49,21 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
 
+  // Debug logging to understand layout issues
+  useEffect(() => {
+    const logDimensions = () => {
+      console.log('[SocialProductGrid Debug]');
+      console.log('Window width:', window.innerWidth);
+      console.log('Document body width:', document.body.clientWidth);
+      console.log('Document scrollWidth:', document.body.scrollWidth);
+      console.log('Viewport width:', window.visualViewport?.width || 'N/A');
+    };
+    
+    logDimensions();
+    window.addEventListener('resize', logDimensions);
+    return () => window.removeEventListener('resize', logDimensions);
+  }, []);
+
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
   const { searchProducts } = useUnifiedSearch({ maxResults: 8 });
@@ -410,26 +425,6 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       </div>
     );
   }
-
-  // Debug logging to understand layout issues
-  React.useEffect(() => {
-    const logDimensions = () => {
-      console.log('[SocialProductGrid Debug]');
-      console.log('Window width:', window.innerWidth);
-      console.log('Document body width:', document.body.clientWidth);
-      console.log('Document scrollWidth:', document.body.scrollWidth);
-      console.log('Viewport width:', window.visualViewport?.width || 'N/A');
-      
-      const containers = document.querySelectorAll('[class*="grid"], [class*="container"]');
-      containers.forEach((el, i) => {
-        console.log(`Container ${i}:`, el.className, 'Width:', el.clientWidth, 'ScrollWidth:', el.scrollWidth);
-      });
-    };
-    
-    logDimensions();
-    window.addEventListener('resize', logDimensions);
-    return () => window.removeEventListener('resize', logDimensions);
-  }, []);
 
   return (
     <div 

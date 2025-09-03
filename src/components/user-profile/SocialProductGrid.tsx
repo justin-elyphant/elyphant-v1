@@ -374,8 +374,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (loading) {
     return (
-      <div className="w-full overflow-x-hidden">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-4">
+      <div className="w-full max-w-full overflow-x-hidden min-w-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 py-4 max-w-full overflow-x-hidden">
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={i}
@@ -389,7 +389,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (products.length === 0) {
     return (
-      <div className="w-full overflow-x-hidden p-4">
+      <div className="w-full max-w-full overflow-x-hidden min-w-0 px-2 sm:px-4 py-4">
         <div className="text-center py-8">
           <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
@@ -403,8 +403,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   }
 
   return (
-    <div className="w-full overflow-x-hidden">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 p-4">
+    <div className="w-full max-w-full overflow-x-hidden min-w-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 py-4 max-w-full overflow-x-hidden">
         {products.map((product) => {
           const isWishlisted = wishlistedProducts.includes(product.product_id);
           const SourceIcon = product.sourceIcon;

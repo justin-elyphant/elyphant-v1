@@ -36,10 +36,8 @@ export const useEnhancedCategorySearch = () => {
       // Show success toast with diversity info
       if (result.products.length > 0) {
         const brandCount = Object.keys(result.brandDistribution).length;
-        toast.success("Category Search Complete", {
-          description: `Found ${result.products.length} products from ${brandCount} brands`,
-          duration: 3000
-        });
+        // Search completed silently - no toast needed
+        console.log(`Found ${result.products.length} products from ${brandCount} brands`);
       } else {
         toast.error("No Results", {
           description: `No products found for ${category}`,

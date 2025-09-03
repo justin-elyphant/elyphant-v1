@@ -414,12 +414,12 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   return (
     <div 
-      className="w-full overflow-x-hidden"
-      style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+      className="w-full"
+      style={{ maxWidth: '100%', minWidth: 0, overflow: 'hidden' }}
     >
       <div 
-        className="grid grid-cols-2 gap-1 p-1" 
-        style={{ maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}
+        className="grid grid-cols-2 gap-1 p-1 w-full" 
+        style={{ maxWidth: '100%', minWidth: 0 }}
       >
         {products.map((product) => {
           const isWishlisted = wishlistedProducts.includes(product.product_id);

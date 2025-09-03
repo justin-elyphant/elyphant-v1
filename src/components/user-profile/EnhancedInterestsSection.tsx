@@ -45,9 +45,8 @@ const EnhancedInterestsSection = ({ interests, isOwnProfile, userName }: Enhance
         // Note: The actual diversified results will be handled by the marketplace's search logic
         navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&multi_interest=true`);
         
-        toast.success(`Found ${searchResult.totalResults} diverse products`, {
-          description: `Products from: ${Object.keys(searchResult.searchBreakdown).join(', ')}`
-        });
+        // Silently complete search - no toast needed
+        console.log(`Found ${searchResult.totalResults} diverse products`);
       } else {
         toast.error('No products found for your interests');
       }

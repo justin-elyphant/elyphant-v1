@@ -140,9 +140,8 @@ export const useZincProductSearch = () => {
           return [...filtered, ...formattedProducts];
         });
         
-        toast.success("Search Complete", {
-          description: `Found ${formattedProducts.length} products matching "${term}"`
-        });
+        // Search completed silently - no toast needed
+        console.log(`Found ${formattedProducts.length} products matching "${term}"`);
       } else {
         // Use the regular search for non-special cases
         await handleRegularSearch(term);
@@ -214,9 +213,8 @@ export const useZincProductSearch = () => {
         return [...prevProducts, ...formattedProducts];
       });
       
-      toast.success("Search Complete", {
-        description: `Found ${formattedProducts.length} products matching "${term}"`
-      });
+      // Search completed silently - no toast needed
+      console.log(`Found ${formattedProducts.length} products matching "${term}"`);
     } else {
       setError("No products found");
       toast.error("No Results", {

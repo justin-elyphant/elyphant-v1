@@ -2,7 +2,12 @@ import React from "react";
 
 const ElyphantTextLogo = () => {
   return (
-    <div className="h-12 md:h-16 w-auto opacity-100 flex items-center justify-start pl-1 md:pl-0">
+    <div className="h-12 md:h-16 w-auto opacity-100 flex items-center justify-start pl-1 md:pl-0 gap-2 md:gap-3">
+      <img 
+        src="/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" 
+        alt="Elyphant logo" 
+        className="h-8 md:h-12 w-auto"
+      />
       <span
         className="text-2xl md:text-4xl font-bold tracking-tight"
         style={{

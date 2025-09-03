@@ -138,13 +138,12 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
           return [...nonZincProducts, ...normalizedProducts];
         });
         
-        // Only show success toast for new searches, not page changes
+        // Silently complete search - no toast needed for normal operation
         if (page === 1) {
           const description = searchResult.cached 
             ? `Found ${searchResult.results.length} cached results for "${query}"`
             : `Found ${searchResult.results.length} results for "${query}"`;
-            
-          toast.success("Search completed", { description });
+          console.log(`Search completed: ${description}`);
         }
       } else if (page === 1) {
         toast.info("No results found", {

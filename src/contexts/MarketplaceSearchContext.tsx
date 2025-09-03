@@ -181,8 +181,7 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
           const description = searchResult.cached 
             ? `Found ${searchResult.results.length} cached results for "${query}"`
             : `Found ${searchResult.results.length} results for "${query}"`;
-            
-          debouncedToastSuccess("Search completed", { description });
+          console.log(`Search completed: ${description}`);
         }
       } else if (page === 1) {
         debouncedToastInfo("No results found", {
@@ -260,14 +259,10 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
         // Update products context with default products
         setProducts(normalizedProducts);
         
-        debouncedToastSuccess("Marketplace loaded", { 
-          description: `Showing ${normalizedProducts.length} featured products` 
-        });
+        // Silently load marketplace - no toast needed for normal operation
+        console.log(`[MarketplaceSearchContext] Loaded default products: ${normalizedProducts.length}`);
       } else {
         console.log("No default products found");
-        debouncedToastInfo("Welcome to the marketplace", {
-          description: "Use the search bar to find amazing gifts"
-        });
       }
       
     } catch (err) {

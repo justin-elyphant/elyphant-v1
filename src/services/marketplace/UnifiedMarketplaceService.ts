@@ -378,7 +378,8 @@ class UnifiedMarketplaceService {
                     ? `Found ${finalProducts.length} results`
                     : `Loaded ${finalProducts.length} featured products`;
             
-        this.showToast(successMessage, 'success');
+        // Silently log success instead of showing toast
+        console.log(`UnifiedMarketplaceService: ${successMessage}`);
       } else {
         const noResultsMessage = searchTerm 
           ? `No results found for "${searchTerm}"`

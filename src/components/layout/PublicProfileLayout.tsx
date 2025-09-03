@@ -14,10 +14,10 @@ const PublicProfileLayout: React.FC<PublicProfileLayoutProps> = ({
   className
 }) => {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Full header with navigation and search functionality */}
       <UnifiedShopperHeader mode="main" />
-      <main className={cn("flex-1", className)}>
+      <main className={cn("flex-1 overflow-x-hidden min-w-0", className)}>
         {children}
       </main>
       <Footer />

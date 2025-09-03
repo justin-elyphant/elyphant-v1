@@ -19,11 +19,11 @@ const HomeCTA = () => {
   
   const handleStartGifting = () => {
     if (user) {
-      // Authenticated user: navigate to marketplace with Nicole
-      navigate("/marketplace?mode=nicole&open=true&greeting=giftor-intent&first_name=true");
+      // Authenticated user: navigate to gifting approach selection
+      navigate("/gifting");
     } else {
-      // Not logged in: show enhanced auth modal
-      setShowAuthModal(true);
+      // Not logged in: navigate to auth with gifting redirect
+      navigate("/auth?redirect=/gifting");
     }
   };
 
@@ -78,14 +78,12 @@ const HomeCTA = () => {
           ) : (
             <div className="flex justify-center">
               <Button
-                asChild
                 size="lg"
                 className="bg-white text-purple-600 hover:bg-gray-100 font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
+                onClick={handleStartGifting}
               >
-                <Link to="/auth">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           )}

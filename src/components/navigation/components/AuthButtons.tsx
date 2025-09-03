@@ -11,7 +11,7 @@ const AuthButtons = () => {
   };
 
   const handleGetStarted = () => {
-    navigate("/auth");
+    navigate("/auth?redirect=/gifting");
   };
 
   return (

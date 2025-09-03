@@ -84,14 +84,28 @@ const StreamlinedProfileSetup = () => {
       // Auto-trigger Nicole popup with invitation context
       setShowNicolePopup(true);
     } else {
-      // Regular profile setup, redirect to homepage
-      navigate('/', { replace: true });
+      // Check for stored redirect path after profile setup
+      const redirectPath = localStorage.getItem('post_auth_redirect');
+      if (redirectPath) {
+        localStorage.removeItem('post_auth_redirect');
+        navigate(redirectPath, { replace: true });
+      } else {
+        // Regular profile setup, redirect to homepage
+        navigate('/', { replace: true });
+      }
     }
   };
 
   const handleNicoleClose = () => {
     setShowNicolePopup(false);
-    navigate('/', { replace: true });
+    // Check for stored redirect path after profile setup
+    const redirectPath = localStorage.getItem('post_auth_redirect');
+    if (redirectPath) {
+      localStorage.removeItem('post_auth_redirect');
+      navigate(redirectPath, { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
   };
 
   if (isLoading) {

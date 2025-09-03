@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -24,6 +24,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 const SignUpForm = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<SignUpFormData>({
@@ -67,6 +68,12 @@ const SignUpForm = () => {
           step: 'profile',
           source: 'email'
         });
+        
+        // Store redirect path for after profile setup
+        const redirectPath = searchParams.get('redirect');
+        if (redirectPath) {
+          localStorage.setItem('post_auth_redirect', redirectPath);
+        }
         
         toast.success("Account created!", {
           description: "Please check your email to verify your account."

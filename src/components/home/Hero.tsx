@@ -20,19 +20,21 @@ const Hero = () => {
 
   const handleStartGifting = () => {
     if (user) {
-      // Navigate to homepage with Nicole mode to use inline interface only
-      navigate('/?mode=nicole');
+      // Navigate directly to gifting approach selection
+      navigate('/gifting');
     } else {
-      navigate('/auth');
+      // Redirect to auth with gifting as the next destination
+      navigate('/auth?redirect=/gifting');
     }
   };
 
   const handleAutoGifting = () => {
     if (user) {
-      // Navigate to homepage with Nicole mode to use inline interface only
-      navigate('/?mode=nicole');
+      // Navigate directly to gifting approach selection  
+      navigate('/gifting');
     } else {
-      navigate('/auth');
+      // Redirect to auth with gifting as the next destination
+      navigate('/auth?redirect=/gifting');
     }
   };
 

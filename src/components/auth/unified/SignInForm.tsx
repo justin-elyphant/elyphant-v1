@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -22,6 +22,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 const SignInForm = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<SignInFormData>({
@@ -51,7 +52,8 @@ const SignInForm = () => {
       }
 
       toast.success("Welcome back!");
-      navigate("/dashboard", { replace: true });
+      const redirectPath = searchParams.get('redirect') || '/dashboard';
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       console.error("Sign in error:", error);
       toast.error("An unexpected error occurred");

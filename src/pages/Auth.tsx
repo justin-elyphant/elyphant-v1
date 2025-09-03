@@ -14,13 +14,14 @@ const Auth = () => {
   // Check if this is an invitation flow
   const isInvitationFlow = searchParams.has('invitation_id');
 
-  // Redirect authenticated users to homepage
+  // Redirect authenticated users to the appropriate page
   useEffect(() => {
     if (user && !isLoading) {
-      console.log("🏠 User already authenticated, redirecting to homepage");
-      navigate("/", { replace: true });
+      const redirectPath = searchParams.get('redirect') || '/';
+      console.log("🏠 User already authenticated, redirecting to:", redirectPath);
+      navigate(redirectPath, { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, searchParams]);
 
   if (isLoading) {
     return (

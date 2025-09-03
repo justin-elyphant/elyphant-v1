@@ -143,7 +143,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
         currentPage: '/dashboard',
         timestamp: new Date().toISOString()
       });
-      navigate("/dashboard");
+      // Check for stored redirect path
+      const redirectPath = localStorage.getItem('post_auth_redirect');
+      if (redirectPath) {
+        localStorage.removeItem('post_auth_redirect');
+        navigate(redirectPath);
+      } else {
+        navigate("/dashboard");
+      }
     }
   };
 

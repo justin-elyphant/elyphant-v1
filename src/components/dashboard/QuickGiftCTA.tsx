@@ -2,23 +2,14 @@
 import React from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const QuickGiftCTA = () => {
-  const handleOpenNicole = () => {
-    console.log("Auto-gifting CTA clicked - opening Nicole with auto-greeting");
-    // Dispatch custom event to trigger Nicole with auto-gifting context and auto-greeting
-    window.dispatchEvent(new CustomEvent('triggerNicole', {
-      detail: {
-        capability: 'auto_gifting',
-        selectedIntent: 'auto-gift',
-        source: 'dashboard-quick-gift',
-        autoGreeting: true,
-        greetingContext: {
-          greeting: 'auto-gifting-welcome',
-          activeMode: 'auto-gifting'
-        }
-      }
-    }));
+  const navigate = useNavigate();
+  
+  const handleOpenGifting = () => {
+    // Navigate to gifting approach selection for auto-gifting setup
+    navigate('/gifting');
   };
 
   return (
@@ -39,7 +30,7 @@ const QuickGiftCTA = () => {
             <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Our AI will pick, purchase, and deliver the perfect gift automatically</p>
           </div>
           <Button 
-            onClick={handleOpenNicole}
+            onClick={handleOpenGifting}
             className="bg-gradient-to-r from-cyan-600 to-amber-600 hover:from-cyan-700 hover:to-amber-700 text-white border-0 shadow-md h-10 sm:h-9 w-full sm:w-auto"
             size="sm"
           >

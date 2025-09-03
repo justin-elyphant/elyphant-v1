@@ -120,20 +120,20 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
   const handleUrlSearch = useCallback(() => {
     if (luxuryCategories) {
       console.log('[useUnifiedMarketplace] Detected luxury categories parameter');
-      executeSearch("luxury collections", { luxuryCategories: true, maxResults: 20 });
+      executeSearch("luxury collections", { luxuryCategories: true, maxResults: 20, silent: true });
     } else if (giftsForHer) {
       console.log('[useUnifiedMarketplace] Detected gifts for her parameter');
-      executeSearch("gifts for her categories", { giftsForHer: true, maxResults: 20 });
+      executeSearch("gifts for her categories", { giftsForHer: true, maxResults: 20, silent: true });
     } else if (giftsForHim) {
       console.log('[useUnifiedMarketplace] Detected gifts for him parameter');
-      executeSearch("gifts for him categories", { giftsForHim: true, maxResults: 20 });
+      executeSearch("gifts for him categories", { giftsForHim: true, maxResults: 20, silent: true });
     } else if (giftsUnder50) {
       console.log('[useUnifiedMarketplace] Detected gifts under $50 parameter');
       console.log('[useUnifiedMarketplace] URL params check:', { giftsUnder50, urlParam: searchParams.get("giftsUnder50") });
-      executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20 });
+      executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20, silent: true });
     } else if (brandCategories) {
       console.log(`[useUnifiedMarketplace] Detected brand categories parameter: "${brandCategories}"`);
-      executeSearch(brandCategories, { brandCategories: true, maxResults: 20 });
+      executeSearch(brandCategories, { brandCategories: true, maxResults: 20, silent: true });
     } else if (urlSearchTerm) {
       console.log(`[useUnifiedMarketplace] Detected URL search term: "${urlSearchTerm}"`);
       
@@ -169,13 +169,14 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
         personId,
         occasionType,
         nicoleContext,
+        silent: true, // Prevent toasts for URL-triggered searches
         // Ensure price filters are honored even without full context
         ...(minPrice !== undefined ? { minPrice } : {}),
         ...(maxPrice !== undefined ? { maxPrice } : {}),
       });
     } else if (autoLoadOnMount) {
       console.log('[useUnifiedMarketplace] Loading default products');
-      executeSearch("", { maxResults: 20 });
+      executeSearch("", { maxResults: 20, silent: true });
     }
   }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
 

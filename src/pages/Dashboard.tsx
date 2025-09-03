@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/auth";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Dashboard = () => {
@@ -13,6 +15,7 @@ const Dashboard = () => {
   const { profile } = useUnifiedProfile();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
 
@@ -86,10 +89,41 @@ const Dashboard = () => {
   // Get first name from auth metadata or profile
   const firstName = user?.user_metadata?.first_name;
 
+  // Mobile-first layout optimization
+  if (isMobile) {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden ios-scroll">
+        <ResponsiveContainer 
+          fullWidthOnMobile={true} 
+          maxWidth="full" 
+          padding="minimal"
+          className="mobile-content-spacing safe-area-bottom"
+        >
+          {/* Mobile Account Header - Optimized */}
+          <div className="mb-4 px-2">
+            <div className="flex flex-col gap-2 mb-3">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-foreground mb-1 line-clamp-1">
+                  {firstName ? `${firstName}'s Account` : 'My Account'}
+                </h1>
+                <p className="text-muted-foreground text-sm line-clamp-2">
+                  Your central hub for all Elyphant features
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <DashboardGrid />
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  // Desktop layout with SidebarLayout
   return (
     <SidebarLayout>
-      <div className="w-full max-w-none sm:max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-3 sm:px-4 md:px-6 mobile-content-spacing">
-        {/* Account Header - User-Centric Design */}
+      <div className="w-full max-w-none sm:max-w-6xl mx-auto py-3 sm:py-4 md:py-8 px-3 sm:px-4 md:px-6">
+        {/* Account Header - Desktop */}
         <div className="mb-4 sm:mb-6 md:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
             <div className="flex-1 min-w-0">

@@ -60,7 +60,10 @@ const DashboardGrid = () => {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className={cn(
+      "space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden",
+      isMobile && "mobile-container touch-manipulation"
+    )}>
       {/* Onboarding Hint for New Navigation */}
       {user && (
         <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg p-4 mb-6">
@@ -85,30 +88,57 @@ const DashboardGrid = () => {
       <QuickGiftCTA />
 
       {/* Quick Stats Overview - Mobile Optimized */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+      <div className={cn(
+        "grid gap-3 sm:gap-4 w-full",
+        isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"
+      )}>
+        <Card className={cn(
+          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
+          isMobile && "gpu-accelerated"
+        )}>
+          <CardContent className={cn(
+            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+            isMobile && "px-2"
+          )}>
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{connectionStats.accepted}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Friends</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+        <Card className={cn(
+          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
+          isMobile && "gpu-accelerated"
+        )}>
+          <CardContent className={cn(
+            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+            isMobile && "px-2"
+          )}>
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{wishlistCount}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Lists</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+        <Card className={cn(
+          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
+          isMobile && "gpu-accelerated"
+        )}>
+          <CardContent className={cn(
+            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+            isMobile && "px-2"
+          )}>
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{totalWishlistItems}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Items</div>
           </CardContent>
         </Card>
         
-        <Card className="text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0">
-          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+        <Card className={cn(
+          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
+          isMobile && "gpu-accelerated"
+        )}>
+          <CardContent className={cn(
+            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+            isMobile && "px-2"
+          )}>
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-600 line-clamp-1">{connectionStats.pending}</div>
             <div className="text-xs text-muted-foreground line-clamp-1">Pending</div>
           </CardContent>
@@ -118,7 +148,10 @@ const DashboardGrid = () => {
       {/* Main Features - Account-Centric Layout */}
       <div className="space-y-6">
         {/* Primary Actions - Top Priority */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className={cn(
+          "grid gap-4 w-full max-w-full",
+          isMobile ? "grid-cols-1 space-y-4" : "grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
+        )}>
           {/* Marketplace */}
           <Card className={cn(
             "hover:shadow-lg transition-all duration-200 cursor-pointer group",
@@ -174,7 +207,10 @@ const DashboardGrid = () => {
         </div>
 
         {/* Secondary Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6">
+        <div className={cn(
+          "grid gap-4 w-full max-w-full",
+          isMobile ? "grid-cols-1 space-y-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6"
+        )}>
 
         {/* Social Hub */}
         <SwipeableCard 

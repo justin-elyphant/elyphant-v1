@@ -32,7 +32,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       <header 
         ref={headerRef}
         className={cn(
-          "sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm transition-all duration-300",
+          "sticky top-0 z-50 bg-white border-b border-border shadow-sm transition-all duration-300",
           className
         )}
       >
@@ -57,7 +57,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
     <header 
       ref={headerRef}
       className={cn(
-        "sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border transition-shadow duration-300",
+        "sticky top-0 z-50 bg-white border-b border-border transition-shadow duration-300",
         // Only subtle shadow change on scroll
         isScrolled ? 'shadow-md' : 'shadow-sm',
         className

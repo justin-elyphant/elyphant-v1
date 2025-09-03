@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Header from "@/components/home/Header";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Dashboard = () => {
@@ -92,29 +93,35 @@ const Dashboard = () => {
   // Mobile-first layout optimization
   if (isMobile) {
     return (
-      <div className="min-h-screen w-full overflow-x-hidden ios-scroll">
-        <ResponsiveContainer 
-          fullWidthOnMobile={true} 
-          maxWidth="full" 
-          padding="minimal"
-          className="mobile-content-spacing safe-area-bottom"
-        >
-          {/* Mobile Account Header - Optimized */}
-          <div className="mb-4 px-2">
-            <div className="flex flex-col gap-2 mb-3">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-foreground mb-1 line-clamp-1">
-                  {firstName ? `${firstName}'s Account` : 'My Account'}
-                </h1>
-                <p className="text-muted-foreground text-sm line-clamp-2">
-                  Your central hub for all Elyphant features
-                </p>
+      <div className="min-h-screen w-full overflow-x-hidden">
+        {/* Always render Header for mobile */}
+        <Header />
+        
+        {/* Mobile dashboard content */}
+        <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>
+          <ResponsiveContainer 
+            fullWidthOnMobile={true} 
+            maxWidth="full" 
+            padding="minimal"
+            className="mobile-content-spacing safe-area-bottom"
+          >
+            {/* Mobile Account Header - Optimized */}
+            <div className="mb-4 px-2">
+              <div className="flex flex-col gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold text-foreground mb-1 line-clamp-1">
+                    {firstName ? `${firstName}'s Account` : 'My Account'}
+                  </h1>
+                  <p className="text-muted-foreground text-sm line-clamp-2">
+                    Your central hub for all Elyphant features
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <DashboardGrid />
-        </ResponsiveContainer>
+            
+            <DashboardGrid />
+          </ResponsiveContainer>
+        </div>
       </div>
     );
   }

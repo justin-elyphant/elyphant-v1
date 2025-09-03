@@ -35,18 +35,20 @@ const VirtualizedProductGrid: React.FC<VirtualizedProductGridProps> = memo(({
   
   // Calculate columns based on view mode and screen size
   const columns = useMemo(() => {
-    if (viewMode !== "grid") return 1;
+    if (viewMode === "list") return 1;
+    // Default to grid layout for "grid", "modern", or any other viewMode
     return isMobile ? 2 : 4;
   }, [viewMode, isMobile]);
 
   // Memoized grid classes
   const gridClasses = useMemo(() => {
-    if (viewMode === "grid") {
-      return isMobile
-        ? "grid grid-cols-2 gap-3 sm:gap-4"
-        : "grid grid-cols-4 gap-4";
+    if (viewMode === "list") {
+      return "space-y-4";
     }
-    return "space-y-4";
+    // Default to grid layout for "grid", "modern", or any other viewMode
+    return isMobile
+      ? "grid grid-cols-2 gap-3 sm:gap-4"
+      : "grid grid-cols-4 gap-4";
   }, [viewMode, isMobile]);
 
   // Calculate visible range

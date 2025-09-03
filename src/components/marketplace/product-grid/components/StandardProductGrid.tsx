@@ -29,11 +29,11 @@ const StandardProductGrid: React.FC<StandardProductGridProps> = ({
   return (
     <div
       className={`${
-        viewMode === "grid"
-          ? isMobile
+        viewMode === "list"
+          ? "space-y-4"
+          : isMobile
             ? "grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 items-stretch" // Mobile-optimized grid
             : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch" // Keep desktop layout
-          : "space-y-4"
       }`}
     >
       {products.map((product) => {

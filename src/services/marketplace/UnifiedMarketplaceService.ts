@@ -16,11 +16,10 @@ export interface SearchOptions {
   brandCategories?: boolean;
   personId?: string;
   occasionType?: string;
-  // Price range filtering from Nicole AI budget context
+  nicoleContext?: any;
   minPrice?: number;
   maxPrice?: number;
-  // Nicole AI context for enhanced filtering
-  nicoleContext?: any;
+  silent?: boolean; // Prevent toasts for background searches
 }
 
 export interface MarketplaceState {
@@ -101,7 +100,7 @@ class UnifiedMarketplaceService {
    * Search products with unified caching and deduplication
    */
   async searchProducts(searchTerm: string, options: SearchOptions = {}): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, page = 1, nicoleContext } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, page = 1, nicoleContext, silent = false } = options;
     
     // Extract budget from Nicole context if provided
     const budgetFromContext = extractBudgetFromNicoleContext(nicoleContext);
@@ -267,7 +266,7 @@ class UnifiedMarketplaceService {
    * Execute the actual search operation
    */
   private async executeSearch(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice, nicoleContext, filters } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, maxResults = 20, minPrice, maxPrice, nicoleContext, filters, silent = false } = options;
     
     try {
       let response;
@@ -378,14 +377,21 @@ class UnifiedMarketplaceService {
                     ? `Found ${finalProducts.length} results`
                     : `Loaded ${finalProducts.length} featured products`;
             
-        // Silently log success instead of showing toast
-        console.log(`UnifiedMarketplaceService: ${successMessage}`);
+        // Only show toasts if not silent
+        if (!silent) {
+          console.log(`UnifiedMarketplaceService: ${successMessage}`);
+        }
       } else {
         const noResultsMessage = searchTerm 
           ? `No results found for "${searchTerm}"`
           : 'No products available';
           
-        this.showToast(noResultsMessage, 'error');
+        // Only show error toasts if not silent
+        if (!silent) {
+          this.showToast(noResultsMessage, 'error');
+        } else {
+          console.log(`UnifiedMarketplaceService: ${noResultsMessage}`);
+        }
       }
 
       return finalProducts;

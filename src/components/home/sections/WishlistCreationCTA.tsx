@@ -48,7 +48,8 @@ const WishlistCreationCTA = () => {
         const categoryPromises = categorySearches.map(async (category) => {
           try {
             const results = await unifiedMarketplaceService.searchProducts(category.query, {
-              maxResults: category.maxResults
+              maxResults: category.maxResults,
+              silent: true // Prevent toasts for background loading
             });
             return results.map(product => ({ ...product, categoryBadge: category.name }));
           } catch (error) {
@@ -73,7 +74,8 @@ const WishlistCreationCTA = () => {
         if (shuffledProducts.length === 0) {
           // Ultimate fallback if all categories fail
           const fallbackResults = await unifiedMarketplaceService.searchProducts("trending", {
-            maxResults: 12
+            maxResults: 12,
+            silent: true // Prevent toasts for background loading
           });
           setProducts(fallbackResults);
         } else {
@@ -84,7 +86,8 @@ const WishlistCreationCTA = () => {
         // Final fallback
         try {
           const fallbackResults = await unifiedMarketplaceService.searchProducts("best selling", {
-            maxResults: 12
+            maxResults: 12,
+            silent: true // Prevent toasts for background loading
           });
           setProducts(fallbackResults);
         } catch (fallbackError) {

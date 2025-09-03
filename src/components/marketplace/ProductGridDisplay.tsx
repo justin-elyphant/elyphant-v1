@@ -48,13 +48,27 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   // Use mobile-optimized grid for mobile devices
   if (isMobile) {
     return (
-      <MobileProductGrid
-        products={products}
-        onProductClick={handleProductClick}
-        getProductStatus={getProductStatus}
-        isLoading={false}
-        hasMore={false}
-      />
+      <div className="safe-area-inset" role="region" aria-label="Product grid">
+        <div className="grid grid-cols-2 gap-3 p-4 items-stretch">
+          {products.map((product) => {
+            const productId = String(product.product_id || product.id);
+            const statusBadge = getProductStatus(product);
+            
+            return (
+              <div key={productId} className="flex">
+                <ProductItem
+                  product={product}
+                  viewMode="grid"
+                  onProductClick={() => handleProductClick(productId)}
+                  onWishlistClick={handleWishlistUpdate}
+                  isFavorited={isProductWishlisted(productId)}
+                  statusBadge={statusBadge}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 

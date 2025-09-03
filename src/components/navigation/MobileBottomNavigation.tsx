@@ -63,7 +63,7 @@ const MobileBottomNavigation: React.FC = () => {
       id: "account",
       label: "Account",
       icon: <User className="h-5 w-5" />,
-      href: "/account",
+      href: "/settings",
       requiresAuth: true,
     }
   ];
@@ -99,9 +99,9 @@ const MobileBottomNavigation: React.FC = () => {
     if (tab.href === "/") {
       return location.pathname === "/";
     }
-    // Handle route consistency - account should match both /account and /profile
+    // Handle route consistency - account should match settings and profile
     if (tab.id === "account") {
-      return location.pathname.startsWith("/account") || location.pathname.startsWith("/profile");
+      return location.pathname.startsWith("/settings") || location.pathname.startsWith("/profile");
     }
     return location.pathname.startsWith(tab.href);
   };

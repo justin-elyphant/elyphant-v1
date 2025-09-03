@@ -40,8 +40,8 @@ const AppSidebar = () => {
       icon: LayoutGrid,
     },
     {
-      title: "Account",
-      url: "/account",
+      title: "Account Settings",
+      url: "/settings",
       icon: User,
     },
   ];

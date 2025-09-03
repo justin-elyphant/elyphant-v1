@@ -64,11 +64,11 @@ const MobileNavMenu = ({
                 Dashboard
               </Link>
               <Link
-                to="/account"
+                to="/settings"
                 className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
                 onClick={onClose}
               >
-                Account
+                Account Settings
               </Link>
             </div>
             

@@ -15,11 +15,12 @@ const MobileRouteRedirects: React.FC = () => {
     
     // Route consistency redirects
     const routeRedirects: Record<string, string> = {
-      '/profile': '/account',
-      '/profile/settings': '/account',
-      '/user/profile': '/account',
-      '/settings/profile': '/account',
-      '/user/settings': '/account'
+      '/profile': '/settings',
+      '/profile/settings': '/settings',
+      '/user/profile': '/settings',
+      '/settings/profile': '/settings',
+      '/user/settings': '/settings',
+      '/account': '/settings'
     };
 
     const targetRoute = routeRedirects[path];
@@ -35,7 +36,7 @@ const MobileRouteRedirects: React.FC = () => {
     if (path.startsWith('/profile/')) {
       const segments = path.split('/');
       if (segments.length === 3) {
-        // /profile/[id] -> /account/[id] or handle appropriately
+        // /profile/[id] -> /settings/[id] or handle appropriately
         const id = segments[2];
         if (id !== 'settings') {
           // This might be a public profile view

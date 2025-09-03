@@ -8,7 +8,7 @@ export const getDefaultLinks = () => [
   { label: "Gifting Hub", href: "/gifting" },
   { label: "Social Hub", href: "/social" },
   { label: "Nicole AI", href: "/nicole" },
-  { label: "Account", href: "/account" }
+  { label: "Account Settings", href: "/settings" }
 ];
 
 export const getMarketplaceItems = (): NavDropdownItem[] => [

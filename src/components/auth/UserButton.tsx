@@ -172,7 +172,7 @@ const UserButton = () => {
           <span>My Profile</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => navigate("/account")}>
+        <DropdownMenuItem onClick={() => navigate("/settings")}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Account Settings</span>
         </DropdownMenuItem>

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
 import { ProfileProvider } from "./contexts/profile/ProfileContext";
@@ -177,7 +177,7 @@ function AppContent() {
           <Route path="/gifting" element={<GiftingHub />} />
           <Route path="/events" element={<GiftingHub />} />
           <Route path="/nicole" element={<Nicole />} />
-          <Route path="/account" element={<Account />} />
+          <Route path="/account" element={<Navigate to="/settings" replace />} />
           <Route path="/social" element={<Social />} />
           <Route path="/profile/complete" element={<ProfileComplete />} />
           

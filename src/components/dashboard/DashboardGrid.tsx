@@ -285,7 +285,7 @@ const DashboardGrid = () => {
                 Update profile, privacy, and preferences
               </div>
               <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
-                <Link to="/account" className="flex items-center justify-center truncate">
+                <Link to="/settings" className="flex items-center justify-center truncate">
                   <span className="hidden sm:inline truncate">Account Settings</span>
                   <span className="sm:hidden truncate">Settings</span>
                   <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />

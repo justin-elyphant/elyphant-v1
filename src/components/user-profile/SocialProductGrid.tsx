@@ -49,6 +49,50 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
 
+  // Debug layout dimensions
+  useEffect(() => {
+    const logDimensions = () => {
+      console.log('[SocialProductGrid Layout Debug]');
+      console.log('Window dimensions:', {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio
+      });
+      console.log('Document dimensions:', {
+        documentWidth: document.documentElement.clientWidth,
+        bodyWidth: document.body.clientWidth,
+        bodyScrollWidth: document.body.scrollWidth
+      });
+      
+      // Find grid container
+      const gridContainer = document.querySelector('[class*="grid-cols-2"]');
+      if (gridContainer) {
+        const rect = gridContainer.getBoundingClientRect();
+        console.log('Grid container:', {
+          width: rect.width,
+          height: rect.height,
+          left: rect.left,
+          right: rect.right,
+          classes: gridContainer.className
+        });
+      }
+      
+      // Find parent containers
+      const containers = document.querySelectorAll('[class*="ResponsiveContainer"], [class*="InstagramProfileLayout"]');
+      containers.forEach((container, i) => {
+        const rect = container.getBoundingClientRect();
+        console.log(`Container ${i}:`, {
+          width: rect.width,
+          classes: container.className.slice(0, 50) + '...'
+        });
+      });
+    };
+    
+    logDimensions();
+    window.addEventListener('resize', logDimensions);
+    return () => window.removeEventListener('resize', logDimensions);
+  }, []);
+
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();

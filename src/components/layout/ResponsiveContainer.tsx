@@ -44,12 +44,29 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   const shouldUseFullWidth = isMobile && fullWidthOnMobile;
   
   return (
-    <div className={cn(
-      "mx-auto w-full transition-all duration-300",
-      shouldUseFullWidth ? "max-w-full" : maxWidthClasses[maxWidth],
-      paddingClasses[padding],
-      className
-    )}>
+    <div 
+      className={cn(
+        "mx-auto w-full transition-all duration-300",
+        shouldUseFullWidth ? "max-w-full" : maxWidthClasses[maxWidth],
+        paddingClasses[padding],
+        className
+      )}
+      ref={(el) => {
+        if (el) {
+          console.log('[ResponsiveContainer Debug]', {
+            shouldUseFullWidth,
+            maxWidth,
+            padding,
+            actualWidth: el.getBoundingClientRect().width,
+            computedStyles: {
+              width: getComputedStyle(el).width,
+              maxWidth: getComputedStyle(el).maxWidth,
+              padding: getComputedStyle(el).padding
+            }
+          });
+        }
+      }}
+    >
       {children}
     </div>
   );

@@ -18,8 +18,8 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   children,
   className = "",
   fullWidthOnMobile = true,
-  maxWidth = "7xl",
-  padding = "standard",
+  maxWidth = "full",
+  padding = "minimal",
 }) => {
   const isMobile = useIsMobile();
   
@@ -51,21 +51,6 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
         paddingClasses[padding],
         className
       )}
-      ref={(el) => {
-        if (el) {
-          console.log('[ResponsiveContainer Debug]', {
-            shouldUseFullWidth,
-            maxWidth,
-            padding,
-            actualWidth: el.getBoundingClientRect().width,
-            computedStyles: {
-              width: getComputedStyle(el).width,
-              maxWidth: getComputedStyle(el).maxWidth,
-              padding: getComputedStyle(el).padding
-            }
-          });
-        }
-      }}
     >
       {children}
     </div>

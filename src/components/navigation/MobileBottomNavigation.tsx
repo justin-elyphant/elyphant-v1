@@ -1,101 +1,59 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, ShoppingBag, ShoppingCart, Bot, User, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
+import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { getNavigationConfig } from "./config/navigationConfig";
+import { NavigationItem } from "./types/navigationTypes";
 
-interface BottomNavTab {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  href: string;
-  badge?: number;
-  requiresAuth?: boolean;
-}
+// Use NavigationItem from unified types
 
 const MobileBottomNavigation: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { getItemCount } = useCart();
   const pendingConnectionsCount = usePendingConnectionsCount();
-  
-  const cartItemCount = getItemCount();
+  const { unreadCount: notificationsCount } = useNotifications();
+  const unreadMessagesCount = useUnreadMessagesCount();
+  const { hasIssues } = useProfileDataIntegrity();
 
-  const handleTabPress = (tab: BottomNavTab) => {
+  const handleTabPress = (tab: NavigationItem) => {
     triggerHapticFeedback('selection');
   };
 
-  const getBaseTabs = (): BottomNavTab[] => [
-    {
-      id: "home",
-      label: "Home",
-      icon: <Home className="h-5 w-5" />,
-      href: "/",
-    },
-    {
-      id: "marketplace",
-      label: "Shop",
-      icon: <ShoppingBag className="h-5 w-5" />,
-      href: "/marketplace",
-    }
+  // Get unified navigation configuration
+  const badges = {
+    cart: getItemCount(),
+    messages: unreadMessagesCount,
+    notifications: notificationsCount,
+    connections: pendingConnectionsCount,
+    issues: hasIssues ? 1 : 0
+  };
+  
+  const { sections } = getNavigationConfig(!!user, badges);
+  
+  // Extract bottom navigation items from primary section
+  const primarySection = sections.find(s => s.id === 'primary');
+  const featuresSection = sections.find(s => s.id === 'features');
+  
+  const tabs: NavigationItem[] = [
+    ...(primarySection?.items || []),
+    // Add Nicole AI and Account/Auth from features/account sections
+    ...(user ? [
+      featuresSection?.items.find(i => i.id === 'nicole'),
+      { id: 'account', label: 'Account', href: '/settings', icon: primarySection?.items[0]?.icon, section: 'account' as const }
+    ].filter(Boolean) as NavigationItem[] : [
+      featuresSection?.items.find(i => i.id === 'nicole'),
+      { id: 'auth', label: 'Sign In', href: '/auth', icon: primarySection?.items[0]?.icon }
+    ].filter(Boolean) as NavigationItem[])
   ];
 
-  const getAuthenticatedTabs = (): BottomNavTab[] => [
-    {
-      id: "cart",
-      label: "Cart",
-      icon: <ShoppingCart className="h-5 w-5" />,
-      href: "/cart",
-      badge: cartItemCount > 0 ? cartItemCount : undefined,
-      requiresAuth: false,
-    },
-    {
-      id: "nicole",
-      label: "Nicole AI",
-      icon: <Bot className="h-5 w-5" />,
-      href: "/nicole",
-      requiresAuth: false,
-    },
-    {
-      id: "account",
-      label: "Account",
-      icon: <User className="h-5 w-5" />,
-      href: "/settings",
-      requiresAuth: true,
-    }
-  ];
-
-  const getGuestTabs = (): BottomNavTab[] => [
-    {
-      id: "cart",
-      label: "Cart",
-      icon: <ShoppingCart className="h-5 w-5" />,
-      href: "/cart",
-      badge: cartItemCount > 0 ? cartItemCount : undefined,
-    },
-    {
-      id: "nicole",
-      label: "Nicole AI",
-      icon: <Bot className="h-5 w-5" />,
-      href: "/nicole",
-    },
-    {
-      id: "auth",
-      label: "Sign In",
-      icon: <User className="h-5 w-5" />,
-      href: "/auth",
-    }
-  ];
-
-  const tabs = [
-    ...getBaseTabs(),
-    ...(user ? getAuthenticatedTabs() : getGuestTabs())
-  ];
-
-  const isTabActive = (tab: BottomNavTab): boolean => {
+  const isTabActive = (tab: NavigationItem): boolean => {
     if (tab.href === "/") {
       return location.pathname === "/";
     }

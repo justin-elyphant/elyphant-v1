@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings, Heart, MessageSquare, LayoutDashboard, Users, CreditCard, Package, Gift, Brain } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -16,6 +16,9 @@ import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity"
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
+import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
+import { getNavigationConfig } from "@/components/navigation/config/navigationConfig";
+import { navigationStyles } from "@/components/navigation/shared/NavigationStyles";
 
 const UserButton = () => {
   const navigate = useNavigate();
@@ -24,6 +27,18 @@ const UserButton = () => {
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
   const { unreadCount: notificationsCount } = useNotifications();
   const unreadMessagesCount = useUnreadMessagesCount();
+  const pendingConnectionsCount = usePendingConnectionsCount();
+
+  // Get unified navigation configuration
+  const badges = {
+    cart: 0, // Cart not shown in desktop dropdown
+    messages: unreadMessagesCount,
+    notifications: notificationsCount,
+    connections: pendingConnectionsCount,
+    issues: hasIssues ? 1 : 0
+  };
+  
+  const { sections } = getNavigationConfig(true, badges);
   
   // Debounced integrity check to prevent page cycling
   React.useEffect(() => {
@@ -126,92 +141,61 @@ const UserButton = () => {
         </button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-        <div className="flex items-center justify-start gap-2 p-2">
-          <div className="flex flex-col space-y-1 leading-none">
-            {user?.email && (
-              <p className="font-medium">{user.email}</p>
-            )}
+      <DropdownMenuContent align="end" className="w-64 bg-background z-50">
+        {/* Enhanced Profile Header */}
+        <div className="flex items-center gap-3 p-4 border-b border-border">
+          <Avatar className="h-10 w-10">
+            <AvatarImage 
+              src={
+                profile?.profile_image || 
+                user?.user_metadata?.avatar_url || 
+                user?.user_metadata?.picture
+              } 
+            />
+            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground truncate">
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+            </p>
+            <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
-        
-        <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          <span className="relative">
-            Dashboard
-            {hasIssues && (
-              <NotificationBadge 
-                count={1} 
-                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
-              />
-            )}
-          </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/gifting")}>
-          <Gift className="mr-2 h-4 w-4" />
-          <span>Gifting Hub</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/social")}>
-          <Users className="mr-2 h-4 w-4" />
-          <span>Social Hub</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/nicole")}>
-          <Brain className="mr-2 h-4 w-4" />
-          <span>Nicole AI</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={handleProfileClick}>
-          <User className="mr-2 h-4 w-4" />
-          <span>My Profile</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/settings")}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Account Settings</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/wishlists")}>
-          <Heart className="mr-2 h-4 w-4" />
-          <span>{wishlistsLabel}</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={() => navigate("/messages")}>
-          <MessageSquare className="mr-2 h-4 w-4" />
-          <span className="relative">
-            Messages
-            {unreadMessagesCount > 0 && (
-              <NotificationBadge 
-                count={unreadMessagesCount} 
-                className="absolute -top-2 -right-2 min-w-[1rem] h-4 text-xs"
-              />
-            )}
-          </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/orders")}>
-          <Package className="mr-2 h-4 w-4" />
-          <span>Orders</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => navigate("/payments")}>
-          <CreditCard className="mr-2 h-4 w-4" />
-          <span>Payment Methods</span>
-        </DropdownMenuItem>
+        {/* Unified Navigation Sections */}
+        {sections.map((section, sectionIndex) => (
+          <div key={section.id}>
+            {section.items.map((item) => (
+              <DropdownMenuItem 
+                key={item.id}
+                onClick={() => navigate(item.href)}
+                className={navigationStyles.dropdownItem}
+              >
+                {item.icon && React.cloneElement(item.icon as React.ReactElement, { 
+                  className: navigationStyles.dropdownIcon 
+                })}
+                <span className={navigationStyles.dropdownLabel}>
+                  {item.label}
+                  {item.badge && item.badge > 0 && (
+                    <NotificationBadge 
+                      count={item.badge} 
+                      className={navigationStyles.badgeDesktop}
+                    />
+                  )}
+                </span>
+              </DropdownMenuItem>
+            ))}
+            {sectionIndex < sections.length - 1 && <DropdownMenuSeparator />}
+          </div>
+        ))}
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+          <LogOut className={navigationStyles.dropdownIcon} />
+          <span>Sign Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

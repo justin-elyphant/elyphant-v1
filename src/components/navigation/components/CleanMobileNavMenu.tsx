@@ -5,28 +5,17 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  X, 
-  ShoppingBag, 
-  Heart, 
-  Package, 
-  User, 
-  Settings,
-  HelpCircle,
-  LogOut,
-  Users,
-  Zap,
-  Clock,
-  Gift,
-  Star,
-  Search,
-  Bell
-} from "lucide-react";
+import { X, Zap, LogOut, ShoppingBag } from "lucide-react";
 import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
+import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
+import { getNavigationConfig } from "../config/navigationConfig";
+import { navigationStyles, getNavItemClasses } from "../shared/NavigationStyles";
 
 interface CleanMobileNavMenuProps {
   isOpen: boolean;
@@ -48,6 +37,20 @@ const CleanMobileNavMenu = ({
   const pendingConnectionsCount = usePendingConnectionsCount();
   const { cartItems, cartTotal, getItemCount } = useCart();
   const { user } = useAuth();
+  const { unreadCount: notificationsCount } = useNotifications();
+  const unreadMessagesCount = useUnreadMessagesCount();
+  const { hasIssues } = useProfileDataIntegrity();
+
+  // Get unified navigation configuration
+  const badges = {
+    cart: getItemCount(),
+    messages: unreadMessagesCount,
+    notifications: notificationsCount,
+    connections: pendingConnectionsCount,
+    issues: hasIssues ? 1 : 0
+  };
+  
+  const { sections, quickActions } = getNavigationConfig(isAuthenticated, badges);
 
   if (!isOpen) return null;
 
@@ -137,249 +140,97 @@ const CleanMobileNavMenu = ({
             </div>
           )}
 
-          {/* Quick Links Section */}
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              to="/search"
-              className="flex flex-col items-center p-4 rounded-xl bg-card hover:bg-accent transition-colors border"
-              onClick={onClose}
-            >
-              <Search className="h-6 w-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Search</span>
-            </Link>
-            {isAuthenticated && (
+          {/* Quick Actions Section */}
+          <div className={navigationStyles.mobileGrid}>
+            {quickActions.map((action) => (
               <Link
-                to="/wishlists"
-                className="flex flex-col items-center p-4 rounded-xl bg-card hover:bg-accent transition-colors border"
+                key={action.id}
+                to={action.href}
+                className={navigationStyles.quickActionCard}
                 onClick={onClose}
               >
-                <Heart className="h-6 w-6 text-primary mb-2" />
-                <span className="text-sm font-medium text-foreground">Wishlist</span>
+                <div className={navigationStyles.quickActionIcon}>
+                  {action.icon}
+                </div>
+                <span className={navigationStyles.quickActionLabel}>{action.label}</span>
               </Link>
-            )}
-            <Link
-              to="/gift-ideas"
-              className="flex flex-col items-center p-4 rounded-xl bg-card hover:bg-accent transition-colors border"
-              onClick={onClose}
-            >
-              <Gift className="h-6 w-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Gift Ideas</span>
-            </Link>
-            {isAuthenticated && (
-              <Link
-                to="/orders"
-                className="flex flex-col items-center p-4 rounded-xl bg-card hover:bg-accent transition-colors border"
-                onClick={onClose}
-              >
-                <Package className="h-6 w-6 text-primary mb-2" />
-                <span className="text-sm font-medium text-foreground">Orders</span>
-              </Link>
-            )}
+            ))}
           </div>
 
           <Separator />
 
-          {/* Shop Section */}
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center">
-              <ShoppingBag className="h-4 w-4 mr-2" />
-              Shop
-            </h3>
-            <div className="space-y-1">
-              {marketplaceItems.map((item, index) => (
-                <Link
-                  key={index}
-                  to={item.href}
-                  className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                  onClick={onClose}
-                >
-                  {item.icon && (
-                    <span className="mr-3 text-primary group-hover:text-primary">
-                      {item.icon}
-                    </span>
-                  )}
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Authenticated User Section */}
-          {isAuthenticated ? (
-            <>
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center">
-                  <User className="h-4 w-4 mr-2" />
-                  My Account
-                </h3>
-                <div className="space-y-1">
-                  {profileItems.map((item, index) => {
-                    const getIcon = () => {
-                      if (item.label === "Profile") return User;
-                      if (item.label === "Settings") return Settings;
-                      if (item.label === "Orders") return Package;
-                      if (item.label === "Wishlists") return Heart;
-                      return User;
-                    };
-                    const IconComponent = getIcon();
-                    
-                    return (
-                      <Link
-                        key={index}
-                        to={item.href}
-                        className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                        onClick={onClose}
-                      >
-                        <IconComponent className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                  
-                  {/* Connections with notification badge */}
+          {/* Unified Sections */}
+          {sections.map((section) => (
+            <div key={section.id}>
+              <h3 className={navigationStyles.sectionHeader}>
+                {section.icon && <span className="mr-2">{section.icon}</span>}
+                {section.title}
+              </h3>
+              <div className="space-y-1">
+                {section.items.map((item) => (
                   <Link
-                    to="/connections"
-                    className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group relative"
+                    key={item.id}
+                    to={item.href}
+                    className={getNavItemClasses(false)}
                     onClick={onClose}
                   >
-                    <Users className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                    <span className="font-medium">Connections</span>
-                    {pendingConnectionsCount > 0 && (
+                    {item.icon && (
+                      <span className="mr-3 text-primary group-hover:text-primary">
+                        {item.icon}
+                      </span>
+                    )}
+                    <span className={navigationStyles.navItemLabel}>{item.label}</span>
+                    {item.badge && item.badge > 0 && (
                       <NotificationBadge 
-                        count={pendingConnectionsCount} 
-                        className="ml-auto"
+                        count={item.badge} 
+                        className={navigationStyles.badge}
                       />
                     )}
                   </Link>
-
-                  {/* Notifications */}
-                  <Link
-                    to="/notifications"
-                    className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                    onClick={onClose}
-                  >
-                    <Bell className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                    <span className="font-medium">Notifications</span>
-                  </Link>
-                </div>
+                ))}
               </div>
-
               <Separator />
+            </div>
+          ))}
 
-              {/* Recently Viewed */}
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Recent Activity
-                </h3>
-                <Link
-                  to="/recently-viewed"
-                  onClick={onClose}
-                  className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                >
-                  <Clock className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                  <span className="font-medium">Recently Viewed</span>
-                </Link>
-              </div>
-
-              <Separator />
-
-              {/* Help & Support */}
-              <div>
-                <Link
-                  to="/support"
-                  onClick={onClose}
-                  className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                >
-                  <HelpCircle className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                  <span className="font-medium">Help & Support</span>
-                </Link>
-              </div>
-
-              <Separator />
-
-              {/* Sign Out */}
-              <div>
-                <button
-                  onClick={() => {
-                    onSignOut();
-                    onClose();
-                  }}
-                  className="w-full flex items-center p-3 rounded-lg hover:bg-destructive/10 transition-colors text-destructive group"
-                >
-                  <LogOut className="h-5 w-5 mr-3 group-hover:text-destructive" />
-                  <span className="font-medium">Sign Out</span>
-                </button>
-              </div>
-            </>
+          {/* Authentication Actions */}
+          {isAuthenticated ? (
+            <div>
+              <button
+                onClick={() => {
+                  onSignOut();
+                  onClose();
+                }}
+                className={navigationStyles.signOutButton}
+              >
+                <LogOut className="h-5 w-5 mr-3 group-hover:text-destructive" />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </div>
           ) : (
-            /* Guest User Section */
-            <>
-              <div className="bg-primary/5 rounded-xl p-6 border border-primary/10 text-center">
-                <div className="mb-4">
-                  <User className="h-12 w-12 text-primary mx-auto mb-3 opacity-70" />
-                  <h3 className="font-semibold text-foreground mb-2">Welcome!</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Sign in to access your wishlists, orders, and personalized shopping experience
-                  </p>
+            <div className={navigationStyles.authPrompt}>
+              <div className="mb-4">
+                <div className="h-12 w-12 bg-primary/10 text-primary mx-auto mb-3 opacity-70 rounded-full flex items-center justify-center">
+                  <span className="h-6 w-6">👋</span>
                 </div>
-                <div className="space-y-3">
-                  <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Link to="/auth" onClick={onClose}>
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="w-full">
-                    <Link to="/auth" onClick={onClose}>
-                      Create Account
-                    </Link>
-                  </Button>
-                </div>
+                <h3 className="font-semibold text-foreground mb-2">Welcome!</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Sign in to access your wishlists, orders, and personalized shopping experience
+                </p>
               </div>
-
-              <Separator />
-
-              {/* Guest Features */}
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  Explore
-                </h3>
-                <div className="space-y-1">
-                  <Link
-                    to="/featured-deals"
-                    onClick={onClose}
-                    className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                  >
-                    <Star className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                    <span className="font-medium">Featured Deals</span>
+              <div className="space-y-3">
+                <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Link to="/auth" onClick={onClose}>
+                    Sign In
                   </Link>
-                  <Link
-                    to="/gift-guides"
-                    onClick={onClose}
-                    className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                  >
-                    <Gift className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                    <span className="font-medium">Gift Guides</span>
+                </Button>
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/auth" onClick={onClose}>
+                    Create Account
                   </Link>
-                </div>
+                </Button>
               </div>
-
-              <Separator />
-
-              {/* Help for Guest Users */}
-              <div>
-                <Link
-                  to="/support"
-                  onClick={onClose}
-                  className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors text-foreground group"
-                >
-                  <HelpCircle className="h-5 w-5 text-primary group-hover:text-primary mr-3" />
-                  <span className="font-medium">Help & Support</span>
-                </Link>
-              </div>
-            </>
+            </div>
           )}
         </div>
       </div>

@@ -1,7 +1,9 @@
 
-import React, { useRef } from "react";
-import { Camera, User } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Camera, User, Upload, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CameraCapture } from "@/components/ui/camera-capture";
 import { cn } from "@/lib/utils";
 
 interface ProfileBubbleProps {
@@ -20,6 +22,7 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
   className
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
 
   const sizeClasses = {
     sm: "w-16 h-16",
@@ -33,25 +36,12 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
     lg: "h-6 w-6"
   };
 
-  const handleClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    console.log("ProfileBubble clicked - Debug info:", { 
-      onImageSelect: !!onImageSelect,
-      fileInputRef: !!fileInputRef.current,
-      eventType: event.type
-    });
-    
-    if (onImageSelect && fileInputRef.current) {
-      console.log("Triggering file input click");
-      fileInputRef.current.click();
-    } else {
-      console.log("Cannot trigger file input:", { 
-        hasOnImageSelect: !!onImageSelect, 
-        hasFileInput: !!fileInputRef.current 
-      });
-    }
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
+  const openCamera = () => {
+    setShowCameraCapture(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +63,18 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
     }
   };
 
+  const handleCameraCapture = (blob: Blob) => {
+    if (!onImageSelect) return;
+    
+    // Convert blob to file
+    const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+      type: 'image/jpeg'
+    });
+    
+    console.log("Camera capture - calling onImageSelect with file:", file.name);
+    onImageSelect(file);
+  };
+
   // Get initials from name
   const initials = userName
     .split(' ')
@@ -83,13 +85,7 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
 
   return (
     <div className="relative group">
-      <div 
-        className={cn(
-          "relative cursor-pointer",
-          onImageSelect && "hover:opacity-80 transition-opacity duration-200"
-        )}
-        onClick={handleClick}
-      >
+      <div className="relative">
         <Avatar className={cn(sizeClasses[size], className)}>
           <AvatarImage src={imageUrl || undefined} alt={userName} />
           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-semibold text-lg">
@@ -98,21 +94,54 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
         </Avatar>
         
         {onImageSelect && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-            <Camera className={cn(iconSizes[size], "text-white")} />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-white p-1 h-8 w-8 rounded-full hover:bg-white/20 transition-colors">
+                  <Camera className={iconSizes[size]} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48">
+                <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Choose from Library
+                </DropdownMenuItem>
+                {imageUrl && (
+                  <DropdownMenuItem 
+                    onClick={() => onImageSelect?.(new File([], ''))} 
+                    className="cursor-pointer text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Remove Photo
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>
       
       {onImageSelect && (
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
-          onChange={handleFileChange}
-          className="hidden"
-          multiple={false}
-        />
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileChange}
+            className="hidden"
+            multiple={false}
+          />
+          
+          <CameraCapture
+            isOpen={showCameraCapture}
+            onClose={() => setShowCameraCapture(false)}
+            onCapture={handleCameraCapture}
+          />
+        </>
       )}
     </div>
   );

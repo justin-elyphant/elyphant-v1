@@ -7,15 +7,17 @@ import { cn } from "@/lib/utils";
 interface ConnectButtonProps {
   targetUserId: string;
   variant?: "default" | "outline" | "ghost";
-  size?: "sm" | "default" | "lg";
+  size?: "sm" | "default" | "lg" | "icon";
   className?: string;
+  iconOnly?: boolean;
 }
 
 const ConnectButton: React.FC<ConnectButtonProps> = ({
   targetUserId,
   variant = "default",
   size = "default",
-  className
+  className,
+  iconOnly = false
 }) => {
   const {
     connectState,
@@ -46,8 +48,8 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
     if (loading) {
       return (
         <>
-          <Clock className="h-4 w-4 mr-2 animate-spin" />
-          Loading...
+          <Clock className="h-4 w-4 animate-spin" />
+          {!iconOnly && <span className="ml-2">Loading...</span>}
         </>
       );
     }
@@ -55,8 +57,8 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
     if (connectState.isConnected) {
       return (
         <>
-          <UserCheck className="h-4 w-4 mr-2" />
-          Connected
+          <UserCheck className="h-4 w-4" />
+          {!iconOnly && <span className="ml-2">Connected</span>}
         </>
       );
     }
@@ -64,16 +66,16 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
     if (connectState.isPending) {
       return (
         <>
-          <Clock className="h-4 w-4 mr-2" />
-          Request Sent
+          <Clock className="h-4 w-4" />
+          {!iconOnly && <span className="ml-2">Request Sent</span>}
         </>
       );
     }
 
     return (
       <>
-        <UserPlus className="h-4 w-4 mr-2" />
-        Connect
+        <UserPlus className="h-4 w-4" />
+        {!iconOnly && <span className="ml-2">Connect</span>}
       </>
     );
   };

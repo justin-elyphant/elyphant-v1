@@ -2,11 +2,13 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users, Settings } from "lucide-react";
 import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CompactProfileHeaderProps {
   userData: any;
@@ -82,63 +84,129 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     onConnect();
   };
 
+  const isMobile = useIsMobile();
+
   const renderActionButtons = () => {
     if (isCurrentUser) {
+      const buttonSize = isMobile ? "icon" : "sm";
+      const buttonClass = "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm";
+      const gapClass = isMobile ? "gap-1" : "gap-2";
+      
       return (
-        <div className="flex gap-2">
-          <Button
-            onClick={() => navigateInIframe('/settings')}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white text-white hover:bg-white/20"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Edit Profile
-          </Button>
-          <Button
-            onClick={onShare}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white text-white hover:bg-white/20"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+        <div className={`flex ${gapClass}`}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => navigateInIframe('/settings')}
+                  variant="outline"
+                  size={buttonSize}
+                  className={buttonClass}
+                >
+                  <Settings className="h-4 w-4" />
+                  {!isMobile && <span className="ml-2">Edit Profile</span>}
+                </Button>
+              </TooltipTrigger>
+              {isMobile && (
+                <TooltipContent>
+                  <p>Edit Profile</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onShare}
+                  variant="outline"
+                  size={buttonSize}
+                  className={buttonClass}
+                >
+                  <Share2 className="h-4 w-4" />
+                  {!isMobile && <span className="ml-2">Share</span>}
+                </Button>
+              </TooltipTrigger>
+              {isMobile && (
+                <TooltipContent>
+                  <p>Share Profile</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     }
 
+    const buttonSize = isMobile ? "icon" : "sm";
+    const gapClass = isMobile ? "gap-1" : "gap-2";
+    
     return (
-      <div className="flex gap-2">
+      <div className={`flex ${gapClass}`}>
         {canConnect && !isConnected && !isAnonymousUser && (
-          <ConnectButton
-            targetUserId={userData?.id}
-            variant="default"
-            size="sm"
-            className="bg-white text-gray-900 hover:bg-gray-100"
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ConnectButton
+                  targetUserId={userData?.id}
+                  variant="default"
+                  size={buttonSize}
+                  className="bg-white text-gray-900 hover:bg-gray-100 rounded-full"
+                  iconOnly={isMobile}
+                />
+              </TooltipTrigger>
+              {isMobile && (
+                <TooltipContent>
+                  <p>Connect</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {isConnected && onSendGift && (
-          <Button
-            onClick={onSendGift}
-            variant="default"
-            size="sm"
-            className="bg-white text-gray-900 hover:bg-gray-100"
-          >
-            <Gift className="h-4 w-4 mr-2" />
-            Gift
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onSendGift}
+                  variant="default"
+                  size={buttonSize}
+                  className="bg-white text-gray-900 hover:bg-gray-100 rounded-full"
+                >
+                  <Gift className="h-4 w-4" />
+                  {!isMobile && <span className="ml-2">Gift</span>}
+                </Button>
+              </TooltipTrigger>
+              {isMobile && (
+                <TooltipContent>
+                  <p>Send Gift</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {canMessage && (
-          <Button
-            onClick={handleMessageClick}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white text-white hover:bg-white/20"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Message
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleMessageClick}
+                  variant="outline"
+                  size={buttonSize}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm rounded-full"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {!isMobile && <span className="ml-2">Message</span>}
+                </Button>
+              </TooltipTrigger>
+              {isMobile && (
+                <TooltipContent>
+                  <p>Send Message</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     );
@@ -212,7 +280,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-1 sm:gap-2">
+          <div className="flex">
             {renderActionButtons()}
           </div>
         </div>

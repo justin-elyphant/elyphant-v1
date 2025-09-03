@@ -16,7 +16,21 @@ type SettingsTab = "general" | "notifications" | "privacy";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as SettingsTab) || "general";
+  const tabParam = searchParams.get('tab') as SettingsTab;
+  const sectionParam = searchParams.get('section'); // Legacy support from old Account page
+  
+  // Map legacy section parameters to current tab names
+  const mapSectionToTab = (section: string | null): SettingsTab | null => {
+    switch (section) {
+      case 'profile': return 'general';
+      case 'notifications': return 'notifications';  
+      case 'privacy': return 'privacy';
+      case 'billing': return 'general'; // billing info is in general settings
+      default: return null;
+    }
+  };
+  
+  const initialTab = tabParam || mapSectionToTab(sectionParam) || "general";
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const { profile, loading, error, refetchProfile } = useProfile();
   const { user } = useAuth();

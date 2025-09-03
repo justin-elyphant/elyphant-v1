@@ -315,9 +315,7 @@ class UnifiedMarketplaceService {
         response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'} and filters:`, searchOptions);
-        if (!silent) {
-          this.showToast(`Searching for "${searchTerm}"...`, 'loading');
-        }
+        // Removed toast notification to prevent "searching for" tokens from appearing during automatic searches
         response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
         
         // Enhanced diverse search strategy for Nicole context

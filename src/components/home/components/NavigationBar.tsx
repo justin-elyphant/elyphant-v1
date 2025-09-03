@@ -73,7 +73,7 @@ const NavigationBar = () => {
 
         {/* Mobile Search Bar - Below header */}
         {shouldShowSearch && (
-          <div className="md:hidden touch-padding-sm pt-2">
+          <div className="md:hidden touch-padding-sm pt-2 pb-4">
             <AIEnhancedSearchBar mobile />
           </div>
         )}

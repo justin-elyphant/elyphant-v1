@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { User, Search, Heart } from "lucide-react";
+import { User, Gift, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
@@ -47,12 +47,12 @@ const MobileBottomNavigation: React.FC = () => {
     // Core navigation from primary section (Home, Shop, Cart)
     ...(primarySection?.items || []).slice(0, 2), // Home and Shop only
     
-    // Add Search as a dedicated tab (industry standard)
+    // Add Gifting as a dedicated tab (Start Gifting CTA)
     {
-      id: 'search',
-      label: 'Search',
-      href: '/search',
-      icon: <Search className="h-5 w-5" />,
+      id: 'gifting',
+      label: 'Start Gifting',
+      href: '/gifting',
+      icon: <Gift className="h-5 w-5" />,
       section: 'primary' as const
     },
     
@@ -98,9 +98,9 @@ const MobileBottomNavigation: React.FC = () => {
     if (tab.id === "favorites") {
       return location.pathname.startsWith("/wishlists") || location.pathname.startsWith("/saved");
     }
-    // Handle search consistency
-    if (tab.id === "search") {
-      return location.pathname.startsWith("/search") || location.pathname.startsWith("/discover");
+    // Handle gifting consistency
+    if (tab.id === "gifting") {
+      return location.pathname.startsWith("/gifting");
     }
     return location.pathname.startsWith(tab.href);
   };

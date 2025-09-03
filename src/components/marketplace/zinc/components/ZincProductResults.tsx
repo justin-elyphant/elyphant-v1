@@ -59,7 +59,7 @@ export const ZincProductResults = ({
     
   if (showLoading) {
     return (
-      <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {[1, 2, 3, 4].map(i => (
           <Card key={i} className="overflow-hidden">
             <div className="animate-pulse">
@@ -78,7 +78,7 @@ export const ZincProductResults = ({
   }
 
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-4">
       {displayProducts.map((product, index) => (
         <Card key={product.product_id || index} className="overflow-hidden border hover:shadow-md transition-all duration-300">
           <div className="relative">

@@ -6,8 +6,9 @@ const ElyphantTextLogo = () => {
       width="180"
       height="64"
       viewBox="0 0 180 64"
-      className="h-16 w-auto"
+      className="h-16 w-auto opacity-100"
       xmlns="http://www.w3.org/2000/svg"
+      style={{ opacity: 1 }}
     >
       <defs>
         <linearGradient
@@ -18,9 +19,9 @@ const ElyphantTextLogo = () => {
           y2="0%"
           gradientUnits="objectBoundingBox"
         >
-          <stop offset="0%" stopColor="#9333ea" />
-          <stop offset="50%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#0ea5e9" />
+          <stop offset="0%" stopColor="#9333ea" stopOpacity="1" />
+          <stop offset="50%" stopColor="#7c3aed" stopOpacity="1" />
+          <stop offset="100%" stopColor="#0ea5e9" stopOpacity="1" />
         </linearGradient>
       </defs>
       
@@ -34,6 +35,7 @@ const ElyphantTextLogo = () => {
         fontFamily="Inter, system-ui, sans-serif"
         fill="url(#elyphantGradient)"
         letterSpacing="-0.02em"
+        style={{ opacity: 1 }}
       >
         Elyphant
       </text>

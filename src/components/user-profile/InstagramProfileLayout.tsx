@@ -58,23 +58,25 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
 
   return (
-    <div className="w-full bg-background overflow-x-hidden">
+    <div className="w-full max-w-full bg-background overflow-x-hidden min-w-0">
       {/* Compact Profile Header (Instagram-style) */}
-      <CompactProfileHeader
-        userData={userData}
-        isCurrentUser={isCurrentUser}
-        isConnected={isConnected}
-        onConnect={onConnect}
-        onShare={onShare}
-        connectionCount={connectionCount}
-        wishlistCount={wishlistCount}
-        canConnect={canConnect}
-        canMessage={canMessage}
-        isAnonymousUser={isAnonymousUser}
-        connectionData={connectionData}
-        onSendGift={onSendGift}
-        onRemoveConnection={onRemoveConnection}
-      />
+      <div className="w-full overflow-x-hidden">
+        <CompactProfileHeader
+          userData={userData}
+          isCurrentUser={isCurrentUser}
+          isConnected={isConnected}
+          onConnect={onConnect}
+          onShare={onShare}
+          connectionCount={connectionCount}
+          wishlistCount={wishlistCount}
+          canConnect={canConnect}
+          canMessage={canMessage}
+          isAnonymousUser={isAnonymousUser}
+          connectionData={connectionData}
+          onSendGift={onSendGift}
+          onRemoveConnection={onRemoveConnection}
+        />
+      </div>
 
       {/* Main Content Container */}
       <ResponsiveContainer 

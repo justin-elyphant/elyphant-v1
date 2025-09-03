@@ -104,24 +104,24 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       {/* Preview Mode Indicator */}
-      <div className="bg-primary/10 border-b border-primary/20">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Eye className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-primary">
+      <div className="bg-primary/10 border-b border-primary/20 w-full overflow-x-hidden">
+        <div className="w-full max-w-full px-4 py-3 overflow-x-hidden">
+          <div className="flex items-center justify-between min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Eye className="h-5 w-5 text-primary flex-shrink-0" />
+              <span className="text-sm font-medium text-primary truncate">
                 Profile Preview - This is how others see you
               </span>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs flex-shrink-0">
                 {completeness}% Complete
               </Badge>
             </div>
             {needsAttention && (
-              <div className="flex items-center gap-2 text-warning">
+              <div className="flex items-center gap-2 text-warning flex-shrink-0 ml-2">
                 <AlertTriangle className="h-4 w-4" />
-                <span className="text-sm font-medium">Profile needs attention</span>
+                <span className="text-sm font-medium hidden sm:inline">Profile needs attention</span>
               </div>
             )}
           </div>
@@ -141,8 +141,10 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         canConnect={false}
         canMessage={false}
         isAnonymousUser={false}
+        secondaryContent={secondaryContent}
+        secondaryTitle="Profile Details & Privacy Settings"
       />
-    </div>
+    </>
   );
 };
 

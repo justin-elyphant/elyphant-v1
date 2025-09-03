@@ -47,10 +47,10 @@ const MobileBottomNavigation: React.FC = () => {
     // Core navigation from primary section (Home, Shop, Cart)
     ...(primarySection?.items || []).slice(0, 2), // Home and Shop only
     
-    // Add Gifting as a dedicated tab (Start Gifting CTA)
+    // Add Gifting as a dedicated tab (Gifting CTA)
     {
       id: 'gifting',
-      label: 'Start Gifting',
+      label: 'Gifting',
       href: '/gifting',
       icon: <Gift className="h-5 w-5" />,
       section: 'primary' as const

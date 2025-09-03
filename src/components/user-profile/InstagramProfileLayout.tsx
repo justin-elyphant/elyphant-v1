@@ -60,7 +60,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   return (
     <div 
       className="w-full bg-background"
-      style={{ maxWidth: '100vw', overflow: 'hidden' }}
+      style={{ width: '100vw', maxWidth: '100vw', overflow: 'hidden' }}
     >
       {/* Compact Profile Header (Instagram-style) */}
       <div className="w-full" style={{ maxWidth: '100%' }}>
@@ -86,7 +86,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
         className="py-4"
         fullWidthOnMobile={true}
         maxWidth="full"
-        padding="minimal"
+        padding="none"
       >
         {/* Social Product Grid - Primary Focus */}
         <div className="mb-6">

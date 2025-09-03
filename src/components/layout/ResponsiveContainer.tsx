@@ -30,7 +30,7 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
     xl: "max-w-xl",
     "2xl": "max-w-2xl",
     "7xl": "max-w-7xl",
-    full: "max-w-full"
+    full: "max-w-none w-full"
   };
   
   const paddingClasses = {
@@ -46,11 +46,12 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   return (
     <div 
       className={cn(
-        "mx-auto w-full transition-all duration-300",
-        shouldUseFullWidth ? "max-w-full" : maxWidthClasses[maxWidth],
+        "w-full transition-all duration-300",
+        shouldUseFullWidth ? "max-w-none" : maxWidthClasses[maxWidth],
         paddingClasses[padding],
         className
       )}
+      style={{ width: '100%', maxWidth: 'none' }}
     >
       {children}
     </div>

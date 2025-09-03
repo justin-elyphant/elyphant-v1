@@ -285,27 +285,39 @@ class UnifiedMarketplaceService {
       
       if (luxuryCategories) {
         console.log('[UnifiedMarketplaceService] Executing luxury category search');
-        this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
+        if (!silent) {
+          this.showToast('Loading luxury collections...', 'loading', 'Searching premium brands and designers');
+        }
         response = await enhancedZincApiService.searchLuxuryCategories(maxResults, searchOptions);
       } else if (giftsForHer) {
         console.log('[UnifiedMarketplaceService] Executing gifts for her category search');
-        this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
+        if (!silent) {
+          this.showToast('Loading gifts for her...', 'loading', 'Finding thoughtful gifts she\'ll love');
+        }
         response = await enhancedZincApiService.searchGiftsForHerCategories(maxResults, searchOptions);
       } else if (giftsForHim) {
         console.log('[UnifiedMarketplaceService] Executing gifts for him category search');
-        this.showToast('Loading gifts for him...', 'loading', 'Finding perfect gifts for him');
+        if (!silent) {
+          this.showToast('Loading gifts for him...', 'loading', 'Finding perfect gifts for him');
+        }
         response = await enhancedZincApiService.searchGiftsForHimCategories(maxResults, searchOptions);
       } else if (giftsUnder50) {
         console.log('[UnifiedMarketplaceService] Executing gifts under $50 category search');
-        this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
+        if (!silent) {
+          this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
+        }
         response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults, searchOptions);
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
-        this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
+        if (!silent) {
+          this.showToast(`Loading ${searchTerm} products...`, 'loading', `Finding ${searchTerm} products across categories`);
+        }
         response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'} and filters:`, searchOptions);
-        this.showToast(`Searching for "${searchTerm}"...`, 'loading');
+        if (!silent) {
+          this.showToast(`Searching for "${searchTerm}"...`, 'loading');
+        }
         response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
         
         // Enhanced diverse search strategy for Nicole context
@@ -317,7 +329,9 @@ class UnifiedMarketplaceService {
           console.log(`[UnifiedMarketplaceService] Mapped to diverse categories: ${categories.join(', ')}`);
           
           if (categories.length > 0) {
-            this.showToast('Finding diverse gift options...', 'loading', `Searching across ${categories.length} categories`);
+            if (!silent) {
+              this.showToast('Finding diverse gift options...', 'loading', `Searching across ${categories.length} categories`);
+            }
             response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
           }
         }
@@ -333,7 +347,9 @@ class UnifiedMarketplaceService {
             console.log(`[UnifiedMarketplaceService] Extracted interests: ${interests.join(', ')}`);
             console.log(`[UnifiedMarketplaceService] Mapped categories: ${categories.join(', ')}`);
             
-            this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
+            if (!silent) {
+              this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
+            }
             response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
           }
         }
@@ -459,7 +475,7 @@ class UnifiedMarketplaceService {
    * Execute live "best selling" fallback with price range filtering
    */
   private async executeliveBestSellingFallback(searchTerm: string, options: SearchOptions): Promise<Product[]> {
-    const { maxResults = 20, minPrice, maxPrice, nicoleContext } = options;
+    const { maxResults = 20, minPrice, maxPrice, nicoleContext, silent = false } = options;
     
     console.log(`[UnifiedMarketplaceService] Executing live "best selling" fallback for "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'}`);
     
@@ -483,7 +499,9 @@ class UnifiedMarketplaceService {
       const interests = this.extractInterestKeywords(searchTerm);
       const categories = this.mapInterestsToCategories(interests);
       
-      this.showToast('Finding popular alternatives...', 'loading', `Searching best selling items within budget`);
+      if (!silent) {
+        this.showToast('Finding popular alternatives...', 'loading', `Searching best selling items within budget`);
+      }
       
       let response;
       

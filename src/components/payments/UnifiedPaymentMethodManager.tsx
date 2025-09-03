@@ -180,51 +180,56 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
     return (
       <Card 
         key={method.id} 
-        className={`cursor-pointer transition-all duration-200 ${
+        className={`cursor-pointer transition-all duration-200 touch-manipulation ios-scroll ${
           isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:shadow-md'
         } ${isExpired ? 'opacity-60' : ''}`}
         onClick={() => allowSelection && handleSelectMethod(method)}
       >
         <CardHeader className="py-3">
-          <CardTitle className="text-base flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              <span className="capitalize">{method.card_type}</span>
-              <span>•••• {method.last_four}</span>
-              {method.is_default && (
-                <Badge variant="default" className="text-xs">
-                  <Star className="h-3 w-3 mr-1" />
-                  Default
-                </Badge>
-              )}
-              {isSelected && (
-                <Badge variant="secondary" className="text-xs">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Selected
-                </Badge>
-              )}
-              {isExpired && (
-                <Badge variant="destructive" className="text-xs">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Expired
-                </Badge>
-              )}
+          <CardTitle className="text-base">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CreditCard className="h-5 w-5 flex-shrink-0" />
+                <span className="capitalize">{method.card_type}</span>
+                <span>•••• {method.last_four}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {method.is_default && (
+                  <Badge variant="default" className="text-xs">
+                    <Star className="h-3 w-3 mr-1" />
+                    Default
+                  </Badge>
+                )}
+                {isSelected && (
+                  <Badge variant="secondary" className="text-xs">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Selected
+                  </Badge>
+                )}
+                {isExpired && (
+                  <Badge variant="destructive" className="text-xs">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Expired
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="py-3 pt-0">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div className="text-sm text-muted-foreground">
               Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
               {isExpired && <span className="text-destructive ml-2">- Update required</span>}
             </div>
             
             {mode === 'management' && (
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 touch-manipulation">
                 {!method.is_default && !isExpired && (
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="min-h-[44px] min-w-[44px] text-xs sm:text-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSetDefault(method.id);
@@ -232,12 +237,14 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
                     disabled={isProcessing}
                   >
                     <Star className="h-3 w-3 mr-1" />
-                    Set Default
+                    <span className="hidden sm:inline">Set Default</span>
+                    <span className="sm:hidden">Default</span>
                   </Button>
                 )}
                 <Button 
                   variant="destructive" 
                   size="sm"
+                  className="min-h-[44px] min-w-[44px]"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRemove(method.id);

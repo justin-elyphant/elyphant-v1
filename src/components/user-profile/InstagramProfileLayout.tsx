@@ -58,7 +58,10 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
 
   return (
-    <div className="w-full max-w-full bg-background overflow-x-hidden min-w-0">
+    <div 
+      className="w-full bg-background overflow-x-hidden"
+      style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+    >
       {/* Compact Profile Header (Instagram-style) */}
       <div className="w-full overflow-x-hidden">
         <CompactProfileHeader

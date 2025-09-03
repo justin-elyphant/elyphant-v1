@@ -374,8 +374,14 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (loading) {
     return (
-      <div className="w-full max-w-full overflow-x-hidden min-w-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-4 py-2 max-w-full overflow-x-hidden">
+      <div 
+        className="w-full overflow-x-hidden"
+        style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+      >
+        <div 
+          className="grid grid-cols-2 gap-1 p-1" 
+          style={{ maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}
+        >
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={i}
@@ -389,7 +395,10 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (products.length === 0) {
     return (
-      <div className="w-full max-w-full overflow-x-hidden min-w-0 px-1 sm:px-2 md:px-4 py-2">
+      <div 
+        className="w-full overflow-x-hidden p-1"
+        style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+      >
         <div className="text-center py-8">
           <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
@@ -402,9 +411,35 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
     );
   }
 
+  // Debug logging to understand layout issues
+  React.useEffect(() => {
+    const logDimensions = () => {
+      console.log('[SocialProductGrid Debug]');
+      console.log('Window width:', window.innerWidth);
+      console.log('Document body width:', document.body.clientWidth);
+      console.log('Document scrollWidth:', document.body.scrollWidth);
+      console.log('Viewport width:', window.visualViewport?.width || 'N/A');
+      
+      const containers = document.querySelectorAll('[class*="grid"], [class*="container"]');
+      containers.forEach((el, i) => {
+        console.log(`Container ${i}:`, el.className, 'Width:', el.clientWidth, 'ScrollWidth:', el.scrollWidth);
+      });
+    };
+    
+    logDimensions();
+    window.addEventListener('resize', logDimensions);
+    return () => window.removeEventListener('resize', logDimensions);
+  }, []);
+
   return (
-    <div className="w-full max-w-full overflow-x-hidden min-w-0">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-4 py-2 max-w-full overflow-x-hidden">
+    <div 
+      className="w-full overflow-x-hidden"
+      style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
+    >
+      <div 
+        className="grid grid-cols-2 gap-1 p-1" 
+        style={{ maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}
+      >
         {products.map((product) => {
           const isWishlisted = wishlistedProducts.includes(product.product_id);
           const SourceIcon = product.sourceIcon;

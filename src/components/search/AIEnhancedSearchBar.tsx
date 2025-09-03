@@ -417,7 +417,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       {/* Enhanced Search Bar with Toggle */}
       <form onSubmit={handleSearch} className="relative">
         <div className={`relative flex items-center transition-all duration-300 ${
-          isNicoleMode ? 'ring-2 ring-purple-300 ring-offset-2' : ''
+          mobile 
+            ? 'bg-gray-50 border border-gray-300 rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
+            : 'bg-gray-50 border border-gray-300 rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
+        } ${
+          isNicoleMode ? 'ring-2 ring-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50' : ''
         }`}>
           {/* Mobile and Desktop Mode Toggle */}
           <div className={`absolute z-10 ${
@@ -451,25 +455,17 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
-            className={`transition-all duration-300 ${
+            className={`transition-all duration-300 bg-transparent border-0 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-24 pr-4 rounded-lg border border-border/50 focus:border-primary bg-white' 
-                : "h-12 text-base pl-32 pr-32"
-            } ${
-              !mobile && isNicoleMode 
-                ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
-                : !mobile ? 'border-border focus:border-primary' : ''
-            } ${
-              mobile && isNicoleMode 
-                ? 'border-purple-300 focus:border-purple-500 bg-gradient-to-r from-purple-50/30 to-indigo-50/30' 
-                : ''
+                ? 'text-base py-3 h-11 pl-24 pr-16 focus:ring-0 focus:outline-none' 
+                : "h-12 text-base pl-32 pr-32 focus:ring-0 focus:outline-none"
             }`}
           />
           
           <div className="absolute right-2 flex items-center space-x-1">
             
-            {/* Clear Button */}
-            {query && !isMobile && (
+            {/* Clear Button - Both Mobile and Desktop */}
+            {query && (
               <Button
                 type="button"
                 variant="ghost"
@@ -480,9 +476,9 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                   setShowSuggestions(false);
                   resetTranscript();
                 }}
-                className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
+                className="h-8 w-8 p-0 rounded-full hover:bg-gray-200 touch-manipulation min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-6 md:w-6"
               >
-                <X className="h-4 w-4 text-gray-400" />
+                <X className="h-4 w-4 text-gray-500" />
               </Button>
             )}
             
@@ -492,7 +488,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
               <Button 
                 type="submit" 
                 size="sm" 
-                className={`transition-all duration-300 h-8 px-3 ${
+                className={`transition-all duration-300 h-8 px-3 ml-2 ${
                   isNicoleMode
                     ? "bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 border border-purple-200"
                     : "bg-primary hover:bg-primary/90"

@@ -113,8 +113,8 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
 
           {/* Mobile Search Bar - always visible */}
           {config.showSearch && (
-            <div className="md:hidden bg-surface/30 border-t border-border/30 py-2">
-              <div className="px-2">
+            <div className="md:hidden bg-gray-50/80 border-t border-gray-200 py-3">
+              <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>
             </div>

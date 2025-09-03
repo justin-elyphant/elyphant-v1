@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import MyProfilePreview from "./MyProfilePreview";
-import UserProfileView from "./UserProfileView";
+
 import InstagramProfileLayout from "./InstagramProfileLayout";
 import ProfileTabs from "./ProfileTabs";
 import type { PublicProfileData } from "@/services/publicProfileService";
@@ -46,16 +46,35 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
     );
   }
 
-  // Connection profile - render enhanced profile view with connection features
+  // Connection profile - render enhanced profile view with connection features  
   if (isConnectionProfile && connectionProfile) {
+    const handleShare = () => {
+      const profileUrl = window.location.origin + `/profile/${connectionProfile.profile.username || connectionProfile.profile.id}`;
+      navigator.clipboard.writeText(profileUrl);
+      toast.success("Profile link copied to clipboard!");
+    };
+
+    const handleConnect = () => {
+      console.log("Connect clicked for user:", connectionProfile.profile.id);
+    };
+
     return (
       <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
-        <UserProfileView 
-          profile={connectionProfile.profile} 
+        <InstagramProfileLayout
+          userData={connectionProfile.profile}
+          profile={connectionProfile.profile}
+          isCurrentUser={false}
+          isConnected={true}
+          onConnect={handleConnect}
+          onShare={handleShare}
+          connectionCount={0}
+          wishlistCount={0}
+          canConnect={false}
+          canMessage={true}
+          isAnonymousUser={false}
           connectionData={connectionProfile.connectionData}
           onSendGift={onSendGift}
           onRemoveConnection={onRemoveConnection}
-          onRefreshConnection={onRefreshConnection}
         />
       </div>
     );

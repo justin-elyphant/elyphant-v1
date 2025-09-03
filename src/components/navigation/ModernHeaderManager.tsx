@@ -37,7 +37,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
         )}
       >
         <nav className="bg-transparent">
-          <div className="container-header">
+          <div className="w-full px-4" style={{ width: '100%', maxWidth: 'none' }}>
             <div className={cn("flex items-center justify-between", config.height)}>
               <div className={cn("flex-shrink-0", config.logoSize)}>
                 <Logo />
@@ -64,7 +64,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       )}
     >
       <nav className="bg-transparent">
-        <div className="container-header">
+        <div className="w-full px-4" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
             "flex items-center",
             config.height

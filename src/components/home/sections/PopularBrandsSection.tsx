@@ -173,12 +173,8 @@ const PopularBrandsSection = () => {
       // Aggressive cleanup of loading toast
       cleanupToasts();
       
-      // Very brief success message
-      const successToastId = `success-${brandName}-${Date.now()}`;
-      toast.success(`${brandName} products loaded`, {
-        id: successToastId,
-        duration: 800
-      });
+      // Silently load brand products - no success toast needed
+      console.log(`${brandName} products loaded successfully`);
       
       // Navigate to marketplace
       navigate(`/marketplace?search=${encodeURIComponent(enhancedSearchTerm)}`);

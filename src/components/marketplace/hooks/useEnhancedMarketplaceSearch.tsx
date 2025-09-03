@@ -221,14 +221,10 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         // Update products context with default products
         setProducts(normalizedProducts);
         
-        toast.success("Marketplace loaded", { 
-          description: `Showing ${normalizedProducts.length} featured products` 
-        });
+        // Silently load marketplace - no toast needed for normal operation
+        console.log(`Marketplace loaded with ${normalizedProducts.length} featured products`);
       } else {
         console.log("No default products found");
-        toast.info("Welcome to the marketplace", {
-          description: "Use the search bar to find amazing gifts"
-        });
       }
       
     } catch (err) {

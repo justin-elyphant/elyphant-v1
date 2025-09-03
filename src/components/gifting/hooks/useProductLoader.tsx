@@ -54,7 +54,8 @@ export const useProductLoader = (initialProducts: Product[] = []) => {
           setProducts(mockProducts);
           // Also update context to make these products available app-wide
           setContextProducts(mockProducts);
-          toast.success(`Loaded ${mockProducts.length} products`);
+          // Silently load products - no toast needed for normal operation
+          console.log(`Successfully loaded ${mockProducts.length} products`);
         } else {
           console.error("Failed to load mock products or empty array returned");
           toast.error("Failed to load products. Please try refreshing the page.");

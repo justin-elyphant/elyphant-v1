@@ -60,30 +60,22 @@ serve(async (req) => {
 
     console.log("Processing invitation:", invitation);
 
-    // Route based on invitation type and source
-    let redirectUrl = "";
+    // Route all invitation types to signup/onboarding flow with invitation context
     const baseUrl = supabaseUrl.replace('//', '//www.');
+    const signupParams = new URLSearchParams({
+      invitation_id: invitationId,
+      recipient_email: invitation.recipient_email,
+      recipient_name: invitation.recipient_name,
+      invited: "true",
+      source: invitation.source_context || invitation.invitation_type || "invite"
+    });
     
-    switch (invitation.invitation_type) {
-      case "nicole_initiated":
-      case "auto_gift":
-        // Route to Nicole chat for preference collection
-        redirectUrl = `${supabaseUrl}/functions/v1/nicole-chatgpt-agent?invitation_id=${invitationId}&mode=invitation_acceptance&recipient_email=${encodeURIComponent(invitation.recipient_email)}&recipient_name=${encodeURIComponent(invitation.recipient_name)}`;
-        break;
-        
-      case "manual_connection":
-      default:
-        // Route to signup/onboarding flow with invitation context
-        const signupParams = new URLSearchParams({
-          invitation_id: invitationId,
-          recipient_email: invitation.recipient_email,
-          recipient_name: invitation.recipient_name,
-          inviter_context: "connection_request",
-          source: invitation.source_context || "manual_invite"
-        });
-        redirectUrl = `${baseUrl}/auth?${signupParams.toString()}`;
-        break;
+    // Add additional context for invited users
+    if (invitation.user_id) {
+      signupParams.set("giftor", invitation.user_id);
     }
+    
+    const redirectUrl = `${baseUrl}/auth?${signupParams.toString()}`;
 
     // Use custom redirect URL if specified
     if (invitation.completion_redirect_url) {

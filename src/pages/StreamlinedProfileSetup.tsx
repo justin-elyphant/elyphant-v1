@@ -4,12 +4,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
-import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { useInvitationAnalytics } from "@/services/analytics/invitationAnalyticsService";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
-import NicolePopup from "@/components/ai/NicolePopup";
 
 const StreamlinedProfileSetup = () => {
   const navigate = useNavigate();
@@ -17,17 +15,8 @@ const StreamlinedProfileSetup = () => {
   const { handleOnboardingComplete } = useOnboardingCompletion();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [showNicolePopup, setShowNicolePopup] = useState(false);
   const [invitationContext, setInvitationContext] = useState<any>(null);
-  const { trackProfileSetupCompleted, trackPreferenceCollectionStarted } = useInvitationAnalytics();
-  
-  // Initialize Nicole AI for invitation context
-  const { chatWithNicole } = useUnifiedNicoleAI({
-    initialContext: { 
-      capability: 'gift_advisor',
-      conversationPhase: 'giftee_onboarding'
-    }
-  });
+  const { trackProfileSetupCompleted } = useInvitationAnalytics();
 
   useEffect(() => {
     if (!user) {
@@ -74,15 +63,9 @@ const StreamlinedProfileSetup = () => {
       await trackProfileSetupCompleted(user.email);
     }
     
-    // Enhanced invitation context handling with Nicole auto-popup
+    // Redirect invited users directly to marketplace (giftees)
     if (invitationContext?.isInvited) {
-      // Track that preference collection is starting
-      if (user?.email) {
-        await trackPreferenceCollectionStarted(user.email);
-      }
-      
-      // Auto-trigger Nicole popup with invitation context
-      setShowNicolePopup(true);
+      navigate('/marketplace', { replace: true });
     } else {
       // Check for stored redirect path after profile setup
       const redirectPath = localStorage.getItem('post_auth_redirect');
@@ -96,17 +79,6 @@ const StreamlinedProfileSetup = () => {
     }
   };
 
-  const handleNicoleClose = () => {
-    setShowNicolePopup(false);
-    // Check for stored redirect path after profile setup
-    const redirectPath = localStorage.getItem('post_auth_redirect');
-    if (redirectPath) {
-      localStorage.removeItem('post_auth_redirect');
-      navigate(redirectPath, { replace: true });
-    } else {
-      navigate('/', { replace: true });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -141,28 +113,6 @@ const StreamlinedProfileSetup = () => {
           </Card>
         </div>
       </div>
-      
-      {/* Enhanced Nicole Popup for Invited Users with Casual Welcome */}
-      {showNicolePopup && invitationContext?.isInvited && (
-        <NicolePopup
-          isOpen={showNicolePopup}
-          onClose={handleNicoleClose}
-          initialContext={{
-            capability: 'gift_advisor',
-            conversationPhase: 'giftee_preference_collection',
-            userFirstName: user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there',
-            recipient: invitationContext.giftorName,
-            occasion: invitationContext.occasion,
-            relationship: invitationContext.relationship,
-            greetingContext: {
-              firstName: user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there',
-              giftorName: invitationContext.giftorName,
-              occasion: invitationContext.occasion
-            }
-          }}
-          welcomeMessage={`Hey ${user?.user_metadata?.name?.split(' ')[0] || 'there'}! 🎉 Welcome to Elyphant! ${invitationContext.giftorName} invited you because they want to get you an amazing gift${invitationContext.occasion ? ` for your ${invitationContext.occasion}` : ''}. Tell me about brands you love, hobbies, sizes, or anything that'll help them pick perfectly!`}
-        />
-      )}
     </MainLayout>
   );
 };

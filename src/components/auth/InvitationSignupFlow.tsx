@@ -49,7 +49,7 @@ export const InvitationSignupFlow: React.FC = () => {
     const invitation_id = searchParams.get('invitation_id');
     const recipient_email = searchParams.get('recipient_email');
     const recipient_name = searchParams.get('recipient_name');
-    const inviter_context = searchParams.get('inviter_context');
+    const inviter_context = searchParams.get('inviter_context') || searchParams.get('giftor'); // Support both parameter names
     const source = searchParams.get('source');
     const relationship_type = searchParams.get('relationship_type');
     const occasion = searchParams.get('occasion');

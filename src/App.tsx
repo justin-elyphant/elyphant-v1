@@ -58,8 +58,6 @@ const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
-const NicoleAutoGiftingTest = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingTest"));
-const NicoleAutoGiftingDashboard = lazy(() => import("./components/auto-gifting/NicoleAutoGiftingDashboard"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 
 function App() {
@@ -201,9 +199,6 @@ function AppContent() {
           <Route path="/auto-gift-approval" element={<AutoGiftApprovalPage />} />
           <Route path="/auto-gifts/approve/:token" element={<AutoGiftApprovalPage />} />
           
-          {/* Nicole Auto-Gifting Test Routes */}
-          <Route path="/nicole-test" element={<NicoleAutoGiftingTest />} />
-          <Route path="/nicole-dashboard" element={<NicoleAutoGiftingDashboard />} />
           
           {/* ZMA Testing Routes */}
           <Route path="/test-zma-order" element={<TestZMAOrder />} />

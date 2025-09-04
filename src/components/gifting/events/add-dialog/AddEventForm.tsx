@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
@@ -15,7 +16,6 @@ import DateSelector from "./DateSelector";
 import PersonSelector from "./PersonSelector";
 import RecurringToggle from "./RecurringToggle";
 import PrivacySelector from "./PrivacySelector";
-import AutoGiftToggle from "./AutoGiftToggle";
 import GiftBudgetInput from "./GiftBudgetInput";
 import { EventFormData } from "./types";
 
@@ -169,17 +169,25 @@ export const AddEventForm: React.FC<AddEventFormProps> = ({ onSubmit, onCancel }
           onChange={(value) => form.setValue("privacyLevel", value)}
         />
 
-        <AutoGiftToggle
-          autoGift={form.watch("autoGiftEnabled")}
-          onAutoGiftChange={(value) => {
-            // Only allow auto-gifting when a connection is selected
-            if (value && !form.watch("personId")) {
-              toast.error("Please select a friend first to enable auto-gifting");
-              return;
-            }
-            form.setValue("autoGiftEnabled", value);
-          }}
-        />
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <Label className="text-base">Automated Gifting</Label>
+            <div className="text-sm text-muted-foreground">
+              Automatically send a gift when this event occurs
+            </div>
+          </div>
+          <Switch
+            checked={form.watch("autoGiftEnabled")}
+            onCheckedChange={(value) => {
+              // Only allow auto-gifting when a connection is selected
+              if (value && !form.watch("personId")) {
+                toast.error("Please select a friend first to enable auto-gifting");
+                return;
+              }
+              form.setValue("autoGiftEnabled", value);
+            }}
+          />
+        </div>
 
         {form.watch("autoGiftEnabled") && (
           <GiftBudgetInput

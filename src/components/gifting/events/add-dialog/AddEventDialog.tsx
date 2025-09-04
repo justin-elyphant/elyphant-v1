@@ -8,7 +8,7 @@ import { eventsService, transformExtendedEventToDatabase } from "@/services/even
 import { unifiedGiftAutomationService } from "@/services/UnifiedGiftAutomationService";
 import { supabase } from "@/integrations/supabase/client";
 import { useEvents } from "../context/EventsContext";
-import UnifiedAutoGiftEntry from "@/components/auto-gifting/UnifiedAutoGiftEntry";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 
 interface AddEventDialogProps {
   open: boolean;
@@ -129,8 +129,8 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Unified Auto-Gift Setup */}
-      <UnifiedAutoGiftEntry 
+      {/* Auto-Gift Setup Flow */}
+      <AutoGiftSetupFlow 
         open={showAutoGiftSetup}
         onOpenChange={handleAutoGiftSetupComplete}
       />

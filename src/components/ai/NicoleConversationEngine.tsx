@@ -11,8 +11,6 @@ import { useSmartCTALogic } from "@/components/ai/enhanced/hooks/useSmartCTALogi
 import GroupedSearchResultsComponent from "./GroupedSearchResults";
 import type { GroupedSearchResults } from "@/services/ai/multiCategorySearchService";
 import { ConversationEnhancementService } from "@/services/ai/conversationEnhancementService";
-import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
-import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
 import { toast } from "sonner";
 
 
@@ -270,14 +268,16 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
         : undefined;
 
       if (budget) {
-        await setupAutoGiftWithUnifiedSystems({
-          userId: user.id,
-          recipientName: String(context.recipient),
-          occasion: String(context.occasion),
-          budget,
-          relationship: (context as any).relationship || 'friend'
+        // Trigger auto-gift setup via Nicole interface instead
+        const autoGiftSetupEvent = new CustomEvent('openAutoGiftSetup', {
+          detail: {
+            recipientName: String(context.recipient),
+            occasion: String(context.occasion),
+            budget
+          }
         });
-        toast.success("Auto-gifting set up successfully");
+        window.dispatchEvent(autoGiftSetupEvent);
+        toast.success("Opening auto-gift setup...");
         const res = await chatWithNicole(
           `Please confirm we've set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)} with a $${budget.min}-$${budget.max} budget.`
         );
@@ -508,12 +508,14 @@ const NicoleConversationEngine: React.FC<NicoleConversationEngineProps> = ({
       {/* Smart Auto-Gift Offer */}
       {canOfferAutoGift && (
         <div className="p-4 border-t bg-white flex-shrink-0">
-          <SmartAutoGiftCTA
-            recipientName={String(context.recipient)}
-            occasion={String(context.occasion)}
-            loading={isSettingUpAutoGift}
-            onConfirm={handleOfferAutoGift}
-          />
+          <Button
+            onClick={handleOfferAutoGift}
+            disabled={isSettingUpAutoGift}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {isSettingUpAutoGift ? 'Setting up...' : `Set up auto-gifting for ${String(context.recipient)}'s ${String(context.occasion)}`}
+          </Button>
         </div>
       )}
 

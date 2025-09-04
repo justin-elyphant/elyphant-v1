@@ -18,7 +18,7 @@ import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
 import { toast } from "sonner";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { useAuth } from "@/contexts/auth";
-import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 
 type AutoGiftConfirmationStepProps = ReturnType<typeof useGiftAdvisorBot>;
 
@@ -53,13 +53,28 @@ const AutoGiftConfirmationStep = ({
       );
 
       // Create rule via unified service with protections and RLS-safe services
-      await setupAutoGiftWithUnifiedSystems({
-        userId: user.id,
-        recipientId,
-        recipientName,
-        occasion,
-        budget,
-        relationship: recipient?.relationshipStrength || recipient?.relationship_type || 'friend'
+      const budgetMin = typeof budget === 'number' ? budget : budget.min || 50;
+      const budgetMax = typeof budget === 'number' ? budget : budget.max || 100;
+      
+      await unifiedGiftManagementService.createRule({
+        user_id: user.id,
+        recipient_id: recipientId,
+        date_type: occasion,
+        is_active: true,
+        budget_limit: budgetMax,
+        notification_preferences: {
+          enabled: true,
+          days_before: [7, 3, 1],
+          email: true,
+          push: true
+        },
+        gift_selection_criteria: {
+          source: "both",
+          max_price: budgetMax,
+          min_price: budgetMin,
+          categories: [],
+          exclude_items: []
+        }
       });
 
       toast.success("Auto-gifting set up successfully!");

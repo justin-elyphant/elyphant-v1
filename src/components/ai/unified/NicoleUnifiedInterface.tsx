@@ -7,8 +7,6 @@ import { useUnifiedNicoleAI } from '@/hooks/useUnifiedNicoleAI';
 import { NicoleConversationDisplay } from './NicoleConversationDisplay';
 import { NicoleInputArea } from './NicoleInputArea';
 import { NicoleCapability } from '@/services/ai/unified/types';
-import SmartAutoGiftCTA from '@/components/ai/ctas/SmartAutoGiftCTA';
-import { setupAutoGiftWithUnifiedSystems } from '@/services/ai/unified/autoGiftSetupHelper';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { useEnhancedGiftRecommendations } from '@/hooks/useEnhancedGiftRecommendations';
@@ -393,8 +391,15 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         : {});
 
     try {
-      const rule: any = await setupAutoGiftWithUnifiedSystems({
-        userId: user.id,
+      const autoGiftSetupEvent = new CustomEvent('openAutoGiftSetup', {
+        detail: {
+          recipientName: String(ctx.recipient),
+          occasion: String(ctx.occasion),
+          budget: budgetObj
+        }
+      });
+      window.dispatchEvent(autoGiftSetupEvent);
+      toast.success("Opening auto-gift setup...");
         recipientId: ctx.recipient_id || undefined,
         recipientName: String(ctx.recipient),
         occasion: String(ctx.occasion),
@@ -633,12 +638,14 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         const canOffer = Boolean(ctx?.recipient && ctx?.occasion);
         return canOffer ? (
           <div className="px-4 pt-2">
-            <SmartAutoGiftCTA
-              recipientName={String(ctx.recipient)}
-              occasion={String(ctx.occasion)}
-              loading={isSettingUpAutoGift}
-              onConfirm={handleOfferAutoGift}
-            />
+            <Button
+              onClick={handleOfferAutoGift}
+              disabled={isSettingUpAutoGift}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isSettingUpAutoGift ? 'Setting up...' : `Set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}`}
+            </Button>
           </div>
         ) : null;
       })()}

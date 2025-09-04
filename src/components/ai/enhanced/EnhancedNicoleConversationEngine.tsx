@@ -16,8 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
 import EnhancedGiftRecommendations from "@/components/ai/recommendations/EnhancedGiftRecommendations";
 import { getNicoleGreeting, getGreetingFromUrl } from "@/utils/nicoleGreetings";
-import SmartAutoGiftCTA from "@/components/ai/ctas/SmartAutoGiftCTA";
-import { setupAutoGiftWithUnifiedSystems } from "@/services/ai/unified/autoGiftSetupHelper";
 import { toast } from "sonner";
 
 interface ConversationMessage {
@@ -463,14 +461,15 @@ Let me take you to your profile where you can start building your wishlist. You 
         : undefined;
 
       if (budget) {
-        await setupAutoGiftWithUnifiedSystems({
-          userId: user.id,
-          recipientName: String((context as any).recipient),
-          occasion: String((context as any).occasion),
-          budget,
-          relationship: (context as any).relationship || 'friend'
+        const autoGiftSetupEvent = new CustomEvent('openAutoGiftSetup', {
+          detail: {
+            recipientName: String(context.recipient),
+            occasion: String(context.occasion),
+            budget
+          }
         });
-        toast.success("Auto-gifting set up successfully");
+        window.dispatchEvent(autoGiftSetupEvent);
+        toast.success("Opening auto-gift setup...");
         const res = await chatWithNicole(
           `Please confirm we've set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)} with a $${budget.min}-$${budget.max} budget.`
         );
@@ -646,12 +645,14 @@ Let me take you to your profile where you can start building your wishlist. You 
 
             {canOfferAutoGift && (
               <div className="px-4 pb-2">
-                <SmartAutoGiftCTA
-                  recipientName={String((context as any).recipient)}
-                  occasion={String((context as any).occasion)}
-                  loading={isSettingUpAutoGift}
-                  onConfirm={handleOfferAutoGift}
-                />
+            <Button
+              onClick={handleOfferAutoGift}
+              disabled={isSettingUpAutoGift}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isSettingUpAutoGift ? 'Setting up...' : `Set up auto-gifting for ${String((context as any).recipient)}'s ${String((context as any).occasion)}`}
+            </Button>
               </div>
             )}
 

@@ -577,10 +577,12 @@ export type Database = {
           address_metadata: Json | null
           ai_agent_source: Json | null
           created_at: string | null
+          emergency_intelligence: Json | null
           error_message: string | null
           event_id: string | null
           execution_date: string
           id: string
+          invitation_context: Json | null
           next_retry_at: string | null
           order_id: string | null
           retry_count: number | null
@@ -589,16 +591,19 @@ export type Database = {
           status: string
           total_amount: number | null
           updated_at: string | null
+          urgency_level: number | null
           user_id: string
         }
         Insert: {
           address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
+          emergency_intelligence?: Json | null
           error_message?: string | null
           event_id?: string | null
           execution_date: string
           id?: string
+          invitation_context?: Json | null
           next_retry_at?: string | null
           order_id?: string | null
           retry_count?: number | null
@@ -607,16 +612,19 @@ export type Database = {
           status?: string
           total_amount?: number | null
           updated_at?: string | null
+          urgency_level?: number | null
           user_id: string
         }
         Update: {
           address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
+          emergency_intelligence?: Json | null
           error_message?: string | null
           event_id?: string | null
           execution_date?: string
           id?: string
+          invitation_context?: Json | null
           next_retry_at?: string | null
           order_id?: string | null
           retry_count?: number | null
@@ -625,6 +633,7 @@ export type Database = {
           status?: string
           total_amount?: number | null
           updated_at?: string | null
+          urgency_level?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1891,6 +1900,42 @@ export type Database = {
           },
         ]
       }
+      invitation_context_cache: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          invitation_data: Json
+          proxy_intelligence: Json
+          recipient_identifier: string
+          relationship_context: Json
+          urgency_factors: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_data?: Json
+          proxy_intelligence?: Json
+          recipient_identifier: string
+          relationship_context?: Json
+          urgency_factors?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_data?: Json
+          proxy_intelligence?: Json
+          recipient_identifier?: string
+          relationship_context?: Json
+          urgency_factors?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       invitation_conversion_events: {
         Row: {
           created_at: string
@@ -2935,8 +2980,11 @@ export type Database = {
           created_at: string | null
           data_sources: Json | null
           id: string
+          invitation_context: Json | null
+          is_emergency_profile: boolean | null
           last_updated: string | null
           profile_data: Json
+          proxy_intelligence: Json | null
           recipient_identifier: string
           user_id: string
         }
@@ -2945,8 +2993,11 @@ export type Database = {
           created_at?: string | null
           data_sources?: Json | null
           id?: string
+          invitation_context?: Json | null
+          is_emergency_profile?: boolean | null
           last_updated?: string | null
           profile_data?: Json
+          proxy_intelligence?: Json | null
           recipient_identifier: string
           user_id: string
         }
@@ -2955,8 +3006,11 @@ export type Database = {
           created_at?: string | null
           data_sources?: Json | null
           id?: string
+          invitation_context?: Json | null
+          is_emergency_profile?: boolean | null
           last_updated?: string | null
           profile_data?: Json
+          proxy_intelligence?: Json | null
           recipient_identifier?: string
           user_id?: string
         }
@@ -3912,6 +3966,10 @@ export type Database = {
       check_zma_order_rate_limit: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      cleanup_expired_invitation_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       cleanup_failed_orders: {
         Args: Record<PropertyKey, never>

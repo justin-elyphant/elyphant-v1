@@ -164,15 +164,15 @@ serve(async (req) => {
       })
       .eq('id', groupGiftProjectId);
 
-    // Process with Zinc API if product ID exists
+    // Process with ZMA API if product ID exists (zinc_api disabled)
     if (project.target_product_id) {
       try {
         await supabaseService.functions.invoke('process-zma-order', {
           body: { orderId: order.id }
         });
-        logStep("Zinc order processing initiated");
-      } catch (zincError) {
-        logStep("Zinc order processing failed", { error: zincError });
+        logStep("ZMA order processing initiated");
+      } catch (zmaError) {
+        logStep("ZMA order processing failed", { error: zmaError });
         // Don't fail the entire process if Zinc fails
       }
     }

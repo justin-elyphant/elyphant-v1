@@ -48,7 +48,7 @@ serve(async (req) => {
         throw new Error('Failed to update order status')
       }
 
-      // Trigger Zinc order processing after successful payment
+      // Trigger ZMA order processing after successful payment
       if (order) {
         try {
           // Call process-zma-order function (zinc_api disabled)

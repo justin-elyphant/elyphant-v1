@@ -179,7 +179,7 @@ const UserButton = () => {
         </button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-64 bg-background z-50">
+      <DropdownMenuContent align="end" className="w-64 bg-background z-50 max-h-[80vh] overflow-y-auto">
         {/* Enhanced Profile Header */}
         <div className="flex items-center gap-3 p-4 border-b border-border">
           <Avatar className="h-10 w-10">

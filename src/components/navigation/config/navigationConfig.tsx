@@ -74,21 +74,6 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           href: "/",
           icon: <Home className="h-5 w-5" />,
           section: "primary"
-        },
-        {
-          id: "marketplace",
-          label: "Shop",
-          href: "/marketplace",
-          icon: <ShoppingBag className="h-5 w-5" />,
-          section: "primary"
-        },
-        {
-          id: "cart",
-          label: "Cart",
-          href: "/cart",
-          icon: <ShoppingCart className="h-5 w-5" />,
-          badge: badges.cart > 0 ? badges.cart : undefined,
-          section: "primary"
         }
       ]
     },

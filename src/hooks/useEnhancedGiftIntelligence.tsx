@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { EnhancedGiftIntelligenceService } from '@/services/ai/enhancedGiftIntelligenceService';
 import { useAuthSession } from '@/contexts/auth/useAuthSession';
+import { useEmergencyGiftIntelligence } from './useEmergencyGiftIntelligence';
 
 export const useEnhancedGiftIntelligence = () => {
   const { user } = useAuthSession();
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<any[]>([]);
   const [cachedData, setCachedData] = useState<any[]>([]);
+  
+  // Include emergency intelligence capabilities
+  const emergencyIntelligence = useEmergencyGiftIntelligence();
 
   // Phase 1: Enhanced Data Utilization
   const updateGiftPreferences = async (preferences: any) => {
@@ -149,5 +153,8 @@ export const useEnhancedGiftIntelligence = () => {
     analyzeWishlistCompatibility,
     getCachedIntelligence,
     setCachedIntelligence,
+    
+    // Phase 4: Emergency Intelligence for New/Invited Users
+    emergencyIntelligence,
   };
 };

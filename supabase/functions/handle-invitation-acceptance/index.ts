@@ -36,10 +36,18 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Get invitation details to determine routing
+    // Get invitation details with inviter's name
     const { data: invitation, error } = await supabase
       .from("gift_invitation_analytics")
-      .select("invitation_type, source_context, user_id, recipient_email, recipient_name, completion_redirect_url")
+      .select(`
+        invitation_type, 
+        source_context, 
+        user_id, 
+        recipient_email, 
+        recipient_name, 
+        completion_redirect_url,
+        profiles!gift_invitation_analytics_user_id_fkey(name, first_name)
+      `)
       .eq("id", invitationId)
       .single();
 
@@ -74,6 +82,16 @@ serve(async (req) => {
     // Add additional context for invited users
     if (invitation.user_id) {
       signupParams.set("giftor", invitation.user_id);
+      
+      // Add inviter's name for personalized welcome message
+      const inviterProfile = invitation.profiles;
+      if (inviterProfile) {
+        const inviterFirstName = inviterProfile.first_name || 
+          (inviterProfile.name ? inviterProfile.name.split(' ')[0] : null);
+        if (inviterFirstName) {
+          signupParams.set("inviter_name", inviterFirstName);
+        }
+      }
     }
     
     let redirectUrl = `${appUrl}/auth?${signupParams.toString()}`;

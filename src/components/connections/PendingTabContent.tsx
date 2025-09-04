@@ -161,7 +161,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                     recipientName: connection.name,
                                     senderName: 'You',
                                     occasion: 'friendship',
-                                    personalMessage: `Hi ${connection.name}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
+                                    personalMessage: `Hi ${connection.name.split(' ')[0]}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
                                     relationshipType: connection.relationship || 'friend'
                                   }
                                 });

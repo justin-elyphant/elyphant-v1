@@ -219,22 +219,37 @@ serve(async (req) => {
             
             console.log(`💰 Selected ${selectedProducts.length} products totaling $${totalCost.toFixed(2)} (${Math.round(totalCost/budgetLimit*100)}% of $${budgetLimit} budget)`);
           } else {
-            console.log(`📝 No wishlist items found, will need AI recommendations`);
-            // For now, just create a placeholder recommendation
-            selectedProducts = [{
-              id: `ai-${Date.now()}`,
-              product_id: `ai-${Date.now()}`,
-              title: `AI Recommended Gift for ${rule.date_type}`,
-              product_name: `AI Recommended Gift for ${rule.date_type}`,
-              name: `AI Recommended Gift for ${rule.date_type}`,
-              price: Math.min(rule.budget_limit || 50, 25),
-              image: null,
-              image_url: null,
-              source: 'ai_recommendation',
-              vendor: 'AI Recommendation',
-              category: rule.date_type,
-              description: `AI-generated gift suggestion for ${rule.date_type} occasion`
-            }];
+            console.log(`📝 No wishlist items found, checking for invitation context and emergency AI logic...`);
+            
+            // Check if recipient is a new/invited user with limited profile
+            const invitationContext = await getInvitationContext(userId, rule.recipient_id, supabase);
+            
+            if (invitationContext.isNewUser || invitationContext.isInvitedUser) {
+              console.log(`🆕 Detected new/invited user, using enhanced emergency AI logic`);
+              selectedProducts = await getEnhancedEmergencyProducts(
+                rule.budget_limit || 50,
+                rule.date_type,
+                invitationContext,
+                recipientProfile,
+                supabase
+              );
+            } else {
+              // Standard AI recommendation for existing users
+              selectedProducts = [{
+                id: `ai-${Date.now()}`,
+                product_id: `ai-${Date.now()}`,
+                title: `AI Recommended Gift for ${rule.date_type}`,
+                product_name: `AI Recommended Gift for ${rule.date_type}`,
+                name: `AI Recommended Gift for ${rule.date_type}`,
+                price: Math.min(rule.budget_limit || 50, 25),
+                image: null,
+                image_url: null,
+                source: 'ai_recommendation',
+                vendor: 'AI Recommendation',
+                category: rule.date_type,
+                description: `AI-generated gift suggestion for ${rule.date_type} occasion`
+              }];
+            }
           }
 
           // Check auto-approve setting
@@ -348,3 +363,244 @@ serve(async (req) => {
     );
   }
 });
+
+// Enhanced invitation context detection for new/invited users
+async function getInvitationContext(userId: string, recipientId: string, supabase: any) {
+  console.log(`🔍 Analyzing invitation context for recipient ${recipientId}`);
+  
+  try {
+    // Check if recipient is a recently invited user
+    const { data: invitationAnalytics } = await supabase
+      .from('gift_invitation_analytics')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('invited_user_id', recipientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    // Check if recipient profile was created recently (within 30 days)
+    const { data: recipientProfile } = await supabase
+      .from('profiles')
+      .select('created_at, dob, enhanced_gift_preferences, enhanced_gifting_history')
+      .eq('id', recipientId)
+      .single();
+    
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const isNewUser = recipientProfile && new Date(recipientProfile.created_at) > thirtyDaysAgo;
+    const isInvitedUser = !!invitationAnalytics;
+    const hasLimitedProfile = !recipientProfile?.enhanced_gift_preferences && !recipientProfile?.enhanced_gifting_history;
+    
+    // Get inviter's profile for proxy intelligence
+    const { data: inviterProfile } = await supabase
+      .from('profiles')
+      .select('enhanced_gift_preferences, enhanced_gifting_history, dob')
+      .eq('id', userId)
+      .single();
+    
+    // Get connection details
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('relationship_type, created_at')
+      .eq('user_id', userId)
+      .eq('connected_user_id', recipientId)
+      .single();
+    
+    // Calculate urgency (days until event)
+    const { data: upcomingEvents } = await supabase
+      .from('user_special_dates')
+      .select('date, date_type')
+      .eq('user_id', recipientId)
+      .gte('date', new Date().toISOString().split('T')[0])
+      .order('date', { ascending: true })
+      .limit(1);
+    
+    const urgencyLevel = upcomingEvents?.[0] 
+      ? Math.ceil((new Date(upcomingEvents[0].date).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+      : 30;
+    
+    return {
+      isNewUser,
+      isInvitedUser,
+      hasLimitedProfile,
+      relationshipType: connection?.relationship_type || 'friend',
+      urgencyLevel,
+      invitationData: invitationAnalytics,
+      inviterPreferences: inviterProfile?.enhanced_gift_preferences,
+      inviterHistory: inviterProfile?.enhanced_gifting_history,
+      recipientAge: recipientProfile?.dob ? calculateAge(recipientProfile.dob) : null,
+    };
+  } catch (error) {
+    console.error('❌ Error getting invitation context:', error);
+    return {
+      isNewUser: false,
+      isInvitedUser: false,
+      hasLimitedProfile: true,
+      relationshipType: 'friend',
+      urgencyLevel: 30
+    };
+  }
+}
+
+// Enhanced emergency product selection with invitation intelligence
+async function getEnhancedEmergencyProducts(
+  maxBudget: number,
+  eventType: string,
+  invitationContext: any,
+  recipientProfile: any,
+  supabase: any
+) {
+  console.log(`🆘 Getting enhanced emergency products with invitation context`);
+  
+  // Import the enhanced emergency fallback function
+  const { getEmergencyFallbackProducts } = await import('./emergency-fallback.ts');
+  
+  // Prepare context for enhanced fallback
+  const enhancedContext = {
+    relationshipType: invitationContext.relationshipType,
+    urgencyLevel: invitationContext.urgencyLevel,
+    recipientDemographics: {
+      age: invitationContext.recipientAge,
+      profile_completion: invitationContext.hasLimitedProfile ? 'limited' : 'complete'
+    },
+    inviterPreferences: invitationContext.inviterPreferences
+  };
+  
+  // Get enhanced emergency products
+  const emergencyProducts = getEmergencyFallbackProducts(maxBudget, eventType, enhancedContext);
+  
+  // Try to enhance with AI if OpenAI is available
+  try {
+    const aiEnhancedProducts = await getAIEnhancedEmergencyProducts(
+      emergencyProducts,
+      invitationContext,
+      recipientProfile,
+      eventType,
+      maxBudget
+    );
+    
+    if (aiEnhancedProducts.length > 0) {
+      console.log(`🤖 Enhanced ${emergencyProducts.length} products with AI intelligence`);
+      return aiEnhancedProducts;
+    }
+  } catch (aiError) {
+    console.log(`⚠️ AI enhancement failed, using enhanced emergency fallback:`, aiError.message);
+  }
+  
+  console.log(`✅ Returning ${emergencyProducts.length} enhanced emergency products`);
+  return emergencyProducts;
+}
+
+// AI-enhanced emergency product selection for new users
+async function getAIEnhancedEmergencyProducts(
+  emergencyProducts: any[],
+  invitationContext: any,
+  recipientProfile: any,
+  eventType: string,
+  maxBudget: number
+) {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key not available');
+  }
+  
+  const prompt = `I need to find emergency gifts for someone who was recently invited to our platform and has limited profile data. Here's what I know:
+
+RECIPIENT CONTEXT:
+- Relationship: ${invitationContext.relationshipType}
+- Event: ${eventType}
+- Budget: $${maxBudget}
+- Days until event: ${invitationContext.urgencyLevel}
+- Profile status: ${invitationContext.hasLimitedProfile ? 'New/Limited' : 'Established'}
+- Age: ${invitationContext.recipientAge || 'Unknown'}
+
+INVITER'S GIFT HISTORY (for context):
+${JSON.stringify(invitationContext.inviterPreferences || {}, null, 2)}
+
+EMERGENCY PRODUCTS TO ENHANCE:
+${JSON.stringify(emergencyProducts.slice(0, 5), null, 2)}
+
+Please enhance these emergency products with:
+1. More specific, personalized descriptions
+2. Better reasoning for why each gift fits
+3. Confidence scores (0-1) for each recommendation
+4. Any additional gift ideas that would work well for this scenario
+
+Focus on gifts that:
+- Work well for the relationship type
+- Are appropriate for the urgency level
+- Don't require deep personal knowledge
+- Are universally appreciated
+- Can be delivered quickly if needed
+
+Return as JSON array of enhanced products.`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are Nicole, an expert gift consultant who specializes in finding perfect gifts for new users with limited profile data. Focus on universally appreciated, relationship-appropriate gifts.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      }),
+    });
+
+    const aiData = await response.json();
+    const enhancedProducts = JSON.parse(aiData.choices[0].message.content);
+    
+    // Process and standardize the AI response
+    return enhancedProducts.map((product: any, index: number) => ({
+      id: product.id || `ai-emergency-${Date.now()}-${index}`,
+      product_id: product.product_id || `ai-emergency-${Date.now()}-${index}`,
+      title: product.title || product.name,
+      product_name: product.title || product.name,
+      name: product.title || product.name,
+      price: Math.min(product.price || maxBudget * 0.5, maxBudget),
+      image: product.image_url || null,
+      image_url: product.image_url || null,
+      source: 'ai_enhanced_emergency',
+      vendor: product.vendor || 'Multiple Vendors',
+      category: product.category || 'General',
+      description: product.description || 'AI-enhanced emergency gift recommendation',
+      features: product.features || ['Perfect for the occasion', 'Thoughtfully selected'],
+      availability: product.availability || 'in_stock',
+      urgent_delivery: invitationContext.urgencyLevel <= 7,
+      confidence_score: product.confidence_score || 0.8,
+      match_reasons: product.match_reasons || ['Relationship-appropriate', 'Event-suitable'],
+      emergency_context: {
+        invitation_based: true,
+        urgency_level: invitationContext.urgencyLevel,
+        relationship_type: invitationContext.relationshipType
+      }
+    }));
+    
+  } catch (error) {
+    console.error('🚨 AI enhancement failed:', error);
+    throw error;
+  }
+}
+
+// Helper function to calculate age
+function calculateAge(dob: string): number {
+  const today = new Date();
+  const birthDate = new Date(dob);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}

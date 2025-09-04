@@ -167,6 +167,141 @@ export class EnhancedGiftIntelligenceService {
     return data;
   }
 
+  // Enhanced methods for new/invited user scenarios
+  static async getInvitationContextIntelligence(userId: string, recipientIdentifier: string) {
+    try {
+      // Check for invitation analytics
+      const { data: invitationData } = await supabase
+        .from('gift_invitation_analytics')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('recipient_email', recipientIdentifier)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!invitationData) return null;
+
+      // Calculate urgency level
+      const urgencyLevel = this.calculateEventUrgency(invitationData.occasion);
+      
+      // Build invitation context
+      return {
+        invitation_data: invitationData,
+        relationship_type: invitationData.relationship_type,
+        urgency_level: urgencyLevel,
+        is_emergency_scenario: urgencyLevel <= 7,
+        invitation_context: {
+          sent_at: invitationData.created_at,
+          occasion: invitationData.occasion,
+          conversion_status: invitationData.conversion_status
+        }
+      };
+    } catch (error) {
+      console.error('Error getting invitation context:', error);
+      return null;
+    }
+  }
+
+  static async createEmergencyRecipientProfile(userId: string, recipientIdentifier: string, invitationContext: any) {
+    try {
+      // Create emergency profile based on invitation context and inviter proxy data
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('enhanced_gift_preferences, enhanced_gifting_history')
+        .eq('id', userId)
+        .single();
+
+      const emergencyProfile = {
+        recipient_identifier: recipientIdentifier,
+        emergency_profile: true,
+        data_sources: ['invitation_context', 'inviter_proxy'],
+        confidence_level: 'medium',
+        profile_data: {
+          relationship_context: {
+            type: invitationContext.relationship_type,
+            connection_recency: 'new_invitation',
+            interaction_level: 'limited'
+          },
+          inferred_preferences: {
+            safe_categories: ['gift_cards', 'flowers', 'gourmet_food', 'books'],
+            avoid_categories: ['intimate', 'highly_personal'],
+            budget_comfort: this.inferBudgetFromInviterHistory(inviterProfile?.enhanced_gifting_history),
+            style_preference: 'thoughtful_and_safe'
+          },
+          proxy_intelligence: {
+            inviter_successful_categories: this.extractSuccessfulCategories(inviterProfile?.enhanced_gifting_history),
+            inviter_typical_budget: this.extractTypicalBudget(inviterProfile?.enhanced_gift_preferences),
+            inviter_gift_style: inviterProfile?.enhanced_gift_preferences?.preferred_gift_styles?.[0] || 'thoughtful'
+          }
+        },
+        urgency_factors: {
+          time_constraint: invitationContext.urgency_level <= 7,
+          profile_building_time: 'limited',
+          decision_confidence: 'medium_with_safe_choices'
+        }
+      };
+
+      // Cache this emergency profile
+      await this.setCachedIntelligence({
+        user_id: userId,
+        intelligence_type: 'emergency_recipient_profile',
+        cache_data: emergencyProfile,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+      });
+
+      return emergencyProfile;
+    } catch (error) {
+      console.error('Error creating emergency recipient profile:', error);
+      return null;
+    }
+  }
+
+  static async enhanceGiftSelectionForNewUser(
+    userId: string, 
+    recipientId: string, 
+    occasion: string, 
+    budget: number
+  ) {
+    try {
+      // Get invitation context if available
+      const invitationContext = await this.getInvitationContextIntelligence(userId, recipientId);
+      
+      // Create enhanced selection criteria for new users
+      const enhancedCriteria = {
+        prioritize_universal_appeal: true,
+        avoid_highly_personal: true,
+        favor_presentation_quality: true,
+        include_gift_message: true,
+        
+        // Budget optimization for new users
+        budget_allocation: {
+          item_cost: budget * 0.85, // Leave room for premium presentation
+          presentation_upgrade: budget * 0.15
+        },
+        
+        // Category priorities based on relationship and urgency
+        category_priorities: this.getCategoryPrioritiesForNewUser(
+          invitationContext?.relationship_type || 'friend',
+          occasion,
+          invitationContext?.urgency_level || 30
+        ),
+        
+        // Delivery considerations
+        delivery_preferences: {
+          expedited_if_urgent: invitationContext?.urgency_level <= 7,
+          include_thoughtful_note: true,
+          premium_packaging: true
+        }
+      };
+
+      return enhancedCriteria;
+    } catch (error) {
+      console.error('Error enhancing gift selection for new user:', error);
+      return null;
+    }
+  }
+
   static async analyzeWishlistCompatibility(userId: string, recipientId: string) {
     // Get recipient's public wishlists
     const { data: wishlists } = await supabase
@@ -261,5 +396,66 @@ export class EnhancedGiftIntelligenceService {
     
     const dataPoints = Object.keys(seasonalData).length + Object.keys(relationshipData).length;
     return Math.min(dataPoints / 10, 1.0); // Max confidence at 10+ data points
+  }
+
+  // Helper methods for new user intelligence
+  private static calculateEventUrgency(occasion: string): number {
+    // Mock urgency calculation - in real implementation, would check actual event dates
+    const urgentOccasions = ['birthday', 'anniversary', 'wedding'];
+    return urgentOccasions.includes(occasion?.toLowerCase()) ? 5 : 30;
+  }
+
+  private static inferBudgetFromInviterHistory(history: any): { min: number, max: number } {
+    if (!history?.seasonal_patterns) {
+      return { min: 25, max: 75 }; // Safe default range
+    }
+
+    const averages = Object.values(history.seasonal_patterns).map((season: any) => season.avg_budget || 50);
+    const avgBudget = averages.reduce((sum: number, val: number) => sum + val, 0) / averages.length;
+    
+    return {
+      min: Math.max(15, avgBudget * 0.6),
+      max: Math.max(50, avgBudget * 1.4)
+    };
+  }
+
+  private static extractSuccessfulCategories(history: any): string[] {
+    if (!history?.category_success_rates) return ['gift_cards', 'flowers', 'books'];
+    
+    return Object.entries(history.category_success_rates)
+      .filter(([_, data]: [string, any]) => data.success_rate > 0.7)
+      .map(([category, _]) => category)
+      .slice(0, 5);
+  }
+
+  private static extractTypicalBudget(preferences: any): { min: number, max: number } {
+    if (!preferences?.preferred_price_ranges?.general) {
+      return { min: 30, max: 80 };
+    }
+    
+    return preferences.preferred_price_ranges.general;
+  }
+
+  private static getCategoryPrioritiesForNewUser(
+    relationshipType: string, 
+    occasion: string, 
+    urgencyLevel: number
+  ): string[] {
+    const basePriorities = ['gift_cards', 'flowers', 'gourmet_food', 'books', 'wellness'];
+    
+    // Adjust based on relationship
+    switch (relationshipType.toLowerCase()) {
+      case 'romantic':
+      case 'spouse':
+        return ['flowers', 'jewelry', 'experiences', 'gourmet_food', 'wellness'];
+      case 'family':
+      case 'parent':
+        return ['experiences', 'home_decor', 'books', 'gourmet_food', 'gift_cards'];
+      case 'professional':
+      case 'colleague':
+        return ['gift_cards', 'books', 'office_supplies', 'gourmet_food', 'plants'];
+      default:
+        return basePriorities;
+    }
   }
 }

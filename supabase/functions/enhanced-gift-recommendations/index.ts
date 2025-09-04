@@ -175,9 +175,17 @@ serve(async (req) => {
   }
 });
 
-// Enhanced context analysis using AI
+// Enhanced context analysis using AI with emergency mode support
 async function enhanceSearchContext(context: any, userId: string, supabase: any) {
   console.log('🔍 Enhancing search context with AI analysis');
+  
+  // Check if this is an emergency/invitation scenario
+  const isEmergencyMode = context.urgency === 'high' || (context.recipientIdentifier && !context.recipient);
+  
+  if (isEmergencyMode) {
+    console.log('🆘 Emergency mode detected - using rapid context enhancement');
+    return await enhanceEmergencyContext(context, userId, supabase);
+  }
   
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiApiKey) {
@@ -445,4 +453,172 @@ async function trackRecommendationAnalytics(recommendationId: string, userId: st
   } catch (error) {
     console.error('🚨 Analytics tracking failed:', error);
   }
+}
+
+// Emergency context enhancement for new/invited users
+async function enhanceEmergencyContext(context: any, userId: string, supabase: any) {
+  console.log('🆘 Enhancing context for emergency/invitation scenario');
+  
+  try {
+    // Try to gather rapid intelligence about the recipient
+    const recipientData = await gatherRapidRecipientIntelligence(
+      context.recipientIdentifier,
+      userId,
+      supabase
+    );
+    
+    // Get inviter's profile as proxy intelligence
+    const { data: inviterProfile } = await supabase
+      .from('profiles')
+      .select('enhanced_gift_preferences, enhanced_gifting_history, dob')
+      .eq('id', userId)
+      .single();
+    
+    // Infer context from available data
+    const enhancedContext = {
+      ...context,
+      
+      // Emergency-specific enhancements
+      emergency_mode: true,
+      data_sources: ['invitation_context', 'inviter_proxy', 'demographic_inference'],
+      
+      // Rapid recipient profiling
+      recipient_intelligence: recipientData,
+      
+      // Use inviter's preferences as proxy
+      inviter_proxy_data: {
+        gift_style: inviterProfile?.enhanced_gift_preferences?.preferred_gift_styles?.[0] || 'thoughtful',
+        typical_budget_range: inviterProfile?.enhanced_gift_preferences?.preferred_price_ranges?.general || [25, 100],
+        successful_categories: Object.keys(inviterProfile?.enhanced_gifting_history?.category_success_rates || {}),
+      },
+      
+      // Enhanced urgency handling
+      urgency_factors: {
+        delivery_constraint: context.urgency === 'high',
+        profile_completion_time: 'limited',
+        decision_confidence: 'medium_due_to_limited_data',
+      },
+      
+      // Smart defaults based on common patterns
+      inferred_preferences: {
+        safe_categories: ['gift_cards', 'flowers', 'gourmet_food', 'books', 'wellness'],
+        avoid_categories: ['intimate_apparel', 'highly_personal_items', 'niche_hobbies'],
+        universal_appeal_items: true,
+      }
+    };
+    
+    console.log('✅ Emergency context enhancement complete');
+    return enhancedContext;
+    
+  } catch (error) {
+    console.error('🚨 Emergency context enhancement failed:', error);
+    return {
+      ...context,
+      emergency_mode: true,
+      enhancement_failed: true,
+      safe_mode: true
+    };
+  }
+}
+
+// Rapid recipient intelligence gathering for emergency scenarios
+async function gatherRapidRecipientIntelligence(recipientIdentifier: string, userId: string, supabase: any) {
+  console.log('🔍 Gathering rapid recipient intelligence');
+  
+  try {
+    // Check if we have any existing data about this recipient
+    const { data: existingProfiles } = await supabase
+      .from('recipient_intelligence_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('recipient_identifier', recipientIdentifier)
+      .order('last_updated', { ascending: false })
+      .limit(1);
+    
+    if (existingProfiles && existingProfiles.length > 0) {
+      console.log('📋 Found existing recipient intelligence');
+      return existingProfiles[0].profile_data;
+    }
+    
+    // Check invitation analytics for any context
+    const { data: invitationData } = await supabase
+      .from('gift_invitation_analytics')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('recipient_email', recipientIdentifier)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    // Try to find the recipient's profile if they've joined
+    const { data: recipientProfile } = await supabase
+      .from('profiles')
+      .select('dob, enhanced_gift_preferences, data_sharing_settings')
+      .eq('email', recipientIdentifier)
+      .single();
+    
+    // Compile available intelligence
+    const intelligence = {
+      data_sources: [],
+      confidence_level: 'low',
+      
+      // From invitation context
+      relationship_context: invitationData ? {
+        relationship_type: invitationData.relationship_type,
+        invitation_occasion: invitationData.occasion,
+        invitation_date: invitationData.created_at,
+      } : null,
+      
+      // From recipient profile (if available)
+      recipient_data: recipientProfile ? {
+        age: recipientProfile.dob ? calculateAge(recipientProfile.dob) : null,
+        has_preferences: !!recipientProfile.enhanced_gift_preferences,
+        data_sharing_level: recipientProfile.data_sharing_settings?.general || 'limited',
+      } : null,
+      
+      // Emergency defaults
+      emergency_assumptions: {
+        prefers_safe_choices: true,
+        appreciates_thoughtful_gestures: true,
+        values_presentation: true,
+        delivery_preference: 'standard_plus_thoughtful_note',
+      }
+    };
+    
+    // Add data sources
+    if (invitationData) intelligence.data_sources.push('invitation_analytics');
+    if (recipientProfile) intelligence.data_sources.push('recipient_profile');
+    intelligence.data_sources.push('emergency_defaults');
+    
+    // Calculate confidence level
+    intelligence.confidence_level = intelligence.data_sources.length > 1 ? 'medium' : 'low';
+    
+    console.log(`📊 Gathered rapid intelligence with ${intelligence.data_sources.length} sources`);
+    return intelligence;
+    
+  } catch (error) {
+    console.error('🚨 Rapid intelligence gathering failed:', error);
+    return {
+      data_sources: ['emergency_defaults'],
+      confidence_level: 'very_low',
+      emergency_assumptions: {
+        prefers_safe_choices: true,
+        appreciates_thoughtful_gestures: true,
+        values_presentation: true,
+      }
+    };
+  }
+}
+
+// Helper function to calculate age (duplicate but needed here)
+function calculateAge(dob: string): number {
+  const today = new Date();
+  const birthDate = new Date(dob);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
 }

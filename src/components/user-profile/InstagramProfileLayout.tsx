@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
+import DesktopProfileWrapper from "./DesktopProfileWrapper";
 
 
 interface InstagramProfileLayoutProps {
@@ -90,7 +91,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 
         {/* Expandable Secondary Content */}
         {secondaryContent && (
-          <div className="w-full px-4">
+          <DesktopProfileWrapper className="w-full px-4">
             <Card>
               <CardContent className="p-0">
                 {/* Expandable Header */}
@@ -125,7 +126,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </DesktopProfileWrapper>
         )}
       </div>
     </div>

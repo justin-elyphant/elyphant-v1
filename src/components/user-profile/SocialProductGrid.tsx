@@ -12,6 +12,8 @@ import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
 import WishlistItemManagementDialog from "./WishlistItemManagementDialog";
+import ResponsiveProductGrid from "./ResponsiveProductGrid";
+import DesktopProfileWrapper from "./DesktopProfileWrapper";
 
 interface SocialProductGridProps {
   profile: any;
@@ -48,8 +50,6 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [selectedWishlistItem, setSelectedWishlistItem] = useState<WishlistItem | null>(null);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
-
-
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
@@ -144,8 +144,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         console.log('📈 Trending products:', trendingProducts.length);
         gridProducts.push(...trendingProducts.slice(0, 2));
 
-        // Shuffle and limit to 20 items for Instagram-like grid
-        const shuffledProducts = shuffleArray(gridProducts).slice(0, 20);
+        // Shuffle and limit to 24 items for better desktop display
+        const shuffledProducts = shuffleArray(gridProducts).slice(0, 24);
         console.log('🎲 Final grid products:', shuffledProducts.length);
         setProducts(shuffledProducts);
       } catch (error) {
@@ -376,31 +376,22 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   if (loading) {
     return (
-      <div 
-        className="w-full overflow-x-hidden"
-        style={{ maxWidth: '100vw', minWidth: 0, boxSizing: 'border-box' }}
-      >
-        <div 
-          className="grid grid-cols-2 gap-1 p-1" 
-          style={{ maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}
-        >
-          {Array.from({ length: 20 }).map((_, i) => (
+      <DesktopProfileWrapper className="w-full px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+          {Array.from({ length: 24 }).map((_, i) => (
             <div
               key={i}
               className="aspect-square bg-muted rounded-lg animate-pulse"
             />
           ))}
         </div>
-      </div>
+      </DesktopProfileWrapper>
     );
   }
 
   if (products.length === 0) {
     return (
-      <div 
-        className="w-full overflow-x-hidden"
-        style={{ width: '100%', maxWidth: 'none', minWidth: 0, boxSizing: 'border-box' }}
-      >
+      <DesktopProfileWrapper className="w-full px-4">
         <div className="text-center py-8">
           <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
@@ -409,95 +400,22 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
               : "No products to display yet."}
           </p>
         </div>
-      </div>
+      </DesktopProfileWrapper>
     );
   }
 
   return (
-    <div 
-      className="w-full"
-      style={{ width: '100%', maxWidth: 'none' }}
-    >
-      <div 
-        className="grid grid-cols-2 gap-2" 
-        style={{ width: '100%', maxWidth: 'none' }}
-      >
-        {products.map((product) => {
-          const isWishlisted = wishlistedProducts.includes(product.product_id);
-          const SourceIcon = product.sourceIcon;
-
-          return (
-            <div
-              key={product.product_id}
-              className="group relative aspect-square cursor-pointer min-w-0"
-              onClick={() => handleProductClick(product)}
-            >
-              {/* Product Image */}
-              <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                  
-                {/* Source Badge */}
-                <Badge
-                  className={cn(
-                    "absolute top-1 left-1 text-xs px-1.5 py-0.5 scale-90",
-                    product.sourceColor
-                  )}
-                >
-                  <SourceIcon className="w-2.5 h-2.5 mr-0.5" />
-                  <span className="hidden sm:inline">{product.sourceLabel}</span>
-                </Badge>
-
-                {/* Price Badge */}
-                {product.price > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute bottom-1 left-1 text-xs px-1.5 py-0.5 scale-90"
-                  >
-                    {formatPrice(product.price)}
-                  </Badge>
-                 )}
-
-                {/* Action Buttons - Context Aware */}
-                <div className="absolute top-1 right-1 flex gap-1">
-                  {product.source === 'wishlist' && isOwnProfile ? (
-                    // Show remove button for own wishlist items
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 sm:h-8 sm:w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500"
-                      onClick={(e) => handleRemoveFromWishlist(e, product)}
-                    >
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                    </Button>
-                  ) : (
-                    // Show wishlist heart for other products
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "h-6 w-6 sm:h-8 sm:w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
-                        isWishlisted && "opacity-100"
-                      )}
-                      onClick={(e) => handleWishlistAction(e, product)}
-                    >
-                      <Heart
-                        className={cn(
-                          "h-3 w-3 sm:h-4 sm:w-4",
-                          isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                        )}
-                      />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    <div>
+      <DesktopProfileWrapper className="w-full px-4">
+        <ResponsiveProductGrid
+          products={products}
+          isOwnProfile={isOwnProfile}
+          onProductClick={handleProductClick}
+          onWishlistAction={handleWishlistAction}
+          onRemoveFromWishlist={handleRemoveFromWishlist}
+          wishlistedProducts={wishlistedProducts}
+        />
+      </DesktopProfileWrapper>
 
       {/* Dialogs */}
       <ProductDetailsDialog

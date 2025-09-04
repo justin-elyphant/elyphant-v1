@@ -9,4 +9,5 @@ export enum SUPABASE_FUNCTIONS {
   HANDLE_INVITATION_ACCEPTANCE = "handle-invitation-acceptance",
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
   PROCESS_ZMA_ORDER = "process-zma-order"
+  // Note: process-zinc-order is disabled - all orders use ZMA
 }

@@ -2,11 +2,12 @@
  * Order Retry Service - Handles retrying failed orders with corrected information
  * 
  * This service allows retrying stuck orders by updating them with proper
- * billing information and resubmitting to Zinc or ZMA.
+ * billing information and resubmitting to ZMA only (zinc_api disabled).
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import { BillingInfo } from "./billingService";
+import { logOrderProcessing, validateOrderMethod } from "./orderMonitoringService";
 
 export interface OrderRetryResult {
   success: boolean;
@@ -30,7 +31,7 @@ export const retryOrderWithBillingInfo = async (
     // First, get the order to check its method and payment status
     const { data: orderData, error: fetchError } = await supabase
       .from('orders')
-      .select('order_method, status, payment_status, total_amount, stripe_payment_intent_id')
+      .select('order_method, status, payment_status, total_amount, stripe_payment_intent_id, user_id')
       .eq('id', orderId)
       .single();
 
@@ -38,19 +39,25 @@ export const retryOrderWithBillingInfo = async (
       throw new Error(`Failed to fetch order: ${fetchError?.message || 'Order not found'}`);
     }
 
-    const orderMethod = orderData.order_method || 'zma';
-    console.log(`📋 Order method: ${orderMethod}`);
-    
-    // SAFETY GUARD: Block zinc_api processing
-    if (orderMethod === 'zinc_api') {
-      console.error('❌ BLOCKED: zinc_api order method is disabled. Converting to ZMA.');
-      // Update order to use ZMA
-      await supabase
-        .from('orders')
-        .update({ order_method: 'zma' })
-        .eq('id', orderId);
-      throw new Error('Order converted to ZMA method. Please retry the order.');
+    // Validate and ensure order uses ZMA method only
+    const validation = await validateOrderMethod(orderId);
+    if (!validation.isValid) {
+      throw new Error(`Order ${orderId} validation failed: method=${validation.orderMethod}`);
     }
+
+    const orderMethod = validation.orderMethod; // Always 'zma' after validation
+    console.log(`📋 Order method validated: ${orderMethod}`);
+    
+    // Log the retry attempt
+    await logOrderProcessing({
+      orderId,
+      orderMethod,
+      processingFunction: 'process-zma-order',
+      timestamp: new Date().toISOString(),
+      userId: orderData.user_id,
+      isRetry: true,
+      converted: validation.converted
+    });
     
     // CRITICAL: Verify payment status before retry to prevent duplicate charges
     console.log('💳 Verifying payment status before retry...');

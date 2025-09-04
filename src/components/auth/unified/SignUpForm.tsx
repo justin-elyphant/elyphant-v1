@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Gift } from "lucide-react";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 
@@ -26,10 +26,48 @@ const SignUpForm = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [invitationData, setInvitationData] = useState<{
+    invitation_id: string;
+    recipient_name: string;
+    recipient_email: string;
+    inviter_first_name?: string;
+  } | null>(null);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<SignUpFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema)
   });
+
+  // Check for invitation parameters on load
+  useEffect(() => {
+    const invitation_id = searchParams.get('invitation_id');
+    const recipient_name = searchParams.get('recipient_name');
+    const recipient_email = searchParams.get('recipient_email');
+    const inviter_context = searchParams.get('inviter_context');
+    
+    if (invitation_id && recipient_name && recipient_email) {
+      // Parse inviter first name from inviter_context if available
+      let inviter_first_name;
+      try {
+        if (inviter_context) {
+          const contextData = JSON.parse(decodeURIComponent(inviter_context));
+          inviter_first_name = contextData.inviter_first_name;
+        }
+      } catch (e) {
+        console.log("Could not parse inviter_context:", e);
+      }
+      
+      setInvitationData({
+        invitation_id,
+        recipient_name,
+        recipient_email,
+        inviter_first_name
+      });
+      
+      // Pre-populate form fields
+      setValue('name', recipient_name);
+      setValue('email', recipient_email);
+    }
+  }, [searchParams, setValue]);
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
@@ -41,6 +79,7 @@ const SignUpForm = () => {
         options: {
           data: {
             name: data.name,
+            invitation_context: invitationData
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
@@ -75,12 +114,20 @@ const SignUpForm = () => {
           localStorage.setItem('post_auth_redirect', redirectPath);
         }
         
+        // Store invitation context for profile setup if present
+        if (invitationData) {
+          localStorage.setItem('invitation_context', JSON.stringify(invitationData));
+        }
+        
         toast.success("Account created!", {
           description: "Please check your email to verify your account."
         });
         
-        // Navigate to streamlined profile setup
-        navigate("/profile-setup", { replace: true });
+        // Navigate to streamlined profile setup with invitation context if present
+        const profileSetupUrl = invitationData 
+          ? `/profile-setup?invitation_id=${invitationData.invitation_id}&source=invitation`
+          : "/profile-setup";
+        navigate(profileSetupUrl, { replace: true });
       }
     } catch (error) {
       console.error("Sign up error:", error);
@@ -90,8 +137,36 @@ const SignUpForm = () => {
     }
   };
 
+  // Render personalized welcome message for invitations
+  const renderWelcomeMessage = () => {
+    if (!invitationData) return null;
+    
+    const firstName = invitationData.recipient_name.split(' ')[0];
+    const inviterName = invitationData.inviter_first_name || "someone";
+    
+    return (
+      <div className="surface-secondary border border-border rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="surface-accent p-2 rounded-full">
+            <Gift className="h-4 w-4 text-accent-foreground" />
+          </div>
+          <div>
+            <h3 className="text-body font-medium text-foreground">
+              Welcome to Elyphant, {firstName}!
+            </h3>
+            <p className="text-body-sm text-muted-foreground">
+              {inviterName} invited you to join and start looking for great gifts for yourself
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-loose">
+      {renderWelcomeMessage()}
+      
       <SocialLoginButtons />
       
       <div className="relative">

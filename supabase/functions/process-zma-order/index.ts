@@ -202,13 +202,92 @@ async function trackZmaOrderFailure(userId, orderId, errorType, errorDetails, su
   }
 }
 
+// Payment verification function to prevent duplicate charges
+async function verifyPaymentStatus(orderId, supabase) {
+  console.log('💳 Verifying payment status before ZMA processing...');
+  
+  const { data: orderData, error } = await supabase
+    .from('orders')
+    .select('payment_status, stripe_payment_intent_id, stripe_checkout_session_id, total_amount')
+    .eq('id', orderId)
+    .single();
+
+  if (error || !orderData) {
+    throw new Error(`Failed to fetch order payment status: ${error?.message}`);
+  }
+
+  // Check if payment is confirmed as succeeded
+  if (orderData.payment_status !== 'succeeded') {
+    throw new Error(`Payment not confirmed. Status: ${orderData.payment_status}. Cannot process order until payment is successful.`);
+  }
+
+  console.log(`✅ Payment verified: ${orderData.payment_status} for amount $${orderData.total_amount}`);
+  
+  // Additional Stripe verification if payment intent is available
+  if (orderData.stripe_payment_intent_id || orderData.stripe_checkout_session_id) {
+    console.log('🔍 Additional Stripe payment verification...');
+    // Note: In production, you would verify with Stripe API here
+    // For now, we trust the payment_status in our database
+  }
+
+  return {
+    verified: true,
+    paymentStatus: orderData.payment_status,
+    amount: orderData.total_amount
+  };
+}
+
+// Classify ZMA errors for retry logic
+function classifyZmaError(zincResult) {
+  const errorCode = zincResult.code;
+  const errorMessage = zincResult.message || '';
+  
+  // ZMA temporarily overloaded - system error, should retry
+  if (errorCode === 'zma_temporarily_overloaded') {
+    return {
+      type: 'retryable_system',
+      shouldRetry: true,
+      retryDelay: 3600, // 1 hour in seconds
+      maxRetries: 3,
+      userFriendlyMessage: 'The ordering system is temporarily at capacity. We\'ll retry your order automatically.'
+    };
+  }
+  
+  // Other retryable system errors
+  if (errorCode?.includes('timeout') || errorCode?.includes('server_error') || errorCode?.includes('unavailable')) {
+    return {
+      type: 'retryable_system',
+      shouldRetry: true,
+      retryDelay: 1800, // 30 minutes
+      maxRetries: 2,
+      userFriendlyMessage: 'A temporary system issue occurred. We\'ll retry your order automatically.'
+    };
+  }
+  
+  // User errors that should not retry
+  if (errorCode?.includes('invalid') || errorCode?.includes('payment') || errorCode?.includes('address')) {
+    return {
+      type: 'user_error',
+      shouldRetry: false,
+      userFriendlyMessage: 'There was an issue with your order details. Please check and try again.'
+    };
+  }
+  
+  // Default to non-retryable for unknown errors
+  return {
+    type: 'unknown',
+    shouldRetry: false,
+    userFriendlyMessage: 'An unexpected error occurred with your order.'
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     console.log('✅ CORS preflight handled');
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('🚀 ZMA Function - Debug Version Started');
+  console.log('🚀 ZMA Function - Enhanced with Duplicate Charge Prevention');
   
   try {
     // Step 1: Parse request
@@ -246,8 +325,36 @@ serve(async (req) => {
       throw new Error(`Supabase setup failed: ${supabaseError.message}`);
     }
 
-    // Step 3: Get full order data
-    console.log('📥 Step 3: Getting full order data...');
+    // Step 3: CRITICAL - Verify payment status before any ZMA processing
+    console.log('💳 Step 3: Verifying payment status...');
+    try {
+      const paymentVerification = await verifyPaymentStatus(orderId, supabase);
+      console.log('✅ Payment verification passed:', paymentVerification);
+    } catch (paymentError) {
+      console.error('❌ Payment verification failed:', paymentError);
+      
+      // Update order with payment verification failure
+      await supabase
+        .from('orders')
+        .update({
+          status: 'payment_verification_failed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Payment verification failed',
+        details: paymentError.message,
+        preventDuplicateCharge: true
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Step 4: Get full order data
+    console.log('📥 Step 4: Getting full order data...');
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -261,8 +368,8 @@ serve(async (req) => {
 
     console.log(`✅ Order found: ${orderData.order_number}`);
 
-    // Step 4: Get order items
-    console.log('📥 Step 4: Getting order items...');
+    // Step 5: Get order items
+    console.log('📥 Step 5: Getting order items...');
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
       .select('*')
@@ -275,8 +382,8 @@ serve(async (req) => {
 
     console.log(`✅ Found ${orderItems.length} order items`);
 
-    // Step 5: ZMA Security Validation
-    console.log('🛡️ Step 5: Running ZMA security checks...');
+    // Step 6: ZMA Security Validation
+    console.log('🛡️ Step 6: Running ZMA security checks...');
     
     // Perform comprehensive security validation
     const securityCheckResult = await performZmaSecurityValidation({
@@ -321,8 +428,8 @@ serve(async (req) => {
 
     console.log('✅ Security checks passed');
 
-    // Step 6: Get ZMA credentials
-    console.log('📥 Step 5: Getting ZMA credentials...');
+    // Step 7: Get ZMA credentials
+    console.log('📥 Step 7: Getting ZMA credentials...');
     const { data: zmaAccount, error: credError } = await supabase
       .from('zma_accounts')
       .select('*')
@@ -338,8 +445,8 @@ serve(async (req) => {
 
     console.log(`✅ ZMA credentials retrieved - API Key: ${zmaAccount.api_key.substring(0, 8)}...`);
 
-    // Step 6: Prepare Zinc API order data
-    console.log('📥 Step 6: Preparing Zinc API request...');
+    // Step 8: Prepare Zinc API order data
+    console.log('📥 Step 8: Preparing Zinc API request...');
     console.log(`🔍 Order items to process: ${orderItems.length}`);
     orderItems.forEach((item, index) => {
       console.log(`  Item ${index + 1}: ${item.product_id} (qty: ${item.quantity})`);
@@ -462,8 +569,8 @@ serve(async (req) => {
 
     console.log('✅ Zinc order data prepared');
 
-    // Step 7: Call Zinc API
-    console.log('📥 Step 7: Calling Zinc API...');
+    // Step 9: Call Zinc API
+    console.log('📥 Step 9: Calling Zinc API...');
     if (!zmaAccount.api_key) {
       console.error('❌ ZMA account API key not configured');
       throw new Error('ZMA account API key not configured');
@@ -492,42 +599,102 @@ serve(async (req) => {
     if (isZincError) {
       console.error('❌ Zinc API rejected the order:', zincResult);
       
+      // Classify the error for retry logic
+      const errorClassification = classifyZmaError(zincResult);
+      console.log('🔍 Error classification:', errorClassification);
+      
       // Extract error message
       const errorMessage = zincResult.message || zincResult.data?.validator_errors?.[0]?.message || 'Unknown validation error';
       
-      // Update order status to failed with error details
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: 'failed',
-          zma_error: JSON.stringify(zincResult),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-
-      if (updateError) {
-        console.error('❌ Failed to update order status to failed:', updateError);
-      }
-
-      // Track the failure for security monitoring
-      await trackZmaOrderFailure(orderData.user_id, orderId, 'zinc_api_error', errorMessage, supabase);
-
-      // CRITICAL: If this is from an auto-gift execution, reset it for retry
-      if (body.isAutoGift && body.executionMetadata?.execution_id) {
-        console.log('🔄 Resetting auto-gift execution for retry due to ZMA failure...');
-        await supabase
-          .from('automated_gift_executions')
+      // Handle retryable vs non-retryable errors differently
+      if (errorClassification.shouldRetry) {
+        console.log('🔄 Setting order to retry_pending status for automatic retry...');
+        
+        // Set order to retry_pending status with retry metadata
+        const { error: updateError } = await supabase
+          .from('orders')
           .update({
-            status: 'pending_approval',
-            error_message: `ZMA processing failed: ${errorMessage}. Please retry.`,
+            status: 'retry_pending',
+            zinc_status: 'awaiting_retry',
+            zma_error: JSON.stringify(zincResult),
+            retry_count: (orderData.retry_count || 0) + 1,
+            next_retry_at: new Date(Date.now() + (errorClassification.retryDelay * 1000)).toISOString(),
+            retry_reason: errorClassification.type,
             updated_at: new Date().toISOString()
           })
-          .eq('id', body.executionMetadata.execution_id);
-        
-        console.log(`✅ Auto-gift execution ${body.executionMetadata.execution_id} reset to pending_approval for retry`);
-      }
+          .eq('id', orderId);
 
-      throw new Error(`Zinc API rejected order: ${errorMessage}`);
+        if (updateError) {
+          console.error('❌ Failed to update order status to retry_pending:', updateError);
+        }
+
+        // Track as retryable failure
+        await trackZmaOrderFailure(orderData.user_id, orderId, 'retryable_zinc_error', errorMessage, supabase);
+
+        // For auto-gift executions, keep them in processing (don't reset to pending_approval)
+        if (body.isAutoGift && body.executionMetadata?.execution_id) {
+          console.log('🔄 Keeping auto-gift execution in processing for retry...');
+          await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'processing',
+              error_message: `${errorClassification.userFriendlyMessage} Retry scheduled.`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', body.executionMetadata.execution_id);
+          
+          console.log(`✅ Auto-gift execution ${body.executionMetadata.execution_id} kept in processing for retry`);
+        }
+
+        return new Response(JSON.stringify({
+          success: false,
+          error: errorClassification.userFriendlyMessage,
+          retryable: true,
+          retryScheduled: true,
+          nextRetryAt: new Date(Date.now() + (errorClassification.retryDelay * 1000)).toISOString(),
+          details: errorMessage
+        }), {
+          status: 202, // Accepted for retry
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        // Non-retryable error - fail permanently
+        console.log('❌ Non-retryable error - failing order permanently...');
+        
+        // Update order status to failed with error details
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            status: 'failed',
+            zma_error: JSON.stringify(zincResult),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          console.error('❌ Failed to update order status to failed:', updateError);
+        }
+
+        // Track the failure for security monitoring
+        await trackZmaOrderFailure(orderData.user_id, orderId, 'zinc_api_error', errorMessage, supabase);
+
+        // CRITICAL: If this is from an auto-gift execution, reset it for retry
+        if (body.isAutoGift && body.executionMetadata?.execution_id) {
+          console.log('🔄 Resetting auto-gift execution for retry due to ZMA failure...');
+          await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'pending_approval',
+              error_message: `ZMA processing failed: ${errorMessage}. Please retry.`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', body.executionMetadata.execution_id);
+          
+          console.log(`✅ Auto-gift execution ${body.executionMetadata.execution_id} reset to pending_approval for retry`);
+        }
+
+        throw new Error(`Zinc API rejected order: ${errorMessage}`);
+      }
     }
 
     // Only proceed if Zinc actually accepted the order
@@ -536,8 +703,8 @@ serve(async (req) => {
       throw new Error('Zinc API response missing request_id - order may not have been accepted');
     }
 
-    // Step 8: Update order with Zinc request ID (only on success)
-    console.log('📥 Step 8: Updating order with Zinc data...');
+    // Step 10: Update order with Zinc request ID (only on success)
+    console.log('📥 Step 10: Updating order with Zinc data...');
     const { data: orderUpdateData, error: updateError } = await supabase
       .from('orders')
       .update({
@@ -581,15 +748,18 @@ serve(async (req) => {
       orderId: orderId,
       zincRequestId: zincResult.request_id,
       zmaAccount: zmaAccount.account_id,
+      paymentVerified: true,
       debug: {
         step1_parseRequest: '✅ Success',
         step2_supabaseClient: '✅ Success', 
-        step3_orderExists: '✅ Success',
-        step4_orderItems: '✅ Success',
-        step5_zmaCredentials: '✅ Success',
-        step6_prepareZincData: '✅ Success',
-        step7_callZincAPI: '✅ Success',
-        step8_updateOrder: '✅ Success'
+        step3_paymentVerification: '✅ Success',
+        step4_orderExists: '✅ Success',
+        step5_orderItems: '✅ Success',
+        step6_securityChecks: '✅ Success',
+        step7_zmaCredentials: '✅ Success',
+        step8_prepareZincData: '✅ Success',
+        step9_callZincAPI: '✅ Success',
+        step10_updateOrder: '✅ Success'
       },
       timestamp: new Date().toISOString()
     }), {

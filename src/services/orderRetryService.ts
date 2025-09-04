@@ -27,10 +27,10 @@ export const retryOrderWithBillingInfo = async (
   try {
     console.log(`🔄 Retrying order ${orderId} with billing info:`, billingInfo);
     
-    // First, get the order to check its method
+    // First, get the order to check its method and payment status
     const { data: orderData, error: fetchError } = await supabase
       .from('orders')
-      .select('order_method, status')
+      .select('order_method, status, payment_status, total_amount, stripe_payment_intent_id')
       .eq('id', orderId)
       .single();
 
@@ -40,6 +40,15 @@ export const retryOrderWithBillingInfo = async (
 
     const orderMethod = orderData.order_method || 'zinc_api';
     console.log(`📋 Order method: ${orderMethod}`);
+    
+    // CRITICAL: Verify payment status before retry to prevent duplicate charges
+    console.log('💳 Verifying payment status before retry...');
+    if (orderData.payment_status !== 'succeeded') {
+      console.error(`❌ Payment not confirmed: ${orderData.payment_status}`);
+      throw new Error(`Cannot retry order - payment status is ${orderData.payment_status}. Payment must be 'succeeded' before retrying to prevent duplicate charges.`);
+    }
+    
+    console.log(`✅ Payment verified: ${orderData.payment_status} for $${orderData.total_amount}`);
     
     // Update the order with billing information
     const { error: updateError } = await supabase

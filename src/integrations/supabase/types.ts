@@ -2438,9 +2438,12 @@ export type Database = {
           id: string
           is_gift: boolean | null
           is_surprise_gift: boolean | null
+          next_retry_at: string | null
           order_method: string | null
           order_number: string
           payment_status: string | null
+          retry_count: number | null
+          retry_reason: string | null
           scheduled_delivery_date: string | null
           shipping_cost: number
           shipping_info: Json
@@ -2476,9 +2479,12 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          next_retry_at?: string | null
           order_method?: string | null
           order_number: string
           payment_status?: string | null
+          retry_count?: number | null
+          retry_reason?: string | null
           scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info: Json
@@ -2514,9 +2520,12 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          next_retry_at?: string | null
           order_method?: string | null
           order_number?: string
           payment_status?: string | null
+          retry_count?: number | null
+          retry_reason?: string | null
           scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info?: Json

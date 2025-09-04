@@ -83,3 +83,9 @@ verify_jwt = false
 
 [functions.approve-auto-gift]
 verify_jwt = true
+
+[functions.process-zma-order]
+verify_jwt = false
+
+[functions.process-retry-pending-orders]
+verify_jwt = false

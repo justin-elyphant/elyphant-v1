@@ -3,7 +3,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2 } from "lucide-react";
+import { Send, Loader2, MessageCircle, X, Minimize2, Maximize2, Sparkles } from "lucide-react";
 import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
 import { NicoleMessage, NicoleContext, ConversationPhase } from "@/services/ai/nicoleAiService";
 import { useAuth } from "@/contexts/auth";

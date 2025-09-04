@@ -400,33 +400,18 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
       });
       window.dispatchEvent(autoGiftSetupEvent);
       toast.success("Opening auto-gift setup...");
-        recipientId: ctx.recipient_id || undefined,
-        recipientName: String(ctx.recipient),
-        occasion: String(ctx.occasion),
-        budget: budgetObj as any,
-        relationship: ctx.relationship || 'friend',
-        selected_product: {
-          id: String(rec?.item?.id),
-          title: rec?.item?.title || rec?.item?.name,
-          price: rec?.item?.price ? Number(rec?.item?.price) : undefined,
-          image_url: rec?.item?.image_url,
-          url: rec?.item?.url,
-          source: 'ai_selected'
-        },
-        scheduleDate
-      });
 
       toast.success('Gift scheduled');
       setMessages(prev => [...prev, { role: 'assistant', content: `Done! I’ll order ${rec?.item?.title || rec?.item?.name} ahead of ${String(ctx.recipient)}'s ${String(ctx.occasion)}. You’ll get a heads-up before it goes through.` }]);
       try {
-        updateContext({ ruleId: rule?.id, mode: 'curated', selectedProduct: rec?.item, scheduleDate } as any);
+        updateContext({ mode: 'curated', selectedProduct: rec?.item, scheduleDate } as any);
       } catch {}
       setCuratedActive(false);
       setCuratedFlow({ status: 'idle', preferences: [] });
     } catch (e) {
-      console.error('Rule creation failed', e);
-      toast.error("Couldn't schedule that gift");
-      setMessages(prev => [...prev, { role: 'assistant', content: "I couldn't schedule that just now. Want me to enable hands‑free auto‑gift instead or try different ideas?" }]);
+      console.error('Auto-gift setup failed', e);
+      toast.error("Couldn't open auto-gift setup");
+      setMessages(prev => [...prev, { role: 'assistant', content: "I couldn't open the auto-gift setup just now. Want me to try a different approach?" }]);
     }
   };
 
@@ -546,18 +531,19 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         ? { min: Number(ctx.budget[0]), max: Number(ctx.budget[1]) }
         : {};
 
-      await setupAutoGiftWithUnifiedSystems({
-        userId: user.id,
-        recipientId: ctx.recipient_id || undefined,
-        recipientName: String(ctx.recipient),
-        occasion: String(ctx.occasion),
-        budget,
-        relationship: ctx.relationship || 'friend'
+      const autoGiftSetupEvent = new CustomEvent('openAutoGiftSetup', {
+        detail: {
+          recipientName: String(ctx.recipient),
+          occasion: String(ctx.occasion),
+          budget
+        }
       });
+      window.dispatchEvent(autoGiftSetupEvent);
+      toast.success("Opening auto-gift setup...");
 
-      toast.success("Auto-gifting set up successfully");
+      setMessages(prev => [...prev, { role: 'assistant', content: `I'll help you set up auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}. The setup flow will guide you through the process.` }]);
       try {
-        await chatWithNicole(`All set! I've enabled auto-gifting for ${String(ctx.recipient)}'s ${String(ctx.occasion)}. I'll handle reminders and picks within your preferences.`);
+        await chatWithNicole(`All set! I've opened the auto-gift setup for ${String(ctx.recipient)}'s ${String(ctx.occasion)}. Follow the steps to complete the configuration.`);
       } catch {}
     } catch (e) {
       console.error('Auto-gift setup error', e);

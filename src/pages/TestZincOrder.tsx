@@ -54,7 +54,7 @@ const TestZincOrder = () => {
         is_test: true
       };
 
-      const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderRequest: testOrderRequest,
           orderId: 'test-order-' + Date.now(),

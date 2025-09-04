@@ -61,7 +61,7 @@ const OrderConfirmation = () => {
         console.log('Attempting to process order:', orderIdToProcess);
         setProcessingStatus('processing');
         
-        const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+        const { data, error } = await supabase.functions.invoke('process-zma-order', {
           body: {
             orderId: orderIdToProcess,
             isTestMode: true // Set to false for production

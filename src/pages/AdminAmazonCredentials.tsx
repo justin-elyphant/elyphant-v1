@@ -93,7 +93,7 @@ const AdminAmazonCredentials = () => {
     try {
       setLoading(true);
       // Call the test zinc order to verify credentials work
-      const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderRequest: {
             retailer: "amazon",

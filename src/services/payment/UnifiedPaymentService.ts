@@ -12,7 +12,7 @@
  * 
  * ⚠️  CRITICAL ARCHITECTURE BOUNDARIES:
  * - MUST call UnifiedMarketplaceService for product operations
- * - MUST route Amazon orders through process-zinc-order Edge Function
+ * - MUST route Amazon orders through process-zma-order Edge Function (zinc_api disabled)
  * - MUST separate customer Stripe payments from business Amazon payments
  * - MUST preserve dual payment architecture (Customer → Business)
  * - MUST integrate with existing Zinc API protection measures
@@ -883,14 +883,14 @@ class UnifiedPaymentService {
 
   /**
    * Route Amazon orders to Enhanced Zinc API System
-   * CRITICAL: MUST use process-zinc-order Edge Function, never direct API
+   * CRITICAL: MUST use process-zma-order Edge Function (zinc_api disabled)
    */
   private async processZincOrder(orderId: string): Promise<void> {
     try {
       console.log(`Routing order ${orderId} to Enhanced Zinc API System`);
 
       // CRITICAL: Use existing Edge Function, respect protection measures
-      const { data, error } = await supabase.functions.invoke('process-zinc-order', {
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderId,
           isTestMode: false,

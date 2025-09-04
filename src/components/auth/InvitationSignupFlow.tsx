@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Gift, Heart, Users, UserPlus, Calendar, Sparkles } from 'lucide-react';
+import { Gift, Heart, Users } from 'lucide-react';
 
 interface InvitationData {
   invitation_id: string;
@@ -16,15 +16,6 @@ interface InvitationData {
   recipient_name: string;
   inviter_context: string;
   source: string;
-  relationship_type?: string;
-  occasion?: string;
-}
-
-interface InviterDetails {
-  name: string;
-  first_name?: string;
-  last_name?: string;
-  profile_image?: string;
 }
 
 export const InvitationSignupFlow: React.FC = () => {
@@ -33,8 +24,6 @@ export const InvitationSignupFlow: React.FC = () => {
   const { user, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [invitationData, setInvitationData] = useState<InvitationData | null>(null);
-  const [inviterDetails, setInviterDetails] = useState<InviterDetails | null>(null);
-  const [loadingInviter, setLoadingInviter] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -49,74 +38,22 @@ export const InvitationSignupFlow: React.FC = () => {
     const invitation_id = searchParams.get('invitation_id');
     const recipient_email = searchParams.get('recipient_email');
     const recipient_name = searchParams.get('recipient_name');
-    const inviter_context = searchParams.get('inviter_context') || searchParams.get('giftor'); // Support both parameter names
+    const inviter_context = searchParams.get('inviter_context');
     const source = searchParams.get('source');
-    const relationship_type = searchParams.get('relationship_type');
-    const occasion = searchParams.get('occasion');
 
     if (invitation_id && recipient_email && recipient_name) {
-      const invitationData = {
+      setInvitationData({
         invitation_id,
         recipient_email,
         recipient_name,
         inviter_context: inviter_context || 'connection_request',
-        source: source || 'manual_invite',
-        relationship_type: relationship_type || undefined,
-        occasion: occasion || undefined
-      };
-      
-      setInvitationData(invitationData);
+        source: source || 'manual_invite'
+      });
 
       // Pre-populate email
       setFormData(prev => ({ ...prev, email: recipient_email }));
-      
-      // Fetch inviter details
-      fetchInviterDetails(invitation_id);
     }
   }, [searchParams]);
-
-  const fetchInviterDetails = async (invitationId: string) => {
-    setLoadingInviter(true);
-    try {
-      // First get the invitation details to get the inviter's user_id
-      const { data: invitationDetails, error: invitationError } = await supabase
-        .from("gift_invitation_analytics")
-        .select("user_id, relationship_type, occasion")
-        .eq("id", invitationId)
-        .single();
-
-      if (invitationError || !invitationDetails) {
-        console.error("Error fetching invitation details:", invitationError);
-        return;
-      }
-
-      // Then get the inviter's profile information
-      const { data: inviterProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("name, first_name, last_name, profile_image")
-        .eq("id", invitationDetails.user_id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching inviter profile:", profileError);
-        return;
-      }
-
-      setInviterDetails(inviterProfile);
-      
-      // Update invitation data with fetched details
-      setInvitationData(prev => prev ? {
-        ...prev,
-        relationship_type: invitationDetails.relationship_type || prev.relationship_type,
-        occasion: invitationDetails.occasion || prev.occasion
-      } : prev);
-
-    } catch (error) {
-      console.error("Error in fetchInviterDetails:", error);
-    } finally {
-      setLoadingInviter(false);
-    }
-  };
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -227,93 +164,6 @@ export const InvitationSignupFlow: React.FC = () => {
     }
   };
 
-  // Helper functions for personalized messaging
-  const getPersonalizedGreeting = () => {
-    if (loadingInviter) return "You're Invited!";
-    
-    if (inviterDetails?.name || inviterDetails?.first_name) {
-      const inviterName = inviterDetails.first_name || inviterDetails.name || "Someone";
-      return `${inviterName} invited you!`;
-    }
-    
-    return "You're Invited!";
-  };
-
-  const getPersonalizedSubtitle = () => {
-    if (loadingInviter) return "Loading invitation details...";
-    
-    const inviterName = inviterDetails?.first_name || inviterDetails?.name || "Someone";
-    const relationship = invitationData?.relationship_type;
-    const occasion = invitationData?.occasion;
-    
-    let message = `${inviterName} wants to connect with you on Elyphant`;
-    
-    if (relationship && relationship !== 'friend') {
-      if (relationship === 'family') {
-        message += " as family";
-      } else if (relationship === 'coworker') {
-        message += " as a coworker";
-      } else if (relationship === 'close_friend') {
-        message += " as a close friend";
-      } else {
-        message += ` as ${relationship}`;
-      }
-    }
-    
-    if (occasion) {
-      message += ` for ${occasion}`;
-    }
-    
-    return message + " to make gift-giving magical together! 🎁";
-  };
-
-  const getContextualIcon = () => {
-    const occasion = invitationData?.occasion;
-    const relationship = invitationData?.relationship_type;
-    
-    if (occasion?.toLowerCase().includes('birthday')) return Calendar;
-    if (occasion?.toLowerCase().includes('holiday') || occasion?.toLowerCase().includes('christmas')) return Sparkles;
-    if (relationship === 'family') return Heart;
-    if (relationship === 'coworker') return Users;
-    return UserPlus;
-  };
-
-  const getContextualColors = () => {
-    const occasion = invitationData?.occasion;
-    const relationship = invitationData?.relationship_type;
-    
-    if (occasion?.toLowerCase().includes('birthday')) {
-      return {
-        bgColor: 'bg-yellow-50',
-        iconColor: 'text-yellow-600',
-        borderColor: 'border-yellow-200'
-      };
-    }
-    
-    if (occasion?.toLowerCase().includes('holiday') || occasion?.toLowerCase().includes('christmas')) {
-      return {
-        bgColor: 'bg-green-50',
-        iconColor: 'text-green-600', 
-        borderColor: 'border-green-200'
-      };
-    }
-    
-    if (relationship === 'family') {
-      return {
-        bgColor: 'bg-rose-50',
-        iconColor: 'text-rose-600',
-        borderColor: 'border-rose-200'
-      };
-    }
-    
-    // Default purple theme
-    return {
-      bgColor: 'bg-primary/10',
-      iconColor: 'text-primary',
-      borderColor: 'border-primary/20'
-    };
-  };
-
   if (!invitationData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -332,75 +182,25 @@ export const InvitationSignupFlow: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          {/* Inviter Profile Section */}
-          {inviterDetails?.profile_image && (
-            <div className="mx-auto mb-3">
-              <img 
-                src={inviterDetails.profile_image} 
-                alt={`${inviterDetails.first_name || inviterDetails.name}'s profile`}
-                className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-              />
-            </div>
-          )}
-          
-          {/* Dynamic Icon based on context */}
-          {(() => {
-            const IconComponent = getContextualIcon();
-            const colors = getContextualColors();
-            return (
-              <div className={`mx-auto mb-4 p-3 ${colors.bgColor} ${colors.borderColor} border rounded-full w-fit`}>
-                <IconComponent className={`h-6 w-6 ${colors.iconColor}`} />
-              </div>
-            );
-          })()}
-          
-          <CardTitle className="text-2xl font-bold mb-2">
-            {getPersonalizedGreeting()}
-          </CardTitle>
-          
-          <p className="text-muted-foreground leading-relaxed">
-            {getPersonalizedSubtitle()}
+          <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+            <Gift className="h-6 w-6 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">You're Invited!</CardTitle>
+          <p className="text-muted-foreground">
+            Someone wants to connect with you on Elyphant for gift sharing
           </p>
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Dynamic context section based on invitation details */}
-          {(() => {
-            const colors = getContextualColors();
-            const relationship = invitationData?.relationship_type;
-            const occasion = invitationData?.occasion;
-            const inviterName = inviterDetails?.first_name || inviterDetails?.name || "Your friend";
-            
-            return (
-              <div className={`${colors.bgColor} ${colors.borderColor} border p-4 rounded-lg space-y-3`}>
-                <div className="flex items-center gap-2">
-                  <Gift className={`h-4 w-4 ${colors.iconColor}`} />
-                  <span className="font-medium">
-                    {occasion ? `${occasion} Connection` : 
-                     relationship === 'family' ? 'Family Connection' :
-                     relationship === 'coworker' ? 'Work Connection' :
-                     'Friend Connection'}
-                  </span>
-                </div>
-                
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>
-                    <strong>What you'll get:</strong>
-                  </p>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Access to {inviterName}'s wishlist</li>
-                    <li>Smart gift recommendations</li>
-                    <li>
-                      {occasion ? `Help with ${occasion} planning` : 
-                       relationship === 'family' ? 'Family gift coordination' :
-                       'Never miss important dates'}
-                    </li>
-                    <li>Private gift planning together</li>
-                  </ul>
-                </div>
-              </div>
-            );
-          })()}
+          <div className="bg-secondary/50 p-4 rounded-lg space-y-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="font-medium">Connection Request</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Join Elyphant to share wishlists and make gift-giving easier for everyone
+            </p>
+          </div>
 
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

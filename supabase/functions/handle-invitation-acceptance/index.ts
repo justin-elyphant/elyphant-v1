@@ -25,22 +25,21 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return new Response("Missing Supabase configuration", { 
         status: 500, 
         headers: corsHeaders 
       });
     }
 
-    // Use service role key to bypass RLS for invitation lookup
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     // Get invitation details to determine routing
     const { data: invitation, error } = await supabase
       .from("gift_invitation_analytics")
-      .select("invitation_type, source_context, user_id, recipient_email, recipient_name, completion_redirect_url, relationship_type, occasion")
+      .select("invitation_type, source_context, user_id, recipient_email, recipient_name, completion_redirect_url")
       .eq("id", invitationId)
       .single();
 
@@ -74,16 +73,7 @@ serve(async (req) => {
     
     // Add additional context for invited users
     if (invitation.user_id) {
-      signupParams.set("inviter_context", invitation.user_id);
-    }
-    
-    // Add relationship and occasion context for personalization
-    if (invitation.relationship_type) {
-      signupParams.set("relationship_type", invitation.relationship_type);
-    }
-    
-    if (invitation.occasion) {
-      signupParams.set("occasion", invitation.occasion);
+      signupParams.set("giftor", invitation.user_id);
     }
     
     let redirectUrl = `${appUrl}/auth?${signupParams.toString()}`;

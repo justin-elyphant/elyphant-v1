@@ -45,7 +45,8 @@ serve(async (req) => {
 
     if (error || !invitation) {
       console.error("Invitation not found:", error);
-      return Response.redirect(`${supabaseUrl.replace('//', '//www.')}/signup?error=invitation_not_found`);
+      const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
+      return Response.redirect(`${appUrl}/auth?error=invitation_not_found`);
     }
 
     // Track email click event
@@ -61,7 +62,7 @@ serve(async (req) => {
     console.log("Processing invitation:", invitation);
 
     // Route all invitation types to signup/onboarding flow with invitation context
-    const baseUrl = supabaseUrl.replace('//', '//www.');
+    const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
     const signupParams = new URLSearchParams({
       invitation_id: invitationId,
       recipient_email: invitation.recipient_email,
@@ -75,7 +76,7 @@ serve(async (req) => {
       signupParams.set("giftor", invitation.user_id);
     }
     
-    const redirectUrl = `${baseUrl}/auth?${signupParams.toString()}`;
+    let redirectUrl = `${appUrl}/auth?${signupParams.toString()}`;
 
     // Use custom redirect URL if specified
     if (invitation.completion_redirect_url) {
@@ -92,8 +93,8 @@ serve(async (req) => {
     console.error("Error in handle-invitation-acceptance:", error);
     
     // Fallback redirect to signup with error context
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const fallbackUrl = `${supabaseUrl?.replace('//', '//www.')}/auth?error=invitation_processing_failed`;
+    const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
+    const fallbackUrl = `${appUrl}/auth?error=invitation_processing_failed`;
     
     return Response.redirect(fallbackUrl);
   }

@@ -38,8 +38,19 @@ export const retryOrderWithBillingInfo = async (
       throw new Error(`Failed to fetch order: ${fetchError?.message || 'Order not found'}`);
     }
 
-    const orderMethod = orderData.order_method || 'zinc_api';
+    const orderMethod = orderData.order_method || 'zma';
     console.log(`📋 Order method: ${orderMethod}`);
+    
+    // SAFETY GUARD: Block zinc_api processing
+    if (orderMethod === 'zinc_api') {
+      console.error('❌ BLOCKED: zinc_api order method is disabled. Converting to ZMA.');
+      // Update order to use ZMA
+      await supabase
+        .from('orders')
+        .update({ order_method: 'zma' })
+        .eq('id', orderId);
+      throw new Error('Order converted to ZMA method. Please retry the order.');
+    }
     
     // CRITICAL: Verify payment status before retry to prevent duplicate charges
     console.log('💳 Verifying payment status before retry...');
@@ -69,7 +80,9 @@ export const retryOrderWithBillingInfo = async (
     console.log('✅ Order updated with billing information');
 
     // Choose the appropriate processing function based on order method
-    const functionName = orderMethod === 'zma' ? 'process-zma-order' : 'process-zinc-order';
+    // SAFETY GUARD: Only allow ZMA processing
+    const functionName = 'process-zma-order';
+    console.log(`🔄 Using ${functionName} for order retry (zinc_api processing disabled)`);
 
     // Resubmit via the appropriate processing function
     const { data, error } = await supabase.functions.invoke(functionName, {

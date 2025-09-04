@@ -56,8 +56,21 @@ serve(async (req) => {
       try {
         console.log(`🔄 Processing retry for order ${order.id} (attempt ${order.retry_count + 1})`);
 
-        // Determine the processing function based on order method
-        const functionName = order.order_method === 'zma' ? 'process-zma-order' : 'process-zinc-order';
+        // SAFETY GUARD: Only allow ZMA processing (zinc_api disabled)
+        let orderMethod = order.order_method || 'zma';
+        
+        // Block and convert any zinc_api orders to ZMA
+        if (orderMethod === 'zinc_api') {
+          console.log(`🔄 Converting order ${order.id} from zinc_api to ZMA`);
+          await supabase
+            .from('orders')
+            .update({ order_method: 'zma' })
+            .eq('id', order.id);
+          orderMethod = 'zma';
+        }
+        
+        const functionName = 'process-zma-order';  // Only use ZMA processing
+        console.log(`🔄 Using ${functionName} for order ${order.id} (zinc_api disabled)`);
 
         // Retry the order processing
         const { data, error } = await supabase.functions.invoke(functionName, {

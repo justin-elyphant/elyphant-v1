@@ -4,6 +4,7 @@ import { useOrders } from "@/hooks/trunkline/useOrders";
 import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
+import RetryNotificationService from "@/components/admin/RetryNotificationService";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
@@ -46,6 +47,17 @@ const TrunklineOrdersTab = () => {
         loading={loading}
         onOrderClick={handleOrderClick}
         onOrderUpdated={refetch}
+      />
+
+      {/* Retry Processing Queue */}
+      <RetryNotificationService 
+        onSuccess={(orderId, result) => {
+          console.log(`Order ${orderId} retry successful:`, result);
+          refetch(); // Refresh the orders list
+        }}
+        onError={(orderId, error) => {
+          console.error(`Order ${orderId} retry failed:`, error);
+        }}
       />
     </div>
   );

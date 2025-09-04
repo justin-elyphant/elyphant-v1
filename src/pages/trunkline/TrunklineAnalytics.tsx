@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PerformanceMonitor, usePerformanceMonitor } from '@/utils/performanceMonitoring';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import DuplicateChargePreventionDashboard from '@/components/admin/DuplicateChargePreventionDashboard';
 import { Activity, Users, Database, Server, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 
 interface SystemMetrics {
@@ -198,6 +199,7 @@ const TrunklineAnalytics: React.FC = () => {
           <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
           <TabsTrigger value="capacity">Capacity Planning</TabsTrigger>
           <TabsTrigger value="growth">User Growth</TabsTrigger>
+          <TabsTrigger value="payment-protection">Payment Protection</TabsTrigger>
         </TabsList>
 
         <TabsContent value="services" className="space-y-4">
@@ -368,6 +370,10 @@ const TrunklineAnalytics: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="payment-protection" className="space-y-4">
+          <DuplicateChargePreventionDashboard />
         </TabsContent>
       </Tabs>
     </div>

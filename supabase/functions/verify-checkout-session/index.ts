@@ -51,8 +51,8 @@ serve(async (req) => {
       // Trigger Zinc order processing after successful payment
       if (order) {
         try {
-          // Call process-zinc-order function with correct interface
-          const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zinc-order', {
+          // Call process-zma-order function (zinc_api disabled)
+          const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zma-order', {
             body: {
               orderId: order.id,
               isTestMode: false,

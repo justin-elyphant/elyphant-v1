@@ -167,7 +167,7 @@ serve(async (req) => {
     // Process with Zinc API if product ID exists
     if (project.target_product_id) {
       try {
-        await supabaseService.functions.invoke('process-zinc-order', {
+        await supabaseService.functions.invoke('process-zma-order', {
           body: { orderId: order.id }
         });
         logStep("Zinc order processing initiated");

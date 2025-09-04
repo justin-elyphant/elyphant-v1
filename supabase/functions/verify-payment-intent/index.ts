@@ -144,7 +144,7 @@ serve(async (req) => {
       // Trigger Zinc order processing
       try {
         console.log('🚀 Triggering Zinc processing...');
-        const { data: zincResponse, error: zincError } = await supabaseClient.functions.invoke('process-zinc-order', {
+        const { data: zincResponse, error: zincError } = await supabaseClient.functions.invoke('process-zma-order', {
           body: { 
             orderId: order_id,
             isTestMode: false

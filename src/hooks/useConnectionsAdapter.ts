@@ -399,8 +399,124 @@ export const useConnectionsAdapter = () => {
   };
 
   const fetchSuggestions = async () => {
-    // For now, return empty array - suggestions would be a more complex feature
-    return [];
+    try {
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) return [];
+
+      console.log('🔍 [useConnectionsAdapter] Fetching suggestions for user:', currentUser.user.id);
+
+      // Get current user's profile info for potential matching
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('name, first_name, last_name, email, bio')
+        .eq('id', currentUser.user.id)
+        .maybeSingle();
+
+      if (!userProfile) {
+        console.log('⚠️ [useConnectionsAdapter] No user profile found for suggestions');
+        return [];
+      }
+
+      // Get already connected user IDs to exclude from suggestions
+      const { data: existingConnections } = await supabase
+        .from('user_connections')
+        .select('user_id, connected_user_id')
+        .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
+        .in('status', ['accepted', 'pending', 'pending_invitation']);
+
+      const connectedUserIds = new Set<string>();
+      connectedUserIds.add(currentUser.user.id); // Exclude self
+      
+      existingConnections?.forEach(conn => {
+        connectedUserIds.add(conn.user_id);
+        connectedUserIds.add(conn.connected_user_id);
+      });
+
+      // Get blocked users to exclude
+      const { data: blockedUsers } = await supabase
+        .from('blocked_users')
+        .select('blocked_id, blocker_id')
+        .or(`blocker_id.eq.${currentUser.user.id},blocked_id.eq.${currentUser.user.id}`);
+
+      blockedUsers?.forEach(block => {
+        connectedUserIds.add(block.blocked_id);
+        connectedUserIds.add(block.blocker_id);
+      });
+
+      console.log('🚫 [useConnectionsAdapter] Excluding users:', connectedUserIds.size, 'already connected/blocked users');
+
+      // Use the search function to find potential connections
+      // Search by parts of the user's name to find similar users
+      const searchTerms = [];
+      if (userProfile.first_name) searchTerms.push(userProfile.first_name);
+      if (userProfile.last_name) searchTerms.push(userProfile.last_name);
+      
+      const suggestionProfiles = new Map();
+      
+      // Search for users with similar names or interests
+      for (const searchTerm of searchTerms.slice(0, 2)) { // Limit to 2 searches
+        const { data: searchResults } = await supabase.rpc('search_users_for_friends', {
+          search_term: searchTerm,
+          requesting_user_id: currentUser.user.id,
+          search_limit: 10
+        });
+
+        searchResults?.forEach(profile => {
+          if (!connectedUserIds.has(profile.id)) {
+            suggestionProfiles.set(profile.id, {
+              ...profile,
+              reason: `May know from ${searchTerm}`
+            });
+          }
+        });
+      }
+
+      // Also get some random suggestions from users who allow public discovery
+      const { data: randomSuggestions } = await supabase
+        .from('profiles')
+        .select('id, name, username, first_name, last_name, profile_image, bio')
+        .not('id', 'in', `(${Array.from(connectedUserIds).join(',')})`)
+        .limit(5);
+
+      randomSuggestions?.forEach(profile => {
+        if (!suggestionProfiles.has(profile.id)) {
+          suggestionProfiles.set(profile.id, {
+            ...profile,
+            reason: 'Suggested for you'
+          });
+        }
+      });
+
+      // Convert to suggestions format
+      const suggestions = Array.from(suggestionProfiles.values())
+        .slice(0, 8) // Limit to 8 suggestions
+        .map(profile => ({
+          id: profile.id,
+          connectionId: null, // No connection yet
+          name: profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+          username: profile.username || `@${profile.id.substring(0, 8)}`,
+          imageUrl: profile.profile_image || '/placeholder.svg',
+          mutualFriends: 0, // TODO: Could calculate mutual connections
+          type: 'suggestion' as const,
+          lastActive: 'recently',
+          relationship: 'none' as any,
+          dataStatus: {
+            shipping: 'missing' as const,
+            birthday: 'missing' as const,
+            email: 'missing' as const
+          },
+          bio: profile.bio || '',
+          reason: profile.reason || 'Suggested for you',
+          isPending: false,
+          isIncoming: false
+        }));
+
+      console.log('✅ [useConnectionsAdapter] Found suggestions:', suggestions.length);
+      return suggestions;
+    } catch (error) {
+      console.error('❌ [useConnectionsAdapter] Error fetching suggestions:', error);
+      return [];
+    }
   };
 
   const loadData = useCallback(async () => {

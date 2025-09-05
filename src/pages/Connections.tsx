@@ -63,6 +63,7 @@ const Connections = () => {
   // Get connections data
   const { 
     friends,
+    suggestions,
     pendingConnections, 
     loading: connectionsLoading,
     refreshPendingConnections,
@@ -197,16 +198,20 @@ const Connections = () => {
                     ))}
                   </div>
                 }>
-                  <div className="text-center py-12">
-                    <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Discover new connections</h3>
-                    <p className="text-muted-foreground mb-4">
-                      We'll suggest people you might know
-                    </p>
-                    <Button>
-                      Explore Suggestions
-                    </Button>
-                  </div>
+                  {suggestions.length > 0 ? (
+                    <SuggestionsTabContent suggestions={suggestions} />
+                  ) : (
+                    <div className="text-center py-12">
+                      <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Discover new connections</h3>
+                      <p className="text-muted-foreground mb-4">
+                        We'll suggest people you might know
+                      </p>
+                      <Button onClick={() => window.location.reload()}>
+                        Explore Suggestions
+                      </Button>
+                    </div>
+                  )}
                 </Suspense>
               </TabsContent>
             </Tabs>

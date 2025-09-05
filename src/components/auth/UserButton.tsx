@@ -208,23 +208,24 @@ const UserButton = () => {
             {section.items.map((item) => (
               <DropdownMenuItem 
                 key={item.id}
-                asChild
                 className={navigationStyles.dropdownItem}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.href);
+                }}
               >
-                <Link to={item.href}>
-                  {item.icon && React.cloneElement(item.icon as React.ReactElement, { 
-                    className: navigationStyles.dropdownIcon 
-                  })}
-                  <span className={navigationStyles.dropdownLabel}>
-                    {item.label}
-                    {item.badge && item.badge > 0 && (
-                      <NotificationBadge 
-                        count={item.badge} 
-                        className={navigationStyles.badgeDesktop}
-                      />
-                    )}
-                  </span>
-                </Link>
+                {item.icon && React.cloneElement(item.icon as React.ReactElement, { 
+                  className: navigationStyles.dropdownIcon 
+                })}
+                <span className={navigationStyles.dropdownLabel}>
+                  {item.label}
+                  {item.badge && item.badge > 0 && (
+                    <NotificationBadge 
+                      count={item.badge} 
+                      className={navigationStyles.badgeDesktop}
+                    />
+                  )}
+                </span>
               </DropdownMenuItem>
             ))}
             {sectionIndex < sections.length - 1 && <DropdownMenuSeparator />}

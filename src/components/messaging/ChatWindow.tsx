@@ -136,7 +136,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Fixed Chat Header */}
-      <div className="flex-shrink-0 border-b bg-background p-4 sticky top-0 z-10">
+      <div className="flex-shrink-0 border-b bg-background p-4 sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/messages">

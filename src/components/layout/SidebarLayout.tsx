@@ -11,15 +11,15 @@ interface SidebarLayoutProps {
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <div className="min-h-screen w-full">
-      {/* Full-width header */}
-      <Header />
+      {/* Fixed header with higher z-index */}
+      <Header className="fixed top-0 left-0 right-0 z-50" />
       
       {/* Sidebar layout below header */}
       <SidebarProvider defaultOpen={false}>
-        <div className="flex w-full" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="flex w-full" style={{ height: '100vh', paddingTop: '80px' }}>
           <AppSidebar />
-          <SidebarInset className="flex-1">
-            <main className="flex-1 p-4">
+          <SidebarInset className="flex-1 overflow-hidden">
+            <main className="h-full overflow-hidden">
               {children}
             </main>
           </SidebarInset>

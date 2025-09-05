@@ -4004,6 +4004,10 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: boolean
       }
+      get_security_recommendations: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_upcoming_auto_gift_events: {
         Args: { days_ahead?: number }
         Returns: {
@@ -4120,6 +4124,10 @@ export type Database = {
           username: string
         }[]
       }
+      security_monitoring_dashboard: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       set_limit: {
         Args: { "": number }
         Returns: number
@@ -4147,6 +4155,10 @@ export type Database = {
           order_hash_param: string
           user_uuid: string
         }
+        Returns: Json
+      }
+      verify_critical_security_fixed: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
     }

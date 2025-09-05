@@ -184,7 +184,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
         </CardContent>
         <CardFooter className="flex justify-between pt-2">
           <Button variant="outline" size="sm" onClick={handleViewDetailsClick}>
-            View Details
+            View Profile
           </Button>
           <div className="flex gap-2">
             <TooltipProvider>

@@ -749,14 +749,18 @@ class UnifiedMessagingService {
 
   private async verifyConnection(userId: string, recipientId: string): Promise<boolean> {
     try {
-      const { data: connection } = await supabase
+      const { data: connections, error } = await supabase
         .from('user_connections')
         .select('*')
         .or(`and(user_id.eq.${userId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${userId})`)
-        .eq('status', 'accepted')
-        .single();
+        .eq('status', 'accepted');
 
-      return !!connection;
+      if (error) {
+        console.error('Error verifying connection:', error);
+        return false;
+      }
+
+      return connections && connections.length > 0;
     } catch (error) {
       console.error('Error verifying connection:', error);
       return false;

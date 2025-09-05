@@ -232,7 +232,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       {/* Fixed Message Input */}
-      <div className="flex-shrink-0 border-t bg-background p-4 fixed bottom-[60px] left-0 right-0 md:sticky md:bottom-0 z-40">
+      <div className="flex-shrink-0 border-t bg-background p-4 fixed bottom-[80px] left-0 right-0 md:sticky md:bottom-0 z-40">
         <form onSubmit={handleSendMessage} className="flex gap-3">
           <Input
             value={newMessage}

@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Zap,
   Plus,
-  Search
+  Search,
+  MessageCircle
 } from "lucide-react";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
 import QuickGiftCTA from "./QuickGiftCTA";
@@ -212,20 +213,20 @@ const DashboardGrid = () => {
           isMobile ? "grid-cols-1 space-y-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6"
         )}>
 
-        {/* Social Hub */}
+        {/* Connections */}
         <SwipeableCard 
           className={cn(
             "hover:shadow-lg transition-all duration-200 cursor-pointer group",
             "touch-manipulation min-h-[140px] sm:min-h-[130px]"
           )}
-          onSwipeLeft={() => handleCardSwipe('left', 'social')}
-          onSwipeRight={() => handleCardSwipe('right', 'social')}
+          onSwipeLeft={() => handleCardSwipe('left', 'connections')}
+          onSwipeRight={() => handleCardSwipe('right', 'connections')}
           disabled={!isMobile}
         >
           <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
             <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
-              <span className="line-clamp-1">Social Hub</span>
+              <span className="line-clamp-1">Connections</span>
               {connectionStats.pending > 0 && (
                 <Badge variant="secondary" className="ml-auto text-xs h-4 px-1">
                   {connectionStats.pending}
@@ -233,18 +234,18 @@ const DashboardGrid = () => {
               )}
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm line-clamp-2">
-              Friends & connections
+              Friends & networking
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
               <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-                View activity, manage connections, and send messages
+                Manage your friend connections
               </div>
               <Button asChild className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
-                <Link to="/social" className="flex items-center justify-center truncate">
-                  <span className="hidden sm:inline truncate">Open Social Hub</span>
-                  <span className="sm:hidden truncate">Social</span>
+                <Link to="/connections" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">View Connections</span>
+                  <span className="sm:hidden truncate">Connections</span>
                   <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </Button>
@@ -282,6 +283,35 @@ const DashboardGrid = () => {
           </CardContent>
         </Card>
 
+        {/* Messages */}
+        <Card className={cn(
+          "hover:shadow-lg transition-all duration-200 cursor-pointer group",
+          "touch-manipulation min-h-[140px] sm:min-h-[130px]"
+        )}>
+          <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="flex items-center gap-2 group-hover:text-primary transition-colors text-base sm:text-lg">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:scale-110 transition-transform flex-shrink-0" />
+              <span className="line-clamp-1">Messages</span>
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm line-clamp-2">
+              Chat with friends
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">
+                Send messages to your connections
+              </div>
+              <Button asChild variant="outline" className="w-full touch-target-44 text-xs sm:text-sm h-9 sm:h-10 min-w-0">
+                <Link to="/messages" className="flex items-center justify-center truncate">
+                  <span className="hidden sm:inline truncate">View Messages</span>
+                  <span className="sm:hidden truncate">Messages</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Wishlists */}
         <Card className={cn(

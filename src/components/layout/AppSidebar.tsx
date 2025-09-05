@@ -30,12 +30,13 @@ import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const { unreadCount: messageCount } = useNotifications();
+  const unreadMessagesCount = useUnreadMessagesCount();
   const { pendingConnections } = useConnectionsAdapter();
 
   // Personal dashboard 
@@ -73,7 +74,7 @@ const AppSidebar = () => {
       title: "Messages",
       url: "/messages",
       icon: MessageCircle,
-      badge: messageCount > 0 ? messageCount : undefined,
+      badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
     },
     {
       title: "Gifting Hub",

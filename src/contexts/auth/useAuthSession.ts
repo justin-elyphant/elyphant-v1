@@ -11,6 +11,7 @@ interface UseAuthSessionReturn {
 }
 
 export function useAuthSession(): UseAuthSessionReturn {
+  // Fixed: Removed all router hooks to prevent context errors
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);

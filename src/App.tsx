@@ -162,9 +162,7 @@ function AppContent() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Import at top level */}
-      <MobileBottomNavigation />
+    <div className="min-h-screen bg-background text-foreground">{/* Import at top level - inside Router context */}
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -236,6 +234,7 @@ function AppContent() {
           <Route path="/signup" element={<Auth />} />
         </Routes>
       </Suspense>
+      <MobileBottomNavigation />
       <Toaster />
       
     </div>

@@ -32,21 +32,16 @@ const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Personal dashboard and features
+  // Personal dashboard 
   const personalItems = [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutGrid,
     },
-    {
-      title: "Account Settings",
-      url: "/settings",
-      icon: User,
-    },
   ];
 
-  // Shopping and commerce
+  // Shopping workflows
   const shoppingItems = [
     {
       title: "Marketplace",
@@ -54,23 +49,13 @@ const AppSidebar = () => {
       icon: ShoppingBag,
     },
     {
-      title: "Wishlists",
-      url: "/wishlists",
-      icon: Heart,
-    },
-    {
       title: "Cart",
       url: "/cart",
       icon: ShoppingCart,
     },
-    {
-      title: "Orders",
-      url: "/orders",
-      icon: Package,
-    },
   ];
 
-  // Social and AI features
+  // Social and AI workflows
   const socialItems = [
     {
       title: "Social Hub",
@@ -104,7 +89,7 @@ const AppSidebar = () => {
       <SidebarContent>
         {/* Personal Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Personal</SidebarGroupLabel>
+          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {personalItems.map((item) => (

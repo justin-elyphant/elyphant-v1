@@ -20,7 +20,9 @@ import {
   Star,
   Clock,
   Zap,
-  Compass
+  Compass,
+  UserCheck,
+  Sparkles
 } from "lucide-react";
 import { NavigationConfig, NavigationItem, NavigationSection } from "../types/navigationTypes";
 
@@ -50,7 +52,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
       id: "gift-ideas",
       label: "Gift Ideas",
       href: "/gift-ideas",
-      icon: <Gift className="h-5 w-5" />,
+      icon: <Sparkles className="h-5 w-5" />,
     },
     ...(isAuthenticated ? [
       {
@@ -185,7 +187,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           id: "connections",
           label: "Connections",
           href: "/connections",
-          icon: <Users className="h-5 w-5" />,
+          icon: <UserCheck className="h-5 w-5" />,
           badge: badges.connections > 0 ? badges.connections : undefined,
           section: "account" as const,
           requiresAuth: true

@@ -182,49 +182,64 @@ export const useConnectionsAdapter = () => {
         });
       });
 
-      // Transform connections to friend objects with enhanced fallback
-      const friends = connections.map(conn => {
-        // Determine which profile to show (the other person)
-        const isCurrentUserRequester = conn.user_id === currentUser.user.id;
-        const otherUserId = isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
-        const otherProfile = profileMap.get(otherUserId);
-        
-        // Enhanced name resolution for accepted connections
-        let displayName = otherProfile?.name || 'Unknown User';
-        let displayUsername = otherProfile?.username || `@user${otherUserId?.substring(0, 6) || 'unknown'}`;
-        
-        // For accepted connections, we should always have some name
-        if (displayName === 'Unknown User' || displayName.startsWith('Unknown')) {
-          displayName = `Friend ${otherUserId?.substring(0, 8) || 'Unknown'}`;
-          console.warn('⚠️ [useConnectionsAdapter] Using fallback name for accepted connection:', otherUserId);
-        }
-        
-        // Get data status from privacy map or use fallback
-        const dataStatus = privacyMap.get(otherUserId) || {
-          shipping: 'missing' as const,
-          birthday: 'missing' as const,
-          email: 'missing' as const
-        };
+      // Transform connections to friend objects with enhanced fallback and deduplication
+      const seenConnections = new Set<string>();
+      const friends = connections
+        .map(conn => {
+          // Determine which profile to show (the other person)
+          const isCurrentUserRequester = conn.user_id === currentUser.user.id;
+          const otherUserId = isCurrentUserRequester ? conn.connected_user_id : conn.user_id;
+          
+          // Create a unique key for this connection to prevent duplicates
+          const connectionKey = [currentUser.user.id, otherUserId].sort().join('-');
+          
+          // Skip if we've already processed this connection
+          if (seenConnections.has(connectionKey)) {
+            console.log('🔄 [useConnectionsAdapter] Skipping duplicate connection for:', otherUserId);
+            return null;
+          }
+          
+          seenConnections.add(connectionKey);
+          
+          const otherProfile = profileMap.get(otherUserId);
+          
+          // Enhanced name resolution for accepted connections
+          let displayName = otherProfile?.name || 'Unknown User';
+          let displayUsername = otherProfile?.username || `@user${otherUserId?.substring(0, 6) || 'unknown'}`;
+          
+          // For accepted connections, we should always have some name
+          if (displayName === 'Unknown User' || displayName.startsWith('Unknown')) {
+            displayName = `Friend ${otherUserId?.substring(0, 8) || 'Unknown'}`;
+            console.warn('⚠️ [useConnectionsAdapter] Using fallback name for accepted connection:', otherUserId);
+          }
+          
+          // Get data status from privacy map or use fallback
+          const dataStatus = privacyMap.get(otherUserId) || {
+            shipping: 'missing' as const,
+            birthday: 'missing' as const,
+            email: 'missing' as const
+          };
 
-        console.log(`🔍 [useConnectionsAdapter] Privacy status for ${displayName}:`, dataStatus);
+          console.log(`🔍 [useConnectionsAdapter] Privacy status for ${displayName}:`, dataStatus);
 
-        return {
-          id: otherUserId,
-          connectionId: conn.id, // Add connectionId for deletion
-          name: displayName,
-          username: displayUsername,
-          imageUrl: otherProfile?.profile_image || '/placeholder.svg',
-          mutualFriends: 0,
-          type: 'friend' as const,
-          lastActive: 'recently',
-          relationship: conn.relationship_type as RelationshipType,
-          dataStatus,
-          bio: otherProfile?.bio || '',
-          connectionDate: conn.created_at
-        };
-      });
+          return {
+            id: otherUserId,
+            connectionId: conn.id, // Add connectionId for deletion
+            name: displayName,
+            username: displayUsername,
+            imageUrl: otherProfile?.profile_image || '/placeholder.svg',
+            mutualFriends: 0,
+            type: 'friend' as const,
+            lastActive: 'recently',
+            relationship: conn.relationship_type as RelationshipType,
+            dataStatus,
+            bio: otherProfile?.bio || '',
+            connectionDate: conn.created_at
+          };
+        })
+        .filter((friend): friend is NonNullable<typeof friend> => friend !== null); // Remove null entries from duplicates
       
-      console.log('✅ [useConnectionsAdapter] Transformed friends with enhanced fallback:', friends.length);
+      console.log('✅ [useConnectionsAdapter] Transformed friends with deduplication:', friends.length);
       console.log('🔍 [useConnectionsAdapter] Sample friend names:', friends.slice(0, 3).map(f => f.name));
       return friends;
     } catch (error) {

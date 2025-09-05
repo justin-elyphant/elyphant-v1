@@ -468,10 +468,9 @@ const GiftingHubCard = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="smart-gifting">Smart Gifting</TabsTrigger>
               <TabsTrigger value="my-gifts">My Gifts</TabsTrigger>
-              <TabsTrigger value="group-projects">Group Projects</TabsTrigger>
               <TabsTrigger value="automation">Automation</TabsTrigger>
             </TabsList>
             
@@ -481,10 +480,6 @@ const GiftingHubCard = () => {
             
             <TabsContent value="my-gifts" className="mt-6">
               <MyGiftsTab />
-            </TabsContent>
-            
-            <TabsContent value="group-projects" className="mt-6">
-              <GroupProjectsTab />
             </TabsContent>
             
             <TabsContent value="automation" className="mt-6">

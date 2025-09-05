@@ -4071,7 +4071,7 @@ export type Database = {
         Returns: string
       }
       is_authorized_for_payment_methods: {
-        Args: { action_type: string }
+        Args: { permission_type: string }
         Returns: boolean
       }
       is_business_admin: {
@@ -4093,6 +4093,15 @@ export type Database = {
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
+      }
+      log_sensitive_data_access: {
+        Args: {
+          access_reason?: string
+          access_type: string
+          accessed_id: string
+          accessed_table: string
+        }
+        Returns: undefined
       }
       search_users_for_friends: {
         Args: {

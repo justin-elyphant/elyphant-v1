@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target } from "lucide-react";
+import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Edit, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
-import { MyGiftsDashboard } from "@/components/gifting/unified/MyGiftsDashboard";
+import { MyGiftsDashboardSimplified } from "@/components/gifting/unified/MyGiftsDashboardSimplified";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,17 +28,23 @@ import { supabase } from "@/integrations/supabase/client";
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
 import GroupGiftAnalytics from "./GroupGiftAnalytics";
 
-// Import automation component
-import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
+// Import auto-gifting hook
+import { useAutoGifting } from "@/hooks/useAutoGifting";
 
-// Smart Gifting Tab Component
+// Enhanced Smart Gifting Tab Component (Primary Hub)
 const SmartGiftingTab = () => {
   const { events, isLoading: eventsLoading } = useEvents();
   const { pendingInvitations, loading: connectionsLoading } = useEnhancedConnections();
   const { user } = useAuth();
+  const { rules } = useAutoGifting();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
+
+  // Quick Stats for dashboard
+  const activeRules = rules?.filter(rule => rule.is_active) || [];
+  const scheduledGifts = []; // TODO: Integrate with actual scheduled gifts
+  const recentGifts = []; // TODO: Integrate with gift history
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
@@ -79,6 +85,19 @@ const SmartGiftingTab = () => {
     }
   };
 
+  const handleScheduleGift = () => {
+    window.location.href = '/marketplace';
+  };
+
+  const handleViewHistory = () => {
+    // Switch to My Gifts tab to see full history
+    const tabsList = document.querySelector('[data-testid="tabs-list"]');
+    const myGiftsTab = tabsList?.querySelector('[value="my-gifts"]');
+    if (myGiftsTab) {
+      (myGiftsTab as HTMLElement).click();
+    }
+  };
+
   if (eventsLoading) {
     return (
       <div className="space-y-4">
@@ -107,13 +126,54 @@ const SmartGiftingTab = () => {
         <GiftPathSelector onSelectPath={handlePathSelection} />
       </div>
 
-      {/* Auto-Gift Hub Section */}
+      {/* Quick Actions Bar */}
+      <div className="flex flex-wrap gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <Button 
+          onClick={() => setAutoGiftSetupOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Auto-Gift Rule
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleScheduleGift}
+          className="flex items-center gap-2"
+        >
+          <Calendar className="h-4 w-4" />
+          Schedule Gift
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleViewHistory}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          View History
+        </Button>
+      </div>
+
+      {/* Enhanced Upcoming Events Section with Quick Stats */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center">
             <Zap className="h-5 w-5 mr-2 text-emerald-500" />
             Upcoming Events
           </h3>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Bot className="h-4 w-4" />
+              {activeRules.length} Rules Active
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              {scheduledGifts.length} Scheduled
+            </span>
+            <span className="flex items-center gap-1">
+              <Gift className="h-4 w-4" />
+              {recentGifts.length} Recent
+            </span>
+          </div>
         </div>
         
         {upcomingEvents.length > 0 ? (
@@ -145,7 +205,7 @@ const SmartGiftingTab = () => {
                   )}
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-sm text-muted-foreground">
                     {event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}
                   </p>
@@ -159,15 +219,33 @@ const SmartGiftingTab = () => {
                         Reminders Only
                       </Badge>
                     )}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => handleSetupAutoGift(event)}
-                      className="h-8 sm:h-7 touch-manipulation"
-                    >
-                      {event.autoGiftEnabled ? 'Edit' : 'Set Up AI'}
-                    </Button>
                   </div>
+                </div>
+
+                {/* Event Actions */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleScheduleGift()}
+                    className="flex-1"
+                  >
+                    Send Now
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleSetupAutoGift(event)}
+                    className="flex-1"
+                  >
+                    {event.autoGiftEnabled ? 'Edit Auto-Gift' : 'Setup Auto-Gift'}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleScheduleGift()}
+                  >
+                    Schedule Later
+                  </Button>
                 </div>
               </div>
             ))}
@@ -186,6 +264,32 @@ const SmartGiftingTab = () => {
           </div>
         )}
       </div>
+
+      {/* Recent Activity Preview */}
+      {recentGifts.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+            <Button variant="ghost" size="sm" onClick={handleViewHistory}>
+              View All
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {recentGifts.slice(0, 3).map((gift: any) => (
+              <div key={gift.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Gift className="h-4 w-4 text-emerald-500" />
+                  <div>
+                    <p className="font-medium">{gift.recipientName}</p>
+                    <p className="text-sm text-muted-foreground">{gift.productName}</p>
+                  </div>
+                </div>
+                <Badge variant="outline">{gift.status}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Nicole AI Quick Access */}
       <div className="p-4 sm:p-6 border rounded-lg bg-gradient-to-r from-purple-100 via-blue-100 to-cyan-100 dark:from-purple-900/30 dark:via-blue-900/30 dark:to-cyan-900/30 shadow-lg relative overflow-hidden">
@@ -407,7 +511,7 @@ const MyCollectionsTab = () => {
   );
 };
 
-// My Gifts Tab Component (Unified Dashboard)
+// Simplified My Gifts Tab Component (Tracking Focus)
 const MyGiftsTab = () => {
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
 
@@ -420,11 +524,20 @@ const MyGiftsTab = () => {
     window.location.href = '/marketplace';
   };
 
+  const handleSwitchToSmartGifting = () => {
+    const tabsList = document.querySelector('[data-testid="tabs-list"]');
+    const smartGiftingTab = tabsList?.querySelector('[value="smart-gifting"]');
+    if (smartGiftingTab) {
+      (smartGiftingTab as HTMLElement).click();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <MyGiftsDashboard 
+      <MyGiftsDashboardSimplified 
         onEditRule={handleEditRule}
         onScheduleGift={handleScheduleGift}
+        onSwitchToSmartGifting={handleSwitchToSmartGifting}
       />
       
       <AutoGiftSetupFlow
@@ -447,11 +560,6 @@ const GroupProjectsTab = () => {
   );
 };
 
-// Automation Tab Component
-const AutomationTab = () => {
-  return <AutomatedGiftingTabContent />;
-};
-
 // Main Gifting Hub Card Component
 const GiftingHubCard = () => {
   const [activeTab, setActiveTab] = useState("smart-gifting");
@@ -468,10 +576,9 @@ const GiftingHubCard = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2" data-testid="tabs-list">
               <TabsTrigger value="smart-gifting">Smart Gifting</TabsTrigger>
               <TabsTrigger value="my-gifts">My Gifts</TabsTrigger>
-              <TabsTrigger value="automation">Automation</TabsTrigger>
             </TabsList>
             
             <TabsContent value="smart-gifting" className="mt-6">
@@ -480,10 +587,6 @@ const GiftingHubCard = () => {
             
             <TabsContent value="my-gifts" className="mt-6">
               <MyGiftsTab />
-            </TabsContent>
-            
-            <TabsContent value="automation" className="mt-6">
-              <AutomationTab />
             </TabsContent>
           </Tabs>
         </CardContent>

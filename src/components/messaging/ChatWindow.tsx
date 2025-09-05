@@ -173,7 +173,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {/* Messages Area - Takes remaining height */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 pb-24 pt-20 md:pt-4 md:pb-2">
+        <div className="flex-1 overflow-y-auto p-4 pb-32 pt-20 md:pt-4 md:pb-2">
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">Loading messages...</p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Edit, Pause } from "lucide-react";
+import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Edit, Pause, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,8 +28,9 @@ import { supabase } from "@/integrations/supabase/client";
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
 import GroupGiftAnalytics from "./GroupGiftAnalytics";
 
-// Import auto-gifting hook
+// Import auto-gifting hook and settings dialog
 import { useAutoGifting } from "@/hooks/useAutoGifting";
+import { AutoGiftSettingsDialog } from "@/components/gifting/AutoGiftSettingsDialog";
 
 // Enhanced Smart Gifting Tab Component (Primary Hub)
 const SmartGiftingTab = () => {
@@ -38,6 +39,7 @@ const SmartGiftingTab = () => {
   const { user } = useAuth();
   const { rules } = useAutoGifting();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
 
@@ -150,6 +152,14 @@ const SmartGiftingTab = () => {
         >
           <Eye className="h-4 w-4" />
           View History
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          Settings
         </Button>
       </div>
 
@@ -321,6 +331,12 @@ const SmartGiftingTab = () => {
         eventId={selectedEventForSetup?.id}
         eventType={selectedEventForSetup?.type}
         recipientId={selectedEventForSetup?.connectionId}
+      />
+
+      {/* Auto-Gift Settings Dialog */}
+      <AutoGiftSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
     </div>
   );

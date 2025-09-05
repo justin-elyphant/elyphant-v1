@@ -1,7 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const useAuthFunctions = (user: any) => {
+  const navigate = useNavigate();
+  
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -21,7 +24,8 @@ export const useAuthFunctions = (user: any) => {
       localStorage.removeItem("onboardingStep");
       localStorage.removeItem("signupFlowActive");
       
-      // The auth state change will trigger navigation in components that have access to Router context
+      // Navigate to home page after successful logout
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Error signing out:", error.message);
       toast.error("Failed to sign out");

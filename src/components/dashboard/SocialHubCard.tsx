@@ -63,7 +63,7 @@ const SocialHubCard = () => {
       <Card className="h-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Social Hub</CardTitle>
+            <CardTitle className="text-lg font-semibold">Stay Connected</CardTitle>
             <Skeleton className="h-6 w-20" />
           </div>
         </CardHeader>
@@ -86,7 +86,7 @@ const SocialHubCard = () => {
     return (
       <Card className="h-full">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Social Hub</CardTitle>
+          <CardTitle className="text-lg font-semibold">Stay Connected</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">Unable to load social activities</p>
@@ -101,7 +101,7 @@ const SocialHubCard = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Social Hub
+            Stay Connected
           </CardTitle>
           <Badge variant="secondary" className="text-xs">
             {connectionStats.accepted} friends

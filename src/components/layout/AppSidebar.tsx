@@ -24,13 +24,19 @@ import {
   Brain,
   LayoutGrid,
   User,
+  MessageCircle
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { unreadCount: messageCount } = useNotifications();
+  const { pendingConnections } = useConnectionsAdapter();
 
   // Personal dashboard 
   const personalItems = [
@@ -55,12 +61,19 @@ const AppSidebar = () => {
     },
   ];
 
-  // Social and AI workflows
-  const socialItems = [
+  // Communication and AI workflows
+  const communicationItems = [
     {
-      title: "Social Hub",
-      url: "/social",
+      title: "Connections",
+      url: "/connections",
       icon: Users,
+      badge: pendingConnections.length > 0 ? pendingConnections.length : undefined,
+    },
+    {
+      title: "Messages",
+      url: "/messages",
+      icon: MessageCircle,
+      badge: messageCount > 0 ? messageCount : undefined,
     },
     {
       title: "Gifting Hub",
@@ -125,17 +138,22 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Social & AI Section */}
+        {/* Communication & AI Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Social & AI</SidebarGroupLabel>
+          <SidebarGroupLabel>Communication & AI</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {socialItems.map((item) => (
+              {communicationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
+                      {item.badge && (
+                        <Badge variant="destructive" className="ml-auto text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

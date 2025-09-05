@@ -53,7 +53,7 @@ const GiftingHub = lazy(() => import("./pages/GiftingHub"));
 const Nicole = lazy(() => import("./pages/Nicole"));
 const Account = lazy(() => import("./pages/Account"));
 const Payments = lazy(() => import("./pages/Payments"));
-const Social = lazy(() => import("./pages/Social"));
+
 const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
@@ -144,7 +144,7 @@ function AppContent() {
     const handleAuthSignout = () => {
       console.log('🔓 Auth signout event received, redirecting to home');
       // Check if user is on a protected route and redirect to home
-      const protectedRoutes = ['/dashboard', '/social', '/profile', '/settings', '/marketplace'];
+      const protectedRoutes = ['/dashboard', '/profile', '/settings', '/marketplace'];
       if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
         navigate("/", { replace: true });
       }
@@ -186,7 +186,7 @@ function AppContent() {
           <Route path="/events" element={<GiftingHub />} />
           <Route path="/nicole" element={<Nicole />} />
           <Route path="/account" element={<Navigate to="/settings" replace />} />
-          <Route path="/social" element={<Social />} />
+          
           <Route path="/profile/complete" element={<ProfileComplete />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />

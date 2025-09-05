@@ -103,14 +103,6 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           requiresAuth: true
         },
         {
-          id: "social",
-          label: "Social Hub",
-          href: "/social",
-          icon: <Users className="h-5 w-5" />,
-          section: "secondary" as const,
-          requiresAuth: true
-        },
-        {
           id: "nicole",
           label: "Nicole AI",
           href: "/nicole",

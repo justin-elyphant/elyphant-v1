@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Users, UserPlus, Clock, AlertCircle } from "lucide-react";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import { toast } from "sonner";
 
 // Lazy load heavy components
 const FriendsTabContent = lazy(() => import("@/components/connections/FriendsTabContent"));
@@ -61,9 +62,11 @@ const Connections = () => {
   
   // Get connections data
   const { 
+    friends,
     pendingConnections, 
     loading: connectionsLoading,
-    refreshPendingConnections 
+    refreshPendingConnections,
+    handleRelationshipChange: adapterHandleRelationshipChange
   } = useConnectionsAdapter();
   
   // Check URL params for tab selection
@@ -75,6 +78,21 @@ const Connections = () => {
     relationship: 'all',
     verificationStatus: 'all'
   });
+
+  // Handle relationship changes
+  const handleRelationshipChange = async (connectionId: string, newRelationship: string, customValue?: string) => {
+    console.log('🔄 [Connections] Updating relationship:', { connectionId, newRelationship, customValue });
+    if (adapterHandleRelationshipChange) {
+      await adapterHandleRelationshipChange(connectionId, newRelationship as any);
+    }
+  };
+
+  // Handle auto-gift toggle
+  const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
+    console.log('🔄 [Connections] Toggling auto-gift:', { connectionId, enabled });
+    // For now, just log - auto-gift functionality can be implemented later
+    toast.success(`Auto-gift ${enabled ? 'enabled' : 'disabled'} for this connection`);
+  };
 
   // Basic error boundary
   if (error) {
@@ -146,16 +164,12 @@ const Connections = () => {
                     ))}
                   </div>
                 }>
-                  <div className="text-center py-12">
-                    <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Your connections will appear here</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Add friends to see them in your connections list
-                    </p>
-                    <Button>
-                      Find Friends
-                    </Button>
-                  </div>
+                  <FriendsTabContent
+                    friends={friends}
+                    searchTerm={searchTerm}
+                    onRelationshipChange={handleRelationshipChange}
+                    onAutoGiftToggle={handleAutoGiftToggle}
+                  />
                 </Suspense>
               </TabsContent>
               

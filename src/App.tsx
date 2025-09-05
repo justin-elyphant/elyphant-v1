@@ -141,12 +141,23 @@ function AppContent() {
       }
     };
 
-    console.log('📡 Setting up nicole-search event listener');
+    const handleAuthSignout = () => {
+      console.log('🔓 Auth signout event received, redirecting to home');
+      // Check if user is on a protected route and redirect to home
+      const protectedRoutes = ['/dashboard', '/social', '/profile', '/settings', '/marketplace'];
+      if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
+        navigate("/", { replace: true });
+      }
+    };
+
+    console.log('📡 Setting up event listeners');
     window.addEventListener('nicole-search', handleNicoleSearch as EventListener);
+    window.addEventListener('auth-signout', handleAuthSignout);
     
     return () => {
-      console.log('🧹 Removing nicole-search event listener');
+      console.log('🧹 Removing event listeners');
       window.removeEventListener('nicole-search', handleNicoleSearch as EventListener);
+      window.removeEventListener('auth-signout', handleAuthSignout);
     };
   }, [navigate]);
 

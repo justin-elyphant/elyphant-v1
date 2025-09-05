@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeDetectionService } from "@/services/employee/EmployeeDetectionService";
-import { useNavigate, useLocation } from "react-router-dom";
 
 interface UseAuthSessionReturn {
   user: User | null;
@@ -16,8 +15,6 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // Process OAuth tokens from URL - simplified
   useEffect(() => {
@@ -114,11 +111,8 @@ export function useAuthSession(): UseAuthSessionReturn {
         localStorage.removeItem("modalForceOpen");
         localStorage.removeItem("modalTargetStep");
         
-        // Redirect to home page if on a protected route
-        const protectedRoutes = ['/dashboard', '/social', '/profile', '/settings', '/marketplace'];
-        if (protectedRoutes.some(route => location.pathname.startsWith(route))) {
-          navigate("/", { replace: true });
-        }
+        // Emit custom event for navigation in Router context
+        window.dispatchEvent(new CustomEvent('auth-signout'));
       }
     };
 

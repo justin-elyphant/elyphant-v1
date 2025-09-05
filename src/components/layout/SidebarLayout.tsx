@@ -18,8 +18,8 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <SidebarProvider defaultOpen={false}>
         <div className="flex w-full" style={{ height: '100vh', paddingTop: '80px' }}>
           <AppSidebar />
-          <SidebarInset className="flex-1 overflow-hidden">
-            <main className="h-full overflow-hidden">
+          <SidebarInset className="flex-1">
+            <main className="h-full overflow-y-auto">
               {children}
             </main>
           </SidebarInset>

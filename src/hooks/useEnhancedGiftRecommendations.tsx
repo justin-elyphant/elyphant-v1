@@ -79,7 +79,7 @@ export const useEnhancedGiftRecommendations = () => {
         body: {
           searchContext,
           recipientIdentifier,
-          executionId,
+          executionId: executionId || null, // Ensure we pass null if executionId is invalid
           options: {
             maxRecommendations: 8,
             includeExplanations: true,

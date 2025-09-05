@@ -213,7 +213,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         interests: profile?.interests || [],
         budget: [25, 200] as [number, number],
         occasion: 'general'
-      }, profile?.id || 'anonymous', `social-grid-${Date.now()}`);
+      }, profile?.id || 'anonymous', null); // Pass null instead of invalid UUID
 
       return recommendations.map(rec => ({
         product_id: rec.productId || `ai-${Math.random()}`,

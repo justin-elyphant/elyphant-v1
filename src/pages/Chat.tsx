@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import ChatWindow from "@/components/messaging/ChatWindow";
@@ -105,35 +103,18 @@ const Chat = () => {
 
   return (
     <SidebarLayout>
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="border-b bg-background p-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/messages">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <h1 className="text-lg font-semibold">
-              Chat with {connection.name || connection.username}
-            </h1>
-          </div>
-        </div>
-
-        {/* Chat Window */}
-        <div className="flex-1 p-4">
-          <ChatWindow
-            connectionId={userId}
-            connectionName={connection.name || connection.username}
-            connectionImage={connection.profile_image}
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onMarkAsRead={handleMarkAsRead}
-            presence={presence}
-            isTyping={isTyping}
-            loading={loading}
-          />
-        </div>
+      <div className="h-full">
+        <ChatWindow
+          connectionId={userId}
+          connectionName={connection.name || connection.username}
+          connectionImage={connection.profile_image}
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          onMarkAsRead={handleMarkAsRead}
+          presence={presence}
+          isTyping={isTyping}
+          loading={loading}
+        />
       </div>
     </SidebarLayout>
   );

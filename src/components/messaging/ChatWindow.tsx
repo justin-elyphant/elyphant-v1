@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, ArrowLeft, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { type UnifiedMessage, type UserPresence } from "@/services/UnifiedMessagingService";
 import { formatDistanceToNow } from "date-fns";
@@ -134,18 +135,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Compact Header */}
-      <div className="flex-shrink-0 border-b bg-background p-3">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8">
+      {/* Fixed Chat Header */}
+      <div className="flex-shrink-0 border-b bg-background p-4 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/messages">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Avatar className="h-10 w-10">
             <AvatarImage src={connectionImage} />
-            <AvatarFallback className="text-xs">
+            <AvatarFallback>
               {connectionName.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <h2 className="font-medium text-sm truncate">{connectionName}</h2>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-lg font-semibold truncate">{connectionName}</h1>
+            <p className="text-sm text-muted-foreground">
               {presence ? (
                 presence.status === 'online' ? 'Online' : 
                 presence.status === 'away' ? 'Away' : 
@@ -165,64 +171,69 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1">
-        {loading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">Loading messages...</p>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">No messages yet. Start the conversation!</p>
-          </div>
-        ) : (
-          <>
-            {messages.map((message, index) => {
-              const isOwn = message.sender_id === user?.id;
-              const showTimestamp = shouldShowTimestamp(message, index);
-              const isConsecutive = isConsecutiveMessage(message, index);
+      {/* Messages Area - Takes remaining height */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 pb-2">
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">Loading messages...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {/* Sort messages chronologically (oldest first) for proper display order */}
+              {[...messages].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).map((message, index, sortedMessages) => {
+                const isOwn = message.sender_id === user?.id;
+                const showTimestamp = shouldShowTimestamp(message, index);
+                const isConsecutive = isConsecutiveMessage(message, index);
 
-              return (
-                <div key={message.id} className={`flex ${getMessageAlignment(message)}`}>
-                  <div className={`max-w-[60%] ${isConsecutive ? 'mt-0.5' : 'mt-2'}`}>
-                    {showTimestamp && (
-                      <div className={`text-xs text-muted-foreground text-center mb-2 ${isOwn ? 'text-right' : 'text-left'}`}>
-                        {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                return (
+                  <div key={message.id} className={`flex ${getMessageAlignment(message)}`}>
+                    <div className={`max-w-[70%] ${isConsecutive ? 'mt-0.5' : 'mt-2'}`}>
+                      {showTimestamp && (
+                        <div className={`text-xs text-muted-foreground text-center mb-2 ${isOwn ? 'text-right' : 'text-left'}`}>
+                          {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                        </div>
+                      )}
+                      
+                      <div className={`px-3 py-2 rounded-2xl ${getMessageStyle(message)} ${
+                        isOwn ? 'rounded-br-md' : 'rounded-bl-md'
+                      }`}>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
                       </div>
-                    )}
-                    
-                    <div className={`px-2.5 py-1.5 rounded-2xl ${getMessageStyle(message)} ${
-                      isOwn ? 'rounded-br-md' : 'rounded-bl-md'
-                    }`}>
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Typing indicator */}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="max-w-[70%] mt-2">
+                    <div className="px-3 py-2 rounded-2xl bg-muted rounded-bl-md">
+                      <div className="flex gap-1">
+                        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
+                        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                        <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-            
-            {/* Typing indicator */}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="max-w-[60%] mt-2">
-                  <div className="px-2.5 py-1.5 rounded-2xl bg-muted rounded-bl-md">
-                    <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
-                      <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                      <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
+              )}
+              
+              {/* Auto-scroll target */}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Message Input */}
-      <div className="flex-shrink-0 border-t bg-background p-3">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
+      {/* Fixed Message Input */}
+      <div className="flex-shrink-0 border-t bg-background p-4 sticky bottom-0">
+        <form onSubmit={handleSendMessage} className="flex gap-3">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -234,7 +245,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             type="submit" 
             size="icon"
             disabled={!newMessage.trim() || sending || rateLimitStatus.isLimited}
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-10 w-10"
           >
             {rateLimitStatus.isLimited ? <Shield className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>

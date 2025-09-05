@@ -459,14 +459,12 @@ const GiftingHubCard = () => {
   return (
     <EventsProvider>
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="h-6 w-6 text-purple-600" />
-            Gifting Hub
-          </CardTitle>
-          <CardDescription>
-            Your comprehensive gift management center
-          </CardDescription>
+        <CardHeader className="pb-4">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">
+              Your comprehensive gift management center
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

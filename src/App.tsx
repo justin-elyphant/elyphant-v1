@@ -53,6 +53,7 @@ const GiftingHub = lazy(() => import("./pages/GiftingHub"));
 const Nicole = lazy(() => import("./pages/Nicole"));
 const Account = lazy(() => import("./pages/Account"));
 const Payments = lazy(() => import("./pages/Payments"));
+const RecentlyViewed = lazy(() => import("./pages/RecentlyViewed"));
 
 const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
@@ -202,6 +203,7 @@ function AppContent() {
           <Route path="/wishlists" element={<Wishlists />} />
           <Route path="/wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
+          <Route path="/recently-viewed" element={<RecentlyViewed />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

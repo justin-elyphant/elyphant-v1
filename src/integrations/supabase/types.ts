@@ -3983,6 +3983,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
+      emergency_security_verification: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       generate_invitation_token: {
         Args: Record<PropertyKey, never>
         Returns: string

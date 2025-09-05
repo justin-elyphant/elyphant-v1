@@ -3152,6 +3152,42 @@ export type Database = {
           },
         ]
       }
+      security_logs: {
+        Row: {
+          created_at: string | null
+          details: Json
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          risk_level: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          risk_level?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          risk_level?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shipping_zones: {
         Row: {
           coordinates: Json

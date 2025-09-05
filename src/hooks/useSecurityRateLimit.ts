@@ -46,14 +46,18 @@ export const useSecurityRateLimit = () => {
       // Log security events for monitoring
       console.warn(`Security Event: ${eventType}`, details);
       
-      // In production, you might want to send this to a security monitoring service
-      // await supabase.from('security_logs').insert([{
-      //   event_type: eventType,
-      //   details: details,
-      //   timestamp: new Date().toISOString(),
-      //   user_agent: navigator.userAgent,
-      //   ip_address: await getClientIP()
-      // }]);
+      // Log to security_logs table for comprehensive monitoring
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (!userError && user) {
+        await supabase.from('security_logs').insert([{
+          user_id: user.id,
+          event_type: eventType,
+          details: details,
+          user_agent: navigator.userAgent,
+          risk_level: details.riskLevel || 'medium'
+        }]);
+      }
     } catch (error) {
       console.error('Failed to log security event:', error);
     }

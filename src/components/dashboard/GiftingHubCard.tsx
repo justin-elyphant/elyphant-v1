@@ -48,71 +48,146 @@ const SmartGiftingTab = () => {
   const scheduledGifts = activeRules?.filter(rule => (rule as any).scheduled_date) || [];
   const recentGifts = []; // TODO: Integrate with gift history
 
+  // Helper function to get friendly date type names
+  const getFriendlyDateType = (dateType: string) => {
+    const friendlyNames: Record<string, string> = {
+      'just_because': 'Surprise Gift',
+      'birthday': 'Birthday',
+      'anniversary': 'Anniversary',
+      'valentines_day': "Valentine's Day",
+      'mothers_day': "Mother's Day",
+      'fathers_day': "Father's Day",
+      'christmas': 'Christmas',
+      'thanksgiving': 'Thanksgiving',
+      'new_year': 'New Year',
+      'graduation': 'Graduation',
+      'wedding': 'Wedding'
+    };
+    return friendlyNames[dateType] || dateType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  // Helper function to calculate next occurrence for recurring events
+  const calculateNextOccurrence = (dateType: string, scheduledDate?: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (scheduledDate) {
+      const date = new Date(scheduledDate);
+      if (date >= today) return date;
+    }
+    
+    // For recurring events like birthdays/anniversaries, calculate next year if past
+    if (dateType === 'birthday' || dateType === 'anniversary') {
+      const currentYear = today.getFullYear();
+      let nextOccurrence = new Date(currentYear, 5, 15); // Default to mid-year if no specific date
+      
+      if (scheduledDate) {
+        const originalDate = new Date(scheduledDate);
+        nextOccurrence = new Date(currentYear, originalDate.getMonth(), originalDate.getDate());
+        
+        // If this year's occurrence has passed, move to next year
+        if (nextOccurrence < today) {
+          nextOccurrence.setFullYear(currentYear + 1);
+        }
+      }
+      
+      return nextOccurrence;
+    }
+    
+    // For holidays, return a reasonable default
+    const holidays: Record<string, [number, number]> = {
+      'valentines_day': [1, 14], // Feb 14
+      'mothers_day': [4, 12], // May 12 (approx second Sunday)
+      'fathers_day': [5, 16], // June 16 (approx third Sunday)
+      'christmas': [11, 25], // Dec 25
+      'thanksgiving': [10, 28], // Nov 28 (approx fourth Thursday)
+      'new_year': [0, 1] // Jan 1
+    };
+    
+    if (holidays[dateType]) {
+      const [month, day] = holidays[dateType];
+      const currentYear = today.getFullYear();
+      let holidayDate = new Date(currentYear, month, day);
+      
+      if (holidayDate < today) {
+        holidayDate.setFullYear(currentYear + 1);
+      }
+      
+      return holidayDate;
+    }
+    
+    // Default fallback - return scheduled date or 30 days from now
+    return scheduledDate ? new Date(scheduledDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  };
+
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Combine regular events and scheduled auto-gifts
-    const allUpcomingEvents = [];
-    
-    // Add regular events
-    const eventsWithDays = events
-      .filter(event => {
-        if (!event.dateObj) return false;
-        return event.dateObj >= today;
-      })
-      .map(event => {
-        const daysAway = Math.ceil((event.dateObj!.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return {
-          ...event,
-          daysAway,
-          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low'
-        };
-      });
-    
-    allUpcomingEvents.push(...eventsWithDays);
-    
-    // Add scheduled auto-gifts from rules
-    const scheduledAutoGifts = activeRules
-      .filter(rule => (rule as any).scheduled_date)
+    // EXCLUSIVELY use auto-gifting rules - remove regular events completely
+    const autoGiftEvents = activeRules
       .map(rule => {
         const ruleWithSchedule = rule as any;
-        const scheduledDate = new Date(ruleWithSchedule.scheduled_date);
-        if (scheduledDate < today) return null;
         
-        const daysAway = Math.ceil((scheduledDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        // Calculate the next occurrence date using smart logic
+        const nextDate = calculateNextOccurrence(rule.date_type, ruleWithSchedule.scheduled_date);
         
-        // Create a pseudo-event for display
+        // Skip if the date is in the past
+        if (nextDate < today) return null;
+        
+        const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Get recipient name from pending email or connections
+        const recipientName = ruleWithSchedule.pending_recipient_email?.split('@')[0] || 
+                             ruleWithSchedule.recipient?.display_name || 
+                             'Gift Recipient';
+        
         return {
           id: `auto-gift-${rule.id}`,
-          type: rule.date_type || 'Auto Gift',
-          person: ruleWithSchedule.pending_recipient_email?.split('@')[0] || 'Scheduled Gift',
-          date: ruleWithSchedule.scheduled_date,
-          dateObj: scheduledDate,
+          type: getFriendlyDateType(rule.date_type),
+          person: recipientName,
+          date: nextDate.toISOString().split('T')[0],
+          dateObj: nextDate,
           daysAway,
           urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low',
           autoGiftEnabled: true,
           autoGiftAmount: rule.budget_limit,
           isScheduledAutoGift: true,
-          ruleId: rule.id
+          ruleId: rule.id,
+          budgetDisplay: rule.budget_limit ? `$${rule.budget_limit}` : 'No budget set'
         };
       })
-      .filter(Boolean);
-    
-    allUpcomingEvents.push(...scheduledAutoGifts);
-    
-    return allUpcomingEvents
+      .filter(Boolean)
       .sort((a, b) => {
         if (!a.dateObj || !b.dateObj) return 0;
         return a.dateObj.getTime() - b.dateObj.getTime();
       })
       .slice(0, 4);
-  }, [events, activeRules]);
+    
+    return autoGiftEvents;
+  }, [activeRules]);
 
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
     setSelectedEventForSetup(event);
     setAutoGiftSetupOpen(true);
+  };
+
+  const handleModifyRule = (event: any) => {
+    if (event.isScheduledAutoGift && event.ruleId) {
+      // Open setup flow with existing rule data for editing
+      setSelectedEventForSetup({
+        ...event,
+        id: event.ruleId,
+        autoGiftRuleId: event.ruleId
+      });
+      setAutoGiftSetupOpen(true);
+    }
+  };
+
+  const handleSendNow = (event: any) => {
+    // Navigate to marketplace with Nicole for immediate gift selection
+    window.location.href = `/marketplace?mode=nicole&open=true&recipient=${encodeURIComponent(event.person)}&occasion=${encodeURIComponent(event.type)}`;
   };
 
   const handlePathSelection = (path: 'ai-autopilot' | 'manual-control') => {
@@ -252,19 +327,21 @@ const SmartGiftingTab = () => {
                 </div>
                 
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-muted-foreground">
-                    {event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {event.autoGiftEnabled ? (
-                      <Badge variant="secondary" className="text-xs">
-                        Auto-Gift Enabled
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">
-                        Reminders Only
-                      </Badge>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}
+                    </p>
+                    {event.budgetDisplay && (
+                      <p className="text-xs text-muted-foreground">
+                        Budget: {event.budgetDisplay}
+                      </p>
                     )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      <Bot className="h-3 w-3 mr-1" />
+                      AI Autopilot
+                    </Badge>
                   </div>
                 </div>
 
@@ -272,7 +349,7 @@ const SmartGiftingTab = () => {
                 <div className="flex items-center gap-2">
                   <Button 
                     size="sm" 
-                    onClick={() => handleScheduleGift()}
+                    onClick={() => handleSendNow(event)}
                     className="flex-1"
                   >
                     Send Now
@@ -280,17 +357,10 @@ const SmartGiftingTab = () => {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => handleSetupAutoGift(event)}
+                    onClick={() => handleModifyRule(event)}
                     className="flex-1"
                   >
-                    {event.autoGiftEnabled ? 'Edit Auto-Gift' : 'Setup Auto-Gift'}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleScheduleGift()}
-                  >
-                    Schedule Later
+                    Modify Plan
                   </Button>
                 </div>
               </div>

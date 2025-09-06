@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 
 interface UpcomingEventsCardContentProps {
@@ -15,49 +15,114 @@ interface UpcomingEventsCardContentProps {
 }
 
 const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProps) => {
-  const { events, isLoading } = useEvents();
   const { user } = useAuth();
   const location = useLocation();
   const isOnEventsPage = location.pathname === '/events';
   
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [autoGiftRules, setAutoGiftRules] = useState<any[]>([]);
+  const [connections, setConnections] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Enhanced: Load real events data with marketplace integration
+  // Load auto-gift rules and connections
+  React.useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+      
+      try {
+        const [rulesResult, connectionsResult] = await Promise.all([
+          supabase
+            .from('auto_gifting_rules')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true),
+          supabase
+            .from('user_connections')
+            .select('*')
+            .eq('user_id', user.id)
+        ]);
+
+        setAutoGiftRules(rulesResult.data || []);
+        setConnections(connectionsResult.data || []);
+      } catch (error) {
+        console.error('Error loading auto-gift data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Transform auto-gift rules into upcoming events
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    // Calculate days away for each event
-    const eventsWithDays = events
-      .filter(event => {
-        if (!event.dateObj) return false;
-        return event.dateObj >= today;
-      })
-      .map(event => {
-        const daysAway = Math.ceil((event.dateObj!.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return autoGiftRules
+      .map(rule => {
+        const connection = connections.find(c => c.id === rule.recipient_id);
+        
+        // Calculate next event date based on rule type
+        let nextDate: Date | null = null;
+        let displayType = rule.date_type;
+        
+        if (rule.date_type === 'just_because' && rule.scheduled_date) {
+          nextDate = new Date(rule.scheduled_date);
+          displayType = 'Surprise Gift';
+        } else if (rule.date_type === 'birthday' && rule.event_date) {
+          const birthDate = new Date(rule.event_date);
+          const thisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+          nextDate = thisYear > today ? thisYear : new Date(today.getFullYear() + 1, birthDate.getMonth(), birthDate.getDate());
+          displayType = 'Birthday';
+        } else if (rule.date_type === 'anniversary' && rule.event_date) {
+          const anniversaryDate = new Date(rule.event_date);
+          const thisYear = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
+          nextDate = thisYear > today ? thisYear : new Date(today.getFullYear() + 1, anniversaryDate.getMonth(), anniversaryDate.getDate());
+          displayType = 'Anniversary';
+        } else if (['christmas', 'valentines', 'mothers_day', 'fathers_day'].includes(rule.date_type)) {
+          const holidayDates = {
+            christmas: new Date(today.getFullYear(), 11, 25),
+            valentines: new Date(today.getFullYear(), 1, 14),
+            mothers_day: new Date(today.getFullYear(), 4, 14), // Approximate
+            fathers_day: new Date(today.getFullYear(), 5, 18), // Approximate
+          };
+          nextDate = holidayDates[rule.date_type as keyof typeof holidayDates];
+          if (nextDate && nextDate < today) {
+            nextDate = new Date(today.getFullYear() + 1, nextDate.getMonth(), nextDate.getDate());
+          }
+          displayType = rule.date_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        if (!nextDate) return null;
+        
+        const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
         return {
-          ...event,
+          id: rule.id,
+          person: connection?.connected_user_name || 'Unknown',
+          type: displayType,
+          dateObj: nextDate,
           daysAway,
-          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low'
+          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low',
+          autoGiftEnabled: true,
+          autoGiftAmount: rule.budget_max || rule.budget_min || 50,
+          rule
         };
       })
-      .sort((a, b) => {
-        if (!a.dateObj || !b.dateObj) return 0;
-        return a.dateObj.getTime() - b.dateObj.getTime();
-      });
-    
-    return eventsWithDays.slice(0, 3); // Show only first 3 upcoming events
-  }, [events]);
+      .filter(Boolean)
+      .sort((a, b) => (a?.daysAway || 0) - (b?.daysAway || 0))
+      .slice(0, 3);
+  }, [autoGiftRules, connections]);
 
   const handleSetupAutoGift = (event: any) => {
     setSelectedEvent(event);
     setSetupDialogOpen(true);
   };
 
-  const handleSaveAutoGiftSettings = (settings: any) => {
-    console.log('Auto-gift settings saved for event:', selectedEvent?.id, settings);
-    // TODO: Save to database in future implementation
+  const handleSendNow = async (event: any) => {
+    // Redirect to Nicole for immediate gift selection
+    window.location.href = `/nicole?giftFor=${encodeURIComponent(event.person)}&occasion=${encodeURIComponent(event.type)}&budget=${event.autoGiftAmount}`;
   };
 
   // Don't show the card if user is not authenticated
@@ -139,21 +204,14 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold">{event.person}</h4>
-                          {event.privacyLevel === 'shared' && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 text-xs">
-                              Shared
-                            </Badge>
-                          )}
-                          {event.privacyLevel === 'public' && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-xs">
-                              Public
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-xs">
+                            Auto-Gift
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <span>{event.type}</span>
                           <span>•</span>
-                          <span>{event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}</span>
+                          <span>{event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : 'No date'}</span>
                           
                           {event.daysAway <= 7 && (
                             <>
@@ -179,20 +237,28 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
                       </div>
                     </div>
                     
-                    <Button 
-                      size="sm" 
-                      variant={event.autoGiftEnabled ? "outline" : "default"}
-                      onClick={() => handleSetupAutoGift(event)}
-                    >
-                      {event.autoGiftEnabled ? "Manage" : "Set Up"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleSetupAutoGift(event)}
+                      >
+                        Modify Plan
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSendNow(event)}
+                      >
+                        Send Now
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 
-                {events.length > 3 && (
+                {autoGiftRules.length > 3 && (
                   <div className="text-center pt-2">
-                    <Link to="/events" className="text-sm text-muted-foreground hover:text-primary">
-                      +{events.length - 3} more event{events.length - 3 > 1 ? 's' : ''}
+                    <Link to="/gifting" className="text-sm text-muted-foreground hover:text-primary">
+                      +{autoGiftRules.length - 3} more auto-gift{autoGiftRules.length - 3 > 1 ? 's' : ''}
                     </Link>
                   </div>
                 )}
@@ -202,8 +268,15 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">No upcoming events</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Add birthdays, anniversaries, and other special occasions to never miss a gift opportunity.
+                  Add special occasions to set up automated gifting
                 </p>
+                <Button 
+                  variant="default" 
+                  onClick={() => setSetupDialogOpen(true)}
+                  className="mb-4"
+                >
+                  Set Up Auto-Gifting
+                </Button>
               </div>
             )}
             
@@ -246,11 +319,7 @@ interface UpcomingEventsCardProps {
 }
 
 const UpcomingEventsCard = ({ onAddEvent }: UpcomingEventsCardProps) => {
-  return (
-    <EventsProvider>
-      <UpcomingEventsCardContent onAddEvent={onAddEvent} />
-    </EventsProvider>
-  );
+  return <UpcomingEventsCardContent onAddEvent={onAddEvent} />;
 };
 
 export default UpcomingEventsCard;

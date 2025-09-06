@@ -28,7 +28,12 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
   // Load auto-gift rules and connections
   React.useEffect(() => {
     const loadData = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('UpcomingEventsCard: No user found');
+        return;
+      }
+      
+      console.log('UpcomingEventsCard: Loading data for user:', user.id);
       
       try {
         const [rulesResult, connectionsResult] = await Promise.all([
@@ -43,10 +48,13 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
             .eq('user_id', user.id)
         ]);
 
+        console.log('UpcomingEventsCard: Rules result:', rulesResult);
+        console.log('UpcomingEventsCard: Connections result:', connectionsResult);
+
         setAutoGiftRules(rulesResult.data || []);
         setConnections(connectionsResult.data || []);
       } catch (error) {
-        console.error('Error loading auto-gift data:', error);
+        console.error('UpcomingEventsCard: Error loading auto-gift data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -57,9 +65,12 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
 
   // Transform auto-gift rules into upcoming events
   const upcomingEvents = React.useMemo(() => {
+    console.log('UpcomingEventsCard: Computing upcoming events from rules:', autoGiftRules);
+    console.log('UpcomingEventsCard: Available connections:', connections);
+    
     const today = new Date();
     
-    return autoGiftRules
+    const result = autoGiftRules
       .map(rule => {
         const connection = connections.find(c => c.id === rule.recipient_id);
         
@@ -113,6 +124,9 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
       .filter(Boolean)
       .sort((a, b) => (a?.daysAway || 0) - (b?.daysAway || 0))
       .slice(0, 3);
+      
+    console.log('UpcomingEventsCard: Final upcoming events:', result);
+    return result;
   }, [autoGiftRules, connections]);
 
   const handleSetupAutoGift = (event: any) => {

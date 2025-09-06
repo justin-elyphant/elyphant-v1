@@ -23,6 +23,7 @@ import { getUserOrders, Order } from "@/services/orderService";
 
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { getExactProductImage } from '@/components/marketplace/zinc/utils/images/productImageUtils';
 
 // Import group components
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
@@ -385,12 +386,14 @@ const SmartGiftingTab = () => {
                             alt={event.execution.selectedProduct.name}
                             className="w-12 h-12 rounded-md object-cover"
                             onError={(e) => {
-                              console.log('GiftingHubCard: Image failed to load:', event.execution.selectedProduct.image);
-                              // Replace broken image with a gift icon placeholder
-                              const placeholder = document.createElement('div');
-                              placeholder.className = 'w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center';
-                              placeholder.innerHTML = '<svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>';
-                              e.currentTarget.parentNode?.replaceChild(placeholder, e.currentTarget);
+                              console.log('GiftingHubCard: Amazon image failed, using fallback:', event.execution.selectedProduct.image);
+                              // Use our Enhanced Zinc API fallback system
+                              const fallbackImage = getExactProductImage(
+                                event.execution.selectedProduct.name, 
+                                'Kitchen & Dining' // We know this is a kitchen item from the data
+                              );
+                              e.currentTarget.src = fallbackImage;
+                              e.currentTarget.onerror = null; // Prevent infinite loop
                             }}
                             onLoad={() => {
                               console.log('GiftingHubCard: Image loaded successfully:', event.execution.selectedProduct.image);

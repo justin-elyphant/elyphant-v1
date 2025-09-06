@@ -34,10 +34,12 @@ import { AutoGiftSettingsDialog } from "@/components/gifting/AutoGiftSettingsDia
 
 // Enhanced Smart Gifting Tab Component (Primary Hub)
 const SmartGiftingTab = () => {
+  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting');
   const { events, isLoading: eventsLoading } = useEvents();
   const { pendingInvitations, loading: connectionsLoading } = useEnhancedConnections();
   const { user } = useAuth();
   const { rules } = useAutoGifting();
+  console.log('📊📊📊 SmartGiftingTab: useAutoGifting returned rules:', rules);
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -695,7 +697,9 @@ const GroupProjectsTab = () => {
 
 // Main Gifting Hub Card Component
 const GiftingHubCard = () => {
+  console.log('🚀🚀🚀 MAIN GiftingHubCard: Component mounting at', new Date().toISOString());
   const [activeTab, setActiveTab] = useState("smart-gifting");
+  console.log('📋📋📋 MAIN GiftingHubCard: Active tab set to:', activeTab);
 
   return (
     <EventsProvider>

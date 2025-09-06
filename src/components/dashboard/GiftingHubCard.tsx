@@ -378,16 +378,24 @@ const SmartGiftingTab = () => {
                 {event.execution?.selectedProduct ? (
                   <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     <div className="flex items-start gap-3">
-                      {event.execution.selectedProduct.image && (
-                        <img 
-                          src={event.execution.selectedProduct.image} 
-                          alt={event.execution.selectedProduct.name}
-                          className="w-12 h-12 rounded-md object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
+                      <div className="w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        {event.execution.selectedProduct.image ? (
+                          <img 
+                            src={event.execution.selectedProduct.image} 
+                            alt={event.execution.selectedProduct.name}
+                            className="w-12 h-12 rounded-md object-cover"
+                            onError={(e) => {
+                              // Replace broken image with a gift icon placeholder
+                              const placeholder = document.createElement('div');
+                              placeholder.className = 'w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center';
+                              placeholder.innerHTML = '<svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>';
+                              e.currentTarget.parentNode?.replaceChild(placeholder, e.currentTarget);
+                            }}
+                          />
+                        ) : (
+                          <Gift className="h-6 w-6 text-gray-400" />
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h5 className="font-medium text-sm truncate">
                           {event.execution.selectedProduct.name}

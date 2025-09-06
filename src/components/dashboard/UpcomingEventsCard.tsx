@@ -19,6 +19,9 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
   const location = useLocation();
   const isOnEventsPage = location.pathname === '/events';
   
+  console.log('UpcomingEventsCard: Component mounted. User:', user);
+  console.log('UpcomingEventsCard: Location:', location.pathname);
+  
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [autoGiftRules, setAutoGiftRules] = useState<any[]>([]);

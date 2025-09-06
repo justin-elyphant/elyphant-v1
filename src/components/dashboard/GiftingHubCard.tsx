@@ -24,7 +24,7 @@ import { getUserOrders, Order } from "@/services/orderService";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { standardizeProduct } from '@/components/marketplace/product-item/productUtils';
-import { getExactProductImage } from '@/components/marketplace/zinc/utils/images/productImageUtils';
+import { fetchProductDetails } from '@/components/marketplace/zinc/services/productDetailsService';
 
 // Import group components
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
@@ -46,6 +46,7 @@ const SmartGiftingTab = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
 
   // Quick Stats for dashboard
   const activeRules = rules?.filter(rule => rule.is_active) || [];
@@ -217,33 +218,73 @@ const SmartGiftingTab = () => {
     return autoGiftEvents;
   }, [activeRules]);
 
-  // Enhanced product image handling using unified systems
-  const getProductImageWithFallback = (event: any): string => {
-    if (!event.execution?.selectedProduct) return '/placeholder.svg';
+  // Fetch real product images from Zinc API using existing unified systems
+  useEffect(() => {
+    const fetchRealProductImages = async () => {
+      console.log('🔍 GiftingHubCard: Starting real product image fetch for', upcomingEvents.length, 'events');
+      
+      if (upcomingEvents.length === 0) return;
+      
+      const imageMap: Record<string, string> = {};
+      
+      for (const event of upcomingEvents) {
+        if (event.execution?.selectedProduct?.name && !productImages[event.id]) {
+          try {
+            // Extract ASIN from Amazon image URL
+            const originalImage = event.execution.selectedProduct.image;
+            console.log('🔍 GiftingHubCard: Original image URL:', originalImage);
+            
+            let productId = null;
+            if (originalImage && originalImage.includes('amazon')) {
+              // Extract ASIN from various Amazon image URL patterns
+              const asinMatches = [
+                originalImage.match(/\/([A-Z0-9]{10})[._]/),  // Standard ASIN pattern
+                originalImage.match(/\/dp\/([A-Z0-9]{10})/),  // Product page pattern
+                originalImage.match(/\/images\/I\/[^\/]*\.([A-Z0-9]{10})\./), // Alternative pattern
+              ];
+              
+              for (const match of asinMatches) {
+                if (match && match[1]) {
+                  productId = match[1];
+                  break;
+                }
+              }
+            }
+            
+            console.log('🔍 GiftingHubCard: Extracted productId:', productId);
+            
+            if (productId) {
+              console.log(`🔍 GiftingHubCard: Fetching real product details for ${productId}`);
+              const productDetails = await fetchProductDetails(productId);
+              
+              if (productDetails && productDetails.images && productDetails.images.length > 0) {
+                // Use the first high-quality image
+                const firstImage = productDetails.images[0];
+                imageMap[event.id] = firstImage;
+                console.log(`🔍 GiftingHubCard: Got real Zinc API image for ${productId}:`, firstImage);
+              } else {
+                console.log(`🔍 GiftingHubCard: No images in API response for ${productId}, using original`);
+                imageMap[event.id] = originalImage;
+              }
+            } else {
+              console.log(`🔍 GiftingHubCard: Could not extract productId from ${originalImage}, using original`);
+              imageMap[event.id] = originalImage;
+            }
+          } catch (error) {
+            console.log(`🔍 GiftingHubCard: API error for event ${event.id}, using original image:`, error);
+            imageMap[event.id] = event.execution.selectedProduct.image;
+          }
+        }
+      }
+      
+      if (Object.keys(imageMap).length > 0) {
+        setProductImages(prev => ({ ...prev, ...imageMap }));
+        console.log('🔍 GiftingHubCard: Updated productImages with real API data:', imageMap);
+      }
+    };
     
-    const product = event.execution.selectedProduct;
-    console.log('🔍 GiftingHubCard: Getting image for product:', product);
-    
-    // Convert to standardized product object
-    const standardized = standardizeProduct({
-      ...product,
-      title: product.name,
-      vendor: 'Amazon via Zinc',
-      productSource: 'zinc_api'
-    });
-    
-    console.log('🔍 GiftingHubCard: Standardized product:', standardized);
-    
-    // Use the Enhanced Zinc API system for intelligent image selection
-    if (product.name) {
-      const smartImage = getExactProductImage(product.name, standardized.category || 'General');
-      console.log('🔍 GiftingHubCard: Smart image from Zinc system:', smartImage);
-      return smartImage;
-    }
-    
-    // Fallback to original image if available
-    return product.image || '/placeholder.svg';
-  };
+    fetchRealProductImages();
+  }, [upcomingEvents, productImages]);
 
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
@@ -411,11 +452,11 @@ const SmartGiftingTab = () => {
                       <div className="w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                         {event.execution.selectedProduct.image ? (
                           <img
-                            src={getProductImageWithFallback(event)}
+                            src={productImages[event.id] || event.execution.selectedProduct.image}
                             alt={event.execution.selectedProduct.name}
                             className="w-12 h-12 rounded-md object-cover"
                             onError={(e) => {
-                              console.log('❌ GiftingHubCard: Image failed to load:', getProductImageWithFallback(event));
+                              console.log('❌ GiftingHubCard: Image failed to load:', productImages[event.id] || event.execution.selectedProduct.image);
                               console.log('❌ GiftingHubCard: Event ID:', event.id);
                               console.log('❌ GiftingHubCard: Product:', event.execution?.selectedProduct);
                               
@@ -426,7 +467,7 @@ const SmartGiftingTab = () => {
                               e.currentTarget.parentNode?.replaceChild(placeholder, e.currentTarget);
                             }}
                             onLoad={() => {
-                              console.log('✅ GiftingHubCard: Image loaded successfully:', getProductImageWithFallback(event));
+                              console.log('✅ GiftingHubCard: Image loaded successfully:', productImages[event.id] || event.execution.selectedProduct.image);
                             }}
                           />
                         ) : (

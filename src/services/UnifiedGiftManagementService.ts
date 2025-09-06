@@ -32,6 +32,14 @@ export interface UnifiedGiftRule {
   budget_limit?: number;
   gift_message?: string;
   created_from_event_id?: string;
+  recipient?: {
+    id: string;
+    name: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+    profile_image?: string;
+  };
   notification_preferences: {
     enabled: boolean;
     days_before: number[];
@@ -711,7 +719,17 @@ class UnifiedGiftManagementService {
   async getUserRules(userId: string): Promise<UnifiedGiftRule[]> {
     const { data, error } = await supabase
       .from('auto_gifting_rules')
-      .select('*')
+      .select(`
+        *,
+        recipient:profiles!recipient_id(
+          id,
+          name,
+          username,
+          first_name,
+          last_name,
+          profile_image
+        )
+      `)
       .eq('user_id', userId);
 
     if (error) throw error;

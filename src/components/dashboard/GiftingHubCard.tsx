@@ -146,9 +146,13 @@ const SmartGiftingTab = () => {
         
         const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
-        // Get recipient name from pending email or connections
+        // Get recipient name from pending email, profile data, or connections
         const recipientName = ruleWithSchedule.pending_recipient_email?.split('@')[0] || 
-                             ruleWithSchedule.recipient?.display_name || 
+                             ruleWithSchedule.recipient?.name || 
+                             ruleWithSchedule.recipient?.username ||
+                             (ruleWithSchedule.recipient?.first_name && ruleWithSchedule.recipient?.last_name 
+                               ? `${ruleWithSchedule.recipient.first_name} ${ruleWithSchedule.recipient.last_name}` 
+                               : ruleWithSchedule.recipient?.first_name) ||
                              'Gift Recipient';
         
         const event = {

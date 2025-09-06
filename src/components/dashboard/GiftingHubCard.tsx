@@ -45,13 +45,17 @@ const SmartGiftingTab = () => {
 
   // Quick Stats for dashboard
   const activeRules = rules?.filter(rule => rule.is_active) || [];
-  const scheduledGifts = []; // TODO: Integrate with actual scheduled gifts
+  const scheduledGifts = activeRules?.filter(rule => (rule as any).scheduled_date) || [];
   const recentGifts = []; // TODO: Integrate with gift history
 
   const upcomingEvents = React.useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    // Combine regular events and scheduled auto-gifts
+    const allUpcomingEvents = [];
+    
+    // Add regular events
     const eventsWithDays = events
       .filter(event => {
         if (!event.dateObj) return false;
@@ -64,14 +68,46 @@ const SmartGiftingTab = () => {
           daysAway,
           urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low'
         };
+      });
+    
+    allUpcomingEvents.push(...eventsWithDays);
+    
+    // Add scheduled auto-gifts from rules
+    const scheduledAutoGifts = activeRules
+      .filter(rule => (rule as any).scheduled_date)
+      .map(rule => {
+        const ruleWithSchedule = rule as any;
+        const scheduledDate = new Date(ruleWithSchedule.scheduled_date);
+        if (scheduledDate < today) return null;
+        
+        const daysAway = Math.ceil((scheduledDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Create a pseudo-event for display
+        return {
+          id: `auto-gift-${rule.id}`,
+          type: rule.date_type || 'Auto Gift',
+          person: ruleWithSchedule.pending_recipient_email?.split('@')[0] || 'Scheduled Gift',
+          date: ruleWithSchedule.scheduled_date,
+          dateObj: scheduledDate,
+          daysAway,
+          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low',
+          autoGiftEnabled: true,
+          autoGiftAmount: rule.budget_limit,
+          isScheduledAutoGift: true,
+          ruleId: rule.id
+        };
       })
+      .filter(Boolean);
+    
+    allUpcomingEvents.push(...scheduledAutoGifts);
+    
+    return allUpcomingEvents
       .sort((a, b) => {
         if (!a.dateObj || !b.dateObj) return 0;
         return a.dateObj.getTime() - b.dateObj.getTime();
-      });
-    
-    return eventsWithDays.slice(0, 4);
-  }, [events]);
+      })
+      .slice(0, 4);
+  }, [events, activeRules]);
 
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);

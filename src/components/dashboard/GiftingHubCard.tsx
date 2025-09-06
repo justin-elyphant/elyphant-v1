@@ -23,7 +23,7 @@ import { getUserOrders, Order } from "@/services/orderService";
 
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { getExactProductImage } from '@/components/marketplace/zinc/utils/images/productImageUtils';
+import { fetchProductDetails } from '@/components/marketplace/zinc/services/productDetailsService';
 
 // Import group components
 import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
@@ -45,6 +45,7 @@ const SmartGiftingTab = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
 
   // Quick Stats for dashboard
   const activeRules = rules?.filter(rule => rule.is_active) || [];
@@ -216,6 +217,53 @@ const SmartGiftingTab = () => {
     return autoGiftEvents;
   }, [activeRules]);
 
+  // Fetch actual product images from Zinc API when events are available
+  useEffect(() => {
+    const fetchProductImages = async () => {
+      if (upcomingEvents.length === 0) return;
+      
+      const imageMap: Record<string, string> = {};
+      
+      for (const event of upcomingEvents) {
+        if (event.execution?.selectedProduct?.name && !productImages[event.id]) {
+          try {
+            // Try to get the product ID from various sources
+            let productId = (event.execution.selectedProduct as any).id || 
+                           (event.execution.selectedProduct as any).asin ||
+                           (event.execution.selectedProduct as any).product_id;
+            
+            // If we don't have an ID, try to extract from image URL
+            if (!productId && event.execution.selectedProduct.image) {
+              const imageUrl = event.execution.selectedProduct.image;
+              const asinMatch = imageUrl.match(/\/([A-Z0-9]{10})\./);
+              if (asinMatch) {
+                productId = asinMatch[1];
+              }
+            }
+            
+            if (productId) {
+              console.log(`GiftingHubCard: Fetching Zinc API images for product ${productId}`);
+              const productDetails = await fetchProductDetails(productId);
+              
+              if (productDetails && productDetails.images && productDetails.images.length > 0) {
+                imageMap[event.id] = productDetails.images[0];
+                console.log(`GiftingHubCard: Got Zinc API image for ${productId}:`, productDetails.images[0]);
+              }
+            }
+          } catch (error) {
+            console.log(`GiftingHubCard: Could not fetch Zinc API image for event ${event.id}:`, error);
+          }
+        }
+      }
+      
+      if (Object.keys(imageMap).length > 0) {
+        setProductImages(prev => ({ ...prev, ...imageMap }));
+      }
+    };
+    
+    fetchProductImages();
+  }, [upcomingEvents, productImages]);
+
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
     setSelectedEventForSetup(event);
@@ -381,22 +429,20 @@ const SmartGiftingTab = () => {
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                         {event.execution.selectedProduct.image ? (
-                          <img 
-                            src={event.execution.selectedProduct.image} 
+                          <img
+                            src={productImages[event.id] || event.execution.selectedProduct.image}
                             alt={event.execution.selectedProduct.name}
                             className="w-12 h-12 rounded-md object-cover"
                             onError={(e) => {
-                              console.log('GiftingHubCard: Amazon image failed, using fallback:', event.execution.selectedProduct.image);
-                              // Use our Enhanced Zinc API fallback system
-                              const fallbackImage = getExactProductImage(
-                                event.execution.selectedProduct.name, 
-                                'Kitchen & Dining' // We know this is a kitchen item from the data
-                              );
-                              e.currentTarget.src = fallbackImage;
-                              e.currentTarget.onerror = null; // Prevent infinite loop
+                              console.log('GiftingHubCard: Image failed to load, using gift icon fallback');
+                              // Replace with gift icon placeholder
+                              const placeholder = document.createElement('div');
+                              placeholder.className = 'w-12 h-12 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center';
+                              placeholder.innerHTML = '<svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>';
+                              e.currentTarget.parentNode?.replaceChild(placeholder, e.currentTarget);
                             }}
                             onLoad={() => {
-                              console.log('GiftingHubCard: Image loaded successfully:', event.execution.selectedProduct.image);
+                              console.log('GiftingHubCard: Image loaded successfully');
                             }}
                           />
                         ) : (

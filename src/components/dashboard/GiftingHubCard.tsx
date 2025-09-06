@@ -48,6 +48,11 @@ const SmartGiftingTab = () => {
   const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
   const [productImages, setProductImages] = useState<Record<string, string>>({});
 
+  // Temporary function to prevent cached errors - will be removed when cache clears
+  const getProductImageWithFallback = (event: any): string => {
+    return productImages[event.id] || event.execution?.selectedProduct?.image || '/placeholder.svg';
+  };
+
   // Quick Stats for dashboard
   const activeRules = rules?.filter(rule => rule.is_active) || [];
   const scheduledGifts = activeRules?.filter(rule => (rule as any).scheduled_date) || [];

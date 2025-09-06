@@ -121,19 +121,26 @@ const SmartGiftingTab = () => {
   };
 
   const upcomingEvents = React.useMemo(() => {
+    console.log('GiftingHubCard: Computing upcoming events from rules:', activeRules);
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     // EXCLUSIVELY use auto-gifting rules - remove regular events completely
     const autoGiftEvents = activeRules
       .map(rule => {
+        console.log('GiftingHubCard: Processing rule:', rule);
         const ruleWithSchedule = rule as any;
         
         // Calculate the next occurrence date using smart logic
         const nextDate = calculateNextOccurrence(rule.date_type, ruleWithSchedule.scheduled_date);
+        console.log('GiftingHubCard: Next date for rule', rule.id, ':', nextDate);
         
         // Skip if the date is in the past
-        if (nextDate < today) return null;
+        if (nextDate < today) {
+          console.log('GiftingHubCard: Skipping past date for rule', rule.id);
+          return null;
+        }
         
         const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
@@ -142,7 +149,7 @@ const SmartGiftingTab = () => {
                              ruleWithSchedule.recipient?.display_name || 
                              'Gift Recipient';
         
-        return {
+        const event = {
           id: `auto-gift-${rule.id}`,
           type: getFriendlyDateType(rule.date_type),
           person: recipientName,
@@ -156,6 +163,9 @@ const SmartGiftingTab = () => {
           ruleId: rule.id,
           budgetDisplay: rule.budget_limit ? `$${rule.budget_limit}` : 'No budget set'
         };
+        
+        console.log('GiftingHubCard: Created event:', event);
+        return event;
       })
       .filter(Boolean)
       .sort((a, b) => {
@@ -164,6 +174,7 @@ const SmartGiftingTab = () => {
       })
       .slice(0, 4);
     
+    console.log('GiftingHubCard: Final upcoming events:', autoGiftEvents);
     return autoGiftEvents;
   }, [activeRules]);
 

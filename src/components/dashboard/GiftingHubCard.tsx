@@ -383,6 +383,9 @@ const SmartGiftingTab = () => {
                           src={event.execution.selectedProduct.image} 
                           alt={event.execution.selectedProduct.name}
                           className="w-12 h-12 rounded-md object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       )}
                       <div className="flex-1 min-w-0">
@@ -432,11 +435,7 @@ const SmartGiftingTab = () => {
                     onClick={() => handleSendNow(event)}
                     className="flex-1"
                   >
-                    {event.execution?.selectedProduct ? 
-                      `Send ${event.execution.selectedProduct.name.length > 15 ? 
-                        event.execution.selectedProduct.name.substring(0, 15) + '...' : 
-                        event.execution.selectedProduct.name}` : 
-                      'Let Nicole Choose & Send'}
+                    Send Gift
                   </Button>
                   <Button 
                     size="sm" 

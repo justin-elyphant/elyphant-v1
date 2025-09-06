@@ -155,6 +155,18 @@ const SmartGiftingTab = () => {
                                : ruleWithSchedule.recipient?.first_name) ||
                              'Gift Recipient';
         
+        // Get the latest execution data for this rule
+        const latestExecution = rule.executions && rule.executions.length > 0 
+          ? rule.executions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+          : null;
+
+        // Extract product details from execution
+        const selectedProduct = latestExecution?.selected_products && latestExecution.selected_products.length > 0
+          ? latestExecution.selected_products[0]
+          : null;
+
+        const aiAgent = latestExecution?.ai_agent_source || {};
+
         const event = {
           id: `auto-gift-${rule.id}`,
           type: getFriendlyDateType(rule.date_type),
@@ -167,7 +179,26 @@ const SmartGiftingTab = () => {
           autoGiftAmount: rule.budget_limit,
           isScheduledAutoGift: true,
           ruleId: rule.id,
-          budgetDisplay: rule.budget_limit ? `$${rule.budget_limit}` : 'No budget set'
+          budgetDisplay: rule.budget_limit ? `$${rule.budget_limit}` : 'No budget set',
+          // Enhanced execution details
+          execution: latestExecution ? {
+            status: latestExecution.status,
+            totalAmount: latestExecution.total_amount,
+            executionDate: latestExecution.execution_date,
+            selectedProduct: selectedProduct ? {
+              name: selectedProduct.name || selectedProduct.title,
+              price: selectedProduct.price,
+              image: selectedProduct.image || selectedProduct.product_image,
+              url: selectedProduct.url || selectedProduct.product_url,
+              vendor: selectedProduct.vendor || selectedProduct.retailer
+            } : null,
+            aiAgent: {
+              name: aiAgent.agent || 'Nicole',
+              confidenceScore: aiAgent.confidence_score || 0,
+              discoveryMethod: aiAgent.discovery_method,
+              dataSources: aiAgent.data_sources || []
+            }
+          } : null
         };
         
         console.log('GiftingHubCard: Created event:', event);
@@ -343,24 +374,56 @@ const SmartGiftingTab = () => {
                   )}
                 </div>
                 
-                <div className="flex items-center justify-between mb-3">
-                  <div>
+                {/* Product Details or Budget Info */}
+                {event.execution?.selectedProduct ? (
+                  <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      {event.execution.selectedProduct.image && (
+                        <img 
+                          src={event.execution.selectedProduct.image} 
+                          alt={event.execution.selectedProduct.name}
+                          className="w-12 h-12 rounded-md object-cover"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-medium text-sm truncate">
+                          {event.execution.selectedProduct.name}
+                        </h5>
+                        <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                          ${event.execution.selectedProduct.price}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            <Bot className="h-3 w-3 mr-1" />
+                            Selected by {event.execution.aiAgent.name}
+                          </Badge>
+                          {event.execution.aiAgent.confidenceScore > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              {Math.round(event.execution.aiAgent.confidenceScore * 100)}% confidence
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-3">
                     <p className="text-sm text-muted-foreground">
                       {event.dateObj ? format(event.dateObj, 'MMM d, yyyy') : event.date}
                     </p>
                     {event.budgetDisplay && (
                       <p className="text-xs text-muted-foreground">
-                        Budget: {event.budgetDisplay}
+                        Budget: {event.budgetDisplay} • AI will select gift
                       </p>
                     )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="secondary" className="text-xs">
+                        <Bot className="h-3 w-3 mr-1" />
+                        AI Autopilot
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      <Bot className="h-3 w-3 mr-1" />
-                      AI Autopilot
-                    </Badge>
-                  </div>
-                </div>
+                )}
 
                 {/* Event Actions */}
                 <div className="flex items-center gap-2">
@@ -369,7 +432,11 @@ const SmartGiftingTab = () => {
                     onClick={() => handleSendNow(event)}
                     className="flex-1"
                   >
-                    Send Now
+                    {event.execution?.selectedProduct ? 
+                      `Send ${event.execution.selectedProduct.name.length > 15 ? 
+                        event.execution.selectedProduct.name.substring(0, 15) + '...' : 
+                        event.execution.selectedProduct.name}` : 
+                      'Let Nicole Choose & Send'}
                   </Button>
                   <Button 
                     size="sm" 

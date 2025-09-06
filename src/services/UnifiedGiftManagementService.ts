@@ -40,6 +40,15 @@ export interface UnifiedGiftRule {
     last_name: string;
     profile_image?: string;
   };
+  executions?: {
+    id: string;
+    status: string;
+    selected_products?: any;
+    ai_agent_source?: any;
+    total_amount?: number;
+    execution_date: string;
+    created_at: string;
+  }[];
   notification_preferences: {
     enabled: boolean;
     days_before: number[];
@@ -728,6 +737,15 @@ class UnifiedGiftManagementService {
           first_name,
           last_name,
           profile_image
+        ),
+        executions:automated_gift_executions!rule_id(
+          id,
+          status,
+          selected_products,
+          ai_agent_source,
+          total_amount,
+          execution_date,
+          created_at
         )
       `)
       .eq('user_id', userId);

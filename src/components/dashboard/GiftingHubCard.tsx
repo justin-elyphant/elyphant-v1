@@ -299,11 +299,23 @@ const SmartGiftingTab = () => {
 
   const handleModifyRule = (event: any) => {
     if (event.isScheduledAutoGift && event.ruleId) {
-      // Open setup flow with existing rule data for editing
+      // Transform event data to match AutoGiftSetupFlow's expected initialData format
+      const ruleData = {
+        recipientId: event.recipientId || "",
+        eventType: event.type || "",
+        budgetLimit: event.budgetAmount || 50,
+        autoApprove: event.autoApprove || false,
+        emailNotifications: true,
+        notificationDays: [7, 3, 1],
+        giftMessage: event.giftMessage || "",
+        selectedPaymentMethodId: event.paymentMethodId || ""
+      };
+      
       setSelectedEventForSetup({
         ...event,
         id: event.ruleId,
-        autoGiftRuleId: event.ruleId
+        autoGiftRuleId: event.ruleId,
+        initialData: ruleData
       });
       setAutoGiftSetupOpen(true);
     }
@@ -611,6 +623,8 @@ const SmartGiftingTab = () => {
         eventId={selectedEventForSetup?.id}
         eventType={selectedEventForSetup?.type}
         recipientId={selectedEventForSetup?.connectionId}
+        initialData={selectedEventForSetup?.initialData}
+        ruleId={selectedEventForSetup?.autoGiftRuleId}
       />
 
       {/* Auto-Gift Settings Dialog */}

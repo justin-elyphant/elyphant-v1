@@ -60,6 +60,7 @@ const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
+const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -213,6 +214,7 @@ function AppContent() {
           
           {/* ZMA Testing Routes */}
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
+          <Route path="/test-retry-function" element={<TestRetryFunction />} />
           
            <Route path="/trunkline-login" element={<TrunklineLogin />} />
            <Route path="/trunkline" element={<Trunkline />} />

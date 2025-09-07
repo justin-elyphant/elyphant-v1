@@ -208,7 +208,7 @@ async function verifyPaymentStatus(orderId, supabase) {
   
   const { data: orderData, error } = await supabase
     .from('orders')
-    .select('payment_status, stripe_payment_intent_id, stripe_checkout_session_id, total_amount')
+    .select('payment_status, stripe_payment_intent_id, total_amount')
     .eq('id', orderId)
     .single();
 
@@ -230,7 +230,7 @@ async function verifyPaymentStatus(orderId, supabase) {
   console.log(`✅ Payment verified: ${orderData.payment_status} for amount $${orderData.total_amount}`);
   
   // Additional Stripe verification if payment intent is available
-  if (orderData.stripe_payment_intent_id || orderData.stripe_checkout_session_id) {
+  if (orderData.stripe_payment_intent_id) {
     console.log('🔍 Additional Stripe payment verification...');
     // Note: In production, you would verify with Stripe API here
     // For now, we trust the payment_status in our database

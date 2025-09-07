@@ -101,6 +101,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   useEffect(() => {
     console.log('🔍 AutoGiftSetupFlow - Props received:', { recipientId, eventType, initialData, ruleId });
+    console.log('🔍 AutoGiftSetupFlow - Current formData before update:', formData);
     
     if (recipientId) setFormData(prev => ({ ...prev, recipientId }));
     if (eventType) setFormData(prev => ({ ...prev, eventType }));
@@ -108,16 +109,21 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     // Populate form with initial data for editing
     if (initialData) {
       console.log('🔍 AutoGiftSetupFlow - Populating form with initialData:', initialData);
-      setFormData(prev => ({
-        ...prev,
-        recipientId: initialData.recipientId || prev.recipientId,
-        eventType: initialData.eventType || prev.eventType,
-        budgetLimit: initialData.budgetLimit || prev.budgetLimit,
-        selectedPaymentMethodId: initialData.selectedPaymentMethodId || prev.selectedPaymentMethodId,
-        emailNotifications: initialData.emailNotifications ?? prev.emailNotifications,
-        notificationDays: initialData.notificationDays || prev.notificationDays,
-        autoApprove: initialData.autoApprove ?? prev.autoApprove
-      }));
+      setFormData(prev => {
+        const newData = {
+          ...prev,
+          recipientId: initialData.recipientId || prev.recipientId,
+          eventType: initialData.eventType || prev.eventType,
+          budgetLimit: initialData.budgetLimit || prev.budgetLimit,
+          selectedPaymentMethodId: initialData.selectedPaymentMethodId || prev.selectedPaymentMethodId,
+          emailNotifications: initialData.emailNotifications ?? prev.emailNotifications,
+          notificationDays: initialData.notificationDays || prev.notificationDays,
+          autoApprove: initialData.autoApprove ?? prev.autoApprove,
+          giftMessage: initialData.giftMessage || prev.giftMessage
+        };
+        console.log('🔍 AutoGiftSetupFlow - New formData after update:', newData);
+        return newData;
+      });
     } else {
       console.log('🔍 AutoGiftSetupFlow - No initialData provided');
     }

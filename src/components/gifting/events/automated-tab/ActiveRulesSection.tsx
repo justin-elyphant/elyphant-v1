@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, DollarSign, Bell, Gift, Pause } from "lucide-react";
-import { UnifiedGiftRule } from "@/services/UnifiedGiftAutomationService";
+import { UnifiedGiftRule, unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
+import { toast } from "sonner";
 
 interface ActiveRulesSectionProps {
   rules: UnifiedGiftRule[];
@@ -20,8 +21,39 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
   };
 
   const handleCancelRule = async (ruleId: string) => {
-    if (confirm("Are you sure you want to cancel this auto-gifting rule? This will disable the rule permanently.")) {
-      await updateRule(ruleId, { is_active: false });
+    try {
+      // First check what can be cancelled
+      const cancellationCheck = await unifiedGiftManagementService.canCancelRule(ruleId);
+      
+      if (!cancellationCheck.canCancel) {
+        alert(cancellationCheck.reason);
+        return;
+      }
+
+      // Show comprehensive cancellation dialog
+      const executionInfo = Object.entries(cancellationCheck.executions)
+        .filter(([key, count]) => count > 0)
+        .map(([key, count]) => `${count} ${key} execution${count !== 1 ? 's' : ''}`)
+        .join(', ');
+
+      const message = executionInfo 
+        ? `Cancel this auto-gifting rule?\n\nThis will also cancel: ${executionInfo}\n\nThis action cannot be undone.`
+        : "Cancel this auto-gifting rule? This action cannot be undone.";
+
+      const confirmed = confirm(message);
+      if (confirmed) {
+        const result = await unifiedGiftManagementService.cancelAutoGiftRule(ruleId, "Cancelled by user");
+        if (result.success) {
+          toast.success(result.message);
+          // Refresh the rules list
+          window.location.reload();
+        } else {
+          toast.error(result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error cancelling rule:', error);
+      toast.error('Failed to cancel auto-gifting rule');
     }
   };
 

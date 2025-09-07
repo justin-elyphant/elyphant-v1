@@ -33,6 +33,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
@@ -338,28 +339,43 @@ const SmartGiftingTab = () => {
       return;
     }
 
-    const cancellationStatus = canCancelRule(event.dateObj);
-    
-    if (!cancellationStatus.canCancel) {
-      toast.error(cancellationStatus.reason);
-      return;
-    }
-
-    // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to cancel the auto-gift for ${event.person}'s ${event.type}?\n\n` +
-      `This will permanently disable the auto-gifting rule and cannot be undone.\n` +
-      `Time remaining: ${cancellationStatus.hoursUntil} hours`
-    );
-
-    if (!confirmed) return;
-
     try {
-      // Use the unified service to cancel the rule
-      const { updateRule } = useAutoGifting();
-      await updateRule(event.ruleId, { is_active: false });
+      // Use the enhanced cancellation system to check what can be cancelled
+      const cancellationCheck = await unifiedGiftManagementService.canCancelRule(event.ruleId);
       
-      toast.success(`Auto-gift cancelled for ${event.person}'s ${event.type}`);
+      if (!cancellationCheck.canCancel) {
+        toast.error(cancellationCheck.reason);
+        return;
+      }
+
+      // Show comprehensive cancellation dialog
+      const executionInfo = Object.entries(cancellationCheck.executions)
+        .filter(([key, count]) => (count as number) > 0)
+        .map(([key, count]) => `${count} ${key} execution${count !== 1 ? 's' : ''}`)
+        .join(', ');
+
+      const timingInfo = cancellationCheck.nextExecution 
+        ? `\n⏰ Next execution: ${cancellationCheck.nextExecution.toLocaleDateString()}`
+        : '';
+
+      const message = executionInfo 
+        ? `Cancel auto-gift for ${event.person}'s ${event.type}?${timingInfo}\n\nThis will also cancel: ${executionInfo}\n\nThis action cannot be undone.`
+        : `Cancel auto-gift for ${event.person}'s ${event.type}?${timingInfo}\n\nThis action cannot be undone.`;
+
+      const confirmed = window.confirm(message);
+
+      if (!confirmed) return;
+
+      // Use the enhanced cancellation method
+      const result = await unifiedGiftManagementService.cancelAutoGiftRule(event.ruleId, "Cancelled by user from dashboard");
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Refresh the rules data to update the UI
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
     } catch (error) {
       console.error('Error cancelling auto-gift:', error);
       toast.error("Failed to cancel auto-gift");

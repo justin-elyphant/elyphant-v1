@@ -959,6 +959,245 @@ class UnifiedGiftManagementService {
     console.log(`[UNIFIED] Auto-gift execution ${executionId} approved for processing`);
   }
 
+  // ============= ENHANCED CANCELLATION SYSTEM =============
+
+  /**
+   * Comprehensive cancellation check for auto-gift rules
+   * Returns what can be cancelled and current state
+   */
+  async canCancelRule(ruleId: string): Promise<{
+    canCancel: boolean;
+    reason: string;
+    executions: {
+      pending: number;
+      processing: number;
+      completed: number;
+      withOrders: number;
+    };
+    nextExecution?: Date;
+  }> {
+    try {
+      // Get rule details
+      const { data: rule, error: ruleError } = await supabase
+        .from('auto_gifting_rules')
+        .select('*')
+        .eq('id', ruleId)
+        .single();
+
+      if (ruleError || !rule) {
+        return {
+          canCancel: false,
+          reason: 'Rule not found',
+          executions: { pending: 0, processing: 0, completed: 0, withOrders: 0 }
+        };
+      }
+
+      // Get all related executions
+      const { data: executions, error: execError } = await supabase
+        .from('automated_gift_executions')
+        .select('id, status, order_id, execution_date')
+        .eq('rule_id', ruleId);
+
+      if (execError) {
+        console.error('Error fetching executions:', execError);
+        return {
+          canCancel: true,
+          reason: 'Can cancel rule (execution check failed)',
+          executions: { pending: 0, processing: 0, completed: 0, withOrders: 0 }
+        };
+      }
+
+      const executionStats = {
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        withOrders: 0
+      };
+
+      const now = new Date();
+      let nextExecution: Date | undefined;
+
+      (executions || []).forEach(exec => {
+        switch (exec.status) {
+          case 'pending':
+            executionStats.pending++;
+            break;
+          case 'processing':
+            executionStats.processing++;
+            break;
+          case 'completed':
+            executionStats.completed++;
+            break;
+        }
+
+        if (exec.order_id) {
+          executionStats.withOrders++;
+        }
+
+        // Find next upcoming execution
+        const execDate = new Date(exec.execution_date);
+        if (execDate > now && (!nextExecution || execDate < nextExecution)) {
+          nextExecution = execDate;
+        }
+      });
+
+      // Determine cancellation status
+      const hasActiveExecutions = executionStats.pending > 0 || executionStats.processing > 0;
+      const cutoffTime = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 24 hours from now
+      const hasImmediateExecution = nextExecution && nextExecution < cutoffTime;
+
+      let canCancel = true;
+      let reason = 'Can cancel auto-gifting rule';
+
+      if (hasImmediateExecution) {
+        canCancel = false;
+        reason = `Cannot cancel: Gift execution scheduled within 24 hours (${nextExecution?.toLocaleDateString()})`;
+      } else if (executionStats.processing > 0) {
+        canCancel = false;
+        reason = 'Cannot cancel: Gifts are currently being processed';
+      }
+
+      return {
+        canCancel,
+        reason,
+        executions: executionStats,
+        nextExecution
+      };
+
+    } catch (error) {
+      console.error('Error checking rule cancellation:', error);
+      return {
+        canCancel: false,
+        reason: 'Error checking cancellation status',
+        executions: { pending: 0, processing: 0, completed: 0, withOrders: 0 }
+      };
+    }
+  }
+
+  /**
+   * Enhanced rule cancellation with execution and order handling
+   */
+  async cancelAutoGiftRule(ruleId: string, reason?: string): Promise<{
+    success: boolean;
+    message: string;
+    cancelledExecutions: number;
+    cancelledOrders: number;
+  }> {
+    try {
+      // First check if cancellation is allowed
+      const cancellationCheck = await this.canCancelRule(ruleId);
+      
+      if (!cancellationCheck.canCancel) {
+        return {
+          success: false,
+          message: cancellationCheck.reason,
+          cancelledExecutions: 0,
+          cancelledOrders: 0
+        };
+      }
+
+      let cancelledExecutions = 0;
+      let cancelledOrders = 0;
+
+      // Step 1: Cancel pending executions
+      const { data: pendingExecutions, error: fetchError } = await supabase
+        .from('automated_gift_executions')
+        .select('id, order_id')
+        .eq('rule_id', ruleId)
+        .in('status', ['pending', 'processing']);
+
+      if (fetchError) {
+        console.error('Error fetching pending executions:', fetchError);
+      } else if (pendingExecutions && pendingExecutions.length > 0) {
+        // Cancel executions
+        const { error: execError } = await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'cancelled',
+            error_message: reason || 'Cancelled by user',
+            updated_at: new Date().toISOString()
+          })
+          .eq('rule_id', ruleId)
+          .in('status', ['pending', 'processing']);
+
+        if (!execError) {
+          cancelledExecutions = pendingExecutions.length;
+          console.log(`Cancelled ${cancelledExecutions} executions for rule ${ruleId}`);
+
+          // Step 2: Cancel associated orders (if any)
+          for (const execution of pendingExecutions) {
+            if (execution.order_id) {
+              try {
+                // Use existing order cancellation function
+                const { data: cancelResult, error: orderCancelError } = await supabase
+                  .rpc('cancel_order', {
+                    order_id: execution.order_id,
+                    cancellation_reason: reason || 'Auto-gift rule cancelled'
+                  });
+
+                if (!orderCancelError && cancelResult?.success) {
+                  cancelledOrders++;
+                  console.log(`Cancelled order ${execution.order_id} for execution ${execution.id}`);
+                }
+              } catch (orderError) {
+                console.error(`Failed to cancel order ${execution.order_id}:`, orderError);
+              }
+            }
+          }
+        }
+      }
+
+      // Step 3: Deactivate the rule
+      const { error: ruleError } = await supabase
+        .from('auto_gifting_rules')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ruleId);
+
+      if (ruleError) {
+        console.error('Error deactivating rule:', ruleError);
+        return {
+          success: false,
+          message: 'Failed to deactivate auto-gifting rule',
+          cancelledExecutions,
+          cancelledOrders
+        };
+      }
+
+      console.log(`[UNIFIED] Successfully cancelled auto-gift rule ${ruleId}:`, {
+        cancelledExecutions,
+        cancelledOrders,
+        reason
+      });
+
+      const parts = [];
+      if (cancelledExecutions > 0) parts.push(`${cancelledExecutions} pending gift${cancelledExecutions !== 1 ? 's' : ''}`);
+      if (cancelledOrders > 0) parts.push(`${cancelledOrders} order${cancelledOrders !== 1 ? 's' : ''}`);
+      
+      const message = parts.length > 0 
+        ? `Auto-gifting cancelled. Also cancelled: ${parts.join(' and ')}`
+        : 'Auto-gifting rule cancelled successfully';
+
+      return {
+        success: true,
+        message,
+        cancelledExecutions,
+        cancelledOrders
+      };
+
+    } catch (error) {
+      console.error('Error cancelling auto-gift rule:', error);
+      return {
+        success: false,
+        message: 'Failed to cancel auto-gifting rule',
+        cancelledExecutions: 0,
+        cancelledOrders: 0
+      };
+    }
+  }
+
   // ============= PENDING INVITATIONS (Consolidated) =============
 
   async createPendingConnection(

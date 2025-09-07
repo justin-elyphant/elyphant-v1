@@ -220,7 +220,8 @@ async function verifyPaymentStatus(orderId, supabase) {
   // Allow 'succeeded' status and also test payments for auto-gifts
   const validPaymentStatuses = ['succeeded', 'test_succeeded'];
   const isTestPayment = orderData.stripe_payment_intent_id?.includes('test') || 
-                       orderData.stripe_payment_intent_id?.includes('pi_test_auto_gift');
+                       orderData.stripe_payment_intent_id?.includes('pi_test_auto_gift') ||
+                       orderData.stripe_payment_intent_id?.startsWith('pi_test_auto_gift_');
   
   if (!validPaymentStatuses.includes(orderData.payment_status) && !isTestPayment) {
     throw new Error(`Payment not confirmed. Status: ${orderData.payment_status}. Cannot process order until payment is successful.`);

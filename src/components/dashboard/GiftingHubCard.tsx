@@ -16,6 +16,7 @@ import { format } from "date-fns";
 
 // Import existing hooks and components
 import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
@@ -297,27 +298,49 @@ const SmartGiftingTab = () => {
     setAutoGiftSetupOpen(true);
   };
 
-  const handleModifyRule = (event: any) => {
+  const handleModifyRule = async (event: any) => {
+    console.log('🔍 MODIFY RULE - Full event object:', event);
+    console.log('🔍 MODIFY RULE - Rule ID:', event.ruleId);
+    console.log('🔍 MODIFY RULE - Is scheduled auto gift:', event.isScheduledAutoGift);
+    
     if (event.isScheduledAutoGift && event.ruleId) {
-      // Transform event data to match AutoGiftSetupFlow's expected initialData format
-      const ruleData = {
-        recipientId: event.recipientId || "",
-        eventType: event.type || "",
-        budgetLimit: event.budgetAmount || 50,
-        autoApprove: event.autoApprove || false,
-        emailNotifications: true,
-        notificationDays: [7, 3, 1],
-        giftMessage: event.giftMessage || "",
-        selectedPaymentMethodId: event.paymentMethodId || ""
-      };
-      
-      setSelectedEventForSetup({
-        ...event,
-        id: event.ruleId,
-        autoGiftRuleId: event.ruleId,
-        initialData: ruleData
-      });
-      setAutoGiftSetupOpen(true);
+      try {
+        // Get the actual rule data from the useAutoGifting hook
+        const existingRule = rules?.find(rule => rule.id === event.ruleId);
+        console.log('🔍 MODIFY RULE - Found existing rule:', existingRule);
+        
+        if (existingRule) {
+          // Transform rule data to match AutoGiftSetupFlow's expected initialData format
+          const ruleData = {
+            recipientId: existingRule.recipient_id || "",
+            eventType: existingRule.date_type || "",
+            budgetLimit: existingRule.budget_limit || 50,
+            autoApprove: false, // Default to false for safety
+            emailNotifications: true,
+            notificationDays: [7, 3, 1],
+            giftMessage: existingRule.gift_message || "",
+            selectedPaymentMethodId: "" // Will need to be set separately
+          };
+          
+          console.log('🔍 MODIFY RULE - Transformed rule data:', ruleData);
+          
+          setSelectedEventForSetup({
+            ...event,
+            id: event.ruleId,
+            autoGiftRuleId: event.ruleId,
+            initialData: ruleData
+          });
+          setAutoGiftSetupOpen(true);
+        } else {
+          console.log('❌ MODIFY RULE - Rule not found in rules array');
+          toast.error("Could not find rule data to edit");
+        }
+      } catch (error) {
+        console.error('❌ MODIFY RULE - Error:', error);
+        toast.error("Failed to load rule data");
+      }
+    } else {
+      console.log('❌ MODIFY RULE - Missing rule ID or not a scheduled auto gift');
     }
   };
 

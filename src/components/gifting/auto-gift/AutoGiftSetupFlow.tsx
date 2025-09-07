@@ -100,11 +100,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   ];
 
   useEffect(() => {
+    console.log('🔍 AutoGiftSetupFlow - Props received:', { recipientId, eventType, initialData, ruleId });
+    
     if (recipientId) setFormData(prev => ({ ...prev, recipientId }));
     if (eventType) setFormData(prev => ({ ...prev, eventType }));
     
     // Populate form with initial data for editing
     if (initialData) {
+      console.log('🔍 AutoGiftSetupFlow - Populating form with initialData:', initialData);
       setFormData(prev => ({
         ...prev,
         recipientId: initialData.recipientId || prev.recipientId,
@@ -115,8 +118,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         notificationDays: initialData.notificationDays || prev.notificationDays,
         autoApprove: initialData.autoApprove ?? prev.autoApprove
       }));
+    } else {
+      console.log('🔍 AutoGiftSetupFlow - No initialData provided');
     }
-  }, [recipientId, eventType, initialData]);
+  }, [recipientId, eventType, initialData, ruleId]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {

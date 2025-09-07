@@ -12,6 +12,7 @@ import ActiveRulesSection from "./ActiveRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
 import AutoGiftExecutionProcessor from "@/components/auto-gifting/AutoGiftExecutionProcessor";
 import AutoGiftSetupFlow from "../../auto-gift/AutoGiftSetupFlow";
+import EnhancedCancellationTest from "@/components/auto-gifts/EnhancedCancellationTest";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { useAutoGiftTrigger } from "@/hooks/useAutoGiftTrigger";
@@ -87,10 +88,11 @@ const AutomatedGiftingTabContent = () => {
       </div>
 
       <Tabs defaultValue="rules" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="rules">My Rules</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="test">System Test</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
@@ -131,6 +133,16 @@ const AutomatedGiftingTabContent = () => {
         <TabsContent value="activity" className="space-y-4">
           <AutoGiftExecutionProcessor className="mb-6" />
           <AutoGiftExecutionDashboard />
+        </TabsContent>
+
+        <TabsContent value="test" className="space-y-6">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-medium mb-2">Enhanced Cancellation System Test</h3>
+            <p className="text-sm text-muted-foreground">
+              Test all 4 phases of the enhanced cancel auto-gift system using your actual data
+            </p>
+          </div>
+          <EnhancedCancellationTest />
         </TabsContent>
       </Tabs>
 

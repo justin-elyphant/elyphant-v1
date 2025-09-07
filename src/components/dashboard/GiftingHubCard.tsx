@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Pause, Settings } from "lucide-react";
+import { 
+  Gift, 
+  Calendar, 
+  Heart, 
+  Package, 
+  Zap, 
+  Search, 
+  Plus, 
+  Eye, 
+  Clock, 
+  Bot, 
+  Users, 
+  Target, 
+  Pause, 
+  Settings 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

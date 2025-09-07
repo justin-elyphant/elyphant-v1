@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Edit, Pause, Settings } from "lucide-react";
+import { Gift, Calendar, Heart, Package, Zap, Search, Plus, Eye, Clock, Bot, Users, Target, Pause, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -298,49 +298,56 @@ const SmartGiftingTab = () => {
     setAutoGiftSetupOpen(true);
   };
 
-  const handleModifyRule = async (event: any) => {
-    console.log('🔍 MODIFY RULE - Full event object:', event);
-    console.log('🔍 MODIFY RULE - Rule ID:', event.ruleId);
-    console.log('🔍 MODIFY RULE - Is scheduled auto gift:', event.isScheduledAutoGift);
+  // Calculate if a rule can be cancelled based on timing restrictions
+  const canCancelRule = (nextDate: Date): { canCancel: boolean; reason?: string; hoursUntil?: number } => {
+    const now = new Date();
+    const hoursUntilExecution = (nextDate.getTime() - now.getTime()) / (1000 * 60 * 60);
     
-    if (event.isScheduledAutoGift && event.ruleId) {
-      try {
-        // Get the actual rule data from the useAutoGifting hook
-        const existingRule = rules?.find(rule => rule.id === event.ruleId);
-        console.log('🔍 MODIFY RULE - Found existing rule:', existingRule);
-        
-        if (existingRule) {
-          // Transform rule data to match AutoGiftSetupFlow's expected initialData format
-          const ruleData = {
-            recipientId: existingRule.recipient_id || "",
-            eventType: existingRule.date_type || "",
-            budgetLimit: existingRule.budget_limit || 50,
-            autoApprove: false, // Default to false for safety
-            emailNotifications: true,
-            notificationDays: [7, 3, 1],
-            giftMessage: existingRule.gift_message || "",
-            selectedPaymentMethodId: "" // Will need to be set separately
-          };
-          
-          console.log('🔍 MODIFY RULE - Transformed rule data:', ruleData);
-          
-          setSelectedEventForSetup({
-            ...event,
-            id: event.ruleId,
-            autoGiftRuleId: event.ruleId,
-            initialData: ruleData
-          });
-          setAutoGiftSetupOpen(true);
-        } else {
-          console.log('❌ MODIFY RULE - Rule not found in rules array');
-          toast.error("Could not find rule data to edit");
-        }
-      } catch (error) {
-        console.error('❌ MODIFY RULE - Error:', error);
-        toast.error("Failed to load rule data");
-      }
-    } else {
-      console.log('❌ MODIFY RULE - Missing rule ID or not a scheduled auto gift');
+    // 24-hour restriction window before execution
+    const CANCELLATION_CUTOFF_HOURS = 24;
+    
+    if (hoursUntilExecution < CANCELLATION_CUTOFF_HOURS) {
+      return {
+        canCancel: false,
+        reason: `Cannot cancel auto-gift within ${CANCELLATION_CUTOFF_HOURS} hours of execution`,
+        hoursUntil: Math.round(hoursUntilExecution)
+      };
+    }
+    
+    return { canCancel: true, hoursUntil: Math.round(hoursUntilExecution) };
+  };
+
+  const handleCancelAutoGift = async (event: any) => {
+    if (!event.isScheduledAutoGift || !event.ruleId) {
+      toast.error("Cannot cancel this gift");
+      return;
+    }
+
+    const cancellationStatus = canCancelRule(event.dateObj);
+    
+    if (!cancellationStatus.canCancel) {
+      toast.error(cancellationStatus.reason);
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel the auto-gift for ${event.person}'s ${event.type}?\n\n` +
+      `This will permanently disable the auto-gifting rule and cannot be undone.\n` +
+      `Time remaining: ${cancellationStatus.hoursUntil} hours`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Use the unified service to cancel the rule
+      const { updateRule } = useAutoGifting();
+      await updateRule(event.ruleId, { is_active: false });
+      
+      toast.success(`Auto-gift cancelled for ${event.person}'s ${event.type}`);
+    } catch (error) {
+      console.error('Error cancelling auto-gift:', error);
+      toast.error("Failed to cancel auto-gift");
     }
   };
 
@@ -563,14 +570,30 @@ const SmartGiftingTab = () => {
                   >
                     Send Gift
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleModifyRule(event)}
-                    className="flex-1"
-                  >
-                    Modify Plan
-                  </Button>
+                  {event.isScheduledAutoGift && (() => {
+                    const cancellationStatus = canCancelRule(event.dateObj);
+                    const isNearExecution = cancellationStatus.hoursUntil && cancellationStatus.hoursUntil < 48;
+                    
+                    return (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleCancelAutoGift(event)}
+                        disabled={!cancellationStatus.canCancel}
+                        className={`flex-1 ${isNearExecution ? 'text-orange-600 border-orange-200' : ''}`}
+                        title={
+                          !cancellationStatus.canCancel 
+                            ? cancellationStatus.reason 
+                            : isNearExecution 
+                              ? `Cancel within ${cancellationStatus.hoursUntil}h` 
+                              : 'Cancel auto-gift'
+                        }
+                      >
+                        <Pause className="h-3 w-3 mr-1" />
+                        Cancel Auto-Gift
+                      </Button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

@@ -4,24 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Settings, Trash2, DollarSign, Bell, Gift } from "lucide-react";
+import { Trash2, DollarSign, Bell, Gift, Pause } from "lucide-react";
 import { UnifiedGiftRule } from "@/services/UnifiedGiftAutomationService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 
 interface ActiveRulesSectionProps {
   rules: UnifiedGiftRule[];
-  onEditRule?: (ruleId: string) => void;
 }
 
-const ActiveRulesSection = ({ rules, onEditRule }: ActiveRulesSectionProps) => {
+const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
   const { updateRule, deleteRule } = useAutoGifting();
 
   const handleToggleRule = async (ruleId: string, isActive: boolean) => {
     await updateRule(ruleId, { is_active: isActive });
   };
 
+  const handleCancelRule = async (ruleId: string) => {
+    if (confirm("Are you sure you want to cancel this auto-gifting rule? This will disable the rule permanently.")) {
+      await updateRule(ruleId, { is_active: false });
+    }
+  };
+
   const handleDeleteRule = async (ruleId: string) => {
-    if (confirm("Are you sure you want to delete this auto-gifting rule?")) {
+    if (confirm("Are you sure you want to delete this auto-gifting rule? This action cannot be undone.")) {
       await deleteRule(ruleId);
     }
   };
@@ -96,13 +101,11 @@ const ActiveRulesSection = ({ rules, onEditRule }: ActiveRulesSectionProps) => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => {
-                      console.log('Edit button clicked for rule:', rule.id);
-                      onEditRule?.(rule.id);
-                    }}
+                    onClick={() => handleCancelRule(rule.id)}
+                    disabled={!rule.is_active}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit
+                    <Pause className="h-4 w-4 mr-2" />
+                    Cancel
                   </Button>
                   <Button 
                     variant="outline" 

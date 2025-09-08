@@ -152,7 +152,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                       size="sm" 
                       variant="outline"
                       onClick={() => onSetupAutoGift?.(event)}
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:from-purple-700 hover:to-blue-700"
                     >
                       <Plus className="h-3 w-3" />
                       Auto-Gift
@@ -160,7 +160,9 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                   )}
                   <Button 
                     size="sm"
+                    variant="outline"
                     onClick={() => onSendGift?.(event)}
+                    className="bg-white text-gray-900 border-gray-200 hover:bg-gray-50"
                   >
                     Send Gift
                   </Button>

@@ -36,14 +36,14 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created successfully! Please check your email for verification.");
+        toast.success("Account created successfully! Please check your email and click the verification link.");
         onSuccess();
       }
     } catch (error) {

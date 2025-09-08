@@ -1,15 +1,13 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
-import VerificationCodeInput from "../verification/components/VerificationCodeInput";
 
 interface VerificationActionsProps {
   isLoading: boolean;
   verificationChecking: boolean;
   onResendVerification: () => Promise<any>;
   onCheckVerification: () => void;
-  onVerifyWithCode?: (code: string) => Promise<boolean>;
   resendCount?: number;
 }
 
@@ -18,46 +16,10 @@ const VerificationActions: React.FC<VerificationActionsProps> = ({
   verificationChecking,
   onResendVerification,
   onCheckVerification,
-  onVerifyWithCode,
   resendCount = 0
 }) => {
-  const [verificationCode, setVerificationCode] = useState("");
-
-  const handleVerifyWithCode = async () => {
-    if (!onVerifyWithCode || !verificationCode || verificationCode.length < 6) {
-      return;
-    }
-    
-    await onVerifyWithCode(verificationCode);
-  };
-
   return (
     <div className="space-y-4 w-full">
-      {onVerifyWithCode && (
-        <div className="space-y-4">
-          <VerificationCodeInput 
-            value={verificationCode} 
-            onChange={setVerificationCode} 
-            disabled={isLoading}
-          />
-          
-          <Button 
-            onClick={handleVerifyWithCode}
-            disabled={isLoading || verificationCode.length < 6}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              'Verify Code'
-            )}
-          </Button>
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row gap-2 w-full">
         <Button
           variant="outline"
@@ -73,7 +35,7 @@ const VerificationActions: React.FC<VerificationActionsProps> = ({
           ) : (
             <>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Resend email
+              Resend verification email
             </>
           )}
         </Button>
@@ -90,7 +52,7 @@ const VerificationActions: React.FC<VerificationActionsProps> = ({
               Checking...
             </>
           ) : (
-            "I've confirmed my email"
+            "I've verified my email"
           )}
         </Button>
       </div>

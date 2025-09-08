@@ -24,15 +24,13 @@ interface EmailVerificationViewProps {
   verificationChecking?: boolean;
   onCheckVerification?: () => Promise<{ verified: boolean }>;
   isVerified?: boolean;
-  onVerifyWithCode?: (code: string) => Promise<boolean>;
 }
 
 const EmailVerificationView = ({ 
   userEmail, 
   verificationChecking = false,
   onCheckVerification,
-  isVerified = false,
-  onVerifyWithCode
+  isVerified = false
 }: EmailVerificationViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [resendAttempts, setResendAttempts] = useState(0);
@@ -59,7 +57,7 @@ const EmailVerificationView = ({
           toast.success("Your email has been verified! Continuing to profile setup...");
         } else {
           console.log("Verification check failed - not verified yet");
-          toast.error("Your email is not yet verified. Please enter the verification code sent to your email.");
+          toast.error("Your email is not yet verified. Please check your email and click the verification link.");
         }
       } else {
         // Default implementation if no callback provided
@@ -75,7 +73,7 @@ const EmailVerificationView = ({
           window.location.href = `${window.location.origin}/auth?verified=true&email=${encodeURIComponent(userEmail)}`;
         } else {
           console.log("Default check - not verified yet");
-          toast.error("Your email is not yet verified. Please enter the verification code from your email.");
+          toast.error("Your email is not yet verified. Please check your email and click the verification link.");
         }
       }
     } catch (err) {
@@ -96,27 +94,22 @@ const EmailVerificationView = ({
       setIsLoading(true);
       setResendAttempts(prev => prev + 1);
       
-      // Get the actual current URL (not localhost)
-      const currentOrigin = window.location.origin;
-      console.log("Resending verification using origin:", currentOrigin);
-      
-      // Try our custom email function first
-      const response = await supabase.functions.invoke('send-verification-email', {
-        body: {
-          email: userEmail,
-          name: "",
-          verificationUrl: currentOrigin,
-          useVerificationCode: true // Explicitly request code-based verification
+      // Use Supabase's built-in resend functionality
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: userEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
       
-      if (response.error) {
-        console.error("Custom verification email error:", response.error);
-        throw new Error(response.error.message || "Failed to send verification email");
+      if (error) {
+        console.error("Resend verification email error:", error);
+        throw new Error(error.message || "Failed to send verification email");
       }
       
-      toast.success("Verification code sent! Please check your inbox", {
-        description: "If you don't see it, please check your spam folder."
+      toast.success("Verification email sent! Please check your inbox", {
+        description: "Click the link in the email to verify your account."
       });
     } catch (err) {
       console.error("Error resending verification:", err);
@@ -127,14 +120,6 @@ const EmailVerificationView = ({
     }
   };
 
-  const verifyWithCode = async (code: string) => {
-    if (!onVerifyWithCode) {
-      toast.error("Verification code validation is not available");
-      return false;
-    }
-    
-    return await onVerifyWithCode(code);
-  };
 
   return (
     <Card className="shadow-md">
@@ -142,7 +127,7 @@ const EmailVerificationView = ({
         <VerificationHeader userEmail={userEmail} />
       </CardHeader>
       <CardContent className="space-y-4">
-        <VerificationAlert useCode={true} />
+        <VerificationAlert />
         
         <VerificationStatus verificationChecking={verificationChecking} />
         
@@ -151,7 +136,6 @@ const EmailVerificationView = ({
           verificationChecking={verificationChecking}
           onResendVerification={handleResendVerification}
           onCheckVerification={checkVerificationStatus}
-          onVerifyWithCode={verifyWithCode}
           resendCount={resendAttempts}
         />
 

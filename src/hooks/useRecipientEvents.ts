@@ -77,6 +77,7 @@ export const useRecipientEvents = () => {
             console.warn('Error fetching special dates:', datesError);
           } else {
             specialDates = datesData || [];
+            console.log('📅 Found special dates:', specialDates);
           }
         }
 
@@ -94,6 +95,7 @@ export const useRecipientEvents = () => {
         // Process events
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const currentYear = today.getFullYear();
 
         const processedEvents: RecipientEvent[] = [];
 
@@ -109,71 +111,88 @@ export const useRecipientEvents = () => {
                                profile.email?.split('@')[0] || 
                                'Unknown';
 
-          // Add birthday from profile
+          console.log('👤 Processing connection:', recipientName, 'Profile:', profile);
+
+          // Add birthday from profile DOB
           if (profile.dob) {
             console.log('🎂 Processing birthday for', recipientName, 'DOB:', profile.dob);
             
-            // Parse DOB more carefully - it comes as MM-DD format
+            // Parse DOB carefully - it comes as MM-DD format
             const dobParts = profile.dob.split('-');
-            const month = parseInt(dobParts[0]) - 1; // Month is 0-indexed in JS
-            const day = parseInt(dobParts[1]);
-            
-            const thisYearBirthday = new Date(today.getFullYear(), month, day);
-            const nextBirthday = thisYearBirthday >= today ? 
-              thisYearBirthday : 
-              new Date(today.getFullYear() + 1, month, day);
-            
-            const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            
-            console.log('🎂 Birthday calculation:', {
-              dobParts,
-              month,
-              day,
-              thisYearBirthday,
-              nextBirthday,
-              daysUntil
-            });
-            
-            // Check if auto-gift rule exists
-            const hasAutoGift = autoGiftRules?.some(rule => 
-              rule.recipient_id === profile.id && rule.date_type === 'birthday'
-            ) || false;
+            if (dobParts.length === 2) {
+              const month = parseInt(dobParts[0]) - 1; // Month is 0-indexed in JS
+              const day = parseInt(dobParts[1]);
+              
+              // Calculate this year's birthday
+              const thisYearBirthday = new Date(currentYear, month, day);
+              
+              // If birthday already passed this year, calculate next year's
+              const nextBirthday = thisYearBirthday >= today ? 
+                thisYearBirthday : 
+                new Date(currentYear + 1, month, day);
+              
+              const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              
+              console.log('🎂 Birthday calculation for', recipientName, ':', {
+                originalDob: profile.dob,
+                parsedMonth: month + 1, // Show 1-indexed for readability
+                parsedDay: day,
+                currentYear,
+                today: today.toDateString(),
+                thisYearBirthday: thisYearBirthday.toDateString(),
+                nextBirthday: nextBirthday.toDateString(),
+                daysUntil
+              });
+              
+              // Check if auto-gift rule exists
+              const hasAutoGift = autoGiftRules?.some(rule => 
+                rule.recipient_id === profile.id && rule.date_type === 'birthday'
+              ) || false;
 
-            processedEvents.push({
-              id: `birthday-${profile.id}`,
-              recipientId: profile.id,
-              recipientName,
-              recipientEmail: profile.email,
-              eventType: 'Birthday',
-              eventDate: nextBirthday.toISOString().split('T')[0],
-              isRecurring: true,
-              relationshipType: connection.relationship_type || 'friend',
-              daysUntil,
-              urgency: daysUntil <= 7 ? 'high' : daysUntil <= 30 ? 'medium' : 'low',
-              hasAutoGift,
-              connectionStatus: connection.status
-            });
+              processedEvents.push({
+                id: `birthday-${profile.id}`,
+                recipientId: profile.id,
+                recipientName,
+                recipientEmail: profile.email,
+                eventType: 'Birthday',
+                eventDate: nextBirthday.toISOString().split('T')[0],
+                isRecurring: true,
+                relationshipType: connection.relationship_type || 'friend',
+                daysUntil,
+                urgency: daysUntil <= 7 ? 'high' : daysUntil <= 30 ? 'medium' : 'low',
+                hasAutoGift,
+                connectionStatus: connection.status
+              });
+            }
           }
 
           // Add special dates for this user
           const userSpecialDates = specialDates.filter(date => date.user_id === profile.id);
+          console.log('📅 Special dates for', recipientName, ':', userSpecialDates);
+          
           userSpecialDates.forEach(specialDate => {
-            console.log('📅 Processing special date for', recipientName, 'Date:', specialDate.date);
+            console.log('📅 Processing special date for', recipientName, 'Date:', specialDate.date, 'Type:', specialDate.date_type);
             
-            const eventDate = new Date(specialDate.date);
-            // Handle timezone issues by using UTC
-            const thisYearEvent = new Date(today.getFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate());
+            // Parse the date more carefully
+            const eventDate = new Date(specialDate.date + 'T00:00:00');
+            const eventMonth = eventDate.getMonth();
+            const eventDay = eventDate.getDate();
+            
+            // Calculate this year's event
+            const thisYearEvent = new Date(currentYear, eventMonth, eventDay);
             const nextEvent = thisYearEvent >= today ? 
               thisYearEvent : 
-              new Date(today.getFullYear() + 1, eventDate.getUTCMonth(), eventDate.getUTCDate());
+              new Date(currentYear + 1, eventMonth, eventDay);
             
             const daysUntil = Math.ceil((nextEvent.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             
-            console.log('📅 Special date calculation:', {
+            console.log('📅 Special date calculation for', recipientName, ':', {
               originalDate: specialDate.date,
-              eventDate,
-              thisYearEvent,
-              nextEvent,
+              eventDate: eventDate.toDateString(),
+              eventMonth: eventMonth + 1, // Show 1-indexed
+              eventDay,
+              thisYearEvent: thisYearEvent.toDateString(),
+              nextEvent: nextEvent.toDateString(),
               daysUntil
             });
             
@@ -187,6 +206,7 @@ export const useRecipientEvents = () => {
               'wedding': 'Wedding Anniversary',
               'graduation': 'Graduation',
               'promotion': 'Promotion',
+              'birthday': 'Birthday',
               'custom': specialDate.custom_name || 'Special Day'
             };
 

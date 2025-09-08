@@ -63,6 +63,7 @@ const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
 const TestEmailSystem = lazy(() => import("./pages/TestEmailSystem"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -178,6 +179,7 @@ function AppContent() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />

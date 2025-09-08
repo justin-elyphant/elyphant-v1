@@ -3548,6 +3548,7 @@ export type Database = {
           archived_at: string | null
           connection_id: string | null
           created_at: string | null
+          created_by_auto_gifting: boolean | null
           date: string
           date_type: string
           end_date: string | null
@@ -3567,6 +3568,7 @@ export type Database = {
           archived_at?: string | null
           connection_id?: string | null
           created_at?: string | null
+          created_by_auto_gifting?: boolean | null
           date: string
           date_type: string
           end_date?: string | null
@@ -3586,6 +3588,7 @@ export type Database = {
           archived_at?: string | null
           connection_id?: string | null
           created_at?: string | null
+          created_by_auto_gifting?: boolean | null
           date?: string
           date_type?: string
           end_date?: string | null

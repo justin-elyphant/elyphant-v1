@@ -20,6 +20,7 @@ import NewRecipientForm from "@/components/shared/NewRecipientForm";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
+import SmartHolidayInfo from "./SmartHolidayInfo";
 import { DatePicker } from "@/components/ui/date-picker";
 import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 
@@ -202,14 +203,23 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       };
 
       // Create or update the rule
+      let result;
       if (ruleId) {
-        await updateRule(ruleId, ruleData);
+        result = await updateRule(ruleId, ruleData);
         toast.success("Auto-gifting rule updated successfully!");
       } else {
-        await createRule(ruleData);
-        toast.success("Auto-gifting rule created successfully!", {
-          description: "You'll be notified when gift suggestions are ready for approval"
-        });
+        result = await createRule(ruleData);
+        
+        // Show different success messages for holidays vs other events
+        if (formData.eventType === "holiday") {
+          toast.success(`Holiday auto-gifting set up for ${formData.specificHoliday}!`, {
+            description: "The holiday event has been added to your calendar and will appear in Recipient Events for your connections"
+          });
+        } else {
+          toast.success("Auto-gifting rule created successfully!", {
+            description: "You'll be notified when gift suggestions are ready for approval"
+          });
+        }
       }
 
       // Update settings to include the auto-approve preference
@@ -380,6 +390,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       Choose any future date to schedule your "just because" gift delivery
                     </p>
                   </div>
+                )}
+
+                {formData.eventType === "holiday" && formData.specificHoliday && (
+                  <SmartHolidayInfo 
+                    holidayType={formData.specificHoliday}
+                    recipientName={
+                      connections.find(c => c.id === formData.recipientId)?.profile_name ||
+                      pendingInvitations.find(c => c.id === formData.recipientId)?.pending_recipient_name
+                    }
+                  />
                 )}
 
                 {formData.eventType === "holiday" && formData.calculatedDate && (

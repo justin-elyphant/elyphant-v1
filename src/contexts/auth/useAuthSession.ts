@@ -124,11 +124,26 @@ export function useAuthSession(): UseAuthSessionReturn {
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get initial session and validate user still exists
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (process.env.NODE_ENV === 'development') {
         console.log("Auth: Fresh session loaded", { hasSession: !!session });
       }
+      
+      // If we have a session, verify the user still exists
+      if (session?.user) {
+        try {
+          const { data, error } = await supabase.auth.getUser();
+          if (error && error.message.includes('User from sub claim in JWT does not exist')) {
+            console.log("Auth: User deleted externally, signing out");
+            await supabase.auth.signOut();
+            return;
+          }
+        } catch (err) {
+          console.error("Auth: Error validating user:", err);
+        }
+      }
+      
       updateAuthState(session);
     });
 

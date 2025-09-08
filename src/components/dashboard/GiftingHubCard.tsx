@@ -1,4 +1,4 @@
-// GiftingHubCard - Restructured Version - Force Cache Clear v2
+// GiftingHubCard - Clean Smart Gifting Only - v3
 import React, { useState, useEffect } from "react";
 import { 
   Gift, 
@@ -43,10 +43,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { standardizeProduct } from '@/components/marketplace/product-item/productUtils';
 import { fetchProductDetails } from '@/components/marketplace/zinc/services/productDetailsService';
 
-// Import group components
-import ActiveGroupProjectsWidget from "./ActiveGroupProjectsWidget";
-import GroupGiftAnalytics from "./GroupGiftAnalytics";
-
 // Import auto-gifting hook and settings dialog
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { AutoGiftSettingsDialog } from "@/components/gifting/AutoGiftSettingsDialog";
@@ -58,7 +54,7 @@ import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
 
 // Enhanced Smart Gifting Tab Component (Gift Opportunities & Setup)
 const SmartGiftingTab = () => {
-  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting - restructured for gift opportunities - CACHE REFRESH');
+  console.log('🎯🎯🎯 SmartGiftingTab: CLEANED VERSION - NO AUTO-GIFT/GROUP SECTIONS');
   console.log('🔍 File timestamp check:', Date.now());
   const { user } = useAuth();
   const { rules } = useAutoGifting();

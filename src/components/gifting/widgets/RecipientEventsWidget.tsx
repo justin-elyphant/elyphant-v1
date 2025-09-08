@@ -18,6 +18,8 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
   maxEvents = 5
 }) => {
   const { events, loading, error } = useRecipientEvents();
+  
+  console.log('📊 RecipientEventsWidget rendering:', { eventsCount: events.length, loading, error, events });
 
   if (loading) {
     return (

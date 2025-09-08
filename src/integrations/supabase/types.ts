@@ -765,6 +765,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_sessions: {
+        Row: {
+          abandoned_at: string | null
+          cart_data: Json
+          checkout_initiated_at: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_recovered: boolean | null
+          last_recovery_email_sent: string | null
+          last_updated: string
+          recovery_emails_sent: number | null
+          session_id: string
+          total_amount: number | null
+          user_id: string | null
+        }
+        Insert: {
+          abandoned_at?: string | null
+          cart_data?: Json
+          checkout_initiated_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_recovered?: boolean | null
+          last_recovery_email_sent?: string | null
+          last_updated?: string
+          recovery_emails_sent?: number | null
+          session_id: string
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          abandoned_at?: string | null
+          cart_data?: Json
+          checkout_initiated_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_recovered?: boolean | null
+          last_recovery_email_sent?: string | null
+          last_updated?: string
+          recovery_emails_sent?: number | null
+          session_id?: string
+          total_amount?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       connection_nudges: {
         Row: {
           connection_id: string | null
@@ -2316,6 +2364,60 @@ export type Database = {
         }
         Relationships: []
       }
+      order_email_events: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          order_id: string | null
+          recipient_email: string
+          resend_message_id: string | null
+          sent_at: string
+          status: string
+          template_id: string | null
+          template_variables: Json | null
+        }
+        Insert: {
+          email_type: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          recipient_email: string
+          resend_message_id?: string | null
+          sent_at?: string
+          status?: string
+          template_id?: string | null
+          template_variables?: Json | null
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          recipient_email?: string
+          resend_message_id?: string | null
+          sent_at?: string
+          status?: string
+          template_id?: string | null
+          template_variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_email_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_email_events_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_group_contributors: {
         Row: {
           contribution_amount: number
@@ -2468,9 +2570,11 @@ export type Database = {
       orders: {
         Row: {
           billing_info: Json | null
+          confirmation_email_sent: boolean | null
           created_at: string
           currency: string
           delivery_groups: Json | null
+          followup_email_sent: boolean | null
           funding_source: string | null
           gift_message: string | null
           gift_options: Json | null
@@ -2486,6 +2590,7 @@ export type Database = {
           next_retry_at: string | null
           order_method: string | null
           order_number: string
+          payment_confirmation_sent: boolean | null
           payment_status: string | null
           retry_count: number | null
           retry_reason: string | null
@@ -2493,6 +2598,7 @@ export type Database = {
           shipping_cost: number
           shipping_info: Json
           status: string
+          status_update_emails_sent: Json | null
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
           subtotal: number
@@ -2509,9 +2615,11 @@ export type Database = {
         }
         Insert: {
           billing_info?: Json | null
+          confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          followup_email_sent?: boolean | null
           funding_source?: string | null
           gift_message?: string | null
           gift_options?: Json | null
@@ -2527,6 +2635,7 @@ export type Database = {
           next_retry_at?: string | null
           order_method?: string | null
           order_number: string
+          payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
@@ -2534,6 +2643,7 @@ export type Database = {
           shipping_cost?: number
           shipping_info: Json
           status?: string
+          status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           subtotal: number
@@ -2550,9 +2660,11 @@ export type Database = {
         }
         Update: {
           billing_info?: Json | null
+          confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          followup_email_sent?: boolean | null
           funding_source?: string | null
           gift_message?: string | null
           gift_options?: Json | null
@@ -2568,6 +2680,7 @@ export type Database = {
           next_retry_at?: string | null
           order_method?: string | null
           order_number?: string
+          payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
@@ -2575,6 +2688,7 @@ export type Database = {
           shipping_cost?: number
           shipping_info?: Json
           status?: string
+          status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           subtotal?: number

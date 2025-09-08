@@ -4178,6 +4178,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
+      detect_abandoned_carts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       emergency_security_verification: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -4346,6 +4350,10 @@ export type Database = {
           order_uuid: string
           user_uuid: string
         }
+        Returns: undefined
+      }
+      trigger_followup_emails: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       validate_zma_order: {

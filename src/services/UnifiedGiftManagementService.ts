@@ -699,6 +699,11 @@ class UnifiedGiftManagementService {
 
     if (error) throw error;
     
+    // Smart Holiday Detection: Create holiday event if needed
+    if (rule.date_type) {
+      await this.createHolidayEventIfNeeded(rule.user_id, rule.date_type, 'friends');
+    }
+    
     await this.logGiftAutomationActivity(rule.user_id, 'rule_created', { rule_id: data.id });
     
     return data;
@@ -717,12 +722,26 @@ class UnifiedGiftManagementService {
   }
 
   async deleteRule(id: string): Promise<void> {
+    // Get rule details before deletion for cleanup
+    const { data: rule, error: fetchError } = await supabase
+      .from('auto_gifting_rules')
+      .select('user_id, date_type')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { error } = await supabase
       .from('auto_gifting_rules')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    // Smart Holiday Cleanup: Remove auto-created holiday event if no other rules exist
+    if (rule?.date_type && rule?.user_id) {
+      await this.cleanupHolidayEventIfNeeded(rule.user_id, rule.date_type);
+    }
   }
 
   async getUserRules(userId: string): Promise<UnifiedGiftRule[]> {
@@ -1071,6 +1090,132 @@ class UnifiedGiftManagementService {
         reason: 'Error checking cancellation status',
         executions: { pending: 0, processing: 0, completed: 0, withOrders: 0 }
       };
+    }
+  }
+
+  // ============= SMART HOLIDAY DETECTION =============
+
+  /**
+   * Creates a user_special_dates entry for holidays when setting up auto-gifting
+   */
+  async createHolidayEventIfNeeded(
+    userId: string, 
+    holidayType: string, 
+    visibility: string = 'friends'
+  ): Promise<boolean> {
+    try {
+      // Import holiday calculation function
+      const { calculateHolidayDate, isKnownHoliday } = await import('@/constants/holidayDates');
+      
+      if (!isKnownHoliday(holidayType)) {
+        console.log(`⏭️ [UNIFIED] Holiday type "${holidayType}" not in known holidays, skipping event creation`);
+        return false;
+      }
+
+      // Calculate the holiday date for current year
+      const calculatedDate = calculateHolidayDate(holidayType);
+      if (!calculatedDate) {
+        console.warn(`⚠️ [UNIFIED] Could not calculate date for holiday: ${holidayType}`);
+        return false;
+      }
+
+      console.log(`🎄 [UNIFIED] Creating holiday event for user ${userId}: ${holidayType} on ${calculatedDate}`);
+
+      // Check if the user already has this holiday event
+      const { data: existingEvent, error: checkError } = await supabase
+        .from('user_special_dates')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('date_type', holidayType)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing holiday event:', checkError);
+        return false;
+      }
+
+      if (existingEvent) {
+        console.log(`📅 [UNIFIED] Holiday event already exists for user ${userId}: ${holidayType}`);
+        return true; // Event already exists, that's fine
+      }
+
+      // Create the holiday event
+      const { data: newEvent, error: createError } = await supabase
+        .from('user_special_dates')
+        .insert([{
+          user_id: userId,
+          date_type: holidayType,
+          date: calculatedDate,
+          visibility: visibility,
+          is_recurring: true, // Holidays are recurring
+          created_by_auto_gifting: true // Mark as auto-created
+        }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating holiday event:', createError);
+        return false;
+      }
+
+      console.log(`✅ [UNIFIED] Successfully created holiday event:`, newEvent);
+      return true;
+
+    } catch (error) {
+      console.error('Error in createHolidayEventIfNeeded:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Cleans up auto-created holiday events when auto-gift rule is deleted
+   */
+  async cleanupHolidayEventIfNeeded(userId: string, holidayType: string): Promise<boolean> {
+    try {
+      // Import holiday check function
+      const { isKnownHoliday } = await import('@/constants/holidayDates');
+      
+      if (!isKnownHoliday(holidayType)) {
+        return false; // Not a holiday, nothing to clean up
+      }
+
+      // Check if there are other active auto-gift rules for this holiday
+      const { data: otherRules, error: rulesError } = await supabase
+        .from('auto_gifting_rules')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('date_type', holidayType)
+        .eq('is_active', true);
+
+      if (rulesError) {
+        console.error('Error checking other auto-gift rules:', rulesError);
+        return false;
+      }
+
+      if (otherRules && otherRules.length > 0) {
+        console.log(`📅 [UNIFIED] Other auto-gift rules exist for ${holidayType}, keeping holiday event`);
+        return false; // Other rules exist, don't delete the event
+      }
+
+      // Check if the event was created by auto-gifting and delete it
+      const { error: deleteError } = await supabase
+        .from('user_special_dates')
+        .delete()
+        .eq('user_id', userId)
+        .eq('date_type', holidayType)
+        .eq('created_by_auto_gifting', true);
+
+      if (deleteError) {
+        console.error('Error deleting auto-created holiday event:', deleteError);
+        return false;
+      }
+
+      console.log(`🗑️ [UNIFIED] Cleaned up auto-created holiday event: ${holidayType}`);
+      return true;
+
+    } catch (error) {
+      console.error('Error in cleanupHolidayEventIfNeeded:', error);
+      return false;
     }
   }
 

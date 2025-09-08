@@ -64,13 +64,65 @@ serve(async (req) => {
 
     console.log('User data deleted successfully:', deletionResult)
 
-    // Delete the user from auth.users table
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+    // Delete the user from auth.users table with retry logic
+    let authDeleteError;
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`Attempting to delete auth user (attempt ${retryCount + 1}/${maxRetries})`)
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+        
+        if (!error) {
+          console.log('Auth user deleted successfully')
+          authDeleteError = null;
+          break;
+        }
+        
+        authDeleteError = error;
+        console.error(`Auth deletion attempt ${retryCount + 1} failed:`, error)
+        
+        if (retryCount < maxRetries - 1) {
+          console.log(`Waiting ${retryDelay}ms before retry...`)
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        }
+      } catch (error) {
+        console.error(`Auth deletion attempt ${retryCount + 1} threw exception:`, error)
+        authDeleteError = error;
+        
+        if (retryCount < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        }
+      }
+      
+      retryCount++;
+    }
 
     if (authDeleteError) {
-      console.error('Error deleting auth user:', authDeleteError)
+      console.error('Failed to delete auth user after all retries:', authDeleteError)
+      
+      // Log detailed error information for debugging
+      console.error('Auth deletion error details:', {
+        name: authDeleteError.name,
+        message: authDeleteError.message,
+        status: authDeleteError.status,
+        code: authDeleteError.code,
+        stack: authDeleteError.stack
+      })
+      
       return new Response(
-        JSON.stringify({ error: 'Failed to delete user account', details: authDeleteError.message }),
+        JSON.stringify({ 
+          error: 'Failed to delete user account from authentication system', 
+          details: authDeleteError.message,
+          retryCount: retryCount,
+          debugInfo: {
+            errorType: authDeleteError.name || 'Unknown',
+            errorCode: authDeleteError.code || 'no_code',
+            errorStatus: authDeleteError.status || 'no_status'
+          }
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -78,7 +130,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('User account deleted successfully')
+    console.log('User account deleted successfully from both database and auth')
 
     return new Response(
       JSON.stringify({ 

@@ -49,9 +49,9 @@ const AuthCallback = () => {
           setStatus('success');
           toast.success('Email verified successfully!');
           
-          // Redirect to dashboard or profile setup
+          // After email verification, redirect to profile setup for new users
           setTimeout(() => {
-            navigate('/dashboard', { replace: true });
+            navigate('/profile-setup', { replace: true });
           }, 2000);
         } else {
           setStatus('error');
@@ -110,7 +110,7 @@ const AuthCallback = () => {
             </div>
             <CardTitle className="text-xl text-green-700">Email Verified!</CardTitle>
             <p className="text-muted-foreground">
-              Your email has been successfully verified. You'll be redirected to your dashboard shortly.
+              Your email has been successfully verified. You'll be redirected to complete your profile setup shortly.
             </p>
           </div>
         );

@@ -107,9 +107,11 @@ const SignUpForm = () => {
       
       // If signup succeeded, send custom verification email
       if (signUpData?.user) {
+        let emailSent = false;
+        
         try {
           console.log("📧 Sending custom verification email");
-          const { error: emailError } = await supabase.functions.invoke('send-verification-email', {
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
             body: {
               email: data.email,
               name: data.name,
@@ -117,12 +119,15 @@ const SignUpForm = () => {
             }
           });
           
+          console.log("Email function result:", { emailData, emailError });
+          
           if (emailError) {
             console.error("Verification email error:", emailError);
             toast.error("Account created but email failed", {
               description: "Your account was created but we couldn't send the verification email. Please contact support."
             });
           } else {
+            emailSent = true;
             toast.success("Account created!", {
               description: "Please check your email for a verification link to complete your signup."
             });
@@ -154,8 +159,13 @@ const SignUpForm = () => {
           localStorage.setItem('invitation_context', JSON.stringify(invitationData));
         }
         
-        // Navigate to verification page instead of profile setup
-        navigate('/verify-email', { replace: true });
+        // Navigate to verification page - create a simple one for now
+        if (emailSent) {
+          // For now, just show success and stay on same page since /verify-email doesn't exist
+          console.log("✅ Account created and verification email sent successfully");
+        } else {
+          console.log("⚠️ Account created but email failed - user can try again");
+        }
       }
     } catch (error) {
       console.error("Sign up error:", error);

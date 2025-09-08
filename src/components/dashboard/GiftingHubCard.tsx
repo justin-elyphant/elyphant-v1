@@ -137,58 +137,6 @@ const SmartGiftingTab = () => {
         onSendGift={handleSendGift}
         maxEvents={5}
       />
-
-      {/* Compact Auto-Gift Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-purple-500" />
-                Auto-Gift Rules
-              </CardTitle>
-              <CardDescription>
-                {activeRules.length > 0 
-                  ? `${activeRules.length} active automation${activeRules.length > 1 ? 's' : ''}`
-                  : "No automation rules set up yet"
-                }
-              </CardDescription>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                const tabsList = document.querySelector('[data-testid="tabs-list"]');
-                const myGiftsTab = tabsList?.querySelector('[value="my-gifts"]');
-                if (myGiftsTab) {
-                  (myGiftsTab as HTMLElement).click();
-                }
-              }}
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              View All Rules
-            </Button>
-          </div>
-        </CardHeader>
-        {activeRules.length > 0 && (
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Your automation rules are active and managing upcoming gifts. 
-              Switch to the "My Gifts" tab for detailed management.
-            </p>
-          </CardContent>
-        )}
-      </Card>
-      
-      {/* Group Projects and Analytics Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active Group Projects */}
-        <ActiveGroupProjectsWidget />
-        
-        {/* Group Gift Analytics */}
-        <GroupGiftAnalytics />
-      </div>
       
       {/* Auto-Gift Setup Flow */}
       <AutoGiftSetupFlow

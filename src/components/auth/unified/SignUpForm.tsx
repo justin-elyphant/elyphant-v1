@@ -86,9 +86,15 @@ const SignUpForm = () => {
       });
       
       if (signUpError) {
+        console.error("Signup error:", signUpError);
+        
         if (signUpError.message.includes("already registered")) {
           toast.error("Email already registered", {
             description: "Please use a different email address or try to sign in."
+          });
+        } else if (signUpError.message.includes("timeout") || signUpError.message.includes("upstream request timeout")) {
+          toast.error("Server timeout", {
+            description: "The signup request timed out. Please try again in a moment."
           });
         } else {
           toast.error("Signup failed", {

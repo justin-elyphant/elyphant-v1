@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Generate verification link using Supabase's generateLink method
     const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'signup',
+      type: 'confirmation',
       email: email,
       options: {
         redirectTo: `${req.headers.get('origin') || 'https://78c3ae13-28be-4c53-9235-ca0f8b2a6e91.sandbox.lovable.dev'}/auth/callback`
@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email using Resend
     const emailResponse = await resend.emails.send({
-      from: 'Elyphant <welcome@resend.dev>',
+      from: 'Elyphant <marketplace.admin@elyphant.com>',
       to: [email],
       subject: emailSubject,
       html: emailHtml,

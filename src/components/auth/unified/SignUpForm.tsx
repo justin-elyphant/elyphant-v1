@@ -264,27 +264,6 @@ const SignUpForm = () => {
           )}
         </Button>
         
-        {/* Temporary test button for debugging */}
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="touch" 
-          className="w-full touch-target-44" 
-          onClick={async () => {
-            try {
-              console.log("🧪 Testing verification system");
-              const { data, error } = await supabase.functions.invoke('test-verification-system');
-              console.log("Test result:", { data, error });
-              toast.success("Test completed - check console logs");
-            } catch (err) {
-              console.error("Test error:", err);
-              toast.error("Test failed - check console");
-            }
-          }}
-        >
-          🧪 Test Email System
-        </Button>
-        
         <p className="text-caption text-muted-foreground text-center">
           By creating an account, you agree to our Terms of Service and Privacy Policy
         </p>

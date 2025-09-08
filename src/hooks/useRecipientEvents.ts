@@ -166,15 +166,28 @@ export const useRecipientEvents = () => {
             }
           }
 
-          // Add special dates for this user
-          const userSpecialDates = specialDates.filter(date => date.user_id === profile.id);
-          console.log('📅 Special dates for', recipientName, ':', userSpecialDates);
+          // Add special dates for this user (SKIP birthdays - profile DOB takes priority)
+          const userSpecialDates = specialDates.filter(date => 
+            date.user_id === profile.id && date.date_type !== 'birthday'
+          );
+          console.log('📅 Special dates for', recipientName, '(excluding birthdays):', userSpecialDates);
           
           userSpecialDates.forEach(specialDate => {
             console.log('📅 Processing special date for', recipientName, 'Date:', specialDate.date, 'Type:', specialDate.date_type);
             
-            // Parse the date more carefully
-            const eventDate = new Date(specialDate.date + 'T00:00:00');
+            // Parse the date more carefully - handle different formats
+            let eventDate: Date;
+            try {
+              if (specialDate.date.includes('T')) {
+                eventDate = new Date(specialDate.date);
+              } else {
+                eventDate = new Date(specialDate.date + 'T00:00:00');
+              }
+            } catch (e) {
+              console.warn('⚠️ Failed to parse special date:', specialDate.date);
+              eventDate = new Date(specialDate.date);
+            }
+            
             const eventMonth = eventDate.getMonth();
             const eventDay = eventDate.getDate();
             
@@ -186,7 +199,8 @@ export const useRecipientEvents = () => {
             
             const daysUntil = Math.ceil((nextEvent.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             
-            console.log('📅 Special date calculation for', recipientName, ':', {
+            console.log('📅 ✅ Special date calculation for', recipientName, ':', {
+              type: specialDate.date_type,
               originalDate: specialDate.date,
               eventDate: eventDate.toDateString(),
               eventMonth: eventMonth + 1, // Show 1-indexed
@@ -217,7 +231,7 @@ export const useRecipientEvents = () => {
               recipientEmail: profile.email,
               eventType: eventTypeMap[specialDate.date_type] || specialDate.date_type,
               eventDate: nextEvent.toISOString().split('T')[0],
-              isRecurring: specialDate.is_recurring || false,
+              isRecurring: specialDate.is_recurring !== false, // Default to true for recurring events
               relationshipType: connection.relationship_type || 'friend',
               daysUntil,
               urgency: daysUntil <= 7 ? 'high' : daysUntil <= 30 ? 'medium' : 'low',

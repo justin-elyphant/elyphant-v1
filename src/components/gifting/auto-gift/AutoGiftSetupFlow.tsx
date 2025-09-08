@@ -107,9 +107,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     if (recipientId) setFormData(prev => ({ ...prev, recipientId }));
     if (eventType) setFormData(prev => ({ ...prev, eventType }));
     
-    // Populate form with initial data for editing
+    // Populate form with initial data for editing OR pre-population from recipient events
     if (initialData) {
       console.log('🔍 AutoGiftSetupFlow - Populating form with initialData:', initialData);
+      
+      // Show confirmation that data was pre-filled
+      if (initialData.recipientName && open) {
+        toast.success(`Auto-gift setup opened for ${initialData.recipientName}`, {
+          description: `Event details for ${initialData.eventType} have been pre-filled`
+        });
+      }
+      
       setFormData(prev => {
         const newData = {
           ...prev,
@@ -120,7 +128,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           emailNotifications: initialData.emailNotifications ?? prev.emailNotifications,
           notificationDays: initialData.notificationDays || prev.notificationDays,
           autoApprove: initialData.autoApprove ?? prev.autoApprove,
-          giftMessage: initialData.giftMessage || prev.giftMessage
+          giftMessage: initialData.giftMessage || prev.giftMessage,
+          // If eventDate is provided, calculate the appropriate date for birthday/anniversary
+          selectedDate: initialData.eventDate && initialData.eventType === 'other' ? 
+            new Date(initialData.eventDate) : prev.selectedDate
         };
         console.log('🔍 AutoGiftSetupFlow - New formData after update:', newData);
         return newData;
@@ -128,7 +139,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     } else {
       console.log('🔍 AutoGiftSetupFlow - No initialData provided');
     }
-  }, [recipientId, eventType, initialData, ruleId]);
+  }, [recipientId, eventType, initialData, ruleId, open]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -278,6 +289,19 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
           {/* Step 1: Recipient Selection */}
           <TabsContent value="0" className="space-y-4">
+            {initialData?.recipientName && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">Event Details Pre-filled</span>
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Setting up auto-gifting for {initialData.recipientName}'s {initialData.eventType}
+                  {initialData.eventDate && ` on ${new Date(initialData.eventDate).toLocaleDateString()}`}
+                </p>
+              </div>
+            )}
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -290,7 +314,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="recipient">Recipient</Label>
+                  <Label htmlFor="recipient" className="flex items-center gap-2">
+                    Recipient
+                    {initialData?.recipientName && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Pre-filled
+                      </Badge>
+                    )}
+                  </Label>
                   <Select 
                     value={formData.recipientId} 
                     onValueChange={(value) => {
@@ -346,7 +377,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                 </div>
 
                 <div>
-                  <Label htmlFor="eventType">Event Type</Label>
+                  <Label htmlFor="eventType" className="flex items-center gap-2">
+                    Event Type
+                    {initialData?.eventType && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Pre-filled
+                      </Badge>
+                    )}
+                  </Label>
                   <Select 
                     value={formData.eventType} 
                     onValueChange={(value) => setFormData(prev => ({ 

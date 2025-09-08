@@ -84,6 +84,7 @@ const SmartGiftingTab = () => {
   };
 
   const handleSetupAutoGift = async (event: any) => {
+    console.log('🎯 handleSetupAutoGift called with event:', event);
     setSelectedEvent(event);
     setAutoGiftSetupOpen(true);
   };
@@ -139,8 +140,8 @@ const SmartGiftingTab = () => {
         open={autoGiftSetupOpen}
         onOpenChange={setAutoGiftSetupOpen}
         eventId={selectedEvent?.id}
-        eventType={selectedEvent?.eventType}
-        recipientId={selectedEvent?.recipientId}
+        eventType={selectedEvent?.initialData?.eventType}
+        recipientId={selectedEvent?.initialData?.recipientId}
         initialData={selectedEvent?.initialData}
         ruleId={selectedEvent?.autoGiftRuleId}
       />

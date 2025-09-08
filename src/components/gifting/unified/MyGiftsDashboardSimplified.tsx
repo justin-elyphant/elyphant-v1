@@ -9,6 +9,8 @@ import {
 import { format } from "date-fns";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
+import ScheduledGiftsSection from "@/components/gifting/sections/ScheduledGiftsSection";
+import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
 
 interface MyGiftsDashboardSimplifiedProps {
   onEditRule?: (ruleId: string) => void;
@@ -178,45 +180,11 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
         </Card>
 
         {/* Scheduled Gifts with Delivery Tracking */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-blue-500" />
-                  Scheduled Gifts
-                </CardTitle>
-                <CardDescription>
-                  Track delivery status and manage scheduled gifts
-                </CardDescription>
-              </div>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={onScheduleGift}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                Schedule Gift
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {scheduledGifts.length > 0 ? (
-              <div className="space-y-3">
-                {/* TODO: Map scheduled gifts with tracking info */}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground mb-4">No scheduled gifts</p>
-                <Button variant="outline" onClick={onScheduleGift}>
-                  Schedule a Gift
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ScheduledGiftsSection 
+          onScheduleNew={onScheduleGift}
+          onTrackOrder={(orderId) => console.log('Track order:', orderId)}
+          onCancelGift={(giftId) => console.log('Cancel gift:', giftId)}
+        />
 
         {/* Recent Gift History with Reorder Options */}
         <Card>
@@ -247,23 +215,11 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
         </Card>
 
         {/* Activity Feed */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-orange-500" />
-              Activity Feed
-            </CardTitle>
-            <CardDescription>
-              Recent automation executions and system activity
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground">No recent activity</p>
-            </div>
-          </CardContent>
-        </Card>
+        <GiftActivityFeed 
+          maxItems={15}
+          showViewAll={true}
+          onViewAll={() => console.log('View all activity')}
+        />
       </div>
     </div>
   );

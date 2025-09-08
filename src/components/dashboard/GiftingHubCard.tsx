@@ -51,29 +51,22 @@ import GroupGiftAnalytics from "./GroupGiftAnalytics";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { AutoGiftSettingsDialog } from "@/components/gifting/AutoGiftSettingsDialog";
 
-// Enhanced Smart Gifting Tab Component (Primary Hub)
+// Import new hooks and components
+import RecipientEventsWidget from "@/components/gifting/widgets/RecipientEventsWidget";
+import ScheduledGiftsSection from "@/components/gifting/sections/ScheduledGiftsSection";
+import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
+
+// Enhanced Smart Gifting Tab Component (Gift Opportunities & Setup)
 const SmartGiftingTab = () => {
-  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting');
-  const { events, isLoading: eventsLoading } = useEvents();
-  const { pendingInvitations, loading: connectionsLoading } = useEnhancedConnections();
+  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting - restructured for gift opportunities');
   const { user } = useAuth();
   const { rules } = useAutoGifting();
-  console.log('📊📊📊 SmartGiftingTab: useAutoGifting returned rules:', rules);
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [selectedEventForSetup, setSelectedEventForSetup] = useState<any>(null);
-  const [productImages, setProductImages] = useState<Record<string, string>>({});
-
-  // Temporary function to prevent cached errors - will be removed when cache clears
-  const getProductImageWithFallback = (event: any): string => {
-    return productImages[event.id] || event.execution?.selectedProduct?.image || '/placeholder.svg';
-  };
 
   // Quick Stats for dashboard
   const activeRules = rules?.filter(rule => rule.is_active) || [];
-  const scheduledGifts = activeRules?.filter(rule => (rule as any).scheduled_date) || [];
-  const recentGifts = []; // TODO: Integrate with gift history
 
   // Helper function to get friendly date type names
   const getFriendlyDateType = (dateType: string) => {
@@ -147,170 +140,12 @@ const SmartGiftingTab = () => {
     return scheduledDate ? new Date(scheduledDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   };
 
-  const upcomingEvents = React.useMemo(() => {
-    console.log('GiftingHubCard: Computing upcoming events from rules:', activeRules);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // EXCLUSIVELY use auto-gifting rules - remove regular events completely
-    const autoGiftEvents = activeRules
-      .map(rule => {
-        console.log('GiftingHubCard: Processing rule:', rule);
-        const ruleWithSchedule = rule as any;
-        
-        // Calculate the next occurrence date using smart logic
-        const nextDate = calculateNextOccurrence(rule.date_type, ruleWithSchedule.scheduled_date);
-        console.log('GiftingHubCard: Next date for rule', rule.id, ':', nextDate);
-        
-        // Skip if the date is in the past
-        if (nextDate < today) {
-          console.log('GiftingHubCard: Skipping past date for rule', rule.id);
-          return null;
-        }
-        
-        const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // Get recipient name from pending email, profile data, or connections
-        const recipientName = ruleWithSchedule.pending_recipient_email?.split('@')[0] || 
-                             ruleWithSchedule.recipient?.name || 
-                             ruleWithSchedule.recipient?.username ||
-                             (ruleWithSchedule.recipient?.first_name && ruleWithSchedule.recipient?.last_name 
-                               ? `${ruleWithSchedule.recipient.first_name} ${ruleWithSchedule.recipient.last_name}` 
-                               : ruleWithSchedule.recipient?.first_name) ||
-                             'Gift Recipient';
-        
-        // Get the latest execution data for this rule
-        const latestExecution = rule.executions && rule.executions.length > 0 
-          ? rule.executions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-          : null;
+  // Remove the complex event computation - we'll use the new RecipientEventsWidget
 
-        // Extract product details from execution
-        const selectedProduct = latestExecution?.selected_products && latestExecution.selected_products.length > 0
-          ? latestExecution.selected_products[0]
-          : null;
-
-        const aiAgent = latestExecution?.ai_agent_source || {};
-
-        const event = {
-          id: `auto-gift-${rule.id}`,
-          type: getFriendlyDateType(rule.date_type),
-          person: recipientName,
-          date: nextDate.toISOString().split('T')[0],
-          dateObj: nextDate,
-          daysAway,
-          urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low',
-          autoGiftEnabled: true,
-          autoGiftAmount: rule.budget_limit,
-          isScheduledAutoGift: true,
-          ruleId: rule.id,
-          budgetDisplay: rule.budget_limit ? `$${rule.budget_limit}` : 'No budget set',
-          // Enhanced execution details
-          execution: latestExecution ? {
-            status: latestExecution.status,
-            totalAmount: latestExecution.total_amount,
-            executionDate: latestExecution.execution_date,
-            selectedProduct: selectedProduct ? {
-              name: selectedProduct.name || selectedProduct.title,
-              price: selectedProduct.price,
-              image: selectedProduct.image || selectedProduct.product_image,
-              url: selectedProduct.url || selectedProduct.product_url,
-              vendor: selectedProduct.vendor || selectedProduct.retailer
-            } : null,
-            aiAgent: {
-              name: aiAgent.agent || 'Nicole',
-              confidenceScore: aiAgent.confidence_score || 0,
-              discoveryMethod: aiAgent.discovery_method,
-              dataSources: aiAgent.data_sources || []
-            }
-          } : null
-        };
-        
-        console.log('GiftingHubCard: Created event:', event);
-        return event;
-      })
-      .filter(Boolean)
-      .sort((a, b) => {
-        if (!a.dateObj || !b.dateObj) return 0;
-        return a.dateObj.getTime() - b.dateObj.getTime();
-      })
-      .slice(0, 4);
-    
-    console.log('GiftingHubCard: Final upcoming events:', autoGiftEvents);
-    return autoGiftEvents;
-  }, [activeRules]);
-
-  // Fetch real product images from Zinc API using existing unified systems
-  useEffect(() => {
-    const fetchRealProductImages = async () => {
-      console.log('🔍 GiftingHubCard: Starting real product image fetch for', upcomingEvents.length, 'events');
-      
-      if (upcomingEvents.length === 0) return;
-      
-      const imageMap: Record<string, string> = {};
-      
-      for (const event of upcomingEvents) {
-        if (event.execution?.selectedProduct?.name && !productImages[event.id]) {
-          try {
-            // Extract ASIN from Amazon image URL
-            const originalImage = event.execution.selectedProduct.image;
-            console.log('🔍 GiftingHubCard: Original image URL:', originalImage);
-            
-            let productId = null;
-            if (originalImage && originalImage.includes('amazon')) {
-              // Extract ASIN from various Amazon image URL patterns
-              const asinMatches = [
-                originalImage.match(/\/([A-Z0-9]{10})[._]/),  // Standard ASIN pattern
-                originalImage.match(/\/dp\/([A-Z0-9]{10})/),  // Product page pattern
-                originalImage.match(/\/images\/I\/[^\/]*\.([A-Z0-9]{10})\./), // Alternative pattern
-              ];
-              
-              for (const match of asinMatches) {
-                if (match && match[1]) {
-                  productId = match[1];
-                  break;
-                }
-              }
-            }
-            
-            console.log('🔍 GiftingHubCard: Extracted productId:', productId);
-            
-            if (productId) {
-              console.log(`🔍 GiftingHubCard: Fetching real product details for ${productId}`);
-              const productDetails = await fetchProductDetails(productId);
-              
-              if (productDetails && productDetails.images && productDetails.images.length > 0) {
-                // Use the first high-quality image
-                const firstImage = productDetails.images[0];
-                imageMap[event.id] = firstImage;
-                console.log(`🔍 GiftingHubCard: Got real Zinc API image for ${productId}:`, firstImage);
-              } else {
-                console.log(`🔍 GiftingHubCard: No images in API response for ${productId}, using original`);
-                imageMap[event.id] = originalImage;
-              }
-            } else {
-              console.log(`🔍 GiftingHubCard: Could not extract productId from ${originalImage}, using original`);
-              imageMap[event.id] = originalImage;
-            }
-          } catch (error) {
-            console.log(`🔍 GiftingHubCard: API error for event ${event.id}, using original image:`, error);
-            imageMap[event.id] = event.execution.selectedProduct.image;
-          }
-        }
-      }
-      
-      if (Object.keys(imageMap).length > 0) {
-        setProductImages(prev => ({ ...prev, ...imageMap }));
-        console.log('🔍 GiftingHubCard: Updated productImages with real API data:', imageMap);
-      }
-    };
-    
-    fetchRealProductImages();
-  }, [upcomingEvents, productImages]);
+  // Remove product image fetching logic as it's no longer needed
 
   const handleSetupAutoGift = async (event: any) => {
     setSelectedEvent(event);
-    setSelectedEventForSetup(event);
     setAutoGiftSetupOpen(true);
   };
 
@@ -382,9 +217,9 @@ const SmartGiftingTab = () => {
     }
   };
 
-  const handleSendNow = (event: any) => {
+  const handleSendGift = (event: any) => {
     // Navigate to marketplace with Nicole for immediate gift selection
-    window.location.href = `/marketplace?mode=nicole&open=true&recipient=${encodeURIComponent(event.person)}&occasion=${encodeURIComponent(event.type)}`;
+    window.location.href = `/marketplace?mode=nicole&open=true&recipient=${encodeURIComponent(event.recipientName)}&occasion=${encodeURIComponent(event.eventType)}`;
   };
 
   const handlePathSelection = (path: 'ai-autopilot' | 'manual-control') => {
@@ -408,20 +243,7 @@ const SmartGiftingTab = () => {
     }
   };
 
-  if (eventsLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-4 border rounded-lg animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2" />
-              <div className="h-3 bg-gray-200 rounded" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Remove loading state check
 
   return (
     <div className="space-y-6">

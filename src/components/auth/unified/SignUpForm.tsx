@@ -167,9 +167,23 @@ const SignUpForm = () => {
           console.log("⚠️ Account created but email failed - user can try again");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign up error:", error);
-      toast.error("An unexpected error occurred");
+      
+      // Handle specific error types
+      if (error?.status === 504 || error?.name === 'AuthRetryableFetchError') {
+        toast.error("Server timeout", {
+          description: "Supabase authentication is experiencing delays. Please wait a moment and try again."
+        });
+      } else if (error?.message?.includes("timeout")) {
+        toast.error("Request timeout", {
+          description: "The signup request took too long. Please try again."
+        });
+      } else {
+        toast.error("Signup failed", {
+          description: error?.message || "An unexpected error occurred. Please try again."
+        });
+      }
     } finally {
       setIsLoading(false);
     }

@@ -7,11 +7,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 
-interface VerificationAlertProps {
-  useCode?: boolean;
-}
-
-const VerificationAlert = ({ useCode = false }: VerificationAlertProps) => {
+const VerificationAlert = () => {
   return (
     <Alert className="bg-purple-50 border-purple-200">
       <Mail className="h-4 w-4 text-purple-600" />

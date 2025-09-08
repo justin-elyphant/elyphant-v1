@@ -118,12 +118,28 @@ class OrderVerificationService {
         
         console.log(`📋 Order ${orderId} verification result:`, result);
 
+        // Handle different Zinc status responses
+        if (result.status === 'request_processing') {
+          // Order is actively processing - update our status and schedule next check
+          await supabase
+            .from('orders')
+            .update({
+              status: 'processing',
+              zinc_status: 'request_processing',
+              next_retry_at: new Date(Date.now() + 10 * 60 * 1000), // Check again in 10 minutes
+              updated_at: new Date()
+            })
+            .eq('id', orderId);
+
+          console.log(`🔄 Order ${orderId} is being processed by Zinc - updated status and scheduled next check`);
+        }
+
         // Add verification note to order
         await supabase
           .from('order_notes')
           .insert({
             order_id: orderId,
-            note_content: `Automatic verification completed. Zinc status: ${result.status}. ${result.error ? `Error: ${result.error}` : 'Verification successful.'}`,
+            note_content: `Automatic verification completed. Zinc status: ${result.status}. ${result.error ? `Error: ${result.error}` : result.status === 'request_processing' ? 'Order is actively processing by Zinc.' : 'Verification successful.'}`,
             note_type: 'verification',
             is_internal: true
           });

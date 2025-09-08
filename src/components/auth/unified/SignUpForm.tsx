@@ -73,6 +73,7 @@ const SignUpForm = () => {
     try {
       setIsLoading(true);
       
+      // First, attempt the signup without email confirmation
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -104,7 +105,35 @@ const SignUpForm = () => {
         return;
       }
       
+      // If signup succeeded, send custom verification email
       if (signUpData?.user) {
+        try {
+          console.log("📧 Sending custom verification email");
+          const { error: emailError } = await supabase.functions.invoke('send-verification-email', {
+            body: {
+              email: data.email,
+              name: data.name,
+              invitationContext: invitationData
+            }
+          });
+          
+          if (emailError) {
+            console.error("Verification email error:", emailError);
+            toast.error("Account created but email failed", {
+              description: "Your account was created but we couldn't send the verification email. Please contact support."
+            });
+          } else {
+            toast.success("Account created!", {
+              description: "Please check your email for a verification link to complete your signup."
+            });
+          }
+        } catch (emailErr) {
+          console.error("Email function error:", emailErr);
+          toast.error("Account created but email failed", {
+            description: "Your account was created but we couldn't send the verification email. Please contact support."
+          });
+        }
+        
         // Store completion state for streamlined profile setup
         LocalStorageService.setProfileCompletionState({
           email: data.email,
@@ -125,15 +154,8 @@ const SignUpForm = () => {
           localStorage.setItem('invitation_context', JSON.stringify(invitationData));
         }
         
-        toast.success("Account created!", {
-          description: "Please check your email to verify your account."
-        });
-        
-        // Navigate to streamlined profile setup with invitation context if present
-        const profileSetupUrl = invitationData 
-          ? `/profile-setup?invitation_id=${invitationData.invitation_id}&source=invitation`
-          : "/profile-setup";
-        navigate(profileSetupUrl, { replace: true });
+        // Navigate to verification page instead of profile setup
+        navigate('/verify-email', { replace: true });
       }
     } catch (error) {
       console.error("Sign up error:", error);

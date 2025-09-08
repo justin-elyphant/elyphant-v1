@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: 'signup',
       email: email,
       options: {
-        redirectTo: `${Deno.env.get('SITE_URL') || 'https://78c3ae13-28be-4c53-9235-ca0f8b2a6e91.sandbox.lovable.dev'}/auth/callback`
+        redirectTo: `${req.headers.get('origin') || 'https://78c3ae13-28be-4c53-9235-ca0f8b2a6e91.sandbox.lovable.dev'}/auth/callback`
       }
     });
 
@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email using Resend
     const emailResponse = await resend.emails.send({
-      from: 'Elyphant <welcome@mail.elyphant.ai>',
+      from: 'Elyphant <welcome@resend.dev>',
       to: [email],
       subject: emailSubject,
       html: emailHtml,

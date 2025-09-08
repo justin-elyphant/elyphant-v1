@@ -3,11 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, CheckCircle, ArrowRight, Info, Heart, Calendar, Users, MapPin, User, Brain, List, ChevronLeft, ChevronRight, Mail, Clock, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "react-hook-form";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
+import { useProfileCompletionEmails } from "@/hooks/profile/useProfileCompletionEmails";
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +36,14 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     hasImportantIssues,
     completionScore
   } = useProfileDataIntegrity();
+
+  const {
+    emailData,
+    loading: emailLoading,
+    updateEmailPreference,
+    getNextEmailSchedule,
+    getEmailStageInfo
+  } = useProfileCompletionEmails();
 
   // Watch form values for real-time updates (only if form context exists)
   const formValues = form?.watch();
@@ -148,6 +158,15 @@ const ProfileDataIntegrityPanel: React.FC = () => {
     content: 'overview'
   });
 
+  // Add email marketing slide if there are issues and completion score < 80%
+  if (hasIssues && completionScore < 80) {
+    slides.push({
+      type: 'email_marketing',
+      title: 'Email Reminders',
+      content: 'email_marketing'
+    });
+  }
+
   // Add issue slides based on what exists
   if (criticalIssues.length > 0) {
     slides.push({
@@ -233,6 +252,73 @@ const ProfileDataIntegrityPanel: React.FC = () => {
               <ArrowRight className="h-4 w-4" />
             </Button>
           )}
+        </div>
+      );
+    }
+
+    if (slide.type === 'email_marketing') {
+      const nextEmail = getNextEmailSchedule();
+      const stageInfo = getEmailStageInfo(emailData.emailCampaignStage);
+
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Profile Completion Reminders</h3>
+          </div>
+          
+          <div className="space-y-3">
+            {/* Email Toggle */}
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-background">
+              <div className="space-y-1">
+                <div className="font-medium text-sm">Email Reminders</div>
+                <div className="text-xs text-muted-foreground">
+                  Get helpful tips to complete your profile for better AI recommendations
+                </div>
+              </div>
+              <Switch
+                checked={emailData.emailsEnabled}
+                onCheckedChange={updateEmailPreference}
+                disabled={emailLoading}
+              />
+            </div>
+
+            {/* Email Status */}
+            {emailData.emailsEnabled && (
+              <div className="space-y-2">
+                {stageInfo && (
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800 text-xs">
+                      <div className="font-medium">{stageInfo.icon} {stageInfo.name}</div>
+                      <div className="mt-1">{stageInfo.description}</div>
+                      {emailData.lastEmailSent && (
+                        <div className="mt-1 opacity-75">
+                          Last sent: {new Date(emailData.lastEmailSent).toLocaleDateString()}
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {nextEmail && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 text-xs">
+                      <div className="font-medium">Next reminder in {nextEmail.daysUntil} day(s)</div>
+                      <div className="mt-1">Focus: {nextEmail.stage}</div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {emailData.emailOpens > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    📊 Email engagement: {emailData.emailOpens} opens, {emailData.emailClicks} clicks
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       );
     }

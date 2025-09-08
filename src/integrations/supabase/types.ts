@@ -2836,6 +2836,48 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_completion_analytics: {
+        Row: {
+          completion_score: number
+          created_at: string
+          email_campaign_stage: string | null
+          email_clicks: number | null
+          email_opens: number | null
+          id: string
+          last_email_sent_at: string | null
+          missing_elements: Json
+          profile_updated_after_email: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completion_score: number
+          created_at?: string
+          email_campaign_stage?: string | null
+          email_clicks?: number | null
+          email_opens?: number | null
+          id?: string
+          last_email_sent_at?: string | null
+          missing_elements?: Json
+          profile_updated_after_email?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completion_score?: number
+          created_at?: string
+          email_campaign_stage?: string | null
+          email_clicks?: number | null
+          email_opens?: number | null
+          id?: string
+          last_email_sent_at?: string | null
+          missing_elements?: Json
+          profile_updated_after_email?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address_last_updated: string | null

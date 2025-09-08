@@ -1,5 +1,5 @@
+// GiftingHubCard - Restructured Version - Force Cache Clear v2
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { 
   Gift, 
   Calendar, 
@@ -58,7 +58,8 @@ import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
 
 // Enhanced Smart Gifting Tab Component (Gift Opportunities & Setup)
 const SmartGiftingTab = () => {
-  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting - restructured for gift opportunities');
+  console.log('🎯🎯🎯 SmartGiftingTab: Component mounting - restructured for gift opportunities - CACHE REFRESH');
+  console.log('🔍 File timestamp check:', Date.now());
   const { user } = useAuth();
   const { rules } = useAutoGifting();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
@@ -263,7 +264,7 @@ const GiftingHubCard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-purple-500" />
-            Gifting Hub
+            Gifting Hub - Restructured
           </CardTitle>
           <CardDescription>
             Manage your gifts, automation, and connections

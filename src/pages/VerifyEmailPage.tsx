@@ -23,7 +23,7 @@ const VerifyEmailPage = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // If email is already verified, redirect to profile setup
+  // If email is already verified, redirect to streamlined profile setup
   if (user.email_confirmed_at) {
     return <Navigate to="/profile-setup" replace />;
   }

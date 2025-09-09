@@ -32,20 +32,21 @@ serve(async (req) => {
     console.log('Calling auth.admin.createUser...');
     const startTime = Date.now();
     
-    const { data, error } = await supabase.auth.admin.createUser({
+    // Create the user without email confirmation (they need to verify)
+    const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // Skip email confirmation for testing
+      email_confirm: false // Require email verification
     });
 
     const endTime = Date.now();
     console.log('Signup completed in:', endTime - startTime, 'ms');
-    console.log('Signup result:', { user: data.user?.id, error });
+    console.log('Signup result:', { user: userData.user?.id, error: userError });
 
-    if (error) {
-      console.error('Signup error:', error);
+    if (userError) {
+      console.error('User creation error:', userError);
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: userError.message }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -53,11 +54,41 @@ serve(async (req) => {
       );
     }
 
+    console.log('✅ User created successfully:', userData.user?.id);
+
+    // Send verification email using send-verification-email function
+    try {
+      const verificationResult = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-verification-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          name: email.split('@')[0]
+        })
+      });
+
+      if (!verificationResult.ok) {
+        console.error('Failed to send verification email');
+        // Don't fail the whole process if verification email fails
+      } else {
+        console.log('✅ Verification email sent successfully');
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Don't fail the whole process if verification email fails
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        user: data.user,
-        message: 'User created successfully via edge function'
+      JSON.stringify({
+        success: true,
+        message: 'User created successfully. Please check your email for verification link.',
+        user: {
+          id: userData.user?.id,
+          email: userData.user?.email
+        }
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

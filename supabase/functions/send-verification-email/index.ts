@@ -37,11 +37,12 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Generate verification link using Supabase's generateLink method
+    const origin = req.headers.get('origin') || 'https://elyphant.ai';
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'signup',
       email: email,
       options: {
-        redirectTo: `${req.headers.get('origin') || 'https://elyphant.ai'}/auth/callback`
+        redirectTo: `${origin}/auth/callback`
       }
     });
 
@@ -150,9 +151,9 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Send email using Resend
+    // Send email using Resend with verified domain
     const emailResponse = await resend.emails.send({
-      from: 'Elyphant <marketplace.admin@elyphant.com>',
+      from: 'Elyphant <noreply@elyphant.com>', // Using main domain instead of marketplace subdomain
       to: [email],
       subject: emailSubject,
       html: emailHtml,

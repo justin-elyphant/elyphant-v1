@@ -49,6 +49,12 @@ const AuthCallback = () => {
           setStatus('success');
           toast.success('Email verified successfully!');
           
+          // Store completion state for streamlined profile setup
+          localStorage.setItem('profileCompletionState', JSON.stringify({
+            step: 'profile',
+            source: 'email_verification'
+          }));
+          
           // After email verification, redirect to profile setup for new users
           setTimeout(() => {
             navigate('/profile-setup', { replace: true });
@@ -73,7 +79,7 @@ const AuthCallback = () => {
         type: 'signup',
         email: '', // User needs to re-enter email if resending
         options: {
-          emailRedirectTo: `https://elyphant.ai/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 

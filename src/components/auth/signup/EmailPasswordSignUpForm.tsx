@@ -40,7 +40,7 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
         email,
         password,
         options: {
-          emailRedirectTo: `https://elyphant.ai/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
@@ -71,31 +71,36 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
           toast.info("Server timeout, trying backup method...");
           
           try {
-            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('test-signup', {
-              body: { email, password }
+            // Use edge function that sends verification email properly
+            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('send-verification-email', {
+              body: { email, name: email.split('@')[0] }
             });
             
-            console.log("Edge function response:", { edgeData, edgeError });
+            console.log("Verification email function response:", { edgeData, edgeError });
             
             if (edgeError) {
-              console.error("Edge function error:", edgeError);
+              console.error("Verification email error:", edgeError);
               toast.error("Signup failed: " + edgeError.message);
             } else {
-              console.log("✅ Edge function success:", edgeData);
-              toast.success("Account created successfully via backup method! You can now sign in.");
+              console.log("✅ Verification email sent successfully");
+              toast.success("Account setup started! Please check your email for verification link.");
               onSuccess();
-              return; // Exit early on success
+              return;
             }
           } catch (edgeErr) {
             console.error("Edge function exception:", edgeErr);
-            toast.error("Both signup methods failed. Please try again later.");
+            toast.error("Signup failed. Please try again later.");
           }
         } else {
           toast.error(error.message || "Signup failed");
         }
       } else {
         console.log("Signup successful:", data);
-        toast.success("Account created successfully! Please check your email and click the verification link.");
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success("Account created! Please check your email for verification link.");
+        } else {
+          toast.success("Account created successfully!");
+        }
         onSuccess();
       }
     } catch (error) {

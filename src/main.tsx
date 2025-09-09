@@ -42,7 +42,8 @@ window.addEventListener('load', () => {
   trackLoadMetrics();
   
   // Preload critical marketplace components after initial load
-  import('./components/marketplace/bundles/MarketplaceBundles').then(({ preloadMarketplaceComponents }) => {
-    preloadMarketplaceComponents();
+  import('./components/marketplace/bundles/MarketplaceBundles').then(({ preloadSearchComponents, preloadProductComponents }) => {
+    preloadSearchComponents();
+    preloadProductComponents();
   });
 });

@@ -128,9 +128,34 @@ const SignUpForm = () => {
               });
             } else {
               console.log("✅ Edge function success:", edgeData);
-              toast.success("Account created successfully!", {
-                description: "You can now sign in with your credentials."
-              });
+              
+              // Send verification email after successful fallback signup
+              try {
+                console.log("📧 Sending verification email via fallback path");
+                const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
+                  body: {
+                    email: data.email,
+                    name: data.name,
+                    invitationContext: invitationData
+                  }
+                });
+                
+                if (emailError) {
+                  console.error("Verification email error:", emailError);
+                  toast.success("Account created!", {
+                    description: "Your account was created but we couldn't send the verification email. Please check your email or contact support."
+                  });
+                } else {
+                  toast.success("Account created!", {
+                    description: "Please check your email for a verification link to complete your signup."
+                  });
+                }
+              } catch (emailErr) {
+                console.error("Email function error:", emailErr);
+                toast.success("Account created!", {
+                  description: "Your account was created but we couldn't send the verification email. Please check your email or contact support."
+                });
+              }
               
               // Store completion state for streamlined profile setup
               LocalStorageService.setProfileCompletionState({

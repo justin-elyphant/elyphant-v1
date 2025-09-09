@@ -172,12 +172,13 @@ const SignUpForm = () => {
       
       // Handle specific error types
       if (error?.status === 504 || error?.name === 'AuthRetryableFetchError') {
-        toast.error("Server timeout", {
-          description: "Supabase authentication is experiencing delays. Please wait a moment and try again."
+        toast.error("Authentication service overloaded", {
+          description: "Supabase is experiencing high traffic. Please wait 30-60 seconds and try again, or try using Google/Apple sign-in instead.",
+          duration: 8000
         });
       } else if (error?.message?.includes("timeout")) {
         toast.error("Request timeout", {
-          description: "The signup request took too long. Please try again."
+          description: "The signup request took too long. Please wait a moment and try again."
         });
       } else {
         toast.error("Signup failed", {

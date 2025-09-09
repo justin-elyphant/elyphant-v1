@@ -51,8 +51,14 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
       if (error) {
         console.error("Signup error:", error);
         
-        // If we get a 504 timeout or similar server error, try the edge function fallback
-        if (error.message.includes('504') || error.message.includes('timeout') || error.message.includes('Gateway')) {
+        // Check for 504 timeout or server errors and try edge function fallback
+        const isServerError = error.status === 504 || 
+                             error.message.includes('504') || 
+                             error.message.includes('timeout') || 
+                             error.message.includes('Gateway') ||
+                             error.name === 'AuthRetryableFetchError';
+        
+        if (isServerError) {
           console.log("Attempting fallback via edge function...");
           
           try {
@@ -67,6 +73,7 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
               console.log("Edge function success:", edgeData);
               toast.success("Account created successfully via backup method! You can now sign in.");
               onSuccess();
+              return; // Exit early on success
             }
           } catch (edgeErr) {
             console.error("Edge function exception:", edgeErr);

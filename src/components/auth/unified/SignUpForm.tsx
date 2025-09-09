@@ -72,8 +72,10 @@ const SignUpForm = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       setIsLoading(true);
+      console.log("🚀 Starting signup process...", { email: data.email });
       
       // First, attempt the signup without email confirmation
+      const startTime = Date.now();
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -86,16 +88,70 @@ const SignUpForm = () => {
         }
       });
       
+      const endTime = Date.now();
+      console.log("⏱️ Signup completed in:", endTime - startTime, "ms");
+      console.log("📋 Signup response:", { user: signUpData?.user?.id, error: signUpError });
+      
       if (signUpError) {
-        console.error("Signup error:", signUpError);
+        console.error("🚨 Signup error details:", {
+          message: signUpError.message,
+          status: signUpError.status,
+          name: signUpError.name,
+          fullError: signUpError
+        });
         
-        if (signUpError.message.includes("already registered")) {
+        // Check for server errors and try edge function fallback
+        const isServerError = signUpError.status === 504 || 
+                             signUpError.message.includes('504') || 
+                             signUpError.message.includes('timeout') || 
+                             signUpError.message.includes('upstream request timeout') ||
+                             signUpError.name === 'AuthRetryableFetchError' ||
+                             signUpError.message === '{}';
+        
+        console.log("🔍 Is server error?", isServerError);
+        
+        if (isServerError) {
+          console.log("🔄 Attempting fallback via edge function...");
+          toast.info("Server timeout, trying backup method...");
+          
+          try {
+            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('test-signup', {
+              body: { email: data.email, password: data.password }
+            });
+            
+            console.log("📡 Edge function response:", { edgeData, edgeError });
+            
+            if (edgeError) {
+              console.error("❌ Edge function error:", edgeError);
+              toast.error("Both signup methods failed", {
+                description: "Please try again later or contact support."
+              });
+            } else {
+              console.log("✅ Edge function success:", edgeData);
+              toast.success("Account created successfully!", {
+                description: "You can now sign in with your credentials."
+              });
+              
+              // Store completion state for streamlined profile setup
+              LocalStorageService.setProfileCompletionState({
+                email: data.email,
+                firstName: data.name.split(' ')[0] || '',
+                lastName: data.name.split(' ').slice(1).join(' ') || '',
+                step: 'profile',
+                source: 'email'
+              });
+              
+              return; // Exit early on success
+            }
+          } catch (edgeErr) {
+            console.error("💥 Edge function exception:", edgeErr);
+            toast.error("Both signup methods failed", {
+              description: "Please try again later or contact support."
+            });
+          }
+        } else if (signUpError.message.includes("already registered")) {
           toast.error("Email already registered", {
             description: "Please use a different email address or try to sign in."
-          });
-        } else if (signUpError.message.includes("timeout") || signUpError.message.includes("upstream request timeout")) {
-          toast.error("Server timeout", {
-            description: "The signup request timed out. Please try again in a moment."
           });
         } else {
           toast.error("Signup failed", {

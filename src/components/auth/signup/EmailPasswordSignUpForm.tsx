@@ -30,9 +30,13 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
     }
 
     setIsLoading(true);
+    console.log("Starting signup process...", { email });
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Calling supabase.auth.signUp...");
+      const startTime = Date.now();
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -40,14 +44,21 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
         }
       });
 
+      const endTime = Date.now();
+      console.log("Signup completed in:", endTime - startTime, "ms");
+      console.log("Signup response:", { data, error });
+
       if (error) {
+        console.error("Signup error:", error);
         toast.error(error.message);
       } else {
+        console.log("Signup successful:", data);
         toast.success("Account created successfully! Please check your email and click the verification link.");
         onSuccess();
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      console.error("Signup exception:", error);
+      toast.error("An unexpected error occurred: " + (error as Error).message);
     } finally {
       setIsLoading(false);
     }

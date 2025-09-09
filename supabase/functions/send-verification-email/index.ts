@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email using Resend
     const emailResponse = await resend.emails.send({
-      from: 'Elyphant <onboarding@resend.dev>',
+      from: 'Elyphant <marketplace.admin@elyphant.com>',
       to: [email],
       subject: emailSubject,
       html: emailHtml,

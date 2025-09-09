@@ -49,38 +49,49 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
       console.log("Signup response:", { data, error });
 
       if (error) {
-        console.error("Signup error:", error);
+        console.error("Signup error details:", { 
+          message: error.message, 
+          status: error.status, 
+          name: error.name,
+          fullError: error 
+        });
         
         // Check for 504 timeout or server errors and try edge function fallback
         const isServerError = error.status === 504 || 
                              error.message.includes('504') || 
                              error.message.includes('timeout') || 
                              error.message.includes('Gateway') ||
-                             error.name === 'AuthRetryableFetchError';
+                             error.name === 'AuthRetryableFetchError' ||
+                             error.message === '{}'; // Empty message indicates server error
+        
+        console.log("Is server error?", isServerError);
         
         if (isServerError) {
-          console.log("Attempting fallback via edge function...");
+          console.log("🔄 Attempting fallback via edge function...");
+          toast.info("Server timeout, trying backup method...");
           
           try {
             const { data: edgeData, error: edgeError } = await supabase.functions.invoke('test-signup', {
               body: { email, password }
             });
             
+            console.log("Edge function response:", { edgeData, edgeError });
+            
             if (edgeError) {
               console.error("Edge function error:", edgeError);
               toast.error("Signup failed: " + edgeError.message);
             } else {
-              console.log("Edge function success:", edgeData);
+              console.log("✅ Edge function success:", edgeData);
               toast.success("Account created successfully via backup method! You can now sign in.");
               onSuccess();
               return; // Exit early on success
             }
           } catch (edgeErr) {
             console.error("Edge function exception:", edgeErr);
-            toast.error("Signup failed with fallback method as well");
+            toast.error("Both signup methods failed. Please try again later.");
           }
         } else {
-          toast.error(error.message);
+          toast.error(error.message || "Signup failed");
         }
       } else {
         console.log("Signup successful:", data);

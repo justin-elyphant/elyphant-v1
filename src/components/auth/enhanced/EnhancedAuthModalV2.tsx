@@ -183,7 +183,7 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
           password: formData.password,
           options: {
             data: { name: formData.name },
-            emailRedirectTo: `https://elyphant.lovable.app/auth/callback`
+            emailRedirectTo: `https://elyphant.ai/auth/callback`
           }
         });
 

@@ -40,8 +40,8 @@ image_transformation = { enabled = true }
 
 [auth]
 enabled = true
-site_url = "https://elyphant.lovable.app"
-additional_redirect_urls = ["https://dmkxtkvlispxeqfzlczr.supabase.co", "https://elyphant.lovable.app"]
+site_url = "https://elyphant.ai"
+additional_redirect_urls = ["https://dmkxtkvlispxeqfzlczr.supabase.co", "https://elyphant.ai"]
 jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = false

@@ -40,7 +40,7 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
         email,
         password,
         options: {
-          emailRedirectTo: `https://elyphant.lovable.app/auth/callback`
+          emailRedirectTo: `https://elyphant.ai/auth/callback`
         }
       });
 

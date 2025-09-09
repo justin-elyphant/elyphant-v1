@@ -141,7 +141,9 @@ const SignUpForm = () => {
                 source: 'email'
               });
               
-              return; // Exit early on success
+              // Navigate to verification page
+              navigate('/auth/verify-email');
+              return;
             }
           } catch (edgeErr) {
             console.error("💥 Edge function exception:", edgeErr);
@@ -215,13 +217,8 @@ const SignUpForm = () => {
           localStorage.setItem('invitation_context', JSON.stringify(invitationData));
         }
         
-        // Navigate to verification page - create a simple one for now
-        if (emailSent) {
-          // For now, just show success and stay on same page since /verify-email doesn't exist
-          console.log("✅ Account created and verification email sent successfully");
-        } else {
-          console.log("⚠️ Account created but email failed - user can try again");
-        }
+        // Navigate to verification page to show email check instructions
+        navigate('/auth/verify-email');
       }
     } catch (error: any) {
       console.error("Sign up error:", error);

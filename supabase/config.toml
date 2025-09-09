@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.test-verification-system]
 verify_jwt = false
+
+[functions.test-signup]
+verify_jwt = false

@@ -50,7 +50,31 @@ export const EmailPasswordSignUpForm: React.FC<EmailPasswordSignUpFormProps> = (
 
       if (error) {
         console.error("Signup error:", error);
-        toast.error(error.message);
+        
+        // If we get a 504 timeout or similar server error, try the edge function fallback
+        if (error.message.includes('504') || error.message.includes('timeout') || error.message.includes('Gateway')) {
+          console.log("Attempting fallback via edge function...");
+          
+          try {
+            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('test-signup', {
+              body: { email, password }
+            });
+            
+            if (edgeError) {
+              console.error("Edge function error:", edgeError);
+              toast.error("Signup failed: " + edgeError.message);
+            } else {
+              console.log("Edge function success:", edgeData);
+              toast.success("Account created successfully via backup method! You can now sign in.");
+              onSuccess();
+            }
+          } catch (edgeErr) {
+            console.error("Edge function exception:", edgeErr);
+            toast.error("Signup failed with fallback method as well");
+          }
+        } else {
+          toast.error(error.message);
+        }
       } else {
         console.log("Signup successful:", data);
         toast.success("Account created successfully! Please check your email and click the verification link.");

@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import StreamlinedProfileForm from "@/components/auth/unified/StreamlinedProfileForm";
-import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
+// EmailVerificationGuard removed for beta
 
 const StreamlinedProfileSetup = () => {
   const navigate = useNavigate();
@@ -139,31 +139,29 @@ const StreamlinedProfileSetup = () => {
   }
 
   return (
-    <EmailVerificationGuard>
-      <MainLayout>
-        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-          <div className="w-full">
-            <Card className="w-full bg-background shadow-lg border border-border">
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-semibold text-foreground">
-                    {invitationContext?.isInvited ? 'Welcome to Elyphant!' : 'Complete Your Profile'}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {invitationContext?.isInvited 
-                      ? `${invitationContext.giftorName} invited you to get amazing gifts${invitationContext.occasion ? ` for your ${invitationContext.occasion}` : ''}!`
-                      : 'Tell us about yourself to personalize your experience'
-                    }
-                  </p>
-                </div>
-                
-                <StreamlinedProfileForm onComplete={handleProfileComplete} />
-              </CardContent>
-            </Card>
-          </div>
+    <MainLayout>
+      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+        <div className="w-full">
+          <Card className="w-full bg-background shadow-lg border border-border">
+            <CardContent className="p-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  {invitationContext?.isInvited ? 'Welcome to Elyphant!' : 'Complete Your Profile'}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {invitationContext?.isInvited 
+                    ? `${invitationContext.giftorName} invited you to get amazing gifts${invitationContext.occasion ? ` for your ${invitationContext.occasion}` : ''}!`
+                    : 'Tell us about yourself to personalize your experience'
+                  }
+                </p>
+              </div>
+              
+              <StreamlinedProfileForm onComplete={handleProfileComplete} />
+            </CardContent>
+          </Card>
         </div>
-      </MainLayout>
-    </EmailVerificationGuard>
+      </div>
+    </MainLayout>
   );
 };
 

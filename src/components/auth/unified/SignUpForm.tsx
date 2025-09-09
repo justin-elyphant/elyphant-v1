@@ -3,21 +3,18 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Gift } from "lucide-react";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
 
+// Simplified schema for beta - only name and email (no password)
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -72,191 +69,40 @@ const SignUpForm = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       setIsLoading(true);
-      console.log("🚀 Starting signup process...", { email: data.email });
+      console.log("🚀 Beta signup: Storing data temporarily...", { email: data.email });
       
-      // First, attempt the signup without email confirmation
-      const startTime = Date.now();
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Store signup data temporarily in localStorage
+      LocalStorageService.setProfileCompletionState({
         email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            invitation_context: invitationData
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
+        firstName: data.name.split(' ')[0] || '',
+        lastName: data.name.split(' ').slice(1).join(' ') || '',
+        step: 'signup',
+        source: 'email'
       });
       
-      const endTime = Date.now();
-      console.log("⏱️ Signup completed in:", endTime - startTime, "ms");
-      console.log("📋 Signup response:", { user: signUpData?.user?.id, error: signUpError });
-      
-      if (signUpError) {
-        console.error("🚨 Signup error details:", {
-          message: signUpError.message,
-          status: signUpError.status,
-          name: signUpError.name,
-          fullError: signUpError
-        });
-        
-        // Check for server errors and try edge function fallback
-        const isServerError = signUpError.status === 504 || 
-                             signUpError.message.includes('504') || 
-                             signUpError.message.includes('timeout') || 
-                             signUpError.message.includes('upstream request timeout') ||
-                             signUpError.name === 'AuthRetryableFetchError' ||
-                             signUpError.message === '{}';
-        
-        console.log("🔍 Is server error?", isServerError);
-        
-        if (isServerError) {
-          console.log("🔄 Attempting fallback via edge function...");
-          toast.info("Server timeout, trying backup method...");
-          
-          try {
-            const { data: edgeData, error: edgeError } = await supabase.functions.invoke('test-signup', {
-              body: { email: data.email, password: data.password }
-            });
-            
-            console.log("📡 Edge function response:", { edgeData, edgeError });
-            
-            if (edgeError) {
-              console.error("❌ Edge function error:", edgeError);
-              toast.error("Both signup methods failed", {
-                description: "Please try again later or contact support."
-              });
-            } else {
-              console.log("✅ Edge function success:", edgeData);
-              
-              // Store completion state for streamlined profile setup
-              LocalStorageService.setProfileCompletionState({
-                email: data.email,
-                firstName: data.name.split(' ')[0] || '',
-                lastName: data.name.split(' ').slice(1).join(' ') || '',
-                step: 'profile',
-                source: 'email'
-              });
-              
-              // Navigate to verification page immediately
-              navigate('/auth/verify-email');
-              
-              // Send verification email after navigation (async)
-              setTimeout(async () => {
-                try {
-                  console.log("📧 Sending verification email via fallback path");
-                  const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
-                    body: {
-                      email: data.email,
-                      name: data.name,
-                      invitationContext: invitationData
-                    }
-                  });
-                  
-                  if (emailError) {
-                    console.error("Verification email error:", emailError);
-                  } else {
-                    console.log("✅ Verification email sent successfully");
-                  }
-                } catch (emailErr) {
-                  console.error("Email function error:", emailErr);
-                }
-              }, 100);
-              return;
-            }
-          } catch (edgeErr) {
-            console.error("💥 Edge function exception:", edgeErr);
-            toast.error("Both signup methods failed", {
-              description: "Please try again later or contact support."
-            });
-          }
-        } else if (signUpError.message.includes("already registered")) {
-          toast.error("Email already registered", {
-            description: "Please use a different email address or try to sign in."
-          });
-        } else {
-          toast.error("Signup failed", {
-            description: signUpError.message
-          });
-        }
-        return;
+      // Store invitation context if present
+      if (invitationData) {
+        localStorage.setItem('invitation_context', JSON.stringify(invitationData));
       }
       
-      // If signup succeeded, send custom verification email
-      if (signUpData?.user) {
-        let emailSent = false;
-        
-        try {
-          console.log("📧 Sending custom verification email");
-          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
-            body: {
-              email: data.email,
-              name: data.name,
-              invitationContext: invitationData
-            }
-          });
-          
-          console.log("Email function result:", { emailData, emailError });
-          
-          if (emailError) {
-            console.error("Verification email error:", emailError);
-            toast.error("Account created but email failed", {
-              description: "Your account was created but we couldn't send the verification email. Please contact support."
-            });
-          } else {
-            emailSent = true;
-            toast.success("Account created!", {
-              description: "Please check your email for a verification link to complete your signup."
-            });
-          }
-        } catch (emailErr) {
-          console.error("Email function error:", emailErr);
-          toast.error("Account created but email failed", {
-            description: "Your account was created but we couldn't send the verification email. Please contact support."
-          });
-        }
-        
-        // Store completion state for streamlined profile setup
-        LocalStorageService.setProfileCompletionState({
-          email: data.email,
-          firstName: data.name.split(' ')[0] || '',
-          lastName: data.name.split(' ').slice(1).join(' ') || '',
-          step: 'profile',
-          source: 'email'
-        });
-        
-        // Store redirect path for after profile setup
-        const redirectPath = searchParams.get('redirect');
-        if (redirectPath) {
-          localStorage.setItem('post_auth_redirect', redirectPath);
-        }
-        
-        // Store invitation context for profile setup if present
-        if (invitationData) {
-          localStorage.setItem('invitation_context', JSON.stringify(invitationData));
-        }
-        
-        // Navigate to verification page to show email check instructions
-        navigate('/auth/verify-email');
+      // Store redirect path for after profile setup
+      const redirectPath = searchParams.get('redirect');
+      if (redirectPath) {
+        localStorage.setItem('post_auth_redirect', redirectPath);
       }
+      
+      toast.success("Let's set up your profile!", {
+        description: "We'll create your account after you complete your profile."
+      });
+      
+      // Navigate directly to StreamlinedSignUp for profile collection
+      navigate('/streamlined-signup');
+      
     } catch (error: any) {
-      console.error("Sign up error:", error);
-      
-      // Handle specific error types
-      if (error?.status === 504 || error?.name === 'AuthRetryableFetchError') {
-        toast.error("Authentication service overloaded", {
-          description: "Supabase is experiencing high traffic. Please wait 30-60 seconds and try again, or try using Google/Apple sign-in instead.",
-          duration: 8000
-        });
-      } else if (error?.message?.includes("timeout")) {
-        toast.error("Request timeout", {
-          description: "The signup request took too long. Please wait a moment and try again."
-        });
-      } else {
-        toast.error("Signup failed", {
-          description: error?.message || "An unexpected error occurred. Please try again."
-        });
-      }
+      console.error("Beta signup error:", error);
+      toast.error("Something went wrong", {
+        description: "Please try again or contact support."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -292,19 +138,10 @@ const SignUpForm = () => {
     <div className="space-y-loose">
       {renderWelcomeMessage()}
       
-      <SocialLoginButtons />
+      {/* Hide social login buttons for beta */}
       
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-caption uppercase">
-          <span className="surface-primary px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-
+      {/* Remove social divider since we're hiding social login */}
+      
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-standard">
         <div className="space-y-minimal">
           <Label htmlFor="name" className="text-body-sm">Full Name</Label>
@@ -336,33 +173,21 @@ const SignUpForm = () => {
           )}
         </div>
         
-        <div className="space-y-minimal">
-          <Label htmlFor="password" className="text-body-sm">Password</Label>
-          <PasswordInput
-            id="password"
-            placeholder="Create a secure password"
-            {...register("password")}
-            disabled={isLoading}
-            className="touch-target-44"
-          />
-          {errors.password && (
-            <p className="text-body-sm text-destructive">{errors.password.message}</p>
-          )}
-        </div>
+        {/* Remove password field for beta */}
         
         <Button type="submit" size="touch" className="w-full touch-target-44" disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Account...
+              Continue...
             </>
           ) : (
-            "Create Account"
+            "Continue to Profile Setup"
           )}
         </Button>
         
         <p className="text-caption text-muted-foreground text-center">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
+          By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </form>
     </div>

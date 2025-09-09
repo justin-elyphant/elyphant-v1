@@ -73,7 +73,7 @@ const AuthCallback = () => {
         type: 'signup',
         email: '', // User needs to re-enter email if resending
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `https://elyphant.lovable.app/auth/callback`
         }
       });
 

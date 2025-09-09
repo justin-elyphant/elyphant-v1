@@ -82,7 +82,7 @@ const SignUpForm = () => {
             name: data.name,
             invitation_context: invitationData
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `https://elyphant.lovable.app/auth/callback`
         }
       });
       

@@ -4278,7 +4278,7 @@ export type Database = {
         Returns: string
       }
       is_authorized_for_payment_methods: {
-        Args: { permission_type: string }
+        Args: { action_type: string }
         Returns: boolean
       }
       is_business_admin: {
@@ -4300,6 +4300,15 @@ export type Database = {
       is_user_blocked: {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
+      }
+      log_business_payment_access: {
+        Args: {
+          additional_data?: Json
+          operation_type: string
+          payment_method_id?: string
+          user_id_param: string
+        }
+        Returns: undefined
       }
       log_sensitive_data_access: {
         Args: {

@@ -99,7 +99,7 @@ const EmailVerificationView = ({
         type: 'signup',
         email: userEmail,
         options: {
-          emailRedirectTo: `https://elyphant.ai/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
       

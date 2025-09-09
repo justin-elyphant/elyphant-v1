@@ -129,34 +129,6 @@ const SignUpForm = () => {
             } else {
               console.log("✅ Edge function success:", edgeData);
               
-              // Send verification email after successful fallback signup
-              try {
-                console.log("📧 Sending verification email via fallback path");
-                const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
-                  body: {
-                    email: data.email,
-                    name: data.name,
-                    invitationContext: invitationData
-                  }
-                });
-                
-                if (emailError) {
-                  console.error("Verification email error:", emailError);
-                  toast.success("Account created!", {
-                    description: "Your account was created but we couldn't send the verification email. Please check your email or contact support."
-                  });
-                } else {
-                  toast.success("Account created!", {
-                    description: "Please check your email for a verification link to complete your signup."
-                  });
-                }
-              } catch (emailErr) {
-                console.error("Email function error:", emailErr);
-                toast.success("Account created!", {
-                  description: "Your account was created but we couldn't send the verification email. Please check your email or contact support."
-                });
-              }
-              
               // Store completion state for streamlined profile setup
               LocalStorageService.setProfileCompletionState({
                 email: data.email,
@@ -166,8 +138,30 @@ const SignUpForm = () => {
                 source: 'email'
               });
               
-              // Navigate to verification page
+              // Navigate to verification page immediately
               navigate('/auth/verify-email');
+              
+              // Send verification email after navigation (async)
+              setTimeout(async () => {
+                try {
+                  console.log("📧 Sending verification email via fallback path");
+                  const { data: emailData, error: emailError } = await supabase.functions.invoke('send-verification-email', {
+                    body: {
+                      email: data.email,
+                      name: data.name,
+                      invitationContext: invitationData
+                    }
+                  });
+                  
+                  if (emailError) {
+                    console.error("Verification email error:", emailError);
+                  } else {
+                    console.log("✅ Verification email sent successfully");
+                  }
+                } catch (emailErr) {
+                  console.error("Email function error:", emailErr);
+                }
+              }, 100);
               return;
             }
           } catch (edgeErr) {

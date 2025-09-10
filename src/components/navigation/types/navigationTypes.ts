@@ -4,6 +4,7 @@ export interface NavigationItem {
   href: string;
   icon?: React.ReactNode;
   badge?: number;
+  hasUnread?: boolean;
   requiresAuth?: boolean;
   section?: 'primary' | 'secondary' | 'account' | 'support';
 }

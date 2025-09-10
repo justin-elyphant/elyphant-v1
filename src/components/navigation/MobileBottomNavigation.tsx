@@ -50,7 +50,7 @@ const MobileBottomNavigation: React.FC = () => {
       label: 'Messages',
       href: '/messages',
       icon: <MessageSquare className="h-5 w-5" />,
-      badge: badges.messages,
+      hasUnread: badges.messages > 0, // Use hasUnread instead of badge count
       section: 'primary' as const
     }] : []),
     
@@ -160,7 +160,8 @@ const MobileBottomNavigation: React.FC = () => {
                   </div>
                   
                   {/* Enhanced Badge with better positioning and animation */}
-                  {tab.badge && tab.badge > 0 && (
+                  {/* Messages use hasUnread property, others use badge */}
+                  {((tab.id === "messages" && tab.hasUnread) || (tab.id !== "messages" && tab.badge && tab.badge > 0)) && (
                     <div className={cn(
                       "absolute -top-1 -right-1 shadow-md transition-all duration-200",
                       "animate-pulse",

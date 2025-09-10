@@ -13,6 +13,12 @@ import {
 import { unifiedLocationService, AddressValidationResult } from '@/services/location/UnifiedLocationService';
 import { StandardizedAddress } from '@/services/googlePlacesService';
 
+interface AddressVerificationData {
+  address: StandardizedAddress;
+  confidence: 'high' | 'medium' | 'low';
+  method: 'automatic' | 'user_confirmed';
+}
+
 interface InlineAddressVerificationProps {
   address: {
     street?: string;
@@ -22,7 +28,7 @@ interface InlineAddressVerificationProps {
     zipCode?: string;
     country?: string;
   };
-  onVerificationChange: (isVerified: boolean, result: AddressValidationResult | null) => void;
+  onVerificationChange: (isVerified: boolean, result: AddressVerificationData | null) => void;
 }
 
 const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
@@ -31,6 +37,7 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
 }) => {
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<AddressValidationResult | null>(null);
+  const [verificationData, setVerificationData] = useState<AddressVerificationData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
   // Check if all required fields are filled
@@ -55,6 +62,9 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
     setIsValidating(true);
     
     try {
+      console.log('🏠 [InlineAddressVerification] Starting validation...');
+      
+      // Prepare address for validation (use same format as settings)
       const standardizedAddress: StandardizedAddress = {
         street: address.street!,
         city: address.city!,
@@ -64,11 +74,36 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
         formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
       };
 
+      console.log('🏠 [InlineAddressVerification] Validating address:', standardizedAddress);
+
+      // Use the same validation service as settings
       const result = await unifiedLocationService.validateAddressForDelivery(standardizedAddress);
+      
+      console.log('🏠 [InlineAddressVerification] Validation result:', result);
+      
       setValidationResult(result);
-      onVerificationChange(result.isValid, result);
+      
+      if (result.isValid) {
+        const verifyData: AddressVerificationData = {
+          address: standardizedAddress,
+          confidence: result.confidence,
+          method: result.confidence === 'high' ? 'automatic' : 'user_confirmed'
+        };
+        
+        console.log('🏠 [InlineAddressVerification] Setting verification data:', verifyData);
+        
+        setVerificationData(verifyData);
+        onVerificationChange(true, verifyData);
+      } else {
+        // Show validation issues with manual confirmation option
+        const issuesList = result.issues.join(", ");
+        console.log('🏠 [InlineAddressVerification] Validation failed:', result.issues);
+        
+        setVerificationData(null);
+        onVerificationChange(false, null);
+      }
     } catch (error) {
-      console.error('Address validation error:', error);
+      console.error('🏠 [InlineAddressVerification] Validation error:', error);
       const errorResult: AddressValidationResult = {
         isValid: false,
         confidence: 'low',
@@ -76,10 +111,33 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
         suggestions: ['Please check your address and try again']
       };
       setValidationResult(errorResult);
-      onVerificationChange(false, errorResult);
+      setVerificationData(null);
+      onVerificationChange(false, null);
     } finally {
       setIsValidating(false);
     }
+  };
+
+  const handleManualConfirmation = () => {
+    console.log('🏠 [InlineAddressVerification] Manual confirmation for address');
+    
+    const standardizedAddress: StandardizedAddress = {
+      street: address.street!,
+      city: address.city!,
+      state: address.state!,
+      zipCode: address.zipCode!,
+      country: address.country || 'US',
+      formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+    };
+    
+    const verifyData: AddressVerificationData = {
+      address: standardizedAddress,
+      confidence: 'medium',
+      method: 'user_confirmed'
+    };
+    
+    setVerificationData(verifyData);
+    onVerificationChange(true, verifyData);
   };
 
   if (!isAddressComplete) {
@@ -107,8 +165,12 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
   }
 
   const getStatusColor = () => {
-    if (validationResult.isValid && validationResult.confidence === 'high') return 'green';
-    if (validationResult.isValid && validationResult.confidence === 'medium') return 'yellow';
+    if (verificationData) {
+      if (verificationData.confidence === 'high') return 'green';
+      if (verificationData.confidence === 'medium') return 'yellow';
+    }
+    if (validationResult?.isValid && validationResult.confidence === 'high') return 'green';
+    if (validationResult?.isValid && validationResult.confidence === 'medium') return 'yellow';
     return 'red';
   };
 
@@ -120,10 +182,15 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
   };
 
   const getStatusMessage = () => {
-    if (validationResult.isValid && validationResult.confidence === 'high') {
+    if (verificationData) {
+      if (verificationData.confidence === 'high') return 'Address verified and ready for delivery';
+      if (verificationData.confidence === 'medium') return 'Address confirmed for delivery';
+      return 'Address verified';
+    }
+    if (validationResult?.isValid && validationResult.confidence === 'high') {
       return 'Address verified and ready for delivery';
     }
-    if (validationResult.isValid && validationResult.confidence === 'medium') {
+    if (validationResult?.isValid && validationResult.confidence === 'medium') {
       return 'Address looks good with minor suggestions';
     }
     return 'Address needs attention';
@@ -137,8 +204,13 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
   };
 
   const getBadgeText = () => {
-    if (validationResult.isValid && validationResult.confidence === 'high') return 'Verified';
-    if (validationResult.isValid && validationResult.confidence === 'medium') return 'Verified with notes';
+    if (verificationData) {
+      if (verificationData.confidence === 'high') return 'Verified';
+      if (verificationData.confidence === 'medium') return 'Confirmed';
+      return 'Verified';
+    }
+    if (validationResult?.isValid && validationResult.confidence === 'high') return 'Verified';
+    if (validationResult?.isValid && validationResult.confidence === 'medium') return 'Verified with notes';
     return 'Needs review';
   };
 
@@ -162,7 +234,18 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
             </div>
           </div>
           
-          {(validationResult.issues.length > 0 || validationResult.suggestions.length > 0) && (
+          {!verificationData && validationResult && !validationResult.isValid && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualConfirmation}
+              className="text-xs"
+            >
+              Confirm Address
+            </Button>
+          )}
+          
+          {(validationResult && (validationResult.issues.length > 0 || validationResult.suggestions.length > 0)) && (
             <Button
               variant="ghost"
               size="sm"
@@ -174,7 +257,7 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
           )}
         </div>
 
-        {showDetails && (validationResult.issues.length > 0 || validationResult.suggestions.length > 0) && (
+        {showDetails && validationResult && (validationResult.issues.length > 0 || validationResult.suggestions.length > 0) && (
           <div className="mt-4 space-y-2">
             {validationResult.issues.length > 0 && (
               <Alert className="border-red-200 bg-red-50">

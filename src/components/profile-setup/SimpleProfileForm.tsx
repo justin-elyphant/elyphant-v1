@@ -16,6 +16,19 @@ import InlineAddressVerification from "./InlineAddressVerification";
 import { supabase } from "@/integrations/supabase/client";
 import { AddressValidationResult } from "@/services/location/UnifiedLocationService";
 
+interface AddressVerificationData {
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    formatted_address: string;
+  };
+  confidence: 'high' | 'medium' | 'low';
+  method: 'automatic' | 'user_confirmed';
+}
+
 const formSchema = z.object({
   profile_image: z.string().nullable().optional(),
   date_of_birth: z.date({
@@ -43,7 +56,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddressVerified, setIsAddressVerified] = useState(false);
-  const [addressValidationResult, setAddressValidationResult] = useState<AddressValidationResult | null>(null);
+  const [addressVerificationData, setAddressVerificationData] = useState<AddressVerificationData | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -104,10 +117,10 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
     form.setValue('address.country', address.country);
   };
 
-  const handleVerificationChange = (verified: boolean, result: AddressValidationResult | null) => {
+  const handleVerificationChange = (verified: boolean, result: AddressVerificationData | null) => {
     console.log('🔍 [SimpleProfileForm] Address verification changed:', { verified, result });
     setIsAddressVerified(verified);
-    setAddressValidationResult(result);
+    setAddressVerificationData(result);
   };
 
   const onSubmit = async (data: FormData) => {
@@ -148,7 +161,8 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
           zipCode: data.address.zipCode
         },
         address_verified: isAddressVerified,
-        address_verification_method: addressValidationResult?.confidence === 'high' ? 'automatic' : 'user_confirmed',
+        address_verification_method: addressVerificationData?.method || (isAddressVerified ? 'user_confirmed' : 'profile_setup'),
+        address_verified_at: isAddressVerified ? new Date().toISOString() : null,
         address_last_updated: new Date().toISOString(),
         interests: [],
         important_dates: [],
@@ -160,10 +174,17 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         }
       };
 
-      console.log("🚀 Saving simple profile data...");
+      console.log("🚀 Saving simple profile data with verification:", {
+        verified: isAddressVerified,
+        method: addressVerificationData?.method,
+        confidence: addressVerificationData?.confidence
+      });
+      
       await updateProfile(profileData);
       
-      toast.success("Profile completed successfully!");
+      toast.success("Profile completed successfully!", {
+        description: isAddressVerified ? "Your address has been verified for delivery" : "You can verify your address later in settings"
+      });
       onComplete();
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -290,9 +311,11 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isSubmitting || !isAddressVerified}
+            disabled={isSubmitting}
           >
-            {isSubmitting ? "Saving Profile..." : "Complete Profile & Get Started"}
+            {isSubmitting ? "Saving Profile..." : 
+             isAddressVerified ? "Complete Profile & Get Started" : 
+             "Complete Profile (Verify Address Later)"}
           </Button>
         </form>
       </Form>

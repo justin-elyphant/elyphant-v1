@@ -157,7 +157,7 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 <MapPin className="h-3 w-3 inline mr-1" />
-                {address.street}, {address.city}, {address.state} {address.zipCode}
+                {address.street}{address.line2 ? ` ${address.line2}` : ''}, {address.city}, {address.state} {address.zipCode}
               </div>
             </div>
           </div>

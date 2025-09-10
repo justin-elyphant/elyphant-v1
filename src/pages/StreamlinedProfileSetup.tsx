@@ -18,8 +18,8 @@ const StreamlinedProfileSetup = () => {
   }, [user, isLoading, navigate]);
 
   const handleProfileComplete = () => {
-    console.log("✅ Profile completed! Redirecting to settings...");
-    navigate('/settings', { replace: true });
+    console.log("✅ Profile completed! Redirecting to gifting...");
+    navigate('/gifting', { replace: true });
   };
 
   if (isLoading) {

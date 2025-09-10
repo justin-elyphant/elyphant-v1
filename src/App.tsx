@@ -150,9 +150,22 @@ function AppContent() {
 
     const handleAuthSignout = () => {
       console.log('🔓 Auth signout event received, redirecting to home');
-      // Check if user is on a protected route and redirect to home
-      const protectedRoutes = ['/dashboard', '/profile', '/settings', '/marketplace'];
-      if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
+      // Comprehensive list of protected routes that require authentication
+      const protectedRoutes = [
+        '/dashboard', '/profile', '/settings', '/marketplace', '/gifting', '/events',
+        '/cart', '/checkout', '/orders', '/messages', '/connections', '/wishlists',
+        '/payments', '/nicole', '/account', '/profile-setup', '/recently-viewed',
+        '/auto-gift-approval', '/order-status', '/trunkline'
+      ];
+      
+      // Check if user is on any protected route and redirect to home
+      const currentPath = window.location.pathname;
+      const isOnProtectedRoute = protectedRoutes.some(route => 
+        currentPath.startsWith(route) || currentPath === route
+      );
+      
+      if (isOnProtectedRoute) {
+        console.log('🔓 User was on protected route, redirecting to home:', currentPath);
         navigate("/", { replace: true });
       }
     };

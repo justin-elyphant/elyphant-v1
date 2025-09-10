@@ -76,7 +76,7 @@ const TrunklineLogin = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/trunkline`,
+          redirectTo: `https://elyphant.ai/trunkline`,
           queryParams: {
             hd: 'elyphant.com' // Restrict to elyphant.com domain
           }

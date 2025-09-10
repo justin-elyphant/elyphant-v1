@@ -4488,6 +4488,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      trigger_order_recovery: {
+        Args: { order_uuid: string }
+        Returns: Json
+      }
       validate_zma_order: {
         Args: {
           order_amount: number

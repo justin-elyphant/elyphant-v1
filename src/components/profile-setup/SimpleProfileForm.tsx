@@ -76,6 +76,9 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
     verifiedAt: string;
   } | null>(null);
 
+  // Debug logs
+  console.log("🔍 Modal state:", { showVerificationModal, verificationData });
+
   const handleImageSelect = async (file: File) => {
     if (!user) return;
 
@@ -117,6 +120,9 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   };
 
   const onSubmit = async (data: FormData) => {
+    console.log("🚀 Form submitted with data:", data);
+    console.log("🔍 Current verification data:", verificationData);
+    
     // Check if address needs verification
     const addressToCheck: StandardizedAddress = {
       street: data.address.street,
@@ -126,8 +132,11 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       country: data.address.country
     };
 
+    console.log("📍 Address to check:", addressToCheck);
+
     // If address hasn't been verified yet, show verification modal
     if (!verificationData) {
+      console.log("✅ Showing verification modal");
       setAddressToVerify(addressToCheck);
       setShowVerificationModal(true);
       return;
@@ -357,7 +366,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || !verificationData}
+                  disabled={isLoading}
                 >
                   {isLoading ? "Setting up your profile..." : "Complete Profile & Get Started"}
                 </Button>
@@ -367,9 +376,13 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
 
           <AddressVerificationModal
             open={showVerificationModal}
-            onOpenChange={setShowVerificationModal}
+            onOpenChange={(open) => {
+              console.log("🔄 Modal open change:", open);
+              setShowVerificationModal(open);
+            }}
             address={addressToVerify || { street: '', city: '', state: '', zipCode: '', country: '' }}
             onVerified={(data) => {
+              console.log("✅ Address verified:", data);
               setVerificationData(data);
               setShowVerificationModal(false);
               // Automatically submit form after verification

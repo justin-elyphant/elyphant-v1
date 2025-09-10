@@ -162,13 +162,16 @@ const MobileBottomNavigation: React.FC = () => {
                   {/* Enhanced Badge with better positioning and animation */}
                   {tab.badge && tab.badge > 0 && (
                     <div className={cn(
-                      "absolute -top-1 -right-1 text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-md transition-all duration-200",
+                      "absolute -top-1 -right-1 shadow-md transition-all duration-200",
                       "animate-pulse",
-                      tab.id === "cart" 
-                        ? "bg-primary text-primary-foreground border border-background" 
-                        : "bg-destructive text-destructive-foreground border border-background"
+                      // Messages get a simple red dot indicator
+                      tab.id === "messages" 
+                        ? "w-2 h-2 bg-destructive rounded-full border border-background" 
+                        : tab.id === "cart" 
+                          ? "bg-primary text-primary-foreground border border-background text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1" 
+                          : "bg-destructive text-destructive-foreground border border-background text-xs font-medium rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
                     )}>
-                      {tab.badge > 99 ? "99+" : tab.badge}
+                      {tab.id === "messages" ? "" : (tab.badge > 99 ? "99+" : tab.badge)}
                     </div>
                   )}
                 </div>

@@ -30,18 +30,38 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id)
 
     if (session.payment_status === 'paid') {
-      // Update order status in database - match by session_id, then update payment_intent_id
-      const { data: order, error: updateError } = await supabase
+      // Update order status in database - try matching by session_id first, then by payment_intent_id
+      let { data: order, error: updateError } = await supabase
         .from('orders')
         .update({
           status: 'processing',
           payment_status: 'succeeded',
           stripe_payment_intent_id: session.payment_intent,
+          stripe_session_id: session_id,
           updated_at: new Date().toISOString()
         })
         .eq('stripe_session_id', session_id)
         .select('id, order_number, shipping_info, gift_message, is_gift, scheduled_delivery_date, is_surprise_gift')
         .single()
+
+      // If no order found by session_id, try by payment_intent_id
+      if (updateError && updateError.message.includes('No rows') && session.payment_intent) {
+        console.log('No order found by session_id, trying payment_intent_id:', session.payment_intent)
+        const { data: orderByIntent, error: intentError } = await supabase
+          .from('orders')
+          .update({
+            status: 'processing',
+            payment_status: 'succeeded',
+            stripe_session_id: session_id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_payment_intent_id', session.payment_intent)
+          .select('id, order_number, shipping_info, gift_message, is_gift, scheduled_delivery_date, is_surprise_gift')
+          .single()
+        
+        order = orderByIntent
+        updateError = intentError
+      }
 
       if (updateError && !updateError.message.includes('No rows')) {
         console.error('Error updating order:', updateError)

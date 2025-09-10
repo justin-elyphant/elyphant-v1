@@ -53,7 +53,7 @@ serve(async (req) => {
 
     if (error || !invitation) {
       console.error("Invitation not found:", error);
-      const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
+      const appUrl = Deno.env.get("APP_URL") || "https://elyphant.ai";
       return Response.redirect(`${appUrl}/auth?error=invitation_not_found`);
     }
 
@@ -70,7 +70,7 @@ serve(async (req) => {
     console.log("Processing invitation:", invitation);
 
     // Route all invitation types to signup/onboarding flow with invitation context
-    const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://elyphant.ai";
     const signupParams = new URLSearchParams({
       invitation_id: invitationId,
       recipient_email: invitation.recipient_email,
@@ -111,7 +111,7 @@ serve(async (req) => {
     console.error("Error in handle-invitation-acceptance:", error);
     
     // Fallback redirect to signup with error context
-    const appUrl = Deno.env.get("APP_URL") || "https://preview--elyphant.lovable.app";
+    const appUrl = Deno.env.get("APP_URL") || "https://elyphant.ai";
     const fallbackUrl = `${appUrl}/auth?error=invitation_processing_failed`;
     
     return Response.redirect(fallbackUrl);

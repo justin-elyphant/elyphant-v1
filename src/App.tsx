@@ -45,6 +45,7 @@ const SharedWishlist = lazy(() => import("./pages/SharedWishlist"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
 const StreamlinedSignUp = lazy(() => import("./components/onboarding/StreamlinedSignUp"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
+const Careers = lazy(() => import("./pages/Careers"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
@@ -226,7 +227,8 @@ function AppContent() {
           <Route path="/wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
-          <Route path="/about" element={<AboutUs />} />
+           <Route path="/about" element={<AboutUs />} />
+           <Route path="/careers" element={<Careers />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

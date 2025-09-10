@@ -22,14 +22,23 @@ const TrunklineLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
-      return;
+    if (isSignUp) {
+      if (!email || !password || !name) {
+        toast.error("Please fill in all fields");
+        return;
+      }
+    } else {
+      if (!email || !password) {
+        toast.error("Please enter both email and password");
+        return;
+      }
     }
 
     // Check if email is from elyphant.com domain
@@ -41,30 +50,60 @@ const TrunklineLogin = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/trunkline`,
+            data: {
+              name: name,
+              user_type: 'employee'
+            }
+          }
+        });
 
-      if (error) {
-        console.error('Sign in error:', error);
-        
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password');
-        } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Please check your email and confirm your account');
-        } else {
-          toast.error('Failed to sign in. Please try again.');
+        if (error) {
+          console.error('Sign up error:', error);
+          
+          if (error.message.includes('User already registered')) {
+            toast.error('Account already exists. Try signing in instead.');
+          } else {
+            toast.error('Failed to create account. Please try again.');
+          }
+          return;
         }
-        return;
-      }
 
-      if (data.user) {
-        toast.success('Signed in successfully');
-        // The TrunklineGuard will handle the access check and navigation
+        if (data.user) {
+          toast.success('Account created! Please check your email to confirm your account.');
+          setIsSignUp(false); // Switch back to login mode
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          console.error('Sign in error:', error);
+          
+          if (error.message.includes('Invalid login credentials')) {
+            toast.error('Invalid email or password');
+          } else if (error.message.includes('Email not confirmed')) {
+            toast.error('Please check your email and confirm your account');
+          } else {
+            toast.error('Failed to sign in. Please try again.');
+          }
+          return;
+        }
+
+        if (data.user) {
+          toast.success('Signed in successfully');
+          // The TrunklineGuard will handle the access check and navigation
+        }
       }
     } catch (err) {
-      console.error('Sign in error:', err);
+      console.error('Auth error:', err);
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -101,9 +140,14 @@ const TrunklineLogin = () => {
             <div className="flex items-center justify-center mb-4">
               <h1 className="text-2xl font-bold text-slate-800">Trunkline</h1>
             </div>
-            <CardTitle className="text-xl text-slate-700">Employee Login</CardTitle>
+            <CardTitle className="text-xl text-slate-700">
+              {isSignUp ? 'Create Employee Account' : 'Employee Login'}
+            </CardTitle>
             <CardDescription className="text-slate-500">
-              Sign in to access the Trunkline admin portal
+              {isSignUp 
+                ? 'Create an account to access the Trunkline admin portal' 
+                : 'Sign in to access the Trunkline admin portal'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -127,11 +171,24 @@ const TrunklineLogin = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Full Name</label>
+                  <Input 
+                    type="text" 
+                    placeholder="Enter your full name"
+                    className="w-full border-slate-300"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Email</label>
                 <Input 
                   type="email" 
-                  placeholder="Enter your email"
+                  placeholder="Enter your @elyphant.com email"
                   className="w-full border-slate-300"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -153,17 +210,32 @@ const TrunklineLogin = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isLoading 
+                  ? (isSignUp ? "Creating Account..." : "Signing In...")
+                  : (isSignUp ? "Create Account" : "Sign In")
+                }
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center">
-            <Link 
-              to="/forgot-password" 
-              className="text-sm text-blue-600 hover:text-blue-700"
+          <CardFooter className="flex flex-col items-center space-y-2">
+            {!isSignUp && (
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Forgot password?
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-slate-600 hover:text-slate-700"
             >
-              Forgot password?
-            </Link>
+              {isSignUp 
+                ? "Already have an account? Sign in" 
+                : "Need an account? Sign up"
+              }
+            </button>
           </CardFooter>
         </Card>
       </div>

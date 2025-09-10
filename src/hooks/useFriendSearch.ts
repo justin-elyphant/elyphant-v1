@@ -38,11 +38,18 @@ export const useFriendSearch = (): UseFriendSearchResult => {
   }, []);
 
   const sendFriendRequestWrapper = useCallback(async (targetUserId: string, targetName?: string) => {
+    console.log('🔍 [useFriendSearch] Sending friend request to:', { targetUserId, targetName });
+    
     const { success, error } = await sendConnectionRequest(targetUserId);
+    
     if (!success) {
-      console.error("useFriendSearch.sendFriendRequest error", error);
+      console.error('🔍 [useFriendSearch] sendFriendRequest failed:', error);
+      setError(error?.message || 'Failed to send connection request');
       return false;
     }
+    
+    console.log('🔍 [useFriendSearch] Friend request sent successfully');
+    
     // Optimistically update result status
     setResults(prev => prev.map(r => r.id === targetUserId ? { ...r, connectionStatus: 'pending' } : r));
     return true;

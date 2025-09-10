@@ -46,6 +46,7 @@ const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSet
 const StreamlinedSignUp = lazy(() => import("./components/onboarding/StreamlinedSignUp"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Careers = lazy(() => import("./pages/Careers"));
+const Press = lazy(() => import("./pages/Press"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
@@ -229,6 +230,7 @@ function AppContent() {
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
            <Route path="/about" element={<AboutUs />} />
            <Route path="/careers" element={<Careers />} />
+           <Route path="/press" element={<Press />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

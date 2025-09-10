@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { User, Gift, Heart } from "lucide-react";
+import { User, Gift, Heart, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
@@ -42,10 +42,20 @@ const MobileBottomNavigation: React.FC = () => {
   const primarySection = sections.find(s => s.id === 'primary');
   const featuresSection = sections.find(s => s.id === 'features');
   
-  // Optimized 5-tab structure following industry standards: Home, Browse/Shop, Search, Favorites, Account
+  // Optimized 5-tab structure: Messages, Shop, Gifting, Saved, Account
   const tabs: NavigationItem[] = [
-    // Core navigation from primary section (Home, Shop, Cart)
-    ...(primarySection?.items || []).slice(0, 2), // Home and Shop only
+    // Messages tab (replacing Home since logo serves as home navigation)
+    ...(user ? [{
+      id: 'messages',
+      label: 'Messages',
+      href: '/messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+      badge: badges.messages,
+      section: 'primary' as const
+    }] : []),
+    
+    // Shop tab from primary section
+    ...(primarySection?.items || []).slice(1, 2), // Shop only (skip Home)
     
     // Add Gifting as a dedicated tab (Gifting CTA)
     {
@@ -89,6 +99,10 @@ const MobileBottomNavigation: React.FC = () => {
   const isTabActive = (tab: NavigationItem): boolean => {
     if (tab.href === "/") {
       return location.pathname === "/";
+    }
+    // Handle messages consistency  
+    if (tab.id === "messages") {
+      return location.pathname.startsWith("/messages");
     }
     // Handle route consistency - account should match dashboard, settings and profile
     if (tab.id === "account") {

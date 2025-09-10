@@ -7,7 +7,7 @@ import StateSelect from "./StateSelect";
 import GooglePlacesAutocomplete from "@/components/forms/GooglePlacesAutocomplete";
 import { StandardizedAddress } from "@/services/googlePlacesService";
 import { FormAddress } from "@/utils/addressStandardization";
-import GoogleMapsDebugPanel from "@/components/debug/GoogleMapsDebugPanel";
+
 
 interface ShippingAddressFormProps {
   address: ShippingAddress;

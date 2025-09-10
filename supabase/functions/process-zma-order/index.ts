@@ -553,14 +553,28 @@ serve(async (req) => {
     // For ZMA orders, exclude payment_method, billing_address, and retailer_credentials
     const zincOrderData = {
       retailer: "amazon",
+      addax: true, // CRITICAL: Enables ZMA ordering
       products: orderItems.map(item => ({
         product_id: item.product_id,
-        quantity: item.quantity
+        quantity: item.quantity,
+        variants: [] // Required field for ZMA
       })),
       max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
       shipping_address: shippingAddress,
+      shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
       gift_message: orderData.gift_message || '',
+      zma_flags: [], // Required field for ZMA
+      business_fields: [], // Required field for ZMA
+      auto_retry_settings: {
+        retry_delays: [0, 0] // Required ZMA configuration
+      },
+      promo_codes: [], // Required field
+      addons_to_preserve: [], // Required field
+      retry_request_ids: [], // Required field
+      bundled_order_ids: [], // Required field
+      free_gifts: [], // Required field
+      scheduled_delivery_windows: [], // Required field
       client_notes: {
         our_internal_order_id: orderData.order_number,
         supabase_order_id: orderId,

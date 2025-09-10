@@ -21,6 +21,7 @@ const formSchema = z.object({
   }),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
+    line2: z.string().optional(),
     city: z.string().min(1, "City is required"),
     state: z.string().min(1, "State is required"),
     zipCode: z.string().min(4, "Valid zip code is required"),
@@ -46,6 +47,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       profile_image: null,
       address: {
         street: "",
+        line2: "",
         city: "",
         state: "",
         zipCode: "",
@@ -126,6 +128,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         birth_year: birthYear,
         shipping_address: {
           address_line1: data.address.street,
+          address_line2: data.address.line2 || "",
           city: data.address.city,
           state: data.address.state,
           zip_code: data.address.zipCode,
@@ -202,6 +205,20 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
               value={form.watch('address.street')}
               onChange={(value) => form.setValue('address.street', value)}
               onAddressSelect={handleAddressSelect}
+            />
+
+            <FormField
+              control={form.control}
+              name="address.line2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apartment, suite, etc. (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Apt, suite, unit, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
             <div className="grid grid-cols-2 gap-4">

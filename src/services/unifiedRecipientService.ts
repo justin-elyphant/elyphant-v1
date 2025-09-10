@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { pendingGiftsService } from "./pendingGiftsService";
+import { unifiedGiftManagementService } from "./UnifiedGiftManagementService";
 import { authDebugService } from "./authDebugService";
 
 export interface UnifiedRecipient {
@@ -249,7 +249,7 @@ export const unifiedRecipientService = {
         throw new Error('Invalid email format');
       }
       
-      const result = await pendingGiftsService.createPendingConnection(
+      const result = await unifiedGiftManagementService.createPendingConnection(
         recipientData.email,
         recipientData.name,
         recipientData.relationship_type || 'friend',

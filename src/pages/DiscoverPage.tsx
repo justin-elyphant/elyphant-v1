@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Compass, TrendingUp, Gift, Users, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEOWrapper from "@/components/seo/SEOWrapper";
 
 const DiscoverPage: React.FC = () => {
   const trendingCategories = [
@@ -20,7 +21,13 @@ const DiscoverPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6 pb-20">
+    <SEOWrapper
+      title="Discover Gifts - Trending Categories & Featured Products | Elyphant"
+      description="Explore trending gift categories, featured products, and discover new ideas. Join our community of gift-givers and find inspiration for every occasion."
+      keywords="discover gifts, trending categories, featured products, gift inspiration, gift community, gift trends, popular gifts"
+      url="/discover"
+    >
+      <div className="container mx-auto px-4 py-6 space-y-6 pb-20">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Compass className="h-6 w-6 text-primary" />
@@ -144,7 +151,8 @@ const DiscoverPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </SEOWrapper>
   );
 };
 

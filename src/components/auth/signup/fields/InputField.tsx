@@ -3,6 +3,7 @@ import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { LucideIcon } from "lucide-react";
 
 interface InputFieldProps {
@@ -32,20 +33,28 @@ const InputField: React.FC<InputFieldProps> = ({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <div className="relative">
-              {Icon && (
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <Icon className="h-4 w-4" />
-                </span>
-              )}
-              <Input
+            {type === "password" ? (
+              <PasswordInput
                 placeholder={placeholder}
-                type={type}
-                className={Icon ? "pl-10" : ""}
                 autoComplete={autoComplete}
                 {...field}
               />
-            </div>
+            ) : (
+              <div className="relative">
+                {Icon && (
+                  <span className="absolute left-3 top-2.5 text-gray-400">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                )}
+                <Input
+                  placeholder={placeholder}
+                  type={type}
+                  className={Icon ? "pl-10" : ""}
+                  autoComplete={autoComplete}
+                  {...field}
+                />
+              </div>
+            )}
           </FormControl>
           <FormMessage />
         </FormItem>

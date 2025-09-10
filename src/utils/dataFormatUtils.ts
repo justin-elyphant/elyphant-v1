@@ -212,7 +212,7 @@ export function mapDatabaseToSettingsForm(profile: Profile) {
     // Map address with proper structure
     const address = profile.shipping_address ? {
       street: profile.shipping_address.address_line1 || profile.shipping_address.street || "",
-      line2: profile.shipping_address.address_line2 || "",
+      line2: profile.shipping_address.address_line2 || profile.shipping_address.line2 || "",
       city: profile.shipping_address.city || "",
       state: profile.shipping_address.state || "",
       zipCode: profile.shipping_address.zip_code || profile.shipping_address.zipCode || "",

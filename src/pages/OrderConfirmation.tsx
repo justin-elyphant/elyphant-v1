@@ -36,14 +36,35 @@ const OrderConfirmation = () => {
         }
         setOrder(orderData);
         
-        // Check if order needs processing
-        if (orderData.payment_status === 'succeeded' && !orderData.zinc_order_id && orderData.status !== 'processing') {
-          setProcessingStatus('needs_processing');
-          await attemptOrderProcessing(orderId);
-        } else if (orderData.zinc_order_id) {
-          setProcessingStatus('processed');
-        } else if (orderData.status === 'processing') {
-          setProcessingStatus('processing');
+        // Enhanced order processing status determination
+        if (orderData.payment_status === 'succeeded') {
+          // Check for existing ZMA processing
+          if (orderData.zinc_order_id || orderData.status === 'shipped' || orderData.status === 'delivered') {
+            setProcessingStatus('processed');
+          } else if (orderData.status === 'processing' || orderData.status === 'retry_pending') {
+            setProcessingStatus('processing');
+            // Set up periodic status checking for active processing
+            const statusCheckInterval = setInterval(async () => {
+              try {
+                const updatedOrder = await getOrderById(orderId);
+                if (updatedOrder && (updatedOrder.zinc_order_id || updatedOrder.status === 'shipped')) {
+                  setProcessingStatus('processed');
+                  setOrder(updatedOrder);
+                  clearInterval(statusCheckInterval);
+                }
+              } catch (error) {
+                console.error('Error checking order status:', error);
+              }
+            }, 5000); // Check every 5 seconds
+            
+            // Clean up interval after 2 minutes
+            setTimeout(() => clearInterval(statusCheckInterval), 120000);
+          } else if (orderData.status === 'failed') {
+            setProcessingStatus('failed');
+          } else {
+            setProcessingStatus('needs_processing');
+            await attemptOrderProcessing(orderId);
+          }
         } else {
           setProcessingStatus('pending');
         }
@@ -56,41 +77,52 @@ const OrderConfirmation = () => {
       }
     };
 
-    const attemptOrderProcessing = async (orderIdToProcess: string) => {
-      try {
-        console.log('Attempting to process order:', orderIdToProcess);
-        setProcessingStatus('processing');
-        
-        const { data, error } = await supabase.functions.invoke('process-zma-order', {
-          body: {
-            orderId: orderIdToProcess,
-            isTestMode: true // Set to false for production
-          }
-        });
-
-        if (error) {
-          console.error('Order processing error:', error);
-          setProcessingStatus('failed');
-          toast.error('Order processing encountered an issue. Our team has been notified.');
-        } else if (data?.success) {
-          console.log('Order processed successfully:', data.zincOrderId);
-          setProcessingStatus('processed');
-          toast.success('Order processed successfully!');
-          
-          // Refresh order data
-          const updatedOrder = await getOrderById(orderIdToProcess);
-          if (updatedOrder) {
-            setOrder(updatedOrder);
-          }
-        } else {
-          console.warn('Order processing returned unexpected result:', data);
-          setProcessingStatus('failed');
+  const attemptOrderProcessing = async (orderIdToProcess: string) => {
+    try {
+      console.log('🔄 Attempting to process order with enhanced address format:', orderIdToProcess);
+      setProcessingStatus('processing');
+      
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
+        body: {
+          orderId: orderIdToProcess,
+          isTestMode: false, // Use production mode for live orders
+          debugMode: true   // Enable detailed logging
         }
-      } catch (error) {
-        console.error('Error processing order:', error);
+      });
+
+      if (error) {
+        console.error('❌ Order processing error:', error);
         setProcessingStatus('failed');
+        toast.error('Order processing encountered an issue. Our team has been notified.');
+      } else if (data?.success) {
+        console.log('✅ Order processed successfully:', data.zincOrderId);
+        setProcessingStatus('processed');
+        toast.success('Order processed successfully!');
+        
+        // Refresh order data
+        const updatedOrder = await getOrderById(orderIdToProcess);
+        if (updatedOrder) {
+          setOrder(updatedOrder);
+        }
+      } else {
+        console.warn('⚠️ Order processing returned unexpected result:', data);
+        
+        // Check if it's a "request_processing" status from Zinc
+        if (data?.status === 'request_processing' || data?.message?.includes('processing')) {
+          console.log('📋 Order submitted to Zinc successfully, now processing...');
+          setProcessingStatus('processing');
+          toast.success('Order submitted to fulfillment partner. Processing in progress...');
+        } else {
+          setProcessingStatus('failed');
+          toast.error('Order processing failed. Please contact support.');
+        }
       }
-    };
+    } catch (error) {
+      console.error('💥 Error processing order:', error);
+      setProcessingStatus('failed');
+      toast.error('Order processing failed. Please contact support.');
+    }
+  };
 
     fetchOrder();
   }, [orderId, navigate]);
@@ -108,10 +140,43 @@ const OrderConfirmation = () => {
     if (zincStatus === 'delivered' || status === 'delivered') {
       return <Badge className="bg-green-500">Delivered</Badge>;
     }
-    if (status === 'processing' || zincStatus === 'placed') {
+    if (status === 'processing' || status === 'retry_pending' || zincStatus === 'placed') {
       return <Badge className="bg-orange-500">Processing</Badge>;
     }
     return <Badge variant="secondary">Pending</Badge>;
+  };
+
+  const getProcessingStatusDisplay = () => {
+    switch (processingStatus) {
+      case 'processing':
+        return (
+          <div className="flex items-center gap-2 text-orange-600">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Processing with fulfillment partner...</span>
+          </div>
+        );
+      case 'processed':
+        return (
+          <div className="flex items-center gap-2 text-green-600">
+            <CheckCircle className="h-4 w-4" />
+            <span>Successfully processed!</span>
+          </div>
+        );
+      case 'failed':
+        return (
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-4 w-4" />
+            <span>Processing failed - support has been notified</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center gap-2 text-gray-600">
+            <Package className="h-4 w-4" />
+            <span>Preparing for processing...</span>
+          </div>
+        );
+    }
   };
 
   const getPaymentStatusBadge = (paymentStatus: string) => {
@@ -127,47 +192,6 @@ const OrderConfirmation = () => {
     }
   };
 
-  const getProcessingStatusDisplay = () => {
-    switch (processingStatus) {
-      case 'checking':
-        return (
-          <div className="flex items-center gap-2 text-blue-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Checking order status...</span>
-          </div>
-        );
-      case 'needs_processing':
-        return (
-          <div className="flex items-center gap-2 text-orange-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Processing order for fulfillment...</span>
-          </div>
-        );
-      case 'processing':
-        return (
-          <div className="flex items-center gap-2 text-orange-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Order being processed...</span>
-          </div>
-        );
-      case 'processed':
-        return (
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle className="h-4 w-4" />
-            <span>Order processed successfully</span>
-          </div>
-        );
-      case 'failed':
-        return (
-          <div className="flex items-center gap-2 text-red-600">
-            <AlertCircle className="h-4 w-4" />
-            <span>Processing issue - Our team has been notified</span>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   if (isLoading) {
     return (

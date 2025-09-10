@@ -187,6 +187,23 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('🎉 Payment successful, creating order...', { paymentIntentId, paymentMethodId });
       
       // CRITICAL: Order creation with all necessary data including gifting fee details
+      // Convert address format to ZMA-compatible format for proper processing
+      const zmaCompatibleShippingInfo = {
+        // Standard ShippingInfo interface fields (required)
+        name: checkoutData.shippingInfo.name,
+        email: checkoutData.shippingInfo.email,
+        address: checkoutData.shippingInfo.address,
+        addressLine2: checkoutData.shippingInfo.addressLine2,
+        city: checkoutData.shippingInfo.city,
+        state: checkoutData.shippingInfo.state,
+        zipCode: checkoutData.shippingInfo.zipCode,
+        country: checkoutData.shippingInfo.country,
+        // ZMA-compatible fields (for proper processing)
+        address_line1: checkoutData.shippingInfo.address,
+        address_line2: checkoutData.shippingInfo.addressLine2 || '',
+        zip_code: checkoutData.shippingInfo.zipCode
+      };
+
       const orderData = {
         cartItems,
         subtotal,
@@ -196,7 +213,7 @@ const UnifiedCheckoutForm: React.FC = () => {
         giftingFeeDescription,
         taxAmount,
         totalAmount,
-        shippingInfo: checkoutData.shippingInfo,
+        shippingInfo: zmaCompatibleShippingInfo,
         giftOptions: {
           isGift: false,
           recipientName: '',

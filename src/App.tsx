@@ -31,6 +31,7 @@ const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Orders = lazy(() => import("./pages/Orders"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -202,6 +203,7 @@ function AppContent() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/oauth-complete" element={<OAuthComplete />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />

@@ -211,6 +211,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           exclude_items: [],
         },
         payment_method_id: formData.selectedPaymentMethodId,
+        gift_message: formData.giftMessage,
       };
 
       // Create or update the rule

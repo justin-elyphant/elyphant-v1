@@ -169,6 +169,25 @@ class UnifiedOrderProcessingService {
   private async createOrderFromExecution(execution: AutoGiftExecution): Promise<any> {
     console.log(`📝 Creating order from execution:`, execution.id);
 
+    // Fetch the auto-gifting rule to get the gift message
+    let giftMessage = 'A thoughtful gift selected just for you!'; // Default message
+    if (execution.rule_id) {
+      try {
+        const { data: rule } = await supabase
+          .from('auto_gifting_rules')
+          .select('gift_message')
+          .eq('id', execution.rule_id)
+          .single();
+        
+        if (rule?.gift_message) {
+          giftMessage = rule.gift_message;
+          console.log(`📝 Using gift message from rule: ${giftMessage}`);
+        }
+      } catch (error) {
+        console.log('📝 Could not fetch gift message from rule, using default');
+      }
+    }
+
     // Extract product details from selected_products
     const selectedProducts = Array.isArray(execution.selected_products) 
       ? execution.selected_products 
@@ -218,7 +237,7 @@ class UnifiedOrderProcessingService {
       shippingInfo,
       giftOptions: {
         isGift: true,
-        giftMessage: 'A thoughtful gift selected just for you!',
+        giftMessage: giftMessage,
         recipientName: addressData.name || 'Gift Recipient',
         isSurpriseGift: true,
         giftWrapping: false,

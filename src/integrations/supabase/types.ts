@@ -426,6 +426,7 @@ export type Database = {
           created_at: string | null
           date_type: string
           event_id: string | null
+          gift_message: string | null
           gift_preferences: Json | null
           gift_selection_criteria: Json | null
           id: string
@@ -448,6 +449,7 @@ export type Database = {
           created_at?: string | null
           date_type: string
           event_id?: string | null
+          gift_message?: string | null
           gift_preferences?: Json | null
           gift_selection_criteria?: Json | null
           id?: string
@@ -470,6 +472,7 @@ export type Database = {
           created_at?: string | null
           date_type?: string
           event_id?: string | null
+          gift_message?: string | null
           gift_preferences?: Json | null
           gift_selection_criteria?: Json | null
           id?: string

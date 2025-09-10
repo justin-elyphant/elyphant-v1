@@ -260,7 +260,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       total_price: unitPrice * quantity,
       recipient_connection_id: sanitizedRecipientData.connectionId,
       delivery_group_id: sanitizedRecipientData.deliveryGroupId,
-      recipient_gift_message: recipientAssignment?.giftMessage || null,
+      recipient_gift_message: recipientAssignment?.giftMessage || orderData.giftOptions?.giftMessage || null,
       scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
     };
   });

@@ -127,6 +127,36 @@ async function performZmaSecurityValidation(context, supabase) {
   return result;
 }
 
+function collectGiftMessage(orderItems, orderData) {
+  // First check if there's a direct gift message on the order
+  if (orderData.gift_message) {
+    console.log('📝 Using gift message from order:', orderData.gift_message);
+    return orderData.gift_message;
+  }
+
+  // Collect gift messages from order items
+  const giftMessages = orderItems
+    .map(item => item.recipient_gift_message)
+    .filter(message => message && message.trim() !== '');
+
+  if (giftMessages.length === 0) {
+    console.log('📝 No gift message found in order or items');
+    return '';
+  }
+
+  // If all messages are the same, use it once
+  const uniqueMessages = [...new Set(giftMessages)];
+  if (uniqueMessages.length === 1) {
+    console.log('📝 Using gift message from order items:', uniqueMessages[0]);
+    return uniqueMessages[0];
+  }
+
+  // If multiple different messages, combine them
+  const combinedMessage = uniqueMessages.join(' | ');
+  console.log('📝 Multiple gift messages found, combining:', combinedMessage);
+  return combinedMessage;
+}
+
 async function logZmaSecurityEvent(eventType, eventData, severity, supabase) {
   try {
     await supabase
@@ -563,7 +593,7 @@ serve(async (req) => {
       shipping_address: shippingAddress,
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
-      gift_message: orderData.gift_message || '',
+      gift_message: collectGiftMessage(orderItems, orderData),
       zma_flags: [], // Required field for ZMA
       business_fields: [], // Required field for ZMA
       auto_retry_settings: {

@@ -9,7 +9,7 @@ const GiftingHub = () => {
       <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            Gifting Hub
+            Gifting
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             Manage your gift events, auto-gifting settings, and group projects

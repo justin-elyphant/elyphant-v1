@@ -209,7 +209,7 @@ const GiftingHubCard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-purple-500" />
-            Gifting Hub - Restructured
+            Smart Gifting
           </CardTitle>
           <CardDescription>
             Manage your gifts, automation, and connections

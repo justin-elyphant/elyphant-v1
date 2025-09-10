@@ -64,17 +64,24 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({ addres
 
   return (
     <div className="grid gap-6">
-      {/* Debug Panel - Remove this after testing */}
-      <GoogleMapsDebugPanel />
-      
       <div className="grid gap-4">
         <GooglePlacesAutocomplete
           value={formAddress.street}
           onChange={(value) => handleChange("street", value)}
           onAddressSelect={handleGooglePlacesSelect}
-          label="Your Street Address"
+          label="Street Address"
           placeholder="Start typing your address..."
         />
+
+        <div className="grid gap-2">
+          <Label htmlFor="apartment">Apartment, suite, etc. (optional)</Label>
+          <Input
+            id="apartment"
+            placeholder="Apt, suite, unit, etc."
+            value={address.address_line2 || ''}
+            onChange={(e) => onChange({ ...address, address_line2: e.target.value })}
+          />
+        </div>
 
         <div className="grid gap-2">
           <Label htmlFor="city">City</Label>

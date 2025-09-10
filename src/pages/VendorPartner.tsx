@@ -6,6 +6,7 @@ import { BusinessTypesSection } from "@/components/vendor/BusinessTypesSection";
 import { HowItWorksSection } from "@/components/vendor/HowItWorksSection";
 import { TestimonialsSection } from "@/components/vendor/TestimonialsSection";
 import { VendorContactForm } from "@/components/vendor/VendorContactForm";
+import { ReturnReductionSection } from "@/components/vendor/ReturnReductionSection";
 import { VendorPortalFeaturesSection } from "@/components/vendor/VendorPortalFeaturesSection";
 
 const VendorPartner = () => {
@@ -27,6 +28,9 @@ const VendorPartner = () => {
 
         {/* Benefits Section */}
         <BenefitsSection />
+
+        {/* Returns Reduction Section */}
+        <ReturnReductionSection />
 
         {/* Vendor Portal Features Section */}
         <VendorPortalFeaturesSection />

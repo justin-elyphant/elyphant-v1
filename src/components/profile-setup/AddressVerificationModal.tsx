@@ -63,6 +63,10 @@ export const AddressVerificationModal: React.FC<AddressVerificationModalProps> =
 
   const formatAddress = (addr: StandardizedAddress) => {
     const parts = [addr.street];
+    // Add apartment/suite if it exists
+    if (addr.line2 && addr.line2.trim()) {
+      parts.push(addr.line2);
+    }
     if (addr.city && addr.state && addr.zipCode) {
       parts.push(`${addr.city}, ${addr.state} ${addr.zipCode}`);
     }

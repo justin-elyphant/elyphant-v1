@@ -126,6 +126,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
     // Check if address needs verification
     const addressToCheck: StandardizedAddress = {
       street: data.address.street,
+      line2: data.address.line2,
       city: data.address.city,
       state: data.address.state,
       zipCode: data.address.zipCode,

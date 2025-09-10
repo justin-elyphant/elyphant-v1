@@ -105,11 +105,13 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   };
 
   const handleVerificationChange = (verified: boolean, result: AddressValidationResult | null) => {
+    console.log('🔍 [SimpleProfileForm] Address verification changed:', { verified, result });
     setIsAddressVerified(verified);
     setAddressValidationResult(result);
   };
 
   const onSubmit = async (data: FormData) => {
+    console.log('🔍 [SimpleProfileForm] Form submission - current address:', form.watch('address'));
     if (!user) {
       toast.error("Please wait for authentication and try again.");
       return;

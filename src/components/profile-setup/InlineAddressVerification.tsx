@@ -35,11 +35,17 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
 
   // Check if all required fields are filled
   const isAddressComplete = address.street && address.city && address.state && address.zipCode;
+  
+  console.log('🏠 [InlineAddressVerification] Address data:', address);
+  console.log('🏠 [InlineAddressVerification] Is complete:', isAddressComplete);
 
   useEffect(() => {
+    console.log('🏠 [InlineAddressVerification] Address changed, isComplete:', isAddressComplete);
     if (isAddressComplete) {
+      console.log('🏠 [InlineAddressVerification] Validating address...');
       validateAddress();
     } else {
+      console.log('🏠 [InlineAddressVerification] Address incomplete, clearing validation');
       setValidationResult(null);
       onVerificationChange(false, null);
     }
@@ -77,8 +83,11 @@ const InlineAddressVerification: React.FC<InlineAddressVerificationProps> = ({
   };
 
   if (!isAddressComplete) {
+    console.log('🏠 [InlineAddressVerification] Not rendering - address incomplete');
     return null;
   }
+
+  console.log('🏠 [InlineAddressVerification] Rendering verification component');
 
   if (isValidating) {
     return (

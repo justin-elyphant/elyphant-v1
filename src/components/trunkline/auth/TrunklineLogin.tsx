@@ -100,7 +100,8 @@ const TrunklineLogin = () => {
 
         if (data.user) {
           toast.success('Signed in successfully');
-          // The TrunklineGuard will handle the access check and navigation
+          // Navigate to trunkline dashboard after successful login
+          navigate('/trunkline');
         }
       }
     } catch (err) {

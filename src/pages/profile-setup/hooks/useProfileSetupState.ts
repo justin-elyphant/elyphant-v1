@@ -55,15 +55,6 @@ export const useProfileSetupState = () => {
       return;
     }
 
-    // Check if profile setup is already complete
-    const completionState = localStorage.getItem('profileCompletionState');
-    if (!completionState && !newSignUpFlag) {
-      console.log("[useProfileSetupState] No profile completion state and not new signup, redirecting to dashboard");
-      setIsInitializing(true);
-      navigate("/", { replace: true });
-      return;
-    }
-
     // If we reach here, we can safely initialize profile setup
     console.log("[useProfileSetupState] Conditions met for profile setup initialization");
     setIsNewSignUp(newSignUpFlag);

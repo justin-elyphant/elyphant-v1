@@ -19,7 +19,7 @@ export const SocialLoginButtons = () => {
       setSocialLoading({ ...socialLoading, [provider]: true });
       
       // OAuth users go to profile completion instead of dashboard
-      const redirectUrl = `https://elyphant.ai/auth/oauth-complete`;
+      const redirectUrl = `${window.location.origin}/auth/oauth-complete`;
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,

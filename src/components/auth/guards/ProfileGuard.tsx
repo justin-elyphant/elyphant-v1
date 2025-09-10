@@ -27,12 +27,6 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({
     return <>{children}</>;
   }
 
-  // CRITICAL: Check email verification first
-  if (user && !user.email_confirmed_at) {
-    console.log('ProfileGuard: User email not verified, redirecting to verification page');
-    return <Navigate to="/auth/verify-email" replace />;
-  }
-
   // Show loading while checking profile
   if (isLoading) {
     return (

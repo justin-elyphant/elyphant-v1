@@ -1,181 +1,292 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { unifiedProfileService } from "@/services/profiles/UnifiedProfileService";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-import MainLayout from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import StreamlinedSignUpForm from "./StreamlinedSignUpForm";
+import { toast } from "sonner";
+// Legacy modal removed - using Nicole unified interface
+import { parseBirthdayFromFormData } from "@/utils/dataFormatUtils";
+import { supabase } from "@/integrations/supabase/client";
 
-interface BetaSignupData {
+// Define custom FormData interface to avoid conflict with browser FormData
+interface OnboardingFormData {
   firstName: string;
   lastName: string;
-  email: string;
-  password: string;
-  birthday: Date;
-  address: {
-    street: string;
-    line2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  interests?: string[];
+  birthday: { month: string; day: string };
+  address: any;
+  interests: string[];
 }
 
 interface StreamlinedSignUpProps {
   onComplete?: () => void;
+  showModal?: boolean;
 }
 
 const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({ 
-  onComplete
+  onComplete, 
+  showModal = true 
 }) => {
   const navigate = useNavigate();
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const { user } = useAuth();
+  const { refetchProfile } = useProfile();
 
-  console.log("🔄 Beta StreamlinedSignUp initialized");
+  // Form state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<OnboardingFormData>({
+    firstName: "",
+    lastName: "",
+    birthday: { month: "", day: "" },
+    address: null,
+    interests: []
+  });
+  
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check if we have stored signup data - if not, redirect to auth
+  console.log("🔄 StreamlinedSignUp initialized with user:", user?.id);
+  console.log("🔄 Initial form data:", formData);
+
   useEffect(() => {
-    const completionState = LocalStorageService.getProfileCompletionState();
-    if (!completionState?.email) {
-      console.warn("❌ No stored signup data found, redirecting to auth");
-      navigate("/auth");
+    if (!user) {
+      console.warn("❌ No user found, redirecting to signin");
+      navigate("/signin");
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
-  const handleProfileComplete = async (formData: BetaSignupData) => {
-    setIsCreatingAccount(true);
+  const updateFormData = (updates: Partial<OnboardingFormData>) => {
+    console.log("📝 Updating form data:", updates);
+    setFormData(prev => {
+      const newData = { ...prev, ...updates };
+      console.log("📝 New form data state:", newData);
+      return newData;
+    });
+  };
+
+  const handleNext = () => {
+    console.log(`➡️ Moving from step ${currentStep} to ${currentStep + 1}`);
+    console.log("📊 Current form data before next:", formData);
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    console.log(`⬅️ Moving from step ${currentStep} to ${currentStep - 1}`);
+    setCurrentStep(prev => prev - 1);
+  };
+
+  const handleFormComplete = () => {
+    console.log("✅ Form completed, showing intent modal");
+    console.log("📊 Final form data:", formData);
+    
+    // Validate required fields
+    const missingFields = [];
+    if (!formData.firstName.trim()) missingFields.push("firstName");
+    if (!formData.lastName.trim()) missingFields.push("lastName");
+    
+    if (missingFields.length > 0) {
+      console.error("❌ Missing required fields:", missingFields);
+      toast.error(`Please fill in required fields: ${missingFields.join(", ")}`);
+      return;
+    }
+
+    // Legacy modal removed - Nicole handles intent selection now
+  };
+
+  const handleIntentSelection = async (intent: "quick-gift" | "browse-shop" | "create-wishlist") => {
+    if (!user) {
+      console.error("❌ No user available for intent selection");
+      toast.error("Authentication error. Please try signing in again.");
+      return;
+    }
+
+    console.log("🎯 Intent selected:", intent);
+    console.log("📊 Form data to save:", JSON.stringify(formData, null, 2));
+    
+    setIsSubmitting(true);
     
     try {
-      console.log("🚀 Creating Supabase account with collected data:", formData);
-      
-      // Create Supabase account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            first_name: formData.firstName,
-            last_name: formData.lastName
-          }
-        }
-      });
-      
-      if (authError) {
-        console.error("❌ Account creation failed:", authError);
-        throw new Error(authError.message);
-      }
-      
-      if (!authData.user) {
-        throw new Error("Failed to create user account");
-      }
-      
-      console.log("✅ Account created successfully:", authData.user.id);
-      
-      // Create profile data
-      const profileData = {
-        id: authData.user.id,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        name: `${formData.firstName} ${formData.lastName}`,
-        username: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, ''),
-        email: formData.email,
-        dob: formData.birthday,
-        birth_year: formData.birthday.getFullYear(),
-        shipping_address: {
-          address_line1: formData.address.street,
-          address_line2: formData.address.line2 || null,
-          city: formData.address.city,
-          state: formData.address.state,
-          zip_code: formData.address.zipCode,
-          country: formData.address.country
-        },
+      // Parse birthday data
+      const parsedBirthday = parseBirthdayFromFormData(formData.birthday);
+      console.log("📅 Parsed birthday:", parsedBirthday);
+
+      // Prepare enhanced profile data with consistent field names
+      const enhancedProfileData = {
+        // Use consistent field names that match ProfileCreationService interface
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        username: `user_${user.id.substring(0, 8)}`,
+        email: user.email || "",
+        
+        // Birthday data in new format
+        dob: parsedBirthday.dob,
+        birth_year: parsedBirthday.birth_year,
+        
+        // Address data - ensure proper structure
+        shipping_address: formData.address ? {
+          address_line1: formData.address.street || "",
+          city: formData.address.city || "",
+          state: formData.address.state || "",
+          zip_code: formData.address.zipCode || "",
+          country: formData.address.country || "US",
+          // Keep aliases for compatibility
+          street: formData.address.street || "",
+          zipCode: formData.address.zipCode || ""
+        } : {},
+        
+        // Interests as gift preferences
         interests: formData.interests || [],
         gift_preferences: (formData.interests || []).map(interest => ({
           category: interest,
           importance: "medium"
         })),
-        onboarding_completed: true,
-        profile_type: "giftee",
-        data_sharing_settings: {
-          dob: "friends",
-          shipping_address: "private",
-          gift_preferences: "public",
-          email: "private"
-        }
+        
+        // Profile type based on intent
+        profile_type: intent === "create-wishlist" ? "giftee" : "giftor",
+        
+        // Mark onboarding as complete
+        onboarding_completed: true
       };
-      
-      // Insert profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([profileData]);
-      
-      if (profileError) {
-        console.error("❌ Profile creation failed:", profileError);
-        throw new Error("Failed to create profile");
+
+      console.log("💾 Enhanced profile data to save:", JSON.stringify(enhancedProfileData, null, 2));
+
+      // Save profile using ProfileCreationService
+      console.log("🔄 Calling ProfileCreationService.createEnhancedProfile...");
+      const result = await unifiedProfileService.createEnhancedProfile(
+        user.id,
+        enhancedProfileData
+      );
+
+      console.log("💾 Profile creation result:", result);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save profile data");
       }
-      
-      console.log("✅ Profile created successfully");
-      
-      // Clear stored data
-      LocalStorageService.clearProfileCompletionState();
-      localStorage.removeItem('beta_signup_data');
-      
-      toast.success("Account created successfully!", {
-        description: "Welcome to Elyphant! Your account is ready."
+
+      // Store intent context
+      console.log("🎯 Storing intent context:", intent);
+      LocalStorageService.setNicoleContext({
+        selectedIntent: intent,
+        source: 'streamlined_signup'
       });
+
+      // Enhanced verification with comprehensive logging
+      console.log("🔍 Verifying profile data was saved...");
       
-      // Navigate to profile setup completion
-      navigate('/profile-setup');
+      // First, refresh the profile context
+      console.log("🔄 Refreshing profile context...");
+      await refetchProfile();
       
+      // Then verify directly from database
+      const { data: savedProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (verifyError) {
+        console.error("❌ Profile verification failed:", verifyError);
+        throw new Error("Profile verification failed");
+      }
+
+      console.log("✅ Profile successfully verified from database:", savedProfile);
+      
+      // Check if critical fields are present
+      if (!savedProfile.first_name || !savedProfile.last_name || !savedProfile.email) {
+        console.error("❌ Critical profile fields missing:", { 
+          first_name: savedProfile.first_name, 
+          last_name: savedProfile.last_name, 
+          email: savedProfile.email 
+        });
+        throw new Error("Critical profile data missing after save");
+      }
+
+      // Verify new fields were saved correctly
+      console.log("🔍 Verifying new data fields:", {
+        dob: savedProfile.dob,
+        birth_year: savedProfile.birth_year,
+        shipping_address: savedProfile.shipping_address,
+        interests: savedProfile.interests,
+        gift_preferences: savedProfile.gift_preferences,
+        profile_type: savedProfile.profile_type,
+        onboarding_completed: savedProfile.onboarding_completed
+      });
+
+      console.log("✅ All critical profile fields verified");
+
+      toast.success("Profile created successfully!");
+      
+      // Legacy modal functionality removed - navigate directly based on intent
+      
+      // Navigate based on intent
+      setTimeout(() => {
+        if (intent === "browse-shop") {
+          console.log("🌐 Navigating to marketplace with AI mode");
+          navigate("/marketplace?mode=nicole&open=true&greeting=personalized");
+        } else if (intent === "quick-gift") {
+          console.log("🎁 Navigating to dashboard for quick gift");
+          navigate("/dashboard");
+        } else {
+          console.log("📝 Navigating to dashboard for wishlist creation");
+          navigate("/dashboard");
+        }
+      }, 500);
+
       if (onComplete) {
         onComplete();
       }
-      
+
     } catch (error: any) {
-      console.error("❌ Beta account creation failed:", error);
-      toast.error("Failed to create account", {
-        description: error.message || "Please try again or contact support."
+      console.error("❌ Error in handleIntentSelection:", error);
+      console.error("❌ Error details:", {
+        message: error.message,
+        stack: error.stack,
+        formData: formData,
+        userId: user.id
+      });
+      
+      toast.error("Failed to save profile data", {
+        description: error.message || "Please try again or contact support if the issue persists."
       });
     } finally {
-      setIsCreatingAccount(false);
+      setIsSubmitting(false);
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
+  const totalSteps = 4;
+  const isLastStep = currentStep === totalSteps;
+
   return (
-    <MainLayout>
-      <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <div className="w-full">
-          <Card className="w-full bg-background shadow-lg border border-border">
-            <CardContent className="p-6">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-semibold text-foreground">
-                  Complete Your Profile
-                </h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Tell us about yourself to personalize your experience
-                </p>
-              </div>
-              
-              <StreamlinedSignUpForm 
-                onComplete={handleProfileComplete}
-              />
-              
-              {isCreatingAccount && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-700 text-center">
-                    Creating your account and setting up your profile...
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <>
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold">Complete Your Profile</h1>
+            <span className="text-sm text-muted-foreground">
+              Step {currentStep} of {totalSteps}
+            </span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Simplified onboarding steps - will be implemented later */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Profile</h2>
+          <p className="text-gray-600">Profile setup steps coming soon...</p>
         </div>
       </div>
-    </MainLayout>
+
+      {/* Legacy modal removed - Nicole handles all intent selection now */}
+    </>
   );
 };
 

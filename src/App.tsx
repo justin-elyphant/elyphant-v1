@@ -43,7 +43,6 @@ const ConnectionDetail = lazy(() => import("./pages/ConnectionDetail"));
 const Wishlists = lazy(() => import("./pages/Wishlists"));
 const SharedWishlist = lazy(() => import("./pages/SharedWishlist"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
-
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
@@ -62,10 +61,6 @@ const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
-const TestEmailSystem = lazy(() => import("./pages/TestEmailSystem"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
-const OAuthComplete = lazy(() => import("./pages/OAuthComplete"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -181,8 +176,6 @@ function AppContent() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/auth/oauth-complete" element={<OAuthComplete />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
@@ -199,7 +192,6 @@ function AppContent() {
           <Route path="/profile/complete" element={<ProfileComplete />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
-          <Route path="/streamlined-signup" element={<Navigate to="/auth" replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/settings" element={<Settings />} />
@@ -223,8 +215,6 @@ function AppContent() {
           {/* ZMA Testing Routes */}
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
           <Route path="/test-retry-function" element={<TestRetryFunction />} />
-          <Route path="/test-email-system" element={<TestEmailSystem />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
           
            <Route path="/trunkline-login" element={<TrunklineLogin />} />
            <Route path="/trunkline" element={<Trunkline />} />

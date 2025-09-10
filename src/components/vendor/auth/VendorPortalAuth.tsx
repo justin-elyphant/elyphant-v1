@@ -103,12 +103,17 @@ const VendorPortalAuth = () => {
 
     setIsLoading(true);
     try {
-      // Create auth user
+      // Create auth user with vendor source attribution
       const { data, error } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/vendor-portal`,
+          data: {
+            signup_source: 'vendor_portal',
+            user_type: 'vendor',
+            company_name: signupData.companyName
+          }
         }
       });
 
@@ -118,6 +123,28 @@ const VendorPortalAuth = () => {
       }
 
       if (data.user) {
+        // Set user identification
+        const { error: identificationError } = await supabase
+          .rpc('set_user_identification', {
+            target_user_id: data.user.id,
+            user_type_param: 'vendor',
+            signup_source_param: 'vendor_portal',
+            metadata_param: {
+              company_name: signupData.companyName,
+              signup_timestamp: new Date().toISOString(),
+              signup_ip: window.location.hostname
+            },
+            attribution_param: {
+              source: 'vendor_portal',
+              campaign: 'vendor_signup',
+              referrer: document.referrer || 'direct'
+            }
+          });
+
+        if (identificationError) {
+          console.error('Error setting user identification:', identificationError);
+        }
+
         // Create vendor account record
         const { error: vendorError } = await supabase
           .from('vendor_accounts')
@@ -151,6 +178,10 @@ const VendorPortalAuth = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/vendor-portal`,
+          queryParams: {
+            signup_source: 'vendor_portal',
+            user_type: 'vendor'
+          }
         }
       });
 

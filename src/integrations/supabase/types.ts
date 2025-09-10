@@ -3147,7 +3147,11 @@ export type Database = {
           profile_image: string | null
           profile_type: string | null
           shipping_address: Json | null
+          signup_metadata: Json | null
+          signup_source: Database["public"]["Enums"]["signup_source"] | null
+          source_attribution: Json | null
           updated_at: string | null
+          user_type: Database["public"]["Enums"]["user_type"] | null
           username: string
           wishlists: Json | null
         }
@@ -3179,7 +3183,11 @@ export type Database = {
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
+          signup_metadata?: Json | null
+          signup_source?: Database["public"]["Enums"]["signup_source"] | null
+          source_attribution?: Json | null
           updated_at?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
           username: string
           wishlists?: Json | null
         }
@@ -3211,7 +3219,11 @@ export type Database = {
           profile_image?: string | null
           profile_type?: string | null
           shipping_address?: Json | null
+          signup_metadata?: Json | null
+          signup_source?: Database["public"]["Enums"]["signup_source"] | null
+          source_attribution?: Json | null
           updated_at?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
           username?: string
           wishlists?: Json | null
         }
@@ -3910,6 +3922,39 @@ export type Database = {
           },
         ]
       }
+      user_type_audit_log: {
+        Row: {
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          new_user_type: string | null
+          old_user_type: string | null
+          user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_user_type?: string | null
+          old_user_type?: string | null
+          user_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_user_type?: string | null
+          old_user_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendor_accounts: {
         Row: {
           approval_status: string
@@ -4387,6 +4432,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_context: {
+        Args: { check_user_id: string }
+        Returns: Json
+      }
       get_user_privacy_settings: {
         Args: { target_user_id: string }
         Returns: {
@@ -4507,6 +4556,16 @@ export type Database = {
         Args: { "": number }
         Returns: number
       }
+      set_user_identification: {
+        Args: {
+          attribution_param?: Json
+          metadata_param?: Json
+          signup_source_param: Database["public"]["Enums"]["signup_source"]
+          target_user_id: string
+          user_type_param: Database["public"]["Enums"]["user_type"]
+        }
+        Returns: undefined
+      }
       show_limit: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -4546,7 +4605,14 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      signup_source:
+        | "header_cta"
+        | "vendor_portal"
+        | "trunkline"
+        | "social_auth"
+        | "direct"
+        | "invite"
+      user_type: "shopper" | "vendor" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4673,6 +4739,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      signup_source: [
+        "header_cta",
+        "vendor_portal",
+        "trunkline",
+        "social_auth",
+        "direct",
+        "invite",
+      ],
+      user_type: ["shopper", "vendor", "employee"],
+    },
   },
 } as const

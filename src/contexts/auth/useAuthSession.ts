@@ -48,6 +48,33 @@ export function useAuthSession(): UseAuthSessionReturn {
 
             if (type === 'recovery' || type === 'signup') {
               localStorage.setItem("emailVerified", "true");
+              
+              // Set user identification for social auth
+              if (type === 'signup') {
+                const urlParams = new URLSearchParams(window.location.search);
+                const signupSource = urlParams.get('signup_source') || 'social_auth';
+                const userType = urlParams.get('user_type') || 'shopper';
+                
+                try {
+                  await supabase.rpc('set_user_identification', {
+                    target_user_id: data.session.user.id,
+                    user_type_param: userType as any,
+                    signup_source_param: signupSource as any,
+                    metadata_param: {
+                      provider: 'oauth',
+                      signup_timestamp: new Date().toISOString(),
+                      oauth_provider: data.session.user.app_metadata?.provider || 'unknown'
+                    },
+                    attribution_param: {
+                      source: signupSource,
+                      campaign: 'oauth_signup',
+                      referrer: document.referrer || 'direct'
+                    }
+                  });
+                } catch (identificationError) {
+                  console.error('Error setting OAuth user identification:', identificationError);
+                }
+              }
               if (data.session.user.email) {
                 localStorage.setItem("verifiedEmail", data.session.user.email);
               }

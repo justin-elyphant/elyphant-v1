@@ -20,6 +20,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import MobileBottomNavigation from "./components/navigation/MobileBottomNavigation";
+import UserTypeDebugPanel from "./components/layout/UserTypeDebugPanel";
 
 // Lazy load non-critical pages
 const SearchPage = lazy(() => import("./pages/SearchPage"));
@@ -273,6 +274,7 @@ function AppContent() {
         </Routes>
       </Suspense>
       <MobileBottomNavigation />
+      <UserTypeDebugPanel />
       <Toaster />
       
     </div>

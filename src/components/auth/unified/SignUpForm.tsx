@@ -32,7 +32,9 @@ const SignUpForm = () => {
               data: {
                 name: values.name,
                 first_name: values.name.split(' ')[0] || '',
-                last_name: values.name.split(' ').slice(1).join(' ') || ''
+                last_name: values.name.split(' ').slice(1).join(' ') || '',
+                signup_source: 'header_cta',
+                user_type: 'shopper'
               },
               emailRedirectTo: redirectUrl
             }
@@ -52,7 +54,30 @@ const SignUpForm = () => {
           }
           
           if (data.user) {
-            console.log("✅ Account created successfully! Redirecting to profile setup...");
+            console.log("✅ Account created successfully! Setting user identification...");
+            
+            // Set user identification for shoppers from header CTA
+            try {
+              await supabase.rpc('set_user_identification', {
+                target_user_id: data.user.id,
+                user_type_param: 'shopper',
+                signup_source_param: 'header_cta',
+                metadata_param: {
+                  name: values.name,
+                  signup_timestamp: new Date().toISOString(),
+                  signup_flow: 'unified_auth'
+                },
+                attribution_param: {
+                  source: 'header_cta',
+                  campaign: 'main_signup',
+                  referrer: document.referrer || 'direct'
+                }
+              });
+            } catch (identificationError) {
+              console.error('Error setting user identification:', identificationError);
+              // Don't block signup for this
+            }
+            
             toast.success("Account created! Complete your profile to get started.");
             
             // Immediate redirect to profile setup

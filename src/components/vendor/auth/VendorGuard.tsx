@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { useUserContext } from '@/hooks/useUserContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface VendorGuardProps {
@@ -11,6 +12,7 @@ type AccessStatus = 'checking' | 'allowed' | 'denied' | 'unapproved-vendor' | 'n
 
 export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
+  const { userContext, isLoading: contextLoading, isVendor } = useUserContext();
   const navigate = useNavigate();
   const [accessStatus, setAccessStatus] = useState<AccessStatus>('checking');
 
@@ -19,6 +21,13 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
       if (!user) {
         console.log('VendorGuard: No user, redirecting to vendor portal login');
         navigate('/vendor-portal');
+        return;
+      }
+
+      // First check user type from context
+      if (userContext && !isVendor) {
+        console.log('VendorGuard: User is not a vendor based on user type');
+        setAccessStatus('not-vendor');
         return;
       }
 
@@ -66,13 +75,13 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
       }
     };
 
-    if (!isLoading) {
+    if (!isLoading && !contextLoading) {
       checkVendorAccess();
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, contextLoading, userContext, isVendor, navigate]);
 
   // Show loading while checking access
-  if (isLoading || accessStatus === 'checking') {
+  if (isLoading || contextLoading || accessStatus === 'checking') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
         <div className="text-center">

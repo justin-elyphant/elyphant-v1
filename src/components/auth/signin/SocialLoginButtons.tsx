@@ -25,6 +25,10 @@ export const SocialLoginButtons = () => {
         provider,
         options: {
           redirectTo: redirectUrl,
+          queryParams: {
+            signup_source: 'social_auth',
+            user_type: 'shopper'
+          }
         }
       });
       

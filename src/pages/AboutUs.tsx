@@ -1,12 +1,29 @@
 
 import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
+import SEOWrapper from "@/components/seo/SEOWrapper";
+import { organizationSchema, websiteSchema } from "@/components/seo/schemas";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info, Gift, GraduationCap, Heart } from "lucide-react";
 
 const AboutUs = () => {
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "mainEntity": organizationSchema,
+    "description": "Learn about Elyphant's mission to transform gifting through AI-powered automation while supporting wildlife conservation efforts.",
+    "url": "https://elyphant.ai/about"
+  };
+
   return (
-    <MainLayout>
+    <SEOWrapper
+      title="About Elyphant - AI-Powered Gifting Platform & Wildlife Conservation"
+      description="Discover Elyphant's story, mission to revolutionize thoughtful gifting through automation, and our commitment to elephant conservation and wildlife protection."
+      keywords="about elyphant, AI gifting platform, automated gifting, wildlife conservation, elephant protection, thoughtful gifts, company mission"
+      url="/about"
+      schema={[organizationSchema, websiteSchema, aboutSchema]}
+    >
+      <MainLayout>
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">About Elyphant</h1>
@@ -125,6 +142,7 @@ const AboutUs = () => {
         </div>
       </div>
     </MainLayout>
+    </SEOWrapper>
   );
 };
 

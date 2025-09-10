@@ -116,8 +116,67 @@ const AboutUs = () => {
                       className="w-full h-auto object-cover"
                     />
                   </div>
+        </div>
+
+        <div className="mb-16">
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="text-2xl font-semibold mb-4 flex items-center">
+                <Gift className="mr-2 text-purple-600" />
+                Reducing Retail Waste Through Smart Gifting
+              </h2>
+              
+              <div className="bg-red-50 border-l-4 border-red-400 p-6 mb-6">
+                <h3 className="text-lg font-semibold text-red-800 mb-2">The Return Crisis</h3>
+                <p className="text-red-700 mb-2">
+                  <strong>$890 billion</strong> - That's how much merchandise was returned in the US retail market in 2024, 
+                  representing nearly 17.6% of all retail sales.
+                </p>
+                <p className="text-red-700 text-sm">
+                  Source: National Retail Federation & CNBC 2024 Returns Report
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-xl font-semibold mb-3">The Problem</h3>
+                  <p className="text-gray-700 mb-4">
+                    Traditional gifting often results in unwanted items that end up returned or, worse, 
+                    discarded. The average return rate for gifts is significantly higher than regular purchases, 
+                    contributing to massive environmental waste and retailer losses.
+                  </p>
+                  <p className="text-gray-700 mb-4">
+                    Many returned items cannot be resold and end up in landfills, creating unnecessary 
+                    environmental impact from production, shipping, and disposal.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold mb-3">Our Solution: Smart Wishlists</h3>
+                  <p className="text-gray-700 mb-4">
+                    Elyphant's custom wishlist feature allows recipients to "get the gift they want" by 
+                    curating personalized lists of desired items. Gift-givers can choose from these 
+                    pre-approved options, dramatically reducing the likelihood of returns.
+                  </p>
+                  <p className="text-gray-700 mb-4">
+                    By matching gifts to genuine preferences, we help ensure every present is meaningful, 
+                    wanted, and keeps families and friends connected rather than creating waste.
+                  </p>
                 </div>
               </div>
+              
+              <div className="bg-green-50 border-l-4 border-green-400 p-6 mt-6">
+                <h3 className="text-lg font-semibold text-green-800 mb-2">Our Environmental Goal</h3>
+                <p className="text-green-700">
+                  Through thoughtful, preference-based gifting, we aim to reduce gift returns by 80% among our users, 
+                  contributing to a more sustainable future while strengthening personal connections. Every perfect match 
+                  means less waste and more joy.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
               
               <div className="bg-gray-100 p-6 rounded-lg mt-6">
                 <h3 className="text-xl font-semibold mb-3 flex items-center">

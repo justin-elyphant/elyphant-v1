@@ -173,6 +173,16 @@ export const useCheckoutState = () => {
     setActiveTab(value);
   };
 
+  // CRITICAL: Gift options state
+  const [giftOptions, setGiftOptions] = useState<GiftOptions>({
+    isGift: false,
+    recipientName: "",
+    giftMessage: "",
+    giftWrapping: false,
+    isSurpriseGift: false,
+    scheduledDeliveryDate: ""
+  });
+
   /*
    * 🔗 CRITICAL: Shipping info update handler
    * 
@@ -185,6 +195,18 @@ export const useCheckoutState = () => {
         ...prev.shippingInfo,
         ...data
       }
+    }));
+  };
+
+  /*
+   * 🔗 CRITICAL: Gift options update handler
+   * 
+   * This function updates gift options with proper state management
+   */
+  const handleUpdateGiftOptions = (data: Partial<GiftOptions>) => {
+    setGiftOptions(prev => ({
+      ...prev,
+      ...data
     }));
   };
 
@@ -245,10 +267,12 @@ export const useCheckoutState = () => {
     activeTab,
     isProcessing,
     checkoutData,
+    giftOptions,
     addressesLoaded,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
+    handleUpdateGiftOptions,
     handlePaymentMethodChange,
     canPlaceOrder,
     getShippingCost,

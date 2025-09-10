@@ -35,26 +35,16 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         console.log(`Attempt ${attempts} to save profile data`);
         
         try {
-        const upsertData = {
-          id: user.id,
-          ...apiData,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString()
-        };
-
-        // Include address verification data if provided
-        if (profileData.address_verified !== undefined) {
-          upsertData.address_verified = profileData.address_verified;
-          upsertData.address_verification_method = profileData.address_verification_method || 'profile_setup';
-          upsertData.address_verified_at = profileData.address_verified_at || new Date().toISOString();
-          upsertData.address_last_updated = new Date().toISOString();
-        }
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .upsert(upsertData, {
-            onConflict: 'id'
-          });
+          const { data, error } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              ...apiData,
+              onboarding_completed: true,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'id'
+            });
 
           if (error) {
             console.error(`Error saving profile (attempt ${attempts}):`, error);

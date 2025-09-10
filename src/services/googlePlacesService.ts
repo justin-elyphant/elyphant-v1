@@ -27,7 +27,6 @@ export interface GooglePlaceDetails {
 
 export interface StandardizedAddress {
   street: string;
-  line2?: string;  // Added for apartment/suite
   city: string;
   state: string;
   zipCode: string;

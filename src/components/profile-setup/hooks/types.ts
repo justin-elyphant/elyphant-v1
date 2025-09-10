@@ -7,16 +7,6 @@ export interface ProfileData extends Omit<SettingsFormValues, 'address' | 'date_
   address: ShippingAddress;
   date_of_birth: Date | null;
   next_steps_option?: string;
-  // Address verification fields
-  address_verified?: boolean;
-  address_verification_method?: string;
-  address_verified_at?: string;
-  // Additional fields for compatibility
-  birth_month?: number | null;
-  birth_day?: number | null;
-  birth_year?: number | null;
-  shipping_address?: any;
-  phone?: string;
 }
 
 export type ProfileDataKey = keyof ProfileData;

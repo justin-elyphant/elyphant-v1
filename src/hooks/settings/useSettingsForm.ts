@@ -29,7 +29,6 @@ export const useSettingsForm = () => {
       date_of_birth: undefined,
       address: {
         street: "",
-        line2: "",
         city: "",
         state: "",
         zipCode: "",
@@ -63,16 +62,8 @@ export const useSettingsForm = () => {
           bio: profile.bio || "",
           profile_image: profile.profile_image || null,
           date_of_birth: undefined,
-          address: profile.shipping_address ? {
-            street: profile.shipping_address.address_line1 || profile.shipping_address.street || "",
-            line2: profile.shipping_address.address_line2 || profile.shipping_address.line2 || "",
-            city: profile.shipping_address.city || "",
-            state: profile.shipping_address.state || "",
-            zipCode: profile.shipping_address.zip_code || profile.shipping_address.zipCode || "",
-            country: profile.shipping_address.country || ""
-          } : {
+          address: profile.shipping_address || {
             street: "",
-            line2: "",
             city: "",
             state: "",
             zipCode: "",
@@ -110,7 +101,6 @@ export const useSettingsForm = () => {
       // Convert form address to API format
       const shippingAddress: ShippingAddress = {
         address_line1: data.address.street || "",
-        address_line2: data.address.line2 || "",
         city: data.address.city || "",
         state: data.address.state || "",
         zip_code: data.address.zipCode || "",

@@ -1,29 +1,24 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
-import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
-import ProfileBubble from "@/components/ui/profile-bubble";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
-import { AddressVerificationModal } from "./AddressVerificationModal";
-import { useProfileSubmission } from "./hooks/useProfileSubmission";
-import { ProfileData } from "./hooks/types";
-import { standardizedToForm } from "@/utils/addressStandardization";
-import { StandardizedAddress } from "@/services/googlePlacesService";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import { toast } from "sonner";
+import ProfileBubble from "@/components/ui/profile-bubble";
+import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  username: z.string().optional(),
-  bio: z.string().optional(),
-  phone: z.string().optional(),
-  birthday: z.date().optional(),
+  profile_image: z.string().nullable().optional(),
+  date_of_birth: z.date({
+    required_error: "Birthday is required",
+  }),
   address: z.object({
     street: z.string().min(1, "Street address is required"),
     line2: z.string().optional(),
@@ -42,15 +37,14 @@ interface SimpleProfileFormProps {
 
 const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => {
   const { user } = useAuth();
-  
+  const { updateProfile } = useProfile();
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user?.user_metadata?.name || "",
-      email: user?.email || "",
-      username: "",
-      bio: "",
-      phone: "",
+      profile_image: null,
       address: {
         street: "",
         line2: "",
@@ -61,23 +55,6 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       }
     }
   });
-
-  const { isLoading, handleComplete } = useProfileSubmission({ 
-    onComplete, 
-    onSkip: undefined 
-  });
-
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [addressToVerify, setAddressToVerify] = useState<StandardizedAddress | null>(null);
-  const [verificationData, setVerificationData] = useState<{
-    verified: boolean;
-    method: string;
-    verifiedAt: string;
-  } | null>(null);
-
-  // Debug logs
-  console.log("🔍 Modal state:", { showVerificationModal, verificationData });
 
   const handleImageSelect = async (file: File) => {
     if (!user) return;
@@ -92,6 +69,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
 
       if (error) {
         console.error('Error uploading image:', error);
+        toast.error('Failed to upload image');
         return;
       }
 
@@ -99,9 +77,12 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         .from('avatars')
         .getPublicUrl(fileName);
 
-      setProfileImage(publicUrl);
+      form.setValue('profile_image', publicUrl);
+      setProfileImageUrl(publicUrl);
+      toast.success('Profile photo uploaded!');
     } catch (error) {
       console.error('Error uploading profile image:', error);
+      toast.error('Failed to upload profile photo');
     }
   };
 
@@ -120,278 +101,181 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   };
 
   const onSubmit = async (data: FormData) => {
-    console.log("🚀 Form submitted with data:", data);
-    console.log("🔍 Current verification data:", verificationData);
-    
-    // Check if address needs verification
-    const addressToCheck: StandardizedAddress = {
-      street: data.address.street,
-      line2: data.address.line2,
-      city: data.address.city,
-      state: data.address.state,
-      zipCode: data.address.zipCode,
-      country: data.address.country
-    };
-
-    console.log("📍 Address to check:", addressToCheck);
-
-    // If address hasn't been verified yet, show verification modal
-    if (!verificationData) {
-      console.log("✅ Showing verification modal");
-      setAddressToVerify(addressToCheck);
-      setShowVerificationModal(true);
+    if (!user) {
+      toast.error("Please wait for authentication and try again.");
       return;
     }
 
-    const profileData: ProfileData = {
-      name: data.name,
-      email: data.email,
-      bio: data.bio || "",
-      profile_image: profileImage,
-      interests: [],
-      importantDates: [],
-      data_sharing_settings: {
-        dob: "private" as const,
-        shipping_address: "private" as const,
-        gift_preferences: "private" as const,
-        email: "private" as const,
-      },
-      address: {
-        street: data.address.street,
-        line2: data.address.line2,
-        city: data.address.city,
-        state: data.address.state,
-        zipCode: data.address.zipCode,
-        country: data.address.country,
-      },
-      date_of_birth: data.birthday || null,
-      birth_month: data.birthday?.getMonth() !== undefined ? (data.birthday.getMonth() + 1) : null,
-      birth_day: data.birthday?.getDate() || null,
-      birth_year: data.birthday?.getFullYear() || null,
-      username: data.username,
-      phone: data.phone
-    };
+    setIsSubmitting(true);
+    try {
+      // Format date of birth for storage
+      const date = new Date(data.date_of_birth);
+      const formattedBirthday = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      const birthYear = date.getFullYear();
 
-    // Get current birth year from form data
-    const birthYear = data.birthday?.getFullYear() || null;
+      // Use existing name from auth metadata
+      const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || '';
+      const lastName = user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || '';
+      const fullName = user.user_metadata?.name || `${firstName} ${lastName}`.trim();
 
-    // Transform the form data to match the API schema with verification data
-    const profileDataWithAddress: ProfileData = {
-      ...profileData,
-      shipping_address: {
-        address_line1: data.address.street,
-        address_line2: data.address.line2 || "",
-        city: data.address.city,
-        state: data.address.state,
-        zip_code: data.address.zipCode,
-        country: data.address.country,
-      },
-      address: {
-        street: data.address.street,
-        line2: data.address.line2,
-        city: data.address.city,
-        state: data.address.state,
-        zipCode: data.address.zipCode,
-        country: data.address.country,
-      },
-      // Include verification data
-      address_verified: verificationData.verified,
-      address_verification_method: verificationData.method,
-      address_verified_at: verificationData.verifiedAt,
-    };
+      const profileData = {
+        first_name: firstName,
+        last_name: lastName,
+        name: fullName,
+        email: user.email,
+        profile_image: data.profile_image,
+        dob: formattedBirthday,
+        birth_year: birthYear,
+        shipping_address: {
+          address_line1: data.address.street,
+          address_line2: data.address.line2 || "",
+          city: data.address.city,
+          state: data.address.state,
+          zip_code: data.address.zipCode,
+          country: data.address.country,
+          street: data.address.street,
+          zipCode: data.address.zipCode
+        },
+        interests: [],
+        important_dates: [],
+        data_sharing_settings: {
+          dob: "friends" as const,
+          shipping_address: "private" as const,
+          gift_preferences: "friends" as const,
+          email: "private" as const
+        }
+      };
 
-    await handleComplete(profileDataWithAddress);
+      console.log("🚀 Saving simple profile data...");
+      await updateProfile(profileData);
+      
+      toast.success("Profile completed successfully!");
+      onComplete();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const userName = user?.user_metadata?.name || '';
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Profile Image */}
-              <div className="flex flex-col items-center space-y-4">
-                <ProfileBubble
-                  imageUrl={profileImage}
-                  userName={user?.user_metadata?.name || ''}
-                  onImageSelect={handleImageSelect}
-                  size="lg"
-                />
-                <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
-              </div>
+      {/* Profile Photo Section */}
+      <div className="flex flex-col items-center space-y-4">
+        <ProfileBubble
+          imageUrl={profileImageUrl}
+          userName={userName}
+          onImageSelect={handleImageSelect}
+          size="lg"
+        />
+        <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
+      </div>
 
-              {/* Name and Email */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Birthday */}
+          <FormField
+            control={form.control}
+            name="date_of_birth"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>When's your birthday?</FormLabel>
+                <FormControl>
+                  <DatePicker
+                    date={field.value}
+                    setDate={field.onChange}
+                    disabled={(date) => 
+                      date > new Date() || 
+                      date < new Date(new Date().getFullYear() - 120, 0, 1)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              {/* Birthday */}
+          {/* Address */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Your Shipping Address</Label>
+            <AddressAutocomplete
+              value={form.watch('address.street')}
+              onChange={(value) => form.setValue('address.street', value)}
+              onAddressSelect={handleAddressSelect}
+            />
+
+            <FormField
+              control={form.control}
+              name="address.line2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apartment, suite, etc. (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Apt, suite, unit, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="birthday"
+                name="address.city"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>When's your birthday? (optional)</FormLabel>
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
                     <FormControl>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                        disabled={(date) => 
-                          date > new Date() || 
-                          date < new Date(new Date().getFullYear() - 120, 0, 1)
-                        }
-                      />
+                      <Input placeholder="San Francisco" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* Address Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Shipping Address</h3>
-                
-                <AddressAutocomplete
-                  value={form.watch('address.street')}
-                  onChange={(value) => form.setValue('address.street', value)}
-                  onAddressSelect={handleAddressSelect}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address.line2"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Apartment, suite, etc. (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Apt, suite, unit, etc." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="address.city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl>
-                          <Input placeholder="San Francisco" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="address.state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input placeholder="California" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="address.zipCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ZIP Code</FormLabel>
-                        <FormControl>
-                          <Input placeholder="94103" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="address.country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input placeholder="US" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {!verificationData && (
-                  <div className="text-sm text-muted-foreground text-center">
-                    Address verification required before completing profile
-                  </div>
+              <FormField
+                control={form.control}
+                name="address.state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                      <Input placeholder="California" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Setting up your profile..." : "Complete Profile & Get Started"}
-                </Button>
-              </div>
-            </form>
-          </Form>
+              />
+            </div>
 
-          <AddressVerificationModal
-            open={showVerificationModal}
-            onOpenChange={(open) => {
-              console.log("🔄 Modal open change:", open);
-              setShowVerificationModal(open);
-            }}
-            address={addressToVerify || { street: '', city: '', state: '', zipCode: '', country: '' }}
-            onVerified={(data) => {
-              console.log("✅ Address verified:", data);
-              setVerificationData(data);
-              setShowVerificationModal(false);
-              // Automatically submit form after verification
-              form.handleSubmit(onSubmit)();
-            }}
-          />
-        </CardContent>
-      </Card>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="address.zipCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ZIP Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="94103" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving Profile..." : "Complete Profile & Get Started"}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 };

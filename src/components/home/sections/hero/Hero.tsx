@@ -93,7 +93,7 @@ const Hero = () => {
               Connecting Through Gifting
             </h1>
             <p className="text-body-lg text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md no-select">
-              Create wishlists, automate gift-giving, and never miss 
+              Create wishlists to always get the gifts you want, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">

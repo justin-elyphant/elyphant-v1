@@ -199,7 +199,6 @@ function AppContent() {
           <Route path="/profile/complete" element={<ProfileComplete />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
-          <Route path="/streamlined-signup" element={<StreamlinedSignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/settings" element={<Settings />} />

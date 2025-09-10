@@ -30,6 +30,22 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id)
 
     if (session.payment_status === 'paid') {
+      console.log(`[VERIFY-CHECKOUT] Payment successful for session: ${session_id}`)
+      
+      // Enhanced verification audit logging
+      const auditEntry = {
+        stripe_session_id: session_id,
+        stripe_payment_intent_id: session.payment_intent,
+        verification_method: 'session_id_primary',
+        verification_status: 'attempting',
+        verification_attempts: 1,
+        metadata: {
+          session_payment_status: session.payment_status,
+          session_amount: session.amount_total,
+          timestamp: new Date().toISOString()
+        }
+      }
+
       // Update order status in database - try matching by session_id first, then by payment_intent_id
       let { data: order, error: updateError } = await supabase
         .from('orders')
@@ -65,7 +81,27 @@ serve(async (req) => {
 
       if (updateError && !updateError.message.includes('No rows')) {
         console.error('Error updating order:', updateError)
+        
+        // Log verification failure
+        await supabase
+          .from('payment_verification_audit')
+          .insert({
+            ...auditEntry,
+            verification_status: 'failed',
+            error_details: { error: updateError.message }
+          })
+        
         throw new Error('Failed to update order status')
+      }
+
+      // Log successful verification
+      if (order) {
+        auditEntry.order_id = order.id
+        auditEntry.verification_status = 'success'
+        
+        await supabase
+          .from('payment_verification_audit')
+          .insert(auditEntry)
       }
 
       // Trigger ZMA order processing after successful payment

@@ -2567,6 +2567,87 @@ export type Database = {
           },
         ]
       }
+      order_recovery_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          recovery_attempts: number | null
+          recovery_status: string
+          recovery_type: string
+          resolved_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          recovery_attempts?: number | null
+          recovery_status?: string
+          recovery_type: string
+          resolved_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          recovery_attempts?: number | null
+          recovery_status?: string
+          recovery_type?: string
+          resolved_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_status_monitoring: {
+        Row: {
+          alert_sent: boolean | null
+          alert_sent_at: string | null
+          created_at: string
+          current_status: string
+          escalation_level: number | null
+          expected_status: string
+          id: string
+          metadata: Json | null
+          order_id: string
+          status_changed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          created_at?: string
+          current_status: string
+          escalation_level?: number | null
+          expected_status: string
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          status_changed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          created_at?: string
+          current_status?: string
+          escalation_level?: number | null
+          expected_status?: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          status_changed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           billing_info: Json | null
@@ -2749,6 +2830,48 @@ export type Database = {
           stripe_payment_method_id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_verification_audit: {
+        Row: {
+          created_at: string
+          error_details: Json | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          resolved_at: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          verification_attempts: number | null
+          verification_method: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          error_details?: Json | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          resolved_at?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          verification_attempts?: number | null
+          verification_method: string
+          verification_status: string
+        }
+        Update: {
+          created_at?: string
+          error_details?: Json | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          resolved_at?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          verification_attempts?: number | null
+          verification_method?: string
+          verification_status?: string
         }
         Relationships: []
       }

@@ -75,8 +75,9 @@ const TrunklineLogin = () => {
         }
 
         if (data.user) {
-          toast.success('Account created! Please check your email to confirm your account.');
+          toast.success('Account created successfully! You can now sign in.');
           setIsSignUp(false); // Switch back to login mode
+          setPassword(''); // Clear password for security
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({

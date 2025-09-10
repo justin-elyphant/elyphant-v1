@@ -35,14 +35,14 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
   if (!hasResults) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-xl border rounded-lg mt-1 max-h-96 overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto">
       {/* Friends Section */}
       {friends.length > 0 && (
         <div className="border-b border-gray-100">
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">People</span>
-            <span className="text-xs text-gray-500">({friends.length})</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b border-border">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">People</span>
+            <span className="text-xs text-muted-foreground">({friends.length})</span>
           </div>
           <div className="py-1">
             {friends.map((friend) => (
@@ -60,10 +60,10 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
       {/* Products Section */}
       {products.length > 0 && (
         <div className="border-b border-gray-100">
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <Package className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Products</span>
-            <span className="text-xs text-gray-500">({products.length})</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b border-border">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Products</span>
+            <span className="text-xs text-muted-foreground">({products.length})</span>
           </div>
           <div className="py-1">
             {products.slice(0, 5).map((product) => (
@@ -98,10 +98,10 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
       {/* Brands Section */}
       {brands.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <Building2 className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Brands</span>
-            <span className="text-xs text-gray-500">({brands.length})</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b border-border">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Brands</span>
+            <span className="text-xs text-muted-foreground">({brands.length})</span>
           </div>
           <div className="py-1">
             {brands.map((brand, idx) => (

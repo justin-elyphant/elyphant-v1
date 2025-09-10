@@ -523,45 +523,25 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
       {/* Search Suggestions and Recent Searches - Only show in search mode */}
       {!isNicoleMode && showSuggestions && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-[400px] overflow-y-auto">
-          {/* Show recent searches when no query or at the top */}
-          {(!query.trim() || query.trim().length < 2) && recentSearches.length > 0 && (
-            <RecentSearches
-              searches={recentSearches}
-              onSearchSelect={handleRecentSearchSelect}
-              mobile={mobile}
-            />
-          )}
-          
-          {/* Show unified search results when there's a query */}
-          {query.trim().length >= 1 && (
-            <>
-              {console.log('🔍 [AIEnhancedSearchBar] Rendering UnifiedSearchSuggestions with:', {
-                friends: unifiedResults.friends?.length || 0,
-                products: unifiedResults.products?.length || 0, 
-                brands: unifiedResults.brands?.length || 0,
-                showSuggestions,
-                isNicoleMode,
-                sampleFriend: unifiedResults.friends?.[0] ? {
-                  id: unifiedResults.friends[0].id,
-                  name: unifiedResults.friends[0].name,
-                  username: unifiedResults.friends[0].username
-                } : null
-              })}
-              <UnifiedSearchSuggestions
-                friends={unifiedResults.friends || []}
-                products={unifiedResults.products || []}
-                brands={unifiedResults.brands || []}
-                isVisible={showSuggestions}
-                onFriendSelect={handleFriendSelect}
-                onProductSelect={handleProductSelect}
-                onBrandSelect={handleBrandSelect}
-                onSendFriendRequest={handleSendFriendRequest}
-                mobile={mobile}
-              />
-            </>
-          )}
-        </div>
+        (!query.trim() || query.trim().length < 2) && recentSearches.length > 0 ? (
+          <RecentSearches
+            searches={recentSearches}
+            onSearchSelect={handleRecentSearchSelect}
+            mobile={mobile}
+          />
+        ) : query.trim().length >= 1 ? (
+          <UnifiedSearchSuggestions
+            friends={unifiedResults.friends || []}
+            products={unifiedResults.products || []}
+            brands={unifiedResults.brands || []}
+            isVisible={showSuggestions}
+            onFriendSelect={handleFriendSelect}
+            onProductSelect={handleProductSelect}
+            onBrandSelect={handleBrandSelect}
+            onSendFriendRequest={handleSendFriendRequest}
+            mobile={mobile}
+          />
+        ) : null
       )}
 
       {/* Nicole Interface - Only render if this instance owns the global state */}

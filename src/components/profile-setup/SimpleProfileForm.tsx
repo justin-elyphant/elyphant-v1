@@ -12,7 +12,9 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import ProfileBubble from "@/components/ui/profile-bubble";
 import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
+import InlineAddressVerification from "./InlineAddressVerification";
 import { supabase } from "@/integrations/supabase/client";
+import { AddressValidationResult } from "@/services/location/UnifiedLocationService";
 
 const formSchema = z.object({
   profile_image: z.string().nullable().optional(),
@@ -40,6 +42,8 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   const { updateProfile } = useProfile();
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddressVerified, setIsAddressVerified] = useState(false);
+  const [addressValidationResult, setAddressValidationResult] = useState<AddressValidationResult | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -100,6 +104,11 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
     form.setValue('address.country', address.country);
   };
 
+  const handleVerificationChange = (verified: boolean, result: AddressValidationResult | null) => {
+    setIsAddressVerified(verified);
+    setAddressValidationResult(result);
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!user) {
       toast.error("Please wait for authentication and try again.");
@@ -136,6 +145,9 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
           street: data.address.street,
           zipCode: data.address.zipCode
         },
+        address_verified: isAddressVerified,
+        address_verification_method: addressValidationResult?.confidence === 'high' ? 'automatic' : 'user_confirmed',
+        address_last_updated: new Date().toISOString(),
         interests: [],
         important_dates: [],
         data_sharing_settings: {
@@ -265,12 +277,18 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
                 )}
               />
             </div>
+
+            {/* Inline Address Verification */}
+            <InlineAddressVerification
+              address={form.watch('address')}
+              onVerificationChange={handleVerificationChange}
+            />
           </div>
 
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isAddressVerified}
           >
             {isSubmitting ? "Saving Profile..." : "Complete Profile & Get Started"}
           </Button>

@@ -23,9 +23,8 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           <div>
             <h3 className="font-semibold mb-4">For Vendors</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/vendor-partner" className="hover:text-foreground">Vendor Portal</Link></li>
-              <li><Link to="/vendor-signup" className="hover:text-foreground">Vendor Sign Up</Link></li>
-              <li><Link to="/vendor-login" className="hover:text-foreground">Vendor Login</Link></li>
+              <li><Link to="/vendor-partner" className="hover:text-foreground">Become a Vendor</Link></li>
+              <li><Link to="/vendor-portal" className="hover:text-foreground">Vendor Portal</Link></li>
             </ul>
           </div>
           <div>

@@ -22,8 +22,8 @@ const VendorLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Bypass auth for testing
-    navigate("/vendor-management");
+    // Redirect to new vendor portal
+    navigate("/vendor-portal");
   };
 
   const handleGoogleSignIn = async () => {
@@ -31,7 +31,7 @@ const VendorLogin = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/vendor-management`,
+          redirectTo: `${window.location.origin}/vendor-portal`,
         }
       });
 

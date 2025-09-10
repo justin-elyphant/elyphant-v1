@@ -48,6 +48,8 @@ const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Careers = lazy(() => import("./pages/Careers"));
 const Press = lazy(() => import("./pages/Press"));
 const VendorPartner = lazy(() => import("./pages/VendorPartner"));
+const VendorPortal = lazy(() => import("./pages/VendorPortal"));
+const VendorManagement = lazy(() => import("./pages/VendorManagement"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
@@ -233,6 +235,8 @@ function AppContent() {
            <Route path="/careers" element={<Careers />} />
            <Route path="/press" element={<Press />} />
            <Route path="/vendor-partner" element={<VendorPartner />} />
+           <Route path="/vendor-portal" element={<VendorPortal />} />
+           <Route path="/vendor-management" element={<VendorManagement />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/sms-consent" element={<SMSConsent />} />

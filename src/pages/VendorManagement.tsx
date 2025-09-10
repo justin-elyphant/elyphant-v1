@@ -12,6 +12,7 @@ import VendorAnalyticsTab from "@/components/vendor/VendorAnalyticsTab";
 import VendorSupportTab from "@/components/vendor/VendorSupportTab";
 import IntegrationAddSheet from "@/components/vendor/IntegrationAddSheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { VendorGuard } from "@/components/vendor/auth/VendorGuard";
 
 const VendorManagement = () => {
   const navigate = useNavigate();
@@ -25,8 +26,9 @@ const VendorManagement = () => {
   };
   
   return (
-    <ProductProvider>
-      <div className="container mx-auto py-8 max-w-7xl">
+    <VendorGuard>
+      <ProductProvider>
+        <div className="container mx-auto py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <Button 
@@ -110,8 +112,9 @@ const VendorManagement = () => {
             <VendorAnalyticsTab />
           </TabsContent>
         </Tabs>
-      </div>
-    </ProductProvider>
+        </div>
+      </ProductProvider>
+    </VendorGuard>
   );
 };
 

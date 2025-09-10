@@ -3910,6 +3910,39 @@ export type Database = {
           },
         ]
       }
+      vendor_accounts: {
+        Row: {
+          approval_status: string
+          approved_by: string | null
+          company_name: string
+          contact_email: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approval_status?: string
+          approved_by?: string | null
+          company_name: string
+          contact_email: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approval_status?: string
+          approved_by?: string | null
+          company_name?: string
+          contact_email?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendor_locations: {
         Row: {
           address: Json
@@ -4237,6 +4270,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_trunkline: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      can_access_vendor_portal: {
         Args: { user_uuid: string }
         Returns: boolean
       }

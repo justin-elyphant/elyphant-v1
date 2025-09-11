@@ -23,11 +23,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const initializeCamera = async () => {
     try {
       setIsLoading(true);
       setHasPermission(null);
+      setIsVideoReady(false);
 
       // Stop any existing stream
       if (streamRef.current) {
@@ -47,8 +49,16 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       streamRef.current = stream;
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        const video = videoRef.current;
+        video.srcObject = stream;
+        const onReady = () => {
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            setIsVideoReady(true);
+          }
+        };
+        video.addEventListener('loadedmetadata', onReady);
+        video.addEventListener('canplay', onReady);
+        try { await video.play(); } catch (_) {}
       }
       
       setHasPermission(true);
@@ -69,12 +79,18 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setIsVideoReady(false);
   };
 
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
+    if (!isVideoReady || video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      toast.error('Camera is not ready yet. Please wait a moment and try again.');
+      return;
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
@@ -87,15 +103,23 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     // Draw the video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert canvas to blob
-    canvas.toBlob((blob) => {
+    // Convert canvas to blob with fallback to data URL
+    canvas.toBlob(async (blob) => {
       if (blob) {
         const imageUrl = URL.createObjectURL(blob);
         setCapturedImage(imageUrl);
+      } else {
+        // Fallback for environments where toBlob may return null
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          setCapturedImage(dataUrl);
+        } catch (e) {
+          console.error('Failed to capture image:', e);
+          toast.error('Failed to capture image. Please try again.');
+        }
       }
-    }, 'image/jpeg', 0.8);
+    }, 'image/jpeg', 0.9);
   };
-
   const confirmCapture = () => {
     if (!canvasRef.current || !capturedImage) return;
 
@@ -122,11 +146,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     stopCamera();
     setCapturedImage(null);
     setHasPermission(null);
+    setIsVideoReady(false);
     onClose();
   };
 
   useEffect(() => {
     if (isOpen && !capturedImage) {
+      setIsVideoReady(false);
       initializeCamera();
     }
     
@@ -135,7 +161,28 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         stopCamera();
       }
     };
-  }, [isOpen, facingMode]);
+  }, [isOpen, facingMode, capturedImage]);
+
+  // Ensure we only allow capture once video has valid dimensions
+  useEffect(() => {
+    if (!isOpen || capturedImage) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onReady = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        setIsVideoReady(true);
+      }
+    };
+
+    video.addEventListener('loadedmetadata', onReady);
+    video.addEventListener('canplay', onReady);
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onReady);
+      video.removeEventListener('canplay', onReady);
+    };
+  }, [isOpen, capturedImage, facingMode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -149,10 +196,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-y-auto">
+      <DialogContent aria-describedby="camera-desc" className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-center">Take Photo</DialogTitle>
         </DialogHeader>
+        <p id="camera-desc" className="sr-only">Use your camera to take a profile photo. The capture button is disabled until the camera is ready.</p>
         
         <div className="relative aspect-square bg-black mx-4 rounded-lg overflow-hidden">
           {!capturedImage ? (
@@ -165,7 +213,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               />
               <canvas ref={canvasRef} className="hidden" />
               
-              {isLoading && (
+              {(isLoading || !isVideoReady) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="text-white">Loading camera...</div>
                 </div>
@@ -208,7 +256,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               <Button
                 size="lg"
                 onClick={capturePhoto}
-                disabled={isLoading || hasPermission === false}
+                disabled={isLoading || hasPermission === false || !isVideoReady}
                 className="rounded-full px-8 bg-primary hover:bg-primary/90"
               >
                 <Camera className="h-5 w-5 mr-2" />

@@ -190,7 +190,14 @@ const searchCategoryBatch = async (
             ...product,
             ...bestSellerData,
             categorySource: category,
-            price: normalizedPrice
+            price: normalizedPrice,
+            // Preserve all image-related fields
+            image: product.image,
+            main_image: product.main_image, 
+            images: product.images,
+            additional_images: product.additional_images,
+            thumbnail: product.thumbnail,
+            image_url: product.image_url
           };
         });
         
@@ -613,7 +620,14 @@ serve(async (req) => {
 
           return {
             ...product,
-            price: normalizedPrice
+            price: normalizedPrice,
+            // Preserve all image-related fields
+            image: product.image,
+            main_image: product.main_image,
+            images: product.images,
+            additional_images: product.additional_images,
+            thumbnail: product.thumbnail,
+            image_url: product.image_url
           };
         });
       }

@@ -92,7 +92,22 @@ const handler = async (req: Request): Promise<Response> => {
         zincData = attempt2.data; zincError = attempt2.error;
       }
 
-      if (zincError) throw zincError;
+      if (zincError) {
+        console.error('❌ Zinc API Error:', zincError);
+        throw zincError;
+      }
+
+      console.log('🔍 Raw Zinc API Response Debug:', JSON.stringify({
+        hasResults: !!zincData?.results,
+        resultsCount: zincData?.results?.length || 0,
+        firstProductKeys: zincData?.results?.[0] ? Object.keys(zincData.results[0]) : [],
+        firstProductImages: zincData?.results?.[0] ? {
+          image: zincData.results[0].image,
+          main_image: zincData.results[0].main_image,
+          images: zincData.results[0].images,
+          thumbnail: zincData.results[0].thumbnail
+        } : null
+      }));
 
       if (zincData?.results && zincData.results.length > 0) {
         // Transform Zinc API results to ProductRecommendation format
@@ -129,6 +144,13 @@ const handler = async (req: Request): Promise<Response> => {
             if (normalizedImage.startsWith('//')) normalizedImage = 'https:' + normalizedImage;
             normalizedImage = normalizedImage.replace(/^http:/, 'https:');
           }
+
+          console.log(`🖼️ Image Debug for "${product.title}":`, {
+            hasImage: !!normalizedImage,
+            rawImage,
+            normalizedImage,
+            allCandidates: candidateImages
+          });
 
           return ({
             productId: product.product_id || `zinc-${Date.now()}-${index}`,

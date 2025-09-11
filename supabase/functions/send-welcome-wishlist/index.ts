@@ -281,12 +281,31 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📧 Email recommendations prepared:', emailRecommendations.length);
     
+    // Inline Unsplash images to avoid remote blocking in some email clients
+    const emailRecommendationsFinal = await Promise.all(
+      emailRecommendations.map(async (p: any) => {
+        try {
+          const host = p.imageUrl ? new URL(p.imageUrl).host : '';
+          if (host === 'images.unsplash.com') {
+            const res = await fetch(p.imageUrl);
+            if (res.ok) {
+              const buf = new Uint8Array(await res.arrayBuffer());
+              const base64 = btoa(String.fromCharCode(...buf));
+              const ct = res.headers.get('content-type') || 'image/jpeg';
+              return { ...p, imageUrl: `data:${ct};base64,${base64}` };
+            }
+          }
+        } catch {}
+        return p;
+      })
+    );
+    
     // Prepare email data
     const emailData = {
       userFirstName: request.userFirstName,
       userEmail: request.userEmail,
       inviterName: request.inviterName,
-      recommendations: emailRecommendations,
+      recommendations: emailRecommendationsFinal,
       marketplaceUrl: `${appUrl}/marketplace?source=welcome_email`,
       profileUrl: `${appUrl}/profile?source=welcome_email`
     };
@@ -326,7 +345,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         success: true,
         message: 'Welcome wishlist email sent successfully',
-        recommendationsCount: emailRecommendations.length,
+        recommendationsCount: emailRecommendationsFinal.length,
         confidenceScore: recommendationsData?.confidence_score || 0
       }),
       {

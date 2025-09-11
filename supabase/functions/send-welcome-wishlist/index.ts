@@ -142,11 +142,11 @@ const handler = async (req: Request): Promise<Response> => {
         imageUrl: rec.imageUrl,
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
-        addToWishlistUrl: `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovableproject.com') || 'https://elyphant.lovableproject.com'}/marketplace?add_to_wishlist=${rec.productId}&source=welcome_email`
+        addToWishlistUrl: `${Deno.env.get('SUPABASE_URL')?.replace('dmkxtkvlispxeqfzlczr.supabase.co', 'dmkxtkvlispxeqfzlczr.lovableproject.com') || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com'}/marketplace?add_to_wishlist=${rec.productId}&source=welcome_email`
       }));
 
     // Prepare email data
-    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovableproject.com') || 'https://elyphant.lovableproject.com';
+    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('dmkxtkvlispxeqfzlczr.supabase.co', 'dmkxtkvlispxeqfzlczr.lovableproject.com') || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
     
     const emailData = {
       userFirstName: request.userFirstName,

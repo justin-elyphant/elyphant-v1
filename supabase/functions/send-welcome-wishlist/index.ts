@@ -154,6 +154,12 @@ const handler = async (req: Request): Promise<Response> => {
       : 'https://elyphant.ai';
     
     // Transform recommendations into email format
+    console.log('🔍 Debug - recommendations data:', JSON.stringify({
+      recommendationsExists: !!recommendationsData?.recommendations,
+      recommendationsCount: recommendationsData?.recommendations?.length || 0,
+      firstRecommendation: recommendationsData?.recommendations?.[0] || null
+    }));
+
     const emailRecommendations = (recommendationsData?.recommendations || [])
       .slice(0, 6) // Show top 6 recommendations
       .map((rec: ProductRecommendation) => ({
@@ -168,6 +174,8 @@ const handler = async (req: Request): Promise<Response> => {
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
         addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email&retailer=amazon`
       }));
+
+    console.log('📧 Email recommendations prepared:', emailRecommendations.length);
     
     // Prepare email data
     const emailData = {

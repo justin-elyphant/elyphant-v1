@@ -103,22 +103,22 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     // Draw the video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert canvas to blob with fallback to data URL
-    canvas.toBlob(async (blob) => {
-      if (blob) {
-        const imageUrl = URL.createObjectURL(blob);
-        setCapturedImage(imageUrl);
-      } else {
-        // Fallback for environments where toBlob may return null
-        try {
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          setCapturedImage(dataUrl);
-        } catch (e) {
-          console.error('Failed to capture image:', e);
+    // Prefer data URL for preview to avoid blob URL issues in iframes/browsers
+    try {
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setCapturedImage(dataUrl);
+    } catch (e) {
+      console.error('Failed to capture image (toDataURL):', e);
+      // Fallback to Blob + Object URL
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const imageUrl = URL.createObjectURL(blob);
+          setCapturedImage(imageUrl);
+        } else {
           toast.error('Failed to capture image. Please try again.');
         }
-      }
-    }, 'image/jpeg', 0.9);
+      }, 'image/jpeg', 0.9);
+    }
   };
   const confirmCapture = () => {
     if (!canvasRef.current || !capturedImage) return;
@@ -132,10 +132,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   };
 
   const retakePhoto = () => {
-    setCapturedImage(null);
-    if (capturedImage) {
+    if (capturedImage && capturedImage.startsWith('blob:')) {
       URL.revokeObjectURL(capturedImage);
     }
+    setCapturedImage(null);
   };
 
   const switchCamera = () => {
@@ -188,7 +188,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   useEffect(() => {
     return () => {
       stopCamera();
-      if (capturedImage) {
+      if (capturedImage && capturedImage.startsWith('blob:')) {
         URL.revokeObjectURL(capturedImage);
       }
     };
@@ -236,6 +236,17 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               src={capturedImage}
               alt="Captured"
               className="w-full h-full object-cover"
+              onError={() => {
+                try {
+                  if (canvasRef.current) {
+                    const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.9);
+                    setCapturedImage(dataUrl);
+                  }
+                } catch (e) {
+                  console.error('Preview image failed to load', e);
+                  toast.error('Preview failed. Please retake the photo.');
+                }
+              }}
             />
           )}
         </div>

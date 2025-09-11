@@ -31,7 +31,7 @@ const ZincOrdersTab = () => {
           key={order.id} 
           order={order} 
           onProcessOrder={handleProcessOrder}
-          onOrderUpdated={() => window.location.reload()}
+          onOrderUpdated={() => window.location.href = window.location.pathname}
         />
       ))}
       

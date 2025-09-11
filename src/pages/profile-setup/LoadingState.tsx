@@ -28,7 +28,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
       if (newSignUp && userIntent === "giftee") {
         // Continue to profile setup
         console.log("[LoadingState] Fallback: Continuing to profile setup");
-        window.location.reload(); // Force a clean reload
+        navigate("/profile-setup", { replace: true });
       } else if (newSignUp && userIntent === "giftor") {
         // Go to marketplace
         console.log("[LoadingState] Fallback: Redirecting to marketplace");

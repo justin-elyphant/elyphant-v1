@@ -39,8 +39,8 @@ export const DebugPanel = () => {
     const toggleFn = (window as any).toggleDebugMode;
     if (toggleFn) {
       toggleFn(true, localOptions);
-      // Force reload to apply changes
-      window.location.reload();
+      // Navigate to apply changes without full reload
+      window.location.href = window.location.pathname;
     }
   };
   
@@ -48,8 +48,8 @@ export const DebugPanel = () => {
     const toggleFn = (window as any).toggleDebugMode;
     if (toggleFn) {
       toggleFn(false);
-      // Force reload to apply changes
-      window.location.reload();
+      // Navigate to apply changes without full reload
+      window.location.href = window.location.pathname;
     }
   };
   

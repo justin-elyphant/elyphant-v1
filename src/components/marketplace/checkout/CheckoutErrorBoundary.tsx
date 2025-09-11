@@ -43,10 +43,10 @@ class CheckoutErrorBoundary extends Component<Props, State> {
                   Try Again
                 </Button>
                 <Button 
-                  onClick={() => window.location.reload()}
+                  onClick={() => window.location.href = window.location.pathname}
                   variant="default"
                 >
-                  Refresh Page
+                  Reset Page
                 </Button>
               </div>
             </AlertDescription>

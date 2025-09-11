@@ -33,7 +33,8 @@ class MarketplaceErrorBoundary extends Component<Props, State> {
 
   private handleRefresh = () => {
     this.setState({ hasError: false, error: undefined });
-    window.location.reload();
+    // Soft navigation instead of full reload
+    window.location.href = window.location.pathname;
   };
 
   private handleRetry = () => {

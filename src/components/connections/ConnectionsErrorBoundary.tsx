@@ -48,11 +48,11 @@ class ConnectionsErrorBoundary extends Component<Props, State> {
                 </details>
               )}
               <Button 
-                onClick={() => window.location.reload()}
+                onClick={() => window.location.href = window.location.pathname}
                 className="w-full"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh Page
+                Reset Page
               </Button>
             </CardContent>
           </Card>

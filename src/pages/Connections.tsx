@@ -207,7 +207,7 @@ const Connections = () => {
                       <p className="text-muted-foreground mb-4">
                         We'll suggest people you might know
                       </p>
-                      <Button onClick={() => window.location.reload()}>
+                      <Button onClick={() => window.location.href = window.location.pathname}>
                         Explore Suggestions
                       </Button>
                     </div>

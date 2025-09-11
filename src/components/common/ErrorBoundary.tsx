@@ -55,7 +55,8 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleReload = () => {
-    window.location.reload();
+    // Soft navigation instead of full reload
+    window.location.href = window.location.pathname;
   };
 
   public render() {

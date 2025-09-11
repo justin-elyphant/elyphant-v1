@@ -180,8 +180,8 @@ const MarketplaceWrapper = () => {
   };
 
   const handleRefresh = async () => {
-    // Enhanced refresh with retry mechanism - reload the page to reset the Enhanced Zinc API system
-    window.location.reload();
+    // Enhanced refresh with retry mechanism - soft navigation to reset state
+    window.location.href = window.location.pathname + window.location.search;
   };
 
   // Enhanced: Handle connection selection for gifting context

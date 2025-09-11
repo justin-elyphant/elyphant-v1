@@ -84,10 +84,10 @@ const AddressSection = () => {
               : "Your address has been confirmed"
           });
           
-          // Give a moment for the database to update, then refresh
+          // Force component refresh without full page reload
           setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+            window.location.href = window.location.pathname;
+          }, 1000);
         } else {
           console.error("❌ Failed to update verification status:", result.error);
           toast.error("Failed to update verification status");

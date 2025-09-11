@@ -17,18 +17,21 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
 
-  // Process OAuth tokens from URL - simplified
+  // Process OAuth tokens from URL - simplified with guards
   useEffect(() => {
+    let isProcessed = false;
+    
     const processAuthRedirect = async () => {
       const fragment = window.location.hash.substring(1);
-      if (!fragment) return;
+      if (!fragment || isProcessed) return;
 
       const params = new URLSearchParams(fragment);
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
       const type = params.get('type');
       
-      if (accessToken && refreshToken) {
+      if (accessToken && refreshToken && !isProcessed) {
+        isProcessed = true;
         try {
           setIsProcessingToken(true);
           

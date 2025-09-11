@@ -56,7 +56,7 @@ interface ProfileErrorBoundaryProps {
 const ProfileErrorBoundary: React.FC<ProfileErrorBoundaryProps> = ({ children }) => {
   return (
     <ErrorBoundary
-      fallback={<ProfileErrorFallback error={new Error("Profile error")} resetError={() => window.location.reload()} />}
+      fallback={<ProfileErrorFallback error={new Error("Profile error")} resetError={() => window.location.href = window.location.pathname} />}
       onError={(error, errorInfo) => {
         console.error('Profile Error Boundary caught an error:', error, errorInfo);
       }}

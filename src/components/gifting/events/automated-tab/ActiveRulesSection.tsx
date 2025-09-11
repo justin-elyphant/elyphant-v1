@@ -45,8 +45,8 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
         const result = await unifiedGiftManagementService.cancelAutoGiftRule(ruleId, "Cancelled by user");
         if (result.success) {
           toast.success(result.message);
-          // Refresh the rules list
-          window.location.reload();
+          // Trigger component refresh without full reload
+          window.location.href = window.location.pathname;
         } else {
           toast.error(result.message);
         }

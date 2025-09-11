@@ -157,21 +157,16 @@ export const getOrderStatus = async (orderId: string): Promise<ZincOrder | null>
 
 export const cancelOrder = async (orderId: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${ZINC_API_BASE_URL}/orders/${orderId}/cancel`, {
-      method: 'POST',
-      headers: getZincHeaders(),
-    });
+    console.log("Cancelling Zinc order:", orderId);
+    console.warn("getZincHeaders is deprecated. Use edge functions for API calls.");
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Zinc API order cancellation error:", errorData);
-      throw new Error(errorData.message || "Failed to cancel order");
-    }
-    
-    return true;
+    // This function is deprecated - direct API calls are blocked by CSP
+    // The actual cancellation should be handled by the edge function
+    // which is properly called from useOrderActions hook
+    console.error("Direct Zinc API cancellation blocked by CSP. Using edge function instead.");
+    return false;
   } catch (error) {
     console.error("Error canceling order:", error);
-    toast.error("Failed to cancel order. Please try again.");
     return false;
   }
 };

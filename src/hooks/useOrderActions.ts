@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { cancelOrder as zincCancelOrder } from "@/components/marketplace/zinc/services/orderProcessingService";
 
 export const useOrderActions = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,14 +37,33 @@ export const useOrderActions = () => {
         return false;
       }
 
-      // If order has a zinc_order_id, cancel it through Zinc API first
+      // If order has a zinc_order_id, cancel it through the edge function
       let zincCancelled = true;
       if (order.zinc_order_id) {
-        console.log('Cancelling Zinc order:', order.zinc_order_id);
-        zincCancelled = await zincCancelOrder(order.zinc_order_id);
+        console.log('Cancelling Zinc order via edge function:', order.zinc_order_id);
         
-        if (!zincCancelled) {
-          console.warn('Failed to cancel through Zinc API, proceeding with database cancellation');
+        try {
+          const { data, error } = await supabase.functions.invoke('zinc-order-management', {
+            body: {
+              action: 'cancel',
+              orderId: orderId,
+              reason: reason || 'User cancelled'
+            }
+          });
+
+          if (error) {
+            console.warn('Failed to cancel through Zinc edge function:', error);
+            zincCancelled = false;
+          } else if (data?.success) {
+            console.log('✅ Zinc cancellation successful via edge function');
+            zincCancelled = true;
+          } else {
+            console.warn('Zinc cancellation returned unsuccessful result');
+            zincCancelled = false;
+          }
+        } catch (edgeError) {
+          console.warn('Failed to cancel through Zinc edge function:', edgeError);
+          zincCancelled = false;
         }
       }
 

@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.check-zinc-order-status]
 verify_jwt = false
+
+[functions.zinc-order-management]
+verify_jwt = false

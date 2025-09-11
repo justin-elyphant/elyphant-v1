@@ -149,12 +149,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md p-0 overflow-hidden">
-        <DialogHeader className="p-4 pb-2">
+      <DialogContent className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-center">Take Photo</DialogTitle>
         </DialogHeader>
         
-        <div className="relative aspect-square bg-black">
+        <div className="relative aspect-square bg-black mx-4 rounded-lg overflow-hidden">
           {!capturedImage ? (
             <>
               <video
@@ -192,7 +192,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           )}
         </div>
         
-        <div className="p-4">
+        <div className="p-4 flex-shrink-0">
           {!capturedImage ? (
             <div className="flex justify-center items-center gap-4">
               <Button
@@ -209,7 +209,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 size="lg"
                 onClick={capturePhoto}
                 disabled={isLoading || hasPermission === false}
-                className="rounded-full px-8"
+                className="rounded-full px-8 bg-primary hover:bg-primary/90"
               >
                 <Camera className="h-5 w-5 mr-2" />
                 Capture
@@ -235,7 +235,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               </Button>
               <Button
                 onClick={confirmCapture}
-                className="flex-1"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Use Photo

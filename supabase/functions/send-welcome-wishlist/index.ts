@@ -69,18 +69,28 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       console.log('🔍 Calling Enhanced Zinc API for real product recommendations...');
       
-      // Call our Enhanced Zinc API service to get real products
-      const { data: zincData, error: zincError } = await supabase.functions.invoke('get-products', {
-        body: {
-          query: `${recommendationContext.interests?.join(' ') || 'popular'} gifts ${recommendationContext.occasion || 'welcome'}`,
-          limit: 8,
-          page: 1,
-          filters: {
-            min_price: 15,
-            max_price: 75
-          }
-        }
+      // First, try category-based Zinc search under $75 for broad coverage
+      const zincRequestBase: any = { limit: 24, page: 1, filters: { min_price: 15, max_price: 75 } };
+
+      let zincData: any = null; 
+      let zincError: any = null;
+
+      // Attempt 1: Gifts under $50 category batch (high chance of real images)
+      const attempt1 = await supabase.functions.invoke('get-products', {
+        body: { ...zincRequestBase, giftsUnder50: true }
       });
+      zincData = attempt1.data; zincError = attempt1.error;
+
+      // Attempt 2: Keyword search using interests if attempt 1 yields nothing
+      if (!zincError && (!zincData?.results || zincData.results.length === 0)) {
+        const attempt2 = await supabase.functions.invoke('get-products', {
+          body: {
+            ...zincRequestBase,
+            query: `${recommendationContext.interests?.join(' ') || 'popular'} gifts ${recommendationContext.occasion || 'welcome'}`
+          }
+        });
+        zincData = attempt2.data; zincError = attempt2.error;
+      }
 
       if (zincError) throw zincError;
 
@@ -101,7 +111,19 @@ const handler = async (req: Request): Promise<Response> => {
           }
           if (!normalizedPrice || normalizedPrice < 0) normalizedPrice = 0;
 
-          const rawImage = product.image || product.main_image || product.images?.[0] || null;
+          // Choose best available image from multiple possible fields
+          const candidateImages = [
+            product.image,
+            product.main_image,
+            product.mainImage,
+            product.primary_image,
+            product.image_url,
+            ...(Array.isArray(product.images) ? product.images : []),
+            ...(Array.isArray(product.additional_images) ? product.additional_images : []),
+            product.thumbnail
+          ].filter(Boolean);
+
+          const rawImage: any = candidateImages.find((u: any) => typeof u === 'string' && (u.startsWith('http') || u.startsWith('//'))) || candidateImages[0] || null;
           let normalizedImage = rawImage as string | null;
           if (normalizedImage) {
             if (normalizedImage.startsWith('//')) normalizedImage = 'https:' + normalizedImage;
@@ -121,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
             purchaseUrl: product.url || product.product_url || null,
             availability: 'in_stock'
           });
-        }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0).slice(0, 12);
+        }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0 && !!rec.imageUrl).slice(0, 12);
 
         // Fallback if no valid priced products remain after transformation
         if (!transformedRecommendations.length) {

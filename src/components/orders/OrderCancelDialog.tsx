@@ -53,6 +53,7 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
 
   const isHighValue = orderAmount > 200;
   const isProcessingStatus = orderStatus === 'processing';
+  const isRetryPending = orderStatus === 'retry_pending';
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -73,6 +74,15 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
                   <p className="text-sm text-amber-800">
                     <strong>Note:</strong> This order is currently being processed. 
                     Cancellation may take some time to complete.
+                  </p>
+                </div>
+              )}
+
+              {isRetryPending && (
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
+                  <p className="text-sm text-orange-800">
+                    <strong>Retry Pending:</strong> This order is currently pending retry. 
+                    Cancelling will stop all retry attempts and process a refund.
                   </p>
                 </div>
               )}

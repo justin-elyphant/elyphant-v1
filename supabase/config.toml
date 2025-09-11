@@ -116,3 +116,9 @@ verify_jwt = false
 
 [functions.process-scheduled-orders]
 verify_jwt = false
+
+[functions.audit-duplicate-orders]
+verify_jwt = false
+
+[functions.check-zinc-order-status]
+verify_jwt = false

@@ -389,8 +389,8 @@ serve(async (req) => {
       });
     }
 
-    // Step 4: Get full order data
-    console.log('📥 Step 4: Getting full order data...');
+    // Step 4: Get full order data and check for duplicates
+    console.log('📥 Step 4: Getting full order data and checking for duplicates...');
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -403,6 +403,49 @@ serve(async (req) => {
     }
 
     console.log(`✅ Order found: ${orderData.order_number}`);
+
+    // CRITICAL DUPLICATE CHECK: If order already has a zinc_order_id and is not failed, don't reprocess
+    if (orderData.zinc_order_id && !retryAttempt && orderData.status !== 'failed') {
+      console.log(`⚠️ Order ${orderId} already has zinc_order_id: ${orderData.zinc_order_id} with status: ${orderData.status}`);
+      console.log('🛑 Preventing duplicate order processing - this order was already submitted to Zinc');
+      
+      // Check if it's actually processing or completed
+      if (['processing', 'shipped', 'delivered', 'completed'].includes(orderData.status)) {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Order already processed successfully',
+          orderId: orderId,
+          zincRequestId: orderData.zinc_order_id,
+          status: orderData.status,
+          duplicatePrevented: true,
+          timestamp: new Date().toISOString()
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      }
+    }
+
+    // If this is a retry, verify the order is actually in retry_pending status
+    if (retryAttempt && orderData.status !== 'retry_pending' && orderData.status !== 'failed') {
+      console.log(`⚠️ Retry attempted on order ${orderId} but status is ${orderData.status}, not retry_pending`);
+      
+      // If order is already successful, return success
+      if (['processing', 'shipped', 'delivered', 'completed'].includes(orderData.status)) {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Order already successfully processed',
+          orderId: orderId,
+          zincRequestId: orderData.zinc_order_id,
+          status: orderData.status,
+          retryNotNeeded: true,
+          timestamp: new Date().toISOString()
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      }
+    }
     
     // Log scheduled delivery information if present
     if (scheduledDeliveryDate || orderData.scheduled_delivery_date) {

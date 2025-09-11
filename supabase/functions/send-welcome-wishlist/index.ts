@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
           productId: product.product_id || `zinc-${Date.now()}-${index}`,
           title: product.title || 'Great Gift Item',
           description: product.description || product.product_description || 'Perfect gift for any occasion',
-          price: typeof product.price === 'number' ? product.price : (parseFloat(product.price) || 25.00),
+          price: typeof product.price === 'number' && product.price > 0 ? product.price : (parseFloat(product.price) || 25.00),
           vendor: product.vendor || product.retailer || 'Amazon',
           imageUrl: product.image || product.main_image || product.images?.[0] || null,
           category: product.category || 'General',
@@ -142,11 +142,11 @@ const handler = async (req: Request): Promise<Response> => {
         imageUrl: rec.imageUrl,
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
-        addToWishlistUrl: `${Deno.env.get('SUPABASE_URL')?.replace('dmkxtkvlispxeqfzlczr.supabase.co', 'dmkxtkvlispxeqfzlczr.lovableproject.com') || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com'}/marketplace?add_to_wishlist=${rec.productId}&source=welcome_email`
+        addToWishlistUrl: `https://dmkxtkvlispxeqfzlczr.lovableproject.com/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email`
       }));
 
     // Prepare email data
-    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('dmkxtkvlispxeqfzlczr.supabase.co', 'dmkxtkvlispxeqfzlczr.lovableproject.com') || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
+    const appUrl = 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
     
     const emailData = {
       userFirstName: request.userFirstName,

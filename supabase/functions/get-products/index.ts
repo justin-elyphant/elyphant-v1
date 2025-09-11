@@ -592,20 +592,33 @@ serve(async (req) => {
         filteredResults = filteredResults.map((product: any) => {
           let normalizedPrice = product.price;
           
-          // Convert from cents to dollars if price is in cents
-          if (typeof product.price === 'number' && product.price > 100) {
-            // If price is over 100 and appears to be in cents, convert to dollars
-            normalizedPrice = product.price / 100;
-            console.log(`🔄 Price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
+          // Handle different price formats from Zinc API
+          if (typeof product.price === 'number') {
+            if (product.price === 0) {
+              // Handle $0 prices - keep as 0 but don't convert
+              normalizedPrice = 0;
+            } else if (product.price > 100) {
+              // If price is over 100 and appears to be in cents, convert to dollars
+              normalizedPrice = product.price / 100;
+              console.log(`🔄 Price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
+            } else {
+              // Price is already in dollars
+              normalizedPrice = product.price;
+            }
           } else if (typeof product.price === 'string') {
             // Handle string prices by parsing and checking if conversion is needed
             const numericPrice = parseFloat(product.price.replace(/[$,]/g, ''));
-            if (numericPrice > 100) {
+            if (isNaN(numericPrice)) {
+              normalizedPrice = 0; // Default to 0 for invalid prices
+            } else if (numericPrice > 100) {
               normalizedPrice = numericPrice / 100;
               console.log(`🔄 Price conversion (string): "${product.title}" - Original: ${product.price} → Converted: $${normalizedPrice}`);
             } else {
               normalizedPrice = numericPrice;
             }
+          } else {
+            // Handle null/undefined prices
+            normalizedPrice = 0;
           }
           
           return {

@@ -101,13 +101,20 @@ const handler = async (req: Request): Promise<Response> => {
           }
           if (!normalizedPrice || normalizedPrice < 0) normalizedPrice = 0;
 
+          const rawImage = product.image || product.main_image || product.images?.[0] || null;
+          let normalizedImage = rawImage as string | null;
+          if (normalizedImage) {
+            if (normalizedImage.startsWith('//')) normalizedImage = 'https:' + normalizedImage;
+            normalizedImage = normalizedImage.replace(/^http:/, 'https:');
+          }
+
           return ({
             productId: product.product_id || `zinc-${Date.now()}-${index}`,
             title: product.title || 'Great Gift Item',
             description: product.description || product.product_description || 'Perfect gift for any occasion',
             price: normalizedPrice,
             vendor: product.vendor || product.retailer || 'Amazon',
-            imageUrl: product.image || product.main_image || product.images?.[0] || null,
+            imageUrl: normalizedImage,
             category: product.category || 'General',
             matchScore: 0.8 + (Math.random() * 0.15), // High confidence for real products
             matchReasons: [`Real product from ${product.vendor || 'marketplace'}`, 'Curated by Nicole AI'],
@@ -115,6 +122,12 @@ const handler = async (req: Request): Promise<Response> => {
             availability: 'in_stock'
           });
         }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0).slice(0, 12);
+
+        // Fallback if no valid priced products remain after transformation
+        if (!transformedRecommendations.length) {
+          console.warn('⚠️ No priced products after transform; switching to curated fallback');
+          throw new Error('No priced products after transformation');
+        }
 
         recommendationsData = {
           recommendations: transformedRecommendations,

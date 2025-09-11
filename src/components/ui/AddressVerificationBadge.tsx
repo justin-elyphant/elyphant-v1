@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, AlertTriangle, Clock } from 'lucide-react';
+import { Check, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
@@ -29,24 +29,14 @@ export const AddressVerificationBadge: React.FC<AddressVerificationBadgeProps> =
   });
   
   const getVerificationStatus = () => {
-    if (!verified) {
+    // Consider it pending only when explicitly unverified or marked pending
+    const pending = !verified || verificationMethod === 'pending_verification';
+    if (pending) {
       return {
         variant: 'outline' as const,
         icon: AlertTriangle,
-        text: 'Unverified',
-        tooltip: 'This address has not been verified'
-      };
-    }
-
-    // Check if address was updated after verification
-    const isOutdated = lastUpdated && verifiedAt && new Date(lastUpdated) > new Date(verifiedAt);
-    
-    if (isOutdated) {
-      return {
-        variant: 'secondary' as const,
-        icon: Clock,
         text: 'Needs Verification',
-        tooltip: 'Address was updated after verification'
+        tooltip: 'Verify your address to ensure successful delivery'
       };
     }
 

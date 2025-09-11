@@ -22,6 +22,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isVideoReady, setIsVideoReady] = useState(false);
 
@@ -103,15 +104,32 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     // Draw the video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Prefer data URL for preview to avoid blob URL issues in iframes/browsers
+    // Produce a data URL for preview and a Blob for saving
     try {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setCapturedImage(dataUrl);
+
+      // Create Blob asynchronously as well
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          setCapturedBlob(blob);
+        } else {
+          // Fallback: convert dataURL to Blob
+          try {
+            const res = await fetch(dataUrl);
+            const fallbackBlob = await res.blob();
+            setCapturedBlob(fallbackBlob);
+          } catch (e) {
+            console.error('Failed to create blob from data URL', e);
+          }
+        }
+      }, 'image/jpeg', 0.9);
     } catch (e) {
       console.error('Failed to capture image (toDataURL):', e);
       // Fallback to Blob + Object URL
       canvas.toBlob((blob) => {
         if (blob) {
+          setCapturedBlob(blob);
           const imageUrl = URL.createObjectURL(blob);
           setCapturedImage(imageUrl);
         } else {
@@ -120,15 +138,26 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       }, 'image/jpeg', 0.9);
     }
   };
-  const confirmCapture = () => {
-    if (!canvasRef.current || !capturedImage) return;
+  const confirmCapture = async () => {
+    if (!capturedImage) return;
 
-    canvasRef.current.toBlob((blob) => {
-      if (blob) {
-        onCapture(blob);
-        handleClose();
-      }
-    }, 'image/jpeg', 0.8);
+    // Prefer the captured Blob if available
+    if (capturedBlob) {
+      onCapture(capturedBlob);
+      handleClose();
+      return;
+    }
+
+    // Fallback: convert data URL or object URL to Blob
+    try {
+      const res = await fetch(capturedImage);
+      const blob = await res.blob();
+      onCapture(blob);
+      handleClose();
+    } catch (e) {
+      console.error('Failed to use captured photo', e);
+      toast.error('Failed to use photo. Please try again.');
+    }
   };
 
   const retakePhoto = () => {
@@ -136,6 +165,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       URL.revokeObjectURL(capturedImage);
     }
     setCapturedImage(null);
+    setCapturedBlob(null);
   };
 
   const switchCamera = () => {
@@ -145,6 +175,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const handleClose = () => {
     stopCamera();
     setCapturedImage(null);
+    setCapturedBlob(null);
     setHasPermission(null);
     setIsVideoReady(false);
     onClose();

@@ -15,6 +15,7 @@ import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 import InlineAddressVerification from "./InlineAddressVerification";
 import { supabase } from "@/integrations/supabase/client";
 import { AddressValidationResult } from "@/services/location/UnifiedLocationService";
+import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
 interface AddressVerificationData {
   address: {
@@ -57,6 +58,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddressVerified, setIsAddressVerified] = useState(false);
   const [addressVerificationData, setAddressVerificationData] = useState<AddressVerificationData | null>(null);
+  const { triggerWelcomeWishlist } = useWelcomeWishlist();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -222,6 +224,27 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       });
       
       await updateProfile(profileData);
+      
+      // Trigger welcome wishlist email now that profile is complete
+      try {
+        await triggerWelcomeWishlist({
+          userId: user.id,
+          userEmail: user.email || '',
+          userFirstName: firstName,
+          userLastName: lastName || undefined,
+          birthYear: birthYear,
+          interests: [],
+          inviterName: undefined,
+          profileData: {
+            gender: undefined,
+            lifestyle: undefined,
+            favoriteCategories: undefined
+          }
+        });
+      } catch (emailError) {
+        console.error('Non-blocking: Welcome wishlist email failed:', emailError);
+        // Don't block the profile completion flow
+      }
       
       toast.success("Profile completed successfully!", {
         description: isAddressVerified ? "Your address has been verified for delivery" : "You can verify your address later in settings"

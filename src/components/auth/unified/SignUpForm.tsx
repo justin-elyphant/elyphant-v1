@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SignUpFormComponent from "../signup/SignUpForm";
 import { SignUpFormValues } from "../signup/SignUpForm";
+import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
 const SignUpForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
 
   const handleSignUp = useCallback(async (values: SignUpFormValues) => {
     setIsSubmitting(true);
@@ -79,6 +81,25 @@ const SignUpForm = () => {
             }
             
             toast.success("Account created! Complete your profile to get started.");
+            
+            // Schedule delayed welcome email (non-blocking)
+            try {
+              await scheduleDelayedWelcomeEmail({
+                userId: data.user.id,
+                userEmail: values.email,
+                userFirstName: values.name.split(' ')[0] || values.name,
+                userLastName: values.name.split(' ').slice(1).join(' ') || undefined,
+                inviterName: undefined,
+                profileData: {
+                  gender: undefined,
+                  lifestyle: undefined,
+                  favoriteCategories: undefined
+                }
+              });
+            } catch (emailError) {
+              console.error('Non-blocking: Welcome email scheduling failed:', emailError);
+              // Don't block signup flow for email issues
+            }
             
             // Immediate redirect to profile setup
             navigate("/profile-setup", { replace: true });

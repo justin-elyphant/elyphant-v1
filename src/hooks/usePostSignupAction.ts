@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PostSignupAction {
   type: 'follow' | 'message' | 'view_profile' | 'view_wishlists';
@@ -18,11 +19,29 @@ export const usePostSignupAction = () => {
     const storedAction = sessionStorage.getItem('elyphant-post-signup-action');
     if (!storedAction) return;
 
-    try {
-      const action: PostSignupAction = JSON.parse(storedAction);
-      
-      // Clear the stored action
-      sessionStorage.removeItem('elyphant-post-signup-action');
+    const handlePostSignupAction = async () => {
+      try {
+        const action: PostSignupAction = JSON.parse(storedAction);
+        
+        // Clear the stored action
+        sessionStorage.removeItem('elyphant-post-signup-action');
+
+        // Trigger email orchestrator for new user onboarding
+        try {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'user_welcomed',
+              userId: user.id,
+              metadata: {
+                postSignupAction: action,
+                welcomeContext: 'post_signup_flow'
+              }
+            }
+          });
+        } catch (emailError) {
+          console.error('Non-blocking: Email orchestrator failed for post-signup:', emailError);
+          // Don't block the user flow for email issues
+        }
 
       // Execute the action after a short delay to ensure the user is fully authenticated
       setTimeout(() => {
@@ -60,9 +79,12 @@ export const usePostSignupAction = () => {
         }
       }, 1000);
 
-    } catch (error) {
-      console.error('Error processing post-signup action:', error);
-      sessionStorage.removeItem('elyphant-post-signup-action');
-    }
+      } catch (error) {
+        console.error('Error processing post-signup action:', error);
+        sessionStorage.removeItem('elyphant-post-signup-action');
+      }
+    };
+
+    handlePostSignupAction();
   }, [user]);
 };

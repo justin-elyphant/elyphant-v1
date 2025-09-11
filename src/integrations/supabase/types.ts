@@ -124,6 +124,69 @@ export type Database = {
           },
         ]
       }
+      admin_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          order_id: string | null
+          requires_action: boolean | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          order_id?: string | null
+          requires_action?: boolean | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          order_id?: string | null
+          requires_action?: boolean | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_alerts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_alerts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_log: {
         Row: {
           action_details: Json
@@ -645,6 +708,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "user_special_dates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automated_gift_executions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
             referencedColumns: ["id"]
           },
           {
@@ -1891,6 +1961,13 @@ export type Database = {
             foreignKeyName: "group_gift_projects_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_projects_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2409,6 +2486,13 @@ export type Database = {
             foreignKeyName: "order_email_events_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_email_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2452,6 +2536,13 @@ export type Database = {
             columns: ["contributor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_group_contributors_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
             referencedColumns: ["id"]
           },
           {
@@ -2517,6 +2608,13 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2561,6 +2659,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "order_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_notes_order_id_fkey"
             columns: ["order_id"]
@@ -2654,6 +2759,8 @@ export type Database = {
       orders: {
         Row: {
           billing_info: Json | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           confirmation_email_sent: boolean | null
           created_at: string
           currency: string
@@ -2699,6 +2806,8 @@ export type Database = {
         }
         Insert: {
           billing_info?: Json | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -2744,6 +2853,8 @@ export type Database = {
         }
         Update: {
           billing_info?: Json | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -3396,6 +3507,63 @@ export type Database = {
           },
         ]
       }
+      refund_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          error_message: string | null
+          id: string
+          order_id: string
+          processed_at: string | null
+          reason: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id: string
+          processed_at?: string | null
+          reason?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          order_id?: string
+          processed_at?: string | null
+          reason?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       return_events: {
         Row: {
           created_at: string
@@ -3437,6 +3605,13 @@ export type Database = {
           zinc_order_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "return_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "return_events_order_id_fkey"
             columns: ["order_id"]
@@ -4294,7 +4469,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      order_monitoring_summary: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string | null
+          has_active_alerts: boolean | null
+          has_pending_refund: boolean | null
+          id: string | null
+          monitoring_status: string | null
+          next_retry_at: string | null
+          order_number: string | null
+          retry_count: number | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+          zinc_status: string | null
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          has_active_alerts?: never
+          has_pending_refund?: never
+          id?: string | null
+          monitoring_status?: never
+          next_retry_at?: string | null
+          order_number?: string | null
+          retry_count?: number | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          zinc_status?: string | null
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          has_active_alerts?: never
+          has_pending_refund?: never
+          id?: string | null
+          monitoring_status?: never
+          next_retry_at?: string | null
+          order_number?: string | null
+          retry_count?: number | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          zinc_status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_business_admin: {
@@ -4410,6 +4635,10 @@ export type Database = {
           last_nudge_sent: string
           total_nudges: number
         }[]
+      }
+      get_order_cancel_eligibility: {
+        Args: { order_uuid: string }
+        Returns: Json
       }
       get_safe_profile_data: {
         Args: { profile_user_id: string }

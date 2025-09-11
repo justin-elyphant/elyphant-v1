@@ -165,22 +165,38 @@ const handler = async (req: Request): Promise<Response> => {
             purchaseUrl: product.url || product.product_url || null,
             availability: 'in_stock'
           });
-        }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0 && !!rec.imageUrl).slice(0, 12);
+        }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0).slice(0, 24);
 
-        // Fallback if no valid priced products remain after transformation
-        if (!transformedRecommendations.length) {
-          console.warn('⚠️ No priced products after transform; switching to curated fallback');
-          throw new Error('No priced products after transformation');
+        // Build final list preferring items with live images
+        const withImages = transformedRecommendations.filter(r => !!r.imageUrl);
+        const withoutImages = transformedRecommendations.filter(r => !r.imageUrl);
+
+        const categoryFallback = (cat: string) => {
+          const c = (cat || '').toLowerCase();
+          if (c.includes('tech') || c.includes('electron')) return 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=400&h=400&fit=crop&auto=format&q=80';
+          if (c.includes('home') || c.includes('blanket') || c.includes('bedding')) return 'https://images.unsplash.com/photo-1559123830-6ec229bc5ba7?w=400&h=400&fit=crop&auto=format&q=80';
+          if (c.includes('wellness') || c.includes('candle')) return 'https://images.unsplash.com/photo-1602874801006-2b5e0b9a9b3e?w=400&h=400&fit=crop&auto=format&q=80';
+          if (c.includes('kitchen') || c.includes('mug') || c.includes('cook')) return 'https://images.unsplash.com/photo-1524511119869-32e3a0e24733?w=400&h=400&fit=crop&auto=format&q=80';
+          return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80';
+        };
+
+        const completed = [...withImages, ...withoutImages.map(r => ({ ...r, imageUrl: categoryFallback(r.category) }))];
+        const finalRecommendations = completed.slice(0, 12);
+
+        // Ensure we have something to send; otherwise fall back to curated list
+        if (!finalRecommendations.length) {
+          console.warn('⚠️ No products with or without images after transform; switching to curated fallback');
+          throw new Error('No usable products after transformation');
         }
 
         recommendationsData = {
-          recommendations: transformedRecommendations,
+          recommendations: finalRecommendations,
           confidence_score: 0.85,
           fallback_used: false,
           source: 'enhanced_zinc_api'
         };
 
-        console.log('✅ Successfully fetched real products from Enhanced Zinc API:', transformedRecommendations.length);
+        console.log('✅ Successfully fetched real products from Enhanced Zinc API:', finalRecommendations.length);
       } else {
         throw new Error('No products returned from Enhanced Zinc API');
       }
@@ -311,7 +327,7 @@ function generateWelcomeWishlistEmailContent(data: any): string {
   const productCards = data.recommendations.map((product: any) => `
     <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 15px 0; background: white;">
       <div style="display: flex; align-items: start; gap: 15px;">
-        ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : ''}
+        ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.title}" width="80" height="80" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0; display: block;" referrerpolicy="no-referrer">` : ''}
         <div style="flex: 1;">
           <h3 style="margin: 0 0 8px 0; color: #374151; font-size: 16px; font-weight: 600;">${product.title}</h3>
           <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${product.description}</p>

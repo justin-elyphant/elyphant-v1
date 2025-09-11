@@ -262,9 +262,13 @@ const handler = async (req: Request): Promise<Response> => {
         title: rec.title,
         description: rec.description || `${rec.category} item from ${rec.vendor}`,
         price: rec.price,
-        imageUrl: rec.imageUrl && rec.imageUrl !== 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop' 
-          ? rec.imageUrl 
-          : `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80`,
+        imageUrl: (() => {
+          const src = rec.imageUrl && rec.imageUrl !== 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop' 
+            ? rec.imageUrl 
+            : `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80`;
+          const proxied = `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/image-proxy?url=${encodeURIComponent(src)}`;
+          return proxied;
+        })(),
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
         addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email&retailer=amazon`

@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.zinc-order-management]
 verify_jwt = false
+
+[functions.image-proxy]
+verify_jwt = false

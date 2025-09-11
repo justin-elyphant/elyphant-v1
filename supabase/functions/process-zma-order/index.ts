@@ -624,7 +624,7 @@ serve(async (req) => {
       retry_request_ids: [], // Required field
       bundled_order_ids: [], // Required field
       free_gifts: [], // Required field
-      scheduled_delivery_windows: [], // Required field
+      scheduled_delivery_windows: [], // Will be populated below if scheduled delivery date exists
       client_notes: {
         our_internal_order_id: orderData.order_number,
         supabase_order_id: orderId,
@@ -632,6 +632,27 @@ serve(async (req) => {
         zma_account_id: zmaAccount.account_id
       }
     };
+    
+    // Add scheduled delivery windows if delivery date is specified
+    const finalDeliveryDate = scheduledDeliveryDate || orderData.scheduled_delivery_date;
+    if (finalDeliveryDate) {
+      const deliveryDate = new Date(finalDeliveryDate);
+      // Create delivery window for Zinc: target date ± 1 day
+      const startDate = new Date(deliveryDate);
+      startDate.setDate(startDate.getDate() - 1);
+      const endDate = new Date(deliveryDate);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      zincOrderData.scheduled_delivery_windows = [{
+        start_date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        end_date: endDate.toISOString().split('T')[0] // YYYY-MM-DD format
+      }];
+      
+      console.log(`📅 [ZMA-ORDER] Added scheduled delivery window to Zinc request:`, {
+        target_date: finalDeliveryDate,
+        delivery_window: zincOrderData.scheduled_delivery_windows[0]
+      });
+    }
     
     console.log('✅ Zinc order data prepared with billing address');
     console.log('📄 Shipping Address:', JSON.stringify(shippingAddress, null, 2));

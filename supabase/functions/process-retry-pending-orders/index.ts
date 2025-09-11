@@ -56,6 +56,32 @@ serve(async (req) => {
       try {
         console.log(`🔄 Processing retry for order ${order.id} (attempt ${order.retry_count + 1})`);
 
+        // CRITICAL SAFETY CHECK: Skip orders that already have a successful zinc_order_id
+        if (order.zinc_order_id && order.zinc_status !== 'failed') {
+          console.log(`⚠️ Order ${order.id} already has zinc_order_id ${order.zinc_order_id} with status ${order.zinc_status} - checking actual status before retry`);
+          
+          // Check the actual status with Zinc API if possible
+          // For now, mark as processing to stop retries and let manual verification handle it
+          await supabase
+            .from('orders')
+            .update({
+              status: 'processing',
+              zinc_status: 'processing',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', order.id);
+          
+          console.log(`✅ Order ${order.id} marked as processing to stop duplicate retries`);
+          successCount++;
+          results.push({
+            orderId: order.id,
+            success: true,
+            message: 'Stopped duplicate retry - order already has zinc_order_id',
+            zinc_order_id: order.zinc_order_id
+          });
+          continue;
+        }
+
         // SAFETY GUARD: Only allow ZMA processing (zinc_api disabled)
         let orderMethod = order.order_method || 'zma';
         

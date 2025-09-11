@@ -70,6 +70,7 @@ const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
 const TestEmailSystem = lazy(() => import("./pages/TestEmailSystem"));
+const EmailSystemTester = lazy(() => import("./pages/EmailSystemTester"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const OAuthComplete = lazy(() => import("./pages/OAuthComplete"));
@@ -249,7 +250,8 @@ function AppContent() {
           {/* ZMA Testing Routes */}
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
           <Route path="/test-retry-function" element={<TestRetryFunction />} />
-          <Route path="/test-email-system" element={<TestEmailSystem />} />
+        <Route path="/test-email-system" element={<TestEmailSystem />} />
+        <Route path="/email-system-tester" element={<EmailSystemTester />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           
            <Route path="/trunkline-login" element={<TrunklineLogin />} />

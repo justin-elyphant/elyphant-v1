@@ -11,8 +11,6 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { SocialLoginButtons } from "@/components/auth/signin/SocialLoginButtons";
-
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -64,19 +62,6 @@ const SignInForm = () => {
 
   return (
     <div className="space-y-loose">
-      <SocialLoginButtons />
-      
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-caption uppercase">
-          <span className="surface-primary px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-standard">
         <div className="space-y-minimal">
           <Label htmlFor="email" className="text-body-sm">Email</Label>

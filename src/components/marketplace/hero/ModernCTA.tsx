@@ -8,6 +8,7 @@ import EnhancedAuthModal from "@/components/auth/enhanced/EnhancedAuthModalV2";
 const ModernCTA: React.FC = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup");
 
   const features = [
     { icon: Heart, text: "Save favorites", color: "text-pink-500" },
@@ -68,7 +69,10 @@ const ModernCTA: React.FC = () => {
             <Button 
               size="lg" 
               className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => {
+                setAuthModalMode("signup");
+                setShowAuthModal(true);
+              }}
             >
               <Gift className="mr-2 h-5 w-5" />
               Get Started Free
@@ -77,7 +81,10 @@ const ModernCTA: React.FC = () => {
               variant="outline" 
               size="lg" 
               className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => {
+                setAuthModalMode("signin");
+                setShowAuthModal(true);
+              }}
             >
               Sign In
             </Button>
@@ -111,6 +118,7 @@ const ModernCTA: React.FC = () => {
       <EnhancedAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+        initialMode={authModalMode}
       />
     </div>
   );

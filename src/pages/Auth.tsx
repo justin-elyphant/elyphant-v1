@@ -9,6 +9,10 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user, isLoading } = useAuth();
 
+  // Detect initial mode from URL parameters
+  const mode = searchParams.get('mode') as 'signin' | 'signup' | null;
+  const initialMode = mode || 'signup'; // Default to signup if no mode specified
+
   // Redirect authenticated users to the appropriate page
   useEffect(() => {
     if (user && !isLoading) {
@@ -34,7 +38,7 @@ const Auth = () => {
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <UnifiedAuthView />
+        <UnifiedAuthView initialMode={initialMode} />
       </div>
     </MainLayout>
   );

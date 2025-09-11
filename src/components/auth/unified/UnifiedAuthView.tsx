@@ -5,8 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SignInForm from "./SignInForm";
 import SignUpForm from "./SignUpForm";
 
-const UnifiedAuthView = () => {
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup");
+interface UnifiedAuthViewProps {
+  initialMode?: "signin" | "signup";
+}
+
+const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ initialMode = "signup" }) => {
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">(initialMode);
 
   return (
     <Card className="w-full card-unified">

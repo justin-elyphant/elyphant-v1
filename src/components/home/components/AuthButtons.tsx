@@ -7,11 +7,11 @@ const AuthButtons = () => {
   const navigate = useNavigate();
 
   const handleSignIn = () => {
-    navigate("/auth");
+    navigate("/auth?mode=signin");
   };
 
   const handleGetStarted = () => {
-    navigate("/auth?redirect=/gifting");
+    navigate("/auth?mode=signup&redirect=/gifting");
   };
 
   return (

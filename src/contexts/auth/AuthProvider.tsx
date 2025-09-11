@@ -14,15 +14,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Debug mode for development
   const isDebugMode = process.env.NODE_ENV === 'development';
-  
-  // Optimized debug logging (only when necessary)
-  if (isDebugMode && (isLoading || isProcessingToken)) {
-    console.log("AuthProvider - Loading state:", {
-      hasUser: !!user,
-      isLoading,
-      isProcessingToken
-    });
-  }
 
   // Detect employee status when user changes
   useEffect(() => {
@@ -30,13 +21,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       EmployeeDetectionService.detectEmployee(user).then(detection => {
         setIsEmployee(detection.isEmployee);
         
-        if (isDebugMode) {
-          console.log('AuthProvider: Employee detection complete', {
-            isEmployee: detection.isEmployee,
-            reason: detection.reason,
-            email: user.email
-          });
-        }
       }).catch(error => {
         console.error('AuthProvider: Employee detection failed', error);
         setIsEmployee(false);

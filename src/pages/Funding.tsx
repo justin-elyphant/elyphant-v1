@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { fetchActiveCampaigns, fetchCampaignContributions, FundingCampaign } from "@/utils/crowdfundingService";
 import CampaignCard from "@/components/crowdfunding/CampaignCard";
 import CreateCampaignDialog from "@/components/crowdfunding/CreateCampaignDialog";

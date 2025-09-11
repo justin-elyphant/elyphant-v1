@@ -17,7 +17,7 @@ const Auth = () => {
   useEffect(() => {
     if (user && !isLoading) {
       const redirectPath = searchParams.get('redirect') || '/';
-      console.log("🏠 User already authenticated, redirecting to:", redirectPath);
+      
       navigate(redirectPath, { replace: true });
     }
   }, [user, isLoading, navigate, searchParams]);

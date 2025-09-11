@@ -6,7 +6,7 @@ import { Heart, Share, Plus, Minus } from "lucide-react";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import ProductCarousel from "./ProductCarousel";

@@ -6,7 +6,7 @@ import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { Product } from "@/types/product";
 import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import ConnectionPickerModal from "./ConnectionPickerModal";
 import MessageTemplateSelector from "./MessageTemplateSelector";

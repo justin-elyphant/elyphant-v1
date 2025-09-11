@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChatMessage from "./ChatMessage";
 import ProductShareButton from "./ProductShareButton";
 import WishlistShareButton from "./WishlistShareButton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useWishlists } from "@/components/gifting/hooks/useWishlists";
 import { toast } from "sonner";
 import { Wishlist } from "@/types/profile";

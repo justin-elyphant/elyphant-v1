@@ -2,7 +2,7 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import MessageStatusIndicator from "./MessageStatusIndicator";
 import ProductSharePreview from "./ProductSharePreview";
 import WishlistSharePreview from "./WishlistSharePreview";

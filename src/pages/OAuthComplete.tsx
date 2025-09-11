@@ -14,7 +14,7 @@ const OAuthComplete = () => {
     if (isLoading) return;
 
     if (user) {
-      console.log('OAuth user authenticated:', user);
+      
       setStatus('success');
       
       // Redirect to profile completion if needed, otherwise dashboard

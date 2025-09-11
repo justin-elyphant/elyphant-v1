@@ -85,8 +85,6 @@ export const resendVerificationEmail = async (email: string | undefined) => {
 export const sendDeletionEmail = async (email: string, name?: string) => {
   try {
     // This would typically call an edge function to send the email
-    // For now we'll just log it
-    console.log(`Sending deletion confirmation email to ${email} for user ${name || 'unknown'}`);
     return { success: true };
   } catch (error) {
     console.error("Error sending deletion email:", error);

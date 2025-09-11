@@ -33,7 +33,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, CreditCard, Trash2, Star, StarOff, CheckCircle, AlertCircle, Shield, ArrowLeft } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from "@/services/payment/StripeClientManager";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UnifiedPaymentForm from "./UnifiedPaymentForm";

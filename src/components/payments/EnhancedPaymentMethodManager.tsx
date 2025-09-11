@@ -42,7 +42,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { paymentAnalyticsService } from '../../services/payment/PaymentAnalytics';

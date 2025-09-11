@@ -108,13 +108,6 @@ export function useAuthSession(): UseAuthSessionReturn {
     const updateAuthState = (newSession: Session | null, event?: string) => {
       if (!mounted) return;
 
-      // Log auth state changes in development
-      if (process.env.NODE_ENV === 'development' && event) {
-        console.log(`Auth: ${event}`, { 
-          hasSession: !!newSession, 
-          hasUser: !!newSession?.user
-        });
-      }
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
@@ -156,16 +149,12 @@ export function useAuthSession(): UseAuthSessionReturn {
 
     // Get initial session and validate user still exists
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Auth: Fresh session loaded", { hasSession: !!session });
-      }
       
       // If we have a session, verify the user still exists
       if (session?.user) {
         try {
           const { data, error } = await supabase.auth.getUser();
           if (error && error.message.includes('User from sub claim in JWT does not exist')) {
-            console.log("Auth: User deleted externally, signing out");
             await supabase.auth.signOut();
             return;
           }
@@ -189,7 +178,6 @@ export function useAuthSession(): UseAuthSessionReturn {
       const detection = await EmployeeDetectionService.detectEmployee(user);
       
       if (detection.isEmployee) {
-        console.log('Employee detected after OAuth, setting redirect flag');
         localStorage.setItem('pendingEmployeeRedirect', 'true');
         localStorage.setItem('employeeRedirectReason', detection.reason);
       }

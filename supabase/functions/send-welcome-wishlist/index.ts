@@ -148,8 +148,10 @@ const handler = async (req: Request): Promise<Response> => {
       confidence: recommendationsData?.confidence_score || 0
     });
 
-    // Prepare app URL
-    const appUrl = request.appBaseUrl || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
+    // Prepare app URL - ensure we use the production domain
+    const appUrl = request.appBaseUrl && request.appBaseUrl.includes('elyphant.ai') 
+      ? request.appBaseUrl 
+      : 'https://elyphant.ai';
     
     // Transform recommendations into email format
     const emailRecommendations = (recommendationsData?.recommendations || [])
@@ -159,10 +161,12 @@ const handler = async (req: Request): Promise<Response> => {
         title: rec.title,
         description: rec.description || `${rec.category} item from ${rec.vendor}`,
         price: rec.price,
-        imageUrl: rec.imageUrl,
+        imageUrl: rec.imageUrl && rec.imageUrl !== 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop' 
+          ? rec.imageUrl 
+          : `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80`,
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
-        addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email`
+        addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email&retailer=amazon`
       }));
     
     // Prepare email data

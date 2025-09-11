@@ -19,6 +19,7 @@ interface WelcomeWishlistRequest {
     lifestyle?: string;
     favoriteCategories?: string[];
   };
+  appBaseUrl?: string;
 }
 
 interface ProductRecommendation {
@@ -85,19 +86,35 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (zincData?.results && zincData.results.length > 0) {
         // Transform Zinc API results to ProductRecommendation format
-        const transformedRecommendations: ProductRecommendation[] = zincData.results.map((product: any, index: number) => ({
-          productId: product.product_id || `zinc-${Date.now()}-${index}`,
-          title: product.title || 'Great Gift Item',
-          description: product.description || product.product_description || 'Perfect gift for any occasion',
-          price: typeof product.price === 'number' && product.price > 0 ? product.price : (parseFloat(product.price) || 25.00),
-          vendor: product.vendor || product.retailer || 'Amazon',
-          imageUrl: product.image || product.main_image || product.images?.[0] || null,
-          category: product.category || 'General',
-          matchScore: 0.8 + (Math.random() * 0.15), // High confidence for real products
-          matchReasons: [`Real product from ${product.vendor || 'marketplace'}`, 'Curated by Nicole AI'],
-          purchaseUrl: product.url || product.product_url || null,
-          availability: 'in_stock'
-        }));
+        const transformedRecommendations: ProductRecommendation[] = zincData.results.map((product: any, index: number) => {
+          // Robust price normalization
+          let priceCandidate: any = product.price;
+          if (priceCandidate == null || priceCandidate === 0) {
+            priceCandidate = product.price_cents ?? product.offer_price_cents ?? product.sale_price_cents ?? product.list_price_cents ?? product.current_price ?? product.list_price ?? product.price_string;
+          }
+          let normalizedPrice = 0;
+          if (typeof priceCandidate === 'number') {
+            normalizedPrice = priceCandidate > 100 ? priceCandidate / 100 : priceCandidate;
+          } else if (typeof priceCandidate === 'string') {
+            const num = parseFloat(priceCandidate.replace(/[$,]/g, ''));
+            normalizedPrice = isNaN(num) ? 0 : (num > 100 ? num / 100 : num);
+          }
+          if (!normalizedPrice || normalizedPrice < 0) normalizedPrice = 0;
+
+          return ({
+            productId: product.product_id || `zinc-${Date.now()}-${index}`,
+            title: product.title || 'Great Gift Item',
+            description: product.description || product.product_description || 'Perfect gift for any occasion',
+            price: normalizedPrice,
+            vendor: product.vendor || product.retailer || 'Amazon',
+            imageUrl: product.image || product.main_image || product.images?.[0] || null,
+            category: product.category || 'General',
+            matchScore: 0.8 + (Math.random() * 0.15), // High confidence for real products
+            matchReasons: [`Real product from ${product.vendor || 'marketplace'}`, 'Curated by Nicole AI'],
+            purchaseUrl: product.url || product.product_url || null,
+            availability: 'in_stock'
+          });
+        }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0).slice(0, 12);
 
         recommendationsData = {
           recommendations: transformedRecommendations,
@@ -142,11 +159,11 @@ const handler = async (req: Request): Promise<Response> => {
         imageUrl: rec.imageUrl,
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
-        addToWishlistUrl: `https://dmkxtkvlispxeqfzlczr.lovableproject.com/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email`
+        addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email`
       }));
 
     // Prepare email data
-    const appUrl = 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
+    const appUrl = request.appBaseUrl || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
     
     const emailData = {
       userFirstName: request.userFirstName,

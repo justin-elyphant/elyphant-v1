@@ -590,37 +590,27 @@ serve(async (req) => {
       // Process and normalize prices (Zinc API returns prices in cents)
       if (filteredResults && Array.isArray(filteredResults)) {
         filteredResults = filteredResults.map((product: any) => {
-          let normalizedPrice = product.price;
-          
-          // Handle different price formats from Zinc API
-          if (typeof product.price === 'number') {
-            if (product.price === 0) {
-              // Handle $0 prices - keep as 0 but don't convert
-              normalizedPrice = 0;
-            } else if (product.price > 100) {
-              // If price is over 100 and appears to be in cents, convert to dollars
-              normalizedPrice = product.price / 100;
-              console.log(`🔄 Price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
-            } else {
-              // Price is already in dollars
-              normalizedPrice = product.price;
-            }
-          } else if (typeof product.price === 'string') {
-            // Handle string prices by parsing and checking if conversion is needed
-            const numericPrice = parseFloat(product.price.replace(/[$,]/g, ''));
-            if (isNaN(numericPrice)) {
-              normalizedPrice = 0; // Default to 0 for invalid prices
-            } else if (numericPrice > 100) {
-              normalizedPrice = numericPrice / 100;
-              console.log(`🔄 Price conversion (string): "${product.title}" - Original: ${product.price} → Converted: $${normalizedPrice}`);
-            } else {
-              normalizedPrice = numericPrice;
-            }
-          } else {
-            // Handle null/undefined prices
-            normalizedPrice = 0;
+          const pickFirst = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== '' && !(typeof v === 'number' && isNaN(v)));
+          let priceCandidate: any = pickFirst(
+            product.price,
+            product.price_cents,
+            product.offer_price_cents,
+            product.sale_price_cents,
+            product.list_price_cents,
+            product.current_price,
+            product.list_price,
+            product.price_string,
+            product.deal_price_cents
+          );
+
+          let normalizedPrice = 0;
+          if (typeof priceCandidate === 'number') {
+            normalizedPrice = priceCandidate > 100 ? priceCandidate / 100 : priceCandidate;
+          } else if (typeof priceCandidate === 'string') {
+            const num = parseFloat(priceCandidate.replace(/[$,]/g, ''));
+            normalizedPrice = isNaN(num) ? 0 : (num > 100 ? num / 100 : num);
           }
-          
+
           return {
             ...product,
             price: normalizedPrice

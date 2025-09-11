@@ -113,7 +113,8 @@ const EmailSystemTester = () => {
             userEmail: testEmail,
             userFirstName: 'Test User',
             birthYear: 1990,
-            interests: ['tech', 'books']
+            interests: ['tech', 'books'],
+            appBaseUrl: window.location.origin
           };
           break;
         case 'gift_invitation':

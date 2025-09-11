@@ -45,9 +45,9 @@ export const useOrderActions = () => {
         try {
           const { data, error } = await supabase.functions.invoke('zinc-order-management', {
             body: {
-              action: 'cancel',
+              action: 'cancel_order',
               orderId: orderId,
-              reason: reason || 'User cancelled'
+              cancellationReason: reason || 'User cancelled'
             }
           });
 

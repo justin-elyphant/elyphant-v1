@@ -94,34 +94,67 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
         </Avatar>
         
         {onImageSelect && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-white p-1 h-8 w-8 rounded-full hover:bg-white/20 transition-colors">
-                  <Camera className={iconSizes[size]} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48">
-                <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Take Photo
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Choose from Library
-                </DropdownMenuItem>
-                {imageUrl && (
-                  <DropdownMenuItem 
-                    onClick={() => onImageSelect?.(new File([], ''))} 
-                    className="cursor-pointer text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Remove Photo
+          <>
+            {/* Always visible camera CTA button */}
+            <div className="absolute -bottom-2 -right-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-full shadow-lg border-2 border-background transition-colors">
+                    <Camera className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Take Photo
                   </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose from Library
+                  </DropdownMenuItem>
+                  {imageUrl && (
+                    <DropdownMenuItem 
+                      onClick={() => onImageSelect?.(new File([], ''))} 
+                      className="cursor-pointer text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove Photo
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Hover overlay (keeping for additional interaction) */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-white p-1 h-8 w-8 rounded-full hover:bg-white/20 transition-colors">
+                    <Camera className={iconSizes[size]} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  <DropdownMenuItem onClick={openCamera} className="cursor-pointer">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Take Photo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={openFileDialog} className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose from Library
+                  </DropdownMenuItem>
+                  {imageUrl && (
+                    <DropdownMenuItem 
+                      onClick={() => onImageSelect?.(new File([], ''))} 
+                      className="cursor-pointer text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove Photo
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )}
       </div>
       

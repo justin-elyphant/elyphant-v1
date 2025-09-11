@@ -167,9 +167,13 @@ const handler = async (req: Request): Promise<Response> => {
           });
         }).filter((rec: ProductRecommendation) => rec.price && rec.price > 0).slice(0, 24);
 
+        console.log(`🔍 Transform step: ${transformedRecommendations.length} products after price filtering`);
+
         // Build final list preferring items with live images
         const withImages = transformedRecommendations.filter(r => !!r.imageUrl);
         const withoutImages = transformedRecommendations.filter(r => !r.imageUrl);
+
+        console.log(`🖼️ Image split: ${withImages.length} with images, ${withoutImages.length} without`);
 
         const categoryFallback = (cat: string) => {
           const c = (cat || '').toLowerCase();
@@ -181,7 +185,9 @@ const handler = async (req: Request): Promise<Response> => {
         };
 
         const completed = [...withImages, ...withoutImages.map(r => ({ ...r, imageUrl: categoryFallback(r.category) }))];
-        const finalRecommendations = completed.slice(0, 12);
+        const finalRecommendations = completed.slice(0, 6);
+
+        console.log(`📦 Final recommendations count: ${finalRecommendations.length}`);
 
         // Ensure we have something to send; otherwise fall back to curated list
         if (!finalRecommendations.length) {
@@ -268,7 +274,7 @@ const handler = async (req: Request): Promise<Response> => {
       {
         body: {
           recipientEmail: request.userEmail,
-          subject: `${request.inviterName ? `${request.inviterName} invited you - ` : ''}Nicole picked these just for you! 🎁`,
+          subject: `Welcome to Elyphant, ${request.userFirstName}! 🎁`,
           htmlContent: generateWelcomeWishlistEmailContent(emailData),
           recipientName: request.userFirstName,
           notificationType: 'welcome_wishlist'

@@ -273,47 +273,75 @@ async function verifyPaymentStatus(orderId, supabase) {
   };
 }
 
-// Classify ZMA errors for retry logic
+// Enhanced ZMA error classification with account-level handling
 function classifyZmaError(zincResult) {
   const errorCode = zincResult.code;
   const errorMessage = zincResult.message || '';
   
-  // ZMA temporarily overloaded - system error, should retry
+  // Account-level errors requiring immediate admin intervention
+  if (errorCode === 'insufficient_zma_balance') {
+    return {
+      type: 'account_critical',
+      shouldRetry: false,
+      requiresAdminIntervention: true,
+      alertLevel: 'critical',
+      retryStrategy: 'manual_only',
+      useZincNativeRetry: false,
+      userFriendlyMessage: 'Account requires attention. Customer service has been notified and will resolve this shortly.',
+      adminMessage: 'ZMA account balance insufficient - requires immediate funding or account verification'
+    };
+  }
+
+  // ZMA temporarily overloaded - use Zinc native retry for better success rate
   if (errorCode === 'zma_temporarily_overloaded') {
     return {
       type: 'retryable_system',
       shouldRetry: true,
+      useZincNativeRetry: true, // Use Zinc's native retry API
       retryDelay: 3600, // 1 hour in seconds
       maxRetries: 3,
-      userFriendlyMessage: 'The ordering system is temporarily at capacity. We\'ll retry your order automatically.'
+      alertLevel: 'warning',
+      userFriendlyMessage: 'The ordering system is temporarily at capacity. We\'ll retry your order automatically using our enhanced retry system.',
+      adminMessage: 'ZMA system overloaded - monitoring retry success rates'
     };
   }
   
-  // Other retryable system errors
-  if (errorCode?.includes('timeout') || errorCode?.includes('server_error') || errorCode?.includes('unavailable')) {
+  // Network/timeout errors - standard retry
+  if (errorCode?.includes('timeout') || errorCode?.includes('server_error') || 
+      errorCode?.includes('unavailable') || errorCode?.includes('network')) {
     return {
       type: 'retryable_system',
       shouldRetry: true,
+      useZincNativeRetry: false,
       retryDelay: 1800, // 30 minutes
       maxRetries: 2,
+      alertLevel: 'info',
       userFriendlyMessage: 'A temporary system issue occurred. We\'ll retry your order automatically.'
     };
   }
   
-  // User errors that should not retry
-  if (errorCode?.includes('invalid') || errorCode?.includes('payment') || errorCode?.includes('address')) {
+  // Payment/address errors - user action required
+  if (errorCode?.includes('invalid') || errorCode?.includes('payment') || 
+      errorCode?.includes('address') || errorCode?.includes('product_not_available')) {
     return {
       type: 'user_error',
       shouldRetry: false,
-      userFriendlyMessage: 'There was an issue with your order details. Please check and try again.'
+      requiresUserAction: true,
+      alertLevel: 'info',
+      userFriendlyMessage: 'There was an issue with your order details. Please check and try again.',
+      adminMessage: `User error requiring attention: ${errorCode} - ${errorMessage}`
     };
   }
   
-  // Default to non-retryable for unknown errors
+  // Unknown errors - conservative approach
   return {
     type: 'unknown',
     shouldRetry: false,
-    userFriendlyMessage: 'An unexpected error occurred with your order.'
+    requiresInvestigation: true,
+    alertLevel: 'warning',
+    useZincNativeRetry: false,
+    userFriendlyMessage: 'An unexpected error occurred with your order. Customer service has been notified.',
+    adminMessage: `Unknown error requiring investigation: ${errorCode} - ${errorMessage}`
   };
 }
 

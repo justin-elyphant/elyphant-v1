@@ -14,16 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { X, AlertTriangle } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { useOrderActions } from "@/hooks/useOrderActions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import OrderCancelDialog from "./OrderCancelDialog";
 
 interface Order {
   id: string;
@@ -31,6 +22,7 @@ interface Order {
   total_amount: number;
   status: string;
   user_id: string;
+  order_number?: string;
 }
 
 interface OrderTableProps {
@@ -48,8 +40,10 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
     return ['pending', 'processing', 'failed'].includes(status.toLowerCase());
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    const success = await cancelOrder(orderId, 'User cancelled via main orders page');
+  const handleCancelOrder = async (reason: string) => {
+    if (!cancellingOrderId) return;
+    
+    const success = await cancelOrder(cancellingOrderId, reason);
     if (success) {
       setCancellingOrderId(null);
       onOrderUpdated?.();
@@ -132,36 +126,22 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
         </TableBody>
       </Table>
       
-      <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Cancel Order
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel order #{cancellingOrderId?.slice(-6)}? This action cannot be undone.
-              {cancellingOrderId && orders.find(o => o.id === cancellingOrderId)?.status === 'processing' && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
-                  <strong>Note:</strong> This order is currently being processed. Cancellation may take some time to complete.
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isProcessing}>
-              Keep Order
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => cancellingOrderId && handleCancelOrder(cancellingOrderId)}
-              disabled={isProcessing}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isProcessing ? 'Cancelling...' : 'Cancel Order'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <OrderCancelDialog
+        isOpen={!!cancellingOrderId}
+        onClose={() => setCancellingOrderId(null)}
+        onConfirm={handleCancelOrder}
+        isProcessing={isProcessing}
+        orderNumber={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.order_number?.split('-').pop() || 
+          cancellingOrderId.slice(-6) : ''
+        }
+        orderStatus={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.status || 'unknown' : 'unknown'
+        }
+        orderAmount={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.total_amount || 0 : 0
+        }
+      />
     </>
   );
 };

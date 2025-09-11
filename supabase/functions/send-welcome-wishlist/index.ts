@@ -63,26 +63,37 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('🤖 Generating recommendations with context:', recommendationContext);
 
-    // Call the existing enhanced-gift-recommendations function
-    const { data: recommendationsData, error: recommendationsError } = await supabase.functions.invoke(
-      'enhanced-gift-recommendations',
-      {
-        body: {
-          searchContext: recommendationContext,
-          recipientIdentifier: request.userId,
-          options: {
-            maxRecommendations: 8,
-            includeExplanations: true,
-            fallbackToGeneric: true,
-            priceRange: [15, 75] // Starter-friendly price range
+    // Try enhanced-gift-recommendations; fall back to generic if it fails
+    let recommendationsData: any = null;
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'enhanced-gift-recommendations',
+        {
+          body: {
+            searchContext: recommendationContext,
+            recipientIdentifier: request.userId,
+            options: {
+              maxRecommendations: 8,
+              includeExplanations: true,
+              fallbackToGeneric: true,
+              priceRange: [15, 75] // Starter-friendly price range
+            }
           }
         }
-      }
-    );
-
-    if (recommendationsError) {
-      console.error('❌ Failed to generate recommendations:', recommendationsError);
-      throw new Error(`Recommendation generation failed: ${recommendationsError.message}`);
+      );
+      if (error) throw error;
+      recommendationsData = data;
+    } catch (recErr: any) {
+      console.warn('⚠️ Recommendation service unavailable, using safe fallback set. Reason:', recErr?.message || recErr);
+      const fallback: ProductRecommendation[] = [
+        { productId: 'generic-1', title: 'Insulated Water Bottle', description: 'Durable, leak-proof bottle for daily use', price: 24.99, vendor: 'Everyday Essentials', imageUrl: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=640&q=80', category: 'Lifestyle', matchScore: 0.72, matchReasons: ['Popular starter pick'] },
+        { productId: 'generic-2', title: 'Cozy Throw Blanket', description: 'Soft, machine-washable knit throw', price: 34.0, vendor: 'Home Comforts', imageUrl: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=640&q=80', category: 'Home', matchScore: 0.7, matchReasons: ['Comfort item loved by many'] },
+        { productId: 'generic-3', title: 'Aromatherapy Candle', description: 'Calming lavender and cedarwood', price: 18.5, vendor: 'Calm Co.', imageUrl: 'https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=640&q=80', category: 'Wellness', matchScore: 0.69, matchReasons: ['Affordable and giftable'] },
+        { productId: 'generic-4', title: 'Wireless Earbuds Case', description: 'Protective case with keychain', price: 15.99, vendor: 'Tech Bits', imageUrl: 'https://images.unsplash.com/photo-1518442073365-7d3b43b2e18d?w=640&q=80', category: 'Tech Accessories', matchScore: 0.66, matchReasons: ['Tech-friendly accessory'] },
+        { productId: 'generic-5', title: 'Ceramic Mug Set', description: 'Minimal mugs, set of 2', price: 22.0, vendor: 'Kitchen Daily', imageUrl: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=640&q=80', category: 'Kitchen', matchScore: 0.68, matchReasons: ['Useful everyday pick'] },
+        { productId: 'generic-6', title: 'Hardcover Journal', description: 'Dotted pages for notes or sketches', price: 16.0, vendor: 'Paperworks', imageUrl: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=640&q=80', category: 'Stationery', matchScore: 0.65, matchReasons: ['Great for organizing thoughts'] }
+      ];
+      recommendationsData = { recommendations: fallback, confidence_score: 0.3, fallback_used: true } as const;
     }
 
     console.log('✅ Generated recommendations:', {

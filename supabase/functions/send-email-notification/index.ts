@@ -14,7 +14,7 @@ interface EmailNotificationRequest {
   subject: string;
   htmlContent: string;
   recipientName?: string;
-  notificationType: 'auto_gift_approval' | 'auto_gift_confirmation' | 'gift_delivered' | 'general';
+  notificationType: 'auto_gift_approval' | 'auto_gift_confirmation' | 'gift_delivered' | 'welcome_wishlist' | 'general';
 }
 
 const handler = async (req: Request): Promise<Response> => {

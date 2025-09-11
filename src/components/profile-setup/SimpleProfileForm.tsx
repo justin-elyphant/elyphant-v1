@@ -74,29 +74,70 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   });
 
   const handleImageSelect = async (file: File) => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found for image upload');
+      return;
+    }
+
+    // Handle remove photo case (empty file)
+    if (!file.name) {
+      console.log('Removing profile image');
+      form.setValue('profile_image', null);
+      setProfileImageUrl(null);
+      toast.success('Profile photo removed');
+      return;
+    }
 
     try {
+      console.log('Starting image upload for file:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        userId: user.id
+      });
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `profile-images/${user.id}/${user.id}-${Date.now()}.${fileExt}`;
+      
+      console.log('Uploading to path:', fileName);
       
       const { data, error } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (error) {
-        console.error('Error uploading image:', error);
+        console.error('Storage upload error:', error);
         toast.error('Failed to upload image');
         return;
       }
 
+      console.log('Upload successful, getting public URL for:', fileName);
+      
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
+      console.log('Generated public URL:', publicUrl);
+
+      // Test if the URL is accessible
+      try {
+        const testResponse = await fetch(publicUrl, { method: 'HEAD' });
+        if (!testResponse.ok) {
+          throw new Error(`Image not accessible: ${testResponse.status}`);
+        }
+        console.log('Image URL verified as accessible');
+      } catch (urlError) {
+        console.error('Generated URL is not accessible:', urlError);
+        toast.error('Image uploaded but not accessible. Please try again.');
+        return;
+      }
+
       form.setValue('profile_image', publicUrl);
       setProfileImageUrl(publicUrl);
-      toast.success('Profile photo uploaded!');
+      toast.success('Profile photo uploaded successfully!');
     } catch (error) {
       console.error('Error uploading profile image:', error);
       toast.error('Failed to upload profile photo');

@@ -189,12 +189,12 @@ const handler = async (req: Request): Promise<Response> => {
         // If we still have fewer than 6, top up with curated items
         if (finalRecommendations.length < 6) {
           const curatedTopUp: ProductRecommendation[] = [
-            { productId: 'curated-1', title: 'Premium Insulated Water Bottle', description: 'Stainless steel, keeps drinks cold 24hrs/hot 12hrs', price: 29.99, vendor: 'Hydro Flask', imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=640&q=80', category: 'Lifestyle', matchScore: 0.82, matchReasons: ['Curated top-up'] },
-            { productId: 'curated-2', title: 'Luxury Weighted Throw Blanket', description: 'Ultra-soft bamboo fabric, reduces anxiety', price: 45.00, vendor: 'YnM', imageUrl: 'https://images.unsplash.com/photo-1559123830-6ec229bc5ba7?w=640&q=80', category: 'Home', matchScore: 0.8, matchReasons: ['Curated top-up'] },
-            { productId: 'curated-3', title: 'Organic Soy Candle Set', description: 'Hand-poured with essential oils, 40hr burn time', price: 32.50, vendor: 'Paddywax', imageUrl: 'https://images.unsplash.com/photo-1602874801006-2b5e0b9a9b3e?w=640&q=80', category: 'Wellness', matchScore: 0.79, matchReasons: ['Curated top-up'] },
-            { productId: 'curated-4', title: 'Wireless Charging Pad', description: 'Fast charging for all Qi-enabled devices', price: 24.99, vendor: 'Anker', imageUrl: 'https://images.unsplash.com/photo-1609592167934-b5da2bc5da84?w=640&q=80', category: 'Tech', matchScore: 0.76, matchReasons: ['Curated top-up'] },
-            { productId: 'curated-5', title: 'Artisan Ceramic Mug Set', description: 'Handcrafted stoneware, microwave safe', price: 28.00, vendor: 'East Fork', imageUrl: 'https://images.unsplash.com/photo-1524511119869-32e3a0e24733?w=640&q=80', category: 'Kitchen', matchScore: 0.78, matchReasons: ['Curated top-up'] },
-            { productId: 'curated-6', title: 'Bullet Journal Starter Kit', description: 'Dotted notebook with accessories', price: 19.99, vendor: 'Rocketbook', imageUrl: 'https://images.unsplash.com/photo-1526052694-c37d4eb5a8e1?w=640&q=80', category: 'Stationery', matchScore: 0.75, matchReasons: ['Curated top-up'] }
+            { productId: 'curated-1', title: 'Premium Insulated Water Bottle', description: 'Stainless steel, keeps drinks cold 24hrs/hot 12hrs', price: 29.99, vendor: 'Hydro Flask', imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=640&h=640&q=80', category: 'Lifestyle', matchScore: 0.82, matchReasons: ['Curated top-up'] },
+            { productId: 'curated-2', title: 'Luxury Weighted Throw Blanket', description: 'Ultra-soft bamboo fabric, reduces anxiety', price: 45.00, vendor: 'YnM', imageUrl: 'https://images.unsplash.com/photo-1559123830-6ec229bc5ba7?auto=format&fit=crop&w=640&h=640&q=80', category: 'Home', matchScore: 0.8, matchReasons: ['Curated top-up'] },
+            { productId: 'curated-3', title: 'Organic Soy Candle Set', description: 'Hand-poured with essential oils, 40hr burn time', price: 32.50, vendor: 'Paddywax', imageUrl: 'https://images.unsplash.com/photo-1602874801006-2b5e0b9a9b3e?auto=format&fit=crop&w=640&h=640&q=80', category: 'Wellness', matchScore: 0.79, matchReasons: ['Curated top-up'] },
+            { productId: 'curated-4', title: 'Wireless Charging Pad', description: 'Fast charging for all Qi-enabled devices', price: 24.99, vendor: 'Anker', imageUrl: 'https://images.unsplash.com/photo-1609592167934-b5da2bc5da84?auto=format&fit=crop&w=640&h=640&q=80', category: 'Tech', matchScore: 0.76, matchReasons: ['Curated top-up'] },
+            { productId: 'curated-5', title: 'Artisan Ceramic Mug Set', description: 'Handcrafted stoneware, microwave safe', price: 28.00, vendor: 'East Fork', imageUrl: 'https://images.unsplash.com/photo-1524511119869-32e3a0e24733?auto=format&fit=crop&w=640&h=640&q=80', category: 'Kitchen', matchScore: 0.78, matchReasons: ['Curated top-up'] },
+            { productId: 'curated-6', title: 'Bullet Journal Starter Kit', description: 'Dotted notebook with accessories', price: 19.99, vendor: 'Rocketbook', imageUrl: 'https://images.unsplash.com/photo-1526052694-c37d4eb5a8e1?auto=format&fit=crop&w=640&h=640&q=80', category: 'Stationery', matchScore: 0.75, matchReasons: ['Curated top-up'] }
           ];
 
           for (const item of curatedTopUp) {
@@ -228,12 +228,12 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Fallback to high-quality curated products with real images
       const fallback: ProductRecommendation[] = [
-        { productId: 'curated-1', title: 'Premium Insulated Water Bottle', description: 'Stainless steel, keeps drinks cold 24hrs/hot 12hrs', price: 29.99, vendor: 'Hydro Flask', imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=640&q=80', category: 'Lifestyle', matchScore: 0.82, matchReasons: ['Premium quality', 'High user ratings'] },
-        { productId: 'curated-2', title: 'Luxury Weighted Throw Blanket', description: 'Ultra-soft bamboo fabric, reduces anxiety', price: 45.00, vendor: 'YnM', imageUrl: 'https://images.unsplash.com/photo-1559123830-6ec229bc5ba7?w=640&q=80', category: 'Home', matchScore: 0.8, matchReasons: ['Wellness benefits', 'Premium materials'] },
-        { productId: 'curated-3', title: 'Organic Soy Candle Set', description: 'Hand-poured with essential oils, 40hr burn time', price: 32.50, vendor: 'Paddywax', imageUrl: 'https://images.unsplash.com/photo-1602874801006-2b5e0b9a9b3e?w=640&q=80', category: 'Wellness', matchScore: 0.79, matchReasons: ['Eco-friendly', 'Artisan quality'] },
-        { productId: 'curated-4', title: 'Wireless Charging Pad', description: 'Fast charging for all Qi-enabled devices', price: 24.99, vendor: 'Anker', imageUrl: 'https://images.unsplash.com/photo-1609592167934-b5da2bc5da84?w=640&q=80', category: 'Tech', matchScore: 0.76, matchReasons: ['Universal compatibility', 'Trusted brand'] },
-        { productId: 'curated-5', title: 'Artisan Ceramic Mug Set', description: 'Handcrafted stoneware, microwave safe', price: 28.00, vendor: 'East Fork', imageUrl: 'https://images.unsplash.com/photo-1524511119869-32e3a0e24733?w=640&q=80', category: 'Kitchen', matchScore: 0.78, matchReasons: ['Artisan crafted', 'Daily usability'] },
-        { productId: 'curated-6', title: 'Bullet Journal Starter Kit', description: 'Dotted notebook with accessories', price: 19.99, vendor: 'Rocketbook', imageUrl: 'https://images.unsplash.com/photo-1526052694-c37d4eb5a8e1?w=640&q=80', category: 'Stationery', matchScore: 0.75, matchReasons: ['Productivity tool', 'Creative outlet'] }
+        { productId: 'curated-1', title: 'Premium Insulated Water Bottle', description: 'Stainless steel, keeps drinks cold 24hrs/hot 12hrs', price: 29.99, vendor: 'Hydro Flask', imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=640&h=640&q=80', category: 'Lifestyle', matchScore: 0.82, matchReasons: ['Premium quality', 'High user ratings'] },
+        { productId: 'curated-2', title: 'Luxury Weighted Throw Blanket', description: 'Ultra-soft bamboo fabric, reduces anxiety', price: 45.00, vendor: 'YnM', imageUrl: 'https://images.unsplash.com/photo-1559123830-6ec229bc5ba7?auto=format&fit=crop&w=640&h=640&q=80', category: 'Home', matchScore: 0.8, matchReasons: ['Wellness benefits', 'Premium materials'] },
+        { productId: 'curated-3', title: 'Organic Soy Candle Set', description: 'Hand-poured with essential oils, 40hr burn time', price: 32.50, vendor: 'Paddywax', imageUrl: 'https://images.unsplash.com/photo-1602874801006-2b5e0b9a9b3e?auto=format&fit=crop&w=640&h=640&q=80', category: 'Wellness', matchScore: 0.79, matchReasons: ['Eco-friendly', 'Artisan quality'] },
+        { productId: 'curated-4', title: 'Wireless Charging Pad', description: 'Fast charging for all Qi-enabled devices', price: 24.99, vendor: 'Anker', imageUrl: 'https://images.unsplash.com/photo-1609592167934-b5da2bc5da84?auto=format&fit=crop&w=640&h=640&q=80', category: 'Tech', matchScore: 0.76, matchReasons: ['Universal compatibility', 'Trusted brand'] },
+        { productId: 'curated-5', title: 'Artisan Ceramic Mug Set', description: 'Handcrafted stoneware, microwave safe', price: 28.00, vendor: 'East Fork', imageUrl: 'https://images.unsplash.com/photo-1524511119869-32e3a0e24733?auto=format&fit=crop&w=640&h=640&q=80', category: 'Kitchen', matchScore: 0.78, matchReasons: ['Artisan crafted', 'Daily usability'] },
+        { productId: 'curated-6', title: 'Bullet Journal Starter Kit', description: 'Dotted notebook with accessories', price: 19.99, vendor: 'Rocketbook', imageUrl: 'https://images.unsplash.com/photo-1526052694-c37d4eb5a8e1?auto=format&fit=crop&w=640&h=640&q=80', category: 'Stationery', matchScore: 0.75, matchReasons: ['Productivity tool', 'Creative outlet'] }
       ];
       recommendationsData = { recommendations: fallback, confidence_score: 0.65, fallback_used: true, source: 'curated_fallback' };
     }
@@ -265,9 +265,14 @@ const handler = async (req: Request): Promise<Response> => {
         imageUrl: (() => {
           const src = rec.imageUrl && rec.imageUrl !== 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop' 
             ? rec.imageUrl 
-            : `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80`;
-          const proxied = `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/image-proxy?url=${encodeURIComponent(src)}`;
-          return proxied;
+            : `https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&h=400&q=80`;
+          try {
+            const host = new URL(src).host;
+            const shouldProxy = ['m.media-amazon.com','images-na.ssl-images-amazon.com','images.amazon.com'].includes(host);
+            return shouldProxy 
+              ? `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/image-proxy?url=${encodeURIComponent(src)}`
+              : src;
+          } catch { return src; }
         })(),
         category: rec.category,
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',

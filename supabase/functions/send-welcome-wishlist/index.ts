@@ -148,6 +148,9 @@ const handler = async (req: Request): Promise<Response> => {
       confidence: recommendationsData?.confidence_score || 0
     });
 
+    // Prepare app URL
+    const appUrl = request.appBaseUrl || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
+    
     // Transform recommendations into email format
     const emailRecommendations = (recommendationsData?.recommendations || [])
       .slice(0, 6) // Show top 6 recommendations
@@ -161,10 +164,8 @@ const handler = async (req: Request): Promise<Response> => {
         matchReason: rec.matchReasons?.[0] || 'Highly rated and popular choice',
         addToWishlistUrl: `${appUrl}/wishlist/add?productId=${rec.productId}&title=${encodeURIComponent(rec.title)}&price=${rec.price}&source=welcome_email`
       }));
-
-    // Prepare email data
-    const appUrl = request.appBaseUrl || 'https://dmkxtkvlispxeqfzlczr.lovableproject.com';
     
+    // Prepare email data
     const emailData = {
       userFirstName: request.userFirstName,
       userEmail: request.userEmail,

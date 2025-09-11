@@ -24,6 +24,11 @@ const profileValidationSchema = z.object({
     street: z.string().max(255, "Street too long").optional(),
     zipCode: z.string().max(20, "ZIP code too long").optional()
   }).nullable().optional(),
+  // Address verification fields
+  address_verified: z.boolean().optional(),
+  address_verification_method: z.enum(['automatic', 'user_confirmed', 'pending_verification', 'profile_setup']).optional(),
+  address_verified_at: z.string().datetime().nullable().optional(),
+  address_last_updated: z.string().datetime().nullable().optional(),
   interests: z.array(z.string().max(50, "Interest name too long")).optional(),
   gift_preferences: z.array(z.object({
     category: z.string().max(50, "Category name too long"),

@@ -1,5 +1,43 @@
 
 import { Profile } from "@/types/profile";
+import { z } from "zod";
+
+// Address verification fields schema
+const addressVerificationSchema = z.object({
+  address_verified: z.boolean().optional(),
+  address_verification_method: z.enum(['automatic', 'user_confirmed', 'pending_verification', 'profile_setup']).optional(),
+  address_verified_at: z.string().datetime().nullable().optional(),
+  address_last_updated: z.string().datetime().nullable().optional(),
+});
+
+// Profile data schema that preserves verification fields
+const profileDataSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().optional(),
+  bio: z.string().optional(),
+  dob: z.string().optional(),
+  birth_year: z.number().optional(),
+  shipping_address: z.any().optional(),
+  gift_preferences: z.array(z.any()).optional(),
+  important_dates: z.array(z.any()).optional(),
+  interests: z.array(z.string()).optional(),
+  profile_image: z.string().nullable().optional(),
+  data_sharing_settings: z.any().optional(),
+}).merge(addressVerificationSchema);
+
+export type ValidatedProfileData = z.infer<typeof profileDataSchema>;
+
+/**
+ * Validates and preserves profile data including address verification fields
+ */
+export const validateAndPreserveProfileData = (data: any): ValidatedProfileData => {
+  try {
+    return profileDataSchema.parse(data);
+  } catch (error) {
+    console.warn('Profile data validation failed, using raw data:', error);
+    return data; // Fallback to raw data if validation fails
+  }
+};
 
 /**
  * Validates profile data consistency and logs warnings for common issues

@@ -337,14 +337,14 @@ serve(async (req) => {
       throw new Error(`Invalid JSON: ${parseError.message}`);
     }
 
-    const { orderId, isTestMode, debugMode, retryAttempt } = body;
+    const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate } = body;
     
     if (!orderId) {
       console.log('❌ No order ID provided');
       throw new Error('Order ID is required');
     }
 
-    console.log(`🔍 Processing order: ${orderId}, test mode: ${isTestMode}, debug: ${debugMode}, retry: ${retryAttempt}`);
+    console.log(`🔍 Processing order: ${orderId}, test mode: ${isTestMode}, debug: ${debugMode}, retry: ${retryAttempt}, scheduled: ${scheduledProcessing}`);
 
     // Step 2: Create Supabase client
     console.log('📥 Step 2: Creating Supabase client...');
@@ -403,6 +403,26 @@ serve(async (req) => {
     }
 
     console.log(`✅ Order found: ${orderData.order_number}`);
+    
+    // Log scheduled delivery information if present
+    if (scheduledDeliveryDate || orderData.scheduled_delivery_date) {
+      const deliveryDate = scheduledDeliveryDate || orderData.scheduled_delivery_date;
+      const currentDate = new Date();
+      const scheduledDate = new Date(deliveryDate);
+      const daysDifference = Math.ceil((scheduledDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      console.log(`📅 [ZMA-ORDER] Scheduled delivery processing:`, {
+        scheduled_delivery_date: deliveryDate,
+        days_until_delivery: daysDifference,
+        processing_trigger: scheduledProcessing ? 'daily_scheduler' : 'immediate',
+        optimal_timing: daysDifference <= 4 ? 'YES' : 'EARLY'
+      });
+      
+      // Validation: Don't process orders too early unless forced
+      if (!scheduledProcessing && daysDifference > 6) {
+        console.warn(`⚠️ [ZMA-ORDER] Processing order ${daysDifference} days early - may not align with delivery window`);
+      }
+    }
 
     // Step 5: Get order items
     console.log('📥 Step 5: Getting order items...');

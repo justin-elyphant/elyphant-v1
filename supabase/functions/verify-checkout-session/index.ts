@@ -104,15 +104,64 @@ serve(async (req) => {
           .insert(auditEntry)
       }
 
-      // Trigger ZMA order processing after successful payment
+      // Conditional ZMA order processing after successful payment
       if (order) {
         try {
+          // Check if order has scheduled delivery date and if it's more than 4 days away
+          const currentDate = new Date()
+          const scheduledDate = order.scheduled_delivery_date ? new Date(order.scheduled_delivery_date) : null
+          const daysDifference = scheduledDate ? Math.ceil((scheduledDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0
+          
+          console.log(`[VERIFY-CHECKOUT] Order ${order.id} scheduled delivery check:`, {
+            scheduled_delivery_date: order.scheduled_delivery_date,
+            days_until_delivery: daysDifference,
+            should_schedule: daysDifference > 4
+          })
+
+          if (scheduledDate && daysDifference > 4) {
+            // Schedule for later processing - set status to 'scheduled'
+            console.log(`📅 [VERIFY-CHECKOUT] Order ${order.id} scheduled for delivery in ${daysDifference} days - marking as scheduled`)
+            
+            const { error: scheduleError } = await supabase
+              .from('orders')
+              .update({
+                status: 'scheduled',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', order.id)
+
+            if (scheduleError) {
+              console.error('Failed to update order to scheduled status:', scheduleError)
+              // Fall through to immediate processing if scheduling fails
+            } else {
+              console.log(`✅ [VERIFY-CHECKOUT] Order ${order.id} successfully scheduled for future processing`)
+              // Successfully scheduled - don't process now
+              return new Response(
+                JSON.stringify({ 
+                  success: true,
+                  order_number: order?.order_number,
+                  payment_status: session.payment_status,
+                  scheduled: true,
+                  processing_date: new Date(scheduledDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                }),
+                { 
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  status: 200,
+                },
+              )
+            }
+          }
+
+          // Process immediately (no scheduled date OR scheduled date <= 4 days away OR scheduling failed)
+          console.log(`🚀 [VERIFY-CHECKOUT] Processing order ${order.id} immediately`)
+          
           // Call process-zma-order function (zinc_api disabled)
           const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zma-order', {
             body: {
               orderId: order.id,
               isTestMode: false,
-              debugMode: false
+              debugMode: false,
+              scheduledDeliveryDate: order.scheduled_delivery_date // Pass scheduled date to ZMA
             }
           })
 

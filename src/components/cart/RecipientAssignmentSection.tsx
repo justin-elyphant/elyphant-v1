@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CalendarDays, Gift, Users, Plus, Calendar, Clock } from 'lucide-react';
+import { CalendarDays, Gift, Users, Plus, Calendar, Clock, Search, UserPlus } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { RecipientAssignment } from '@/types/recipient';
 import { toast } from 'sonner';
+import { useFriendSearch } from '@/hooks/useFriendSearch';
 
 interface Connection {
   id: string;
@@ -69,11 +70,16 @@ const RecipientAssignmentSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [showFindMoreRecipients, setShowFindMoreRecipients] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [deliveryStates, setDeliveryStates] = useState<{[groupId: string]: {
     type: 'now' | 'scheduled';
     scheduledDate?: string;
     scheduledTime?: string;
   }}>({});
+
+  // Friend search hook for finding new recipients
+  const { results: searchResults, isLoading: searchLoading, searchForFriends, sendFriendRequest } = useFriendSearch();
 
   useEffect(() => {
     if (user) {
@@ -134,6 +140,37 @@ const RecipientAssignmentSection: React.FC = () => {
     
     setSelectedItems([]);
     setShowAssignmentModal(false);
+    setShowFindMoreRecipients(false);
+    setSearchQuery('');
+  };
+
+  const handleAssignToSearchResult = async (friendId: string, friendName: string, canGift: boolean) => {
+    if (!canGift) {
+      toast.error('Cannot send gifts to this user due to privacy settings');
+      return;
+    }
+
+    selectedItems.forEach(productId => {
+      const recipientAssignment: RecipientAssignment = {
+        connectionId: friendId,
+        connectionName: friendName,
+        deliveryGroupId: crypto.randomUUID(),
+      };
+      assignItemToRecipient(productId, recipientAssignment);
+    });
+    
+    toast.success(`Items assigned to ${friendName}`);
+    setSelectedItems([]);
+    setShowAssignmentModal(false);
+    setShowFindMoreRecipients(false);
+    setSearchQuery('');
+  };
+
+  const handleSearchForRecipients = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length >= 2) {
+      await searchForFriends(query);
+    }
   };
 
   const handleDeliveryTypeChange = (groupId: string, type: 'now' | 'scheduled') => {
@@ -399,34 +436,124 @@ const RecipientAssignmentSection: React.FC = () => {
       {/* Assignment Modal */}
       {showAssignmentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
+          <Card className="w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
             <CardHeader>
               <CardTitle>Assign Items to Recipient</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {connections.map(connection => (
-                  <Button
-                    key={connection.id}
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleAssignToRecipient(connection.id, connection.name)}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    <div className="text-left">
-                      <div className="font-medium">{connection.name}</div>
-                      <div className="text-sm text-muted-foreground capitalize">
-                        {connection.relationship_type}
-                      </div>
+            <CardContent className="overflow-y-auto">
+              {/* Existing Connections */}
+              {!showFindMoreRecipients && (
+                <>
+                  <div className="space-y-3">
+                    {connections.map(connection => (
+                      <Button
+                        key={connection.id}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleAssignToRecipient(connection.id, connection.name)}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="font-medium">{connection.name}</div>
+                          <div className="text-sm text-muted-foreground capitalize">
+                            {connection.relationship_type}
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t pt-3 mt-3">
+                    <Button 
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => setShowFindMoreRecipients(true)}
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Find More People to Gift
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Search for New Recipients */}
+              {showFindMoreRecipients && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Search for People</Label>
+                    <Input
+                      placeholder="Search by name, username, or email..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchForRecipients(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {searchLoading && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      Searching...
                     </div>
+                  )}
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {searchResults.map(friend => (
+                        <Button
+                          key={friend.id}
+                          variant="outline"
+                          className="w-full justify-start p-3"
+                          onClick={() => handleAssignToSearchResult(friend.id, friend.name, friend.canGift || false)}
+                          disabled={!friend.canGift}
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Users className="h-4 w-4" />
+                            </div>
+                            <div className="text-left flex-1">
+                              <div className="font-medium">{friend.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                @{friend.username}
+                                {friend.connectionStatus === 'connected' && ' • Connected'}
+                                {friend.connectionStatus === 'pending' && ' • Pending Connection'}
+                                {!friend.canGift && ' • Cannot send gifts'}
+                              </div>
+                            </div>
+                            {friend.connectionStatus === 'none' && friend.canGift && (
+                              <UserPlus className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchQuery.length >= 2 && !searchLoading && searchResults.length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      No users found matching "{searchQuery}"
+                    </div>
+                  )}
+
+                  <Button 
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => {
+                      setShowFindMoreRecipients(false);
+                      setSearchQuery('');
+                    }}
+                  >
+                    ← Back to Connections
                   </Button>
-                ))}
-              </div>
+                </div>
+              )}
               
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2 mt-4 pt-4 border-t">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowAssignmentModal(false)}
+                  onClick={() => {
+                    setShowAssignmentModal(false);
+                    setShowFindMoreRecipients(false);
+                    setSearchQuery('');
+                  }}
                   className="flex-1"
                 >
                   Cancel

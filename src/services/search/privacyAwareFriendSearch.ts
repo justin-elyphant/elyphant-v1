@@ -16,6 +16,7 @@ export interface FilteredProfile {
   lastActive?: string;
   privacyLevel?: 'public' | 'limited' | 'private';
   isPrivacyRestricted?: boolean;
+  canGift?: boolean;
 }
 
 export interface PrivacyAwareFriendSearchResult {
@@ -25,6 +26,7 @@ export interface PrivacyAwareFriendSearchResult {
   profile_image?: string;
   bio?: string;
   can_connect: boolean;
+  can_gift: boolean;
   connection_policy: string;
 }
 
@@ -260,6 +262,8 @@ export const searchFriendsWithPrivacy = async (
         const userPrivacy = privacySettings?.find(ps => ps.user_id === profile.id);
         const connectionPolicy = userPrivacy?.allow_connection_requests_from || 'everyone';
         
+        const connectionStatus = statusMap.get(profile.id) || 'none';
+        
         // Determine if current user can connect based on privacy settings
         let canConnect = true;
         if (connectionPolicy === 'nobody') {
@@ -269,7 +273,9 @@ export const searchFriendsWithPrivacy = async (
           canConnect = false;
         }
 
-        const connectionStatus = statusMap.get(profile.id) || 'none';
+        // Determine if current user can gift (more permissive than connection)
+        // Can gift to anyone who isn't blocked and has searchable profile
+        const canGift = connectionStatus !== 'blocked';
         const privacyLevel = connectionPolicy === 'nobody' ? 'private' : 
                            connectionPolicy === 'friends_only' ? 'limited' : 'public';
 
@@ -283,7 +289,8 @@ export const searchFriendsWithPrivacy = async (
           connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
           mutualConnections: 0, // TODO: Implement mutual connections count
           privacyLevel: privacyLevel as 'public' | 'limited' | 'private',
-          isPrivacyRestricted: !canConnect
+          isPrivacyRestricted: !canConnect,
+          canGift: canGift
         };
       });
 
@@ -307,6 +314,7 @@ export const privacyAwareFriendSearch = async (
     profile_image: profile.profile_image,
     bio: profile.bio,
     can_connect: !profile.isPrivacyRestricted,
+    can_gift: profile.canGift || false,
     connection_policy: profile.privacyLevel === 'private' ? 'nobody' : 
                       profile.privacyLevel === 'limited' ? 'friends_only' : 'everyone'
   }));

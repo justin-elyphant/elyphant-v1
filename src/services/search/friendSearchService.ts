@@ -14,6 +14,7 @@ export interface FriendSearchResult {
   lastActive?: string;
   privacyLevel?: 'public' | 'limited' | 'private';
   isPrivacyRestricted?: boolean;
+  canGift?: boolean;
 }
 
 export const searchFriends = async (query: string, currentUserId?: string): Promise<FriendSearchResult[]> => {
@@ -37,7 +38,8 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
       mutualConnections: profile.mutualConnections,
       lastActive: profile.lastActive,
       privacyLevel: profile.privacyLevel,
-      isPrivacyRestricted: profile.isPrivacyRestricted
+      isPrivacyRestricted: profile.isPrivacyRestricted,
+      canGift: profile.canGift
     }));
 
     console.log(`Found ${results.length} friend results for query: "${query}"`);

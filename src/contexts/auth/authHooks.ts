@@ -4,6 +4,9 @@ import { toast } from "sonner";
 export const useAuthFunctions = (user: any) => {
   const signOut = async () => {
     try {
+      // Ensure logged-out view starts with an empty guest cart (preserve user cart)
+      localStorage.removeItem('guest_cart');
+      localStorage.removeItem('guest_cart_version');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
@@ -21,14 +24,8 @@ export const useAuthFunctions = (user: any) => {
       localStorage.removeItem("onboardingStep");
       localStorage.removeItem("signupFlowActive");
       
-      // Clear cart data for the current user
-      if (user?.id) {
-        const userCartKey = `cart_${user.id}`;
-        localStorage.removeItem(userCartKey);
-        localStorage.removeItem(`${userCartKey}_version`);
-        console.log(`[AUTH] Cleared cart data for user: ${userCartKey}`);
-      }
-      
+      // Cart persistence: preserve per-user cart. UnifiedPaymentService switches to guest cart on sign-out.
+
       // Auth state change will trigger navigation in Router context
     } catch (error: any) {
       console.error("Error signing out:", error.message);

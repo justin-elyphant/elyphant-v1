@@ -14,6 +14,7 @@ import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 import { EmployeeRouteGuard } from "./components/auth/EmployeeRouteGuard";
 import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandler";
 import { Toaster } from "@/components/ui/toaster";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 
 // Immediate load for critical pages
@@ -25,8 +26,13 @@ import MobileBottomNavigation from "./components/navigation/MobileBottomNavigati
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
 
-// Lazy load non-critical pages
-const Cart = lazy(() => import("./pages/Cart"));
+// Lazy load non-critical pages with retry logic
+const Cart = lazy(() => import("./pages/Cart").catch(() => {
+  // If dynamic import fails, force reload to clear cache
+  console.log('Failed to load Cart module, forcing page reload...');
+  window.location.reload();
+  return { default: () => null }; // Return empty component as fallback
+}));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
@@ -192,11 +198,15 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">{/* Import at top level - inside Router context */}
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      }>
+      <ErrorBoundary>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+          </div>
+        }>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -277,7 +287,8 @@ function AppContent() {
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />
         </Routes>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
       <MobileBottomNavigation />
       <Toaster />
       

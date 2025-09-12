@@ -207,7 +207,6 @@ serve(async (req) => {
     } else if (user && !validatedUserId) {
       console.warn('⚠️ User authentication failed UUID validation, proceeding as guest')
     }
-    }
 
     return new Response(
       JSON.stringify({ 

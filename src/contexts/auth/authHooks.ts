@@ -21,6 +21,14 @@ export const useAuthFunctions = (user: any) => {
       localStorage.removeItem("onboardingStep");
       localStorage.removeItem("signupFlowActive");
       
+      // Clear cart data for the current user
+      if (user?.id) {
+        const userCartKey = `cart_${user.id}`;
+        localStorage.removeItem(userCartKey);
+        localStorage.removeItem(`${userCartKey}_version`);
+        console.log(`[AUTH] Cleared cart data for user: ${userCartKey}`);
+      }
+      
       // Auth state change will trigger navigation in Router context
     } catch (error: any) {
       console.error("Error signing out:", error.message);

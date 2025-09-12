@@ -93,6 +93,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     if (!user) {
       return (
         <Button 
+          type="button"
           size="sm" 
           variant="outline" 
           onClick={() => navigate(`/signin?redirect=${encodeURIComponent(window.location.pathname)}`)}
@@ -107,14 +108,14 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     switch (connectionStatus) {
       case 'connected':
         return (
-          <Button size="sm" variant="outline" disabled className="border-green-200 bg-green-50 text-green-700">
+          <Button type="button" size="sm" variant="outline" disabled className="border-green-200 bg-green-50 text-green-700">
             <Check className="h-4 w-4 mr-1" />
             Connected
           </Button>
         );
       case 'pending':
         return (
-          <Button size="sm" variant="outline" disabled className="border-amber-200 bg-amber-50 text-amber-700">
+          <Button type="button" size="sm" variant="outline" disabled className="border-amber-200 bg-amber-50 text-amber-700">
             <Clock className="h-4 w-4 mr-1" />
             Pending
           </Button>
@@ -123,7 +124,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
         // Priority 2: Only check permissions for non-connected users
         if (!permissions.canSendRequest) {
           return (
-            <Button size="sm" variant="outline" disabled title={permissions.restrictionReason}>
+            <Button type="button" size="sm" variant="outline" disabled title={permissions.restrictionReason}>
               <Lock className="h-4 w-4 mr-1" />
               Restricted
             </Button>
@@ -133,6 +134,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
         // Priority 3: Show connect button
         return (
           <Button
+            type="button"
             size="sm"
             variant="outline"
             onClick={handleSendRequest}
@@ -199,6 +201,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
         {getConnectionButton()}
         {onViewProfile && permissions.canViewProfile && (
           <Button
+            type="button"
             size="sm"
             variant="ghost"
             onClick={() => onViewProfile(friend.username || friend.id)}

@@ -50,7 +50,7 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
                 key={friend.id}
                 friend={friend}
                 onSendRequest={onSendFriendRequest}
-                onViewProfile={() => onFriendSelect(friend)}
+                onViewProfile={(_id) => onFriendSelect(friend)}
               />
             ))}
           </div>

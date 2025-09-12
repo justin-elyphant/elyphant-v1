@@ -49,15 +49,8 @@ export interface ShippingInfo {
   country: string;
 }
 
-// CRITICAL: Gift options interface
-export interface GiftOptions {
-  isGift: boolean;
-  recipientName: string;
-  giftMessage: string;
-  giftWrapping: boolean;
-  isSurpriseGift: boolean;
-  scheduledDeliveryDate?: string;
-}
+// Import unified interface
+import { GiftOptions } from "@/types/gift-options";
 
 // CRITICAL: Complete checkout data interface
 export interface CheckoutData {
@@ -180,6 +173,8 @@ export const useCheckoutState = () => {
     giftMessage: "",
     giftWrapping: false,
     isSurpriseGift: false,
+    scheduleDelivery: false,
+    sendGiftMessage: false,
     scheduledDeliveryDate: ""
   });
 

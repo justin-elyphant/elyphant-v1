@@ -19,7 +19,7 @@ import { PersonalInfoFields } from "./PersonalInfoFields";
 import { AddressFields } from "./AddressFields";
 import { z } from "zod";
 import ContextualHelp from "@/components/help/ContextualHelp";
-import { GiftOptions } from "@/components/marketplace/checkout/GiftScheduling";
+import { GiftOptions } from "@/types/gift-options";
 
 export type RecipientInfoFormData = z.infer<typeof formSchema>;
 
@@ -54,9 +54,11 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
   // Gift scheduling options state with proper boolean types
   const [giftScheduling, setGiftScheduling] = React.useState<GiftOptions>({
     isGift: true,
+    recipientName: "",
+    giftMessage: "",
+    isSurpriseGift: false,
     scheduleDelivery: false,
-    sendGiftMessage: false,
-    isSurprise: false
+    sendGiftMessage: false
   });
 
   const handleSubmit = async (data: RecipientInfoFormData) => {

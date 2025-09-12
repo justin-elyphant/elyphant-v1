@@ -37,7 +37,8 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
+import { ShippingInfo } from "@/components/marketplace/checkout/useCheckoutState";
+import { GiftOptions } from "@/types/gift-options";
 import { CartItem } from "@/contexts/CartContext";
 import { DeliveryGroup } from "@/types/recipient";
 import { addressService } from "./addressService";

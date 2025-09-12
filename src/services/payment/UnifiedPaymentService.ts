@@ -52,7 +52,8 @@ import { paymentAnalyticsService, enhancedPaymentErrorHandler } from "./PaymentA
 import { Product } from "@/types/product";
 import { CartItem } from "@/contexts/CartContext";
 import { RecipientAssignment, DeliveryGroup } from "@/types/recipient";
-import { ShippingInfo, GiftOptions } from "@/components/marketplace/checkout/useCheckoutState";
+import { ShippingInfo } from "@/components/marketplace/checkout/useCheckoutState";
+import { GiftOptions } from "@/types/gift-options";
 import { toast } from "sonner";
 import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 

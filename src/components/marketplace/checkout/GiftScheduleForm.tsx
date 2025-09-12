@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Gift, Calendar, Heart, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GiftOptions } from "./useCheckoutState";
+import { GiftOptions } from "@/types/gift-options";
 
 interface GiftScheduleFormProps {
   giftOptions: GiftOptions;

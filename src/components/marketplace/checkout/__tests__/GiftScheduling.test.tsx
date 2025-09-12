@@ -7,6 +7,9 @@ describe('GiftScheduling Component (Checkout)', () => {
   const defaultProps = {
     giftOptions: {
       isGift: false,
+      recipientName: "",
+      giftMessage: "",
+      isSurpriseGift: false,
       scheduleDelivery: false,
       sendGiftMessage: false
     },
@@ -51,6 +54,9 @@ describe('GiftScheduling Component (Checkout)', () => {
     const propsWithSurprise = {
       giftOptions: {
         isGift: false,
+        recipientName: "",
+        giftMessage: "",
+        isSurpriseGift: false,
         scheduleDelivery: false,
         sendGiftMessage: false,
         isSurprise: false

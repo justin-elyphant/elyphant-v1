@@ -1,7 +1,7 @@
 
 import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
 import { ZincOrderRequest, ZincOrder } from '../types';
-import { GiftOptions } from '../../checkout/useCheckoutState';
+import { GiftOptions } from '@/types/gift-options';
 import { toast } from "sonner";
 
 /**

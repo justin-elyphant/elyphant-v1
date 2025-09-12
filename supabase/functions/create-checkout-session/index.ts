@@ -96,6 +96,11 @@ serve(async (req) => {
           is_gift: giftOptions?.isGift || false,
           scheduled_delivery_date: giftOptions?.scheduledDeliveryDate || null,
           is_surprise_gift: giftOptions?.isSurpriseGift || false,
+          gift_scheduling_options: {
+            scheduleDelivery: giftOptions?.scheduleDelivery || false,
+            sendGiftMessage: giftOptions?.sendGiftMessage || false,
+            isSurpriseGift: giftOptions?.isSurpriseGift || false
+          },
           created_at: new Date().toISOString()
         })
         .select()

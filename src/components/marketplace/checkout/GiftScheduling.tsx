@@ -3,15 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export interface GiftOptions {
-  isGift: boolean;
-  giftMessage?: string;
-  giftWrapping?: boolean;
-  scheduleDelivery?: boolean;
-  sendGiftMessage?: boolean;
-  isSurprise?: boolean;
-  isSurpriseGift?: boolean;
-}
+import { GiftOptions } from "@/types/gift-options";
 
 interface GiftSchedulingProps {
   giftOptions: GiftOptions;

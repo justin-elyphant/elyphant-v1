@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/contexts/CartContext";
-import { ShippingInfo, GiftOptions } from "./useCheckoutState";
+import { ShippingInfo } from "./useCheckoutState";
+import { GiftOptions } from "@/types/gift-options";
 
 interface ExpressCheckoutButtonProps {
   cartItems: CartItem[];

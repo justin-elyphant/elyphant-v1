@@ -293,7 +293,7 @@ async function verifyPaymentStatus(orderId, supabase) {
   console.log(`✅ Payment verified: ${orderData.payment_status} for amount $${orderData.total_amount}`);
   
   // Enhanced Stripe verification with better error handling
-  if (orderData.stripe_payment_intent_id && orderData.payment_status === 'pending') {
+  if (orderData.stripe_payment_intent_id && (orderData.payment_status === 'pending' || orderData.payment_status === 'payment_verification_failed')) {
     console.log('🔍 Additional Stripe payment verification...');
     try {
       const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
@@ -326,6 +326,8 @@ async function verifyPaymentStatus(orderId, supabase) {
           console.error('⚠️ Failed to update payment status:', updateError);
         } else {
           console.log('✅ Updated payment status to succeeded based on Stripe verification');
+          // Update the local orderData to reflect the successful payment
+          orderData.payment_status = 'succeeded';
         }
       } else if (['payment_failed', 'canceled', 'failed'].includes(paymentIntent.status)) {
         throw new Error(`Payment failed in Stripe: ${paymentIntent.status}`);

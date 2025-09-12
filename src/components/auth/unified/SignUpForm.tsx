@@ -101,8 +101,11 @@ const SignUpForm = () => {
               // Don't block signup flow for email issues
             }
             
-            // Immediate redirect to profile setup
-            navigate("/profile-setup", { replace: true });
+            // Set flag for new signup to trigger interests modal
+            localStorage.setItem("newSignUp", "true");
+            
+            // Redirect to auth page where interests modal will be shown
+            navigate("/auth", { replace: true });
             return;
           }
           

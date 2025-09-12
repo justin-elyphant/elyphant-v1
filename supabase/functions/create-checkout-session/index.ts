@@ -13,7 +13,25 @@ serve(async (req) => {
   }
 
   try {
-    const { cartItems, totalAmount, shippingInfo, giftOptions, metadata = {} } = await req.json()
+    const requestBody = await req.json()
+    const { cartItems, totalAmount, shippingInfo, giftOptions, metadata = {} } = requestBody
+
+    // Enhanced input validation and sanitization
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      throw new Error('Invalid cart items provided')
+    }
+
+    if (!totalAmount || typeof totalAmount !== 'number' || totalAmount <= 0) {
+      throw new Error('Invalid total amount provided')
+    }
+
+    console.log('📥 Request validated:', {
+      itemCount: cartItems.length,
+      totalAmount,
+      hasShipping: !!shippingInfo,
+      hasGiftOptions: !!giftOptions,
+      metadata
+    })
 
     const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
@@ -26,9 +44,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get user from auth header
+    // Enhanced user authentication with UUID validation
     let user = null
+    let validatedUserId = null
     const authHeader = req.headers.get('Authorization')
+    
     if (authHeader) {
       try {
         const userClient = createClient(
@@ -38,6 +58,18 @@ serve(async (req) => {
         const token = authHeader.replace('Bearer ', '')
         const { data } = await userClient.auth.getUser(token)
         user = data.user
+        
+        // Validate UUID format for user.id
+        if (user?.id) {
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          if (uuidRegex.test(user.id)) {
+            validatedUserId = user.id
+            console.log('✅ Valid user authenticated:', validatedUserId)
+          } else {
+            console.warn('⚠️ Invalid UUID format for user.id:', user.id)
+            user = null
+          }
+        }
       } catch (error) {
         console.warn('Failed to get user, proceeding with guest checkout:', error)
       }
@@ -74,55 +106,107 @@ serve(async (req) => {
       success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get('origin')}/payment-cancel`,
       metadata: {
-        user_id: user?.id || 'guest',
+        user_id: validatedUserId || 'guest',
         order_type: 'marketplace',
+        gift_options: giftOptions ? JSON.stringify({
+          isGift: !!giftOptions.isGift,
+          scheduleDelivery: !!giftOptions.scheduleDelivery,
+          sendGiftMessage: !!giftOptions.sendGiftMessage,
+          scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || null
+        }) : '{}',
         ...metadata
       }
     })
 
-    // Create order in database
-    if (user) {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          subtotal: totalAmount - (giftOptions?.giftingFee || 0),
-          total_amount: totalAmount,
-          status: 'pending',
-          payment_status: 'pending',
-          stripe_session_id: session.id,
-          shipping_info: shippingInfo,
-          gift_message: giftOptions?.giftMessage || null,
-          is_gift: giftOptions?.isGift || false,
-          scheduled_delivery_date: giftOptions?.scheduledDeliveryDate || null,
-          is_surprise_gift: giftOptions?.isSurpriseGift || false,
-          gift_scheduling_options: {
-            scheduleDelivery: giftOptions?.scheduleDelivery || false,
-            sendGiftMessage: giftOptions?.sendGiftMessage || false,
-            isSurpriseGift: giftOptions?.isSurpriseGift || false
-          },
-          created_at: new Date().toISOString()
+    // Create order in database with enhanced validation
+    if (user && validatedUserId) {
+      try {
+        // Sanitize and validate gift options
+        const sanitizedGiftOptions = {
+          isGift: !!giftOptions?.isGift,
+          scheduleDelivery: !!giftOptions?.scheduleDelivery,
+          sendGiftMessage: !!giftOptions?.sendGiftMessage,
+          isSurpriseGift: !!giftOptions?.isSurpriseGift,
+          giftMessage: giftOptions?.giftMessage ? String(giftOptions.giftMessage).substring(0, 1000) : null,
+          scheduledDeliveryDate: giftOptions?.scheduledDeliveryDate || null
+        }
+
+        console.log('💾 Creating order with sanitized data:', {
+          userId: validatedUserId,
+          sessionId: session.id,
+          giftOptions: sanitizedGiftOptions
         })
-        .select()
-        .single()
 
-      if (!orderError && order) {
-        // Create order items
-        const orderItems = cartItems?.map((item: any) => ({
-          order_id: order.id,
-          product_id: item.product.product_id,
-          product_name: item.product.name || item.product.title,
-          product_image: item.product.image,
-          vendor: item.product.vendor,
-          quantity: item.quantity,
-          unit_price: item.product.price,
-          total_price: item.product.price * item.quantity
-        })) || []
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: validatedUserId,
+            subtotal: Math.round((totalAmount - (giftOptions?.giftingFee || 0)) * 100) / 100,
+            total_amount: Math.round(totalAmount * 100) / 100,
+            status: 'pending',
+            payment_status: 'pending',
+            stripe_session_id: session.id,
+            shipping_info: shippingInfo || null,
+            gift_message: sanitizedGiftOptions.giftMessage,
+            is_gift: sanitizedGiftOptions.isGift,
+            scheduled_delivery_date: sanitizedGiftOptions.scheduledDeliveryDate,
+            is_surprise_gift: sanitizedGiftOptions.isSurpriseGift,
+            gift_scheduling_options: {
+              scheduleDelivery: sanitizedGiftOptions.scheduleDelivery,
+              sendGiftMessage: sanitizedGiftOptions.sendGiftMessage,
+              isSurpriseGift: sanitizedGiftOptions.isSurpriseGift
+            },
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single()
 
-        await supabase
-          .from('order_items')
-          .insert(orderItems)
+        if (orderError) {
+          console.error('❌ Order creation failed:', orderError)
+          throw new Error(`Failed to create order: ${orderError.message}`)
+        }
+
+        if (order) {
+          console.log('✅ Order created successfully:', order.id)
+          
+          // Create order items with validation
+          const orderItems = cartItems?.map((item: any) => {
+            // Validate product data
+            if (!item.product?.product_id) {
+              throw new Error('Invalid product data: missing product_id')
+            }
+            
+            return {
+              order_id: order.id,
+              product_id: String(item.product.product_id).substring(0, 255),
+              product_name: String(item.product.name || item.product.title || 'Unknown Product').substring(0, 255),
+              product_image: item.product.image ? String(item.product.image).substring(0, 500) : null,
+              vendor: item.product.vendor ? String(item.product.vendor).substring(0, 255) : null,
+              quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+              unit_price: Math.round((Number(item.product.price) || 0) * 100) / 100,
+              total_price: Math.round((Number(item.product.price) || 0) * Math.max(1, Math.floor(Number(item.quantity) || 1)) * 100) / 100
+            }
+          }) || []
+
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems)
+
+          if (itemsError) {
+            console.error('⚠️ Order items creation failed:', itemsError)
+            // Don't fail the entire request, just log the error
+          } else {
+            console.log('✅ Order items created successfully')
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Database operation failed:', dbError)
+        // Continue with checkout session creation even if order creation fails
+        console.log('⚠️ Continuing with guest checkout flow')
       }
+    } else if (user && !validatedUserId) {
+      console.warn('⚠️ User authentication failed UUID validation, proceeding as guest')
+    }
     }
 
     return new Response(

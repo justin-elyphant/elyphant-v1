@@ -232,34 +232,67 @@ async function trackZmaOrderFailure(userId, orderId, errorType, errorDetails, su
   }
 }
 
-// Payment verification function to prevent duplicate charges
+// Enhanced payment verification function with UUID validation
 async function verifyPaymentStatus(orderId, supabase) {
   console.log('💳 Verifying payment status before ZMA processing...');
   
+  // Validate orderId format
+  if (!orderId || typeof orderId !== 'string') {
+    throw new Error('Invalid order ID provided');
+  }
+  
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(orderId)) {
+    throw new Error(`Invalid UUID format for order ID: ${orderId}`);
+  }
+  
   const { data: orderData, error } = await supabase
     .from('orders')
-    .select('payment_status, stripe_payment_intent_id, total_amount')
+    .select('payment_status, stripe_payment_intent_id, total_amount, user_id, status')
     .eq('id', orderId)
     .single();
 
-  if (error || !orderData) {
-    throw new Error(`Failed to fetch order payment status: ${error?.message}`);
+  if (error) {
+    console.error('❌ Database error fetching order:', error);
+    throw new Error(`Failed to fetch order payment status: ${error.message}`);
+  }
+  
+  if (!orderData) {
+    throw new Error(`Order not found: ${orderId}`);
   }
 
-  // Check if payment is confirmed as succeeded
-  // Allow 'succeeded' status and also test payments for auto-gifts
+  // Enhanced payment status validation with better error messages
   const validPaymentStatuses = ['succeeded', 'test_succeeded'];
   const isTestPayment = orderData.stripe_payment_intent_id?.includes('test') || 
                        orderData.stripe_payment_intent_id?.includes('pi_test_auto_gift') ||
                        orderData.stripe_payment_intent_id?.startsWith('pi_test_auto_gift_');
   
+  console.log('🔍 Payment validation details:', {
+    paymentStatus: orderData.payment_status,
+    isTestPayment,
+    stripePaymentIntentId: orderData.stripe_payment_intent_id?.substring(0, 20) + '...',
+    totalAmount: orderData.total_amount
+  });
+  
   if (!validPaymentStatuses.includes(orderData.payment_status) && !isTestPayment) {
-    throw new Error(`Payment not confirmed. Status: ${orderData.payment_status}. Cannot process order until payment is successful.`);
+    // More specific error message based on payment status
+    const errorMessages = {
+      'pending': 'Payment is still being processed. Please wait for payment confirmation.',
+      'failed': 'Payment has failed. Please use a different payment method.',
+      'canceled': 'Payment was canceled. Please retry the payment.',
+      'requires_action': 'Payment requires additional authentication. Please complete the payment process.',
+      'payment_verification_failed': 'Payment could not be verified. Please contact support.'
+    };
+    
+    const errorMessage = errorMessages[orderData.payment_status] || 
+                        `Payment status "${orderData.payment_status}" is not valid for processing.`;
+    
+    throw new Error(`${errorMessage} Cannot process order until payment is successful.`);
   }
 
   console.log(`✅ Payment verified: ${orderData.payment_status} for amount $${orderData.total_amount}`);
   
-  // Additional Stripe verification if payment intent is available
+  // Enhanced Stripe verification with better error handling
   if (orderData.stripe_payment_intent_id && orderData.payment_status === 'pending') {
     console.log('🔍 Additional Stripe payment verification...');
     try {
@@ -268,27 +301,55 @@ async function verifyPaymentStatus(orderId, supabase) {
         { apiVersion: '2023-10-16' }
       );
       
+      // Validate payment intent ID format before calling Stripe
+      if (!orderData.stripe_payment_intent_id.startsWith('pi_') && !orderData.stripe_payment_intent_id.includes('test')) {
+        throw new Error('Invalid payment intent ID format');
+      }
+      
       const paymentIntent = await stripe.paymentIntents.retrieve(orderData.stripe_payment_intent_id);
-      console.log(`💳 Stripe verification result: ${paymentIntent.status}`);
+      console.log(`💳 Stripe verification result: ${paymentIntent.status} for amount: ${paymentIntent.amount}`);
       
       if (paymentIntent.status === 'succeeded') {
-        // Update payment status in database
-        await supabase
+        // Update payment status in database with enhanced data
+        const { error: updateError } = await supabase
           .from('orders')
           .update({ 
             payment_status: 'succeeded',
             status: 'payment_confirmed',
+            stripe_payment_method_id: paymentIntent.payment_method,
+            payment_verified_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId);
         
-        console.log('✅ Updated payment status to succeeded based on Stripe verification');
-      } else if (paymentIntent.status === 'payment_failed') {
+        if (updateError) {
+          console.error('⚠️ Failed to update payment status:', updateError);
+        } else {
+          console.log('✅ Updated payment status to succeeded based on Stripe verification');
+        }
+      } else if (['payment_failed', 'canceled', 'failed'].includes(paymentIntent.status)) {
         throw new Error(`Payment failed in Stripe: ${paymentIntent.status}`);
+      } else {
+        console.log(`⏳ Payment still in progress: ${paymentIntent.status}`);
+        throw new Error(`Payment is still processing. Current status: ${paymentIntent.status}`);
       }
     } catch (stripeError) {
-      console.warn('⚠️ Stripe verification failed:', stripeError.message);
-      // Continue with existing payment status if Stripe check fails
+      console.error('❌ Stripe verification failed:', stripeError.message);
+      
+      // Update order with verification failure status
+      await supabase
+        .from('orders')
+        .update({
+          status: 'payment_verification_failed',
+          payment_verification_error: stripeError.message,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .then(({ error }) => {
+          if (error) console.error('Failed to update verification failure status:', error);
+        });
+      
+      throw stripeError;
     }
   }
 

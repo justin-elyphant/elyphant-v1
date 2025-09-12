@@ -107,27 +107,72 @@ serve(async (req) => {
       // Conditional ZMA order processing after successful payment
       if (order) {
         try {
-          // Check if order has scheduled delivery date and if it's more than 4 days away
+          // Enhanced package-level scheduling logic
           const currentDate = new Date()
-          const scheduledDate = order.scheduled_delivery_date ? new Date(order.scheduled_delivery_date) : null
-          const daysDifference = scheduledDate ? Math.ceil((scheduledDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)) : 0
+          let shouldSchedule = false
+          let earliestDeliveryDate = null
+          let latestDeliveryDate = null
           
-          console.log(`[VERIFY-CHECKOUT] Order ${order.id} scheduled delivery check:`, {
-            scheduled_delivery_date: order.scheduled_delivery_date,
-            days_until_delivery: daysDifference,
-            should_schedule: daysDifference > 4
-          })
+          // Check package-level scheduling from delivery groups metadata
+          try {
+            const deliveryGroupsMetadata = session.metadata?.delivery_groups ? JSON.parse(session.metadata.delivery_groups) : {}
+            console.log(`[VERIFY-CHECKOUT] Checking delivery groups for scheduling:`, deliveryGroupsMetadata)
+            
+            const scheduledDates = Object.values(deliveryGroupsMetadata)
+              .map(group => group.scheduledDeliveryDate)
+              .filter(date => date)
+              .map(date => new Date(date))
+            
+            if (scheduledDates.length > 0) {
+              earliestDeliveryDate = new Date(Math.min(...scheduledDates))
+              latestDeliveryDate = new Date(Math.max(...scheduledDates))
+              
+              // Check if ANY package is scheduled more than 4 days away
+              const daysDifference = Math.ceil((earliestDeliveryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+              shouldSchedule = daysDifference > 4
+              
+              console.log(`[VERIFY-CHECKOUT] Package scheduling analysis:`, {
+                packageCount: Object.keys(deliveryGroupsMetadata).length,
+                scheduledPackages: scheduledDates.length,
+                earliestDelivery: earliestDeliveryDate.toISOString().split('T')[0],
+                latestDelivery: latestDeliveryDate.toISOString().split('T')[0],
+                daysTillEarliest: daysDifference,
+                shouldSchedule
+              })
+            }
+          } catch (e) {
+            console.warn(`[VERIFY-CHECKOUT] Failed to parse delivery groups metadata:`, e)
+          }
+          
+          // Fallback to order-level scheduled delivery date
+          if (!shouldSchedule && order.scheduled_delivery_date) {
+            const scheduledDate = new Date(order.scheduled_delivery_date)
+            const daysDifference = Math.ceil((scheduledDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+            shouldSchedule = daysDifference > 4
+            earliestDeliveryDate = scheduledDate
+            
+            console.log(`[VERIFY-CHECKOUT] Order-level scheduling check:`, {
+              scheduled_delivery_date: order.scheduled_delivery_date,
+              days_until_delivery: daysDifference,
+              should_schedule: shouldSchedule
+            })
+          }
 
-          if (scheduledDate && daysDifference > 4) {
+          if (shouldSchedule && earliestDeliveryDate) {
             // Schedule for later processing - set status to 'scheduled'
-            console.log(`📅 [VERIFY-CHECKOUT] Order ${order.id} scheduled for delivery in ${daysDifference} days - marking as scheduled`)
+            const daysTillEarliest = Math.ceil((earliestDeliveryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+            console.log(`📅 [VERIFY-CHECKOUT] Order ${order.id} has packages scheduled for delivery in ${daysTillEarliest} days - marking as scheduled`)
+            
+            const updateData = {
+              status: 'scheduled',
+              scheduled_delivery_date: order.scheduled_delivery_date || earliestDeliveryDate.toISOString().split('T')[0],
+              package_scheduling_metadata: session.metadata?.delivery_groups || null,
+              updated_at: new Date().toISOString()
+            }
             
             const { error: scheduleError } = await supabase
               .from('orders')
-              .update({
-                status: 'scheduled',
-                updated_at: new Date().toISOString()
-              })
+              .update(updateData)
               .eq('id', order.id)
 
             if (scheduleError) {
@@ -142,7 +187,8 @@ serve(async (req) => {
                   order_number: order?.order_number,
                   payment_status: session.payment_status,
                   scheduled: true,
-                  processing_date: new Date(scheduledDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                  processing_date: new Date(earliestDeliveryDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                  packageCount: Object.keys(JSON.parse(session.metadata?.delivery_groups || '{}')).length
                 }),
                 { 
                   headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,13 +201,15 @@ serve(async (req) => {
           // Process immediately (no scheduled date OR scheduled date <= 4 days away OR scheduling failed)
           console.log(`🚀 [VERIFY-CHECKOUT] Processing order ${order.id} immediately`)
           
-          // Call process-zma-order function (zinc_api disabled)
+          // Call process-zma-order function with enhanced package-level data
           const { data: zincResult, error: zincError } = await supabase.functions.invoke('process-zma-order', {
             body: {
               orderId: order.id,
               isTestMode: false,
               debugMode: false,
-              scheduledDeliveryDate: order.scheduled_delivery_date // Pass scheduled date to ZMA
+              scheduledDeliveryDate: order.scheduled_delivery_date,
+              packageSchedulingData: session.metadata?.delivery_groups || null,
+              hasMultiplePackages: Object.keys(JSON.parse(session.metadata?.delivery_groups || '{}')).length > 1
             }
           })
 

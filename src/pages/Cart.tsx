@@ -163,6 +163,12 @@ const Cart = () => {
     toast.success(`Assigned ${unassignedItems.length} items to your address`);
   };
 
+  const handlePackageSchedulingUpdate = (groupId: string, scheduledDate: string | null) => {
+    console.log(`📅 [Cart] Updating package scheduling:`, { groupId, scheduledDate });
+    updateRecipientAssignment(groupId, { scheduledDeliveryDate: scheduledDate });
+    toast.success(scheduledDate ? 'Delivery date scheduled' : 'Delivery timing updated');
+  };
+
   // Use centralized formatPrice from utils
   const unassignedItems = getUnassignedItems();
   
@@ -240,6 +246,7 @@ const Cart = () => {
                           key={group.id}
                           deliveryGroup={group}
                           cartItems={cartItems}
+                          onPackageSchedulingUpdate={handlePackageSchedulingUpdate}
                         />
                       ))}
                     </div>

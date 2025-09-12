@@ -112,8 +112,27 @@ serve(async (req) => {
           isGift: !!giftOptions.isGift,
           scheduleDelivery: !!giftOptions.scheduleDelivery,
           sendGiftMessage: !!giftOptions.sendGiftMessage,
-          scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || null
+          scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || null,
+          // Enhanced package-level scheduling support
+          packages: giftOptions.packages || []
         }) : '{}',
+        delivery_groups: cartItems ? JSON.stringify(
+          cartItems
+            .filter(item => item.recipientAssignment?.deliveryGroupId)
+            .reduce((groups, item) => {
+              const groupId = item.recipientAssignment.deliveryGroupId;
+              if (!groups[groupId]) {
+                groups[groupId] = {
+                  recipientId: item.recipientAssignment.connectionId,
+                  recipientName: item.recipientAssignment.connectionName,
+                  scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
+                  items: []
+                };
+              }
+              groups[groupId].items.push(item.product.product_id);
+              return groups;
+            }, {})
+        ) : '{}',
         ...metadata
       }
     })

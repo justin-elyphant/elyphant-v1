@@ -27,7 +27,7 @@ serve(async (req) => {
 
     console.log(`📅 Processing orders scheduled for delivery on or before: ${cutoffDateString}`)
 
-    // Find orders with status 'scheduled' that are ready for processing
+    // Enhanced query to include package scheduling metadata
     const { data: ordersToProcess, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -36,7 +36,8 @@ serve(async (req) => {
         scheduled_delivery_date,
         user_id,
         total_amount,
-        payment_status
+        payment_status,
+        package_scheduling_metadata
       `)
       .eq('status', 'scheduled')
       .lte('scheduled_delivery_date', cutoffDateString)
@@ -108,15 +109,27 @@ serve(async (req) => {
           continue
         }
 
-        // Call process-zma-order function to handle the actual order placement
+        // Enhanced ZMA processing with package-level data
         console.log(`🚀 Invoking process-zma-order for scheduled order ${order.id}`)
+        
+        const packageData = order.package_scheduling_metadata ? JSON.parse(order.package_scheduling_metadata) : {}
+        const hasMultiplePackages = Object.keys(packageData).length > 1
+        
+        console.log(`📦 Package analysis for order ${order.id}:`, {
+          packageCount: Object.keys(packageData).length,
+          scheduledDeliveryDate: order.scheduled_delivery_date,
+          hasMultiplePackages
+        })
         
         const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
           body: {
             orderId: order.id,
             isTestMode: false,
             debugMode: false,
-            scheduledProcessing: true // Flag to indicate this is scheduled processing
+            scheduledProcessing: true,
+            scheduledDeliveryDate: order.scheduled_delivery_date,
+            packageSchedulingData: order.package_scheduling_metadata,
+            hasMultiplePackages
           }
         })
 

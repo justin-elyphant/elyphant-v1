@@ -1,19 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Package, MessageCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Package, MessageCircle, AlertTriangle, CheckCircle2, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import { DeliveryGroup } from '@/types/recipient';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;
   cartItems: CartItem[];
+  onPackageSchedulingUpdate?: (groupId: string, scheduledDate: string | null) => void;
 }
 
 const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   deliveryGroup,
-  cartItems
+  cartItems,
+  onPackageSchedulingUpdate
 }) => {
+  const [deliveryTiming, setDeliveryTiming] = useState<'now' | 'scheduled'>(
+    deliveryGroup.scheduledDeliveryDate ? 'scheduled' : 'now'
+  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    deliveryGroup.scheduledDeliveryDate ? new Date(deliveryGroup.scheduledDeliveryDate) : undefined
+  );
   const groupItems = cartItems.filter(
     item => item.recipientAssignment?.deliveryGroupId === deliveryGroup.id
   );
@@ -67,6 +82,21 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   };
 
   const messageStatus = getMessageStatus();
+
+  const handleDeliveryTimingChange = (value: 'now' | 'scheduled') => {
+    setDeliveryTiming(value);
+    if (value === 'now') {
+      setSelectedDate(undefined);
+      onPackageSchedulingUpdate?.(deliveryGroup.id, null);
+    }
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date && onPackageSchedulingUpdate) {
+      onPackageSchedulingUpdate(deliveryGroup.id, date.toISOString().split('T')[0]);
+    }
+  };
 
   return (
     <Card className="border-l-4 border-l-blue-500">
@@ -145,6 +175,66 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
             )}
           </div>
         )}
+
+        {/* Delivery Timing Section */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-muted-foreground">Delivery Timing:</h4>
+          <RadioGroup
+            value={deliveryTiming}
+            onValueChange={handleDeliveryTimingChange}
+            className="space-y-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="now" id={`${deliveryGroup.id}-now`} />
+              <Label htmlFor={`${deliveryGroup.id}-now`} className="cursor-pointer">
+                Send now (arrives in 2-3 business days)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="scheduled" id={`${deliveryGroup.id}-scheduled`} />
+              <Label htmlFor={`${deliveryGroup.id}-scheduled`} className="cursor-pointer">
+                Schedule for specific date
+              </Label>
+            </div>
+          </RadioGroup>
+
+          {deliveryTiming === 'scheduled' && (
+            <div className="mt-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick delivery date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {selectedDate && (
+                <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    Will be processed 4 days before delivery date to ensure on-time arrival
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Recommendations */}
         {hasMultipleMessages && (

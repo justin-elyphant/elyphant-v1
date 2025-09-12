@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
 import { Skeleton } from "@/components/ui/skeleton";
+import RetryOrderButton from '@/components/admin/RetryOrderButton';
 
 const ZincDebugger = () => {
   const { user, isLoading } = useAuth();
@@ -64,6 +65,13 @@ const ZincDebugger = () => {
           <p className="text-muted-foreground">
             Troubleshoot and debug Zinc order processing issues
           </p>
+          
+          <div className="mt-4 flex gap-4">
+            <RetryOrderButton 
+              orderId="0260ac01-88cc-4451-a760-f4447dcc95cd"
+              className="w-auto"
+            />
+          </div>
         </div>
         
         <ZincOrderDebugger />

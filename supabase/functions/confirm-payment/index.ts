@@ -34,7 +34,7 @@ serve(async (req) => {
       const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id)
       
       if (paymentIntent.status === 'succeeded') {
-        paymentStatus = 'completed'
+        paymentStatus = 'succeeded'
         orderStatus = 'payment_confirmed'
       } else if (paymentIntent.status === 'payment_failed') {
         paymentStatus = 'failed'
@@ -45,7 +45,7 @@ serve(async (req) => {
       const session = await stripe.checkout.sessions.retrieve(session_id)
       
       if (session.payment_status === 'paid') {
-        paymentStatus = 'completed'
+        paymentStatus = 'succeeded'
         orderStatus = 'payment_confirmed'
       } else if (session.payment_status === 'failed') {
         paymentStatus = 'failed'

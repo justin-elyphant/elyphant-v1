@@ -260,10 +260,36 @@ async function verifyPaymentStatus(orderId, supabase) {
   console.log(`✅ Payment verified: ${orderData.payment_status} for amount $${orderData.total_amount}`);
   
   // Additional Stripe verification if payment intent is available
-  if (orderData.stripe_payment_intent_id) {
+  if (orderData.stripe_payment_intent_id && orderData.payment_status === 'pending') {
     console.log('🔍 Additional Stripe payment verification...');
-    // Note: In production, you would verify with Stripe API here
-    // For now, we trust the payment_status in our database
+    try {
+      const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
+        Deno.env.get('STRIPE_SECRET_KEY') || '',
+        { apiVersion: '2023-10-16' }
+      );
+      
+      const paymentIntent = await stripe.paymentIntents.retrieve(orderData.stripe_payment_intent_id);
+      console.log(`💳 Stripe verification result: ${paymentIntent.status}`);
+      
+      if (paymentIntent.status === 'succeeded') {
+        // Update payment status in database
+        await supabase
+          .from('orders')
+          .update({ 
+            payment_status: 'succeeded',
+            status: 'payment_confirmed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+        
+        console.log('✅ Updated payment status to succeeded based on Stripe verification');
+      } else if (paymentIntent.status === 'payment_failed') {
+        throw new Error(`Payment failed in Stripe: ${paymentIntent.status}`);
+      }
+    } catch (stripeError) {
+      console.warn('⚠️ Stripe verification failed:', stripeError.message);
+      // Continue with existing payment status if Stripe check fails
+    }
   }
 
   return {
@@ -685,17 +711,7 @@ serve(async (req) => {
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
       gift_message: collectGiftMessage(orderItems, orderData),
-      zma_flags: [], // Required field for ZMA
-      business_fields: [], // Required field for ZMA
-      auto_retry_settings: {
-        retry_delays: [0, 0] // Required ZMA configuration
-      },
-      promo_codes: [], // Required field
-      addons_to_preserve: [], // Required field
-      retry_request_ids: [], // Required field
-      bundled_order_ids: [], // Required field
-      free_gifts: [], // Required field
-      scheduled_delivery_windows: [], // Will be populated below if scheduled delivery date exists
+      addax: true, // Required for ZMA orders
       client_notes: {
         our_internal_order_id: orderData.order_number,
         supabase_order_id: orderId,
@@ -708,22 +724,29 @@ serve(async (req) => {
     const finalDeliveryDate = scheduledDeliveryDate || orderData.scheduled_delivery_date;
     if (finalDeliveryDate) {
       const deliveryDate = new Date(finalDeliveryDate);
-      // Create delivery window for Zinc: target date ± 1 day
+      // Create delivery window for Zinc: target date ± 1 day using root-level fields
       const startDate = new Date(deliveryDate);
       startDate.setDate(startDate.getDate() - 1);
       const endDate = new Date(deliveryDate);
       endDate.setDate(endDate.getDate() + 1);
       
-      zincOrderData.scheduled_delivery_windows = [{
-        start_date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
-        end_date: endDate.toISOString().split('T')[0] // YYYY-MM-DD format
-      }];
+      // Use root-level start/end fields as per ZMA API docs
+      zincOrderData.start = startDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      zincOrderData.end = endDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       
       console.log(`📅 [ZMA-ORDER] Added scheduled delivery window to Zinc request:`, {
         target_date: finalDeliveryDate,
-        delivery_window: zincOrderData.scheduled_delivery_windows[0]
+        delivery_window: { start_date: zincOrderData.start, end_date: zincOrderData.end }
       });
     }
+    
+    // Validate that we don't send undefined values to Zinc
+    Object.keys(zincOrderData).forEach(key => {
+      if (zincOrderData[key] === undefined) {
+        console.warn(`⚠️ Removing undefined field from Zinc request: ${key}`);
+        delete zincOrderData[key];
+      }
+    });
     
     console.log('✅ Zinc order data prepared with billing address');
     console.log('📄 Shipping Address:', JSON.stringify(shippingAddress, null, 2));

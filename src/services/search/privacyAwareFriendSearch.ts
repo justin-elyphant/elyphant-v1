@@ -209,17 +209,25 @@ export const searchFriendsWithPrivacy = async (
 
     // Check connection status for each profile
     const connectionStatusPromises = profiles.map(async (profile) => {
-      const { data: connectionData, error } = await supabase
+      const { data: connectionRows, error } = await supabase
         .from('user_connections')
         .select('status')
-        .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${profile.id}),and(user_id.eq.${profile.id},connected_user_id.eq.${currentUserId})`)
-        .maybeSingle();
+        .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${profile.id}),and(user_id.eq.${profile.id},connected_user_id.eq.${currentUserId})`);
 
-      console.log(`🔍 [CONNECTION CHECK] Profile ${profile.id} (${profile.name}):`, { connectionData, error });
+      if (error) {
+        console.warn(`🔍 [CONNECTION CHECK] Error fetching connection for ${profile.id}:`, error);
+      }
+
+      let status: 'connected' | 'pending' | 'none' = 'none';
+      if (connectionRows && connectionRows.length > 0) {
+        if (connectionRows.some(r => r.status === 'accepted')) status = 'connected';
+        else if (connectionRows.some(r => r.status === 'pending')) status = 'pending';
+        else status = 'none';
+      }
 
       return {
         profileId: profile.id,
-        status: connectionData ? (connectionData.status === 'accepted' ? 'connected' : 'pending') : 'none'
+        status
       };
     });
 
@@ -343,18 +351,23 @@ export const getConnectionPermissions = async (targetUserId: string, currentUser
     const connectionPolicy = privacySettings?.allow_connection_requests_from || 'everyone';
 
     // Check if users are already connected
-    const { data: existingConnection } = await supabase
+    const { data: existingRows, error: existingErr } = await supabase
       .from('user_connections')
       .select('status')
-      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
-      .single();
+      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`);
 
-    if (existingConnection) {
+    if (existingErr) {
+      console.warn('Error fetching existing connection:', existingErr);
+    }
+
+    if (existingRows && existingRows.length > 0) {
+      const hasAccepted = existingRows.some(r => r.status === 'accepted');
+      const hasPending = existingRows.some(r => r.status === 'pending');
       return {
         canSendRequest: false,
         canViewProfile: true,
-        canMessage: existingConnection.status === 'accepted',
-        restrictionReason: existingConnection.status === 'accepted' ? 'Already connected' : 'Connection request pending'
+        canMessage: hasAccepted,
+        restrictionReason: hasAccepted ? 'Already connected' : 'Connection request pending'
       };
     }
 

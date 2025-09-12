@@ -120,19 +120,16 @@ export const sendConnectionRequest = async (targetUserId: string, relationshipTy
 
 export const checkConnectionStatus = async (currentUserId: string, targetUserId: string): Promise<FriendSearchResult['connectionStatus']> => {
   try {
-    const { data, error } = await supabase
+    const { data: rows, error } = await supabase
       .from('user_connections')
       .select('status')
-      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
-      .maybeSingle();
+      .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`);
 
-    console.log(`🔍 [checkConnectionStatus] Current: ${currentUserId}, Target: ${targetUserId}:`, { data, error });
+    if (error) throw error;
 
-    if (error && error.code !== 'PGRST116') throw error;
-    
-    if (!data) return 'none';
-    
-    return data.status === 'accepted' ? 'connected' : 'pending';
+    if (!rows || rows.length === 0) return 'none';
+
+    return rows.some(r => r.status === 'accepted') ? 'connected' : 'pending';
   } catch (error) {
     console.error('Error checking connection status:', error);
     return 'none';

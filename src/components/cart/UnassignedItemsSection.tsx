@@ -100,7 +100,7 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
             className="flex-1 flex items-center gap-2"
           >
             <UserPlus className="h-4 w-4" />
-            Assign All to Recipients
+            Assign All to a Recipient
           </Button>
           {hasCompleteAddress && (
             <Button

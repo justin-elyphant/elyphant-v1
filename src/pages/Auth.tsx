@@ -19,31 +19,32 @@ const Auth = () => {
 
   // Handle post-signup interests modal and redirect
   useEffect(() => {
-    if (user && !isLoading && profileData) {
-      // Check if this is a new signup
-      const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    if (user && !isLoading) {
+      // Check if we should show the quick interests modal
+      const shouldShowQuickInterests = localStorage.getItem("showQuickInterests") === "true";
       
-      // Show quick interests modal if:
-      // 1. User just signed up (newSignUp flag set)
-      // 2. User has no existing interests
-      // 3. We're not already redirecting somewhere specific
-      const hasNoInterests = !profileData.interests || profileData.interests.length === 0;
-      const hasRedirect = searchParams.get('redirect');
-      const shouldShowModal = isNewSignUp && hasNoInterests && !hasRedirect;
-      
-      if (shouldShowModal) {
-        // Clear the flag to prevent showing modal again
-        localStorage.removeItem("newSignUp");
-        setShowQuickInterests(true);
-        return;
+      if (shouldShowQuickInterests) {
+        // Wait for profile data to load before checking interests
+        if (profileData !== null) {
+          const hasNoInterests = !profileData.interests || profileData.interests.length === 0;
+          const hasRedirect = searchParams.get('redirect');
+          
+          if (hasNoInterests && !hasRedirect) {
+            // Clear the flag and show modal
+            localStorage.removeItem("showQuickInterests");
+            setShowQuickInterests(true);
+            return;
+          } else {
+            // User already has interests or there's a redirect, skip modal
+            localStorage.removeItem("showQuickInterests");
+          }
+        } else if (profileData === null) {
+          // Still loading profile data, wait
+          return;
+        }
       }
       
-      // Clear signup flag if not showing modal
-      if (isNewSignUp) {
-        localStorage.removeItem("newSignUp");
-      }
-      
-      // Otherwise, redirect normally
+      // Normal redirect flow
       const redirectPath = searchParams.get('redirect') || '/gifting';
       navigate(redirectPath, { replace: true });
     }

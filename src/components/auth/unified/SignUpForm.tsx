@@ -102,7 +102,7 @@ const SignUpForm = () => {
             }
             
             // Set flag for new signup to trigger interests modal
-            localStorage.setItem("newSignUp", "true");
+            localStorage.setItem("showQuickInterests", "true");
             
             // Redirect to auth page where interests modal will be shown
             navigate("/auth", { replace: true });

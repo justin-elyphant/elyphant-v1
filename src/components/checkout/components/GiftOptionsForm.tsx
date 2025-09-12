@@ -10,15 +10,17 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 
-interface GiftOptions {
+import { GiftOptions } from "@/types/gift-options";
+
+interface LocalGiftOptions {
   giftMessage: string;
   scheduledDeliveryDate: string;
   specialInstructions: string;
 }
 
 interface GiftOptionsFormProps {
-  giftOptions: GiftOptions;
-  onChange: (options: GiftOptions) => void;
+  giftOptions: LocalGiftOptions;
+  onChange: (options: LocalGiftOptions) => void;
   scheduledDate?: Date;
   onScheduledDateChange?: (date: Date | undefined) => void;
 }
@@ -29,7 +31,7 @@ const GiftOptionsForm: React.FC<GiftOptionsFormProps> = ({
   scheduledDate,
   onScheduledDateChange
 }) => {
-  const handleChange = (field: keyof GiftOptions, value: string) => {
+  const handleChange = (field: keyof LocalGiftOptions, value: string) => {
     onChange({
       ...giftOptions,
       [field]: value

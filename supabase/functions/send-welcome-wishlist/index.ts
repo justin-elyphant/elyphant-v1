@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -281,21 +281,65 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📧 Email recommendations prepared:', emailRecommendations.length);
     
-    // Inline Unsplash images to avoid remote blocking in some email clients
+    // Cache external images to Supabase Storage for 100% reliability
     const emailRecommendationsFinal = await Promise.all(
-      emailRecommendations.map(async (p: any) => {
+      emailRecommendations.map(async (p: any, index: number) => {
         try {
-          const host = p.imageUrl ? new URL(p.imageUrl).host : '';
-          if (host === 'images.unsplash.com') {
-            const res = await fetch(p.imageUrl);
-            if (res.ok) {
-              const buf = new Uint8Array(await res.arrayBuffer());
-              const base64 = btoa(String.fromCharCode(...buf));
-              const ct = res.headers.get('content-type') || 'image/jpeg';
-              return { ...p, imageUrl: `data:${ct};base64,${base64}` };
+          if (!p.imageUrl) return p;
+          
+          // Create a stable filename based on product ID or URL
+          const productId = p.id || `product-${index}`;
+          const fileExtension = p.imageUrl.includes('.png') ? 'png' : 'jpg';
+          const fileName = `email-products/${productId}.${fileExtension}`;
+          
+          // Check if image is already cached
+          const { data: existingFile } = await supabase.storage
+            .from('email-images')
+            .list('email-products', { search: `${productId}.` });
+          
+          if (existingFile && existingFile.length > 0) {
+            // Use cached version
+            const { data } = supabase.storage
+              .from('email-images')
+              .getPublicUrl(fileName);
+            
+            console.log(`✅ Using cached image for ${productId}`);
+            return { ...p, imageUrl: data.publicUrl };
+          }
+          
+          // Fetch and cache the image
+          console.log(`🔄 Caching image for ${productId}: ${p.imageUrl}`);
+          const response = await fetch(p.imageUrl);
+          
+          if (response.ok) {
+            const imageBuffer = await response.arrayBuffer();
+            const contentType = response.headers.get('content-type') || 'image/jpeg';
+            
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('email-images')
+              .upload(fileName, imageBuffer, {
+                contentType,
+                upsert: true
+              });
+            
+            if (!uploadError && uploadData) {
+              // Get public URL
+              const { data } = supabase.storage
+                .from('email-images')
+                .getPublicUrl(fileName);
+              
+              console.log(`✅ Cached and serving from Storage: ${data.publicUrl}`);
+              return { ...p, imageUrl: data.publicUrl };
+            } else {
+              console.warn(`⚠️ Failed to upload image for ${productId}:`, uploadError);
             }
           }
-        } catch {}
+        } catch (error) {
+          console.warn(`⚠️ Error caching image for product ${index}:`, error);
+        }
+        
+        // Fallback to original URL
         return p;
       })
     );

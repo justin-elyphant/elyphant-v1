@@ -47,6 +47,7 @@ interface CartContextType {
   assignItemToRecipient: (productId: string, recipientAssignment: RecipientAssignment) => void;
   unassignItemFromRecipient: (productId: string) => void;
   updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>) => void;
+  updateDeliveryGroupScheduling: (groupId: string, scheduledDate: string | null) => void;
   getItemsByRecipient: () => Map<string, CartItem[]>;
   getUnassignedItems: () => CartItem[];
   assignItemsToNewRecipient: (productIds: string[], recipientData: any) => void;
@@ -168,6 +169,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateDeliveryGroupScheduling = (groupId: string, scheduledDate: string | null) => {
+    // Update all items in the delivery group with the new scheduled date
+    const itemsInGroup = cartItems.filter(item => 
+      item.recipientAssignment?.deliveryGroupId === groupId
+    );
+    
+    console.log(`📅 [CartContext] Updating delivery group ${groupId} scheduling:`, {
+      scheduledDate,
+      itemCount: itemsInGroup.length
+    });
+    
+    itemsInGroup.forEach(item => {
+      if (item.recipientAssignment) {
+        const updatedAssignment = { 
+          ...item.recipientAssignment, 
+          scheduledDeliveryDate: scheduledDate 
+        };
+        serviceAssignToRecipient(item.product.product_id, updatedAssignment);
+      }
+    });
+  };
+
   const getItemsByRecipient = (): Map<string, CartItem[]> => {
     const groupedItems = new Map<string, CartItem[]>();
     
@@ -271,6 +294,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     assignItemToRecipient,
     unassignItemFromRecipient,
     updateRecipientAssignment,
+    updateDeliveryGroupScheduling,
     getItemsByRecipient,
     getUnassignedItems,
     assignItemsToNewRecipient,
@@ -288,6 +312,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     assignItemToRecipient,
     unassignItemFromRecipient,
     updateRecipientAssignment,
+    updateDeliveryGroupScheduling,
     getItemsByRecipient,
     getUnassignedItems,
     assignItemsToNewRecipient

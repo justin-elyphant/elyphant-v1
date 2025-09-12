@@ -36,7 +36,8 @@ const Cart = () => {
     getUnassignedItems,
     assignItemToRecipient,
     unassignItemFromRecipient,
-    updateRecipientAssignment
+    updateRecipientAssignment,
+    updateDeliveryGroupScheduling
   } = useCart();
   const isMobile = useIsMobile();
   const [showRecipientModal, setShowRecipientModal] = useState(false);
@@ -165,7 +166,7 @@ const Cart = () => {
 
   const handlePackageSchedulingUpdate = (groupId: string, scheduledDate: string | null) => {
     console.log(`📅 [Cart] Updating package scheduling:`, { groupId, scheduledDate });
-    updateRecipientAssignment(groupId, { scheduledDeliveryDate: scheduledDate });
+    updateDeliveryGroupScheduling(groupId, scheduledDate);
     toast.success(scheduledDate ? 'Delivery date scheduled' : 'Delivery timing updated');
   };
 

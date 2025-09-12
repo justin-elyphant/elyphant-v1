@@ -53,7 +53,6 @@ import { toast } from 'sonner';
 
 // CRITICAL: These imports are essential for the checkout system
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
-import GiftScheduleForm from '@/components/marketplace/checkout/GiftScheduleForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import CheckoutShippingReview from './CheckoutShippingReview';
@@ -414,12 +413,6 @@ const UnifiedCheckoutForm: React.FC = () => {
         <div className="lg:col-span-2 space-y-4 lg:space-y-6">
           {/* Shipping Review Section - Mobile: Collapsible */}
           <CheckoutShippingReview shippingCost={shippingCost} />
-
-          {/* Gift Scheduling Section */}
-          <GiftScheduleForm 
-            giftOptions={giftOptions}
-            onUpdate={handleUpdateGiftOptions}
-          />
 
           {/* Payment Section - Mobile: Full width */}
           <Card>

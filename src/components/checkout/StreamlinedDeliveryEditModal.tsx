@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
 import AddressDisplay from './components/AddressDisplay';
 import AddressForm from './components/AddressForm';
-import GiftOptionsForm from './components/GiftOptionsForm';
 
 interface DeliveryGroup {
   id: string;
@@ -42,12 +41,6 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
   const [email, setEmail] = useState('');
   const [addressOverride, setAddressOverride] = useState(false);
   const [overrideAddress, setOverrideAddress] = useState<any>(null);
-  const [giftOptions, setGiftOptions] = useState({
-    giftMessage: '',
-    scheduledDeliveryDate: '',
-    specialInstructions: ''
-  });
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [isValidAddress, setIsValidAddress] = useState(true);
 
@@ -76,19 +69,6 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
       // Always start with address override OFF to show the original shipping address
       setAddressOverride(false);
       setOverrideAddress(deliveryGroup.shippingAddress || null);
-      
-      // Initialize gift options
-      setGiftOptions({
-        giftMessage: deliveryGroup.giftMessage || '',
-        scheduledDeliveryDate: deliveryGroup.scheduledDeliveryDate || '',
-        specialInstructions: deliveryGroup.specialInstructions || ''
-      });
-      
-      setScheduledDate(
-        deliveryGroup.scheduledDeliveryDate 
-          ? new Date(deliveryGroup.scheduledDeliveryDate) 
-          : undefined
-      );
     }
   }, [isOpen, deliveryGroup, connectionData, connectionsLoading]);
 
@@ -105,9 +85,6 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
         ...deliveryGroup,
         connectionName: name,
         shippingAddress: addressOverride ? overrideAddress : null,
-        giftMessage: giftOptions.giftMessage,
-        scheduledDeliveryDate: giftOptions.scheduledDeliveryDate,
-        specialInstructions: giftOptions.specialInstructions,
       };
 
       // If we have a connection ID and basic info changed, update the connection
@@ -201,14 +178,6 @@ const StreamlinedDeliveryEditModal: React.FC<StreamlinedDeliveryEditModalProps> 
               )}
             </CardContent>
           </Card>
-
-          {/* Gift Options Section */}
-          <GiftOptionsForm
-            giftOptions={giftOptions}
-            onChange={setGiftOptions}
-            scheduledDate={scheduledDate}
-            onScheduledDateChange={setScheduledDate}
-          />
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3">

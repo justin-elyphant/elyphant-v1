@@ -124,7 +124,9 @@ export const checkConnectionStatus = async (currentUserId: string, targetUserId:
       .from('user_connections')
       .select('status')
       .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUserId})`)
-      .single();
+      .maybeSingle();
+
+    console.log(`🔍 [checkConnectionStatus] Current: ${currentUserId}, Target: ${targetUserId}:`, { data, error });
 
     if (error && error.code !== 'PGRST116') throw error;
     

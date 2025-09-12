@@ -209,11 +209,13 @@ export const searchFriendsWithPrivacy = async (
 
     // Check connection status for each profile
     const connectionStatusPromises = profiles.map(async (profile) => {
-      const { data: connectionData } = await supabase
+      const { data: connectionData, error } = await supabase
         .from('user_connections')
         .select('status')
         .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${profile.id}),and(user_id.eq.${profile.id},connected_user_id.eq.${currentUserId})`)
-        .single();
+        .maybeSingle();
+
+      console.log(`🔍 [CONNECTION CHECK] Profile ${profile.id} (${profile.name}):`, { connectionData, error });
 
       return {
         profileId: profile.id,

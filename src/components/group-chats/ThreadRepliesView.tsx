@@ -38,7 +38,11 @@ const ThreadRepliesView = ({ parentMessageId, members, currentUserId }: ThreadRe
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setReplies(repliesData as UnifiedMessage[] || []);
+        const normalized = (repliesData || []).map((r: any) => ({
+          ...r,
+          sender: Array.isArray(r.sender) ? r.sender[0] : r.sender,
+        }));
+        setReplies(normalized as UnifiedMessage[]);
       } catch (error) {
         console.error('Error loading thread replies:', error);
       } finally {

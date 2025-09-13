@@ -66,7 +66,9 @@ const GroupGiftingButton: React.FC<GroupGiftingButtonProps> = ({
           goal_amount: goalAmount,
           creator_id: user.id,
           campaign_type: 'group_gift',
-          product_id: product.product_id || product.id,
+          product_id: typeof (product as any).product_id === 'number' 
+            ? (product as any).product_id 
+            : (typeof (product as any).id === 'number' ? (product as any).id : null),
         })
         .select()
         .single();

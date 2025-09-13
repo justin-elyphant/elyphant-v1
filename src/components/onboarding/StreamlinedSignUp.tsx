@@ -83,7 +83,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
         name: `${formData.firstName} ${formData.lastName}`,
         username: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, ''),
         email: formData.email,
-        dob: formData.birthday,
+        dob: formData.birthday.toISOString(),
         birth_year: formData.birthday.getFullYear(),
         shipping_address: {
           address_line1: formData.address.street,
@@ -111,7 +111,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
       // Insert profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([profileData]);
+        .insert(profileData as any);
       
       if (profileError) {
         console.error("❌ Profile creation failed:", profileError);

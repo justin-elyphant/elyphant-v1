@@ -19,7 +19,7 @@ export const useZincIntegration = () => {
       toast.error("loading the zinc api key");
     } else {
       setApiKey(data.key);
-      setRowId(data.id);
+      setRowId(String(data.id));
     }
 
   }

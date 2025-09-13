@@ -23,14 +23,17 @@ export const useGiftSearches = () => {
   // Save a wizard/onboarding session to Supabase
   const saveGiftSearch = useCallback(async (session: GiftSearchSession) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
       const { error } = await supabase
         .from("gift_searches")
         .insert([{
           ...session,
-          recipient_interests: session.recipient_interests || null,
-          excluded_items: session.excluded_items || null,
-          extra_preferences: session.extra_preferences || null,
-          search_results: session.search_results || null,
+          user_id: user.id,
+          recipient_interests: (session.recipient_interests as any) || null,
+          excluded_items: (session.excluded_items as any) || null,
+          extra_preferences: (session.extra_preferences as any) || null,
+          search_results: (session.search_results as any) || null,
         }]);
       if (error) throw error;
       return true;

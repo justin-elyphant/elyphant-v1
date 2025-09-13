@@ -92,16 +92,35 @@ const EnhancedPaymentMethodManager: React.FC<EnhancedPaymentMethodManagerProps> 
       
       const { data, error } = await supabase
         .from('payment_methods')
-        .select('*')
+        .select('*' as any)
         .eq('user_id', user.id)
         .order('is_default', { ascending: false })
         .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      const enhancedMethods = (data || []).map(method => ({
-        ...method,
-        is_validated: isPaymentMethodValid(method),
+      const enhancedMethods: PaymentMethod[] = (data || []).map((method: any) => ({
+        id: method.id,
+        user_id: method.user_id,
+        payment_method_id: method.stripe_payment_method_id || method.payment_method_id,
+        last_four: method.last_four,
+        card_type: method.card_type,
+        exp_month: method.exp_month,
+        exp_year: method.exp_year,
+        created_at: method.created_at,
+        is_default: method.is_default,
+        nickname: method.nickname,
+        is_validated: method.is_validated ?? isPaymentMethodValid({
+          id: method.id,
+          user_id: method.user_id,
+          payment_method_id: method.stripe_payment_method_id || method.payment_method_id,
+          last_four: method.last_four,
+          card_type: method.card_type,
+          exp_month: method.exp_month,
+          exp_year: method.exp_year,
+          created_at: method.created_at,
+          is_default: method.is_default,
+        } as PaymentMethod),
         last_used: method.last_used || method.created_at
       }));
       
@@ -175,7 +194,7 @@ const EnhancedPaymentMethodManager: React.FC<EnhancedPaymentMethodManagerProps> 
       
       const { error } = await supabase
         .from('payment_methods')
-        .update({ nickname: nickname.trim() || null })
+        .update({ nickname: nickname.trim() || null } as any)
         .eq('id', methodId);
         
       if (error) throw error;
@@ -205,7 +224,7 @@ const EnhancedPaymentMethodManager: React.FC<EnhancedPaymentMethodManagerProps> 
         .update({ 
           is_validated: true,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', methodId);
         
       if (error) throw error;

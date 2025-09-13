@@ -65,8 +65,9 @@ export const useConnectionSuggestions = () => {
           
           // Calculate interest similarity
           const profileInterests = profile.interests || [];
-          const commonInterests = userInterests.filter(interest => 
-            profileInterests.includes(interest)
+          const userInterestsArray = Array.isArray(userInterests) ? userInterests : [];
+          const commonInterests = userInterestsArray.filter(interest => 
+            (profileInterests as any[])?.includes?.(interest)
           );
           
           // Scoring algorithm
@@ -90,7 +91,7 @@ export const useConnectionSuggestions = () => {
               birthday: 'missing' as const,
               email: 'missing' as const
             },
-            interests: profileInterests,
+            interests: (profileInterests as any[]) || [],
             bio: profile.bio || '',
             reason: mutualFriends > 0 
               ? `${mutualFriends} mutual connection${mutualFriends > 1 ? 's' : ''}`

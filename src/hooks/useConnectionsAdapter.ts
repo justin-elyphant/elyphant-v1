@@ -167,16 +167,16 @@ export const useConnectionsAdapter = () => {
         
         privacyMap.set(profile.id, {
           shipping: isShippingBlocked ? 'blocked' as const :
-            (settings.shipping_address === 'friends' || settings.shipping_address === 'public') 
-              ? (profile.shipping_address ? 'verified' as const : 'missing' as const)
+            ((settings as any)?.shipping_address === 'friends' || (settings as any)?.shipping_address === 'public') 
+              ? ((profile.shipping_address as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           birthday: isBirthdayBlocked ? 'blocked' as const :
-            (settings.dob === 'friends' || settings.dob === 'public') 
-              ? (profile.dob ? 'verified' as const : 'missing' as const)
+            ((settings as any)?.dob === 'friends' || (settings as any)?.dob === 'public') 
+              ? ((profile.dob as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           email: isEmailBlocked ? 'blocked' as const :
-            (settings.email === 'friends' || settings.email === 'public') 
-              ? (profile.email ? 'verified' as const : 'missing' as const)
+            ((settings as any)?.email === 'friends' || (settings as any)?.email === 'public') 
+              ? ((profile.email as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           isBlocked: isShippingBlocked || isBirthdayBlocked || isEmailBlocked
         });

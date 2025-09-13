@@ -229,8 +229,8 @@ export const useEnhancedConnections = () => {
     
     try {
       const { data: canFollow } = await supabase
-        .rpc('can_user_follow', {
-          follower_id: user.id,
+        .rpc('can_user_connect', {
+          requester_id: user.id,
           target_id: connectedUserId
         });
         

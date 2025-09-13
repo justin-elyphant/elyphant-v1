@@ -68,7 +68,7 @@ export const useOrders = () => {
 
       if (queryError) throw queryError;
 
-      setOrders(data || []);
+      setOrders((data || []) as any);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch orders');
       console.error('Error fetching orders:', err);

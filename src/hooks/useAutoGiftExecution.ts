@@ -114,9 +114,9 @@ export const useAutoGiftExecution = () => {
       if (execution?.address_metadata) {
         const addressMeta = execution.address_metadata;
         shippingAddress = {
-          address: addressMeta.address || {},
-          source: addressMeta.source as 'user_verified' | 'giver_provided' | 'missing',
-          needs_confirmation: addressMeta.needs_confirmation || false
+          address: (addressMeta as any)?.address || {},
+          source: (addressMeta as any)?.source as 'user_verified' | 'giver_provided' | 'missing',
+          needs_confirmation: (addressMeta as any)?.needs_confirmation || false
         };
       }
 

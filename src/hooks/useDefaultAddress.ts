@@ -61,12 +61,12 @@ export const useDefaultAddress = () => {
             id: anyAddress.id,
             name: anyAddress.name,
             address: {
-              street: anyAddress.address.street || anyAddress.address.address_line1 || anyAddress.address.address || '',
-              address_line2: anyAddress.address.address_line2 || '',
-              city: anyAddress.address.city || '',
-              state: anyAddress.address.state === 'CA' ? 'California' : (anyAddress.address.state || ''),
-              zipCode: anyAddress.address.zipCode || anyAddress.address.zip_code || '',
-              country: anyAddress.address.country || 'United States'
+              street: (anyAddress.address as any)?.street || (anyAddress.address as any)?.address_line1 || (anyAddress.address as any)?.address || '',
+              address_line2: (anyAddress.address as any)?.address_line2 || '',
+              city: (anyAddress.address as any)?.city || '',
+              state: (anyAddress.address as any)?.state === 'CA' ? 'California' : ((anyAddress.address as any)?.state || ''),
+              zipCode: (anyAddress.address as any)?.zipCode || (anyAddress.address as any)?.zip_code || '',
+              country: (anyAddress.address as any)?.country || 'United States'
             }
           });
         } else {
@@ -80,12 +80,12 @@ export const useDefaultAddress = () => {
             id: defaultData.id,
             name: defaultData.name,
             address: {
-              street: defaultData.address.street || defaultData.address.address_line1 || defaultData.address.address || '',
-              address_line2: defaultData.address.address_line2 || '',
-              city: defaultData.address.city || '',
-              state: defaultData.address.state === 'CA' ? 'California' : (defaultData.address.state || ''),
-              zipCode: defaultData.address.zipCode || defaultData.address.zip_code || '',
-              country: defaultData.address.country || 'United States'
+              street: (defaultData.address as any)?.street || (defaultData.address as any)?.address_line1 || (defaultData.address as any)?.address || '',
+              address_line2: (defaultData.address as any)?.address_line2 || '',
+              city: (defaultData.address as any)?.city || '',
+              state: (defaultData.address as any)?.state === 'CA' ? 'California' : ((defaultData.address as any)?.state || ''),
+              zipCode: (defaultData.address as any)?.zipCode || (defaultData.address as any)?.zip_code || '',
+              country: (defaultData.address as any)?.country || 'United States'
             }
           });
       } else {

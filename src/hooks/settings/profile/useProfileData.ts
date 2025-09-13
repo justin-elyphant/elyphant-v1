@@ -85,11 +85,11 @@ export const useProfileData = () => {
               typeof pref === 'string' ? pref : pref.category || ''
             ).filter(Boolean);
           } else if (data.interests && Array.isArray(data.interests)) {
-            interests = data.interests;
+            interests = (data.interests as any[]) || [];
           }
           
           // Map shipping_address to address
-          const address: ShippingAddress = data.shipping_address || {
+          const address: ShippingAddress = (data.shipping_address as any) || {
             street: '',
             city: '',
             state: '',
@@ -109,7 +109,7 @@ export const useProfileData = () => {
             address: address,
             interests: interests,
             importantDates: importantDates,
-            data_sharing_settings: data.data_sharing_settings || {
+            data_sharing_settings: (data.data_sharing_settings as any) || {
               dob: "friends",
               shipping_address: "friends",
               gift_preferences: "public",

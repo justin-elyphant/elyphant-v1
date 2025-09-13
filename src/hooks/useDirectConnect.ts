@@ -59,7 +59,7 @@ export const useDirectConnect = (targetUserId?: string) => {
         isPending: connectionData?.status === 'pending',
         canConnect: true,
         loading: false,
-        connectionType: connectionData?.relationship_type
+        connectionType: (connectionData?.relationship_type as "friend" | "family") || "friend"
       });
     } catch (error) {
       console.error('Error checking connection status:', error);

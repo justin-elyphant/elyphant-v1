@@ -19,7 +19,7 @@ export function useWishlistSync() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          wishlists: wishlists,
+          wishlists: wishlists as any,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -56,10 +56,10 @@ export function useWishlistSync() {
         return false;
       }
       
-      const existingWishlists = profile?.wishlists || [];
+      const existingWishlists = Array.isArray(profile?.wishlists) ? profile.wishlists as any[] : [];
       
       // Find the wishlist to update
-      const wishlistIndex = existingWishlists.findIndex(list => list.id === wishlistId);
+      const wishlistIndex = existingWishlists.findIndex((list: any) => list.id === wishlistId);
       
       if (wishlistIndex === -1) {
         toast.error("Wishlist not found");

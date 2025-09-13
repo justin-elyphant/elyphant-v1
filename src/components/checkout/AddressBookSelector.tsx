@@ -61,7 +61,13 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
         .order('is_default', { ascending: false });
 
       if (error) throw error;
-      setAddresses(data || []);
+      
+      // Cast JSON fields to proper types
+      const formattedAddresses = (data || []).map(addr => ({
+        ...addr,
+        address: addr.address as any
+      }));
+      setAddresses(formattedAddresses);
     } catch (error) {
       console.error('Error fetching addresses:', error);
       toast.error('Failed to load saved addresses');

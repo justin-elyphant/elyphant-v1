@@ -72,7 +72,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTemplates(data || []);
+      // Cast JSON fields to proper types
+      const formattedTemplates = (data || []).map(template => ({
+        ...template,
+        budget_range: template.budget_range as any,
+        connection_filters: template.connection_filters as any,
+        recurring_schedule: template.recurring_schedule as any,
+        recipient_types: Array.isArray(template.recipient_types) ? template.recipient_types : [],
+        preferred_categories: Array.isArray(template.preferred_categories) ? template.preferred_categories : []
+      })) as GiftTemplate[];
+      setTemplates(formattedTemplates);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast.error('Failed to load templates');
@@ -116,7 +125,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
       if (error) throw error;
 
-      setTemplates(prev => [data, ...prev]);
+      // Cast JSON fields for the new template
+      const formattedTemplate = {
+        ...data,
+        budget_range: data.budget_range as any,
+        connection_filters: data.connection_filters as any,
+        recurring_schedule: data.recurring_schedule as any,
+        recipient_types: Array.isArray(data.recipient_types) ? data.recipient_types : [],
+        preferred_categories: Array.isArray(data.preferred_categories) ? data.preferred_categories : []
+      } as GiftTemplate;
+      setTemplates(prev => [formattedTemplate, ...prev]);
       toast.success('Template duplicated successfully');
     } catch (error) {
       console.error('Error duplicating template:', error);

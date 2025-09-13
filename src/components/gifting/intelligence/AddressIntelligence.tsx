@@ -76,7 +76,7 @@ const AddressIntelligence: React.FC<AddressIntelligenceProps> = ({
         .upsert({
           user_id: profile.id,
           address_hash: generateAddressHash(address),
-          analysis: mockAnalysis,
+          analysis: mockAnalysis as any,
           created_at: new Date().toISOString()
         });
 

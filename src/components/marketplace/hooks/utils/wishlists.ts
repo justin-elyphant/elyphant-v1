@@ -38,7 +38,7 @@ export async function createWishlist(userId: string, title: string, description?
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        wishlists,
+        wishlists: wishlists as any,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
@@ -75,8 +75,8 @@ export async function addToWishlist(
     }
     
     // Find target wishlist
-    const wishlists = Array.isArray(profile?.wishlists) ? profile.wishlists : [];
-    const wishlistIndex = wishlists.findIndex(list => list.id === wishlistId);
+    const wishlists = Array.isArray(profile?.wishlists) ? profile.wishlists as any[] : [];
+    const wishlistIndex = wishlists.findIndex((list: any) => list.id === wishlistId);
     
     if (wishlistIndex === -1) {
       toast.error("Wishlist not found");
@@ -106,14 +106,18 @@ export async function addToWishlist(
     });
     
     // Add item to wishlist
-    wishlists[wishlistIndex].items = [...wishlists[wishlistIndex].items, newItem];
-    wishlists[wishlistIndex].updated_at = new Date().toISOString();
+    const currentWishlist = wishlists[wishlistIndex] as any;
+    wishlists[wishlistIndex] = {
+      ...currentWishlist,
+      items: [...(currentWishlist.items || []), newItem],
+      updated_at: new Date().toISOString()
+    };
     
     // Update profile
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        wishlists,
+        wishlists: wishlists as any,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);

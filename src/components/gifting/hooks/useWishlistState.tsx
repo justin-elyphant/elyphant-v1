@@ -201,7 +201,7 @@ export function useWishlistState() {
         const { error } = await supabase
           .from('profiles')
           .update({
-            wishlists: wishlistsToSync,
+            wishlists: wishlistsToSync as any,
             updated_at: new Date().toISOString()
           })
           .eq('id', user.id);
@@ -244,9 +244,9 @@ export function useWishlistState() {
       }
       
       if (profile?.wishlists && Array.isArray(profile.wishlists)) {
-        const validWishlists = profile.wishlists
-          .filter(list => list && typeof list === 'object' && list.id && Array.isArray(list.items))
-          .map(list => normalizeWishlist({...list, user_id: user.id}));
+        const validWishlists = (profile.wishlists as any[])
+          .filter((list: any) => list && typeof list === 'object' && list.id && Array.isArray(list.items))
+          .map((list: any) => normalizeWishlist({...list, user_id: user.id}));
         
         setWishlists(validWishlists);
         

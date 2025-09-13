@@ -80,7 +80,7 @@ const ConnectionRecipientSelector: React.FC<ConnectionRecipientSelectorProps> = 
 
       const formattedConnections: ConnectionWithAddress[] = (data || []).map(conn => {
         const connProfile = conn.profiles as any;
-        const addresses = conn.user_addresses as any[];
+        const addresses = Array.isArray(conn.user_addresses) ? conn.user_addresses as any[] : [];
         const primaryAddress = addresses?.find(addr => addr.is_default) || addresses?.[0];
 
         return {

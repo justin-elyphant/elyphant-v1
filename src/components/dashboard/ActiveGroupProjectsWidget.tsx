@@ -56,7 +56,18 @@ const ActiveGroupProjectsWidget = () => {
 
       if (error) throw error;
 
-      setProjects(data || []);
+      // Cast and format the data to match expected types
+      const formattedProjects = (data || []).map(project => ({
+        ...project,
+        group_chat: Array.isArray(project.group_chats) && project.group_chats.length > 0 
+          ? project.group_chats[0] 
+          : { name: 'Unknown Group', avatar_url: null },
+        group_gift_contributions: Array.isArray(project.group_gift_contributions) 
+          ? project.group_gift_contributions 
+          : [],
+        delivery_address: project.delivery_address as any
+      }));
+      setProjects(formattedProjects as GroupProjectWithDetails[]);
     } catch (error) {
       console.error('Error fetching active projects:', error);
       toast.error('Failed to load active projects');

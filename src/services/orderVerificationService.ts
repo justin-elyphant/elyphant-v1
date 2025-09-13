@@ -126,8 +126,8 @@ class OrderVerificationService {
             .update({
               status: 'processing',
               zinc_status: 'request_processing',
-              next_retry_at: new Date(Date.now() + 10 * 60 * 1000), // Check again in 10 minutes
-              updated_at: new Date()
+              next_retry_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // Check again in 10 minutes
+              updated_at: new Date().toISOString()
             })
             .eq('id', orderId);
 
@@ -135,9 +135,11 @@ class OrderVerificationService {
         }
 
         // Add verification note to order
+        const { data: userData } = await supabase.auth.getUser();
         await supabase
           .from('order_notes')
           .insert({
+            admin_user_id: userData?.user?.id || '00000000-0000-0000-0000-000000000000',
             order_id: orderId,
             note_content: `Automatic verification completed. Zinc status: ${result.status}. ${result.error ? `Error: ${result.error}` : result.status === 'request_processing' ? 'Order is actively processing by Zinc.' : 'Verification successful.'}`,
             note_type: 'verification',
@@ -164,9 +166,11 @@ class OrderVerificationService {
       console.error(`💥 Exception during order verification:`, error);
       
       // Log the error
+      const { data: userData } = await supabase.auth.getUser();
       await supabase
         .from('order_notes')
         .insert({
+          admin_user_id: userData?.user?.id || '00000000-0000-0000-0000-000000000000',
           order_id: orderId,
           note_content: `Automatic verification failed: ${error.message}`,
           note_type: 'error',

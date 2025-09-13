@@ -1111,7 +1111,13 @@ class UnifiedPaymentService {
       return [];
     }
 
-    return orders || [];
+    const normalized = (orders || []).map((o: any) => ({
+      ...o,
+      shipping_info: typeof o.shipping_info === 'string' ? JSON.parse(o.shipping_info as any) : o.shipping_info,
+      order_items: o.order_items || []
+    })) as unknown as Order[];
+
+    return normalized;
   }
 
   /**

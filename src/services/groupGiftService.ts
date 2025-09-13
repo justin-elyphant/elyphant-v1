@@ -75,8 +75,15 @@ export const createGroupGiftProject = async (params: CreateGroupGiftProjectParam
       `)
       .single();
 
+
     if (error) throw error;
-    return data;
+    // Normalize status to strict union
+    const allowedStatuses = ['collecting','ready_to_purchase','purchased','shipped','delivered'];
+    const normalized = data ? { 
+      ...data,
+      status: allowedStatuses.includes((data as any).status) ? (data as any).status : 'collecting'
+    } : null;
+    return normalized;
   } catch (error) {
     console.error('Error creating group gift project:', error);
     return null;
@@ -99,8 +106,20 @@ export const getGroupGiftProjects = async (groupChatId: string): Promise<GroupGi
       .eq('group_chat_id', groupChatId)
       .order('created_at', { ascending: false });
 
+
     if (error) throw error;
-    return data || [];
+    const allowedStatuses = ['collecting','ready_to_purchase','purchased','shipped','delivered'];
+    const normalized = (data || []).map((p: any) => ({
+      ...p,
+      status: allowedStatuses.includes(p?.status) ? p.status : 'collecting',
+      contributions: Array.isArray(p?.contributions)
+        ? p.contributions.map((c: any) => ({
+            ...c,
+            contribution_status: ['committed','paid','refunded'].includes(c?.contribution_status) ? c.contribution_status : 'committed'
+          }))
+        : []
+    }));
+    return normalized;
   } catch (error) {
     console.error('Error fetching group gift projects:', error);
     return [];
@@ -126,12 +145,19 @@ export const addContribution = async (projectId: string, amount: number): Promis
       `)
       .single();
 
+
     if (error) throw error;
 
     // Update project's current amount
     await updateProjectAmount(projectId);
 
-    return data;
+    // Normalize contribution status
+    const normalized = data ? {
+      ...data,
+      contribution_status: ['committed','paid','refunded'].includes((data as any).contribution_status) ? (data as any).contribution_status : 'committed'
+    } : null;
+
+    return normalized;
   } catch (error) {
     console.error('Error adding contribution:', error);
     return null;
@@ -280,8 +306,13 @@ export const getUserContributions = async (): Promise<GroupGiftContribution[]> =
       .eq('contributor_id', user.id)
       .order('created_at', { ascending: false });
 
+
     if (error) throw error;
-    return data || [];
+    const normalized = (data || []).map((c: any) => ({
+      ...c,
+      contribution_status: ['committed','paid','refunded'].includes(c?.contribution_status) ? c.contribution_status : 'committed'
+    }));
+    return normalized;
   } catch (error) {
     console.error('Error fetching user contributions:', error);
     return [];

@@ -72,7 +72,8 @@ export const retryOrderWithBillingInfo = async (
     const { error: updateError } = await supabase
       .from('orders')
       .update({
-        billing_info: billingInfo,
+        // Cast to any to satisfy Supabase Json type
+        billing_info: (billingInfo as unknown as any),
         status: 'pending',
         zinc_status: null,
         updated_at: new Date().toISOString()

@@ -191,7 +191,6 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
-      user_id: user.id,
       subtotal: orderData.subtotal,
       shipping_cost: orderData.shippingCost,
       tax_amount: orderData.taxAmount,
@@ -211,7 +210,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       payment_status: 'pending',
       has_multiple_recipients: hasMultipleRecipients,
       delivery_groups: orderData.deliveryGroups || []
-    })
+    } as any)
     .select()
     .single();
 
@@ -302,8 +301,14 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   return {
     ...order,
+    shipping_info: typeof (order as any).shipping_info === 'string' 
+      ? JSON.parse((order as any).shipping_info as any)
+      : (order as any).shipping_info,
+    delivery_groups: Array.isArray((order as any).delivery_groups)
+      ? (order as any).delivery_groups
+      : ((typeof (order as any).delivery_groups === 'string' && (order as any).delivery_groups ? JSON.parse((order as any).delivery_groups) : (order as any).delivery_groups)),
     order_items: createdItems
-  };
+} as unknown as Order;
 };
 
 /*
@@ -329,7 +334,16 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
   }
 
   console.log('Order fetched successfully:', order.order_number);
-  return order;
+  const normalized = {
+    ...order,
+    shipping_info: typeof (order as any).shipping_info === 'string' 
+      ? JSON.parse((order as any).shipping_info as any)
+      : (order as any).shipping_info,
+    delivery_groups: Array.isArray((order as any).delivery_groups)
+      ? (order as any).delivery_groups
+      : ((typeof (order as any).delivery_groups === 'string' && (order as any).delivery_groups ? JSON.parse((order as any).delivery_groups) : (order as any).delivery_groups)),
+  } as unknown as Order;
+return normalized;
 };
 
 /*
@@ -349,7 +363,12 @@ export const getUserOrders = async (): Promise<Order[]> => {
     return [];
   }
 
-  return orders || [];
+  return (orders || []).map((o: any) => ({
+    ...o,
+    shipping_info: typeof o.shipping_info === 'string' ? JSON.parse(o.shipping_info as any) : o.shipping_info,
+    delivery_groups: Array.isArray(o.delivery_groups) ? o.delivery_groups : (typeof o.delivery_groups === 'string' && o.delivery_groups ? JSON.parse(o.delivery_groups) : o.delivery_groups),
+    order_items: o.order_items || []
+  })) as unknown as Order[];
 };
 
 /*

@@ -122,12 +122,12 @@ export class EnhancedGiftIntelligenceService {
 
     if (!profile || !connection) return null;
 
-    const preferences = profile.enhanced_gift_preferences || {};
-    const history = profile.enhanced_gifting_history || {};
+    const preferences = (profile.enhanced_gift_preferences as any) || {};
+    const history = (profile.enhanced_gifting_history as any) || {};
     
     // Calculate context-aware budget
-    const baseRange = preferences.preferred_price_ranges?.[occasion] || { min: 25, max: 100 };
-    const relationshipModifier = preferences.relationship_budget_modifiers?.[connection.relationship_type] || 1.0;
+    const baseRange = preferences?.preferred_price_ranges?.[occasion] || { min: 25, max: 100 };
+    const relationshipModifier = preferences?.relationship_budget_modifiers?.[connection.relationship_type] || 1.0;
     
     return {
       min: Math.round(baseRange.min * relationshipModifier),
@@ -228,13 +228,13 @@ export class EnhancedGiftIntelligenceService {
           inferred_preferences: {
             safe_categories: ['gift_cards', 'flowers', 'gourmet_food', 'books'],
             avoid_categories: ['intimate', 'highly_personal'],
-            budget_comfort: this.inferBudgetFromInviterHistory(inviterProfile?.enhanced_gifting_history),
+            budget_comfort: this.inferBudgetFromInviterHistory((inviterProfile as any)?.enhanced_gifting_history),
             style_preference: 'thoughtful_and_safe'
           },
           proxy_intelligence: {
-            inviter_successful_categories: this.extractSuccessfulCategories(inviterProfile?.enhanced_gifting_history),
-            inviter_typical_budget: this.extractTypicalBudget(inviterProfile?.enhanced_gift_preferences),
-            inviter_gift_style: inviterProfile?.enhanced_gift_preferences?.preferred_gift_styles?.[0] || 'thoughtful'
+            inviter_successful_categories: this.extractSuccessfulCategories((inviterProfile as any)?.enhanced_gifting_history),
+            inviter_typical_budget: this.extractTypicalBudget((inviterProfile as any)?.enhanced_gift_preferences),
+            inviter_gift_style: (inviterProfile as any)?.enhanced_gift_preferences?.preferred_gift_styles?.[0] || 'thoughtful'
           }
         },
         urgency_factors: {

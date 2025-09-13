@@ -119,7 +119,7 @@ export const getGroupGiftProject = async (projectId: string): Promise<GroupGiftP
       return null;
     }
 
-    return data;
+    return data as unknown as GroupGiftProject;
   } catch (error) {
     console.error('Error fetching group gift project:', error);
     return null;
@@ -143,7 +143,7 @@ export const getUserGroupGiftContributions = async (userId: string): Promise<Gro
       return [];
     }
 
-    return data || [];
+    return (data as unknown as GroupGiftContribution[]) || [];
   } catch (error) {
     console.error('Error fetching user contributions:', error);
     return [];

@@ -87,8 +87,8 @@ export const eventCRUD = {
 
       // Try to find auto_gifting_rules by event type and recipient email
       if (!event.auto_gifting_rules || event.auto_gifting_rules.length === 0) {
-        const recipientEmail = event.user_connections?.pending_recipient_email || 
-                              event.user_connections?.profiles?.email;
+        const recipientEmail = (event as any)?.user_connections?.pending_recipient_email || 
+                              (event as any)?.user_connections?.profiles?.email;
         
         if (recipientEmail || eventType) {
           const { data: rules } = await supabase

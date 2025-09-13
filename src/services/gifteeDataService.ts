@@ -82,8 +82,12 @@ export const fetchGifteeData = async (gifteeName: string): Promise<GifteeData | 
 
     // Extract preferences
     const preferences: GifteePreferences = {
-      interests: profile.interests || [],
-      gift_preferences: profile.gift_preferences || []
+      interests: Array.isArray(profile.interests) 
+        ? profile.interests.filter((x: any): x is string => typeof x === 'string') 
+        : [],
+      gift_preferences: Array.isArray(profile.gift_preferences)
+        ? profile.gift_preferences.map((p: any) => typeof p === 'string' ? ({ category: p }) : p)
+        : []
     };
 
     console.log(`Found ${wishlistItems.length} wishlist items and preferences for ${gifteeName}`);

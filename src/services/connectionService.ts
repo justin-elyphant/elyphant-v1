@@ -71,7 +71,7 @@ export const connectionService = {
         relationship: connection.relationship_type || 'friend',
         customRelationship: connection.custom_relationship,
         connectionDate: connection.created_at,
-        isAutoGiftEnabled: autoGiftData?.canAutoGift || false,
+        isAutoGiftEnabled: !!(autoGiftData as any)?.canAutoGift,
         canRemoveConnection: true,
         status: connection.status
       };
@@ -148,10 +148,19 @@ export const connectionService = {
         }
 
         // Add wishlists to profile - now using consistent data source
+        const normalizedGiftPreferences = Array.isArray((profile as any).gift_preferences)
+          ? (profile as any).gift_preferences.map((p: any) => typeof p === 'string' ? ({ category: p }) : p)
+          : [];
+        const normalizedInterests = Array.isArray((profile as any).interests)
+          ? (profile as any).interests.filter((x: any) => typeof x === 'string')
+          : [];
+
         const profileWithWishlists = {
           ...profile,
+          gift_preferences: normalizedGiftPreferences,
+          interests: normalizedInterests,
           wishlists: wishlists || [],
-          wishlist_count: wishlists?.length || 0  // Add the count for profile display
+          wishlist_count: wishlists?.length || 0
         };
 
         console.log('✅ Connection profile loaded successfully:', { 

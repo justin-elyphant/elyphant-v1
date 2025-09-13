@@ -75,12 +75,12 @@ class NicoleMarketplaceIntelligenceService {
           *,
           wishlists!inner (
             user_id,
-            name,
-            privacy_level
+            title,
+            is_public
           )
         `)
         .eq('wishlists.user_id', recipientId)
-        .eq('wishlists.privacy_level', 'public'); // Only get public wishlists for gifting
+        .eq('wishlists.is_public', true); // Only get public wishlists for gifting
 
       if (error) {
         console.error('Error fetching wishlist:', error);
@@ -113,7 +113,7 @@ class NicoleMarketplaceIntelligenceService {
 
         recommendations.push({
           product,
-          reasoning: `This item is on ${item.wishlists.name || 'their wishlist'}, indicating strong interest`,
+          reasoning: `This item is on ${item.wishlists.title || 'their wishlist'}, indicating strong interest`,
           confidence_score: 0.95, // Very high confidence for wishlist items
           source: 'wishlist',
           match_factors: ['wishlist_item', 'high_interest', 'verified_desire']
@@ -153,9 +153,9 @@ class NicoleMarketplaceIntelligenceService {
       }
 
       // Extract interests from profile
-      const profileInterests = profile.interests || [];
-      const contextInterests = context.interests || [];
-      const allInterests = [...new Set([...profileInterests, ...contextInterests])];
+      const profileInterests = Array.isArray(profile.interests) ? profile.interests : [];
+      const contextInterests = Array.isArray(context.interests) ? context.interests : [];
+      const allInterests = [...new Set([...(profileInterests as any[]), ...(contextInterests as any[])])];
 
       if (!allInterests.length) {
         console.log('No interests found, falling back to demographic search');

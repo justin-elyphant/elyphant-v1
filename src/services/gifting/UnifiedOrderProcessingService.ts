@@ -160,7 +160,7 @@ class UnifiedOrderProcessingService {
       return null;
     }
 
-    return data;
+    return data as unknown as AutoGiftExecution;
   }
 
   /**
@@ -396,7 +396,7 @@ class UnifiedOrderProcessingService {
       return [];
     }
 
-    return data || [];
+    return (data as unknown as AutoGiftExecution[]) || [];
   }
 
   /**

@@ -1078,6 +1078,10 @@ class UnifiedGiftAutomationService {
           next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
           created_at: new Date(execution.created_at),
           updated_at: new Date(execution.updated_at),
+          // Normalize selected_products from Json to array
+          selected_products: Array.isArray((execution as any).selected_products)
+            ? (execution as any).selected_products
+            : ((execution as any).selected_products ? [(execution as any).selected_products] : undefined),
           error_message: execution.error_message || 'Failed to fetch rule details'
         }));
       }
@@ -1088,7 +1092,11 @@ class UnifiedGiftAutomationService {
         execution_date: new Date(execution.execution_date),
         next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
         created_at: new Date(execution.created_at),
-        updated_at: new Date(execution.updated_at)
+        updated_at: new Date(execution.updated_at),
+        // Normalize selected_products from Json to array
+        selected_products: Array.isArray((execution as any).selected_products)
+          ? (execution as any).selected_products
+          : ((execution as any).selected_products ? [(execution as any).selected_products] : undefined)
       }));
     } catch (error) {
       console.error('Error in getUserExecutions:', error);

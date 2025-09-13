@@ -30,7 +30,12 @@ export class AddressService {
         .order('is_default', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        is_default: row.is_default,
+        ...(row.address as any)
+      })) as AddressWithId[];
     } catch (error) {
       console.error('Error fetching user addresses:', error);
       return [];
@@ -56,7 +61,7 @@ export class AddressService {
         .insert({
           user_id: userId,
           name,
-          address: dbAddress,
+          address: dbAddress as any,
           is_default: setAsDefault
         });
 
@@ -66,7 +71,7 @@ export class AddressService {
       if (setAsDefault) {
         await supabase
           .from('profiles')
-          .update({ shipping_address: dbAddress })
+          .update({ shipping_address: dbAddress as any })
           .eq('id', userId);
       }
 
@@ -90,7 +95,7 @@ export class AddressService {
         .single();
 
       if (addressData) {
-        return databaseToForm(addressData.address);
+        return databaseToForm(addressData.address as any);
       }
 
       // Fallback to profile shipping_address
@@ -101,7 +106,7 @@ export class AddressService {
         .single();
 
       if (profileData?.shipping_address) {
-        return databaseToForm(profileData.shipping_address);
+        return databaseToForm(profileData.shipping_address as any);
       }
 
       return null;
@@ -117,7 +122,7 @@ export class AddressService {
       
       const { error } = await supabase
         .from('profiles')
-        .update({ shipping_address: dbAddress })
+        .update({ shipping_address: dbAddress as any })
         .eq('id', userId);
 
       if (error) throw error;

@@ -190,8 +190,8 @@ class NicoleAIService {
       const nicoleContext: UnifiedNicoleContext = {
         conversationPhase: 'approval_discussion',
         capability: 'auto_gifting',
-        giftSelections: conversation.conversation_data.products || [],
-        previousMessages: conversation.conversation_data.messages || [],
+        giftSelections: ((conversation.conversation_data as any)?.products) || [],
+        previousMessages: ((conversation.conversation_data as any)?.messages) || [],
         currentUserId: conversation.user_id
       };
 
@@ -448,7 +448,8 @@ Focus on actionable insights that can improve gift success and user satisfaction
       .eq('id', conversationId)
       .single();
 
-    const messages = conversation?.conversation_data?.messages || [];
+    const convData = (conversation?.conversation_data as any) || {};
+    const messages = convData.messages || [];
     messages.push(
       { role: 'user', content: userMessage, timestamp: new Date().toISOString() },
       { role: 'nicole', content: nicoleResponse.message, timestamp: new Date().toISOString() }
@@ -458,7 +459,7 @@ Focus on actionable insights that can improve gift success and user satisfaction
       .from('approval_conversations')
       .update({
         conversation_data: {
-          ...conversation?.conversation_data,
+          ...convData,
           messages
         },
         updated_at: new Date().toISOString()

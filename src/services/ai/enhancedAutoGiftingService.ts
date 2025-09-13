@@ -111,7 +111,8 @@ export class EnhancedAutoGiftingService {
     const seasonalFactors = this.getSeasonalAdjustments(occasion, new Date());
     
     // Calculate dynamic budget
-    const baseRange = profile.enhanced_gift_preferences?.preferred_price_ranges?.[occasion] || { min: 25, max: 100 };
+    const prefs = (profile?.enhanced_gift_preferences as any) || {};
+    const baseRange = prefs.preferred_price_ranges?.[occasion] || { min: 25, max: 100 };
     const relationshipMultiplier = relationshipContext?.closeness_level ? 
       (relationshipContext.closeness_level / 10) * 1.5 + 0.5 : 1.0;
     
@@ -210,12 +211,10 @@ export class EnhancedAutoGiftingService {
     // Analyze and predict categories
     const categories = new Set<string>();
 
-    // From recipient's interests
-    if (recipientProfile?.interests) {
-      recipientProfile.interests.forEach((interest: string) => {
-        categories.add(this.mapInterestToCategory(interest));
-      });
-    }
+    const interests = (recipientProfile?.interests as any[]) || [];
+    interests.forEach((interest: any) => {
+      categories.add(this.mapInterestToCategory(String(interest)));
+    });
 
     // From recipient's wishlist patterns
     if (wishlists) {
@@ -224,11 +223,10 @@ export class EnhancedAutoGiftingService {
       });
     }
 
-    // From user's successful gift history
-    const giftHistory = userProfile?.enhanced_gifting_history;
-    if (giftHistory?.category_success_rates) {
+    const giftHistory = (userProfile?.enhanced_gifting_history as any) || {};
+    if (giftHistory.category_success_rates) {
       Object.entries(giftHistory.category_success_rates)
-        .filter(([_, data]: [string, any]) => data.success_rate > 0.7)
+        .filter(([_, data]: [string, any]) => (data as any).success_rate > 0.7)
         .forEach(([category]) => categories.add(category));
     }
 
@@ -243,7 +241,7 @@ export class EnhancedAutoGiftingService {
       .eq('id', recipientId)
       .single();
 
-    const preferences = profile?.enhanced_gift_preferences?.gift_timing_preferences;
+    const preferences = (profile?.enhanced_gift_preferences as any)?.gift_timing_preferences;
     const advanceDays = preferences?.advance_notice_days || 3;
     
     const optimalDate = new Date(eventDate.getTime() - advanceDays * 24 * 60 * 60 * 1000);

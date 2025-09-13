@@ -132,7 +132,7 @@ export const authDebugService = {
     // Test READ permission
     try {
       const { error: readError } = await supabase
-        .from(tableName)
+        .from<any>(tableName as any)
         .select('*')
         .limit(1);
         
@@ -147,8 +147,8 @@ export const authDebugService = {
     // Test INSERT permission (dry run with invalid data to test policy only)
     try {
       const { error: insertError } = await supabase
-        .from(tableName)
-        .insert({ user_id: testUserId, test_field: 'rls_test' });
+        .from<any>(tableName as any)
+        .insert({ user_id: testUserId, test_field: 'rls_test' } as any);
         
       // Even if insert fails due to missing columns, if it's not an RLS error, policies allow insert
       result.canInsert = !insertError || !insertError.message.includes('policy');

@@ -39,16 +39,17 @@ export class EnhancedGiftIntelligenceService {
 
     if (fetchError) throw fetchError;
 
-    const currentData = profile?.enhanced_ai_interaction_data || {};
+    const currentData = (profile?.enhanced_ai_interaction_data as any) || {};
+    const safeCurrent = currentData && typeof currentData === 'object' ? currentData : {};
     const updatedData = {
-      ...currentData,
-      search_patterns: [...(currentData.search_patterns || []), interactionData.pattern],
+      ...safeCurrent,
+      search_patterns: [...(safeCurrent.search_patterns || []), interactionData.pattern],
       successful_suggestions: interactionData.success 
-        ? [...(currentData.successful_suggestions || []), interactionData]
-        : currentData.successful_suggestions,
+        ? [...(safeCurrent.successful_suggestions || []), interactionData]
+        : (safeCurrent.successful_suggestions || []),
       unsuccessful_suggestions: !interactionData.success 
-        ? [...(currentData.unsuccessful_suggestions || []), interactionData]
-        : currentData.unsuccessful_suggestions,
+        ? [...(safeCurrent.unsuccessful_suggestions || []), interactionData]
+        : (safeCurrent.unsuccessful_suggestions || []),
     };
 
     const { data, error } = await supabase
@@ -69,12 +70,13 @@ export class EnhancedGiftIntelligenceService {
 
     if (fetchError) throw fetchError;
 
-    const currentHistory = profile?.enhanced_gifting_history || {};
+    const currentHistory = (profile?.enhanced_gifting_history as any) || {};
+    const safeHistory = currentHistory && typeof currentHistory === 'object' ? currentHistory : {};
     const updatedHistory = {
-      ...currentHistory,
-      seasonal_patterns: this.updateSeasonalPatterns(currentHistory.seasonal_patterns, giftData),
-      category_success_rates: this.updateCategorySuccessRates(currentHistory.category_success_rates, giftData),
-      recipient_type_preferences: this.updateRecipientTypePreferences(currentHistory.recipient_type_preferences, giftData),
+      ...safeHistory,
+      seasonal_patterns: this.updateSeasonalPatterns(safeHistory.seasonal_patterns, giftData),
+      category_success_rates: this.updateCategorySuccessRates(safeHistory.category_success_rates, giftData),
+      recipient_type_preferences: this.updateRecipientTypePreferences(safeHistory.recipient_type_preferences, giftData),
     };
 
     const { data, error } = await supabase
@@ -333,38 +335,41 @@ export class EnhancedGiftIntelligenceService {
   // Helper methods
   private static updateSeasonalPatterns(current: any, giftData: any) {
     const season = this.getSeason(new Date(giftData.date));
+    const base = current && typeof current === 'object' ? current : {};
     return {
-      ...current,
+      ...base,
       [season]: {
-        ...current[season],
-        total_gifts: (current[season]?.total_gifts || 0) + 1,
-        avg_budget: this.calculateAverageBudget(current[season], giftData.amount),
-        popular_categories: this.updatePopularCategories(current[season]?.popular_categories, giftData.category),
+        ...(base[season] || {}),
+        total_gifts: ((base[season]?.total_gifts || 0) + 1),
+        avg_budget: this.calculateAverageBudget(base[season], giftData.amount),
+        popular_categories: this.updatePopularCategories(base[season]?.popular_categories, giftData.category),
       }
     };
   }
 
   private static updateCategorySuccessRates(current: any, giftData: any) {
     const category = giftData.category;
+    const base = current && typeof current === 'object' ? current : {};
     return {
-      ...current,
+      ...base,
       [category]: {
-        total_attempts: (current[category]?.total_attempts || 0) + 1,
-        successful: (current[category]?.successful || 0) + (giftData.was_successful ? 1 : 0),
-        success_rate: ((current[category]?.successful || 0) + (giftData.was_successful ? 1 : 0)) / 
-                     ((current[category]?.total_attempts || 0) + 1),
+        total_attempts: ((base[category]?.total_attempts || 0) + 1),
+        successful: ((base[category]?.successful || 0) + (giftData.was_successful ? 1 : 0)),
+        success_rate: (((base[category]?.successful || 0) + (giftData.was_successful ? 1 : 0)) / 
+                     ((base[category]?.total_attempts || 0) + 1)),
       }
     };
   }
 
   private static updateRecipientTypePreferences(current: any, giftData: any) {
     const recipientType = giftData.recipient_type;
+    const base = current && typeof current === 'object' ? current : {};
     return {
-      ...current,
+      ...base,
       [recipientType]: {
-        ...current[recipientType],
-        preferred_categories: this.updatePopularCategories(current[recipientType]?.preferred_categories, giftData.category),
-        avg_budget: this.calculateAverageBudget(current[recipientType], giftData.amount),
+        ...(base[recipientType] || {}),
+        preferred_categories: this.updatePopularCategories(base[recipientType]?.preferred_categories, giftData.category),
+        avg_budget: this.calculateAverageBudget(base[recipientType], giftData.amount),
       }
     };
   }
@@ -391,8 +396,8 @@ export class EnhancedGiftIntelligenceService {
   }
 
   private static calculateBudgetConfidence(history: any, occasion: string, relationshipType: string): number {
-    const seasonalData = history.seasonal_patterns || {};
-    const relationshipData = history.relationship_gift_history?.[relationshipType] || {};
+    const seasonalData = (history?.seasonal_patterns as any) || {};
+    const relationshipData = (history?.relationship_gift_history as any)?.[relationshipType] || {};
     
     const dataPoints = Object.keys(seasonalData).length + Object.keys(relationshipData).length;
     return Math.min(dataPoints / 10, 1.0); // Max confidence at 10+ data points
@@ -410,8 +415,8 @@ export class EnhancedGiftIntelligenceService {
       return { min: 25, max: 75 }; // Safe default range
     }
 
-    const averages = Object.values(history.seasonal_patterns).map((season: any) => season.avg_budget || 50);
-    const avgBudget = averages.reduce((sum: number, val: number) => sum + val, 0) / averages.length;
+    const patterns = Object.values(((history?.seasonal_patterns as any) || {})).map((season: any) => season.avg_budget || 50);
+    const avgBudget = patterns.reduce((sum: number, val: number) => sum + val, 0) / Math.max(patterns.length, 1);
     
     return {
       min: Math.max(15, avgBudget * 0.6),
@@ -422,18 +427,18 @@ export class EnhancedGiftIntelligenceService {
   private static extractSuccessfulCategories(history: any): string[] {
     if (!history?.category_success_rates) return ['gift_cards', 'flowers', 'books'];
     
-    return Object.entries(history.category_success_rates)
-      .filter(([_, data]: [string, any]) => data.success_rate > 0.7)
+    return Object.entries(((history?.category_success_rates as any) || {}))
+      .filter(([_, data]: [string, any]) => (data as any).success_rate > 0.7)
       .map(([category, _]) => category)
       .slice(0, 5);
   }
 
   private static extractTypicalBudget(preferences: any): { min: number, max: number } {
-    if (!preferences?.preferred_price_ranges?.general) {
+    if (!((preferences as any)?.preferred_price_ranges?.general)) {
       return { min: 30, max: 80 };
     }
     
-    return preferences.preferred_price_ranges.general;
+    return (preferences as any).preferred_price_ranges.general;
   }
 
   private static getCategoryPrioritiesForNewUser(

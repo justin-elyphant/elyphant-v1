@@ -1017,6 +1017,22 @@ class UnifiedGiftAutomationService {
       throw error;
     }
   }
+  
+  // Normalize execution status to allowed union
+  private normalizeExecutionStatus(status: string): UnifiedGiftExecution['status'] {
+    switch (status) {
+      case 'pending':
+      case 'processing':
+      case 'completed':
+      case 'failed':
+      case 'cancelled':
+      case 'address_required':
+      case 'pending_address':
+        return status;
+      default:
+        return 'pending';
+    }
+  }
 
   /**
    * Get executions for a user with better error handling
@@ -1057,6 +1073,7 @@ class UnifiedGiftAutomationService {
         
         return (basicData || []).map(execution => ({
           ...execution,
+          status: this.normalizeExecutionStatus(execution.status as string),
           execution_date: new Date(execution.execution_date),
           next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
           created_at: new Date(execution.created_at),
@@ -1067,6 +1084,7 @@ class UnifiedGiftAutomationService {
       
       return (data || []).map(execution => ({
         ...execution,
+        status: this.normalizeExecutionStatus(execution.status as string),
         execution_date: new Date(execution.execution_date),
         next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
         created_at: new Date(execution.created_at),

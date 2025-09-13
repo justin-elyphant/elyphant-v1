@@ -76,7 +76,7 @@ const AddNewAddressForm: React.FC<AddNewAddressFormProps> = ({
         .insert({
           user_id: profile.id,
           name: addressName.trim(),
-          address: address,
+          address: address as any,
           is_default: isDefault
         })
         .select()

@@ -74,7 +74,7 @@ const AddressCollectionDialog: React.FC<AddressCollectionDialogProps> = ({
         .insert({
           user_id: profile.id,
           name: addressName,
-          address: address,
+          address: address as any,
           is_default: false
         });
 

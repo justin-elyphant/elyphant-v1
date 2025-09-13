@@ -32,10 +32,10 @@ export function useWishlistModify(
         throw fetchError;
       }
       
-      const existingWishlists = profile?.wishlists || [];
+      const existingWishlists = Array.isArray(profile?.wishlists) ? profile.wishlists : [];
       
       // Find the wishlist to update
-      const wishlistIndex = existingWishlists.findIndex(list => list.id === wishlistId);
+      const wishlistIndex = existingWishlists.findIndex((list: any) => list.id === wishlistId);
       
       if (wishlistIndex === -1) {
         toast.error("Wishlist not found");
@@ -43,8 +43,9 @@ export function useWishlistModify(
       }
       
       // Check if item already exists
-      const existingItem = existingWishlists[wishlistIndex].items.find(
-        i => i.product_id === item.product_id
+      const currentWishlist = existingWishlists[wishlistIndex] as any;
+      const existingItem = currentWishlist.items?.find(
+        (i: any) => i.product_id === item.product_id
       );
       
       if (existingItem) {
@@ -61,8 +62,8 @@ export function useWishlistModify(
       
       // Update wishlist
       const updatedWishlist = {
-        ...existingWishlists[wishlistIndex],
-        items: [...existingWishlists[wishlistIndex].items, newItem],
+        ...currentWishlist,
+        items: [...(currentWishlist.items || []), newItem],
         updated_at: new Date().toISOString()
       };
       
@@ -112,10 +113,10 @@ export function useWishlistModify(
         throw fetchError;
       }
       
-      const existingWishlists = profile?.wishlists || [];
+      const existingWishlists = Array.isArray(profile?.wishlists) ? profile.wishlists : [];
       
       // Find the wishlist to update
-      const wishlistIndex = existingWishlists.findIndex(list => list.id === wishlistId);
+      const wishlistIndex = existingWishlists.findIndex((list: any) => list.id === wishlistId);
       
       if (wishlistIndex === -1) {
         toast.error("Wishlist not found");
@@ -123,7 +124,8 @@ export function useWishlistModify(
       }
       
       // Find the item to remove
-      const itemToRemove = existingWishlists[wishlistIndex].items.find(item => item.id === itemId);
+      const currentWishlist = existingWishlists[wishlistIndex] as any;
+      const itemToRemove = currentWishlist.items?.find((item: any) => item.id === itemId);
       
       if (!itemToRemove) {
         toast.error("Item not found in wishlist");
@@ -131,20 +133,20 @@ export function useWishlistModify(
       }
       
       // Remove the item
-      const updatedItems = existingWishlists[wishlistIndex].items.filter(item => item.id !== itemId);
+      const updatedItems = currentWishlist.items?.filter((item: any) => item.id !== itemId) || [];
       
       // Update the wishlist
       const updatedWishlist = {
-        ...existingWishlists[wishlistIndex],
+        ...currentWishlist,
         items: updatedItems,
         updated_at: new Date().toISOString()
       };
       
       // Update wishlists array
       const updatedWishlists = [
-        ...existingWishlists.slice(0, wishlistIndex),
+        ...(existingWishlists as any[]).slice(0, wishlistIndex),
         updatedWishlist,
-        ...existingWishlists.slice(wishlistIndex + 1)
+        ...(existingWishlists as any[]).slice(wishlistIndex + 1)
       ];
       
       // Update profile using our new sync function

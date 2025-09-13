@@ -59,10 +59,10 @@ const AutoGiftApprovalPage = () => {
 
       const execution = tokenData.automated_gift_executions;
       const rule = execution.auto_gifting_rules;
-      const products = execution.selected_products || [];
+      const products = Array.isArray(execution.selected_products) ? execution.selected_products : [];
 
       const isExpired = new Date(tokenData.expires_at) < new Date();
-      const isAlreadyProcessed = tokenData.approved_at || tokenData.rejected_at;
+      const isAlreadyProcessed = !!tokenData.approved_at || !!tokenData.rejected_at;
 
       setApprovalData({
         token: tokenData,

@@ -20,8 +20,16 @@ export const testZincApiKey = async (apiKey: string) => {
 
 export const updateZincApiKey = async (id: string | null, key: string) => {
     try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+
         if(!id) {
-            const {data, error} = await supabase.from('api_keys').insert({key: key}).select().single();
+            const {data, error} = await supabase.from('api_keys').insert({
+                key: key,
+                user_id: user.id
+            }).select().single();
             if (error) {
                 throw new Error('Error updating API key: ' + error.message);
             } else {
@@ -29,7 +37,7 @@ export const updateZincApiKey = async (id: string | null, key: string) => {
             }
         }
         else {
-            const {data, error} = await supabase.from('api_keys').update({key: key}).eq('id', id).select().single();
+            const {data, error} = await supabase.from('api_keys').update({key: key}).eq('id', parseInt(id)).select().single();
             if (error) {
                 throw new Error('Error updating API key: ' + error.message);
             }

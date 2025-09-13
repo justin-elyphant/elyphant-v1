@@ -58,7 +58,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
 
       if (error) throw error;
 
-      const currentPerms = data?.data_access_permissions || {};
+      const currentPerms = (data?.data_access_permissions as any) || {};
       setPermissions({
         shipping_address: currentPerms.shipping_address !== false,
         dob: currentPerms.dob !== false,

@@ -42,7 +42,7 @@ export const useUserContext = () => {
             source_attribution: {}
           });
         } else {
-          setUserContext(data as UserContext);
+          setUserContext(data as unknown as UserContext);
         }
       } catch (error) {
         console.error('Error in useUserContext:', error);

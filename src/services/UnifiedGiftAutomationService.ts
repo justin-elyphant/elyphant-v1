@@ -669,7 +669,7 @@ class UnifiedGiftAutomationService {
     // Log rule creation for audit
     await this.logGiftAutomationActivity(rule.user_id, 'rule_created', { rule_id: data.id });
     
-    return data;
+    return data as unknown as UnifiedGiftRule;
   }
 
   /**
@@ -684,7 +684,7 @@ class UnifiedGiftAutomationService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as unknown as UnifiedGiftRule;
   }
 
   /**
@@ -709,7 +709,7 @@ class UnifiedGiftAutomationService {
       .eq('user_id', userId);
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as unknown as UnifiedGiftRule[];
   }
 
   // ============= SETTINGS MANAGEMENT ============= 
@@ -725,7 +725,7 @@ class UnifiedGiftAutomationService {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data as unknown as UnifiedGiftSettings | null;
   }
 
   /**
@@ -739,7 +739,7 @@ class UnifiedGiftAutomationService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as unknown as UnifiedGiftSettings;
   }
 
   /**

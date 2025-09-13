@@ -46,18 +46,13 @@ export const useScheduledGifts = () => {
             total_amount,
             status,
             tracking_number,
-            shipping_address,
             scheduled_delivery_date,
             created_at,
             updated_at,
-            zinc_order_id,
-            recipient_email,
             order_items (
               id,
               product_name,
-              product_image,
-              quantity,
-              price
+              product_image
             )
           `)
           .eq('user_id', user.id)
@@ -104,12 +99,9 @@ export const useScheduledGifts = () => {
           
           // Get recipient name from shipping address or execution data
           let recipientName = 'Unknown Recipient';
-          let recipientEmail = order.recipient_email;
+          let recipientEmail: string | undefined = undefined;
 
-          if (order.shipping_address && typeof order.shipping_address === 'object') {
-            const shippingAddr = order.shipping_address as any;
-            recipientName = shippingAddr.name || recipientName;
-          }
+          // Shipping address not available in current schema; keep default recipient name
 
           if (execution?.auto_gifting_rules) {
             const rule = execution.auto_gifting_rules as any;
@@ -150,7 +142,7 @@ export const useScheduledGifts = () => {
               deliveryDate: order.updated_at,
               status: giftStatus,
               orderNumber: order.order_number,
-              totalAmount: item.price * item.quantity,
+              totalAmount: order.total_amount,
               trackingNumber: order.tracking_number,
               isAutoGift,
               ruleId: execution?.rule_id,

@@ -88,7 +88,7 @@ const OrderDetail = () => {
             gifting_fee_description: pricingBreakdown.gifting_fee_description,
             items: data.order_items || [],
             shipping_info: data.shipping_info || {},
-            customerName: data.shipping_info?.name || user?.user_metadata?.name || "Customer",
+            customerName: (data.shipping_info as any)?.name || user?.user_metadata?.name || "Customer",
             tracking_number: data.tracking_number || null,
             zinc_order_id: data.zinc_order_id || null
           };

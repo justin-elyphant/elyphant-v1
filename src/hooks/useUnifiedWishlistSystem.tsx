@@ -170,7 +170,7 @@ export const useUnifiedWishlistSystem = () => {
           priority: wishlist.priority || 1,
           created_at: wishlist.created_at,
           updated_at: wishlist.updated_at
-        });
+        } as any);
 
       if (error) {
         console.error("Error creating wishlist:", error);

@@ -61,7 +61,12 @@ export const useNicoleDiscovery = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDiscoveryLogs(data || []);
+      setDiscoveryLogs(((data || []) as any).map((d: any) => ({
+        ...d,
+        discovery_trigger: d.discovery_trigger as NicoleDiscoveryLog['discovery_trigger'],
+        discovery_status: d.discovery_status as NicoleDiscoveryLog['discovery_status'],
+        contact_method: d.contact_method as NicoleDiscoveryLog['contact_method'],
+      })) as NicoleDiscoveryLog[]);
     } catch (error) {
       console.error('Error fetching Nicole discovery logs:', error);
     } finally {

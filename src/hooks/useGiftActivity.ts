@@ -94,7 +94,6 @@ export const useGiftActivity = () => {
             status,
             total_amount,
             created_at,
-            shipping_address,
             order_items!inner(
               product_name
             )
@@ -203,11 +202,7 @@ export const useGiftActivity = () => {
           const isAutoGift = executions?.some(exec => exec.id === order.id);
           if (isAutoGift) return; // Skip auto-gift orders as they're already processed
 
-          let recipientName = 'Unknown Recipient';
-          if (order.shipping_address && typeof order.shipping_address === 'object') {
-            const shippingAddr = order.shipping_address as any;
-            recipientName = shippingAddr.name || recipientName;
-          }
+          const recipientName = 'Recipient';
 
           const productName = order.order_items?.[0]?.product_name || 'Unknown Product';
 

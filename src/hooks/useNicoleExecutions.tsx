@@ -41,7 +41,10 @@ export const useNicoleExecutions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setExecutions(data || []);
+      setExecutions(((data || []) as any).map((d: any) => ({
+        ...d,
+        status: d.status as AutoGiftExecutionWithNicole['status'],
+      })) as AutoGiftExecutionWithNicole[]);
     } catch (error) {
       console.error('Error fetching Nicole executions:', error);
     } finally {

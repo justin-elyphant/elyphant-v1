@@ -52,7 +52,10 @@ export const useSMSGifteeDiscovery = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActiveDiscoveries(data || []);
+      setActiveDiscoveries(((data || []) as any).map((d: any) => ({
+        ...d,
+        sms_conversation_state: (d.sms_conversation_state as any) || { phase: '', responses: [] },
+      })) as TemporaryGifteeProfile[]);
     } catch (error) {
       console.error('Error fetching active discoveries:', error);
       toast.error('Failed to fetch active discoveries');

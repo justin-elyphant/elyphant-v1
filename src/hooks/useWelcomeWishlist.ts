@@ -59,9 +59,9 @@ export const useWelcomeWishlist = () => {
         recipient_name: data.userFirstName,
         template_id: null, // We'll use custom template
         template_variables: {
-          welcomeWishlistData: data,
+          welcomeWishlistData: data as any,
           source: 'delayed_signup'
-        },
+        } as any,
         scheduled_for: new Date(Date.now() + delayMinutes * 60 * 1000).toISOString(),
         status: 'pending',
         max_attempts: 2

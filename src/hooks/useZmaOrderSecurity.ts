@@ -155,10 +155,11 @@ export const useZmaOrderSecurity = () => {
           order_amount: orderData.total_amount
         });
 
+      const vr = (validationResult as any) || {};
       const validation: ZmaOrderValidation = {
-        isValid: validationResult?.is_valid || false,
-        isDuplicate: validationResult?.is_duplicate || false,
-        isSuspiciousPattern: validationResult?.is_suspicious_pattern || false,
+        isValid: !!vr.is_valid,
+        isDuplicate: !!vr.is_duplicate,
+        isSuspiciousPattern: !!vr.is_suspicious_pattern,
         reasons: []
       };
 

@@ -80,11 +80,12 @@ export const useOrderActions = () => {
         return false;
       }
 
-      if (result?.success) {
+      const resultObj = (result as any) || {};
+      if (resultObj.success) {
         toast.success(`Order ${order.order_number} cancelled successfully`);
         return true;
       } else {
-        toast.error(result?.error || 'Failed to cancel order');
+        toast.error(resultObj.error || 'Failed to cancel order');
         return false;
       }
 

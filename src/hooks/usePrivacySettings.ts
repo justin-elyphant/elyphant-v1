@@ -43,12 +43,12 @@ export const usePrivacySettings = () => {
 
       if (data) {
         setSettings({
-          allow_connection_requests_from: data.allow_connection_requests_from,
-          profile_visibility: data.profile_visibility,
-          block_list_visibility: data.block_list_visibility,
-          show_follower_count: data.show_follower_count,
-          show_following_count: data.show_following_count,
-          allow_message_requests: data.allow_message_requests
+          allow_connection_requests_from: data.allow_connection_requests_from as PrivacySettings['allow_connection_requests_from'],
+          profile_visibility: data.profile_visibility as PrivacySettings['profile_visibility'],
+          block_list_visibility: data.block_list_visibility as PrivacySettings['block_list_visibility'],
+          show_follower_count: !!data.show_follower_count,
+          show_following_count: !!data.show_following_count,
+          allow_message_requests: !!data.allow_message_requests
         });
       }
     } catch (error) {

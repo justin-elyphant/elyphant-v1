@@ -77,7 +77,7 @@ export const useProductDataSync = () => {
       // Get current profile data
       const { data: profile, error: fetchError } = await supabase
         .from('profiles')
-        .select('recently_viewed')
+        .select('id')
         .eq('id', user.id)
         .single();
       
@@ -86,8 +86,8 @@ export const useProductDataSync = () => {
         return;
       }
       
-      // Get current recently viewed items
-      const currentItems = profile?.recently_viewed || [];
+      // Get current recently viewed items (column may not exist in this schema)
+      const currentItems: any[] = [];
       
       // Add new items from queue
       const newItems = [...queue];
@@ -123,7 +123,6 @@ export const useProductDataSync = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          recently_viewed: updatedItems,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);

@@ -86,10 +86,10 @@ const SharedWishlist = () => {
               image_url: item.image_url,
               added_at: item.created_at,
               created_at: item.created_at,
-              vendor: item.vendor,
-              retailer: item.retailer,
-              isZincApiProduct: item.isZincApiProduct,
-              productSource: item.productSource
+              vendor: (item as any).vendor,
+              retailer: (item as any).retailer,
+              isZincApiProduct: (item as any).isZincApiProduct,
+              productSource: (item as any).productSource || (item as any).product_source
             };
             
             return enhanceWishlistItemWithSource(baseItem);

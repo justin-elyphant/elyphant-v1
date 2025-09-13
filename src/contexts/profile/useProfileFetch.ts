@@ -57,31 +57,34 @@ export function useProfileFetch() {
       const enhancedProfile: Profile = {
         ...profile,
         user_id: user.id,  // Add user_id based on id to match expectations
-        gift_preferences: profile.gift_preferences || [],
-        important_dates: profile.important_dates || [],
-        data_sharing_settings: profile.data_sharing_settings || {
+        gift_preferences: Array.isArray(profile.gift_preferences) ? profile.gift_preferences as any[] : 
+          (profile.gift_preferences ? [profile.gift_preferences] as any[] : [] as any[]),
+        important_dates: Array.isArray(profile.important_dates) ? profile.important_dates as any[] :
+          (profile.important_dates ? [profile.important_dates] as any[] : [] as any[]),
+        data_sharing_settings: (typeof profile.data_sharing_settings === 'object' && profile.data_sharing_settings) ? profile.data_sharing_settings as any : {
           dob: 'private',
           shipping_address: 'private', 
           gift_preferences: 'friends',
           email: 'private'
         },
-        // Extract the actual count from the Supabase count aggregation result
-        wishlist_count: (() => {
-          const countData = (profile as any).wishlist_count;
-          if (Array.isArray(countData) && countData.length > 0 && typeof countData[0].count === 'number') {
-            return countData[0].count;
-          }
-          return 0;
-        })(),
-        // Extract connection count (only count where user is the initiator to avoid double counting)
-        connection_count: (() => {
-          const connectionData = (profile as any).connection_count;
-          if (Array.isArray(connectionData) && connectionData.length > 0 && typeof connectionData[0].count === 'number') {
-            return connectionData[0].count;
-          }
-          return 0;
-        })()
-      };
+      } as Profile;
+      
+      // Add computed fields separately to avoid type errors
+      (enhancedProfile as any).wishlist_count = (() => {
+        const countData = (profile as any).wishlist_count;
+        if (Array.isArray(countData) && countData.length > 0 && typeof countData[0].count === 'number') {
+          return countData[0].count;
+        }
+        return 0;
+      })();
+      
+      (enhancedProfile as any).connection_count = (() => {
+        const connectionData = (profile as any).connection_count;
+        if (Array.isArray(connectionData) && connectionData.length > 0 && typeof connectionData[0].count === 'number') {
+          return connectionData[0].count;
+        }
+        return 0;
+      })();
 
       return enhancedProfile;
     } catch (error) {

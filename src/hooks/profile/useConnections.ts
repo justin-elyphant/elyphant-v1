@@ -58,10 +58,11 @@ export const useConnections = () => {
         conn.status === 'accepted'
       );
       
-      setConnections(accepted);
-      setPendingRequests(pending);
-      setFollowers(followerConnections);
-      setFollowing(followingConnections);
+      // Type cast database results to match our interface
+      setConnections(accepted as any[]);
+      setPendingRequests(pending as any[]);
+      setFollowers(followerConnections as any[]);
+      setFollowing(followingConnections as any[]);
       setBlockedUsers(blockedData || []);
     } catch (err) {
       console.error("Error fetching connections:", err);
@@ -84,8 +85,8 @@ export const useConnections = () => {
     try {
       // Check if user can follow first
       const { data: canFollow } = await supabase
-        .rpc('can_user_follow', {
-          follower_id: user.id,
+        .rpc('can_user_connect', {
+          requester_id: user.id,
           target_id: connectedUserId
         });
         
@@ -149,7 +150,7 @@ export const useConnections = () => {
       if (error) throw error;
       
       setPendingRequests(prev => prev.filter(req => req.id !== connectionId));
-      setConnections(prev => [...prev, data]);
+      setConnections(prev => [...prev, data as any]);
       toast.success("Connection request accepted");
       
       return data;
@@ -237,7 +238,7 @@ export const useConnections = () => {
       if (fetchError) throw fetchError;
       
       const updatedPermissions = {
-        ...currentConn.data_access_permissions,
+        ...(currentConn.data_access_permissions as any || {}),
         ...permissions
       };
       
@@ -254,7 +255,7 @@ export const useConnections = () => {
       if (error) throw error;
       
       setConnections(prev => prev.map(conn => 
-        conn.id === connectionId ? data : conn
+        conn.id === connectionId ? data as any : conn
       ));
       
       toast.success("Access permissions updated");

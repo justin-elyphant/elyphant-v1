@@ -35,13 +35,30 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
         console.log(`Attempt ${attempts} to save profile data`);
         
         try {
+          // Ensure birth_year is calculated from dob
+          const birthYear = profileData.date_of_birth ? profileData.date_of_birth.getFullYear() : new Date().getFullYear();
+          
+          // Convert complex objects to JSON for database storage and ensure required fields
+          const dbData = {
+            ...apiData,
+            birth_year: birthYear,
+            email: profileData.email || user.email, // Ensure email is present
+            first_name: apiData.first_name || profileData.name?.split(' ')[0] || '', // Ensure first_name
+            last_name: apiData.last_name || profileData.name?.split(' ').slice(1).join(' ') || '', // Ensure last_name
+            username: apiData.username || profileData.email?.split('@')[0] || '', // Generate username from email if missing
+            updated_at: new Date().toISOString(),
+            data_sharing_settings: apiData.data_sharing_settings ? JSON.stringify(apiData.data_sharing_settings) : null,
+            gift_preferences: apiData.gift_preferences ? JSON.stringify(apiData.gift_preferences) : null,
+            important_dates: apiData.important_dates ? JSON.stringify(apiData.important_dates) : null,
+            shipping_address: apiData.shipping_address ? JSON.stringify(apiData.shipping_address) : null,
+            wishlists: apiData.wishlists ? JSON.stringify(apiData.wishlists) : null
+          };
+          
           const { data, error } = await supabase
             .from('profiles')
             .upsert({
               id: user.id,
-              ...apiData,
-              onboarding_completed: true,
-              updated_at: new Date().toISOString()
+              ...dbData
             }, {
               onConflict: 'id'
             });

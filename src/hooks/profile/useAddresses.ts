@@ -26,7 +26,12 @@ export const useAddresses = () => {
       
       if (error) throw error;
       
-      setAddresses(data || []);
+      // Map database fields to component interface
+      const mappedData = (data || []).map(addr => ({
+        ...addr,
+        address: addr.address as ShippingAddress
+      }));
+      setAddresses(mappedData);
     } catch (err) {
       console.error("Error fetching addresses:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -60,7 +65,7 @@ export const useAddresses = () => {
         .insert({
           user_id: user.id,
           name,
-          address,
+          address: JSON.stringify(address) as any,
           is_default: isDefault
         })
         .select()
@@ -68,7 +73,11 @@ export const useAddresses = () => {
       
       if (error) throw error;
       
-      setAddresses(prev => [...prev, data]);
+      const mappedNewAddress = {
+        ...data,
+        address: data.address as ShippingAddress
+      };
+      setAddresses(prev => [...prev, mappedNewAddress]);
       toast.success("Address added successfully");
       
       return data;
@@ -95,9 +104,15 @@ export const useAddresses = () => {
           .eq('is_default', true);
       }
       
+      // Convert address object to JSON if present
+      const dbUpdates = {
+        ...updates,
+        address: updates.address ? JSON.stringify(updates.address) as any : undefined
+      };
+      
       const { data, error } = await supabase
         .from('user_addresses')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
@@ -105,7 +120,11 @@ export const useAddresses = () => {
       
       if (error) throw error;
       
-      setAddresses(prev => prev.map(addr => addr.id === id ? data : addr));
+      const mappedUpdatedAddress = {
+        ...data,
+        address: data.address as ShippingAddress
+      };
+      setAddresses(prev => prev.map(addr => addr.id === id ? mappedUpdatedAddress : addr));
       toast.success("Address updated successfully");
       
       return data;

@@ -16,7 +16,7 @@ export const createProfileCompletenessRule = (userId: string): ValidationRule =>
       data?.name && 
       data?.dob && 
       data?.shipping_address && 
-      data?.gift_preferences?.length > 0 &&
+      (Array.isArray(data?.gift_preferences) ? data.gift_preferences.length > 0 : false) &&
       data?.data_sharing_settings
     );
   },

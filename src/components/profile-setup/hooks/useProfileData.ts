@@ -53,9 +53,14 @@ export const useProfileData = () => {
           console.log("Loading existing profile data:", profile);
           
           // Ensure complete data sharing settings with email field using consistent defaults
+          const shippingAddressData = profile.shipping_address as any;
+          const giftPreferencesData = profile.gift_preferences as any;
+          const importantDatesData = profile.important_dates as any;
+          const dataSharingData = profile.data_sharing_settings as any;
+          
           const completeDataSharingSettings = {
             ...getDefaultDataSharingSettings(),
-            ...(profile.data_sharing_settings || {})
+            ...(dataSharingData || {})
           };
 
           // Convert stored birthday back to full date
@@ -73,19 +78,19 @@ export const useProfileData = () => {
             profile_image: profile.profile_image,
             date_of_birth: fullBirthDate,
             address: {
-              street: profile.shipping_address?.street || profile.shipping_address?.address_line1 || "",
-              city: profile.shipping_address?.city || "",
-              state: profile.shipping_address?.state || "",
-              zipCode: profile.shipping_address?.zipCode || profile.shipping_address?.zip_code || "",
-              country: profile.shipping_address?.country || "US"
+              street: shippingAddressData?.street || shippingAddressData?.address_line1 || "",
+              city: shippingAddressData?.city || "",
+              state: shippingAddressData?.state || "",
+              zipCode: shippingAddressData?.zipCode || shippingAddressData?.zip_code || "",
+              country: shippingAddressData?.country || "US"
             },
-            interests: Array.isArray(profile.gift_preferences) 
-              ? profile.gift_preferences.map((pref: any) => 
+            interests: Array.isArray(giftPreferencesData) 
+              ? giftPreferencesData.map((pref: any) => 
                   typeof pref === 'string' ? pref : (pref.category || '')
                 ).filter(Boolean)
               : [],
-            importantDates: Array.isArray(profile.important_dates)
-              ? profile.important_dates.map((date: any) => ({
+            importantDates: Array.isArray(importantDatesData)
+              ? importantDatesData.map((date: any) => ({
                   date: new Date(date.date),
                   description: date.description || date.title || ""
                 })).filter((date: any) => date.date && date.description)

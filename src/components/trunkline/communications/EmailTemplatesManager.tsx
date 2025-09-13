@@ -120,9 +120,18 @@ const EmailTemplatesManager = () => {
         if (error) throw error;
         toast.success('Template updated successfully');
       } else {
+        // Ensure required fields are present for new templates
+        const completeTemplateData = {
+          name: templateData.name || '',
+          template_type: templateData.template_type || '',
+          subject_template: templateData.subject_template || '',
+          html_template: templateData.html_template || '',
+          ...templateData
+        };
+        
         const { error } = await supabase
           .from('email_templates')
-          .insert(templateData);
+          .insert(completeTemplateData);
 
         if (error) throw error;
         toast.success('Template created successfully');

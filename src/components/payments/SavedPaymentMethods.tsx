@@ -11,6 +11,7 @@ interface PaymentMethod {
   id: string;
   user_id: string;
   payment_method_id: string;
+  stripe_payment_method_id: string;
   last_four: string;
   card_type: string;
   exp_month: number;
@@ -40,7 +41,12 @@ const SavedPaymentMethods = () => {
         throw error;
       }
       
-      setPaymentMethods(data || []);
+      // Map database fields to component interface
+      const mappedData = (data || []).map(method => ({
+        ...method,
+        payment_method_id: method.stripe_payment_method_id
+      }));
+      setPaymentMethods(mappedData);
     } catch (err) {
       console.error('Error fetching payment methods:', err);
       toast.error('Failed to load payment methods');

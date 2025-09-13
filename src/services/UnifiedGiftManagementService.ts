@@ -706,7 +706,7 @@ class UnifiedGiftManagementService {
     
     await this.logGiftAutomationActivity(rule.user_id, 'rule_created', { rule_id: data.id });
     
-    return data;
+    return data as unknown as UnifiedGiftRule;
   }
 
   async updateRule(id: string, updates: Partial<UnifiedGiftRule>): Promise<UnifiedGiftRule> {
@@ -718,7 +718,7 @@ class UnifiedGiftManagementService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as unknown as UnifiedGiftRule;
   }
 
   async deleteRule(id: string): Promise<void> {
@@ -770,7 +770,7 @@ class UnifiedGiftManagementService {
       .eq('user_id', userId);
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as unknown as UnifiedGiftRule[];
   }
 
   // ============= SETTINGS MANAGEMENT (Enhanced) =============
@@ -817,7 +817,7 @@ class UnifiedGiftManagementService {
         throw error;
       }
 
-      return data;
+      return data as unknown as UnifiedGiftSettings;
     } catch (error) {
       console.error('Error in getSettings:', error);
       throw error;
@@ -832,7 +832,7 @@ class UnifiedGiftManagementService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as unknown as UnifiedGiftSettings;
   }
 
   // ============= TIMING & SCHEDULING (Consolidated) =============
@@ -956,11 +956,12 @@ class UnifiedGiftManagementService {
     
     return (data || []).map(execution => ({
       ...execution,
+      status: execution.status as any,
       execution_date: new Date(execution.execution_date),
       next_retry_at: execution.next_retry_at ? new Date(execution.next_retry_at) : undefined,
       created_at: new Date(execution.created_at),
       updated_at: new Date(execution.updated_at)
-    }));
+    })) as unknown as UnifiedGiftExecution[];
   }
 
   async approveExecution(executionId: string, selectedProductIds: string[]): Promise<void> {
@@ -1280,7 +1281,7 @@ class UnifiedGiftManagementService {
                     cancellation_reason: reason || 'Auto-gift rule cancelled'
                   });
 
-                if (!orderCancelError && cancelResult?.success) {
+                if (!orderCancelError && (cancelResult as any)?.success) {
                   cancelledOrders++;
                   console.log(`Cancelled order ${execution.order_id} for execution ${execution.id}`);
                 }
@@ -1736,12 +1737,12 @@ class UnifiedGiftManagementService {
   private async logGiftAutomationActivity(userId: string, activity: string, metadata: any): Promise<void> {
     try {
       await supabase
-        .from('gift_automation_logs')
+        .from('security_logs')
         .insert({
           user_id: userId,
-          activity,
-          metadata,
-          timestamp: new Date().toISOString()
+          event_type: activity,
+          details: metadata,
+          created_at: new Date().toISOString()
         });
     } catch (error) {
       console.error('Error logging gift automation activity:', error);

@@ -1027,16 +1027,16 @@ class UnifiedMessagingService {
         .limit(limit);
 
       wishlists?.forEach(wishlist => {
-        const user = Array.isArray(wishlist.user) ? wishlist.user[0] : wishlist.user;
+        const user = null; // User data not available in this schema
         activities.push({
-          id: wishlist.id,
+          id: (wishlist as any).id || '',
           type: 'wishlist_update',
-          userId: wishlist.user_id,
-          userName: user?.name || 'Unknown',
-          userImage: user?.profile_image,
-          content: `Updated wishlist: ${wishlist.name}`,
-          timestamp: wishlist.updated_at,
-          metadata: { wishlistId: wishlist.id }
+          userId: (wishlist as any).user_id || '',
+          userName: 'User',
+          userImage: undefined,
+          content: `Updated wishlist: ${(wishlist as any).title || 'Untitled'}`,
+          timestamp: (wishlist as any).updated_at || new Date().toISOString(),
+          metadata: { wishlistId: (wishlist as any).id }
         });
       });
 
@@ -1057,10 +1057,10 @@ class UnifiedMessagingService {
   async createNotification(notification: CreateNotificationData): Promise<void> {
     try {
       const { data, error } = await supabase
-        .from('notifications')
+        .from('auto_gift_notifications')
         .insert({
           user_id: notification.userId,
-          type: notification.type,
+          notification_type: notification.type,
           title: notification.title,
           message: notification.message,
           data: notification.data || {},
@@ -1089,14 +1089,14 @@ class UnifiedMessagingService {
   async getUserNotifications(userId: string, limit: number = 20): Promise<UserNotification[]> {
     try {
       const { data, error } = await supabase
-        .from('notifications')
+        .from('auto_gift_notifications')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as any;
     } catch (error) {
       console.error('Error fetching notifications:', error);
       return [];
@@ -1109,7 +1109,7 @@ class UnifiedMessagingService {
   async markNotificationAsRead(notificationId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from('auto_gift_notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId);
 

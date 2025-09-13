@@ -908,13 +908,13 @@ class UnifiedGiftAutomationService {
           // Always clear existing products for fresh selection with proper budget enforcement
           console.log(`🔄 [Force Reset] Execution ${execution.id}: Clearing existing products for fresh budget-compliant selection`);
           
-          if (execution.selected_products && execution.selected_products.length > 0) {
-            const currentTotal = execution.selected_products.reduce((sum: number, product: any) => sum + (product.price || 0), 0);
+          if (execution.selected_products && Array.isArray(execution.selected_products) && (execution.selected_products as any[]).length > 0) {
+            const currentTotal = (execution.selected_products as any[]).reduce((sum: number, product: any) => sum + (product.price || 0), 0);
             
             console.log(`🔍 [Budget Check] Execution ${execution.id}:`);
             console.log(`  - Current total: $${currentTotal}`);
             console.log(`  - Budget limit: $${budgetLimit}`);
-            console.log(`  - Current products: ${execution.selected_products.length}`);
+            console.log(`  - Current products: ${(execution.selected_products as any[]).length}`);
             console.log(`  - Resetting to ensure strict budget compliance`);
           } else {
             console.log(`🆕 [New Selection] Execution ${execution.id} has no products, selecting new ones`);
@@ -928,7 +928,7 @@ class UnifiedGiftAutomationService {
             execution.auto_gifting_rules.recipient_id,
             budgetLimit,
             occasionType,
-            execution.auto_gifting_rules.gift_selection_criteria?.categories || [],
+            (execution.auto_gifting_rules.gift_selection_criteria as any)?.categories || [],
             userId
           );
           
@@ -977,7 +977,7 @@ class UnifiedGiftAutomationService {
             .update({
               selected_products: giftSelection.products,
               total_amount: totalAmount,
-              status: execution.auto_gifting_rules.auto_approve_gifts ? 'processing' : 'pending',
+              status: (execution.auto_gifting_rules as any).auto_approve_gifts ? 'processing' : 'pending',
               address_metadata: addressResult.addressMeta,
               updated_at: new Date().toISOString()
             })

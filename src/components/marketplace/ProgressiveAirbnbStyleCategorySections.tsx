@@ -9,7 +9,7 @@ import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersecti
 import { optimizedMarketplaceService } from "@/services/marketplace/OptimizedMarketplaceService";
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
-import SimpleLoadingIndicator from "./ui/SimpleLoadingIndicator";
+
 import { devLog } from "@/utils/performanceOptimizations";
 
 interface ProgressiveAirbnbStyleCategorySectionsProps {
@@ -43,7 +43,7 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
 }) => {
   const navigate = useNavigate();
   const [categoryData, setCategoryData] = useState<Record<string, CategoryData>>({});
-  const [progressStats, setProgressStats] = useState({ totalLoadTime: 0, averageLoadTime: 0, loadedCount: 0 });
+  
   const loadedCategories = useRef(new Set<string>());
   const loadTimes = useRef<number[]>([]);
   const { startTimer, endTimer } = usePerformanceMonitoring();
@@ -186,23 +186,9 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
     }
   }, [onProductClick]);
 
-  // Calculate loading stats for indicator
-  const totalCategories = CATEGORIES.length;
-  const loadedCount = Object.values(categoryData).filter(data => data.hasLoaded).length;
-  const loadingCount = Object.values(categoryData).filter(data => data.isLoading).length;
-  const erroredCount = Object.values(categoryData).filter(data => data.error && !data.isLoading).length;
 
   return (
     <div className={`space-y-8 ${className}`}>
-      {/* Progressive Loading Indicator */}
-      {(loadingCount > 0 || loadedCount < totalCategories) && (
-        <SimpleLoadingIndicator
-          totalItems={totalCategories}
-          loadedCount={loadedCount}
-          loadingCount={loadingCount}
-          className="mx-auto max-w-md mb-4"
-        />
-      )}
       {CATEGORIES.map((category, index) => {
         const data = categoryData[category.key];
         if (!data) {

@@ -3621,6 +3621,33 @@ export type Database = {
           },
         ]
       }
+      security_audit: {
+        Row: {
+          access_granted: boolean
+          context: Json | null
+          created_at: string | null
+          function_name: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_granted: boolean
+          context?: Json | null
+          created_at?: string | null
+          function_name: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_granted?: boolean
+          context?: Json | null
+          created_at?: string | null
+          function_name?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_logs: {
         Row: {
           created_at: string | null
@@ -4819,6 +4846,14 @@ export type Database = {
       trigger_order_recovery: {
         Args: { order_uuid: string }
         Returns: Json
+      }
+      validate_access_pattern: {
+        Args: {
+          operation_type: string
+          resource_id?: string
+          resource_type: string
+        }
+        Returns: boolean
       }
       validate_zma_order: {
         Args: {

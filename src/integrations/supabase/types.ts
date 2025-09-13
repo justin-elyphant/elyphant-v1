@@ -223,6 +223,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_security_overrides: {
+        Row: {
+          admin_user_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          override_type: string
+          reason: string | null
+          target_resource: string | null
+          used_at: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          override_type: string
+          reason?: string | null
+          target_resource?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          override_type?: string
+          reason?: string | null
+          target_resource?: string | null
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       ai_assistants: {
         Row: {
           assistant_id: string
@@ -4586,6 +4622,10 @@ export type Database = {
         Args: { action_type: string }
         Returns: boolean
       }
+      can_bypass_payment_verification: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       can_cancel_order: {
         Args: { order_id: string }
         Returns: boolean
@@ -4645,6 +4685,10 @@ export type Database = {
       emergency_security_verification: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      fix_function_security_warnings: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       generate_invitation_token: {
         Args: Record<PropertyKey, never>
@@ -4721,6 +4765,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      grant_payment_bypass: {
+        Args: {
+          admin_user_id: string
+          duration_hours?: number
+          reason?: string
+        }
+        Returns: Json
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown
@@ -4786,6 +4838,14 @@ export type Database = {
           accessed_table: string
         }
         Returns: undefined
+      }
+      manual_order_recovery: {
+        Args: {
+          admin_user_id: string
+          bypass_payment_check?: boolean
+          order_uuid: string
+        }
+        Returns: Json
       }
       search_users_for_friends: {
         Args: {

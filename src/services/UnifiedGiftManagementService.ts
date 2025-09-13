@@ -378,7 +378,7 @@ class UnifiedGiftManagementService {
    */
   private async getWishlistGifts(recipientId: string, budget: number): Promise<any[]> {
     try {
-      const { data: wishlists, error } = await supabase
+      const { data: wishlists, error } = await (supabase as any)
         .from('wishlists')
         .select(`
           *,

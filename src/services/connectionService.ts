@@ -120,6 +120,7 @@ export const connectionService = {
           .from('wishlists')
           .select(`
             id,
+            user_id,
             title,
             description,
             is_public,
@@ -159,6 +160,14 @@ export const connectionService = {
           ...profile,
           gift_preferences: normalizedGiftPreferences,
           interests: normalizedInterests,
+          // Normalize important_dates to proper shape if present
+          important_dates: Array.isArray((profile as any).important_dates)
+            ? (profile as any).important_dates.map((d: any) => ({
+                title: d?.title ?? 'Important Date',
+                date: typeof d?.date === 'string' ? d.date : (d?.date ? new Date(d.date).toISOString() : new Date().toISOString()),
+                type: d?.type ?? 'custom'
+              }))
+            : [],
           wishlists: wishlists || [],
           wishlist_count: wishlists?.length || 0
         };
@@ -172,7 +181,7 @@ export const connectionService = {
         });
 
         return {
-          profile: profileWithWishlists as Profile,
+          profile: profileWithWishlists as unknown as Profile,
           connectionData
         };
       } catch (error) {

@@ -1082,6 +1082,21 @@ class UnifiedGiftAutomationService {
           selected_products: Array.isArray((execution as any).selected_products)
             ? (execution as any).selected_products
             : ((execution as any).selected_products ? [(execution as any).selected_products] : undefined),
+          // Normalize address_metadata Json to typed shape
+          address_metadata: (() => {
+            const raw = (execution as any).address_metadata;
+            if (!raw) return undefined;
+            let obj: any = raw;
+            if (typeof raw === 'string') {
+              try { obj = JSON.parse(raw); } catch { obj = {}; }
+            }
+            return {
+              source: ['user_verified','giver_provided','missing'].includes(obj?.source) ? obj.source : undefined,
+              is_verified: Boolean(obj?.is_verified),
+              needs_confirmation: Boolean(obj?.needs_confirmation),
+              connection_id: obj?.connection_id ? String(obj.connection_id) : undefined,
+            };
+          })(),
           error_message: execution.error_message || 'Failed to fetch rule details'
         }));
       }
@@ -1096,7 +1111,22 @@ class UnifiedGiftAutomationService {
         // Normalize selected_products from Json to array
         selected_products: Array.isArray((execution as any).selected_products)
           ? (execution as any).selected_products
-          : ((execution as any).selected_products ? [(execution as any).selected_products] : undefined)
+          : ((execution as any).selected_products ? [(execution as any).selected_products] : undefined),
+        // Normalize address_metadata Json to typed shape
+        address_metadata: (() => {
+          const raw = (execution as any).address_metadata;
+          if (!raw) return undefined;
+          let obj: any = raw;
+          if (typeof raw === 'string') {
+            try { obj = JSON.parse(raw); } catch { obj = {}; }
+          }
+          return {
+            source: ['user_verified','giver_provided','missing'].includes(obj?.source) ? obj.source : undefined,
+            is_verified: Boolean(obj?.is_verified),
+            needs_confirmation: Boolean(obj?.needs_confirmation),
+            connection_id: obj?.connection_id ? String(obj.connection_id) : undefined,
+          };
+        })()
       }));
     } catch (error) {
       console.error('Error in getUserExecutions:', error);

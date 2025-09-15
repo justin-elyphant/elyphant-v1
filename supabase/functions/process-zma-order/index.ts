@@ -1088,13 +1088,13 @@ serve(async (req) => {
         step10_updateOrder: '✅ Success'
       },
       timestamp: new Date().toISOString()
-    } as const;
+    };
 
     return new Response(
       JSON.stringify(successPayload),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200
       }
     );
 

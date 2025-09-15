@@ -631,9 +631,21 @@ serve(async (req) => {
       throw new Error('Missing shipping information in order');
     }
     
+    // Handle name field splitting - check for first_name/last_name or split name field
+    let firstName = orderData.shipping_info.first_name;
+    let lastName = orderData.shipping_info.last_name;
+    
+    if (!firstName || !lastName) {
+      // Try to split the name field if first_name/last_name are not provided
+      const fullName = orderData.shipping_info.name || '';
+      const nameParts = fullName.trim().split(' ');
+      firstName = firstName || nameParts[0] || 'Customer';
+      lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Name');
+    }
+    
     const shippingAddress = {
-      first_name: orderData.shipping_info.first_name || 'Customer',
-      last_name: orderData.shipping_info.last_name || 'Name',
+      first_name: firstName,
+      last_name: lastName,
       address_line1: orderData.shipping_info.address_line1 || '',
       address_line2: orderData.shipping_info.address_line2 || '',
       zip_code: orderData.shipping_info.zip_code || '',

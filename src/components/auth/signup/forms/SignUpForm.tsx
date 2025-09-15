@@ -79,7 +79,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           form={form}
           name="name"
           label="Name"
-          placeholder="Your name"
+          placeholder="Your first and last name"
           Icon={User}
         />
         

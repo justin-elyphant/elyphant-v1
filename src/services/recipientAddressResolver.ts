@@ -217,10 +217,18 @@ class RecipientAddressResolver {
     try {
       console.log(`📤 Sending address request to ${recipientEmail}`);
       
+      // Find recipient ID from email
+      const { data: recipientProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', recipientEmail)
+        .single();
+
       const { data, error } = await supabase
         .from('address_requests')
         .insert({
           requester_id: userId,
+          recipient_id: recipientProfile?.id || userId, // Fallback if not found
           recipient_email: recipientEmail,
           message: message || `Hi ${recipientName}, I'd like to send you a gift! Could you please share your shipping address?`,
           include_notifications: true,

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 // 🚨 DEPRECATION WARNING - Phase 5 Migration
 // This service has been consolidated into UnifiedGiftManagementService
@@ -37,17 +38,29 @@ export interface CreatePendingGiftData {
 
 export const pendingGiftsService = {
   async createPendingInvitation(data: CreatePendingGiftData): Promise<PendingGiftInvitation> {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+
     const { data: result, error } = await supabase
       .from('pending_gift_invitations')
       .insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        ...data
+        user_id: user.user.id,
+        recipient_email: data.recipient_email,
+        recipient_name: data.recipient_name,
+        shipping_address: data.shipping_address as Json,
+        gift_events: (data.gift_events || []) as Json,
+        auto_gift_rules: (data.auto_gift_rules || []) as Json,
+        invitation_token: crypto.randomUUID(),
       })
       .select()
       .single();
 
     if (error) throw error;
-    return result;
+    return {
+      ...result,
+      gift_events: Array.isArray(result.gift_events) ? result.gift_events : [],
+      auto_gift_rules: Array.isArray(result.auto_gift_rules) ? result.auto_gift_rules : []
+    } as PendingGiftInvitation;
   },
 
   async createPendingConnection(
@@ -336,7 +349,11 @@ export const pendingGiftsService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(invitation => ({
+      ...invitation,
+      gift_events: Array.isArray(invitation.gift_events) ? invitation.gift_events : [],
+      auto_gift_rules: Array.isArray(invitation.auto_gift_rules) ? invitation.auto_gift_rules : []
+    })) as PendingGiftInvitation[];
   },
 
   async getPendingConnectionsWithInvitations() {
@@ -363,7 +380,11 @@ export const pendingGiftsService = {
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    return data ? {
+      ...data,
+      gift_events: Array.isArray(data.gift_events) ? data.gift_events : [],
+      auto_gift_rules: Array.isArray(data.auto_gift_rules) ? data.auto_gift_rules : []
+    } as PendingGiftInvitation : null;
   },
 
   async acceptInvitation(token: string) {

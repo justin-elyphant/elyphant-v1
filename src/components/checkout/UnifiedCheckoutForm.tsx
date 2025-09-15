@@ -153,7 +153,11 @@ const UnifiedCheckoutForm: React.FC = () => {
           metadata: {
             user_id: user.id,
             order_type: 'marketplace_purchase',
-            item_count: cartItems.length
+            item_count: cartItems.length,
+            // CRITICAL: Pass scheduled delivery information for proper payment handling
+            scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
+            isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
+            deliveryDate: giftOptions.scheduledDeliveryDate
           }
         }
       });

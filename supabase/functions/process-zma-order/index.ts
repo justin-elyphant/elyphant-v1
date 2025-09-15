@@ -1119,13 +1119,12 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    return new Response(
-      JSON.stringify(successPayload),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
-    );
+    const resBody = JSON.stringify(successPayload);
+    const resInit = {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
+    };
+    return new Response(resBody, resInit);
 
   } catch (error) {
     console.error('🚨 ZMA Debug Error:', error);

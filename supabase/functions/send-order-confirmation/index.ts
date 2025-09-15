@@ -181,16 +181,24 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    // Robust handling of provider response
+    console.log("📨 Resend response:", emailResponse);
+    if ((emailResponse as any)?.error || !(emailResponse as any)?.data?.id) {
+      const providerError = (emailResponse as any)?.error || 'Unknown provider error';
+      console.error('❌ Email provider did not accept message:', providerError);
+      throw new Error(typeof providerError === 'string' ? providerError : JSON.stringify(providerError));
+    }
+
     console.log("✅ Order confirmation email sent successfully:", {
       order_number: order.order_number,
       user_email,
       payment_method_used,
-      email_id: emailResponse.data?.id
+      email_id: (emailResponse as any).data.id
     });
 
     return new Response(JSON.stringify({ 
       success: true,
-      email_id: emailResponse.data?.id,
+      email_id: (emailResponse as any).data.id,
       order_number: order.order_number
     }), {
       status: 200,

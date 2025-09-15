@@ -2711,6 +2711,33 @@ export type Database = {
           },
         ]
       }
+      order_processing_signals: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          processed_at: string
+          signal_metadata: Json | null
+          trigger_source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          processed_at?: string
+          signal_metadata?: Json | null
+          trigger_source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          processed_at?: string
+          signal_metadata?: Json | null
+          trigger_source?: string
+        }
+        Relationships: []
+      }
       order_recovery_logs: {
         Row: {
           created_at: string

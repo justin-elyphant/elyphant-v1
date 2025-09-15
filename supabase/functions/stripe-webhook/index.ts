@@ -103,15 +103,19 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     if (order) {
       console.log(`✅ Order ${order.id} updated for successful payment`);
       
-      // Automatically trigger order processing
+      // PRIMARY TRIGGER: Use orchestrator for controlled processing
       try {
-        await supabase.functions.invoke('process-zma-order', {
+        await supabase.functions.invoke('order-orchestrator', {
           body: { 
             orderId: order.id,
-            triggeredBy: 'stripe_webhook'
+            triggerSource: 'stripe-webhook',
+            metadata: {
+              eventType: 'payment_intent.succeeded',
+              webhookProcessedAt: new Date().toISOString()
+            }
           }
         });
-        console.log(`🚀 Triggered ZMA processing for order ${order.id}`);
+        console.log(`🚀 PRIMARY TRIGGER: Orchestrator invoked for order ${order.id}`);
       } catch (processError) {
         console.error('⚠️ Failed to trigger order processing:', processError);
         // Don't fail the webhook, order processing can be retried later
@@ -171,15 +175,20 @@ async function handleCheckoutCompleted(session: any, supabase: any) {
       if (order) {
         console.log(`✅ Order ${order.id} updated for completed checkout`);
         
-        // Automatically trigger order processing
+        // PRIMARY TRIGGER: Use orchestrator for checkout completion
         try {
-          await supabase.functions.invoke('process-zma-order', {
+          await supabase.functions.invoke('order-orchestrator', {
             body: { 
               orderId: order.id,
-              triggeredBy: 'stripe_webhook'
+              triggerSource: 'stripe-webhook',
+              metadata: {
+                sessionId: session.id,
+                eventType: 'checkout.session.completed',
+                webhookProcessedAt: new Date().toISOString()
+              }
             }
           });
-          console.log(`🚀 Triggered ZMA processing for order ${order.id}`);
+          console.log(`🚀 PRIMARY TRIGGER: Orchestrator invoked for checkout order ${order.id}`);
         } catch (processError) {
           console.error('⚠️ Failed to trigger order processing:', processError);
         }

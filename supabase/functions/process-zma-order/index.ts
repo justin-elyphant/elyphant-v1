@@ -866,6 +866,33 @@ serve(async (req) => {
 
     console.log('✅ Zinc order data prepared');
 
+    // Extra preflight submission lock using existing zinc_status to prevent double submissions
+    console.log('🔒 Attempting submission lock with zinc_status=submitting...');
+    const nowIso = new Date().toISOString();
+    const { data: submissionLock, error: submissionLockError } = await supabase
+      .from('orders')
+      .update({ zinc_status: 'submitting', status: 'processing', updated_at: nowIso })
+      .eq('id', orderId)
+      .is('zinc_order_id', null)
+      .or('zinc_status.is.null,zinc_status.eq.pending,zinc_status.eq.awaiting_retry,zinc_status.eq.retry_pending')
+      .select('id');
+
+    if (submissionLockError) {
+      console.error('❌ Failed to acquire submission lock:', submissionLockError);
+    }
+
+    if (!submissionLock || submissionLock.length === 0) {
+      console.warn('🛑 Another process appears to be submitting this order already. Aborting duplicate submission.');
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Order is already being submitted by another process. Prevented duplicate Zinc order.',
+        duplicatePrevented: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
     // Step 9: Call Zinc API
     console.log('📥 Step 9: Calling Zinc API...');
     if (!zmaAccount.api_key) {

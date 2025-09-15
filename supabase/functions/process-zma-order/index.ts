@@ -859,15 +859,6 @@ return await (async () => {
 
     console.log('✅ Atomic submission lock acquired successfully');
     console.log(`🔒 Order ${orderId} claimed for Zinc submission - proceeding with API call`);
-        message: 'Order submission already in progress by another process. Duplicate submission prevented.',
-        orderId: orderId,
-        duplicatePrevented: true,
-        lockAcquired: false
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
-    }
 
     console.log(`✅ Successfully acquired atomic submission lock for order ${orderId}`);
     console.log(`📊 PROCESS-ZMA-ORDER: Starting Zinc submission for order ${orderId} - lock acquired successfully`);

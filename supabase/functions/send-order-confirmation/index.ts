@@ -81,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       : 'Demo Payment'
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <orders@elyphant.com>",
+      from: "Elyphant Orders <hello@elyphant.ai>",
       to: [user_email],
       subject: `Order Confirmation - ${order.order_number}`,
       html: `

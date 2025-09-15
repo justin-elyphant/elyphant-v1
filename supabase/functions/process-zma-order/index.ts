@@ -1126,7 +1126,8 @@ return await (async () => {
       status: 200
     });
 
-  } catch (err) {
+  }
+  catch (err) {
     const error: any = err as any;
     console.error('🚨 ZMA Debug Error:', error);
     console.error('🚨 Error stack:', error?.stack);

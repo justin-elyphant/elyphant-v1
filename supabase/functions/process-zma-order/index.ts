@@ -580,7 +580,6 @@ return await (async () => {
           status: 200
         });
       }
-    }
 
     // If this is a retry, verify the order is actually in retry_pending status
     if (retryAttempt && orderData.status !== 'retry_pending' && orderData.status !== 'failed') {

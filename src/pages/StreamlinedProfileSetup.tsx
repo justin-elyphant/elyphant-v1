@@ -5,10 +5,12 @@ import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import SimpleProfileForm from "@/components/profile-setup/SimpleProfileForm";
+import QuickInterestsModal from "@/components/auth/QuickInterestsModal";
 
 const StreamlinedProfileSetup = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const [showInterestsModal, setShowInterestsModal] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -18,8 +20,34 @@ const StreamlinedProfileSetup = () => {
   }, [user, isLoading, navigate]);
 
   const handleProfileComplete = () => {
-    console.log("✅ Profile completed! Redirecting to gifting...");
+    console.log("✅ Profile completed! Checking if interests modal should be shown...");
+    
+    // Check if this is a new signup that should see interests modal
+    const isNewSignUp = localStorage.getItem("newSignUp") === "true";
+    
+    if (isNewSignUp) {
+      console.log("🎯 New signup detected, showing interests modal");
+      setShowInterestsModal(true);
+    } else {
+      console.log("📍 Existing user, redirecting directly to gifting");
+      navigate('/gifting', { replace: true });
+    }
+  };
+
+  const handleInterestsComplete = () => {
+    console.log("✅ Interests completed! Cleaning up and redirecting to gifting...");
+    
+    // Clean up signup flags
+    localStorage.removeItem("newSignUp");
+    localStorage.removeItem("profileCompletionState");
+    
+    setShowInterestsModal(false);
     navigate('/gifting', { replace: true });
+  };
+
+  const handleInterestsClose = () => {
+    console.log("⏭️ Interests modal closed/skipped");
+    handleInterestsComplete();
   };
 
   if (isLoading) {
@@ -50,6 +78,12 @@ const StreamlinedProfileSetup = () => {
           </Card>
         </div>
       </div>
+
+      <QuickInterestsModal
+        isOpen={showInterestsModal}
+        onClose={handleInterestsClose}
+        onComplete={handleInterestsComplete}
+      />
     </MainLayout>
   );
 };

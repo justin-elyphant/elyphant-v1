@@ -101,11 +101,12 @@ const SignUpForm = () => {
               // Don't block signup flow for email issues
             }
             
-            // Set flag for new signup to trigger interests modal
-            localStorage.setItem("showQuickInterests", "true");
+            // Set flag for new signup and profile completion needed
+            localStorage.setItem("newSignUp", "true");
+            localStorage.setItem("profileCompletionState", "pending");
             
-            // Redirect to auth page where interests modal will be shown
-            navigate("/auth", { replace: true });
+            // Redirect to profile setup where they'll complete profile then see interests modal
+            navigate("/profile-setup", { replace: true });
             return;
           }
           

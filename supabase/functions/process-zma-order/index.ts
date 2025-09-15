@@ -392,6 +392,7 @@ serve(async (req) => {
   console.log('🚀 ZMA Function - Enhanced with Duplicate Charge Prevention');
   
 return await (async () => {
+    let finalResponse: Response;
     try {
     // Step 1: Parse request
     console.log('📥 Step 1: Parsing request body...');
@@ -1120,7 +1121,7 @@ return await (async () => {
       timestamp: new Date().toISOString()
     };
 
-    return new Response(JSON.stringify(successPayload), {
+    finalResponse = new Response(JSON.stringify(successPayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
     });
@@ -1154,7 +1155,7 @@ return await (async () => {
       console.error('Failed to track order failure:', trackingError);
     }
     
-    return new Response(JSON.stringify({
+    finalResponse = new Response(JSON.stringify({
       success: false,
       error: error?.message || 'Unknown error',
       stack: error?.stack,
@@ -1165,5 +1166,6 @@ return await (async () => {
       status: 500
     });
   }
+  return finalResponse;
   })();
 });

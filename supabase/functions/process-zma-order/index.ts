@@ -855,9 +855,10 @@ return await (async () => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
-      
-      return new Response(JSON.stringify({
-        success: true,
+    }
+
+    console.log('✅ Atomic submission lock acquired successfully');
+    console.log(`🔒 Order ${orderId} claimed for Zinc submission - proceeding with API call`);
         message: 'Order submission already in progress by another process. Duplicate submission prevented.',
         orderId: orderId,
         duplicatePrevented: true,

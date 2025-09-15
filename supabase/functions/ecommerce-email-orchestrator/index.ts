@@ -102,13 +102,38 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     return { skipped: true, reason: 'already_sent' };
   }
 
-  // Get order confirmation template
-  const { data: template } = await supabase
+  // Get order confirmation template - check if we have one or create a basic fallback
+  let { data: template } = await supabase
     .from('email_templates')
     .select('*')
     .eq('template_type', 'order_confirmation')
     .eq('is_active', true)
     .single();
+
+  // If no order_confirmation template exists, create a basic one
+  if (!template) {
+    const { data: newTemplate } = await supabase
+      .from('email_templates')
+      .insert({
+        template_type: 'order_confirmation',
+        name: 'Order Confirmation',
+        subject_template: 'Order Confirmation - {{order_number}}',
+        html_template: `
+          <h1>Thank you for your order!</h1>
+          <p>Dear {{customer_name}},</p>
+          <p>We've received your order #{{order_number}} for ${{total_amount}}.</p>
+          <p>Order Date: {{order_date}}</p>
+          <p>Track your order: <a href="{{order_tracking_url}}">View Order</a></p>
+          <p>Questions? Contact us at {{support_email}}</p>
+        `,
+        is_active: true,
+        created_by: '0478a7d7-9d59-40bf-954e-657fa28fe251'
+      })
+      .select()
+      .single();
+    
+    template = newTemplate;
+  }
 
   if (!template) {
     throw new Error('Order confirmation template not found');

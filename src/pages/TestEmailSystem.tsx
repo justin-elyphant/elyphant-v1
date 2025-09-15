@@ -13,7 +13,7 @@ const TestEmailSystem = () => {
   const emailTypes = [
     { value: 'user_welcomed', label: 'Welcome Email' },
     { value: 'order_confirmed', label: 'Order Confirmation' },
-    { value: 'payment_confirmed', label: 'Payment Confirmation' },
+    { value: 'payment_confirmed', label: 'Payment Confirmation' }, 
     { value: 'order_status_updated', label: 'Order Status Update' },
     { value: 'order_cancelled', label: 'Order Cancellation' },
     { value: 'cart_abandoned', label: 'Abandoned Cart Recovery' },

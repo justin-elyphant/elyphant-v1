@@ -2750,6 +2750,36 @@ export type Database = {
         }
         Relationships: []
       }
+      order_request_fingerprints: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          request_fingerprint: string
+          request_metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          request_fingerprint: string
+          request_metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          request_fingerprint?: string
+          request_metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_status_monitoring: {
         Row: {
           alert_sent: boolean | null
@@ -2819,6 +2849,7 @@ export type Database = {
           order_number: string
           payment_confirmation_sent: boolean | null
           payment_status: string | null
+          processing_status: string | null
           retry_count: number | null
           retry_reason: string | null
           scheduled_delivery_date: string | null
@@ -2866,6 +2897,7 @@ export type Database = {
           order_number: string
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
+          processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
@@ -2913,6 +2945,7 @@ export type Database = {
           order_number?: string
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
+          processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
@@ -4658,9 +4691,21 @@ export type Database = {
         Args: { sender_uuid: string }
         Returns: boolean
       }
+      check_request_fingerprint: {
+        Args: {
+          fingerprint_param: string
+          order_uuid?: string
+          user_uuid: string
+        }
+        Returns: Json
+      }
       check_zma_order_rate_limit: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      cleanup_expired_fingerprints: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       cleanup_expired_invitation_cache: {
         Args: Record<PropertyKey, never>
@@ -4673,6 +4718,15 @@ export type Database = {
       cleanup_zma_validation_cache: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      complete_order_processing: {
+        Args: {
+          error_message?: string
+          final_status?: string
+          order_uuid: string
+          zinc_order_id_param?: string
+        }
+        Returns: Json
       }
       delete_user_account: {
         Args: { target_user_id: string }
@@ -4889,6 +4943,10 @@ export type Database = {
       show_trgm: {
         Args: { "": string }
         Returns: string[]
+      }
+      start_order_processing: {
+        Args: { order_uuid: string; processing_user?: string }
+        Returns: Json
       }
       track_zma_cost: {
         Args: {

@@ -455,8 +455,86 @@ serve(async (req) => {
       });
     }
 
-    // Step 4: Get full order data and check for duplicates
-    console.log('📥 Step 4: Getting full order data and checking for duplicates...');
+    // Step 4: Enhanced atomic duplicate check and processing lock
+    console.log('📥 Step 4: Atomic duplicate check and processing lock...');
+    
+    // Generate request fingerprint for duplicate detection
+    const requestFingerprint = btoa(JSON.stringify({
+      orderId,
+      timestamp: Math.floor(Date.now() / 60000), // 1-minute window
+      isRetry: retryAttempt,
+      processType: 'zma-order'
+    }));
+    
+    // Check request fingerprint first
+    const { data: fingerprintCheck } = await supabase
+      .rpc('check_request_fingerprint', {
+        fingerprint_param: requestFingerprint,
+        user_uuid: null, // Will be set from order data
+        order_uuid: orderId
+      });
+    
+    if (fingerprintCheck?.is_duplicate && !retryAttempt) {
+      console.log('🛑 Duplicate request detected by fingerprint');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Duplicate request detected',
+        message: 'This exact request was already processed recently',
+        duplicateRequestDetected: true
+      }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Start atomic processing with enhanced duplicate prevention
+    const { data: processingResult } = await supabase
+      .rpc('start_order_processing', {
+        order_uuid: orderId,
+        processing_user: null // Service role processing
+      });
+    
+    if (!processingResult?.success) {
+      console.log('🛑 Order processing blocked:', processingResult?.error);
+      
+      if (processingResult?.error === 'already_processed') {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Order already processed successfully',
+          zinc_order_id: processingResult.zinc_order_id,
+          current_status: processingResult.current_status,
+          preventDuplicateProcessing: true
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      if (processingResult?.error === 'already_processing') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Order currently being processed',
+          message: 'Another process is currently handling this order',
+          retryAfter: 30
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: processingResult.error,
+        message: processingResult.message
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('✅ Order processing lock acquired successfully');
+    
+    // Get full order data after acquiring lock
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -465,20 +543,30 @@ serve(async (req) => {
 
     if (orderError || !orderData) {
       console.error('❌ Order lookup error:', orderError);
+      // Release processing lock on error
+      await supabase.rpc('complete_order_processing', {
+        order_uuid: orderId,
+        final_status: 'failed',
+        error_message: 'Order not found after acquiring lock'
+      });
       throw new Error(`Order not found: ${orderError?.message || 'Unknown error'}`);
     }
 
-    console.log(`✅ Order found: ${orderData.order_number}`);
+    console.log(`✅ Order found: ${orderData.order_number} - Processing lock active`);
 
-    // CRITICAL DUPLICATE CHECK: If order already has a zinc_order_id and is not failed, don't reprocess
+    // Final safety check - if somehow order has zinc_order_id after lock, something is wrong
     if (orderData.zinc_order_id && !retryAttempt && orderData.status !== 'failed') {
-      console.log(`⚠️ Order ${orderId} already has zinc_order_id: ${orderData.zinc_order_id} with status: ${orderData.status}`);
-      console.log('🛑 Preventing duplicate order processing - this order was already submitted to Zinc');
+      console.error('🚨 CRITICAL: Order has zinc_order_id despite processing lock!');
       
-      // Check if it's actually processing or completed
-      if (['processing', 'shipped', 'delivered', 'completed'].includes(orderData.status)) {
-        return new Response(JSON.stringify({
-          success: true,
+      // Release lock and exit
+      await supabase.rpc('complete_order_processing', {
+        order_uuid: orderId,
+        final_status: orderData.status,
+        error_message: 'Duplicate detected after lock acquisition'
+      });
+      
+      return new Response(JSON.stringify({
+        success: true,
           message: 'Order already processed successfully',
           orderId: orderId,
           zincRequestId: orderData.zinc_order_id,
@@ -819,11 +907,22 @@ serve(async (req) => {
       if (errorClassification.shouldRetry) {
         console.log('🔄 Setting order to retry_pending status for automatic retry...');
         
-        // Set order to retry_pending status with retry metadata
-        const { error: updateError } = await supabase
+        // Complete processing with retry status using atomic function
+        const { data: retryResult } = await supabase
+          .rpc('complete_order_processing', {
+            order_uuid: orderId,
+            final_status: 'retry_pending',
+            error_message: `${errorClassification.type}: ${errorMessage}`
+          });
+
+        if (!retryResult?.success) {
+          console.error('❌ Failed to complete order processing for retry:', retryResult);
+        }
+
+        // Update retry metadata (non-atomic, can be done after completion)
+        const { error: metadataError } = await supabase
           .from('orders')
           .update({
-            status: 'retry_pending',
             zinc_status: 'awaiting_retry',
             zma_error: JSON.stringify(zincResult),
             retry_count: (orderData.retry_count || 0) + 1,
@@ -833,8 +932,8 @@ serve(async (req) => {
           })
           .eq('id', orderId);
 
-        if (updateError) {
-          console.error('❌ Failed to update order status to retry_pending:', updateError);
+        if (metadataError) {
+          console.warn('⚠️ Failed to update retry metadata (non-critical):', metadataError);
         }
 
         // Track as retryable failure
@@ -870,18 +969,29 @@ serve(async (req) => {
         // Non-retryable error - fail permanently
         console.log('❌ Non-retryable error - failing order permanently...');
         
-        // Update order status to failed with error details
-        const { error: updateError } = await supabase
+        // Complete processing with failed status using atomic function
+        const { data: failureResult } = await supabase
+          .rpc('complete_order_processing', {
+            order_uuid: orderId,
+            final_status: 'failed',
+            error_message: `Non-retryable error: ${errorMessage}`
+          });
+
+        if (!failureResult?.success) {
+          console.error('❌ Failed to complete order processing for failure:', failureResult);
+        }
+
+        // Update error metadata (non-atomic, can be done after completion)
+        const { error: metadataError } = await supabase
           .from('orders')
           .update({
-            status: 'failed',
             zma_error: JSON.stringify(zincResult),
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId);
 
-        if (updateError) {
-          console.error('❌ Failed to update order status to failed:', updateError);
+        if (metadataError) {
+          console.warn('⚠️ Failed to update error metadata (non-critical):', metadataError);
         }
 
         // Track the failure for security monitoring
@@ -912,39 +1022,45 @@ serve(async (req) => {
       throw new Error('Zinc API response missing request_id - order may not have been accepted');
     }
 
-    // Step 10: Update order with Zinc request ID (only on success)
-    console.log('📥 Step 10: Updating order with Zinc data...');
-    const { data: orderUpdateData, error: updateError } = await supabase
-      .from('orders')
-      .update({
-        zinc_order_id: zincResult.request_id, // Use zinc_order_id (not zma_order_id)
-        zma_order_id: zincResult.request_id,  // Keep for compatibility
-        status: 'processing',
-        zinc_status: 'submitted',
-        zma_account_used: zmaAccount.account_id,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', orderId)
-      .select();
+    // Step 10: Atomically complete order processing with Zinc ID
+    console.log('📥 Step 10: Completing order processing with Zinc data...');
+    
+    const { data: completionResult } = await supabase
+      .rpc('complete_order_processing', {
+        order_uuid: orderId,
+        zinc_order_id_param: zincResult.request_id,
+        final_status: 'processing'
+      });
 
-    if (updateError) {
-      console.error('❌ Critical Error: Failed to update order with Zinc ID:', updateError);
+    if (!completionResult?.success) {
+      console.error('❌ Critical Error: Failed to complete order processing:', completionResult);
       // This is critical - we need to track this zinc_order_id for status monitoring
       console.error('🚨 Manual intervention needed: Order', orderId, 'has Zinc request ID', zincResult.request_id, 'but failed to save to database');
       
       // Still throw error but provide actionable information
-      throw new Error(`Critical: Order submitted to Zinc (${zincResult.request_id}) but failed to update database: ${updateError.message}`);
+      throw new Error(`Critical: Order submitted to Zinc (${zincResult.request_id}) but failed to complete processing: ${completionResult?.message}`);
     }
 
-    if (!orderUpdateData || orderUpdateData.length === 0) {
-      console.error('❌ Warning: Order update succeeded but no data returned. Zinc ID:', zincResult.request_id);
-    } else {
-      console.log('✅ Order successfully updated with Zinc data:', { 
-        orderId, 
-        zinc_order_id: zincResult.request_id,
-        updated_rows: orderUpdateData.length 
-      });
+    // Update additional ZMA metadata (can be done after atomic completion)
+    const { error: metadataError } = await supabase
+      .from('orders')
+      .update({
+        zma_order_id: zincResult.request_id,  // Keep for compatibility
+        zinc_status: 'submitted',
+        zma_account_used: zmaAccount.account_id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    if (metadataError) {
+      console.warn('⚠️ Failed to update ZMA metadata (non-critical):', metadataError);
     }
+
+    console.log('✅ Order processing completed atomically:', { 
+      orderId, 
+      zinc_order_id: zincResult.request_id,
+      final_status: completionResult.final_status 
+    });
 
     // Track successful order for security metrics
     await trackZmaOrderSuccess(orderData.user_id, orderId, orderData.total_amount, supabase);

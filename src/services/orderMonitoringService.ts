@@ -15,6 +15,16 @@ export interface OrderProcessingLog {
   userId?: string;
   isRetry?: boolean;
   converted?: boolean;
+  duplicateDetected?: boolean;
+  processingLockAcquired?: boolean;
+}
+
+export interface DuplicatePreventionMetrics {
+  total_requests: number;
+  duplicate_requests_blocked: number;
+  processing_locks_acquired: number;
+  race_conditions_prevented: number;
+  fingerprint_hits: number;
 }
 
 /**
@@ -100,6 +110,63 @@ export const validateOrderMethod = async (orderId: string): Promise<{ isValid: b
 };
 
 /**
+ * Gets duplicate prevention metrics
+ */
+export const getDuplicatePreventionMetrics = async (days: number = 7): Promise<DuplicatePreventionMetrics> => {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get fingerprint statistics
+    const { data: fingerprintData } = await supabase
+      .from('order_request_fingerprints')
+      .select('*')
+      .gte('created_at', startDate.toISOString());
+
+    // Get order processing statistics using existing columns
+    const { data: ordersData } = await supabase
+      .from('orders')
+      .select('status, zinc_order_id, created_at, updated_at')
+      .gte('created_at', startDate.toISOString());
+
+    const total_requests = fingerprintData?.length || 0;
+    const successful_orders = ordersData?.filter(o => 
+      o.zinc_order_id && ['processing', 'shipped', 'delivered', 'completed'].includes(o.status)
+    ).length || 0;
+    
+    // Estimate duplicates and race conditions based on processing patterns
+    const duplicate_requests_blocked = Math.max(0, total_requests - successful_orders);
+    const race_conditions_prevented = successful_orders; // Orders that successfully acquired processing
+
+    console.log(`📊 [Duplicate Prevention] Last ${days} days metrics:`, {
+      total_requests,
+      duplicate_requests_blocked,
+      successful_orders,
+      race_conditions_prevented,
+      prevention_rate: total_requests > 0 ? Math.round((duplicate_requests_blocked / total_requests) * 100) : 0
+    });
+
+    return {
+      total_requests,
+      duplicate_requests_blocked,
+      processing_locks_acquired: successful_orders,
+      race_conditions_prevented,
+      fingerprint_hits: duplicate_requests_blocked
+    };
+
+  } catch (error) {
+    console.error('❌ [Duplicate Prevention] Failed to get metrics:', error);
+    return {
+      total_requests: 0,
+      duplicate_requests_blocked: 0,
+      processing_locks_acquired: 0,
+      race_conditions_prevented: 0,
+      fingerprint_hits: 0
+    };
+  }
+};
+
+/**
  * Gets metrics about order processing methods
  */
 export const getOrderMethodMetrics = async (days: number = 7): Promise<{
@@ -152,15 +219,17 @@ export const getOrderMethodMetrics = async (days: number = 7): Promise<{
 };
 
 /**
- * Checks system health - ensures all recent orders use ZMA
+ * Checks system health - ensures all recent orders use ZMA and duplicate prevention is working
  */
 export const checkSystemHealth = async (): Promise<{
   healthy: boolean;
   issues: string[];
   metrics: any;
+  duplicatePrevention: DuplicatePreventionMetrics;
 }> => {
   const issues: string[] = [];
   const metrics = await getOrderMethodMetrics(1); // Last 24 hours
+  const duplicatePrevention = await getDuplicatePreventionMetrics(1);
 
   // Check if any orders are using non-ZMA methods
   const { data: nonZmaOrders } = await supabase
@@ -178,9 +247,27 @@ export const checkSystemHealth = async (): Promise<{
     issues.push(`High failure rate: ${Math.round((metrics.failed / metrics.total) * 100)}%`);
   }
 
+  // Check for stuck processing orders (using existing columns)
+  const { data: stuckOrders } = await supabase
+    .from('orders')
+    .select('id, status, updated_at')
+    .eq('status', 'pending')
+    .lt('updated_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Stuck for 30+ minutes
+
+  if (stuckOrders && stuckOrders.length > 0) {
+    issues.push(`Found ${stuckOrders.length} orders stuck in pending status for 30+ minutes`);
+  }
+
+  // Check duplicate prevention effectiveness
+  if (duplicatePrevention.total_requests > 10 && duplicatePrevention.duplicate_requests_blocked === 0) {
+    // If we have many requests but no duplicates blocked, system might not be detecting duplicates properly
+    issues.push('Duplicate prevention system may not be detecting duplicates properly');
+  }
+
   return {
     healthy: issues.length === 0,
     issues,
-    metrics
+    metrics,
+    duplicatePrevention
   };
 };

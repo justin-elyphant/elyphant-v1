@@ -489,52 +489,7 @@ return await (async () => {
       });
     }
     
-    // Start atomic processing with enhanced duplicate prevention
-    const { data: processingResult } = await supabase
-      .rpc('start_order_processing', {
-        order_uuid: orderId,
-        processing_user: null // Service role processing
-      });
-    
-    if (!processingResult?.success) {
-      console.log('🛑 Order processing blocked:', processingResult?.error);
-      
-      if (processingResult?.error === 'already_processed') {
-        return new Response(JSON.stringify({
-          success: true,
-          message: 'Order already processed successfully',
-          zinc_order_id: processingResult.zinc_order_id,
-          current_status: processingResult.current_status,
-          preventDuplicateProcessing: true
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      
-      if (processingResult?.error === 'already_processing') {
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Order currently being processed',
-          message: 'Another process is currently handling this order',
-          retryAfter: 30
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      
-      return new Response(JSON.stringify({
-        success: false,
-        error: processingResult.error,
-        message: processingResult.message
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    
-    console.log('✅ Order processing lock acquired successfully');
+    console.log('🔍 Initial order validation before processing...');
     
     // Get full order data after acquiring lock
     const { data: orderData, error: orderError } = await supabase
@@ -867,8 +822,8 @@ return await (async () => {
 
     console.log('✅ Zinc order data prepared');
 
-    // ATOMIC SUBMISSION LOCK - Prevents duplicate Zinc order submissions
-    console.log('🔒 Attempting atomic submission lock...');
+    // ATOMIC SUBMISSION LOCK - Single point of truth for order processing
+    console.log('🔒 Attempting atomic submission lock (replaces old dual-lock system)...');
     const { data: lockAcquired, error: lockError } = await supabase
       .rpc('acquire_order_submission_lock', { order_uuid: orderId });
 
@@ -878,8 +833,28 @@ return await (async () => {
     }
 
     if (!lockAcquired) {
-      console.warn('🛑 DUPLICATE PREVENTION: Another process is already submitting this order. Aborting to prevent duplicate Zinc order.');
-      console.log(`📊 Order ${orderId} - Lock acquisition failed - returning success to prevent retry loops`);
+      console.warn('🛑 ATOMIC DUPLICATE PREVENTION: Another process already claimed this order.');
+      console.log(`📊 Order ${orderId} - Atomic lock failed - order being processed elsewhere`);
+      
+      // Check final order status for proper response
+      const { data: finalOrderCheck } = await supabase
+        .from('orders')
+        .select('zinc_order_id, status, zinc_status')
+        .eq('id', orderId)
+        .single();
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Order processing handled by another process',
+        orderId: orderId,
+        currentStatus: finalOrderCheck?.status || 'processing',
+        zincOrderId: finalOrderCheck?.zinc_order_id || null,
+        preventedDuplicate: true,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
       
       return new Response(JSON.stringify({
         success: true,

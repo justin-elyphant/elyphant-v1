@@ -49,6 +49,16 @@ The following components are **CRITICAL** and should **NEVER** be replaced with 
 2. Check RLS policies on orders table
 3. Ensure user authentication
 
+### Issue: Atomic Order Processing Broken
+**Problem**: Orders stuck in "submitting" status or duplicate orders created
+**Solution**:
+1. 🚨 **CRITICAL**: Never bypass atomic functions - use `complete_order_processing()`
+2. Verify edge function `process-zma-order` is calling atomic completion correctly
+3. Check parameter names match exactly: `zinc_request_id_param`, `zinc_status_param`, `final_status_param`
+4. Use `recover_stuck_orders()` for orders stuck > 2 minutes
+5. **NEVER** update order status directly in database - always use atomic functions
+6. See `ATOMIC_ORDER_PROCESSING_MEASURES.md` for full recovery procedures
+
 ### Issue: Pricing Integration Broken
 **Problem**: Gifting fee shows as $0.00 or pricing settings not loading
 **Solution**:
@@ -69,6 +79,17 @@ If the checkout system is accidentally simplified/broken:
    git checkout HEAD~1 -- src/components/checkout/PaymentMethodSelector.tsx
    git checkout HEAD~1 -- src/components/marketplace/checkout/useCheckoutState.tsx
    git checkout HEAD~1 -- src/services/orderService.ts
+   ```
+
+2. **🔒 CRITICAL: Restore Atomic Order Processing**:
+   ```bash
+   git checkout HEAD~1 -- supabase/functions/process-zma-order/index.ts
+   git checkout HEAD~1 -- supabase/migrations/*atomic*.sql
+   ```
+   
+   **Verify Atomic Functions Exist**:
+   ```sql
+   SELECT * FROM pg_proc WHERE proname IN ('complete_order_processing', 'manually_complete_order', 'recover_stuck_orders');
    ```
 
 2. **Restore Pricing Integration** (if gifting fee = $0.00):
@@ -98,8 +119,10 @@ If the checkout system is accidentally simplified/broken:
 3. **Test Critical Paths**:
    - Address form completion
    - Payment processing
-   - Order creation
+   - **Atomic order completion** (most critical)
+   - Order creation without duplicates
    - Confirmation page navigation
+   - **Recovery of stuck orders**
 
 ## 🔐 Security Considerations
 

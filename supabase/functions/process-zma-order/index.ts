@@ -391,7 +391,8 @@ serve(async (req) => {
 
   console.log('🚀 ZMA Function - Enhanced with Duplicate Charge Prevention');
   
-  try {
+const __run = async () => {
+    try {
     // Step 1: Parse request
     console.log('📥 Step 1: Parsing request body...');
     let body;
@@ -1164,4 +1165,6 @@ serve(async (req) => {
       status: 500
     });
   }
+  };
+  return await __run();
 });

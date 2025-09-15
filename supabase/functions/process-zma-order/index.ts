@@ -1124,9 +1124,10 @@ serve(async (req) => {
       status: 200
     });
 
-  } catch (error) {
+  } catch (err) {
+    const error: any = err as any;
     console.error('🚨 ZMA Debug Error:', error);
-    console.error('🚨 Error stack:', error.stack);
+    console.error('🚨 Error stack:', error?.stack);
     
     // Track failure for security metrics (if we have order data)
     try {
@@ -1145,7 +1146,7 @@ serve(async (req) => {
           .single();
         
         if (orderData?.user_id) {
-          await trackZmaOrderFailure(orderData.user_id, orderId, 'processing_error', error.message, supabase);
+          await trackZmaOrderFailure(orderData.user_id, orderId, 'processing_error', error?.message, supabase);
         }
       }
     } catch (trackingError) {
@@ -1154,8 +1155,8 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
-      stack: error.stack,
+      error: error?.message || 'Unknown error',
+      stack: error?.stack,
       timestamp: new Date().toISOString(),
       debug: 'Check the edge function logs for detailed debugging info'
     }), {

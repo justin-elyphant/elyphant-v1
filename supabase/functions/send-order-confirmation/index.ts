@@ -181,25 +181,71 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    // Robust handling of provider response
+    // Robust handling of provider response with fallback
     console.log("📨 Resend response:", emailResponse);
+    
+    let finalEmailId = null;
+    let usedFallback = false;
+    
     if ((emailResponse as any)?.error || !(emailResponse as any)?.data?.id) {
-      const providerError = (emailResponse as any)?.error || 'Unknown provider error';
-      console.error('❌ Email provider did not accept message:', providerError);
-      throw new Error(typeof providerError === 'string' ? providerError : JSON.stringify(providerError));
+      console.log("⚠️ Resend failed or returned no ID, attempting fallback to send-email-notification...");
+      
+      try {
+        // Fallback: Use the working send-email-notification function
+        const fallbackResponse = await supabase.functions.invoke('send-email-notification', {
+          body: {
+            recipientEmail: user_email,
+            subject: `Order Confirmation - ${order.order_number}`,
+            htmlContent: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #333;">Order Confirmed! 🎉</h1>
+                <p>Thank you for your purchase, your order <strong>${order.order_number}</strong> has been confirmed.</p>
+                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 5px;">
+                  <h3>Order Details:</h3>
+                  <p><strong>Order Number:</strong> ${order.order_number}</p>
+                  <p><strong>Total:</strong> $${orderTotal.toFixed(2)}</p>
+                  <p><strong>Payment Method:</strong> ${paymentMethodDisplay}</p>
+                  <p><strong>Status:</strong> ${order.status}</p>
+                </div>
+                <p>You'll receive tracking information once your order ships.</p>
+                <p style="color: #666; font-size: 12px;">Thank you for shopping with Elyphant!</p>
+              </div>
+            `,
+            notificationType: 'order_confirmation'
+          }
+        });
+        
+        if (fallbackResponse.error) {
+          throw new Error(`Fallback failed: ${fallbackResponse.error.message}`);
+        }
+        
+        finalEmailId = fallbackResponse.data?.emailId || 'fallback-sent';
+        usedFallback = true;
+        console.log("✅ Fallback email sent successfully via send-email-notification");
+        
+      } catch (fallbackError) {
+        console.error('❌ Both primary and fallback email methods failed:', fallbackError);
+        throw new Error(`Email delivery failed: ${fallbackError.message}`);
+      }
+      
+    } else {
+      finalEmailId = (emailResponse as any).data.id;
+      console.log("✅ Primary Resend email sent successfully");
     }
 
     console.log("✅ Order confirmation email sent successfully:", {
       order_number: order.order_number,
       user_email,
       payment_method_used,
-      email_id: (emailResponse as any).data.id
+      email_id: finalEmailId,
+      used_fallback: usedFallback
     });
 
     return new Response(JSON.stringify({ 
       success: true,
-      email_id: (emailResponse as any).data.id,
-      order_number: order.order_number
+      email_id: finalEmailId,
+      order_number: order.order_number,
+      used_fallback: usedFallback
     }), {
       status: 200,
       headers: {

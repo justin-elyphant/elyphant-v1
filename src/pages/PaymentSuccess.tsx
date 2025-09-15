@@ -15,11 +15,13 @@ const PaymentSuccess = () => {
   const { clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(true);
   const [orderNumber, setOrderNumber] = useState<string>('');
-  const [processingStatus, setProcessingStatus] = useState<string>('Verifying payment...');
+  const [processingStatus, setProcessingStatus] = useState<string>('Confirming your payment...');
+  const [startTime] = useState<number>(Date.now());
 
   useEffect(() => {
     const processPaymentSuccess = async () => {
       const sessionId = searchParams.get('session_id');
+      let messageInterval: NodeJS.Timeout | null = null;
       
       if (!sessionId) {
         toast.error('Invalid payment session');
@@ -28,7 +30,20 @@ const PaymentSuccess = () => {
       }
 
       try {
-        setProcessingStatus('Confirming your payment...');
+        // Time-aware messaging progression
+        const updateProgressiveMessage = () => {
+          const elapsed = Date.now() - startTime;
+          if (elapsed < 30000) {
+            setProcessingStatus('Confirming your payment...');
+          } else if (elapsed < 120000) {
+            setProcessingStatus('Processing your order...');
+          } else {
+            setProcessingStatus('Payment verification taking longer than usual - this is normal for security');
+          }
+        };
+
+        updateProgressiveMessage();
+        messageInterval = setInterval(updateProgressiveMessage, 10000);
         
         // First check if we already processed this session
         const { data: existingOrder } = await supabase
@@ -43,6 +58,10 @@ const PaymentSuccess = () => {
           setOrderNumber(existingOrder.order_number || '');
           setProcessingStatus('Order confirmed!');
           toast.success('Payment successful! Your order has been confirmed.');
+          if (messageInterval) {
+            clearInterval(messageInterval);
+            messageInterval = null;
+          }
           setIsProcessing(false);
           return;
         }
@@ -51,7 +70,15 @@ const PaymentSuccess = () => {
         const retryPaymentConfirmation = async (attempt = 1, maxAttempts = 3) => {
           const delays = [0, 5000, 15000]; // immediate, 5s, 15s
           
-          setProcessingStatus(`Confirming payment${attempt > 1 ? ` (attempt ${attempt})` : ''}...`);
+          // Don't override progressive messaging for retries
+          if (attempt > 1) {
+            const elapsed = Date.now() - startTime;
+            if (elapsed < 120000) {
+              setProcessingStatus(`Processing your order (attempt ${attempt})...`);
+            } else {
+              setProcessingStatus(`Payment verification in progress (attempt ${attempt}) - this is normal for security`);
+            }
+          }
           
           try {
             const { data, error } = await supabase.functions.invoke('confirm-payment', {
@@ -86,9 +113,18 @@ const PaymentSuccess = () => {
         
       } catch (error) {
         console.error('Payment verification error:', error);
-        setProcessingStatus('Payment confirmation in progress');
+        const elapsed = Date.now() - startTime;
+        if (elapsed > 120000) {
+          setProcessingStatus('Payment verification taking longer than usual - this is normal for security');
+        } else {
+          setProcessingStatus('Payment confirmation in progress');
+        }
         toast.error('Payment confirmation is taking longer than expected. Please check your orders page in a few minutes.');
       } finally {
+        if (messageInterval) {
+          clearInterval(messageInterval);
+          messageInterval = null;
+        }
         setIsProcessing(false);
       }
     };
@@ -104,7 +140,14 @@ const PaymentSuccess = () => {
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin mx-auto" />
             <h2 className="text-xl font-semibold">{processingStatus}</h2>
-            <p className="text-muted-foreground">Please wait while we confirm your order and process it with our fulfillment partner.</p>
+            {Date.now() - startTime < 120000 ? (
+              <p className="text-muted-foreground">Please wait while we confirm your order and process it with our fulfillment partner.</p>
+            ) : (
+              <div className="space-y-2 text-muted-foreground">
+                <p>Payment verification can take a few minutes for security reasons.</p>
+                <p className="text-sm">You can safely close this page - we'll email you confirmation once complete.</p>
+              </div>
+            )}
           </div>
         </main>
         <Footer />

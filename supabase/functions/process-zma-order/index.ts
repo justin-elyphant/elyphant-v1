@@ -338,18 +338,36 @@ async function verifyPaymentStatus(orderId, supabase) {
     } catch (stripeError) {
       console.error('❌ Stripe verification failed:', stripeError.message);
       
-      // Update order with verification failure status
+      // Log verification failure for audit but don't change order status to failed immediately
+      // This prevents premature failure states during transient Stripe issues
       await supabase
-        .from('orders')
-        .update({
-          status: 'payment_verification_failed',
-          payment_verification_error: stripeError.message,
-          updated_at: new Date().toISOString()
+        .from('order_notes')
+        .insert({
+          order_id: orderId,
+          note_content: `Payment verification attempt failed: ${stripeError.message}`,
+          note_type: 'system_error',
+          is_internal: true,
+          admin_user_id: null
         })
-        .eq('id', orderId)
         .then(({ error }) => {
-          if (error) console.error('Failed to update verification failure status:', error);
+          if (error) console.error('Failed to log verification failure:', error);
         });
+      
+      // Only set payment_verification_failed for definitive failures, not transient issues
+      const isDefinitiveFailure = stripeError.message?.includes('No such payment_intent') ||
+                                 stripeError.message?.includes('invalid') ||
+                                 stripeError.message?.includes('not found');
+      
+      if (isDefinitiveFailure) {
+        await supabase
+          .from('orders')
+          .update({
+            status: 'payment_verification_failed',
+            payment_verification_error: stripeError.message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+      }
       
       throw stripeError;
     }

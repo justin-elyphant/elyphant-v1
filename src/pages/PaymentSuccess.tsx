@@ -28,7 +28,7 @@ const PaymentSuccess = () => {
       }
 
       try {
-        setProcessingStatus('Verifying payment...');
+        setProcessingStatus('Confirming your payment...');
         
         // First check if we already processed this session
         const { data: existingOrder } = await supabase
@@ -47,29 +47,47 @@ const PaymentSuccess = () => {
           return;
         }
 
-        setProcessingStatus('Processing payment with Stripe...');
+        // Use confirm-payment with exponential backoff retry logic
+        const retryPaymentConfirmation = async (attempt = 1, maxAttempts = 3) => {
+          const delays = [0, 5000, 15000]; // immediate, 5s, 15s
+          
+          setProcessingStatus(`Confirming payment${attempt > 1 ? ` (attempt ${attempt})` : ''}...`);
+          
+          try {
+            const { data, error } = await supabase.functions.invoke('confirm-payment', {
+              body: { session_id: sessionId }
+            });
+
+            if (error) throw new Error(error.message);
+
+            if (data?.success && data?.payment_status === 'succeeded') {
+              clearCart();
+              setOrderNumber(data.order?.order_number || '');
+              setProcessingStatus('Order confirmed!');
+              toast.success('Payment confirmed! Your order is being processed.');
+              return true;
+            } else if (data?.payment_status === 'pending' && attempt < maxAttempts) {
+              // Payment still processing, retry
+              await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+              return retryPaymentConfirmation(attempt + 1, maxAttempts);
+            } else {
+              throw new Error('Payment confirmation failed');
+            }
+          } catch (retryError) {
+            if (attempt < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+              return retryPaymentConfirmation(attempt + 1, maxAttempts);
+            }
+            throw retryError;
+          }
+        };
+
+        await retryPaymentConfirmation();
         
-        // Verify payment with Stripe and update order
-        const { data, error } = await supabase.functions.invoke('verify-checkout-session', {
-          body: { session_id: sessionId }
-        });
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        if (data?.success) {
-          clearCart();
-          setOrderNumber(data.order_number || '');
-          setProcessingStatus('Order confirmed!');
-          toast.success('Payment successful! Your order has been confirmed and is being processed.');
-        } else {
-          throw new Error('Payment verification failed');
-        }
       } catch (error) {
         console.error('Payment verification error:', error);
-        setProcessingStatus('Error processing payment');
-        toast.error('There was an issue verifying your payment. Please contact support.');
+        setProcessingStatus('Payment confirmation in progress');
+        toast.error('Payment confirmation is taking longer than expected. Please check your orders page in a few minutes.');
       } finally {
         setIsProcessing(false);
       }

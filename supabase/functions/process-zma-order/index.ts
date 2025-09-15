@@ -1067,10 +1067,11 @@ serve(async (req) => {
     
     console.log('✅ Order successfully submitted to Zinc and updated');
     
-    return new Response(JSON.stringify({
+    // Build response payload explicitly to avoid any parser ambiguity
+    const successPayload = {
       success: true,
       message: 'Order successfully submitted to ZMA/Zinc!',
-      orderId: orderId,
+      orderId,
       zincRequestId: zincResult.request_id,
       zmaAccount: zmaAccount.account_id,
       paymentVerified: true,
@@ -1087,11 +1088,17 @@ serve(async (req) => {
         step10_updateOrder: '✅ Success'
       },
       timestamp: new Date().toISOString()
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    } as const;
 
+    return new Response(
+      JSON.stringify(successPayload),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
+
+  
   } catch (error) {
     console.error('🚨 ZMA Debug Error:', error);
     console.error('🚨 Error stack:', error.stack);

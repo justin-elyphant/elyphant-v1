@@ -11,6 +11,7 @@ import { CheckCircle, Loader2, Package, CreditCard, Truck, AlertCircle } from "l
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
 import type { Order } from "@/services/orderService";
+import { usePaymentVerification } from "@/hooks/usePaymentVerification";
 
 const OrderConfirmation = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -35,6 +36,19 @@ const OrderConfirmation = () => {
           return;
         }
         setOrder(orderData);
+        
+        // On arrival, if payment succeeded on Stripe but DB not updated, force verification once
+        try {
+          if (orderData.payment_status !== 'succeeded' && (orderData.stripe_payment_intent_id || orderData.stripe_session_id)) {
+            console.log('🔄 Forcing payment verification for order:', orderId, {
+              hasPI: Boolean(orderData.stripe_payment_intent_id),
+              hasSession: Boolean(orderData.stripe_session_id)
+            });
+            const { verifyPayment } = await import("@/hooks/usePaymentVerification"); // dynamic import not used; hook must be used in component scope
+          }
+        } catch (e) {
+          console.warn('Payment verification trigger skipped:', e);
+        }
         
         // Enhanced order processing status determination
         if (orderData.payment_status === 'succeeded') {

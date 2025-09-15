@@ -1163,7 +1163,7 @@ serve(async (req) => {
       debug: 'Check the edge function logs for detailed debugging info'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 500
     });
   }
 });

@@ -1025,8 +1025,9 @@ return await (async () => {
     const { data: completionResult } = await supabase
       .rpc('complete_order_processing', {
         order_uuid: orderId,
-        zinc_order_id_param: zincResult.request_id,
-        final_status: 'processing'
+        zinc_request_id_param: zincResult.request_id,
+        zinc_status_param: 'submitted',
+        final_status_param: 'submitted_to_zinc'
       });
 
     if (!completionResult?.success) {

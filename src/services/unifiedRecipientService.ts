@@ -99,7 +99,9 @@ export const unifiedRecipientService = {
             address: conn.pending_shipping_address,
             source: 'pending',
             relationship_type: conn.relationship_type,
-            relationship_context: conn.relationship_context,
+            relationship_context: (conn.relationship_context && typeof conn.relationship_context === 'object') 
+              ? conn.relationship_context as any 
+              : {},
             status: conn.status,
             created_at: conn.created_at
           });
@@ -121,13 +123,13 @@ export const unifiedRecipientService = {
           recipients.push({
             id: recipient.id,
             name: recipient.name,
-            email: recipient.preferences?.email,
-            phone: recipient.preferences?.phone,
-            birthday: recipient.preferences?.birthday,
-            address: recipient.preferences?.shipping_address,
+            email: (recipient.preferences && typeof recipient.preferences === 'object' && (recipient.preferences as any)?.email) || null,
+            phone: (recipient.preferences && typeof recipient.preferences === 'object' && (recipient.preferences as any)?.phone) || null,
+            birthday: (recipient.preferences && typeof recipient.preferences === 'object' && (recipient.preferences as any)?.birthday) || null,
+            address: (recipient.preferences && typeof recipient.preferences === 'object' && (recipient.preferences as any)?.shipping_address) || null,
             source: 'address_book',
             relationship_type: recipient.relationship,
-            relationship_context: recipient.preferences?.relationship_context,
+            relationship_context: (recipient.preferences && typeof recipient.preferences === 'object' && (recipient.preferences as any)?.relationship_context) || {},
             created_at: recipient.created_at
           });
         });
@@ -165,7 +167,10 @@ export const unifiedRecipientService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return {
+      ...data,
+      address: null // Add missing required field
+    };
   },
 
   async createPendingRecipient(recipientData: {
@@ -306,7 +311,7 @@ export const unifiedRecipientService = {
     await this.createPendingRecipient({
       name: addressBookRecipient.name,
       email,
-      address: addressBookRecipient.preferences?.shipping_address,
+      address: (addressBookRecipient.preferences && typeof addressBookRecipient.preferences === 'object' && (addressBookRecipient.preferences as any)?.shipping_address) || null,
       relationship_type: addressBookRecipient.relationship
     });
 

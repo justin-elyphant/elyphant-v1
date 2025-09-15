@@ -43,7 +43,10 @@ export const getIncomingConnectionRequests = async (userId: string): Promise<Con
     }
     
     console.log('✅ [connectionRequestService] Incoming requests fetched:', data?.length || 0);
-    return data || [];
+    return (data || []).map(req => ({
+      ...req,
+      status: req.status as "pending" | "accepted" | "rejected"
+    }));
   } catch (error) {
     console.error('❌ [connectionRequestService] Error in getIncomingConnectionRequests:', error);
     return [];
@@ -70,7 +73,10 @@ export const getOutgoingConnectionRequests = async (userId: string): Promise<Con
     }
     
     console.log('✅ [connectionRequestService] Outgoing requests fetched:', data?.length || 0, 'Raw data:', data);
-    return data || [];
+    return (data || []).map(req => ({
+      ...req,
+      status: req.status as "pending" | "accepted" | "rejected"
+    }));
   } catch (error) {
     console.error('❌ [connectionRequestService] Error in getOutgoingConnectionRequests:', error);
     return [];

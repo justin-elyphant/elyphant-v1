@@ -29,7 +29,7 @@ export const testOnboardingSettingsSync = async (userId: string) => {
     console.log("✅ Profile found in database:", profile);
 
     // Test the mapping to settings format
-    const settingsData = mapDatabaseToSettingsForm(profile);
+    const settingsData = mapDatabaseToSettingsForm(profile as any);
     
     if (!settingsData) {
       console.error("❌ Failed to map profile to settings format");

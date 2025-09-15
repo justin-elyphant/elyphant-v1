@@ -40,7 +40,12 @@ export const createTestConnections = async (userId: string) => {
     for (const profile of testProfiles) {
       await supabase
         .from('profiles')
-        .upsert(profile, { onConflict: 'id' });
+        .upsert({
+          ...profile,
+          birth_year: 1990,
+          first_name: profile.name.split(' ')[0] || 'Test',
+          last_name: profile.name.split(' ')[1] || 'User'
+        } as any, { onConflict: 'id' });
     }
 
     // Create test connections

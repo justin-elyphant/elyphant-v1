@@ -32,6 +32,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -612,18 +613,19 @@ class UnifiedSecurityService {
 
   private async persistCriticalError(error: UnifiedError): Promise<void> {
     try {
-      // Store in database for analysis
+      // Store in database for analysis - using security_logs table
       await supabase
-        .from('error_logs')
+        .from('security_logs')
         .insert({
-          error_id: error.id,
-          service: error.service,
-          error_type: error.errorType,
-          message: error.message,
-          context: error.context,
-          severity: error.severity,
+          event_type: 'error',
           user_id: error.userId,
-          timestamp: error.timestamp
+          details: {
+            error_type: error.errorType,
+            message: error.message,
+            context: error.context,
+            severity: error.severity,
+            timestamp: error.timestamp
+          } as Json
         });
     } catch (dbError) {
       console.error('Failed to persist critical error:', dbError);
@@ -632,16 +634,20 @@ class UnifiedSecurityService {
 
   private async persistSecurityViolation(violation: SecurityViolation): Promise<void> {
     try {
+      // Store in security_logs table  
       await supabase
-        .from('security_violations')
+        .from('security_logs')
         .insert({
-          violation_id: violation.id,
-          violation_type: violation.violationType,
-          service: violation.service,
+          event_type: 'security_violation',
           user_id: violation.userId,
-          details: violation.details,
-          severity: violation.severity,
-          timestamp: violation.timestamp
+          details: {
+            violation_id: violation.id,
+            violation_type: violation.violationType,
+            service: violation.service,
+            details: violation.details,
+            severity: violation.severity,
+            timestamp: violation.timestamp
+          } as Json
         });
     } catch (dbError) {
       console.error('Failed to persist security violation:', dbError);

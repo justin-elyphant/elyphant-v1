@@ -221,9 +221,10 @@ const validateZmaOrderSecurity = async (context: ZmaOrderContext) => {
         order_amount: context.orderData.total_amount
       });
 
-    const isDuplicate = validationResult?.is_duplicate || false;
-    const isSuspicious = validationResult?.is_suspicious_pattern || false;
-    const isValid = validationResult?.is_valid || false;
+    const result = validationResult && typeof validationResult === 'object' ? validationResult as any : {};
+    const isDuplicate = result?.is_duplicate || false;
+    const isSuspicious = result?.is_suspicious_pattern || false;
+    const isValid = result?.is_valid || false;
 
     return {
       valid: isValid,

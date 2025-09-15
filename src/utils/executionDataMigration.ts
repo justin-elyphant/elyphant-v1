@@ -27,7 +27,10 @@ export const migrateExecutionProductData = async (executionId: string) => {
     }
 
     // Check if products are already objects (migrated)
-    if (typeof execution.selected_products[0] === 'object' && execution.selected_products[0].title) {
+    if (execution.selected_products && Array.isArray(execution.selected_products) && 
+        execution.selected_products.length > 0 && 
+        typeof execution.selected_products[0] === 'object' && 
+        (execution.selected_products[0] as any)?.title) {
       console.log('Execution already has complete product data');
       return { success: true, alreadyMigrated: true };
     }
@@ -38,9 +41,13 @@ export const migrateExecutionProductData = async (executionId: string) => {
       return { success: false, error: 'Unexpected product data format' };
     }
 
+    const productIds = Array.isArray(execution.selected_products) ? 
+      execution.selected_products.filter(p => typeof p === 'string') as string[] : 
+      [];
+
     // Transform product IDs to complete objects
     const productObjects = await transformProductIdsToObjects(
-      execution.selected_products,
+      productIds,
       supabase
     );
 

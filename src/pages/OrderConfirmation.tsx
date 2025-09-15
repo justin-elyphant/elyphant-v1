@@ -19,6 +19,7 @@ const OrderConfirmation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('checking');
+  const { verifyPayment } = usePaymentVerification();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -29,7 +30,7 @@ const OrderConfirmation = () => {
       }
 
       try {
-        const orderData = await getOrderById(orderId);
+        let orderData = await getOrderById(orderId);
         if (!orderData) {
           toast.error('Order not found');
           navigate('/orders');
@@ -38,16 +39,26 @@ const OrderConfirmation = () => {
         setOrder(orderData);
         
         // On arrival, if payment succeeded on Stripe but DB not updated, force verification once
-        try {
-          if (orderData.payment_status !== 'succeeded' && (orderData.stripe_payment_intent_id || orderData.stripe_session_id)) {
-            console.log('🔄 Forcing payment verification for order:', orderId, {
-              hasPI: Boolean(orderData.stripe_payment_intent_id),
-              hasSession: Boolean(orderData.stripe_session_id)
-            });
-            const { verifyPayment } = await import("@/hooks/usePaymentVerification"); // dynamic import not used; hook must be used in component scope
+        if (orderData.payment_status !== 'succeeded' && (orderData.stripe_payment_intent_id || orderData.stripe_session_id)) {
+          console.log('🔄 Forcing payment verification for order:', orderId, {
+            hasPI: Boolean(orderData.stripe_payment_intent_id),
+            hasSession: Boolean(orderData.stripe_session_id),
+            currentStatus: orderData.payment_status
+          });
+          
+          try {
+            const result = await verifyPayment(orderData.stripe_session_id, orderData.stripe_payment_intent_id, false);
+            if (result.success && result.payment_status === 'succeeded') {
+              console.log('✅ Payment verification successful - refreshing order data');
+              const refreshedOrder = await getOrderById(orderId);
+              if (refreshedOrder) {
+                setOrder(refreshedOrder);
+                orderData = refreshedOrder; // Update for subsequent logic
+              }
+            }
+          } catch (verificationError) {
+            console.warn('⚠️ Payment verification failed:', verificationError);
           }
-        } catch (e) {
-          console.warn('Payment verification trigger skipped:', e);
         }
         
         // Enhanced order processing status determination

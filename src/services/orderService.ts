@@ -188,9 +188,17 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   console.log('Creating order with data:', orderData);
 
   // CRITICAL: Create the order with proper schema alignment including gifting fee
+  // Determine order status: scheduled orders start as "scheduled", immediate orders as "pending"
+  const isScheduledDelivery = orderData.giftOptions.scheduledDeliveryDate && orderData.giftOptions.scheduledDeliveryDate !== '';
+  const orderStatus = isScheduledDelivery ? 'scheduled' : 'pending';
+  const paymentStatus = isScheduledDelivery ? 'payment_intent_created' : 'pending';
+  
+  console.log(`[ORDER SERVICE] Creating order with status: ${orderStatus}, payment_status: ${paymentStatus}, scheduled: ${isScheduledDelivery}`);
+
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
+      user_id: user.id, // CRITICAL: Fix RLS policy violation
       subtotal: orderData.subtotal,
       shipping_cost: orderData.shippingCost,
       tax_amount: orderData.taxAmount,
@@ -205,9 +213,9 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       scheduled_delivery_date: orderData.giftOptions.scheduledDeliveryDate || null,
       is_surprise_gift: orderData.giftOptions.isSurpriseGift,
       stripe_payment_intent_id: orderData.paymentIntentId,
-      stripe_session_id: orderData.stripeSessionId, // Add this line
-      status: 'pending',
-      payment_status: 'pending',
+      stripe_session_id: orderData.stripeSessionId,
+      status: orderStatus,
+      payment_status: paymentStatus,
       has_multiple_recipients: hasMultipleRecipients,
       delivery_groups: orderData.deliveryGroups || []
     } as any)

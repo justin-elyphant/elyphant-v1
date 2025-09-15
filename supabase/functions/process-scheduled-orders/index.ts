@@ -75,14 +75,47 @@ serve(async (req) => {
         console.log(`🔄 Processing scheduled order: ${order.order_number} (${order.id})`)
         console.log(`   Scheduled delivery: ${order.scheduled_delivery_date}`)
 
-        // Verify payment status before processing
-        if (order.payment_status !== 'succeeded') {
-          console.warn(`⚠️ Skipping order ${order.order_number} - payment not succeeded: ${order.payment_status}`)
+        // CRITICAL: Capture payment for scheduled deliveries before processing
+        if (order.payment_status === 'payment_intent_created') {
+          console.log(`💳 Capturing payment for scheduled order ${order.order_number}`)
+          
+          try {
+            // Invoke payment capture function
+            const { data: captureResult, error: captureError } = await supabase.functions.invoke('capture-scheduled-payment', {
+              body: { orderId: order.id }
+            });
+            
+            if (captureError) {
+              console.error(`❌ Payment capture failed for order ${order.order_number}:`, captureError);
+              results.push({
+                orderId: order.id,
+                orderNumber: order.order_number,
+                success: false,
+                error: 'Payment capture failed',
+                skipped: true
+              });
+              continue;
+            }
+            
+            console.log(`✅ Payment captured successfully for order ${order.order_number}`);
+          } catch (captureErr) {
+            console.error(`❌ Payment capture error for order ${order.order_number}:`, captureErr);
+            results.push({
+              orderId: order.id,
+              orderNumber: order.order_number,
+              success: false,
+              error: 'Payment capture error',
+              skipped: true
+            });
+            continue;
+          }
+        } else if (order.payment_status !== 'succeeded') {
+          console.warn(`⚠️ Skipping order ${order.order_number} - payment not ready: ${order.payment_status}`)
           results.push({
             orderId: order.id,
             orderNumber: order.order_number,
             success: false,
-            error: 'Payment not confirmed',
+            error: 'Payment not ready for processing',
             skipped: true
           })
           continue

@@ -87,6 +87,14 @@ serve(async (req) => {
     // Get origin for return URL
     const origin = req.headers.get('origin') || 'https://your-domain.com';
     
+    // CRITICAL: Check if this is a scheduled delivery (should not be charged immediately)
+    const isScheduledDelivery = metadata.scheduledDeliveryDate && metadata.scheduledDeliveryDate !== '';
+    console.log('🗓️ Scheduled delivery check:', {
+      isScheduledDelivery,
+      scheduledDate: metadata.scheduledDeliveryDate,
+      shouldHoldPayment: isScheduledDelivery
+    });
+    
     if (useExistingPaymentMethod && paymentMethodId && customer_id) {
       // Enhanced payment method handling with better error recovery
       try {
@@ -114,11 +122,20 @@ serve(async (req) => {
             console.log('🔗 Successfully attached payment method to customer');
           }
           
-          // Use existing payment method with confirmation
-          paymentIntentData.payment_method = paymentMethodId;
-          paymentIntentData.confirmation_method = 'manual';
-          paymentIntentData.confirm = true;
-          paymentIntentData.return_url = `${origin}/payment-success`;
+          // CRITICAL: Only confirm payment immediately for non-scheduled deliveries
+          if (isScheduledDelivery) {
+            console.log('⏰ Scheduled delivery detected - creating payment intent WITHOUT immediate confirmation');
+            paymentIntentData.payment_method = paymentMethodId;
+            paymentIntentData.confirmation_method = 'manual';
+            paymentIntentData.confirm = false; // Do NOT charge immediately for scheduled deliveries
+            paymentIntentData.return_url = `${origin}/payment-success`;
+          } else {
+            console.log('⚡ Immediate delivery - confirming payment now');
+            paymentIntentData.payment_method = paymentMethodId;
+            paymentIntentData.confirmation_method = 'manual';
+            paymentIntentData.confirm = true;
+            paymentIntentData.return_url = `${origin}/payment-success`;
+          }
         }
       } catch (attachError) {
         console.log('⚠️ Payment method attachment/retrieval error:', attachError);

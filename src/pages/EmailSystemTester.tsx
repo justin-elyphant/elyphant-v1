@@ -104,8 +104,8 @@ const EmailSystemTester = () => {
       console.log(`Testing ${trigger.name} via ${trigger.function}`);
       
       // Prepare test data based on trigger type
-      let testData = {};
-      
+      let testData: any = {};
+
       switch (trigger.id) {
         case 'welcome':
           testData = {
@@ -127,10 +127,53 @@ const EmailSystemTester = () => {
         case 'auto_gift_approval':
           testData = {
             recipientEmail: testEmail,
-            giftDetails: { name: 'Test Gift', price: 25.00 },
+            giftDetails: { name: 'Test Gift', price: 25.0 },
             approvalDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
           };
           break;
+        case 'order_confirmation':
+        case 'payment_confirmation': {
+          // Fetch the most recent order for the test user
+          const { data: latestOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', '0478a7d7-9d59-40bf-954e-657fa28fe251')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!latestOrder?.id) {
+            throw new Error('No orders found for the test user to send an order confirmation.');
+          }
+
+          testData = {
+            order_id: latestOrder.id,
+            user_email: testEmail,
+            payment_method_used: 'saved_payment_method'
+          };
+          break;
+        }
+        case 'order_status': {
+          // Map to orchestrator expected payload
+          const { data: latestOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', '0478a7d7-9d59-40bf-954e-657fa28fe251')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (!latestOrder?.id) {
+            throw new Error('No orders found for the test user to send a status update.');
+          }
+
+          testData = {
+            eventType: 'order_status_changed',
+            orderId: latestOrder.id,
+            customData: { status: 'shipped' }
+          };
+          break;
+        }
         default:
           testData = {
             eventType: trigger.id,

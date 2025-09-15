@@ -1127,8 +1127,6 @@ serve(async (req) => {
       }
     );
 
-  } // Close try block
-
   } catch (error) {
     console.error('🚨 ZMA Debug Error:', error);
     console.error('🚨 Error stack:', error.stack);

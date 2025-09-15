@@ -6,6 +6,62 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to generate dynamic gift messages
+function getGiftMessage(execution: any): string {
+  const rule = execution.auto_gifting_rules;
+  
+  // 1. Check for custom gift message in the rule
+  if (rule.gift_message && rule.gift_message.trim() !== '') {
+    console.log('🎁 [approve-auto-gift] Using custom gift message from rule');
+    return rule.gift_message.trim();
+  }
+  
+  // 2. Check for gift preferences that might contain a message
+  if (rule.gift_preferences?.message && rule.gift_preferences.message.trim() !== '') {
+    console.log('🎁 [approve-auto-gift] Using gift message from preferences');
+    return rule.gift_preferences.message.trim();
+  }
+  
+  // 3. Generate personalized message based on occasion and relationship
+  const occasion = rule.date_type;
+  const recipientName = getRecipientName(execution);
+  
+  console.log('🎁 [approve-auto-gift] Generating personalized gift message for occasion:', occasion);
+  
+  const personalizedMessages = {
+    'birthday': `Happy Birthday, ${recipientName}! 🎂 Hope your special day is amazing!`,
+    'anniversary': `Happy Anniversary, ${recipientName}! 💕 Celebrating this special milestone with you!`,
+    'christmas': `Merry Christmas, ${recipientName}! 🎄 Wishing you joy and happiness this holiday season!`,
+    'valentine': `Happy Valentine's Day, ${recipientName}! 💝 You're special to me!`,
+    'graduation': `Congratulations on your graduation, ${recipientName}! 🎓 So proud of your achievement!`,
+    'wedding': `Congratulations on your wedding, ${recipientName}! 💍 Wishing you a lifetime of happiness!`,
+    'just_because': `Thinking of you, ${recipientName}! 💕 Just wanted to brighten your day!`,
+    'mothers_day': `Happy Mother's Day, ${recipientName}! 🌸 Thank you for everything you do!`,
+    'fathers_day': `Happy Father's Day, ${recipientName}! 👔 You're the best!`,
+    'new_baby': `Congratulations on your new baby, ${recipientName}! 👶 What an exciting time!`,
+    'housewarming': `Congratulations on your new home, ${recipientName}! 🏠 Hope you love it!`
+  };
+  
+  return personalizedMessages[occasion] || `Hope you enjoy this thoughtful gift, ${recipientName}! 🎁`;
+}
+
+// Helper function to extract recipient name
+function getRecipientName(execution: any): string {
+  // Try to get name from various sources
+  if (execution.recipient_name) return execution.recipient_name;
+  if (execution.auto_gifting_rules?.recipient_name) return execution.auto_gifting_rules.recipient_name;
+  
+  // If we have recipient profile data in the execution context
+  const rule = execution.auto_gifting_rules;
+  if (rule.pending_recipient_email) {
+    // Extract name from email before @ symbol as fallback
+    const emailName = rule.pending_recipient_email.split('@')[0];
+    return emailName.charAt(0).toUpperCase() + emailName.slice(1);
+  }
+  
+  return 'Friend'; // Generic fallback
+}
+
 serve(async (req) => {
   console.log('🚀 [approve-auto-gift] Function invoked');
   console.log('📊 [approve-auto-gift] Request method:', req.method);
@@ -167,6 +223,12 @@ serve(async (req) => {
       }
       
       console.log('✅ [approve-auto-gift] Recipient profile fetched successfully');
+      
+      // Log gift message source for debugging
+      const rule = execution.auto_gifting_rules;
+      console.log('🎁 [approve-auto-gift] Gift message analysis:');
+      console.log('   - Rule gift_message:', rule.gift_message);
+      console.log('   - Rule gift_preferences:', JSON.stringify(rule.gift_preferences, null, 2));
 
       // Process real payment using stored payment method
       const orderTotal = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
@@ -284,7 +346,7 @@ serve(async (req) => {
           order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
           shipping_info: shippingInfo,
           is_gift: true,
-          gift_message: `Auto-gift from your auto-gifting rule`,
+          gift_message: getGiftMessage(execution),
           gift_options: {
             auto_gift_execution_id: executionId,
             recipient_id: execution.auto_gifting_rules.recipient_id,

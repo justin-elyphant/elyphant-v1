@@ -866,32 +866,34 @@ serve(async (req) => {
 
     console.log('✅ Zinc order data prepared');
 
-    // Extra preflight submission lock using existing zinc_status to prevent double submissions
-    console.log('🔒 Attempting submission lock with zinc_status=submitting...');
-    const nowIso = new Date().toISOString();
-    const { data: submissionLock, error: submissionLockError } = await supabase
-      .from('orders')
-      .update({ zinc_status: 'submitting', status: 'processing', updated_at: nowIso })
-      .eq('id', orderId)
-      .is('zinc_order_id', null)
-      .or('zinc_status.is.null,zinc_status.eq.pending,zinc_status.eq.awaiting_retry,zinc_status.eq.retry_pending')
-      .select('id');
+    // ATOMIC SUBMISSION LOCK - Prevents duplicate Zinc order submissions
+    console.log('🔒 Attempting atomic submission lock...');
+    const { data: lockAcquired, error: lockError } = await supabase
+      .rpc('acquire_order_submission_lock', { order_uuid: orderId });
 
-    if (submissionLockError) {
-      console.error('❌ Failed to acquire submission lock:', submissionLockError);
+    if (lockError) {
+      console.error('❌ Failed to acquire atomic submission lock:', lockError);
+      throw new Error(`Submission lock error: ${lockError.message}`);
     }
 
-    if (!submissionLock || submissionLock.length === 0) {
-      console.warn('🛑 Another process appears to be submitting this order already. Aborting duplicate submission.');
+    if (!lockAcquired) {
+      console.warn('🛑 DUPLICATE PREVENTION: Another process is already submitting this order. Aborting to prevent duplicate Zinc order.');
+      console.log(`📊 Order ${orderId} - Lock acquisition failed - returning success to prevent retry loops`);
+      
       return new Response(JSON.stringify({
         success: true,
-        message: 'Order is already being submitted by another process. Prevented duplicate Zinc order.',
-        duplicatePrevented: true
+        message: 'Order submission already in progress by another process. Duplicate submission prevented.',
+        orderId: orderId,
+        duplicatePrevented: true,
+        lockAcquired: false
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
     }
+
+    console.log(`✅ Successfully acquired atomic submission lock for order ${orderId}`);
+    console.log(`📊 PROCESS-ZMA-ORDER: Starting Zinc submission for order ${orderId} - lock acquired successfully`);
 
     // Step 9: Call Zinc API
     console.log('📥 Step 9: Calling Zinc API...');

@@ -4618,6 +4618,10 @@ export type Database = {
       }
     }
     Functions: {
+      acquire_order_submission_lock: {
+        Args: { order_uuid: string }
+        Returns: boolean
+      }
       add_business_admin: {
         Args: {
           admin_level_param: string
@@ -4935,6 +4939,10 @@ export type Database = {
           user_type_param: Database["public"]["Enums"]["user_type"]
         }
         Returns: undefined
+      }
+      set_zinc_order_id_if_null: {
+        Args: { order_uuid: string; zinc_id: string }
+        Returns: boolean
       }
       show_limit: {
         Args: Record<PropertyKey, never>

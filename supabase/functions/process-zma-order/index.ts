@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { classifyZmaError } from '../shared/zmaErrorClassification.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -380,43 +381,7 @@ async function verifyPaymentStatus(orderId, supabase) {
   };
 }
 
-// Streamlined ZMA error classification - simplified to 3 essential categories
-function classifyZmaError(zincResult) {
-  const errorCode = zincResult.code;
-  const errorMessage = zincResult.message || '';
-  
-  // Category 1: payment_required - User action needed
-  if (errorCode?.includes('invalid') || errorCode?.includes('payment') || 
-      errorCode?.includes('address') || errorCode?.includes('product_not_available') ||
-      errorCode === 'insufficient_zma_balance') {
-    return {
-      type: 'payment_required',
-      shouldRetry: false,
-      userFriendlyMessage: 'There was an issue with your order details. Please check and try again.',
-      adminMessage: `User/Account error requiring attention: ${errorCode} - ${errorMessage}`
-    };
-  }
-  
-  // Category 2: system_retry - Automatic retry for transient issues  
-  if (errorCode?.includes('timeout') || errorCode?.includes('server_error') || 
-      errorCode?.includes('unavailable') || errorCode?.includes('network') ||
-      errorCode === 'zma_temporarily_overloaded') {
-    return {
-      type: 'system_retry',
-      shouldRetry: true,
-      userFriendlyMessage: 'A temporary system issue occurred. We\'ll retry your order automatically.',
-      adminMessage: `System error - auto-retry enabled: ${errorCode} - ${errorMessage}`
-    };
-  }
-  
-  // Category 3: manual_review - Admin intervention required
-  return {
-    type: 'manual_review',
-    shouldRetry: false,
-    userFriendlyMessage: 'An unexpected error occurred with your order. Customer service has been notified.',
-    adminMessage: `Unknown error requiring investigation: ${errorCode} - ${errorMessage}`
-  };
-}
+// Error classification now handled by shared utility
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

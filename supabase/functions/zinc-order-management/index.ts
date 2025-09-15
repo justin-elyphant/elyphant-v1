@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { classifyZmaError } from '../shared/zmaErrorClassification.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -131,75 +132,7 @@ class ZincApiManager {
   }
 }
 
-// Enhanced error classification with account-level error handling
-function classifyZmaError(zincResult: any) {
-  const errorCode = zincResult.code;
-  const errorMessage = zincResult.message || '';
-  
-  // Account-level errors requiring immediate admin intervention
-  if (errorCode === 'insufficient_zma_balance') {
-    return {
-      type: 'account_critical',
-      shouldRetry: false,
-      requiresAdminIntervention: true,
-      alertLevel: 'critical',
-      retryStrategy: 'manual_only',
-      userFriendlyMessage: 'Account requires attention. Customer service has been notified and will resolve this shortly.',
-      adminMessage: 'ZMA account balance insufficient - requires immediate funding or account verification'
-    };
-  }
-
-  // System overload - use Zinc native retry
-  if (errorCode === 'zma_temporarily_overloaded') {
-    return {
-      type: 'retryable_system',
-      shouldRetry: true,
-      useZincNativeRetry: true,
-      retryDelay: 3600, // 1 hour
-      maxRetries: 3,
-      alertLevel: 'warning',
-      userFriendlyMessage: 'The ordering system is temporarily at capacity. We\'ll retry your order automatically.',
-      adminMessage: 'ZMA system overloaded - monitoring retry success rates'
-    };
-  }
-
-  // Network/timeout errors - standard retry
-  if (errorCode?.includes('timeout') || errorCode?.includes('server_error') || 
-      errorCode?.includes('unavailable') || errorCode?.includes('network')) {
-    return {
-      type: 'retryable_system',
-      shouldRetry: true,
-      useZincNativeRetry: false,
-      retryDelay: 1800, // 30 minutes
-      maxRetries: 2,
-      alertLevel: 'info',
-      userFriendlyMessage: 'A temporary system issue occurred. We\'ll retry your order automatically.'
-    };
-  }
-
-  // Payment/address errors - user action required
-  if (errorCode?.includes('invalid') || errorCode?.includes('payment') || 
-      errorCode?.includes('address') || errorCode?.includes('product_not_available')) {
-    return {
-      type: 'user_error',
-      shouldRetry: false,
-      requiresUserAction: true,
-      alertLevel: 'info',
-      userFriendlyMessage: 'There was an issue with your order details. Please check and try again.',
-      adminMessage: `User error requiring attention: ${errorCode} - ${errorMessage}`
-    };
-  }
-
-  // Unknown errors - conservative approach
-  return {
-    type: 'unknown',
-    shouldRetry: false,
-    requiresInvestigation: true,
-    alertLevel: 'warning',
-    userFriendlyMessage: 'An unexpected error occurred with your order. Customer service has been notified.',
-    adminMessage: `Unknown error requiring investigation: ${errorCode} - ${errorMessage}`
-  };
-}
+// Error classification now handled by shared utility
 
 // Enhanced admin alerting system
 async function sendAdminAlert(alertType: string, orderData: any, errorDetails: any, supabase: any) {

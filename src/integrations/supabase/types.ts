@@ -4751,12 +4751,20 @@ export type Database = {
         Returns: number
       }
       complete_order_processing: {
-        Args: {
-          error_message?: string
-          final_status?: string
-          order_uuid: string
-          zinc_order_id_param?: string
-        }
+        Args:
+          | {
+              error_message?: string
+              final_status?: string
+              order_uuid: string
+              zinc_order_id_param?: string
+            }
+          | {
+              error_message_param?: string
+              final_status_param?: string
+              order_uuid: string
+              zinc_request_id_param: string
+              zinc_status_param?: string
+            }
         Returns: Json
       }
       delete_user_account: {
@@ -4930,6 +4938,19 @@ export type Database = {
           bypass_payment_check?: boolean
           order_uuid: string
         }
+        Returns: Json
+      }
+      manually_complete_order: {
+        Args: {
+          final_status_param?: string
+          order_uuid: string
+          zinc_request_id_param: string
+          zinc_status_param?: string
+        }
+        Returns: Json
+      }
+      recover_stuck_orders: {
+        Args: { max_age_minutes?: number }
         Returns: Json
       }
       search_users_for_friends: {

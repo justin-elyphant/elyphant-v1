@@ -169,7 +169,18 @@ const OrderDetail = () => {
         <div>
           <h1 className="text-2xl font-bold">Order #{order.id.slice(-6)}</h1>
           <p className="text-muted-foreground">
-            Placed on {new Date(order.date).toLocaleDateString()} • <OrderStatusBadge status={order.status} />
+            Placed on {new Date(order.date).toLocaleDateString()} • 
+            <OrderStatusBadge 
+              status={order.status}
+              orderId={order.id}
+              stripePaymentIntentId={order.stripe_payment_intent_id}
+              stripeSessionId={order.stripe_session_id}
+              createdAt={order.created_at}
+              onStatusUpdate={(newStatus) => {
+                // Refresh order data when status updates
+                window.location.reload();
+              }}
+            />
           </p>
         </div>
         <div className="hidden md:flex gap-2">

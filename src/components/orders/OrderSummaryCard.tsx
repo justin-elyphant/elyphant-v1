@@ -49,7 +49,19 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Status:</dt>
-            <dd><OrderStatusBadge status={order.status} /></dd>
+            <dd>
+              <OrderStatusBadge 
+                status={order.status}
+                orderId={order.id}
+                stripePaymentIntentId={order.stripe_payment_intent_id}
+                stripeSessionId={order.stripe_session_id}
+                createdAt={order.date}
+                onStatusUpdate={() => {
+                  // Refresh the order data when status updates
+                  window.location.reload();
+                }}
+              />
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Customer:</dt>

@@ -23,6 +23,8 @@ interface Order {
   status: string;
   user_id: string;
   order_number?: string;
+  stripe_payment_intent_id?: string;
+  stripe_session_id?: string;
 }
 
 interface OrderTableProps {
@@ -98,7 +100,19 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
                 {new Date(order.created_at).toLocaleDateString()}
               </TableCell>
               <TableCell>#{order.id.slice(-6)}</TableCell>
-              <TableCell><OrderStatusBadge status={order.status} /></TableCell>
+              <TableCell>
+                <OrderStatusBadge 
+                  status={order.status}
+                  orderId={order.id}
+                  stripePaymentIntentId={order.stripe_payment_intent_id}
+                  stripeSessionId={order.stripe_session_id}
+                  createdAt={order.created_at}
+                  onStatusUpdate={() => {
+                    // Refresh the orders list when status updates
+                    window.location.reload();
+                  }}
+                />
+              </TableCell>
               <TableCell>${order.total_amount.toFixed(2)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2 items-center">

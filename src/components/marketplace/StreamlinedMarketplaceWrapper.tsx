@@ -18,7 +18,7 @@ import BrandHeroSection from "./BrandHeroSection";
 import CategoryHeroSection from "./CategoryHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { getCategoryByValue } from "@/constants/categories";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
 import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
@@ -50,6 +50,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { addToCart } = useCart();
   
   // Performance monitoring
@@ -297,6 +298,16 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     });
   }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
 
+  // Check if user came from homepage category navigation
+  const hideHeroBanner = useMemo(() => {
+    // Check router state first (most reliable)
+    if (location.state?.fromHome) {
+      return true;
+    }
+    // Fallback: check URL parameter for diversity flag (indicates homepage origin)
+    return searchParams.get('diversity') === 'true';
+  }, [location.state, searchParams]);
+
   // Use virtualized grid for large product lists - MOVED BEFORE EARLY RETURNS
   const shouldUseVirtualization = paginatedProducts.length > 50;
 
@@ -369,7 +380,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           productCount={totalCount}
         />
       ) : (
-        <MarketplaceHeroBanner category={searchParams.get("category") || undefined} />
+        <MarketplaceHeroBanner 
+          category={searchParams.get("category") || undefined} 
+          hideFromCategoryNavigation={hideHeroBanner}
+        />
       )}
       
       <MarketplaceHeader

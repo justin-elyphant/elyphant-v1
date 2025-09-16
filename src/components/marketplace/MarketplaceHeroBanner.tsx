@@ -2,9 +2,14 @@ import React from "react";
 
 interface MarketplaceHeroBannerProps {
   category?: string;
+  hideFromCategoryNavigation?: boolean;
 }
 
-const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category }) => {
+const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category, hideFromCategoryNavigation = false }) => {
+  // Hide banner if coming from homepage category navigation
+  if (hideFromCategoryNavigation) {
+    return null;
+  }
   // Use flowers hero image for flowers category, default image for others
   const getHeroImage = () => {
     if (category === "flowers") {

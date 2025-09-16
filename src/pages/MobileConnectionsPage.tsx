@@ -39,22 +39,26 @@ export const MobileConnectionsPage = () => {
     handleRelationshipChange: adapterHandleRelationshipChange
   } = useConnectionsAdapter();
   
+  const safeFriends = Array.isArray(friends) ? friends : [];
+  const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
+  const safePending = Array.isArray(pendingConnections) ? pendingConnections : [];
+  
   console.log('📱 [MobileConnectionsPage] Data loaded:', { 
-    friendsCount: friends.length, 
-    suggestionsCount: suggestions.length, 
-    pendingCount: pendingConnections.length,
+    friendsCount: safeFriends.length, 
+    suggestionsCount: safeSuggestions.length, 
+    pendingCount: safePending.length,
     loading 
   });
 
   // Search suggestions based on connection names
   const searchSuggestions = React.useMemo(() => {
     if (!searchTerm) return [];
-    const allConnections = [...friends, ...suggestions, ...pendingConnections];
+    const allConnections = [...safeFriends, ...safeSuggestions, ...safePending];
     return allConnections
-      .filter(conn => conn.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(conn => conn?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
       .map(conn => conn.name)
       .slice(0, 5);
-  }, [searchTerm, friends, suggestions, pendingConnections]);
+  }, [searchTerm, safeFriends, safeSuggestions, safePending]);
 
   const handlePullToRefresh = useCallback(async () => {
     triggerHapticFeedback('light');
@@ -94,15 +98,15 @@ export const MobileConnectionsPage = () => {
     triggerHapticFeedback('light');
   }, []);
 
-  const filteredFriends = friends.filter(friend =>
+  const filteredFriends = safeFriends.filter(friend =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredSuggestions = suggestions.filter(suggestion =>
+  const filteredSuggestions = safeSuggestions.filter(suggestion =>
     suggestion.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredPending = pendingConnections.filter(pending =>
+  const filteredPending = safePending.filter(pending =>
     pending.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

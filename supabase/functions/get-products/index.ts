@@ -150,21 +150,31 @@ const searchCategoryBatch = async (
         // Additional price filtering for budget categories - try multiple price field formats
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
-            // Zinc API returns prices in dollars - extract price value
+            // Zinc API returns prices in cents - extract price value
             let price = 0;
             if (product.price) {
               if (typeof product.price === 'string') {
-                price = parseFloat(product.price.replace(/[$,]/g, ''));
+                // Handle string prices like "$19.99" or "1999"
+                const cleanPrice = product.price.replace(/[$,]/g, '');
+                const numPrice = parseFloat(cleanPrice);
+                // If the number is greater than 100, assume it's in cents
+                price = numPrice > 100 ? numPrice / 100 : numPrice;
               } else if (typeof product.price === 'number') {
-                price = product.price;
+                // If the number is greater than 100, assume it's in cents
+                price = product.price > 100 ? product.price / 100 : product.price;
               }
             } else if (product.price_amount) {
-              price = product.price_amount;
+              price = product.price_amount > 100 ? product.price_amount / 100 : product.price_amount;
+            } else if (product.price_cents) {
+              price = product.price_cents / 100;
             }
             
             const isUnderBudget = price > 0 && price <= priceFilter.max!;
-            console.log(`Product: ${product.title}, Original Price: ${product.price}, Converted Price: ${price}, Max: ${priceFilter.max}, Under Budget: ${isUnderBudget}`);
-            return isUnderBudget;
+            const meetsMinimum = !priceFilter.min || price >= priceFilter.min;
+            const passesFilter = isUnderBudget && meetsMinimum;
+            
+            console.log(`Product: ${product.title}, Original Price: ${product.price}, Converted Price: ${price}, Max: ${priceFilter.max}, Min: ${priceFilter.min || 'none'}, Passes Filter: ${passesFilter}`);
+            return passesFilter;
           });
         }
         
@@ -272,19 +282,27 @@ const searchGiftsForHimCategories = async (api_key: string, page: number = 1, li
 // Gifts Under $50 category search handler
 const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
   const giftsUnder50Categories = [
+    "best gifts under 50", // More generic, higher chance of results
+    "popular products under 50", // Another generic category
     "bluetooth earbuds under 50",
     "phone accessories under 50", 
-    "kitchen utensils under 50",
-    "skincare products under 50",
-    "jewelry under 50",
-    "home decor under 50"
+    "kitchen gadgets under 50", // Changed from "utensils" to "gadgets"
+    "skincare sets under 50", // Changed from "products" to "sets"
+    "jewelry gifts under 50", // Made more specific
+    "home decor items under 50", // Made more specific
+    "tech accessories under 50", // Added new category
+    "books under 50", // Added simple category
+    "coffee accessories under 50", // Added specific category
+    "fitness accessories under 50" // Added another category
   ];
   
   // Combine provided price filter with default $50 max
   const combinedFilter = {
     max: Math.min(priceFilter?.max || 50, 50), // Never exceed $50 for this category
-    min: priceFilter?.min
+    min: priceFilter?.min || 1 // Set minimum to $1 to avoid very cheap items
   };
+  
+  console.log(`Starting gifts under $50 search with filter:`, combinedFilter);
   
   return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, combinedFilter);
 };

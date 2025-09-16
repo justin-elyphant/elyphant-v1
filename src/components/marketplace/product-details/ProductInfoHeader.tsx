@@ -16,7 +16,6 @@ const ProductInfoHeader = ({ product }: ProductInfoHeaderProps) => {
         })}
       </h3>
       <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
-      <span className="text-green-600 text-sm block mt-2">Free shipping</span>
     </div>
   );
 };

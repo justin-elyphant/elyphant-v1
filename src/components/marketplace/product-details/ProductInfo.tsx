@@ -40,7 +40,6 @@ const ProductInfo = ({ product, source }: ProductInfoProps) => {
           })}
         </h3>
         <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
-        <span className="text-green-600 text-sm block mt-2">Free shipping</span>
       </div>
       
       <div className="space-y-4">

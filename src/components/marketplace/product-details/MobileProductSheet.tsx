@@ -225,8 +225,6 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
               </div>
             )}
             
-            <span className="text-green-600 text-sm block">Free shipping</span>
-            
             {/* Loading indicator for details */}
             {isLoadingDetails && (
               <div className="text-sm text-muted-foreground animate-pulse">

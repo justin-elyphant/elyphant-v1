@@ -157,7 +157,7 @@ const OrderDetail = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 md:pb-8">
+    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8">
       <div className="mb-6">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           <ArrowLeft className="h-4 w-4 mr-2" />

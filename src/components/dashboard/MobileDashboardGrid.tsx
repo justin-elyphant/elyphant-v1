@@ -119,7 +119,7 @@ const MobileDashboardGrid = () => {
   };
 
   return (
-    <div className="space-y-6 pb-20 pt-6">
+    <div className="space-y-6 pb-20 lg:pb-6 pt-6">
       {/* Welcome Banner */}
       {user && (
         <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-xl p-4">

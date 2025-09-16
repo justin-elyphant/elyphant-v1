@@ -27,7 +27,7 @@ const DiscoverPage: React.FC = () => {
       keywords="discover gifts, trending categories, featured products, gift inspiration, gift community, gift trends, popular gifts"
       url="/discover"
     >
-      <div className="container mx-auto px-4 py-6 space-y-6 pb-20">
+      <div className="container mx-auto px-4 py-6 space-y-6 pb-20 lg:pb-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Compass className="h-6 w-6 text-primary" />

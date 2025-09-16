@@ -247,7 +247,7 @@ const MarketplaceWrapper = () => {
         <ResultsSummaryBar totalItems={products.length} searchTerm={searchTerm} />
 
         {/* Main Content - full bleed layout */}
-        <FullWidthSection className={isMobile ? "pb-20" : "pb-12"} padding="none">
+        <FullWidthSection className={isMobile ? "pb-20 lg:pb-12" : "pb-12"} padding="none">
           <div ref={resultsRef}>
             <MarketplaceContent
               searchTerm={searchTerm}

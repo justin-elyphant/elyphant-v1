@@ -70,11 +70,11 @@ const MobileDashboardGrid = () => {
     fetchProcessingOrders();
   }, [user]);
 
-  // Quick stats for horizontal scrolling bar
+  // Quick stats for horizontal scrolling bar  
   const stats = [
-    { label: "Friends", value: connectionStats.accepted, color: "text-primary" },
-    { label: "Wishlists", value: wishlistCount, color: "text-primary" },
-    { label: "Orders", value: processingOrdersCount, color: "text-primary" },
+    { label: "Friends", value: connectionStats.accepted, color: "text-primary", href: "/connections" },
+    { label: "Wishlists", value: wishlistCount, color: "text-primary", href: "/wishlists" },
+    { label: "Orders", value: processingOrdersCount, color: "text-primary", href: "/orders" },
   ];
 
   // Categorized Icon Grid Actions
@@ -142,16 +142,18 @@ const MobileDashboardGrid = () => {
       {/* Horizontal Stats Bar */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {stats.map((stat, index) => (
-          <Card key={index} className="flex-shrink-0 min-w-[80px] text-center">
-            <CardContent className="p-3">
-              <div className={cn("text-xl font-bold", stat.color)}>
-                {stat.value}
-              </div>
-              <div className="text-xs text-muted-foreground whitespace-nowrap">
-                {stat.label}
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={index} to={stat.href} className="flex-shrink-0 min-w-[80px]">
+            <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-3">
+                <div className={cn("text-xl font-bold", stat.color)}>
+                  {stat.value}
+                </div>
+                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  {stat.label}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeableCard } from "@/components/mobile/SwipeableCard";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { MobileActionBar } from "@/components/mobile/MobileActionBar";
+import { supabase } from "@/integrations/supabase/client";
 import MobileDashboardGrid from "./MobileDashboardGrid";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +37,30 @@ const DashboardGrid = () => {
   const { wishlists } = useUnifiedWishlistSystem();
   const isMobile = useIsMobile();
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [processingOrdersCount, setProcessingOrdersCount] = useState(0);
   
   const wishlistCount = wishlists?.length || 0;
-  const totalWishlistItems = wishlists?.reduce((total, wishlist) => 
-    total + (wishlist.items?.length || 0), 0) || 0;
+
+  // Fetch processing orders count
+  useEffect(() => {
+    const fetchProcessingOrders = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'processing');
+        
+        setProcessingOrdersCount(orders?.length || 0);
+      } catch (error) {
+        console.error('Error fetching processing orders:', error);
+      }
+    };
+
+    fetchProcessingOrders();
+  }, [user]);
 
   const handleCardSwipe = (direction: 'left' | 'right', cardType: string) => {
     console.log(`Swiped ${direction} on ${cardType} card`);
@@ -98,57 +119,50 @@ const DashboardGrid = () => {
         "grid gap-3 sm:gap-4 w-full",
         isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"
       )}>
-        <Card className={cn(
-          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
-          isMobile && "gpu-accelerated"
-        )}>
-          <CardContent className={cn(
-            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
-            isMobile && "px-2"
+        <Link to="/connections">
+          <Card className={cn(
+            "text-center hover:shadow-md transition-shadow touch-manipulation min-w-0 max-w-full mobile-card cursor-pointer",
+            isMobile && "gpu-accelerated"
           )}>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{connectionStats.accepted}</div>
-            <div className="text-xs text-muted-foreground line-clamp-1">Friends</div>
-          </CardContent>
-        </Card>
+            <CardContent className={cn(
+              "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+              isMobile && "px-2"
+            )}>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{connectionStats.accepted}</div>
+              <div className="text-xs text-muted-foreground line-clamp-1">Friends</div>
+            </CardContent>
+          </Card>
+        </Link>
         
-        <Card className={cn(
-          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
-          isMobile && "gpu-accelerated"
-        )}>
-          <CardContent className={cn(
-            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
-            isMobile && "px-2"
+        <Link to="/wishlists">
+          <Card className={cn(
+            "text-center hover:shadow-md transition-shadow touch-manipulation min-w-0 max-w-full mobile-card cursor-pointer",
+            isMobile && "gpu-accelerated"
           )}>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{wishlistCount}</div>
-            <div className="text-xs text-muted-foreground line-clamp-1">Wishlists</div>
-          </CardContent>
-        </Card>
+            <CardContent className={cn(
+              "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+              isMobile && "px-2"
+            )}>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{wishlistCount}</div>
+              <div className="text-xs text-muted-foreground line-clamp-1">Wishlists</div>
+            </CardContent>
+          </Card>
+        </Link>
         
-        <Card className={cn(
-          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
-          isMobile && "gpu-accelerated"
-        )}>
-          <CardContent className={cn(
-            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
-            isMobile && "px-2"
+        <Link to="/orders">
+          <Card className={cn(
+            "text-center hover:shadow-md transition-shadow touch-manipulation min-w-0 max-w-full mobile-card cursor-pointer",
+            isMobile && "gpu-accelerated"
           )}>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{totalWishlistItems}</div>
-            <div className="text-xs text-muted-foreground line-clamp-1">Items</div>
-          </CardContent>
-        </Card>
-        
-        <Card className={cn(
-          "text-center hover:shadow-sm transition-shadow touch-manipulation min-w-0 max-w-full mobile-card",
-          isMobile && "gpu-accelerated"
-        )}>
-          <CardContent className={cn(
-            "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
-            isMobile && "px-2"
-          )}>
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-600 line-clamp-1">{connectionStats.pending}</div>
-            <div className="text-xs text-muted-foreground line-clamp-1">Pending</div>
-          </CardContent>
-        </Card>
+            <CardContent className={cn(
+              "pt-3 pb-3 px-3 sm:pt-4 sm:pb-4 sm:px-6",
+              isMobile && "px-2"
+            )}>
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{processingOrdersCount}</div>
+              <div className="text-xs text-muted-foreground line-clamp-1">Orders</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Features - Account-Centric Layout */}

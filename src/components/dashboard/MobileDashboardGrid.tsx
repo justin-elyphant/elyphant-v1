@@ -15,6 +15,7 @@ import {
   CreditCard,
   TrendingUp,
   Calendar,
+  User,
   HelpCircle,
   Plus,
   Zap
@@ -67,12 +68,12 @@ const MobileDashboardGrid = () => {
     { id: "friends", label: "Friends", icon: <Users className="h-6 w-6" />, href: "/connections", badge: connectionStats.pending },
     { id: "wishlists", label: "Lists", icon: <Heart className="h-6 w-6" />, href: "/wishlists" },
     { id: "settings", label: "Settings", icon: <Settings className="h-6 w-6" />, onClick: () => setShowQuickActions(true) },
-    { id: "payments", label: "Payments", icon: <CreditCard className="h-6 w-6" />, href: "/settings?tab=payment" },
+    { id: "payments", label: "Payments", icon: <CreditCard className="h-6 w-6" />, href: "/payments" },
     
     // Row 3 - Analytics & Tools
-    { id: "analytics", label: "Analytics", icon: <TrendingUp className="h-6 w-6" />, href: "/analytics" },
-    { id: "calendar", label: "Calendar", icon: <Calendar className="h-6 w-6" />, href: "/calendar" },
-    { id: "help", label: "Help", icon: <HelpCircle className="h-6 w-6" />, href: "/help" },
+    { id: "orders", label: "Orders", icon: <TrendingUp className="h-6 w-6" />, href: "/orders" },
+    { id: "recently", label: "Recent", icon: <Calendar className="h-6 w-6" />, href: "/recently-viewed" },
+    { id: "profile", label: "Profile", icon: <User className="h-6 w-6" />, href: "/profile" },
     { id: "search", label: "Search", icon: <Search className="h-6 w-6" />, href: "/search" },
   ];
 
@@ -175,9 +176,9 @@ const MobileDashboardGrid = () => {
       {/* Recent Activity Section */}
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-foreground">Recent Activity</h3>
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide ios-smooth-scroll">
           {recentItems.map((item, index) => (
-            <Card key={index} className="flex-shrink-0 w-44">
+            <Card key={index} className="flex-shrink-0 w-44 mobile-card-hover">
               <CardContent className="p-3">
                 <div className="text-2xl mb-2">{item.image}</div>
                 <div className="space-y-1">
@@ -189,14 +190,16 @@ const MobileDashboardGrid = () => {
           ))}
           
           {/* Add more card */}
-          <Card className="flex-shrink-0 w-44 border-dashed">
-            <CardContent className="p-3 flex items-center justify-center h-full">
-              <div className="text-center">
-                <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">View All</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link to="/recently-viewed">
+            <Card className="flex-shrink-0 w-44 border-dashed mobile-card-hover">
+              <CardContent className="p-3 flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">View All</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
 

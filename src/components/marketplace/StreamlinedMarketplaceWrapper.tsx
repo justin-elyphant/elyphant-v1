@@ -78,11 +78,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     rootMargin: '100px'
   });
 
-  // Memoized show search info calculation
-  const showSearchInfo = useMemo(() => 
-    !!(urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType),
-    [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]
-  );
+  // Memoized show search info calculation (include category param)
+  const showSearchInfo = useMemo(() => {
+    const categoryParam = searchParams.get('category');
+    return !!(categoryParam || urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType);
+  }, [searchParams, urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]);
 
   // Server-side load more function - MOVED BEFORE useOptimizedProducts
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {

@@ -1,0 +1,48 @@
+/* Mobile Scrolling Optimizations */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari and Chrome */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.touch-target-44 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.mobile-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.ios-smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Grid touch improvements */
+.grid-touch-optimize {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Floating Action Button animations */
+.fab-animate {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-animate:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Card hover animations for mobile */
+.mobile-card-hover {
+  transition: transform 0.2s ease-out;
+}
+
+.mobile-card-hover:active {
+  transform: scale(0.98);
+}

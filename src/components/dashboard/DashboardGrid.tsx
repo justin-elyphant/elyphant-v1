@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SwipeableCard } from "@/components/mobile/SwipeableCard";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { MobileActionBar } from "@/components/mobile/MobileActionBar";
+import MobileDashboardGrid from "./MobileDashboardGrid";
 import { cn } from "@/lib/utils";
 
 const DashboardGrid = () => {
@@ -60,10 +61,14 @@ const DashboardGrid = () => {
     },
   ];
 
+  // Use new mobile grid on mobile devices
+  if (isMobile) {
+    return <MobileDashboardGrid />;
+  }
+
   return (
     <div className={cn(
-      "space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden",
-      isMobile && "mobile-container touch-manipulation"
+      "space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden"
     )}>
       {/* Onboarding Hint for New Navigation */}
       {user && (

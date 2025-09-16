@@ -391,6 +391,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             productCount={totalCount}
           />
         )
+      ) : currentQuickPickCategory ? (
+        <CategoryHeroSection 
+          categoryType={currentQuickPickCategory === 'luxury' ? 'luxuryCategories' : currentQuickPickCategory}
+          productCount={totalCount}
+        />
       ) : giftsForHer ? (
         <CategoryHeroSection 
           categoryType="giftsForHer"

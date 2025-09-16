@@ -68,7 +68,32 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           setProfile(profileData);
           setLastFetchTime(Date.now());
           
-          localStorage.removeItem("newSignUp");
+          // Preserve newSignUp flag if profile setup is pending
+          try {
+            const pcsRaw = localStorage.getItem("profileCompletionState");
+            let isProfileSetupPending = false;
+            if (pcsRaw) {
+              try {
+                const parsed = JSON.parse(pcsRaw as string);
+                if (parsed && typeof parsed === "object") {
+                  // If using structured state, keep flag until completed
+                  isProfileSetupPending = parsed.step && parsed.step !== "completed";
+                } else {
+                  // If using simple string state, treat 'pending' as in-progress
+                  isProfileSetupPending = pcsRaw === "pending";
+                }
+              } catch {
+                // Not JSON, check simple value
+                isProfileSetupPending = pcsRaw === "pending";
+              }
+            }
+            if (!isProfileSetupPending) {
+              localStorage.removeItem("newSignUp");
+            }
+          } catch (e) {
+            console.warn("ProfileContext: Skipping newSignUp cleanup due to error", e);
+          }
+          // Always clear legacy loading flag
           localStorage.removeItem("profileSetupLoading");
         } else if (isActive && profileData === null) {
           console.warn("ProfileContext: No profile data returned");

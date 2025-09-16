@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductCarousel from "./ProductCarousel";
 import ProductInfo from "./ProductInfo";
-import ProductActions from "./ProductActions";
+import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
 import { normalizeProduct, Product } from "@/contexts/ProductContext";
@@ -32,6 +32,20 @@ const ProductDetailsDialog = ({
 }: ProductDetailsDialogProps) => {
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [quantity, setQuantity] = useState(1);
+  const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+
+  const handleIncrease = () => {
+    if (quantity < 10) {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  const handleDecrease = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
   
   useEffect(() => {
     if (product) {
@@ -129,21 +143,24 @@ const ProductDetailsDialog = ({
             productDetail ?
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                <div className="relative overflow-hidden rounded-md">
-                  <ProductCarousel 
-                    images={getProductImages(productDetail)} 
-                    productName={getProductName(productDetail)} 
-                  />
-                </div>
-                
-                 <div className="flex flex-col space-y-4">
-                   <ProductInfo product={productDetail} source={source} />
-                   <ProductActions 
-                     product={productDetail} 
-                     userData={userData}
-                     onWishlistChange={onWishlistChange}
+                 <div className="relative overflow-hidden rounded-md">
+                   <ProductCarousel 
+                     images={getProductImages(productDetail)} 
+                     productName={getProductName(productDetail)} 
                    />
                  </div>
+                 
+                  <div className="flex flex-col space-y-4">
+                    <ProductInfo product={productDetail} source={source} />
+                    <ProductDetailsActionsSection
+                      product={productDetail}
+                      quantity={quantity}
+                      onIncrease={handleIncrease}
+                      onDecrease={handleDecrease}
+                      isHeartAnimating={isHeartAnimating}
+                      reloadWishlists={onWishlistChange}
+                    />
+                  </div>
               </div>
             </>
             :

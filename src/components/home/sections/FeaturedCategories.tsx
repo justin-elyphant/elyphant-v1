@@ -12,14 +12,18 @@ const FeaturedCategories: React.FC = () => {
   const categories = getFeaturedCategories();
 
   const handleCategoryClick = (category: string, searchTerm: string) => {
+    console.log(`[FeaturedCategories] Navigating to category: ${category}, searchTerm: ${searchTerm}`);
+    
     // Enhanced category navigation with brand diversity flag
     if (searchTerm) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category)}&diversity=true`, 
-        { state: { fromHome: true, enableBrandDiversity: true } });
+      const url = `/marketplace?search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(category)}&diversity=true`;
+      console.log(`[FeaturedCategories] Navigating with search term to: ${url}`);
+      navigate(url, { state: { fromHome: true, enableBrandDiversity: true } });
     } else {
       // Fallback to category-based navigation
-      navigate(`/marketplace?category=${encodeURIComponent(category)}&diversity=true`, 
-        { state: { fromHome: true, enableBrandDiversity: true } });
+      const url = `/marketplace?category=${encodeURIComponent(category)}&diversity=true`;
+      console.log(`[FeaturedCategories] Navigating to category only: ${url}`);
+      navigate(url, { state: { fromHome: true, enableBrandDiversity: true } });
     }
   };
 

@@ -53,6 +53,7 @@ const GiftCategoriesCarousel: React.FC = () => {
   const isMobile = useIsMobile();
 
   const handleCategoryClick = (category: typeof giftCategories[0]) => {
+    console.log(`[GiftCategoriesCarousel] Navigating to: ${category.title} -> ${category.navigationUrl}`);
     navigate(category.navigationUrl, { state: { fromHome: true } });
   };
 

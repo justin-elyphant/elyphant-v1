@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
+import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
+import { useToast } from "@/hooks/use-toast";
 
 interface PersonType {
   id: string;
@@ -15,6 +17,7 @@ interface PersonType {
 
 const PersonTypeCarousel = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   
   const personTypes: PersonType[] = [
@@ -62,10 +65,27 @@ const PersonTypeCarousel = () => {
     }
   ];
   
-  const handlePersonTypeClick = (personType: PersonType) => {
-    navigate(`/marketplace?search=${encodeURIComponent(personType.searchTerm)}`, { 
-      state: { fromPersonType: true }
-    });
+  const handlePersonTypeClick = async (personType: PersonType) => {
+    try {
+      // Check if this lifestyle category is supported by the enhanced system
+      if (CategorySearchService.isSupportedCategory(personType.id)) {
+        console.log(`[CategoriesGrid] Using enhanced search for lifestyle category: ${personType.id}`);
+        
+        // Navigate with category parameter to leverage enhanced caching and search
+        navigate(`/marketplace?category=${personType.id}`, { 
+          state: { fromLifestyle: true, lifestyleType: personType.id }
+        });
+      } else {
+        // Fallback to original search term approach
+        console.log(`[CategoriesGrid] Using fallback search for: ${personType.id}`);
+        navigate(`/marketplace?search=${encodeURIComponent(personType.searchTerm)}`, { 
+          state: { fromPersonType: true }
+        });
+      }
+    } catch (error) {
+      console.error(`[CategoriesGrid] Navigation error for ${personType.id}:`, error);
+      toast.error("Unable to navigate to category. Please try again.");
+    }
   };
   
   return (

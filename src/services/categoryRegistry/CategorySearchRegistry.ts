@@ -34,6 +34,12 @@ export type CategoryKey =
   | 'gifts-for-him'
   | 'gifts-under-50'
   | 'brand-categories'
+  | 'on-the-go'
+  | 'movie-buff'
+  | 'work-from-home'
+  | 'the-traveler'
+  | 'the-home-chef'
+  | 'teens'
   | 'default';
 
 /**
@@ -88,6 +94,48 @@ export const CATEGORY_SEARCH_REGISTRY: Record<CategoryKey, CategorySearchStrateg
     edgeFunction: 'get-products',
     fallbackQuery: '', // Dynamic based on brand name
     description: 'Multi-category brand searches with brand filtering',
+    isActive: true
+  },
+  'on-the-go': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'portable electronics travel accessories convenience gadgets on-the-go essentials commuter gear',
+    description: 'Products for busy, active lifestyles',
+    isActive: true
+  },
+  'movie-buff': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'streaming devices home theater popcorn makers entertainment accessories movie collectibles comfort items',
+    description: 'Products for cinema lovers and entertainment enthusiasts',
+    isActive: true
+  },
+  'work-from-home': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'office supplies ergonomic furniture productivity tools desk accessories lighting organization',
+    description: 'Essentials for productive remote work',
+    isActive: true
+  },
+  'the-traveler': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'luggage travel accessories portable chargers travel comfort international adapters',
+    description: 'Adventure-ready gear for wanderers',
+    isActive: true
+  },
+  'the-home-chef': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'kitchen appliances cooking gadgets specialty ingredients cookbooks utensils food storage',
+    description: 'Culinary tools for kitchen enthusiasts',
+    isActive: true
+  },
+  'teens': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'trendy accessories tech gadgets gaming items room decor study supplies fashion',
+    description: 'Trendy picks for young adults',
     isActive: true
   },
   'default': {

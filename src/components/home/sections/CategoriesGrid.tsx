@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
+import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -90,55 +91,51 @@ const PersonTypeCarousel = () => {
   
   return (
     <FullBleedSection 
-      background="bg-muted/30" 
-      height="large"
-      className="intersection-target"
-      contentPadding={false}
+      background="bg-gradient-to-br from-purple-50 to-pink-50" 
+      height="auto"
+      className="py-16"
     >
-      {/* Header with improved background for better visibility */}
-      <div className="absolute top-8 md:top-12 left-0 right-0 z-20 text-center px-4 md:px-6">
-        <div className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-6 md:p-8 mx-auto max-w-4xl border border-border/20">
-          <h2 className="text-heading-2 md:text-heading-1 text-foreground mb-space-tight">
+      <ResponsiveContainer>
+        {/* Clean Page Title */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Gifts for Every Lifestyle
           </h2>
-          <p className="text-body-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Discover thoughtfully curated gifts tailored to different lifestyles and personalities
           </p>
         </div>
-      </div>
 
-      {/* Grid layout with container padding */}
-      <div className="container mx-auto px-4 md:px-6 pt-40 md:pt-48 lg:pt-52 pb-8 md:pb-12">
-        {/* Grid layout for mobile-first approach */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+        {/* Grid layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {personTypes.map((personType) => (
             <div
               key={personType.id}
-              className="group relative overflow-hidden bg-background cursor-pointer h-80 md:h-96 lg:h-[400px] touch-target-48 touch-manipulation tap-feedback rounded-2xl"
+              className="group relative overflow-hidden bg-white cursor-pointer h-80 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
               onClick={() => handlePersonTypeClick(personType)}
             >
-              {/* Image Container - Full height */}
+              {/* Image Container */}
               <div className="relative h-full overflow-hidden">
                 <img
                   src={personType.image}
                   alt={personType.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 gpu-accelerated"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 
-                {/* Overlay Content - positioned at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 lg:p-8 text-white">
-                  <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3">
+                {/* Overlay Content */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">
                     {personType.title}
                   </h3>
-                  <p className="text-sm md:text-base text-white/90 mb-3 md:mb-4 leading-relaxed">
+                  <p className="text-sm text-white/90 mb-4 leading-relaxed">
                     {personType.description}
                   </p>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 touch-target-44 no-select text-sm md:text-base px-4 py-2"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200"
                   >
                     Shop Now
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
@@ -148,7 +145,7 @@ const PersonTypeCarousel = () => {
             </div>
           ))}
         </div>
-      </div>
+      </ResponsiveContainer>
     </FullBleedSection>
   );
 };

@@ -4,7 +4,8 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ProductCarousel from "./ProductCarousel";
-import ProductInfo from "./ProductInfo";
+import ProductInfoHeader from "./ProductInfoHeader";
+import ProductInfoDetails from "./ProductInfoDetails";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
@@ -150,17 +151,18 @@ const ProductDetailsDialog = ({
                    />
                  </div>
                  
-                  <div className="flex flex-col space-y-4">
-                    <ProductInfo product={productDetail} source={source} />
-                    <ProductDetailsActionsSection
-                      product={productDetail}
-                      quantity={quantity}
-                      onIncrease={handleIncrease}
-                      onDecrease={handleDecrease}
-                      isHeartAnimating={isHeartAnimating}
-                      reloadWishlists={onWishlistChange}
-                    />
-                  </div>
+                   <div className="flex flex-col space-y-4">
+                     <ProductInfoHeader product={productDetail} />
+                     <ProductDetailsActionsSection
+                       product={productDetail}
+                       quantity={quantity}
+                       onIncrease={handleIncrease}
+                       onDecrease={handleDecrease}
+                       isHeartAnimating={isHeartAnimating}
+                       reloadWishlists={onWishlistChange}
+                     />
+                     <ProductInfoDetails product={productDetail} source={source} />
+                   </div>
               </div>
             </>
             :

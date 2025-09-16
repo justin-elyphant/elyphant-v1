@@ -383,38 +383,40 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       }}
       className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''}`}
     >
-      {/* Conditional Hero Section */}
-      {brandCategories ? (
-        <BrandHeroSection 
-          brandName={brandCategories}
-          productCount={totalCount}
-        />
-      ) : giftsForHer ? (
-        <CategoryHeroSection 
-          categoryType="giftsForHer"
-          productCount={totalCount}
-        />
-      ) : giftsForHim ? (
-        <CategoryHeroSection 
-          categoryType="giftsForHim"
-          productCount={totalCount}
-        />
-      ) : giftsUnder50 ? (
-        <CategoryHeroSection 
-          categoryType="giftsUnder50"
-          productCount={totalCount}
-        />
-      ) : luxuryCategories ? (
-        <CategoryHeroSection 
-          categoryType="luxuryCategories"
-          productCount={totalCount}
-        />
-      ) : (
-        <MarketplaceHeroBanner 
-          category={searchParams.get("category") || undefined} 
-          hideFromCategoryNavigation={hideHeroBanner}
-          quickPickCategory={currentQuickPickCategory}
-        />
+      {/* Conditional Hero Section - Check for homepage navigation first */}
+      {hideHeroBanner ? null : (
+        brandCategories ? (
+          <BrandHeroSection 
+            brandName={brandCategories}
+            productCount={totalCount}
+          />
+        ) : giftsForHer ? (
+          <CategoryHeroSection 
+            categoryType="giftsForHer"
+            productCount={totalCount}
+          />
+        ) : giftsForHim ? (
+          <CategoryHeroSection 
+            categoryType="giftsForHim"
+            productCount={totalCount}
+          />
+        ) : giftsUnder50 ? (
+          <CategoryHeroSection 
+            categoryType="giftsUnder50"
+            productCount={totalCount}
+          />
+        ) : luxuryCategories ? (
+          <CategoryHeroSection 
+            categoryType="luxuryCategories"
+            productCount={totalCount}
+          />
+        ) : (
+          <MarketplaceHeroBanner 
+            category={searchParams.get("category") || undefined} 
+            hideFromCategoryNavigation={false}
+            quickPickCategory={currentQuickPickCategory}
+          />
+        )
       )}
       
       <MarketplaceHeader

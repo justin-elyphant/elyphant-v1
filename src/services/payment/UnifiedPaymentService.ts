@@ -135,6 +135,10 @@ class UnifiedPaymentService {
       // Get current auth state
       const { data: { user } } = await supabase.auth.getUser();
       this.currentUser = user;
+      
+      // SECURITY: Clean up any potentially leaked cart data on initialization
+      this.performSecurityCleanup();
+      
       this.updateCartKey();
 
       // Load cart from localStorage
@@ -145,15 +149,22 @@ class UnifiedPaymentService {
         const previousUser = this.currentUser;
         this.currentUser = session?.user || null;
 
+        console.log(`[CART SECURITY] Auth state change: ${event}, Previous user: ${previousUser?.id}, Current user: ${this.currentUser?.id}`);
+
         if (event === 'SIGNED_IN' && previousUser === null) {
           // User just logged in - transfer guest cart
+          console.log('[CART SECURITY] User signed in - transferring guest cart');
           this.transferGuestCart();
         } else if (event === 'SIGNED_OUT') {
-          // User logged out - switch to guest cart
+          // User logged out - CLEAR CART IMMEDIATELY for security
+          console.log('[CART SECURITY] User signed out - clearing cart for security');
+          this.forceCartClearForSecurity();
           this.updateCartKey();
-          this.loadCartFromStorage();
-        } else if (this.currentUser?.id !== previousUser?.id) {
-          // User changed - update cart key and load
+          this.loadCartFromStorage(); // Load guest cart if exists
+        } else if (this.currentUser?.id !== previousUser?.id && this.currentUser && previousUser) {
+          // Different user logged in - CRITICAL SECURITY: Clear old cart data immediately
+          console.log(`[CART SECURITY] User switched from ${previousUser?.id} to ${this.currentUser?.id} - clearing previous cart`);
+          this.forceCartClearForSecurity();
           this.updateCartKey();
           this.loadCartFromStorage();
         }
@@ -306,7 +317,7 @@ class UnifiedPaymentService {
           this.cartItems = mergedCart;
           this.updateCartKey();
           this.saveCartToStorage();
-          localStorage.removeItem(guestCartKey);
+          this.clearGuestCartData();
 
           toast.success('Cart items transferred successfully!');
           this.notifyCartChange();
@@ -314,6 +325,71 @@ class UnifiedPaymentService {
       } catch (error) {
         console.error('Error transferring guest cart:', error);
       }
+    }
+  }
+
+  /**
+   * SECURITY: Perform cleanup of potentially leaked cart data across localStorage
+   * This prevents cart data from one user being seen by another user
+   */
+  private performSecurityCleanup(): void {
+    try {
+      // Find all localStorage keys that could contain cart data
+      const cartKeysToCheck = [];
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cart_') || key === 'guest_cart')) {
+          cartKeysToCheck.push(key);
+        }
+      }
+
+      // If user is logged in, only keep their cart data
+      if (this.currentUser) {
+        const validUserCartKey = `cart_${this.currentUser.id}`;
+        cartKeysToCheck.forEach(key => {
+          if (key !== validUserCartKey && key !== `${validUserCartKey}_version`) {
+            localStorage.removeItem(key);
+            console.log(`[CART SECURITY] Removed stale cart data: ${key}`);
+          }
+        });
+      } else {
+        // If no user is logged in, clear all user cart data but keep guest cart
+        cartKeysToCheck.forEach(key => {
+          if (key.startsWith('cart_') && key !== 'guest_cart') {
+            localStorage.removeItem(key);
+            console.log(`[CART SECURITY] Removed user cart data while logged out: ${key}`);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error during security cleanup:', error);
+    }
+  }
+
+  /**
+   * SECURITY: Clear all guest cart data from localStorage
+   */
+  private clearGuestCartData(): void {
+    try {
+      localStorage.removeItem('guest_cart');
+      localStorage.removeItem('guest_cart_version');
+      console.log('[CART SECURITY] Cleared guest cart data');
+    } catch (error) {
+      console.error('Error clearing guest cart data:', error);
+    }
+  }
+
+  /**
+   * SECURITY: Clear cart data for a specific user (prevents data leakage)
+   */
+  private clearUserCartData(userId: string): void {
+    try {
+      localStorage.removeItem(`cart_${userId}`);
+      localStorage.removeItem(`cart_${userId}_version`);
+      console.log(`[CART SECURITY] Cleared cart data for user ${userId}`);
+    } catch (error) {
+      console.error(`Error clearing cart data for user ${userId}:`, error);
     }
   }
 
@@ -414,6 +490,24 @@ class UnifiedPaymentService {
     localStorage.removeItem(this.cartKey);
     localStorage.removeItem(`${this.cartKey}_version`); // Also clear version
     toast.success('Cart cleared');
+    this.notifyCartChange();
+  }
+
+  /**
+   * SECURITY: Force clear cart for authentication events (no toast notification)
+   */
+  private forceCartClearForSecurity(): void {
+    console.log(`[CART SECURITY] Force clearing cart - current key: ${this.cartKey}`);
+    this.cartItems = [];
+    
+    // Clear current cart from localStorage
+    if (this.cartKey) {
+      localStorage.removeItem(this.cartKey);
+      localStorage.removeItem(`${this.cartKey}_version`);
+    }
+    
+    // Perform broader security cleanup
+    this.performSecurityCleanup();
     this.notifyCartChange();
   }
 

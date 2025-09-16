@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight, X } from "lucide-react";
+import { SmartInput } from "@/components/ui/smart-input";
+import { Check, ArrowRight, Plus } from "lucide-react";
 import { useProfileUpdate } from "@/contexts/profile/useProfileUpdate";
 import { toast } from "sonner";
+import { COMMON_INTERESTS } from "@/constants/commonInterests";
 
 interface QuickInterestsModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   onComplete
 }) => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [newInterest, setNewInterest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateProfile } = useProfileUpdate();
 
@@ -38,6 +41,27 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
         ? prev.filter(i => i !== interest)
         : [...prev, interest]
     );
+  };
+
+  const isDuplicateInterest = (interest: string) => {
+    return selectedInterests.some(existing => 
+      existing.toLowerCase().replace(/\s+/g, '') === interest.toLowerCase().replace(/\s+/g, '')
+    );
+  };
+
+  const addCustomInterest = () => {
+    const trimmedInterest = newInterest.trim();
+    if (trimmedInterest && !isDuplicateInterest(trimmedInterest)) {
+      setSelectedInterests(prev => [...prev, trimmedInterest]);
+      setNewInterest("");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomInterest();
+    }
   };
 
   const handleSkip = () => {
@@ -110,6 +134,32 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
                 </Button>
               );
             })}
+          </div>
+
+          {/* Custom Interest Input */}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SmartInput
+                  value={newInterest}
+                  onChange={setNewInterest}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Add a new interest (brands, hobbies, etc.)"
+                  suggestions={COMMON_INTERESTS}
+                  showSpellingSuggestions={true}
+                  className="w-full"
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={addCustomInterest}
+                disabled={!newInterest.trim() || isDuplicateInterest(newInterest.trim())}
+                size="sm"
+                className="px-3"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Selected interests count */}

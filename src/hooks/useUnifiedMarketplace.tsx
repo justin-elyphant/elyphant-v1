@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Product } from "@/types/product";
 import { unifiedMarketplaceService, SearchOptions, MarketplaceState } from "@/services/marketplace/UnifiedMarketplaceService";
 import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
+import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 
 interface UseUnifiedMarketplaceOptions {
   autoLoadOnMount?: boolean;
@@ -140,6 +141,24 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     } else if (brandCategories) {
       console.log(`[useUnifiedMarketplace] Detected brand categories parameter: "${brandCategories}"`);
       executeSearch(brandCategories, { brandCategories: true, maxResults: 20, silent: true });
+    } else if (category && CategorySearchService.isSupportedCategory(category)) {
+      console.log(`[useUnifiedMarketplace] Detected supported category parameter: "${category}"`);
+      updateState({ isLoading: true, error: null });
+      (async () => {
+        try {
+          const results = await CategorySearchService.searchCategory(category, '', { limit: 20, silent: true });
+          updateState({
+            products: results || [],
+            isLoading: false,
+            error: null,
+            totalCount: results?.length || 0,
+            hasMore: false
+          });
+        } catch (err) {
+          console.error('[useUnifiedMarketplace] Category registry search error:', err);
+          updateState({ isLoading: false, error: 'Search failed', products: [] });
+        }
+      })();
     } else if (urlSearchTerm) {
       console.log(`[useUnifiedMarketplace] Detected URL search term: "${urlSearchTerm}"`);
       
@@ -265,7 +284,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
   // Handle URL parameter changes - use specific dependencies to avoid infinite loops
   useEffect(() => {
     handleUrlSearch();
-  }, [urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Removed handleUrlSearch from dependencies
+  }, [urlSearchTerm, category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Trigger on category changes too
 
   // Cleanup on unmount
   useEffect(() => {

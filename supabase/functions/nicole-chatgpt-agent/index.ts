@@ -746,19 +746,70 @@ async function handleAnalyzeRecipientPreferences(args: any): Promise<string> {
 
 async function handleSearchProducts(args: any): Promise<string> {
   try {
-    // Call existing product search service
-    const response = await supabase.functions.invoke('search-products', {
-      body: {
-        query: args.query,
-        budget: args.budget,
-        interests: args.interests
-      }
-    });
+    // Enhanced: Try category-based search first if we can map the query to a category
+    let response;
+    const categoryMapping = mapQueryToCategory(args.query, args.interests);
+    
+    if (categoryMapping) {
+      console.log(`[Nicole GPT] Using enhanced category search: ${categoryMapping}`);
+      response = await supabase.functions.invoke('get-products', {
+        body: {
+          category: categoryMapping,
+          query: args.query,
+          budget: args.budget,
+          filters: args.budget ? { 
+            min_price: args.budget.min, 
+            max_price: args.budget.max 
+          } : undefined
+        }
+      });
+    } else {
+      // Fallback to existing search-products function
+      console.log('[Nicole GPT] Using fallback search-products function');
+      response = await supabase.functions.invoke('search-products', {
+        body: {
+          query: args.query,
+          budget: args.budget,
+          interests: args.interests
+        }
+      });
+    }
     
     return JSON.stringify(response.data || { products: [] });
   } catch (error) {
     return JSON.stringify({ error: error.message });
   }
+}
+
+// Map Nicole's queries and user interests to enhanced categories
+function mapQueryToCategory(query: string, interests: string[] = []): string | null {
+  const queryLower = query.toLowerCase();
+  const allTerms = [queryLower, ...(interests || []).map(i => i.toLowerCase())];
+  
+  // Map to enhanced categories
+  if (allTerms.some(term => term.includes('valentine') || term.includes('romantic'))) return 'valentines-day';
+  if (allTerms.some(term => term.includes('birthday'))) return 'birthdays';
+  if (allTerms.some(term => term.includes('graduation') || term.includes('achievement'))) return 'graduation';
+  if (allTerms.some(term => term.includes('baby') || term.includes('newborn'))) return 'baby-shower';
+  if (allTerms.some(term => term.includes('anniversary'))) return 'anniversaries';
+  if (allTerms.some(term => term.includes('mother') || term.includes('mom'))) return 'mothers-day';
+  if (allTerms.some(term => term.includes('father') || term.includes('dad'))) return 'fathers-day';
+  if (allTerms.some(term => term.includes('christmas') || term.includes('holiday'))) return 'christmas';
+  
+  if (allTerms.some(term => term.includes('electronic') || term.includes('tech'))) return 'electronics';
+  if (allTerms.some(term => term.includes('luxury') || term.includes('premium'))) return 'luxury';
+  if (allTerms.some(term => term.includes('cooking') || term.includes('kitchen'))) return 'the-home-chef';
+  if (allTerms.some(term => term.includes('travel'))) return 'the-traveler';
+  if (allTerms.some(term => term.includes('movie') || term.includes('entertainment'))) return 'movie-buff';
+  if (allTerms.some(term => term.includes('work') || term.includes('office'))) return 'work-from-home';
+  if (allTerms.some(term => term.includes('fitness') || term.includes('portable'))) return 'on-the-go';
+  if (allTerms.some(term => term.includes('teen') || term.includes('gaming'))) return 'teens';
+  
+  if (allTerms.some(term => term.includes('under') && term.includes('50'))) return 'gifts-under-50';
+  if (allTerms.some(term => term.includes('her') || term.includes('woman'))) return 'gifts-for-her';
+  if (allTerms.some(term => term.includes('him') || term.includes('man'))) return 'gifts-for-him';
+  
+  return null;
 }
 
 async function handleCreateAutoGiftRule(args: any): Promise<string> {

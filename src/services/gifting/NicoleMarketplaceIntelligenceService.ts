@@ -12,6 +12,10 @@
  * - Marketplace conversational interface via AIEnhancedSearchBar
  * - Agent memory for improved curation over time
  * 
+ * Phase 3.5: Enhanced Category Search Integration
+ * - Integrated with CategorySearchService for optimized performance
+ * - Leverages enhanced caching and search routing
+ * 
  * ⚠️ CRITICAL FEATURES:
  * - Intelligent product filtering based on recipient data
  * - Hierarchical gift selection (Wishlist → Interests → AI → Demographic)
@@ -32,6 +36,7 @@
 import { Product } from "@/types/product";
 import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
 import { supabase } from "@/integrations/supabase/client";
+import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 
 export interface NicoleProductContext {
   recipient_id?: string;
@@ -214,7 +219,7 @@ class NicoleMarketplaceIntelligenceService {
 
     try {
       // Use generic search terms based on occasion and relationship
-      const demographicTerms = this.generateDemographicTerms(context);
+      const demographicTerms = context.occasion || 'gifts';
       console.log(`🎯 Demographic search terms:`, demographicTerms);
 
       const recommendations = await this.searchProductsByKeywords(demographicTerms, context, maxResults);
@@ -255,17 +260,16 @@ class NicoleMarketplaceIntelligenceService {
 
       console.log(`📦 Found ${products.length} products for "${searchQuery}"`);
 
-      // Convert to recommendations with scoring
+      // Convert to recommendations with basic scoring
       const recommendations: NicoleProductRecommendation[] = products.map(product => {
-        const matchFactors = this.calculateMatchFactors(product, keywords, context);
-        const confidenceScore = this.calculateConfidenceScore(product, matchFactors, context);
+        const confidenceScore = 0.6; // Base confidence for interest-based matches
 
         return {
           product,
-          reasoning: this.generateReasoning(product, matchFactors, context),
+          reasoning: `Interest-based match for ${keywords}`,
           confidence_score: confidenceScore,
           source: 'interests' as const,
-          match_factors: matchFactors
+          match_factors: ['interest_match', 'keyword_relevance']
         };
       });
 
@@ -278,6 +282,78 @@ class NicoleMarketplaceIntelligenceService {
     }
   }
 
+  /**
+   * Enhanced Category-based product discovery using CategorySearchService
+   */
+  async getCategoryBasedProducts(context: NicoleProductContext): Promise<NicoleProductRecommendation[]> {
+    try {
+      const category = this.mapContextToCategory(context);
+      if (!category) return [];
+
+      console.log(`🎯 [ENHANCED CATEGORY] Searching category: ${category}`);
+      
+      const searchQuery = this.generateSearchQuery(context);
+      const products = await CategorySearchService.searchCategory(category, searchQuery, {
+        maxResults: 10,
+        minPrice: Array.isArray(context.budget) ? context.budget[0] : context.budget?.min,
+        maxPrice: Array.isArray(context.budget) ? context.budget[1] : context.budget?.max
+      });
+
+      return products.map(product => ({
+        product,
+        reasoning: `Enhanced category match for ${category}`,
+        confidence_score: 0.75, // High confidence for enhanced category matches
+        source: 'enhanced-category' as const,
+        match_factors: {
+          category_match: true,
+          price_match: true,
+          context_relevance: 0.8
+        }
+      }));
+    } catch (error) {
+      console.error('Enhanced category search error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Map Nicole context to enhanced category system
+   */
+  private mapContextToCategory(context: NicoleProductContext): string | null {
+    const { occasion, interests, budget } = context;
+    
+    // Occasion-based mapping
+    if (occasion) {
+      const occasionLower = occasion.toLowerCase();
+      if (occasionLower.includes('valentine')) return 'valentines-day';
+      if (occasionLower.includes('birthday')) return 'birthdays';
+      if (occasionLower.includes('graduation')) return 'graduation';
+      if (occasionLower.includes('baby') || occasionLower.includes('shower')) return 'baby-shower';
+      if (occasionLower.includes('anniversary')) return 'anniversaries';
+      if (occasionLower.includes('mother') || occasionLower.includes('mom')) return 'mothers-day';
+      if (occasionLower.includes('father') || occasionLower.includes('dad')) return 'fathers-day';
+      if (occasionLower.includes('christmas') || occasionLower.includes('holiday')) return 'christmas';
+    }
+
+    // Interest-based mapping
+    if (interests && interests.length > 0) {
+      const allInterests = interests.join(' ').toLowerCase();
+      if (allInterests.includes('cooking') || allInterests.includes('kitchen')) return 'the-home-chef';
+      if (allInterests.includes('travel')) return 'the-traveler';
+      if (allInterests.includes('movie') || allInterests.includes('entertainment')) return 'movie-buff';
+      if (allInterests.includes('work') || allInterests.includes('office')) return 'work-from-home';
+      if (allInterests.includes('fitness') || allInterests.includes('active')) return 'on-the-go';
+      if (allInterests.includes('tech') || allInterests.includes('electronic')) return 'electronics';
+      if (allInterests.includes('luxury') || allInterests.includes('premium')) return 'luxury';
+      if (allInterests.includes('teen') || allInterests.includes('gaming')) return 'teens';
+    }
+
+    // Budget-based mapping
+    const maxBudget = Array.isArray(budget) ? budget[1] : budget?.max;
+    if (maxBudget && maxBudget <= 50) return 'gifts-under-50';
+
+    return null;
+  }
   /**
    * Main intelligence method: Get curated products using hierarchical approach
    */
@@ -313,35 +389,30 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      // TIER 3: AI-curated (always run for conversation context)
-      const aiProducts = await this.getAICuratedProducts(context, 6);
-      allRecommendations.push(...aiProducts);
-      if (aiProducts.length > 0) {
-        intelligenceSource += 'ai_curated+';
-      }
-
-      // TIER 4: Demographic fallback (if other tiers didn't provide enough)
-      if (allRecommendations.length < 5) {
-        const demographicProducts = await this.getDemographicProducts(context, 4);
-        allRecommendations.push(...demographicProducts);
-        if (demographicProducts.length > 0) {
-          intelligenceSource += 'demographic';
+      // TIER 3: Enhanced Category Search (if applicable context)
+      if (allRecommendations.length < 15) {
+        const categoryBasedProducts = await this.getCategoryBasedProducts(context);
+        if (categoryBasedProducts.length > 0) {
+          allRecommendations.push(...categoryBasedProducts);
+          intelligenceSource += 'enhanced-category+';
+          console.log(`🎯 [TIER 3] Enhanced category search added ${categoryBasedProducts.length} products`);
         }
       }
 
-      // Remove duplicates and apply final filtering
-      const uniqueRecommendations = this.deduplicateRecommendations(allRecommendations);
-      
-      // Apply confidence threshold
-      const confidenceThreshold = context.confidence_threshold || 0.3;
-      const filteredRecommendations = uniqueRecommendations.filter(
-        rec => rec.confidence_score >= confidenceThreshold
-      );
+      // TIER 4: Marketplace Search (semantic keyword matching)
+      if (allRecommendations.length < 20) {
+        const marketplaceProducts = await this.getMarketplaceProducts(context);
+        if (marketplaceProducts.length > 0) {
+          allRecommendations.push(...marketplaceProducts);
+          intelligenceSource += 'marketplace+';
+          console.log(`🛍️ [TIER 4] Marketplace search added ${marketplaceProducts.length} products`);
+        }
+      }
 
-      // Limit final results to top 12
-      const finalRecommendations = filteredRecommendations.slice(0, 12);
+      // Deduplicate and score
+      const finalRecommendations = this.deduplicateAndScore(allRecommendations, 12);
 
-      console.log(`✅ [NICOLE INTELLIGENCE] Generated ${finalRecommendations.length} final recommendations`);
+      console.log(`🧠 [FINAL] Returning ${finalRecommendations.length} curated products. Sources: ${intelligenceSource.replace(/\+$/, '')}`);
 
       return {
         recommendations: finalRecommendations,
@@ -364,190 +435,57 @@ class NicoleMarketplaceIntelligenceService {
   }
 
   /**
-   * Generate AI search terms from conversation context
+   * Get marketplace products using semantic search
    */
-  private generateAISearchTerms(context: NicoleProductContext): string[] {
-    const terms: string[] = [];
+  async getMarketplaceProducts(context: NicoleProductContext): Promise<NicoleProductRecommendation[]> {
+    try {
+      const searchQuery = this.generateSearchQuery(context);
+      const products = await unifiedMarketplaceService.searchProducts(searchQuery, {
+        maxResults: 10
+      });
 
-    // Add occasion-based terms
-    if (context.occasion) {
-      const occasionTerms = {
-        'birthday': ['birthday gift', 'celebration', 'party'],
-        'anniversary': ['anniversary gift', 'romantic', 'meaningful'],
-        'christmas': ['christmas gift', 'holiday', 'festive'],
-        'graduation': ['graduation gift', 'achievement', 'milestone']
-      };
-      terms.push(...(occasionTerms[context.occasion as keyof typeof occasionTerms] || [context.occasion]));
+      return products.map(product => ({
+        product,
+        reasoning: `Marketplace search match for "${searchQuery}"`,
+        confidence_score: 0.5,
+        source: 'ai_curated' as const,
+        match_factors: ['keyword_match', 'semantic_relevance']
+      }));
+    } catch (error) {
+      console.error('Marketplace search error:', error);
+      return [];
     }
-
-    // Add relationship-based terms
-    if (context.relationship) {
-      const relationshipTerms = {
-        'friend': ['friendship', 'thoughtful', 'personal'],
-        'family': ['family gift', 'loving', 'cherished'],
-        'romantic': ['romantic gift', 'intimate', 'special'],
-        'colleague': ['professional gift', 'appropriate', 'respectful']
-      };
-      terms.push(...(relationshipTerms[context.relationship as keyof typeof relationshipTerms] || [context.relationship]));
-    }
-
-    // Add conversation context terms
-    if (context.conversation_history?.length) {
-      // Extract keywords from recent conversation
-      const conversationText = context.conversation_history.join(' ').toLowerCase();
-      const keywords = conversationText.match(/\b[a-z]{3,}\b/g) || [];
-      terms.push(...keywords.slice(0, 3)); // Limit to 3 conversation keywords
-    }
-
-    return [...new Set(terms)].slice(0, 5); // Dedupe and limit
   }
 
   /**
-   * Generate demographic search terms
+   * Generate search query from context
    */
-  private generateDemographicTerms(context: NicoleProductContext): string[] {
-    const terms: string[] = ['popular gifts', 'best sellers'];
-
-    if (context.occasion) {
-      terms.push(`popular ${context.occasion} gifts`);
-    }
-
-    if (context.relationship) {
-      terms.push(`gifts for ${context.relationship}`);
-    }
-
-    return terms;
+  generateSearchQuery(context: NicoleProductContext): string {
+    const parts: string[] = [];
+    
+    if (context.occasion) parts.push(context.occasion);
+    if (context.interests?.length) parts.push(...context.interests.slice(0, 2));
+    if (context.recipient_name) parts.push(`for ${context.recipient_name}`);
+    
+    return parts.length > 0 ? parts.join(' ') + ' gifts' : 'gifts';
   }
 
   /**
-   * Calculate match factors for a product
+   * Deduplicate and score recommendations
    */
-  private calculateMatchFactors(product: Product, keywords: string[], context: NicoleProductContext): string[] {
-    const factors: string[] = [];
-
-    // Keyword matching
-    const productText = `${product.name} ${product.title} ${product.description || ''}`.toLowerCase();
-    keywords.forEach(keyword => {
-      if (productText.includes(keyword.toLowerCase())) {
-        factors.push(`keyword_match_${keyword}`);
-      }
-    });
-
-    // Budget matching
-    if (context.budget) {
-      const price = product.price;
-      const budget = Array.isArray(context.budget) ? 
-        { min: context.budget[0], max: context.budget[1] } : 
-        context.budget as { min?: number; max?: number };
-      
-      if (budget.min && budget.max && price >= budget.min && price <= budget.max) {
-        factors.push('budget_perfect_match');
-      } else if (budget.max && price <= budget.max) {
-        factors.push('budget_under_limit');
-      }
-    }
-
-    // Rating factor
-    if (product.rating && product.rating >= 4.0) {
-      factors.push('high_rating');
-    }
-
-    return factors;
-  }
-
-  /**
-   * Calculate confidence score for a product
-   */
-  private calculateConfidenceScore(product: Product, matchFactors: string[], context: NicoleProductContext): number {
-    let score = 0.5; // Base score
-
-    // Keyword matches boost confidence
-    const keywordMatches = matchFactors.filter(f => f.startsWith('keyword_match')).length;
-    score += keywordMatches * 0.15;
-
-    // Budget match boosts confidence
-    if (matchFactors.includes('budget_perfect_match')) {
-      score += 0.2;
-    } else if (matchFactors.includes('budget_under_limit')) {
-      score += 0.1;
-    }
-
-    // High rating boosts confidence
-    if (matchFactors.includes('high_rating')) {
-      score += 0.1;
-    }
-
-    // Product description quality
-    if (product.description && product.description.length > 50) {
-      score += 0.05;
-    }
-
-    return Math.min(score, 1.0); // Cap at 1.0
-  }
-
-  /**
-   * Generate reasoning text for a recommendation
-   */
-  private generateReasoning(product: Product, matchFactors: string[], context: NicoleProductContext): string {
-    const reasons: string[] = [];
-
-    if (matchFactors.some(f => f.startsWith('keyword_match'))) {
-      reasons.push('matches your interests');
-    }
-
-    if (matchFactors.includes('budget_perfect_match')) {
-      reasons.push('fits perfectly within budget');
-    }
-
-    if (matchFactors.includes('high_rating')) {
-      reasons.push('highly rated by customers');
-    }
-
-    if (context.occasion) {
-      reasons.push(`appropriate for ${context.occasion}`);
-    }
-
-    return reasons.length > 0 ? 
-      `This ${product.name} ${reasons.join(' and ')}.` :
-      `This ${product.name} could be a great choice.`;
-  }
-
-  /**
-   * Remove duplicate products from recommendations
-   */
-  private deduplicateRecommendations(recommendations: NicoleProductRecommendation[]): NicoleProductRecommendation[] {
+  deduplicateAndScore(recommendations: NicoleProductRecommendation[], maxResults: number): NicoleProductRecommendation[] {
     const seen = new Set<string>();
-    return recommendations.filter(rec => {
-      const key = rec.product.product_id || rec.product.name;
-      if (seen.has(key)) {
-        return false;
-      }
+    const unique = recommendations.filter(rec => {
+      const key = rec.product.title?.toLowerCase() || rec.product.id;
+      if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
-  }
 
-  /**
-   * Generate search query for marketplace navigation
-   */
-  private generateSearchQuery(context: NicoleProductContext): string {
-    const parts: string[] = [];
-
-    if (context.interests?.length) {
-      parts.push(context.interests[0]);
-    }
-
-    if (context.occasion) {
-      parts.push(context.occasion);
-    }
-
-    if (parts.length === 0) {
-      return 'gifts';
-    }
-
-    return parts.join(' ');
+    return unique
+      .sort((a, b) => (b.confidence_score || 0) - (a.confidence_score || 0))
+      .slice(0, maxResults);
   }
 }
 
-// Export singleton instance
 export const nicoleMarketplaceIntelligenceService = new NicoleMarketplaceIntelligenceService();

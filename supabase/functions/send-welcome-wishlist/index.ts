@@ -6,6 +6,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Map user interests to enhanced category system
+function mapInterestToCategory(interest: string): string | null {
+  const interestMap: { [key: string]: string } = {
+    'technology': 'electronics',
+    'tech': 'electronics',
+    'books': 'best-selling',
+    'reading': 'best-selling',
+    'cooking': 'the-home-chef',
+    'chef': 'the-home-chef',
+    'travel': 'the-traveler',
+    'movies': 'movie-buff',
+    'film': 'movie-buff',
+    'fitness': 'on-the-go',
+    'sports': 'on-the-go',
+    'work': 'work-from-home',
+    'office': 'work-from-home',
+    'fashion': 'gifts-for-her',
+    'style': 'gifts-for-her',
+    'gaming': 'teens',
+    'luxury': 'luxury'
+  };
+
+  const normalizedInterest = interest.toLowerCase();
+  for (const [key, category] of Object.entries(interestMap)) {
+    if (normalizedInterest.includes(key)) {
+      return category;
+    }
+  }
+  return null;
+}
+
 interface WelcomeWishlistRequest {
   userId: string;
   userEmail: string;
@@ -75,21 +106,40 @@ const handler = async (req: Request): Promise<Response> => {
       let zincData: any = null; 
       let zincError: any = null;
 
-      // Attempt 1: Gifts under $50 category batch (high chance of real images)
+      // Attempt 1: Use enhanced category search for gifts under $50
       const attempt1 = await supabase.functions.invoke('get-products', {
-        body: { ...zincRequestBase, giftsUnder50: true }
+        body: { 
+          ...zincRequestBase, 
+          category: 'gifts-under-50',  // Use enhanced category search
+          query: 'welcome gifts starter collection'
+        }
       });
       zincData = attempt1.data; zincError = attempt1.error;
 
-      // Attempt 2: Keyword search using interests if attempt 1 yields nothing
+      // Attempt 2: Try enhanced lifestyle category if user has interests
+      if (!zincError && (!zincData?.results || zincData.results.length === 0) && recommendationContext.interests?.length) {
+        const interestCategory = mapInterestToCategory(recommendationContext.interests[0]);
+        if (interestCategory) {
+          const attempt2 = await supabase.functions.invoke('get-products', {
+            body: {
+              ...zincRequestBase,
+              category: interestCategory,
+              query: `${recommendationContext.interests?.join(' ') || 'popular'} gifts ${recommendationContext.occasion || 'welcome'}`
+            }
+          });
+          zincData = attempt2.data; zincError = attempt2.error;
+        }
+      }
+
+      // Attempt 3: Fallback to keyword search if enhanced searches fail
       if (!zincError && (!zincData?.results || zincData.results.length === 0)) {
-        const attempt2 = await supabase.functions.invoke('get-products', {
+        const attempt3 = await supabase.functions.invoke('get-products', {
           body: {
             ...zincRequestBase,
             query: `${recommendationContext.interests?.join(' ') || 'popular'} gifts ${recommendationContext.occasion || 'welcome'}`
           }
         });
-        zincData = attempt2.data; zincError = attempt2.error;
+        zincData = attempt3.data; zincError = attempt3.error;
       }
 
       if (zincError) {

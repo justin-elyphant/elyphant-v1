@@ -391,37 +391,14 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             productCount={totalCount}
           />
         )
-      ) : currentQuickPickCategory ? (
-        <CategoryHeroSection 
-          categoryType={currentQuickPickCategory === 'luxury' ? 'luxuryCategories' : currentQuickPickCategory}
-          productCount={totalCount}
-        />
-      ) : giftsForHer ? (
-        <CategoryHeroSection 
-          categoryType="giftsForHer"
-          productCount={totalCount}
-        />
-      ) : giftsForHim ? (
-        <CategoryHeroSection 
-          categoryType="giftsForHim"
-          productCount={totalCount}
-        />
-      ) : giftsUnder50 ? (
-        <CategoryHeroSection 
-          categoryType="giftsUnder50"
-          productCount={totalCount}
-        />
-      ) : luxuryCategories ? (
-        <CategoryHeroSection 
-          categoryType="luxuryCategories"
-          productCount={totalCount}
-        />
-      ) : hideHeroBanner ? null : (
-        <MarketplaceHeroBanner 
-          category={searchParams.get("category") || undefined} 
-          hideFromCategoryNavigation={false}
-          quickPickCategory={currentQuickPickCategory}
-        />
+      ) : (currentQuickPickCategory || giftsForHer || giftsForHim || giftsUnder50 || luxuryCategories) ? null : (
+        hideHeroBanner ? null : (
+          <MarketplaceHeroBanner 
+            category={searchParams.get("category") || undefined} 
+            hideFromCategoryNavigation={false}
+            quickPickCategory={currentQuickPickCategory}
+          />
+        )
       )}
       
       <MarketplaceHeader
@@ -429,8 +406,31 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         filteredProducts={products}
       />
 
-      {/* Category Title and Description */}
-      {showSearchInfo && !brandCategories && !giftsForHer && !giftsForHim && !giftsUnder50 && !luxuryCategories && (() => {
+      {/* Category or Quick Pick Title */}
+      {showSearchInfo && !brandCategories && (() => {
+        const quick = currentQuickPickCategory || (giftsForHer ? 'giftsForHer' : giftsForHim ? 'giftsForHim' : giftsUnder50 ? 'giftsUnder50' : luxuryCategories ? 'luxury' : null);
+
+        if (quick) {
+          const map = {
+            giftsForHer: { title: 'Gifts for Her', subtitle: "Thoughtfully curated for the special women in your life" },
+            giftsForHim: { title: 'Gifts for Him', subtitle: "Discover the perfect gift for every guy" },
+            giftsUnder50: { title: 'Gifts Under $50', subtitle: "Great gifts that won't break the bank" },
+            luxury: { title: 'Luxury Gifts', subtitle: "Premium selections for extraordinary moments" },
+          } as const;
+          const { title, subtitle } = map[quick];
+          return (
+            <div className="mb-8">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>
+                <p className="text-lg text-muted-foreground mb-4">{subtitle}</p>
+                <p className="text-sm text-muted-foreground">
+                  {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+                </p>
+              </div>
+            </div>
+          );
+        }
+
         const categoryParam = searchParams.get("category");
         const category = categoryParam ? getCategoryByValue(categoryParam) : null;
         

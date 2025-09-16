@@ -187,7 +187,7 @@ class NicoleMarketplaceIntelligenceService {
 
     try {
       // Generate search terms based on conversation context
-      const aiSearchTerms = this.generateAISearchTerms(context);
+      const aiSearchTerms = [this.generateSearchQuery(context)];
       console.log(`🔍 AI generated search terms:`, aiSearchTerms);
 
       // Search for products using AI terms
@@ -222,7 +222,7 @@ class NicoleMarketplaceIntelligenceService {
       const demographicTerms = context.occasion || 'gifts';
       console.log(`🎯 Demographic search terms:`, demographicTerms);
 
-      const recommendations = await this.searchProductsByKeywords(demographicTerms, context, maxResults);
+      const recommendations = await this.searchProductsByKeywords([demographicTerms], context, maxResults);
 
       return recommendations.map(rec => ({
         ...rec,

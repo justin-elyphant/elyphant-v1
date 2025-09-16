@@ -189,13 +189,38 @@ export class SocialActivityService {
     try {
       const { data: connections } = await supabase
         .from('user_connections')
-        .select('id, status')
+        .select('user_id, connected_user_id, status')
         .or(`user_id.eq.${userId},connected_user_id.eq.${userId}`);
 
-      const accepted = connections?.filter(c => c.status === 'accepted').length || 0;
-      const pending = connections?.filter(c => c.status === 'pending').length || 0;
+      if (!connections) {
+        return { accepted: 0, pending: 0, total: 0 };
+      }
 
-      return { accepted, pending, total: connections?.length || 0 };
+      // Create a Set to track unique connections (avoid counting bidirectional twice)
+      const uniqueConnections = new Set<string>();
+      const acceptedConnections = new Set<string>();
+      const pendingConnections = new Set<string>();
+
+      connections.forEach(connection => {
+        // Get the other user's ID (not the current user)
+        const otherUserId = connection.user_id === userId 
+          ? connection.connected_user_id 
+          : connection.user_id;
+        
+        uniqueConnections.add(otherUserId);
+        
+        if (connection.status === 'accepted') {
+          acceptedConnections.add(otherUserId);
+        } else if (connection.status === 'pending') {
+          pendingConnections.add(otherUserId);
+        }
+      });
+
+      return { 
+        accepted: acceptedConnections.size, 
+        pending: pendingConnections.size, 
+        total: uniqueConnections.size 
+      };
     } catch (error) {
       console.error('Error fetching connection stats:', error);
       return { accepted: 0, pending: 0, total: 0 };

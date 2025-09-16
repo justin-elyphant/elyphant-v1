@@ -130,7 +130,7 @@ export const CATEGORY_SEARCH_REGISTRY: Record<CategoryKey, CategorySearchStrateg
   'the-traveler': {
     searchMethod: 'searchProducts',
     edgeFunction: 'get-products',
-    fallbackQuery: 'luggage travel accessories portable chargers travel comfort international adapters',
+    fallbackQuery: 'travel luggage backpacks cameras portable electronics travel accessories gear organizers comfort items neck pillows',
     description: 'Adventure-ready gear for wanderers',
     isActive: true
   },

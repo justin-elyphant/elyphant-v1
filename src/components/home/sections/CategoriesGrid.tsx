@@ -48,7 +48,7 @@ const PersonTypeCarousel = () => {
       title: "The Traveler",
       description: "Adventure-ready gear for wanderers",
       image: "/lovable-uploads/1a9d5356-1759-43e5-b922-26cc22551216.png",
-      searchTerm: "luggage travel accessories portable chargers travel comfort international adapters"
+      searchTerm: "travel luggage backpacks cameras portable electronics travel accessories gear organizers comfort items neck pillows"
     },
     {
       id: "the-home-chef",

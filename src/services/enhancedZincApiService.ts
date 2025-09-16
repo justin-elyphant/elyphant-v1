@@ -187,6 +187,16 @@ class EnhancedZincApiService {
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`🎯 EnhancedZincApiService: Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
+    // Special handling for best-selling category
+    if (query === "category=best-selling" || query.includes("best-selling")) {
+      console.log('🎯 Detected best-selling category search, using specialized search');
+      const priceOptions = filters ? {
+        minPrice: filters.minPrice || filters.min_price,
+        maxPrice: filters.maxPrice || filters.max_price
+      } : undefined;
+      return this.searchBestSellingCategories(limit, priceOptions);
+    }
+    
     try {
       // CRITICAL FIX: Ensure price filters are properly formatted for the edge function
       const requestBody: any = {
@@ -451,6 +461,49 @@ class EnhancedZincApiService {
     } catch (error) {
       console.error('Gifts under $50 category search error:', error);
       return this.searchProducts('affordable tech accessories', 1, limit);
+    }
+  }
+
+  /**
+   * Search best selling categories and return diverse product array
+   */
+  async searchBestSellingCategories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
+    console.log('Starting best selling category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          bestSelling: true,
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
+        }
+      });
+
+      if (error) {
+        console.error('Error in best selling category search:', error);
+        return {
+          results: [],
+          error: error.message || 'Failed to search best selling categories',
+          cached: false
+        };
+      }
+
+      console.log(`Best selling categories search complete: ${data?.results?.length || 0} products returned`);
+      
+      return {
+        results: data?.results || [],
+        cached: false
+      };
+    } catch (error) {
+      console.error('Exception in best selling category search:', error);
+      return {
+        results: [],
+        error: 'Failed to search best selling categories',
+        cached: false
+      };
     }
   }
 

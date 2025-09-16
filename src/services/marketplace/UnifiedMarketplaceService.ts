@@ -13,6 +13,7 @@ export interface SearchOptions {
   giftsForHer?: boolean;
   giftsForHim?: boolean;
   giftsUnder50?: boolean;
+  bestSelling?: boolean;
   brandCategories?: boolean;
   personId?: string;
   occasionType?: string;

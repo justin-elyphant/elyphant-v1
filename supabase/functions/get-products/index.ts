@@ -99,6 +99,24 @@ const searchLuxuryCategories = async (api_key: string, page: number = 1, priceFi
   return searchCategoryBatch(api_key, luxuryCategories, "luxury items", page, 16, priceFilter);
 };
 
+// Best selling category search handler  
+const searchBestSellingCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
+  console.log('Starting best selling category batch search with price filter:', priceFilter);
+  
+  const bestSellingCategories = [
+    "best selling electronics gadgets",
+    "best selling home kitchen essentials", 
+    "best selling fashion clothing",
+    "best selling books bestsellers",
+    "best selling beauty products",
+    "best selling fitness equipment",
+    "best selling toys games",
+    "popular trending items"
+  ];
+  
+  return searchCategoryBatch(api_key, bestSellingCategories, "best selling products", page, limit, priceFilter);
+};
+
 // Gifts for Her category search handler with pagination support
 // Shared category batch search utility
 const searchCategoryBatch = async (
@@ -491,7 +509,7 @@ serve(async (req) => {
       });
     }
     
-    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, filters = {}} = await req.json();
+    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, brandCategories = false, filters = {}} = await req.json();
     
     // Extract price filters from filters object
     const priceFilter = {
@@ -519,6 +537,17 @@ serve(async (req) => {
         const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
         
         return new Response(JSON.stringify(giftsForHerData), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Handle best selling category batch search
+      if (bestSelling) {
+        console.log('Processing best selling category batch request with price filter:', priceFilter);
+        const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
+        
+        return new Response(JSON.stringify(bestSellingData), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });

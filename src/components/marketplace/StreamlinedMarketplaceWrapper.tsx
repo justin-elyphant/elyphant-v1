@@ -318,7 +318,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
 
   // Check if user came from homepage category navigation and determine Quick Pick type
-  const { hideHeroBanner, currentQuickPickCategory } = useMemo(() => {
+  const { hideHeroBanner, currentQuickPickCategory, currentLifestyleCategory } = useMemo(() => {
     // Check router state first (most reliable)
     const isFromHome = Boolean(location.state?.fromHome) || searchParams.get('diversity') === 'true';
     
@@ -328,11 +328,14 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     const giftsUnder50Param = searchParams.get('giftsUnder50') === 'true';
     const luxuryCategoriesParam = searchParams.get('luxuryCategories') === 'true';
     
-    // Check for regular category navigation
-    const categoryParam = Boolean(searchParams.get('category'));
+    // Check for lifestyle categories
+    const categoryParam = searchParams.get('category');
+    const isLifestyleCategory = categoryParam && CategorySearchService.isSupportedCategory(categoryParam) && 
+      !['best-selling', 'electronics', 'luxury', 'gifts-for-her', 'gifts-for-him', 'gifts-under-50', 'brand-categories'].includes(categoryParam);
     
     // Determine if we should hide the hero banner
-    const shouldHide = isFromHome && (categoryParam || giftsForHerParam || giftsForHimParam || giftsUnder50Param || luxuryCategoriesParam);
+    const shouldHide = isFromHome && (categoryParam || giftsForHerParam || giftsForHimParam || giftsUnder50Param || luxuryCategoriesParam) ||
+                      isLifestyleCategory; // Always hide for lifestyle categories
     
     // Determine the current Quick Pick category for custom headers
     const quickPickType: 'giftsForHer' | 'giftsForHim' | 'giftsUnder50' | 'luxury' | null = giftsForHerParam ? 'giftsForHer' : 
@@ -343,6 +346,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     console.log(`[StreamlinedMarketplaceWrapper] Navigation analysis:`, {
       isFromHome,
       categoryParam,
+      isLifestyleCategory,
       giftsForHerParam,
       giftsForHimParam,
       giftsUnder50Param,
@@ -353,7 +357,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
     return { 
       hideHeroBanner: shouldHide, 
-      currentQuickPickCategory: quickPickType 
+      currentQuickPickCategory: quickPickType,
+      currentLifestyleCategory: isLifestyleCategory ? categoryParam : null
     };
   }, [location.state, searchParams]);
 
@@ -448,6 +453,33 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               </div>
             </div>
           );
+        }
+
+        // Handle lifestyle categories
+        if (currentLifestyleCategory) {
+          const lifestyleMap: Record<string, { title: string; subtitle: string }> = {
+            'movie-buff': { title: 'Movie Buff', subtitle: "Perfect gifts for cinema lovers and entertainment enthusiasts" },
+            'on-the-go': { title: 'On the Go', subtitle: "Essential items for busy, active lifestyles" },
+            'work-from-home': { title: 'Work From Home', subtitle: "Everything you need for productive remote work" },
+            'the-traveler': { title: 'The Traveler', subtitle: "Adventure-ready gear for wanderers" },
+            'the-home-chef': { title: 'The Home Chef', subtitle: "Culinary tools for kitchen enthusiasts" },
+            'teens': { title: 'Teens', subtitle: "Trendy picks for young adults" }
+          };
+          
+          const categoryInfo = lifestyleMap[currentLifestyleCategory];
+          if (categoryInfo) {
+            return (
+              <div className="mb-8">
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-foreground mb-2">{categoryInfo.title}</h1>
+                  <p className="text-lg text-muted-foreground mb-4">{categoryInfo.subtitle}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+                  </p>
+                </div>
+              </div>
+            );
+          }
         }
 
         const categoryParam = searchParams.get("category");

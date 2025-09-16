@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, Heart, Cake, GraduationCap, Baby, ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
+import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
+import { useToast } from "@/hooks/use-toast";
 import {
   Carousel,
   CarouselContent,
@@ -12,7 +14,7 @@ import {
 
 const occasions = [
   {
-    id: 1,
+    id: 'valentines-day',
     name: "Valentine's Day",
     icon: Heart,
     searchTerm: "best selling valentines day gifts",
@@ -20,7 +22,7 @@ const occasions = [
     description: "Show your love with romantic gifts"
   },
   {
-    id: 2,
+    id: 'birthdays',
     name: "Birthdays",
     icon: Cake,
     searchTerm: "best selling birthday gifts",
@@ -28,7 +30,7 @@ const occasions = [
     description: "Make their special day unforgettable"
   },
   {
-    id: 3,
+    id: 'graduation',
     name: "Graduation",
     icon: GraduationCap,
     searchTerm: "best selling graduation gifts",
@@ -36,7 +38,7 @@ const occasions = [
     description: "Celebrate their achievements"
   },
   {
-    id: 4,
+    id: 'baby-shower',
     name: "Baby Shower",
     icon: Baby,
     searchTerm: "best selling baby shower gifts",
@@ -44,7 +46,7 @@ const occasions = [
     description: "Welcome the new arrival"
   },
   {
-    id: 5,
+    id: 'anniversaries',
     name: "Anniversaries",
     icon: Calendar,
     searchTerm: "best selling anniversary gifts",
@@ -52,7 +54,7 @@ const occasions = [
     description: "Commemorate your journey together"
   },
   {
-    id: 6,
+    id: 'mothers-day',
     name: "Mother's Day",
     icon: Heart,
     searchTerm: "best selling mothers day gifts",
@@ -60,7 +62,7 @@ const occasions = [
     description: "Honor the special mom in your life"
   },
   {
-    id: 7,
+    id: 'fathers-day',
     name: "Father's Day",
     icon: Calendar,
     searchTerm: "best selling fathers day gifts",
@@ -68,7 +70,7 @@ const occasions = [
     description: "Celebrate dad with thoughtful gifts"
   },
   {
-    id: 8,
+    id: 'christmas',
     name: "Christmas",
     icon: Calendar,
     searchTerm: "best selling christmas gifts",
@@ -79,10 +81,29 @@ const occasions = [
 
 const FeaturedOccasions: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleOccasionClick = (searchTerm: string) => {
-    // Pass fromHome state to ensure clean filters
-    navigate(`/marketplace?search=${encodeURIComponent(searchTerm)}`, { state: { fromHome: true } });
+  const handleOccasionClick = async (occasion: { id: string; searchTerm: string; name: string }) => {
+    try {
+      // Check if this occasion category is supported by the enhanced system
+      if (CategorySearchService.isSupportedCategory(occasion.id)) {
+        console.log(`[FeaturedOccasions] Using enhanced search for occasion category: ${occasion.id}`);
+        
+        // Navigate with category parameter to leverage enhanced caching and search
+        navigate(`/marketplace?category=${occasion.id}`, { 
+          state: { fromOccasion: true, occasionType: occasion.id }
+        });
+      } else {
+        // Fallback to original search term approach
+        console.log(`[FeaturedOccasions] Using fallback search for: ${occasion.id}`);
+        navigate(`/marketplace?search=${encodeURIComponent(occasion.searchTerm)}`, { 
+          state: { fromHome: true }
+        });
+      }
+    } catch (error) {
+      console.error(`[FeaturedOccasions] Navigation error for ${occasion.id}:`, error);
+      toast.error("Unable to navigate to occasion category. Please try again.");
+    }
   };
 
   return (
@@ -112,7 +133,7 @@ const FeaturedOccasions: React.FC = () => {
                   <CarouselItem key={occasion.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/4 xl:basis-1/5">
                     <div
                       className="group relative p-4 md:p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 h-full"
-                      onClick={() => handleOccasionClick(occasion.searchTerm)}
+                      onClick={() => handleOccasionClick(occasion)}
                     >
                       <div className={`${occasion.color} w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300`}>
                         <IconComponent className="h-5 w-5 md:h-6 md:w-6 text-white" />

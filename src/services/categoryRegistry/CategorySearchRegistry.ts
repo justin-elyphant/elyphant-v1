@@ -15,6 +15,8 @@ export interface CategorySearchOptions {
   maxPrice?: number;
   page?: number;
   limit?: number;
+  maxResults?: number;
+  priceRange?: { min: number; max: number };
   silent?: boolean;
 }
 
@@ -40,6 +42,14 @@ export type CategoryKey =
   | 'the-traveler'
   | 'the-home-chef'
   | 'teens'
+  | 'valentines-day'
+  | 'birthdays'
+  | 'graduation'
+  | 'baby-shower'
+  | 'anniversaries'
+  | 'mothers-day'
+  | 'fathers-day'
+  | 'christmas'
   | 'default';
 
 /**
@@ -136,6 +146,62 @@ export const CATEGORY_SEARCH_REGISTRY: Record<CategoryKey, CategorySearchStrateg
     edgeFunction: 'get-products',
     fallbackQuery: 'trendy accessories tech gadgets gaming items room decor study supplies fashion',
     description: 'Trendy picks for young adults',
+    isActive: true
+  },
+  'valentines-day': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling valentines day gifts romantic gifts couples gifts love hearts',
+    description: 'Romantic gifts for Valentine\'s Day',
+    isActive: true
+  },
+  'birthdays': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling birthday gifts celebration gifts party supplies personalized gifts',
+    description: 'Perfect gifts for birthday celebrations',
+    isActive: true
+  },
+  'graduation': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling graduation gifts achievement gifts professional items milestone gifts',
+    description: 'Celebrate academic achievements',
+    isActive: true
+  },
+  'baby-shower': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling baby shower gifts newborn essentials baby clothes toys nursery items',
+    description: 'Welcome new arrivals with perfect gifts',
+    isActive: true
+  },
+  'anniversaries': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling anniversary gifts romantic gifts couple gifts milestone celebrations',
+    description: 'Commemorate special milestones together',
+    isActive: true
+  },
+  'mothers-day': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling mothers day gifts mom gifts jewelry flowers spa gifts pampering',
+    description: 'Honor special moms with thoughtful gifts',
+    isActive: true
+  },
+  'fathers-day': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling fathers day gifts dad gifts tools gadgets sports accessories hobbies',
+    description: 'Celebrate dads with meaningful gifts',
+    isActive: true
+  },
+  'christmas': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling christmas gifts holiday gifts festive items seasonal decorations',
+    description: 'Spread holiday joy and cheer',
     isActive: true
   },
   'default': {

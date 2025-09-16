@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/auth";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Users, UserPlus, Clock, AlertCircle } from "lucide-react";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileConnectionsPage } from "./MobileConnectionsPage";
 import { toast } from "sonner";
 
 // Lazy load heavy components
@@ -57,8 +59,14 @@ const ConnectionsLoading = () => (
 const Connections = () => {
   console.log('🚀 [Connections] Page component loaded!');
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
+
+  // Use mobile version on mobile devices
+  if (isMobile) {
+    return <MobileConnectionsPage />;
+  }
   
   // Get connections data
   const { 

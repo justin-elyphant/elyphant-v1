@@ -120,7 +120,7 @@ const DashboardGrid = () => {
             isMobile && "px-2"
           )}>
             <div className="text-lg sm:text-xl md:text-2xl font-bold text-primary line-clamp-1">{wishlistCount}</div>
-            <div className="text-xs text-muted-foreground line-clamp-1">Lists</div>
+            <div className="text-xs text-muted-foreground line-clamp-1">Wishlists</div>
           </CardContent>
         </Card>
         

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
+import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -44,17 +45,36 @@ const MobileDashboardGrid = () => {
   const { connectionStats } = useActivityFeed(5);
   const { wishlists } = useUnifiedWishlistSystem();
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [processingOrdersCount, setProcessingOrdersCount] = useState(0);
   
   const wishlistCount = wishlists?.length || 0;
-  const totalWishlistItems = wishlists?.reduce((total, wishlist) => 
-    total + (wishlist.items?.length || 0), 0) || 0;
+
+  // Fetch processing orders count
+  useEffect(() => {
+    const fetchProcessingOrders = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'processing');
+        
+        setProcessingOrdersCount(orders?.length || 0);
+      } catch (error) {
+        console.error('Error fetching processing orders:', error);
+      }
+    };
+
+    fetchProcessingOrders();
+  }, [user]);
 
   // Quick stats for horizontal scrolling bar
   const stats = [
     { label: "Friends", value: connectionStats.accepted, color: "text-primary" },
-    { label: "Lists", value: wishlistCount, color: "text-primary" },
-    { label: "Items", value: totalWishlistItems, color: "text-primary" },
-    { label: "Pending", value: connectionStats.pending, color: "text-orange-600" },
+    { label: "Wishlists", value: wishlistCount, color: "text-primary" },
+    { label: "Orders", value: processingOrdersCount, color: "text-primary" },
   ];
 
   // Categorized Icon Grid Actions

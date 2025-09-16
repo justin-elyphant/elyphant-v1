@@ -53,7 +53,7 @@ const CATEGORY_SEARCH_QUERIES = {
 };
 
 class EnhancedZincApiService {
-  private cache = new Map();
+  private cache = new Map(); // Keep existing Map cache as primary layer
 
   /**
    * Search for best selling products based on interest categories with balanced distribution
@@ -187,6 +187,19 @@ class EnhancedZincApiService {
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`🎯 EnhancedZincApiService: Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
+    // Generate cache key for enhanced caching
+    const cacheKey = `search_${query}_${page}_${limit}_${JSON.stringify(filters || {})}`;
+    
+    // Check existing Map cache first (Phase 2: preserving existing cache as primary layer)
+    const cachedResult = this.cache.get(cacheKey);
+    if (cachedResult && (Date.now() - cachedResult.timestamp) < 30 * 60 * 1000) { // 30 minute TTL
+      console.log(`🎯 Cache HIT (Map): ${cacheKey}`);
+      return {
+        results: cachedResult.data,
+        cached: true
+      };
+    }
+    
     // Special handling for category searches
     if (query === "category=best-selling" || query.includes("best-selling")) {
       console.log('🎯 Detected best-selling category search, using specialized search');
@@ -257,6 +270,14 @@ class EnhancedZincApiService {
 
       // Enhance product data with best seller information
       const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      // Cache successful results in Map cache (Phase 2: enhanced with cache key)
+      if (enhancedResults && enhancedResults.length > 0) {
+        this.cache.set(cacheKey, {
+          data: enhancedResults,
+          timestamp: Date.now()
+        });
+      }
 
       return {
         results: enhancedResults || [],

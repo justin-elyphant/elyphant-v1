@@ -68,7 +68,7 @@ const MobileDashboardGrid = () => {
     // Communication & AI
     { id: "messages", label: "Messages", icon: <MessageCircle className="h-6 w-6" />, href: "/messages", category: "Communication & AI" },
     { id: "nicole", label: "Nicole AI", icon: <Brain className="h-6 w-6" />, href: "/nicole", category: "Communication & AI" },
-    { id: "friends", label: "Friends", icon: <Users className="h-6 w-6" />, href: "/connections", badge: connectionStats.pending, category: "Communication & AI" },
+    { id: "friends", label: "Friends", icon: <Users className="h-6 w-6" />, href: "/connections", category: "Communication & AI" },
     { id: "search", label: "Search", icon: <Search className="h-6 w-6" />, href: "/search", category: "Communication & AI" },
     
     // Personal & Settings

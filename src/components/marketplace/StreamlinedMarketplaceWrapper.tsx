@@ -27,6 +27,7 @@ import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteractions";
 import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
+import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {
@@ -96,7 +97,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         search: searchParams.get('search')
       });
       
-      // Handle category-based searches
+  // Handle category-based searches through CategorySearchService
+      const category = searchParams.get('category');
       const categoryParams = {
         ...(searchParams.get('giftsForHer') && { giftsForHer: true }),
         ...(searchParams.get('giftsForHim') && { giftsForHim: true }),
@@ -105,6 +107,22 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         ...(searchParams.get('brandCategories') && { brandCategories: true, query: searchParams.get('brandCategories') }),
         ...(searchParams.get('category') === 'best-selling' && { bestSelling: true })
       };
+      
+      // Check if this is a supported category in the new registry system
+      if (category && CategorySearchService.isSupportedCategory(category)) {
+        console.log(`Using CategorySearchService for category: ${category}`);
+        
+        const searchOptions = {
+          page,
+          limit: 20,
+          minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
+          maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
+        };
+        
+        const result = await CategorySearchService.searchCategory(category, '', searchOptions);
+        console.log('CategorySearchService result:', result?.length || 0);
+        return result || [];
+      }
       
       if (Object.keys(categoryParams).length > 0) {
         const categoryType = Object.keys(categoryParams)[0];

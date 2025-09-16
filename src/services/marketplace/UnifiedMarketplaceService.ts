@@ -343,7 +343,7 @@ class UnifiedMarketplaceService {
           console.log(`📱 Filtered electronics products: ${response.length} (removed ${originalCount - response.length} beauty products)`);
         }
       } else if (brandCategories && searchTerm.trim()) {
-        console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm} via CategorySearchRegistry`);
+        console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         if (!silent) {
           // Silently execute brand category search - no toast needed
         }

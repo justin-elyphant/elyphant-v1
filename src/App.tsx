@@ -68,7 +68,7 @@ const Nicole = lazy(() => import("./pages/Nicole"));
 const Account = lazy(() => import("./pages/Account"));
 const Payments = lazy(() => import("./pages/Payments"));
 const RecentlyViewed = lazy(() => import("./pages/RecentlyViewed"));
-
+const ProductDetailsPage = lazy(() => import("./pages/ProductDetails"));
 const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
@@ -234,6 +234,7 @@ function AppContent() {
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/marketplace/product/:id" element={<ProductDetailsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/order-status" element={<OrderStatusDashboard />} />

@@ -298,14 +298,44 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     });
   }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
 
-  // Check if user came from homepage category navigation
-  const hideHeroBanner = useMemo(() => {
+  // Check if user came from homepage category navigation and determine Quick Pick type
+  const { hideHeroBanner, currentQuickPickCategory } = useMemo(() => {
     // Check router state first (most reliable)
-    if (location.state?.fromHome) {
-      return true;
-    }
-    // Fallback: check URL parameter for diversity flag (indicates homepage origin)
-    return searchParams.get('diversity') === 'true';
+    const isFromHome = Boolean(location.state?.fromHome) || searchParams.get('diversity') === 'true';
+    
+    // Check for Quick Pick categories
+    const giftsForHerParam = searchParams.get('giftsForHer') === 'true';
+    const giftsForHimParam = searchParams.get('giftsForHim') === 'true';
+    const giftsUnder50Param = searchParams.get('giftsUnder50') === 'true';
+    const luxuryCategoriesParam = searchParams.get('luxuryCategories') === 'true';
+    
+    // Check for regular category navigation
+    const categoryParam = Boolean(searchParams.get('category'));
+    
+    // Determine if we should hide the hero banner
+    const shouldHide = isFromHome && (categoryParam || giftsForHerParam || giftsForHimParam || giftsUnder50Param || luxuryCategoriesParam);
+    
+    // Determine the current Quick Pick category for custom headers
+    const quickPickType: 'giftsForHer' | 'giftsForHim' | 'giftsUnder50' | 'luxury' | null = giftsForHerParam ? 'giftsForHer' : 
+                         giftsForHimParam ? 'giftsForHim' : 
+                         giftsUnder50Param ? 'giftsUnder50' : 
+                         luxuryCategoriesParam ? 'luxury' : null;
+
+    console.log(`[StreamlinedMarketplaceWrapper] Navigation analysis:`, {
+      isFromHome,
+      categoryParam,
+      giftsForHerParam,
+      giftsForHimParam,
+      giftsUnder50Param,
+      luxuryCategoriesParam,
+      shouldHide,
+      quickPickType
+    });
+
+    return { 
+      hideHeroBanner: shouldHide, 
+      currentQuickPickCategory: quickPickType 
+    };
   }, [location.state, searchParams]);
 
   // Use virtualized grid for large product lists - MOVED BEFORE EARLY RETURNS
@@ -383,6 +413,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         <MarketplaceHeroBanner 
           category={searchParams.get("category") || undefined} 
           hideFromCategoryNavigation={hideHeroBanner}
+          quickPickCategory={currentQuickPickCategory}
         />
       )}
       

@@ -1,11 +1,17 @@
 import React from "react";
+import { Heart, Gift, DollarSign, Gem } from "lucide-react";
 
 interface MarketplaceHeroBannerProps {
   category?: string;
   hideFromCategoryNavigation?: boolean;
+  quickPickCategory?: 'giftsForHer' | 'giftsForHim' | 'giftsUnder50' | 'luxury' | null;
 }
 
-const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category, hideFromCategoryNavigation = false }) => {
+const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ 
+  category, 
+  hideFromCategoryNavigation = false,
+  quickPickCategory = null
+}) => {
   // Hide banner if coming from homepage category navigation
   if (hideFromCategoryNavigation) {
     return null;
@@ -19,16 +25,55 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category,
   };
 
   const getHeroText = () => {
+    // Quick Pick category headers
+    if (quickPickCategory) {
+      switch (quickPickCategory) {
+        case 'giftsForHer':
+          return {
+            title: "Gifts for Her",
+            subtitle: "Thoughtful gifts she'll love and cherish",
+            icon: <Heart className="h-8 w-8 md:h-10 md:w-10 text-pink-300 mb-4" />,
+            badges: ["💝 Thoughtful Selection", "✨ Premium Quality", "🚚 Fast Delivery"]
+          };
+        case 'giftsForHim':
+          return {
+            title: "Gifts for Him",
+            subtitle: "Perfect gifts for the special man in your life",
+            icon: <Gift className="h-8 w-8 md:h-10 md:w-10 text-blue-300 mb-4" />,
+            badges: ["🎁 Curated for Men", "⚡ Top Quality", "🚚 Quick Shipping"]
+          };
+        case 'giftsUnder50':
+          return {
+            title: "Gifts Under $50",
+            subtitle: "Great gifts that won't break the bank",
+            icon: <DollarSign className="h-8 w-8 md:h-10 md:w-10 text-green-300 mb-4" />,
+            badges: ["💰 Budget Friendly", "🎯 Best Value", "✨ Quality Guaranteed"]
+          };
+        case 'luxury':
+          return {
+            title: "Luxury Gifts",
+            subtitle: "Premium gifts for special occasions",
+            icon: <Gem className="h-8 w-8 md:h-10 md:w-10 text-purple-300 mb-4" />,
+            badges: ["👑 Premium Quality", "🌟 Luxury Brands", "🎁 Special Occasions"]
+          };
+      }
+    }
+    
+    // Category-specific headers
     if (category === "flowers") {
       return {
         title: "Fresh Flowers & Arrangements",
         subtitle: "Beautiful blooms for every occasion",
+        icon: null,
         badges: ["🌸 Fresh Daily", "💐 Custom Arrangements", "🚚 Same Day Delivery"]
       };
     }
+    
+    // Default header
     return {
-      title: "Elyphant Marketplace",
-      subtitle: "Discover thoughtful gifts for every occasion",
+      title: "Discover Amazing Products",
+      subtitle: "Find exactly what you're looking for from thousands of trusted brands",
+      icon: null,
       badges: ["✨ Curated Collections", "🎁 Perfect for Everyone", "🚚 Fast Delivery"]
     };
   };
@@ -51,7 +96,12 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({ category,
       {/* Hero Content */}
       <div className="relative z-10 flex items-center justify-center h-full">
         <div className="text-center text-white px-6 max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
+          {heroText.icon && (
+            <div className="flex justify-center">
+              {heroText.icon}
+            </div>
+          )}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-lg">
             {heroText.title}
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl mb-6 drop-shadow-md opacity-90">

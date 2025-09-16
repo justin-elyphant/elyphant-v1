@@ -11,7 +11,6 @@ import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
-import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
 import { Product } from "@/types/product";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -30,8 +29,6 @@ const WishlistCreationCTA = () => {
   const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
@@ -142,7 +139,7 @@ const WishlistCreationCTA = () => {
     }
   };
 
-  // Handle product click to open details dialog
+  // Handle product click to view details
   const handleProductClick = (product: ProductWithCategory) => {
     const productId = product.product_id || product.id;
     if (!productId) return;
@@ -156,9 +153,8 @@ const WishlistCreationCTA = () => {
       brand: product.brand || ''
     });
 
-    // Set selected product and open dialog
-    setSelectedProductId(String(productId));
-    setShowProductDetails(true);
+    // Navigate to dedicated product page
+    navigate(`/marketplace/product/${productId}`);
   };
 
   return (
@@ -336,12 +332,6 @@ const WishlistCreationCTA = () => {
         onOpenChange={setShowSignUpDialog} 
       />
       
-      <ProductDetailsDialog
-        productId={selectedProductId}
-        open={showProductDetails}
-        onOpenChange={setShowProductDetails}
-        userData={user}
-      />
     </FullBleedSection>
   );
 };

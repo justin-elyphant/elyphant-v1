@@ -308,6 +308,12 @@ class UnifiedMarketplaceService {
           this.showToast('Loading gifts under $50...', 'loading', 'Finding affordable gift options');
         }
         response = await enhancedZincApiService.searchGiftsUnder50Categories(maxResults, searchOptions);
+      } else if (options.bestSelling) {
+        console.log('[UnifiedMarketplaceService] Executing best selling category search');
+        if (!silent) {
+          // No toast needed to keep UI clean
+        }
+        response = await enhancedZincApiService.searchBestSellingCategories(maxResults, searchOptions);
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         if (!silent) {

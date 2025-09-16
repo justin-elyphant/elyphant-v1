@@ -33,6 +33,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
   const giftsForHim = searchParams.get("giftsForHim") === "true";
   const giftsUnder50 = searchParams.get("giftsUnder50") === "true";
   const brandCategories = searchParams.get("brandCategories");
+  const bestSellingCategory = searchParams.get("category") === "best-selling";
   const personId = searchParams.get("personId");
   const occasionType = searchParams.get("occasionType");
 
@@ -131,6 +132,9 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Detected gifts under $50 parameter');
       console.log('[useUnifiedMarketplace] URL params check:', { giftsUnder50, urlParam: searchParams.get("giftsUnder50") });
       executeSearch("gifts under $50 categories", { giftsUnder50: true, maxResults: 20, silent: true });
+    } else if (bestSellingCategory) {
+      console.log('[useUnifiedMarketplace] Detected best selling category parameter');
+      executeSearch("category=best-selling", { bestSelling: true, maxResults: 20, silent: true });
     } else if (brandCategories) {
       console.log(`[useUnifiedMarketplace] Detected brand categories parameter: "${brandCategories}"`);
       executeSearch(brandCategories, { brandCategories: true, maxResults: 20, silent: true });
@@ -178,7 +182,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Loading default products');
       executeSearch("", { maxResults: 20, silent: true });
     }
-  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
+  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, bestSellingCategory, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
 
   /**
    * Public search function for manual searches

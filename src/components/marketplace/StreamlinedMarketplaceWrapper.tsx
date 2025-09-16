@@ -102,7 +102,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         ...(searchParams.get('giftsForHim') && { giftsForHim: true }),
         ...(searchParams.get('giftsUnder50') && { giftsUnder50: true }),
         ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
-        ...(searchParams.get('brandCategories') && { brandCategories: true, query: searchParams.get('brandCategories') })
+        ...(searchParams.get('brandCategories') && { brandCategories: true, query: searchParams.get('brandCategories') }),
+        ...(searchParams.get('category') === 'best-selling' && { bestSelling: true })
       };
       
       if (Object.keys(categoryParams).length > 0) {

@@ -62,11 +62,24 @@ const Connections = () => {
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
+  
+  console.log('📱 [Connections] Mobile detection:', { 
+    isMobile, 
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+  });
 
-  // Use mobile version on mobile devices
-  if (isMobile) {
+  // Check for mobile query parameter or device detection
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceMobile = urlParams.get('mobile') === 'true';
+  
+  // Use mobile version on mobile devices or when mobile param is set
+  if (isMobile || forceMobile) {
+    console.log('📱 [Connections] Rendering mobile version');
     return <MobileConnectionsPage />;
   }
+  
+  console.log('🖥️ [Connections] Rendering desktop version');
   
   // Get connections data
   const { 

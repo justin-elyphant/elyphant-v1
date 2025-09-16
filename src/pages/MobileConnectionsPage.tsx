@@ -18,6 +18,7 @@ import { RelationshipType } from "@/types/connections";
 import "@/styles/connections-mobile.css";
 
 export const MobileConnectionsPage = () => {
+  console.log('📱 [MobileConnectionsPage] Component loaded!');
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
@@ -27,6 +28,8 @@ export const MobileConnectionsPage = () => {
   const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
+  console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
+  
   const {
     friends,
     suggestions,
@@ -35,6 +38,13 @@ export const MobileConnectionsPage = () => {
     refreshPendingConnections,
     handleRelationshipChange: adapterHandleRelationshipChange
   } = useConnectionsAdapter();
+  
+  console.log('📱 [MobileConnectionsPage] Data loaded:', { 
+    friendsCount: friends.length, 
+    suggestionsCount: suggestions.length, 
+    pendingCount: pendingConnections.length,
+    loading 
+  });
 
   // Search suggestions based on connection names
   const searchSuggestions = React.useMemo(() => {

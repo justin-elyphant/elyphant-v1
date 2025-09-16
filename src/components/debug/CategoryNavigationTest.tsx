@@ -16,24 +16,104 @@ interface CategoryTest {
 const CategoryNavigationTest: React.FC = () => {
   const navigate = useNavigate();
   const [tests, setTests] = useState<CategoryTest[]>([
+    // Featured Categories (Shop by Category section)
     {
-      id: 'featured-electronics',
-      name: 'Featured: Electronics',
+      id: 'arts-crafts',
+      name: 'Arts & Crafts',
+      navigationUrl: '/marketplace?category=arts&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'athleisure',
+      name: 'Athleisure',
+      navigationUrl: '/marketplace?category=athleisure&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'baby',
+      name: 'Baby',
+      navigationUrl: '/marketplace?category=baby&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'beauty',
+      name: 'Beauty',
+      navigationUrl: '/marketplace?category=beauty&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'best-selling',
+      name: 'Best Selling',
+      navigationUrl: '/marketplace?category=best-selling&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'books',
+      name: 'Books',
+      navigationUrl: '/marketplace?category=books&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'electronics',
+      name: 'Electronics',
       navigationUrl: '/marketplace?category=electronics&diversity=true',
       status: 'pending'
     },
     {
-      id: 'featured-flowers',
-      name: 'Featured: Flowers',
+      id: 'fashion',
+      name: 'Fashion',
+      navigationUrl: '/marketplace?category=fashion&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'flowers',
+      name: 'Flowers',
       navigationUrl: '/marketplace?category=flowers&diversity=true',
       status: 'pending'
     },
     {
-      id: 'featured-fashion',
-      name: 'Featured: Fashion',
-      navigationUrl: '/marketplace?category=fashion&diversity=true',
+      id: 'food-drinks',
+      name: 'Food & Drinks',
+      navigationUrl: '/marketplace?category=food&diversity=true',
       status: 'pending'
     },
+    {
+      id: 'home-living',
+      name: 'Home & Living',
+      navigationUrl: '/marketplace?category=home&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'pets',
+      name: 'Pets',
+      navigationUrl: '/marketplace?category=pets&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'sports',
+      name: 'Sports',
+      navigationUrl: '/marketplace?category=sports&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'tech',
+      name: 'Tech',
+      navigationUrl: '/marketplace?category=tech&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'toys-games',
+      name: 'Toys & Games',
+      navigationUrl: '/marketplace?category=toys&diversity=true',
+      status: 'pending'
+    },
+    {
+      id: 'wedding',
+      name: 'Wedding',
+      navigationUrl: '/marketplace?category=wedding&diversity=true',
+      status: 'pending'
+    },
+    // Quick Pick Categories
     {
       id: 'gifts-for-her',
       name: 'Quick Pick: Gifts for Her',

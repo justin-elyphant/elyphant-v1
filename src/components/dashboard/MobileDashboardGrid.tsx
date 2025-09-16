@@ -36,6 +36,7 @@ interface QuickAction {
   onClick?: () => void;
   badge?: number;
   primary?: boolean;
+  category?: string;
 }
 
 const MobileDashboardGrid = () => {
@@ -56,26 +57,34 @@ const MobileDashboardGrid = () => {
     { label: "Pending", value: connectionStats.pending, color: "text-orange-600" },
   ];
 
-  // 4x4 Icon Grid - Primary Actions
+  // Categorized Icon Grid Actions
   const iconGridActions: QuickAction[] = [
-    // Row 1 - Core Features
-    { id: "shop", label: "Shop", icon: <ShoppingBag className="h-6 w-6" />, href: "/marketplace", primary: true },
-    { id: "gift", label: "Quick Gift", icon: <Gift className="h-6 w-6" />, href: "/gifting", primary: true },
-    { id: "messages", label: "Messages", icon: <MessageCircle className="h-6 w-6" />, href: "/messages" },
-    { id: "nicole", label: "Nicole AI", icon: <Brain className="h-6 w-6" />, href: "/nicole" },
+    // Shopping & Gifting
+    { id: "shop", label: "Shop", icon: <ShoppingBag className="h-6 w-6" />, href: "/marketplace", primary: true, category: "Shopping & Gifting" },
+    { id: "gift", label: "Quick Gift", icon: <Gift className="h-6 w-6" />, href: "/gifting", primary: true, category: "Shopping & Gifting" },
+    { id: "wishlists", label: "Lists", icon: <Heart className="h-6 w-6" />, href: "/wishlists", category: "Shopping & Gifting" },
+    { id: "orders", label: "Orders", icon: <TrendingUp className="h-6 w-6" />, href: "/orders", category: "Shopping & Gifting" },
     
-    // Row 2 - Social & Personal
-    { id: "friends", label: "Friends", icon: <Users className="h-6 w-6" />, href: "/connections", badge: connectionStats.pending },
-    { id: "wishlists", label: "Lists", icon: <Heart className="h-6 w-6" />, href: "/wishlists" },
-    { id: "settings", label: "Settings", icon: <Settings className="h-6 w-6" />, onClick: () => setShowQuickActions(true) },
-    { id: "payments", label: "Payments", icon: <CreditCard className="h-6 w-6" />, href: "/payments" },
+    // Communication & AI
+    { id: "messages", label: "Messages", icon: <MessageCircle className="h-6 w-6" />, href: "/messages", category: "Communication & AI" },
+    { id: "nicole", label: "Nicole AI", icon: <Brain className="h-6 w-6" />, href: "/nicole", category: "Communication & AI" },
+    { id: "friends", label: "Friends", icon: <Users className="h-6 w-6" />, href: "/connections", badge: connectionStats.pending, category: "Communication & AI" },
+    { id: "search", label: "Search", icon: <Search className="h-6 w-6" />, href: "/search", category: "Communication & AI" },
     
-    // Row 3 - Analytics & Tools
-    { id: "orders", label: "Orders", icon: <TrendingUp className="h-6 w-6" />, href: "/orders" },
-    { id: "recently", label: "Recent", icon: <Calendar className="h-6 w-6" />, href: "/recently-viewed" },
-    { id: "profile", label: "Profile", icon: <User className="h-6 w-6" />, href: "/profile" },
-    { id: "search", label: "Search", icon: <Search className="h-6 w-6" />, href: "/search" },
+    // Personal & Settings
+    { id: "profile", label: "Profile", icon: <User className="h-6 w-6" />, href: "/profile", category: "Personal & Settings" },
+    { id: "recently", label: "Recent", icon: <Calendar className="h-6 w-6" />, href: "/recently-viewed", category: "Personal & Settings" },
+    { id: "payments", label: "Payments", icon: <CreditCard className="h-6 w-6" />, href: "/payments", category: "Personal & Settings" },
+    { id: "settings", label: "Settings", icon: <Settings className="h-6 w-6" />, onClick: () => setShowQuickActions(true), category: "Personal & Settings" },
   ];
+
+  // Group actions by category
+  const categorizedActions = iconGridActions.reduce((acc, action) => {
+    const category = action.category || "Other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(action);
+    return acc;
+  }, {} as Record<string, QuickAction[]>);
 
   // Recent activity items (horizontal scroll)
   const recentItems = [
@@ -126,51 +135,62 @@ const MobileDashboardGrid = () => {
         ))}
       </div>
 
-      {/* 4x4 Icon Grid */}
-      <div className="grid grid-cols-4 gap-4">
-        {iconGridActions.map((action) => {
-          const ActionContent = () => (
-            <div className="relative">
-              <Button
-                variant={action.primary ? "default" : "ghost"}
-                size="lg"
-                className={cn(
-                  "h-20 w-full flex-col gap-2 text-center touch-target-44 mobile-card-hover grid-touch-optimize",
-                  action.primary && "bg-primary/10 hover:bg-primary/20 border border-primary/30"
-                )}
-              >
-                <div className="relative">
-                  {action.icon}
-                  {action.badge && action.badge > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center"
+      {/* Categorized Icon Grid */}
+      <div className="space-y-6">
+        {Object.entries(categorizedActions).map(([categoryName, actions]) => (
+          <div key={categoryName} className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              {categoryName}
+            </h3>
+            <div className="grid grid-cols-4 gap-4">
+              {actions.map((action) => {
+                const ActionContent = () => (
+                  <div className="relative">
+                    <Button
+                      variant={action.primary ? "default" : "ghost"}
+                      size="lg"
+                      className={cn(
+                        "h-20 w-full flex-col gap-2 text-center touch-target-44 mobile-card-hover grid-touch-optimize",
+                        action.primary 
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                          : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
                     >
-                      {action.badge}
-                    </Badge>
-                  )}
-                </div>
-                <span className="text-xs font-medium leading-tight">
-                  {action.label}
-                </span>
-              </Button>
-            </div>
-          );
+                      <div className="relative">
+                        {action.icon}
+                        {action.badge && action.badge > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center"
+                          >
+                            {action.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium leading-tight">
+                        {action.label}
+                      </span>
+                    </Button>
+                  </div>
+                );
 
-          if (action.href) {
-            return (
-              <Link key={action.id} to={action.href}>
-                <ActionContent />
-              </Link>
-            );
-          }
+                if (action.href) {
+                  return (
+                    <Link key={action.id} to={action.href}>
+                      <ActionContent />
+                    </Link>
+                  );
+                }
 
-          return (
-            <div key={action.id} onClick={action.onClick}>
-              <ActionContent />
+                return (
+                  <div key={action.id} onClick={action.onClick}>
+                    <ActionContent />
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* Recent Activity Section */}

@@ -54,6 +54,8 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
     if (trimmedInterest && !isDuplicateInterest(trimmedInterest)) {
       setSelectedInterests(prev => [...prev, trimmedInterest]);
       setNewInterest("");
+      // Show confirmation toast
+      toast.success(`Added "${trimmedInterest}" to your interests!`);
     }
   };
 

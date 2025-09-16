@@ -187,7 +187,7 @@ class EnhancedZincApiService {
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`🎯 EnhancedZincApiService: Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
-    // Special handling for best-selling category
+    // Special handling for category searches
     if (query === "category=best-selling" || query.includes("best-selling")) {
       console.log('🎯 Detected best-selling category search, using specialized search');
       const priceOptions = filters ? {
@@ -195,6 +195,15 @@ class EnhancedZincApiService {
         maxPrice: filters.maxPrice || filters.max_price
       } : undefined;
       return this.searchBestSellingCategories(limit, priceOptions);
+    }
+    
+    if (query === "category=electronics" || query.includes("electronics")) {
+      console.log('🎯 Detected electronics category search, using specialized search');
+      const priceOptions = filters ? {
+        minPrice: filters.minPrice || filters.min_price,
+        maxPrice: filters.maxPrice || filters.max_price
+      } : undefined;
+      return this.searchElectronicsCategories(limit, priceOptions);
     }
     
     try {
@@ -506,6 +515,50 @@ class EnhancedZincApiService {
       };
     }
   }
+
+  /**
+   * Search electronics categories and return diverse product array
+   */
+  async searchElectronicsCategories(limit: number = 16, priceOptions?: { minPrice?: number; maxPrice?: number }): Promise<ZincSearchResponse> {
+    console.log('Starting electronics category search...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          electronics: true,
+          limit,
+          filters: priceOptions ? {
+            min_price: priceOptions.minPrice,
+            max_price: priceOptions.maxPrice
+          } : {}
+        }
+      });
+
+      if (error) {
+        console.error('Error in electronics category search:', error);
+        return {
+          results: [],
+          error: error.message || 'Failed to search electronics categories',
+          cached: false
+        };
+      }
+
+      console.log(`Electronics categories search complete: ${data?.results?.length || 0} products returned`);
+      
+      return {
+        results: data?.results || [],
+        cached: false
+      };
+    } catch (error) {
+      console.error('Exception in electronics category search:', error);
+      return {
+        results: [],
+        error: 'Failed to search electronics categories',
+        cached: false
+      };
+    }
+  }
+
 
   /**
    * Search brand categories and return diverse product array across all brand categories

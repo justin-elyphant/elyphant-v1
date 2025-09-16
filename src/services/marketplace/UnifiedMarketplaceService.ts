@@ -14,6 +14,7 @@ export interface SearchOptions {
   giftsForHim?: boolean;
   giftsUnder50?: boolean;
   bestSelling?: boolean;
+  electronics?: boolean;
   brandCategories?: boolean;
   personId?: string;
   occasionType?: string;
@@ -45,7 +46,7 @@ class UnifiedMarketplaceService {
    * Generate cache key for search operations
    */
   private getCacheKey(searchTerm: string, options: SearchOptions = {}): string {
-    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, brandCategories = false, page = 1, maxResults = 20, minPrice, maxPrice } = options;
+    const { luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, electronics = false, brandCategories = false, page = 1, maxResults = 20, minPrice, maxPrice } = options;
     // Add version suffix to force cache refresh for updated categories
     const version = giftsUnder50 ? 'v7' : brandCategories ? 'v1' : 'v1';
     const priceKey = minPrice || maxPrice ? `:price:${minPrice || 0}-${maxPrice || 9999}` : '';
@@ -314,6 +315,12 @@ class UnifiedMarketplaceService {
           // No toast needed to keep UI clean
         }
         response = await enhancedZincApiService.searchBestSellingCategories(maxResults, searchOptions);
+      } else if (options.electronics) {
+        console.log('[UnifiedMarketplaceService] Executing electronics category search');
+        if (!silent) {
+          // No toast needed to keep UI clean
+        }
+        response = await enhancedZincApiService.searchElectronicsCategories(maxResults, searchOptions);
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         if (!silent) {

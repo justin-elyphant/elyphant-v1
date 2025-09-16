@@ -28,12 +28,14 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
 
   // Get URL parameters
   const urlSearchTerm = searchParams.get("search") || "";
+  const category = searchParams.get("category");
   const luxuryCategories = searchParams.get("luxuryCategories") === "true";
   const giftsForHer = searchParams.get("giftsForHer") === "true";
   const giftsForHim = searchParams.get("giftsForHim") === "true";
   const giftsUnder50 = searchParams.get("giftsUnder50") === "true";
   const brandCategories = searchParams.get("brandCategories");
-  const bestSellingCategory = searchParams.get("category") === "best-selling";
+  const bestSellingCategory = category === "best-selling";
+  const electronicsCategory = category === "electronics";
   const personId = searchParams.get("personId");
   const occasionType = searchParams.get("occasionType");
 
@@ -182,7 +184,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Loading default products');
       executeSearch("", { maxResults: 20, silent: true });
     }
-  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, bestSellingCategory, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
+  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, bestSellingCategory, electronicsCategory, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
 
   /**
    * Public search function for manual searches

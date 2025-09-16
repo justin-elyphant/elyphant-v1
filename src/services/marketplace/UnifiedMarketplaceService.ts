@@ -321,6 +321,27 @@ class UnifiedMarketplaceService {
           // No toast needed to keep UI clean
         }
         response = await enhancedZincApiService.searchElectronicsCategories(maxResults, searchOptions);
+        
+        // Filter out beauty products that might slip through
+        if (response && Array.isArray(response)) {
+          const originalCount = response.length;
+          response = response.filter(product => {
+            const title = product.title?.toLowerCase() || '';
+            const description = product.description?.toLowerCase() || '';
+            const category = product.category?.toLowerCase() || '';
+            
+            // Exclude beauty/skincare products
+            const isBeautyProduct = title.includes('serum') || title.includes('cleanser') || 
+                                  title.includes('beauty') || title.includes('skincare') ||
+                                  title.includes('moisturizer') || title.includes('lotion') ||
+                                  title.includes('spf') || title.includes('sunscreen') ||
+                                  category.includes('beauty') || category.includes('skincare');
+            
+            return !isBeautyProduct;
+          });
+          
+          console.log(`📱 Filtered electronics products: ${response.length} (removed ${originalCount - response.length} beauty products)`);
+        }
       } else if (brandCategories && searchTerm.trim()) {
         console.log(`[UnifiedMarketplaceService] Executing brand category search for: ${searchTerm}`);
         if (!silent) {

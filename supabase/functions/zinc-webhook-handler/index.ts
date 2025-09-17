@@ -193,6 +193,53 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Extract and validate security token from URL params
+    const url = new URL(req.url);
+    const token = url.searchParams.get('token');
+    const orderId = url.searchParams.get('orderId');
+
+    if (!token || !orderId) {
+      console.error('Missing security token or orderId in webhook URL');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Missing required security parameters'
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    // Validate the webhook token
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('webhook_token, id')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      console.error('Order not found for webhook validation:', orderId);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Order not found'
+      }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    if (order.webhook_token !== token) {
+      console.error('Invalid webhook token for order:', orderId);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid security token'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    console.log('✅ Webhook security validation passed for order:', orderId);
+
     const payload: ZincWebhookPayload = await req.json();
     console.log('Webhook payload:', JSON.stringify(payload, null, 2));
 
@@ -202,6 +249,11 @@ serve(async (req: Request) => {
     }
 
     const result = await updateOrderWithZincData(payload);
+
+    // Log successful webhook processing
+    if (result.success) {
+      console.log(`✅ Successfully processed webhook for order ${orderId} with ${payload.status_updates.length} status updates`);
+    }
 
     return new Response(JSON.stringify(result), {
       status: result.success ? 200 : 400,

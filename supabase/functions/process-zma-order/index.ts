@@ -765,6 +765,24 @@ return await (async () => {
       }
     }
     
+    // Generate a secure webhook token for this order
+    const webhookToken = btoa(JSON.stringify({
+      orderId: orderId,
+      timestamp: Date.now(),
+      nonce: Math.random().toString(36).substring(2)
+    }));
+
+    // Store webhook token for validation
+    await supabase
+      .from('orders')
+      .update({
+        webhook_token: webhookToken,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    console.log('🔐 Generated webhook security token for order:', orderId);
+
     // For ZMA orders, exclude payment_method, billing_address, and retailer_credentials
     const zincOrderData = {
       retailer: "amazon",
@@ -785,8 +803,18 @@ return await (async () => {
         supabase_order_id: orderId,
         created_via: 'elyphant_zma_system',
         zma_account_id: zmaAccount.account_id
+      },
+      // Add webhook configuration for real-time order updates
+      webhooks: {
+        request_succeeded: `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`,
+        request_failed: `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`,
+        status_updated: `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`,
+        tracking_obtained: `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`,
+        tracking_updated: `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`
       }
     };
+
+    console.log('🔗 Added webhook configuration to Zinc order request for live updates');
     
     // Add scheduled delivery windows if delivery date is specified
     const finalDeliveryDate = scheduledDeliveryDate || orderData.scheduled_delivery_date;

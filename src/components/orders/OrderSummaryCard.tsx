@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Card, 
   CardContent, 
@@ -20,14 +21,26 @@ interface OrderSummaryCardProps {
 const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
-  const handleEmailReceipt = () => {
+  const handleEmailReceipt = async () => {
     setIsSendingEmail(true);
     
-    // Simulate API call to send email
-    setTimeout(() => {
-      toast.success("Receipt sent to your email");
+    try {
+      const { data, error } = await supabase.functions.invoke('send-order-receipt', {
+        body: { orderId: order.id }
+      });
+
+      if (error) {
+        console.error('Error sending receipt:', error);
+        toast.error("Failed to send receipt");
+      } else {
+        toast.success("Receipt sent to your email");
+      }
+    } catch (error) {
+      console.error('Error sending receipt:', error);
+      toast.error("Failed to send receipt");
+    } finally {
       setIsSendingEmail(false);
-    }, 1000);
+    }
   };
 
   // Extract customer name from shipping info or fallback

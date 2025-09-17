@@ -303,8 +303,51 @@ const MyWishlists = () => {
                 <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
               </div>
             </div>
-          ) : null}
+           ) : null}
         </MobileWishlistLayout>
+
+        {/* Mobile Dialogs - Add here so they work in mobile view */}
+        <CreateWishlistDialog 
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSubmit={handleDialogSubmit}
+        />
+
+        <EditWishlistDialog 
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSubmit={handleEditDialogSubmit}
+          wishlist={currentWishlist}
+        />
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this wishlist?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the wishlist "{currentWishlist?.title}" and all items within it.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete} 
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }

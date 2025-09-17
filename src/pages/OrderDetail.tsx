@@ -169,6 +169,7 @@ const OrderDetail = () => {
             />
           </p>
         </div>
+        {/* Message Vendor functionality removed per user request */}
         <div className="hidden md:flex gap-2">
           {order.status === "shipped" && (
             <Button onClick={handleTrackPackage}>

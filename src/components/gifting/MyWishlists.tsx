@@ -29,6 +29,8 @@ import PinterestStyleWishlistGrid from "./wishlist/PinterestStyleWishlistGrid";
 import ContextualWishlistActions from "./wishlist/ContextualWishlistActions";
 import EnhancedWishlistHeader from "./wishlist/EnhancedWishlistHeader";
 import TagBasedRecommendations from "./wishlist/TagBasedRecommendations";
+import MobileWishlistLayout from "./wishlist/MobileWishlistLayout";
+import MobileWishlistCard from "./wishlist/MobileWishlistCard";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -65,7 +67,7 @@ const MyWishlists = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("pinterest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
   
@@ -236,7 +238,78 @@ const MyWishlists = () => {
   }
 
 
-  // Main content
+  // Detect mobile screen size
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="space-y-0">
+        <MobileWishlistLayout
+          wishlists={wishlists}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          viewMode={viewMode === "pinterest" ? "grid" : viewMode}
+          onViewModeChange={(mode) => setViewMode(mode)}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          availableCategories={selectableCategories}
+          totalWishlists={wishlists?.length || 0}
+          onCreateNew={() => setDialogOpen(true)}
+          onRefresh={handleRefresh}
+          isRefreshing={refreshing}
+        >
+          {/* Empty state for filtered results */}
+          {wishlists?.length > 0 && filteredAndSortedWishlists.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No wishlists match your filters</p>
+              <Button variant="outline" onClick={clearFilters} className="rounded-xl">
+                Clear Filters
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile Wishlists Display */}
+          {filteredAndSortedWishlists.length > 0 ? (
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}>
+              {filteredAndSortedWishlists.map((wishlist) => (
+                <MobileWishlistCard
+                  key={wishlist.id}
+                  wishlist={wishlist}
+                  onEdit={handleEditWishlist}
+                  onDelete={handleDeleteWishlist}
+                />
+              ))}
+            </div>
+          ) : wishlists?.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="max-w-sm mx-auto">
+                <h3 className="text-lg font-semibold mb-2">Create Your First Wishlist</h3>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Start building your wishlist to share with friends and family.
+                </p>
+                <CreateWishlistCard onCreateNew={() => setDialogOpen(true)} />
+              </div>
+            </div>
+          ) : null}
+        </MobileWishlistLayout>
+      </div>
+    );
+  }
+
+  // Desktop Layout - Original design
   return (
     <div className="space-y-6">
       <EnhancedWishlistHeader

@@ -1,0 +1,229 @@
+/* iOS-style Mobile Wishlist Optimizations */
+
+/* Safe area support for iOS */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* iOS-style touch feedback */
+.ios-touch-feedback {
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+.ios-touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.8;
+}
+
+/* Enhanced scrolling for mobile */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* iOS-style card hover/press effects */
+.card-mobile {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.card-mobile:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Bottom sheet styles */
+.bottom-sheet {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -4px 20px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* iOS-style segmented control */
+.segmented-control {
+  background: rgba(120, 119, 128, 0.12);
+  border-radius: 0.5rem;
+  padding: 0.125rem;
+}
+
+.segmented-control-item {
+  border-radius: 0.375rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.segmented-control-item.active {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Pull to refresh indicator */
+.pull-to-refresh {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pull-to-refresh.active {
+  opacity: 1;
+}
+
+/* iOS-style search bar */
+.search-bar-ios {
+  background: rgba(120, 119, 128, 0.12);
+  border: none;
+  border-radius: 0.75rem;
+  height: 2.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-bar-ios:focus {
+  background: white;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Modern e-commerce card styles */
+.wishlist-card-modern {
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: white;
+  box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.wishlist-card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.15);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Backdrop blur for floating elements */
+.backdrop-blur-ios {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* iOS-style button feedback */
+.button-ios {
+  transition: all 0.1s ease-out;
+}
+
+.button-ios:active {
+  transform: scale(0.95);
+}
+
+/* Modern floating action button */
+.fab-modern {
+  position: fixed;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  right: 1rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 8px 24px -8px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+}
+
+.fab-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(102, 126, 234, 0.5);
+}
+
+.fab-modern:active {
+  transform: scale(0.9);
+}
+
+/* Grid optimizations for mobile */
+.mobile-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.mobile-grid.two-column {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.mobile-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
+/* Animation utilities for mobile */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode adaptations */
+@media (prefers-color-scheme: dark) {
+  .backdrop-blur-ios {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .segmented-control {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .search-bar-ios {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .wishlist-card-modern {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 480px) {
+  .mobile-grid.two-column {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .wishlist-card-modern {
+    border-width: 2px;
+  }
+  
+  .segmented-control-item.active {
+    border: 2px solid currentColor;
+  }
+}

@@ -40,7 +40,8 @@ const MobileOrderItemCard = ({
   useEffect(() => {
     let cancelled = false;
     const resolve = async () => {
-      if (imageSrc && !imageError) return; // already have a working image
+      const badInitial = !imageSrc || /unsplash|placeholder|dummy|default|no-image/i.test(String(imageSrc));
+      if (imageSrc && !imageError && !badInitial) return; // already have a real-looking image
       setLoadingImage(true);
       const productId = (item as any).product_id || (item as any).asin || (item as any).sku || (item as any).product?.product_id;
       const retailer = (item as any).retailer || (item as any).product?.retailer || "amazon";

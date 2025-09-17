@@ -20,13 +20,13 @@ export const useOrderSourceAnalysis = (order: ZincOrder) => {
           .from('automated_gift_executions')
           .select(`
             *,
-            auto_gifting_rules!inner(
+            auto_gifting_rules(
               recipient_id,
               gift_message
             )
           `)
           .eq('order_id', order.id)
-          .single();
+          .maybeSingle();
 
         if (executionError && executionError.code !== 'PGRST116') {
           console.error('Error fetching auto gift execution:', executionError);
@@ -46,11 +46,15 @@ export const useOrderSourceAnalysis = (order: ZincOrder) => {
 
           // Get recipient information with privacy check
           let recipientInfo = undefined;
-          if (autoGiftExecution.auto_gifting_rules?.recipient_id) {
+          const ruleData = Array.isArray(autoGiftExecution.auto_gifting_rules) 
+            ? autoGiftExecution.auto_gifting_rules[0] 
+            : autoGiftExecution.auto_gifting_rules;
+          
+          if (ruleData?.recipient_id) {
             const { data: recipient } = await supabase
               .from('profiles')
               .select('id, name, first_name, last_name')
-              .eq('id', autoGiftExecution.auto_gifting_rules.recipient_id)
+              .eq('id', ruleData.recipient_id)
               .single();
 
             if (recipient) {
@@ -95,7 +99,7 @@ export const useOrderSourceAnalysis = (order: ZincOrder) => {
               status: 'auto_approved'
             },
             selectedProducts,
-            giftMessage: autoGiftExecution.auto_gifting_rules?.gift_message,
+            giftMessage: ruleData?.gift_message,
             executionId: autoGiftExecution.id
           };
 

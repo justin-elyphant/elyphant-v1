@@ -84,7 +84,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
           {/* Order Source */}
           <div className="py-2">
             <dt className="text-muted-foreground text-sm mb-2">Order Source:</dt>
-            <dd className="pb-safe-or-4">
+            <dd className="pb-4 md:pb-0">
               {sourceLoading ? (
                 <div className="animate-pulse">
                   <div className="h-6 bg-muted rounded w-32"></div>

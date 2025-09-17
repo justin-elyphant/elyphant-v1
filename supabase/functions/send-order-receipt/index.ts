@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -23,6 +23,13 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { orderId }: OrderReceiptRequest = await req.json();
 
+    console.log("📨 send-order-receipt invoked", { orderId, ts: new Date().toISOString() });
+    console.log("Env present", {
+      hasSRK: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+      hasURL: !!Deno.env.get("SUPABASE_URL"),
+      hasResend: !!Deno.env.get("RESEND_API_KEY"),
+    });
+
     if (!orderId) {
       return new Response(
         JSON.stringify({ error: "Order ID is required" }),
@@ -31,8 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get order details with items
@@ -83,26 +90,34 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Format order items for email
-    const orderItemsHtml = order.order_items?.map((item: any) => `
+    const orderItemsHtml = (order.order_items || []).map((item: any) => {
+      const unit = Number(item.unit_price ?? item.price ?? 0);
+      const qty = Number(item.quantity ?? 1);
+      const lineTotal = unit * qty;
+      return `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-          <div style="font-weight: 600;">${item.name || item.product_name}</div>
-          ${item.variant_details ? `<div style="font-size: 14px; color: #6b7280;">${item.variant_details}</div>` : ''}
+          <div style="font-weight: 600;">${item.name || item.product_name || 'Item'}</div>
+          ${item.variant_details ? `<div style=\"font-size: 14px; color: #6b7280;\">${item.variant_details}</div>` : ''}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
-          ${item.quantity}
+          ${qty}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
-          $${(item.price * item.quantity).toFixed(2)}
+          $${lineTotal.toFixed(2)}
         </td>
-      </tr>
-    `).join('') || '';
+      </tr>`;
+    }).join('');
 
     // Calculate totals
-    const subtotal = order.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0;
-    const shipping = order.shipping_cost || 0;
-    const tax = order.tax_amount || 0;
-    const total = order.total_amount || subtotal + shipping + tax;
+    const subtotal = (order.order_items || []).reduce((sum: number, item: any) => {
+      const unit = Number(item.unit_price ?? item.price ?? 0);
+      const qty = Number(item.quantity ?? 1);
+      return sum + unit * qty;
+    }, 0);
+    const shipping = Number(order.shipping_cost ?? 0);
+    const tax = Number(order.tax_amount ?? 0);
+    const total = Number(order.total_amount ?? (subtotal + shipping + tax));
 
     // Create receipt HTML
     const receiptHtml = `
@@ -221,19 +236,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("📧 Order receipt email sent:", emailResponse);
 
-    // Log the email send event
+    // Log the email send event (lightweight note)
     await supabase
       .from('order_notes')
       .insert({
         order_id: orderId,
-        note_content: `Order receipt emailed to ${customerEmail}`,
+        note_content: `Order receipt emailed to ${customerEmail} (Resend ID: ${emailResponse.data?.id || 'n/a'})`,
         note_type: 'email_sent',
-        is_internal: false,
-        metadata: {
-          email_type: 'receipt',
-          recipient: customerEmail,
-          resend_message_id: emailResponse.data?.id
-        }
+        is_internal: false
       });
 
     return new Response(

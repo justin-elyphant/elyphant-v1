@@ -30,8 +30,8 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
       });
 
       if (error) {
-        console.error('Error sending receipt:', error);
-        toast.error("Failed to send receipt");
+        console.error('Error sending receipt:', error, data);
+        toast.error(data?.error || error.message || "Failed to send receipt");
       } else {
         toast.success("Receipt sent to your email");
       }

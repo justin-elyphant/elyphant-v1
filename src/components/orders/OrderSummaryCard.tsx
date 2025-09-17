@@ -11,6 +11,7 @@ import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 import OrderStatusBadge from "./OrderStatusBadge";
+import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 
 interface OrderSummaryCardProps {
   order: ZincOrder;
@@ -45,7 +46,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Order Number:</dt>
-            <dd>#{order.id}</dd>
+            <dd>{formatOrderNumberWithHash(order.id)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Status:</dt>

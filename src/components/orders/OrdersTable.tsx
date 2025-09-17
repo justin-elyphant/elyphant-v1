@@ -10,6 +10,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 import { MapPin, ExternalLink, Copy } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
@@ -70,7 +71,7 @@ const OrdersTable = ({
               {new Date(order.date!).toLocaleDateString()}
             </TableCell>
             <TableCell>
-              <div>#{order.id.slice(-6)}</div>
+              <div>{formatOrderNumberWithHash(order.id)}</div>
               <div className="text-sm text-muted-foreground">
                 {order.items?.length} item{order.items?.length !== 1 ? 's' : ''}
               </div>

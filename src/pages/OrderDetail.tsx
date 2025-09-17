@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -171,7 +172,7 @@ const OrderDetail = () => {
 
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Order #{order.id.slice(-6)}</h1>
+          <h1 className="text-2xl font-bold">Order {formatOrderNumberWithHash(order.id)}</h1>
           <p className="text-muted-foreground">
             Placed on {new Date(order.date).toLocaleDateString()} • 
             <OrderStatusBadge 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import OrderStatusBadge from "../OrderStatusBadge";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 import OrderCancelDialog from "../OrderCancelDialog";
 
 interface Order {
@@ -56,7 +57,7 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
                 })}
               </p>
               <p className="text-xs text-muted-foreground">
-                Order #{order.id.slice(-6)}
+                Order {formatOrderNumberWithHash(order.id)}
               </p>
             </div>
             <div className="text-right">

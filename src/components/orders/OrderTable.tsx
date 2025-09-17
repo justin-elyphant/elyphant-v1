@@ -15,6 +15,7 @@ import { X, AlertTriangle } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { useOrderActions } from "@/hooks/useOrderActions";
 import OrderCancelDialog from "./OrderCancelDialog";
+import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 
 interface Order {
   id: string;
@@ -99,7 +100,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
               <TableCell className="font-medium">
                 {new Date(order.created_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>#{order.id.slice(-6)}</TableCell>
+              <TableCell>{formatOrderNumberWithHash(order.id)}</TableCell>
               <TableCell>
                 <OrderStatusBadge 
                   status={order.status}

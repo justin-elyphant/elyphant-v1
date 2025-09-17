@@ -49,7 +49,7 @@ const MobileDashboardGrid = () => {
   
   const wishlistCount = wishlists?.length || 0;
 
-  // Fetch active orders count (processing, pending, retry_pending, submitted_to_zinc, confirmed)
+  // Fetch active orders count (orders user is actively waiting for)
   useEffect(() => {
     const fetchActiveOrders = async () => {
       if (!user) return;
@@ -59,14 +59,9 @@ const MobileDashboardGrid = () => {
           .from('orders')
           .select('id, status')
           .eq('user_id', user.id)
-          .in('status', ['processing', 'pending', 'retry_pending', 'submitted_to_zinc', 'confirmed', 'failed']);
+          .in('status', ['pending', 'processing', 'submitted_to_zinc', 'confirmed', 'retry_pending', 'shipped']);
         
-        // Count active orders (exclude shipped, delivered, cancelled)
-        const activeCount = orders?.filter(order => 
-          !['shipped', 'delivered', 'cancelled'].includes(order.status)
-        ).length || 0;
-        
-        setProcessingOrdersCount(activeCount);
+        setProcessingOrdersCount(orders?.length || 0);
       } catch (error) {
         console.error('Error fetching active orders:', error);
       }

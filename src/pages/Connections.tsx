@@ -69,19 +69,7 @@ const Connections = () => {
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
   });
 
-  // Check for mobile query parameter or device detection
-  const urlParams = new URLSearchParams(window.location.search);
-  const forceMobile = urlParams.get('mobile') === 'true';
-  
-  // Use mobile version when on mobile device or explicitly requested
-  if (isMobile || forceMobile) {
-    console.log('📱 [Connections] Rendering mobile version', { isMobile, forceMobile });
-    return <MobileConnectionsPage />;
-  }
-  
-  console.log('🖥️ [Connections] Rendering desktop version');
-  
-  // Get connections data
+  // Get connections data - MUST be called before any returns
   const { 
     friends,
     suggestions,
@@ -104,6 +92,17 @@ const Connections = () => {
     relationship: 'all',
     verificationStatus: 'all'
   });
+
+  // Check for mobile query parameter or device detection  
+  const forceMobile = searchParams.get('mobile') === 'true';
+  
+  // Use mobile version when on mobile device or explicitly requested
+  if (isMobile || forceMobile) {
+    console.log('📱 [Connections] Rendering mobile version', { isMobile, forceMobile });
+    return <MobileConnectionsPage />;
+  }
+  
+  console.log('🖥️ [Connections] Rendering desktop version');
 
   // Handle relationship changes
   const handleRelationshipChange = async (connectionId: string, newRelationship: string, customValue?: string) => {

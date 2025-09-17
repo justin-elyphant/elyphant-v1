@@ -74,7 +74,7 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
     // Default header
     return {
       title: "Discover Amazing Products",
-      subtitle: "Find exactly what you're looking for from thousands of trusted brands",
+      subtitle: "Find great gifts from trusted brands",
       icon: null,
       badges: ["✨ Curated Collections", "🎁 Perfect for Everyone", "🚚 Fast Delivery"]
     };
@@ -106,8 +106,8 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-lg">
             {heroText.title}
           </h1>
-          <p className="text-lg md:text-xl lg:text-2xl mb-6 drop-shadow-md opacity-90">
-            {heroText.subtitle}
+          <p className="text-lg md:text-xl lg:text-2xl mb-6 drop-shadow-md opacity-90 max-w-2xl mx-auto">
+            {isMobile ? (heroText.subtitle.length > 40 ? heroText.subtitle.split(' ').slice(0, 6).join(' ') : heroText.subtitle) : heroText.subtitle}
           </p>
           <div className="flex flex-wrap gap-3 justify-center items-center text-sm md:text-base">
             {heroText.badges.slice(0, isMobile ? 2 : 3).map((badge, index) => (

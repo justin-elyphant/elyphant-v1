@@ -232,6 +232,7 @@ const OrderDetail = () => {
         status={order.status} 
         trackingNumber={order.tracking_number}
         estimatedDelivery="Tomorrow by 8 PM"
+        zincTimelineEvents={order.zinc_timeline_events}
       />
 
       {/* Order Summary and Details Grid */}

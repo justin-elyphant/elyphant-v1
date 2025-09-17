@@ -7,12 +7,23 @@ interface OrderProgressStepperProps {
   status: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
+  zincTimelineEvents?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    description: string;
+    timestamp: string;
+    status: string;
+    data?: any;
+    source: 'zinc' | 'merchant';
+  }>;
 }
 
 const OrderProgressStepper = ({ 
   status, 
   trackingNumber, 
-  estimatedDelivery 
+  estimatedDelivery,
+  zincTimelineEvents = []
 }: OrderProgressStepperProps) => {
   const steps = [
     {
@@ -42,23 +53,47 @@ const OrderProgressStepper = ({
   ];
 
   const getStepStatus = (stepId: string) => {
-    // Map current order status to progress logic
+    // If we have real Zinc timeline events, use them for accurate progress
+    if (zincTimelineEvents.length > 0) {
+      const eventTypeMap: Record<string, string> = {
+        'request.placed': 'placed',
+        'request.finished': 'processing', 
+        'shipment.shipped': 'shipped',
+        'shipment.delivered': 'delivered'
+      };
+      
+      // Find the latest completed step from timeline events
+      const completedSteps = zincTimelineEvents
+        .map(event => eventTypeMap[event.type])
+        .filter(Boolean);
+      
+      if (completedSteps.includes(stepId)) {
+        // Find the latest step in our progression
+        const stepOrder = ['placed', 'processing', 'shipped', 'delivered'];
+        const latestCompletedIndex = Math.max(...completedSteps.map(step => stepOrder.indexOf(step)));
+        const currentStepIndex = stepOrder.indexOf(stepId);
+        
+        if (currentStepIndex < latestCompletedIndex) return "completed";
+        if (currentStepIndex === latestCompletedIndex) return "active";
+      }
+      return "inactive";
+    }
+
+    // Fallback: Use order status mapping for orders without timeline events
     const statusProgressMap: Record<string, string[]> = {
-      "pending": ["placed"], // Only "Order Placed" completed
-      "payment_confirmed": ["placed"], // Only "Order Placed" completed  
-      "processing": ["placed", "processing"], // "Order Placed" and "Processing" completed
-      "shipped": ["placed", "processing", "shipped"], // All but delivered completed
-      "delivered": ["placed", "processing", "shipped", "delivered"], // All completed
-      "cancelled": ["placed"], // Only first step for cancelled orders
-      "failed": ["placed"] // Only first step for failed orders
+      "pending": ["placed"],
+      "payment_confirmed": ["placed"], 
+      "processing": ["placed", "processing"],
+      "submitted_to_zinc": ["placed", "processing"], // Map Zinc status to processing completed
+      "shipped": ["placed", "processing", "shipped"],
+      "delivered": ["placed", "processing", "shipped", "delivered"],
+      "cancelled": ["placed"],
+      "failed": ["placed"]
     };
     
-    // Get completed steps for current status
     const completedSteps = statusProgressMap[status] || ["placed"];
     
-    // Determine step status
     if (completedSteps.includes(stepId)) {
-      // If this is the latest completed step, mark as active
       const latestCompletedStep = completedSteps[completedSteps.length - 1];
       return stepId === latestCompletedStep ? "active" : "completed";
     }

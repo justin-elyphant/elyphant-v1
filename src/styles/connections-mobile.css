@@ -61,12 +61,14 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: white;
+    background: hsl(var(--background));
     border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     transform: translateY(100%);
     transition: transform 0.3s ease-out;
-    z-index: 50;
+    z-index: 90;
+    border: 1px solid hsl(var(--border));
+    max-height: 85vh;
   }
 
   .connection-bottom-sheet.open {
@@ -76,9 +78,10 @@
   .connection-bottom-sheet-handle {
     width: 40px;
     height: 4px;
-    background: #d1d5db;
+    background: hsl(var(--muted-foreground));
     border-radius: 2px;
     margin: 12px auto;
+    opacity: 0.5;
   }
 
   /* Optimized button sizing for touch */
@@ -192,8 +195,8 @@
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .connection-bottom-sheet {
-    background: #1f2937;
-    color: white;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   .connections-search-input {

@@ -57,7 +57,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-[70] animate-fade-in"
+        className="fixed inset-0 bg-black/40 z-[80] animate-fade-in"
         onClick={handleBackdropClick}
       />
       

@@ -116,35 +116,9 @@ const MobileOrderItemCard = ({
             </div>
           </div>
 
-          {/* Price and Actions */}
-          <div className="flex-shrink-0 text-right space-y-2">
-            <div className="font-medium text-body-base">
-              ${totalPrice.toFixed(2)}
-            </div>
-            <div className="flex gap-2 justify-end">
-              {onReorder && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onReorder?.(item)}
-                  className="touch-target-44 h-9 w-9 p-0"
-                  aria-label="Reorder item"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              )}
-              {orderStatus === "delivered" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onReview?.(item)}
-                  className="touch-target-44 h-9 w-9 p-0"
-                  aria-label="Review item"
-                >
-                  <Star className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+          {/* Price */}
+          <div className="flex-shrink-0 text-right self-center">
+            <div className="font-medium text-body-base">${totalPrice.toFixed(2)}</div>
           </div>
         </div>
       </CardContent>

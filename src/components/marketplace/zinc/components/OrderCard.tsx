@@ -54,7 +54,7 @@ const OrderCard = ({ order, onProcessOrder, onOrderUpdated }: OrderCardProps) =>
   };
 
   const canCancelOrder = (status: string) => {
-    return ['pending', 'processing', 'failed'].includes(status.toLowerCase());
+    return ['pending', 'failed', 'retry_pending'].includes(status.toLowerCase());
   };
 
   const handleCancelOrder = async () => {

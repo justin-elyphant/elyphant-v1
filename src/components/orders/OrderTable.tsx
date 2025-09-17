@@ -40,7 +40,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
   const { cancelOrder, isProcessing } = useOrderActions();
 
   const canCancelOrder = (status: string) => {
-    return ['pending', 'processing', 'failed', 'retry_pending'].includes(status.toLowerCase());
+    return ['pending', 'failed', 'retry_pending'].includes(status.toLowerCase());
   };
 
   const handleCancelOrder = async (reason: string) => {

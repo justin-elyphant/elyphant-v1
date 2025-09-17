@@ -63,7 +63,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
   };
 
   const canCancelOrder = (order: any) => {
-    return ['pending', 'processing', 'failed'].includes(order.status.toLowerCase()) &&
+    return ['pending', 'failed', 'retry_pending'].includes(order.status.toLowerCase()) &&
            !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
   };
 

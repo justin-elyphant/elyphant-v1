@@ -142,12 +142,12 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
   return (
     <div className="relative">
       {/* Swipe Action Backgrounds */}
-      {onSwipeLeft && (
+      {onSwipeLeft && isTracking && (
         <div className="connection-swipe-actions left">
           <MessageCircle className="h-5 w-5" />
         </div>
       )}
-      {onSwipeRight && (
+      {onSwipeRight && isTracking && (
         <div className="connection-swipe-actions right">
           <Gift className="h-5 w-5" />
         </div>

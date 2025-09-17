@@ -2,16 +2,28 @@
 import { toast } from "sonner";
 import { ExtendedEventData } from "../types";
 import { useEvents } from "../context/EventsContext";
+import { useNavigate } from "react-router-dom";
 
 export const useEventActions = () => {
   const { events } = useEvents();
+  const navigate = useNavigate();
 
   const handleSendGift = (id: string) => {
-    console.log(`Send gift for event ${id}`);
-    // Find the event to make sure it exists before showing the toast
+    console.log(`Browse gifts for event ${id}`);
+    // Find the event to make sure it exists before navigating
     const event = events.find(e => e.id === id);
     if (event) {
-      toast.success(`Gift selection opened for ${event.person}'s ${event.type}`);
+      // Navigate to marketplace with optional context
+      navigate('/marketplace', { 
+        state: { 
+          eventContext: {
+            recipientName: event.person,
+            eventType: event.type,
+            eventId: id
+          }
+        }
+      });
+      toast.success(`Opening gift marketplace for ${event.person}'s ${event.type}`);
     }
   };
 

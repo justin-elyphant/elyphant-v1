@@ -13,8 +13,8 @@ export const useAutoGiftToggle = () => {
     
     const newStatus = !event.autoGiftEnabled;
     
-    // If enabling auto-gift and no setup exists, open the wizard
-    if (newStatus && !event.autoGiftAmount) {
+    // Always open the auto-gift setup flow when clicked, whether enabling or configuring
+    if (newStatus || !event.autoGiftAmount) {
       openAutoGiftSetupForEvent(event);
       return;
     }

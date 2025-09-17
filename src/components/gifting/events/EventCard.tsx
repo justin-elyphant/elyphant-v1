@@ -84,7 +84,7 @@ const EventCard = ({
           }}
         >
           <Gift className="mr-1 h-3 w-3" />
-          Send Gift
+          Browse Gifts
         </Button>
         <Button
           variant={event.autoGiftEnabled ? "default" : "outline"}

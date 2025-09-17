@@ -51,7 +51,7 @@ const EventQuickActions = ({
           {onSendGift && (
             <DropdownMenuItem onClick={() => onSendGift(event.id)}>
               <Gift className="h-3 w-3 mr-2" />
-              Send Gift
+              Browse Gifts
             </DropdownMenuItem>
           )}
           {onToggleAutoGift && (

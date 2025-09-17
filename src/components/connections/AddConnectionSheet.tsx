@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { unifiedRecipientService } from "@/services/unifiedRecipientService";
-import { useInvitationAnalytics } from "@/services/analytics/invitationAnalyticsService";
+import { useInvitationAnalytics, invitationAnalyticsService } from "@/services/analytics/invitationAnalyticsService";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface AddConnectionSheetProps {
@@ -69,7 +69,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
       });
 
       // Track invitation analytics
-      await trackInvitationSent({
+      await invitationAnalyticsService.trackInvitationSent({
         recipient_email: inviteForm.email,
         recipient_name: inviteForm.name,
         relationship_type: inviteForm.relationship,

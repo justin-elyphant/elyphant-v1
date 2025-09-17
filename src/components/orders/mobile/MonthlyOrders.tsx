@@ -58,9 +58,14 @@ const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
   };
 
   const getTotalSpent = (orders: Order[]) => {
-    return orders
-      .filter(order => ['delivered', 'shipped'].includes(order.status.toLowerCase()))
-      .reduce((total, order) => total + order.total_amount, 0);
+    const completedOrders = orders.filter(order => ['delivered', 'shipped'].includes(order.status.toLowerCase()));
+    const total = completedOrders.reduce((total, order) => total + order.total_amount, 0);
+    
+    // Debug logging to verify filtering logic
+    console.log(`📊 [MonthlyOrders] Total orders: ${orders.length}, Completed orders: ${completedOrders.length}, Total spent: $${total}`);
+    console.log(`📊 [MonthlyOrders] Order statuses:`, orders.map(o => o.status));
+    
+    return total;
   };
 
   const toggleMonth = (monthKey: string) => {

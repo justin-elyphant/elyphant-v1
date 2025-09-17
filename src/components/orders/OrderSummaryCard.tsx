@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
+import { useOrderSourceAnalysis } from "@/hooks/useOrderSourceAnalysis";
+import OrderSourceDisplay from "./OrderSourceDisplay";
 
 interface OrderSummaryCardProps {
   order: ZincOrder;
@@ -20,6 +22,7 @@ interface OrderSummaryCardProps {
 
 const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const { analysis: sourceAnalysis, loading: sourceLoading } = useOrderSourceAnalysis(order);
 
   const handleEmailReceipt = async () => {
     setIsSendingEmail(true);
@@ -77,6 +80,23 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
               />
             </dd>
           </div>
+          
+          {/* Order Source */}
+          <div className="py-2">
+            <dt className="text-muted-foreground text-sm mb-2">Order Source:</dt>
+            <dd className="pb-safe-or-4">
+              {sourceLoading ? (
+                <div className="animate-pulse">
+                  <div className="h-6 bg-muted rounded w-32"></div>
+                </div>
+              ) : sourceAnalysis ? (
+                <OrderSourceDisplay analysis={sourceAnalysis} />
+              ) : (
+                <span className="text-sm text-muted-foreground">Standard Order</span>
+              )}
+            </dd>
+          </div>
+          
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Customer:</dt>
             <dd>{customerName}</dd>

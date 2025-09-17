@@ -73,42 +73,46 @@ const CollectionsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-primary">{wishlistCount}</p>
-                <p className="text-sm text-muted-foreground">Total Wishlists</p>
-              </div>
-              <Heart className="h-8 w-8 text-red-500" />
+      {/* Horizontal Stats Bar */}
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <Card className="text-center hover:shadow-md transition-shadow flex-shrink-0 min-w-[100px]">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-center mb-1">
+              <Heart className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="text-xl font-bold text-primary">
+              {wishlistCount}
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              Total Wishlists
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-primary">{totalItems}</p>
-                <p className="text-sm text-muted-foreground">Total Items</p>
-              </div>
-              <Gift className="h-8 w-8 text-blue-500" />
+
+        <Card className="text-center hover:shadow-md transition-shadow flex-shrink-0 min-w-[100px]">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-center mb-1">
+              <Gift className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="text-xl font-bold text-primary">
+              {totalItems}
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              Total Items
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-primary">
-                  ${allItems.reduce((total, item) => total + (item.price || 0), 0).toFixed(0)}
-                </p>
-                <p className="text-sm text-muted-foreground">Total Value</p>
-              </div>
-              <Target className="h-8 w-8 text-green-500" />
+
+        <Card className="text-center hover:shadow-md transition-shadow flex-shrink-0 min-w-[100px]">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-center mb-1">
+              <Target className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="text-xl font-bold text-primary">
+              ${allItems.reduce((total, item) => total + (item.price || 0), 0).toFixed(0)}
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              Total Value
             </div>
           </CardContent>
         </Card>

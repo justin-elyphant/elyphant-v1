@@ -19,16 +19,19 @@ import "@/styles/connections-mobile.css";
 
 export const MobileConnectionsPage = () => {
   console.log('📱 [MobileConnectionsPage] Component loaded!');
-  const isMobile = useIsMobile();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("friends");
-  const [isVoiceListening, setIsVoiceListening] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
-  const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   
-  console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
+  // Add error boundary try-catch
+  try {
+    const isMobile = useIsMobile();
+    const [searchTerm, setSearchTerm] = useState("");
+    const [activeTab, setActiveTab] = useState("friends");
+    const [isVoiceListening, setIsVoiceListening] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+    const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    
+    console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
   
   const {
     friends,
@@ -299,4 +302,20 @@ export const MobileConnectionsPage = () => {
       </MobileBottomSheet>
     </div>
   );
+  } catch (error) {
+    console.error('📱 [MobileConnectionsPage] Error:', error);
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+        <div className="text-center p-4">
+          <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">
+            An error occurred while loading the mobile connections page.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
 };

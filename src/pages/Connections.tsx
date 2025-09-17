@@ -73,9 +73,9 @@ const Connections = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const forceMobile = urlParams.get('mobile') === 'true';
   
-  // Use mobile version on mobile devices or when mobile param is set
-  if (isMobile || forceMobile) {
-    console.log('📱 [Connections] Rendering mobile version');
+  // TEMP: Only enable the experimental mobile layout when explicitly requested
+  if (forceMobile) {
+    console.log('📱 [Connections] Rendering mobile version (forced by URL param)');
     return <MobileConnectionsPage />;
   }
   
@@ -90,6 +90,10 @@ const Connections = () => {
     refreshPendingConnections,
     handleRelationshipChange: adapterHandleRelationshipChange
   } = useConnectionsAdapter();
+  
+  const safeFriends = Array.isArray(friends) ? friends : [];
+  const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
+  const safePending = Array.isArray(pendingConnections) ? pendingConnections : [];
   
   // Check URL params for tab selection
   const searchParams = new URLSearchParams(window.location.search);

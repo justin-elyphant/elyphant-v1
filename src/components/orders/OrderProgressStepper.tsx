@@ -16,14 +16,14 @@ const OrderProgressStepper = ({
 }: OrderProgressStepperProps) => {
   const steps = [
     {
-      id: "pending",
+      id: "placed", // Changed from "pending" to match order flow
       label: "Order Placed",
       icon: Package,
       description: "Your order has been received"
     },
     {
       id: "processing",
-      label: "Processing",
+      label: "Processing", 
       icon: Clock,
       description: "Preparing your order"
     },
@@ -42,16 +42,27 @@ const OrderProgressStepper = ({
   ];
 
   const getStepStatus = (stepId: string) => {
-    const statusOrder = ["pending", "processing", "shipped", "delivered"];
-    const currentIndex = statusOrder.indexOf(status);
-    const stepIndex = statusOrder.indexOf(stepId);
+    // Map current order status to progress logic
+    const statusProgressMap: Record<string, string[]> = {
+      "pending": ["placed"], // Only "Order Placed" completed
+      "payment_confirmed": ["placed"], // Only "Order Placed" completed  
+      "processing": ["placed", "processing"], // "Order Placed" and "Processing" completed
+      "shipped": ["placed", "processing", "shipped"], // All but delivered completed
+      "delivered": ["placed", "processing", "shipped", "delivered"], // All completed
+      "cancelled": ["placed"], // Only first step for cancelled orders
+      "failed": ["placed"] // Only first step for failed orders
+    };
     
-    if (status === "cancelled" || status === "failed") {
-      return stepIndex === 0 ? "completed" : "inactive";
+    // Get completed steps for current status
+    const completedSteps = statusProgressMap[status] || ["placed"];
+    
+    // Determine step status
+    if (completedSteps.includes(stepId)) {
+      // If this is the latest completed step, mark as active
+      const latestCompletedStep = completedSteps[completedSteps.length - 1];
+      return stepId === latestCompletedStep ? "active" : "completed";
     }
     
-    if (stepIndex < currentIndex) return "completed";
-    if (stepIndex === currentIndex) return "active";
     return "inactive";
   };
 

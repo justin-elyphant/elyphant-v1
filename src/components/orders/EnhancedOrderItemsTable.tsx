@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
+import EnhancedOrderItemImage from "./EnhancedOrderItemImage";
 
 interface EnhancedOrderItemsTableProps {
   order: ZincOrder;
@@ -52,42 +53,34 @@ const EnhancedOrderItemsTable = ({
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Image</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-20">Image</TableHead>
               <TableHead>Product</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Total</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right w-40">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {order.items?.map((item, index) => (
-              <TableRow key={index}>
+              <TableRow 
+                key={index}
+                className="hover:bg-muted/50 transition-colors duration-200"
+              >
                 <TableCell>
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                    {((item as any).product_image || (item as any).image_url || (item as any).image) ? (
-                      <img 
-                        src={(item as any).product_image || (item as any).image_url || (item as any).image} 
-                        alt={(item as any).product_name || item.name || "Product"}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
-                      <span className="text-xs text-primary font-medium">
-                        {((item as any).product_name || item.name || "P").charAt(0)}
-                      </span>
-                    </div>
-                  </div>
+                  <EnhancedOrderItemImage 
+                    item={item} 
+                    size="lg"
+                    className="hover:scale-105 transition-transform duration-200"
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    <p className="font-medium">
-                      {(item as any).product_name || item.name || "Product"}
+                    <p className="font-medium leading-tight">
+                      {((item as any).product_name || item.name || "Product")
+                        .replace(/,?\s*\d+\s*(EA|ea|each|pack|ct|count|piece|pc|pcs|unit|units)\.?$/i, '')
+                        .trim()}
                     </p>
                     {(item as any).brand && (
                       <p className="text-sm text-muted-foreground">
@@ -104,23 +97,25 @@ const EnhancedOrderItemsTable = ({
                   ${(((item as any).unit_price || item.price || 0) * item.quantity).toFixed(2)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
+                  <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleReorder(item)}
-                      className="h-8 w-8 p-0"
+                      className="h-9 px-3 hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
-                      <RotateCcw className="h-3 w-3" />
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reorder
                     </Button>
                     {order.status === "delivered" && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleReview(item)}
-                        className="h-8 w-8 p-0"
+                        className="h-9 px-3 hover:bg-accent hover:text-accent-foreground transition-colors"
                       >
-                        <Star className="h-3 w-3" />
+                        <Star className="h-3 w-3 mr-1" />
+                        Review
                       </Button>
                     )}
                   </div>

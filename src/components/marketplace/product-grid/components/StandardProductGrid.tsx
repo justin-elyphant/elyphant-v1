@@ -32,7 +32,7 @@ const StandardProductGrid: React.FC<StandardProductGridProps> = ({
         viewMode === "list"
           ? "space-y-4"
           : isMobile
-            ? "grid grid-cols-2 gap-3 items-stretch" // Consistent 2-column grid for mobile
+            ? "grid grid-cols-2 gap-4 items-stretch grid-touch-optimize" // Improved gap and touch optimization for mobile
             : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch" // Keep desktop layout
       }`}
     >

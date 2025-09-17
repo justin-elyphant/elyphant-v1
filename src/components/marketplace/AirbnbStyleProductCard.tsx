@@ -217,10 +217,10 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     <>
       <Card 
         className={cn(
-          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col",
+          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col gpu-accelerated",
           viewMode === "list" && "flex flex-row h-auto",
           isWishlisted && "border-2 border-pink-200 hover:border-pink-300",
-          isMobile && "active:scale-[0.98] touch-manipulation"
+          isMobile && "active:scale-[0.98] touch-manipulation mobile-card-hover"
         )}
         onClick={handleCardClick}
       >
@@ -471,7 +471,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
               // Mobile: Quick Add Button (+ icon only)
               <button
                 onClick={handleAddToCartClick}
-                className="flex items-center justify-center w-8 h-8 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0 touch-target-44"
                 aria-label="Add to cart"
                 title="Add to cart"
               >

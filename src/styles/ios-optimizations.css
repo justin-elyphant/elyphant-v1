@@ -35,9 +35,22 @@
   }
 }
 
-/* Prevent zoom on input focus */
+/* Prevent zoom on input focus - iOS requirement */
 input, textarea, select {
   font-size: 16px !important;
+}
+
+/* iOS product grid optimizations */
+.mobile-marketplace-grid {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Enhanced touch targets for marketplace */
+.marketplace-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
 }
 
 /* iOS modal backdrop styling */
@@ -75,4 +88,38 @@ input, textarea, select {
     0 0 20px rgba(139, 92, 246, 0.1),
     0 0 40px rgba(139, 92, 246, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced marketplace mobile optimizations */
+.marketplace-product-grid {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Improved touch feedback for marketplace elements */
+.marketplace-touch-feedback {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.marketplace-touch-feedback:active {
+  transform: scale(0.98);
+}
+
+/* iOS-specific product card optimizations */
+.ios-product-card-optimize {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Better visual hierarchy on iOS */
+.ios-typography-optimize {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

@@ -54,7 +54,7 @@ const MarketplaceQuickFilters = () => {
   };
 
   return (
-    <div className="flex items-center gap-3 overflow-x-auto pb-2 mb-6">
+    <div className="flex items-center gap-3 overflow-x-auto pb-2 mb-6 ios-smooth-scroll">
       <div className="flex items-center gap-2 min-w-max">
         {quickFilters.map((filter) => {
           const Icon = filter.icon;
@@ -64,7 +64,7 @@ const MarketplaceQuickFilters = () => {
             <Badge
               key={filter.id}
               variant={isActive ? "default" : "outline"}
-              className={`cursor-pointer px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+              className={`cursor-pointer px-4 py-3 text-sm whitespace-nowrap transition-colors touch-target-44 ${
                 isActive 
                   ? "bg-gray-900 text-white hover:bg-gray-800" 
                   : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
@@ -82,7 +82,7 @@ const MarketplaceQuickFilters = () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-[34px] px-3 py-2 text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 border-gray-300 rounded-full border transition-colors"
+              className="min-h-[44px] px-4 py-3 text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 border-gray-300 rounded-full border transition-colors touch-target-44"
             >
               <Grid3X3 className="h-3 w-3 mr-1" />
               Categories
@@ -113,7 +113,7 @@ const MarketplaceQuickFilters = () => {
         {/* More Filters Button */}
         <Badge
           variant="outline"
-          className="cursor-pointer px-3 py-2 text-sm bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
+          className="cursor-pointer px-4 py-3 text-sm bg-white text-gray-700 hover:bg-gray-50 border-gray-300 touch-target-44"
         >
           <Filter className="h-3 w-3 mr-1" />
           More filters

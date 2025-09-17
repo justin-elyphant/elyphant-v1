@@ -405,7 +405,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         containerRef.current = el;
         intersectionRef(el);
       }}
-      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''}`}
+      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
       {/* Conditional Hero Section */}
       {brandCategories ? (

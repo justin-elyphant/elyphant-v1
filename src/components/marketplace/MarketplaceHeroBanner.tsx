@@ -1,5 +1,6 @@
 import React from "react";
 import { Heart, Gift, DollarSign, Gem } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MarketplaceHeroBannerProps {
   category?: string;
@@ -12,6 +13,7 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
   hideFromCategoryNavigation = false,
   quickPickCategory = null
 }) => {
+  const isMobile = useIsMobile();
   // Hide banner if coming from homepage category navigation
   if (hideFromCategoryNavigation) {
     return null;
@@ -107,9 +109,9 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
           <p className="text-lg md:text-xl lg:text-2xl mb-6 drop-shadow-md opacity-90">
             {heroText.subtitle}
           </p>
-          <div className="flex flex-wrap gap-4 justify-center items-center text-sm md:text-base">
-            {heroText.badges.map((badge, index) => (
-              <span key={index} className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+          <div className="flex flex-wrap gap-3 justify-center items-center text-sm md:text-base">
+            {heroText.badges.slice(0, isMobile ? 2 : 3).map((badge, index) => (
+              <span key={index} className="bg-white/20 backdrop-blur-sm px-3 py-2 rounded-full border border-white/30 ios-smooth-scroll">
                 {badge}
               </span>
             ))}

@@ -119,7 +119,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
             <Label htmlFor="invite-name">Name</Label>
             <Input
               id="invite-name"
-              placeholder="Enter their name"
+              placeholder="Enter their first and last name"
               value={inviteForm.name}
               onChange={(e) => setInviteForm(prev => ({ ...prev, name: e.target.value }))}
             />

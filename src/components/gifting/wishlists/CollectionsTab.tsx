@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Heart, Package, Target, Eye, Search } from "lucide-react";
+import { Gift, Heart, Package, Target, Eye, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,9 +9,10 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+import { toast } from "sonner";
 
 const CollectionsTab = () => {
-  const { wishlists, loading } = useUnifiedWishlistSystem();
+  const { wishlists, loading, removeFromWishlist } = useUnifiedWishlistSystem();
   const { user } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
@@ -24,6 +25,7 @@ const CollectionsTab = () => {
       (wishlist.items || []).map(item => ({
         ...item,
         wishlistName: wishlist.title,
+        wishlistId: wishlist.id,
         addedDate: item.created_at ? new Date(item.created_at) : new Date()
       }))
     ) || [];
@@ -53,6 +55,20 @@ const CollectionsTab = () => {
     
     setSelectedProduct(productData);
     setShowProductDetails(true);
+  };
+
+  const handleRemoveItem = async (e: React.MouseEvent, item: any) => {
+    e.stopPropagation(); // Prevent opening product details
+    try {
+      await removeFromWishlist({ 
+        wishlistId: item.wishlistId, 
+        itemId: item.id 
+      });
+      toast.success(`Removed ${item.name} from ${item.wishlistName}`);
+    } catch (error) {
+      console.error("Error removing item:", error);
+      toast.error("Failed to remove item");
+    }
   };
 
   if (loading) {
@@ -131,14 +147,26 @@ const CollectionsTab = () => {
         </div>
         
         {allItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-safe-or-6"
+            style={{ paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' }}
+          >
             {allItems.slice(0, 6).map((item) => (
               <Card 
                 key={item.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-md transition-shadow relative group"
                 onClick={() => handleProductClick(item)}
               >
                 <CardContent className="p-4">
+                  {/* Remove Button */}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={(e) => handleRemoveItem(e, item)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+
                   <div className="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
                     {item.image_url ? (
                       <img 
@@ -169,7 +197,9 @@ const CollectionsTab = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 border rounded-lg bg-gray-50 dark:bg-gray-800">
+          <div className="text-center py-12 border rounded-lg bg-gray-50 dark:bg-gray-800 mb-safe-or-6"
+            style={{ marginBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' }}
+          >
             <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
             <h4 className="font-medium mb-2">No wishlist items yet</h4>
             <p className="text-sm text-muted-foreground mb-6">

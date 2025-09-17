@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowLeft, MessageSquare } from "lucide-react";
+import { MapPin, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
@@ -23,16 +23,6 @@ import TrackingInfoCard from "@/components/orders/TrackingInfoCard";
 import MobileActionBar from "@/components/orders/MobileActionBar";
 import OrderTimeline from "@/components/orders/OrderTimeline";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 
 const OrderDetail = () => {
@@ -42,7 +32,7 @@ const OrderDetail = () => {
   const isMobile = useIsMobile();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [vendorMessage, setVendorMessage] = useState("");
+  
 
   // Redirect to sign-in if not logged in
   useEffect(() => {
@@ -111,15 +101,6 @@ const OrderDetail = () => {
     fetchOrder();
   }, [orderId, navigate, user]);
 
-  const handleSendToVendor = () => {
-    if (!vendorMessage.trim()) return;
-    
-    toast.success("Message sent to vendor", {
-      description: "The vendor will be notified about your message."
-    });
-    
-    setVendorMessage("");
-  };
 
   const handleReorder = (item?: any) => {
     toast.success("Item added to cart", {
@@ -189,36 +170,6 @@ const OrderDetail = () => {
           </p>
         </div>
         <div className="hidden md:flex gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Message Vendor
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Message Vendor</DialogTitle>
-                <DialogDescription>
-                  Send a message to the vendor regarding this order
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <Textarea
-                  placeholder="Type your message to the vendor..."
-                  value={vendorMessage}
-                  onChange={(e) => setVendorMessage(e.target.value)}
-                  rows={4}
-                />
-              </div>
-              <DialogFooter>
-                <Button onClick={handleSendToVendor} disabled={!vendorMessage.trim()}>
-                  Send Message
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
           {order.status === "shipped" && (
             <Button onClick={handleTrackPackage}>
               <MapPin className="h-4 w-4 mr-2" />
@@ -290,11 +241,6 @@ const OrderDetail = () => {
       <MobileActionBar 
         order={order}
         onTrack={handleTrackPackage}
-        onMessage={() => {
-          // Open message dialog programmatically on mobile
-          const trigger = document.querySelector('[data-state="closed"]') as HTMLElement;
-          trigger?.click();
-        }}
         onReorder={() => handleReorder()}
         onReview={() => handleReview()}
       />

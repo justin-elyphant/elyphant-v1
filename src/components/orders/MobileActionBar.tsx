@@ -1,12 +1,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MapPin, MessageSquare, RotateCcw, Star } from "lucide-react";
+import { MapPin, RotateCcw, Star } from "lucide-react";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 
 interface MobileActionBarProps {
   order: ZincOrder;
   onTrack?: () => void;
-  onMessage?: () => void;
   onReorder?: () => void;
   onReview?: () => void;
 }
@@ -14,7 +13,6 @@ interface MobileActionBarProps {
 const MobileActionBar = ({ 
   order, 
   onTrack, 
-  onMessage, 
   onReorder, 
   onReview 
 }: MobileActionBarProps) => {
@@ -31,14 +29,6 @@ const MobileActionBar = ({
             Track
           </Button>
         )}
-        
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onMessage}
-        >
-          <MessageSquare className="h-4 w-4" />
-        </Button>
         
         <Button 
           variant="outline" 

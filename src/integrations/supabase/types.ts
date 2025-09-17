@@ -5041,6 +5041,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_webhook_token: {
+        Args: { order_uuid: string; provided_token: string }
+        Returns: boolean
+      }
       validate_zma_order: {
         Args: {
           order_amount: number

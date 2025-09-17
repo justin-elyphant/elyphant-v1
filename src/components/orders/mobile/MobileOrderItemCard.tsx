@@ -19,55 +19,63 @@ const MobileOrderItemCard = ({
   onReview 
 }: MobileOrderItemCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const [loadingImage, setLoadingImage] = useState(false);
   
   const productName = (item as any).product_name || item.name || "Product";
   const brand = (item as any).brand;
   const unitPrice = (item as any).unit_price || item.price || 0;
-  const totalPrice = unitPrice * item.quantity;
   
-// Determine initial image source from various possible fields
-const initialImageUrl = (item as any).product_image || 
+  // Determine initial image source from various possible fields
+  const initialImageUrl = (item as any).product_image || 
                  (item as any).image_url || 
                  (item as any).image || 
                  (item as any).images?.[0] ||
                  (item as any).product?.image ||
                  (item as any).product?.images?.[0];
-const [imageSrc, setImageSrc] = useState<string | undefined>(initialImageUrl);
+  const [imageSrc, setImageSrc] = useState<string | undefined>(initialImageUrl);
 
-// If we don't have an image (or it failed), try fetching full product details
-useEffect(() => {
-  const productId = (item as any).product_id || (item as any).product?.product_id;
-  if ((!initialImageUrl || imageError) && productId) {
-    const retailer = (item as any).retailer || (item as any).product?.retailer || "amazon";
-    getProductDetail(productId, retailer).then((prod) => {
-      const fetched = (prod as any)?.image || (prod as any)?.images?.[0];
-      if (fetched) {
-        setImageSrc(fetched);
-        setImageError(false);
-      }
-    }).catch(() => {/* ignore */});
-  }
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [imageError, (item as any).product_id]);
-
-// Fallback: search by product name if we still don't have an image
-useEffect(() => {
-  if (!imageSrc && productName && !imageError) {
-    enhancedZincApiService.searchProducts(productName, 1, 12).then((res) => {
-      const p = res?.results?.[0];
-      const fetched = p?.image || p?.main_image || p?.images?.[0];
-      if (fetched) {
-        setImageSrc(fetched);
-      }
-    }).catch(() => {/* ignore */});
-  }
+  // If we don't have an image (or it failed), try fetching full product details
+  useEffect(() => {
+    let cancelled = false;
+    const productId = (item as any).product_id || (item as any).product?.product_id;
+    if ((!initialImageUrl || imageError) && productId) {
+      setLoadingImage(true);
+      const retailer = (item as any).retailer || (item as any).product?.retailer || "amazon";
+      getProductDetail(productId, retailer)
+        .then((prod) => {
+          if (cancelled) return;
+          const fetched = (prod as any)?.image || (prod as any)?.images?.[0];
+          if (fetched) {
+            setImageSrc(fetched);
+            setImageError(false);
+          }
+        })
+        .finally(() => !cancelled && setLoadingImage(false));
+    }
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [imageSrc, productName, imageError]);
+  }, [imageError, (item as any).product_id]);
+
+  // Fallback: search by product name immediately if no image
+  useEffect(() => {
+    let cancelled = false;
+    if (!imageSrc && productName) {
+      setLoadingImage(true);
+      enhancedZincApiService.searchProducts(productName, 1, 8).then((res) => {
+        if (cancelled) return;
+        const p = res?.results?.[0];
+        const fetched = p?.image || p?.main_image || p?.images?.[0];
+        if (fetched) setImageSrc(fetched);
+      }).finally(() => !cancelled && setLoadingImage(false));
+    }
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productName]);
 
   return (
     <Card className="mobile-card-hover">
       <CardContent className="touch-padding">
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           {/* Product Image */}
           <div className="flex-shrink-0">
             <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden relative">

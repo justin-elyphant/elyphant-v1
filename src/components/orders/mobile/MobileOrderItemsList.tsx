@@ -29,15 +29,19 @@ const MobileOrderItemsList = ({
       <CardContent className="space-y-4">
         {/* Order Items */}
         <div className="space-y-3">
-          {order.items?.map((item, index) => (
-            <MobileOrderItemCard
-              key={index}
-              item={item}
-              orderStatus={order.status}
-              onReorder={onReorder}
-              onReview={onReview}
-            />
-          ))}
+          {order.items?.map((item, index) => {
+            const product_id = order.products?.[index]?.product_id;
+            const mergedItem = product_id ? { ...item, product_id } : item;
+            return (
+              <MobileOrderItemCard
+                key={index}
+                item={mergedItem}
+                orderStatus={order.status}
+                onReorder={onReorder}
+                onReview={onReview}
+              />
+            );
+          })}
         </div>
         
         {/* Order Summary */}

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { classifyZmaError } from '../shared/zmaErrorClassification.ts';
+import { checkAbortEligibility, performZincAbort } from './abortHelpers.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -112,7 +113,7 @@ class ZincApiManager {
     }
   }
 
-  // Abort order using Zinc's native abort API
+  // Abort order using Zinc's native abort API with enhanced response handling
   async abortOrder(requestId: string): Promise<ZincApiResponse> {
     console.log(`🛑 [ZincAPI] Aborting order ${requestId} using Zinc native abort...`);
     
@@ -123,12 +124,50 @@ class ZincApiManager {
       });
 
       const result = await response.json();
-      console.log(`✅ [ZincAPI] Order aborted successfully`);
+      
+      // Enhanced response handling for abort
+      if (result._type === 'error') {
+        if (result.code === 'aborted_request') {
+          console.log('✅ [ZincAPI] Order aborted immediately');
+          return { ...result, abortStatus: 'immediate' };
+        } else if (result.code === 'request_processing') {
+          console.log('⏳ [ZincAPI] Order abort initiated, polling required');
+          return { ...result, abortStatus: 'pending' };
+        }
+      }
+      
+      console.log(`✅ [ZincAPI] Order abort response: ${result.code || 'unknown'}`);
       return result;
     } catch (error) {
       console.error('❌ [ZincAPI] Order abort failed:', error);
       throw error;
     }
+  }
+
+  // Poll order status for abort completion
+  async pollAbortStatus(requestId: string, maxAttempts: number = 10, intervalMs: number = 5000): Promise<ZincApiResponse> {
+    console.log(`⏳ [ZincAPI] Polling abort status for ${requestId}...`);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const status = await this.getOrderStatus(requestId);
+        
+        if (status._type === 'error' && status.code === 'aborted_request') {
+          console.log(`✅ [ZincAPI] Order abort confirmed after ${attempt} attempts`);
+          return status;
+        }
+        
+        if (attempt < maxAttempts) {
+          console.log(`⏳ [ZincAPI] Abort not yet confirmed, attempt ${attempt}/${maxAttempts}, waiting ${intervalMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, intervalMs));
+        }
+      } catch (error) {
+        console.warn(`⚠️ [ZincAPI] Polling attempt ${attempt} failed:`, error);
+        if (attempt === maxAttempts) throw error;
+      }
+    }
+    
+    throw new Error('Abort polling timeout - status not confirmed');
   }
 }
 
@@ -377,20 +416,61 @@ async function handleZincNativeRetry(orderId: string, supabase: any) {
   });
 }
 
-// Handle Zinc abort
+// Enhanced Zinc abort with intelligent routing
 async function handleZincAbort(orderId: string, supabase: any) {
-  console.log(`🛑 [ZINC-ABORT] Processing Zinc abort for order ${orderId}`);
+  console.log(`🛑 [ZINC-ABORT] Processing enhanced Zinc abort for order ${orderId}`);
   
-  const result = await cancelOrderWithZinc(orderId, 'Aborted via Zinc API', supabase);
-  
-  return new Response(JSON.stringify({
-    success: true,
-    message: 'Order aborted successfully',
-    ...result
-  }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    status: 200
-  });
+  try {
+    // Get order details first
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !orderData) {
+      throw new Error(`Order not found: ${orderError?.message}`);
+    }
+
+    // Check abort eligibility
+    const abortEligibility = await checkAbortEligibility(orderData, supabase);
+    
+    if (!abortEligibility.canAbort) {
+      // Fall back to regular cancellation if abort not eligible
+      if (abortEligibility.canCancel) {
+        console.log('⚠️ [ZINC-ABORT] Order not eligible for abort, falling back to cancellation');
+        const result = await cancelOrderWithZinc(orderId, 'User cancelled', supabase);
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Order cancelled successfully (abort not available)',
+          operationType: 'cancel',
+          ...result
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+      } else {
+        throw new Error(abortEligibility.reason || 'Order cannot be aborted or cancelled');
+      }
+    }
+
+    // Perform Zinc abort operation
+    const abortResult = await performZincAbort(orderData, supabase);
+    
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Order aborted successfully',
+      operationType: 'abort',
+      ...abortResult
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
+    });
+
+  } catch (error) {
+    console.error('❌ [ZINC-ABORT] Abort operation failed:', error);
+    throw error;
+  }
 }
 
 // Handle order cancellation
@@ -442,11 +522,17 @@ async function handleOrderStatusCheck(orderId: string, supabase: any) {
     }
   }
 
+  // Enhanced status response with abort capability
+  const abortEligibility = await checkAbortEligibility(orderData, supabase, zincStatus);
+  
   return new Response(JSON.stringify({
     success: true,
     orderStatus: orderData.status,
     zincStatus: zincStatus,
-    canCancel: ['pending', 'processing', 'failed'].includes(orderData.status),
+    canCancel: ['pending', 'failed', 'retry_pending'].includes(orderData.status),
+    canAbort: abortEligibility.canAbort,
+    abortReason: abortEligibility.reason,
+    isProcessingStage: abortEligibility.isProcessingStage,
     lastUpdated: orderData.updated_at
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

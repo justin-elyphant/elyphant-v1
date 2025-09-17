@@ -21,7 +21,9 @@ const MobileOrderItemCard = ({
   const [imageError, setImageError] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
   
-  const productName = (item as any).product_name || item.name || "Product";
+  const rawProductName = (item as any).product_name || item.name || "Product";
+  // Clean up product name by removing redundant quantity indicators
+  const productName = rawProductName.replace(/,?\s*\d+\s*(EA|ea|each|pack|ct|count|piece|pc|pcs|unit|units)\.?$/i, '').trim();
   const brand = (item as any).brand;
   const unitPrice = (item as any).unit_price || item.price || 0;
   const quantity = Number((item as any).quantity ?? (item as any).qty ?? 1);

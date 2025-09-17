@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
+import { getProductDetail } from "@/api/product";
 
 interface MobileOrderItemCardProps {
   item: any;
@@ -23,13 +24,30 @@ const MobileOrderItemCard = ({
   const unitPrice = (item as any).unit_price || item.price || 0;
   const totalPrice = unitPrice * item.quantity;
   
-  // Enhanced image URL detection with more fallback options
-  const imageUrl = (item as any).product_image || 
-                   (item as any).image_url || 
-                   (item as any).image || 
-                   (item as any).images?.[0] ||
-                   (item as any).product?.image ||
-                   (item as any).product?.images?.[0];
+// Determine initial image source from various possible fields
+const initialImageUrl = (item as any).product_image || 
+                 (item as any).image_url || 
+                 (item as any).image || 
+                 (item as any).images?.[0] ||
+                 (item as any).product?.image ||
+                 (item as any).product?.images?.[0];
+const [imageSrc, setImageSrc] = useState<string | undefined>(initialImageUrl);
+
+// If we don't have an image (or it failed), try fetching full product details
+useEffect(() => {
+  const productId = (item as any).product_id || (item as any).product?.product_id;
+  if ((!initialImageUrl || imageError) && productId) {
+    const retailer = (item as any).retailer || (item as any).product?.retailer || "amazon";
+    getProductDetail(productId, retailer).then((prod) => {
+      const fetched = (prod as any)?.image || (prod as any)?.images?.[0];
+      if (fetched) {
+        setImageSrc(fetched);
+        setImageError(false);
+      }
+    }).catch(() => {/* ignore */});
+  }
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [imageError, (item as any).product_id]);
 
   return (
     <Card className="mobile-card-hover">
@@ -38,9 +56,9 @@ const MobileOrderItemCard = ({
           {/* Product Image */}
           <div className="flex-shrink-0">
             <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden relative">
-              {imageUrl && !imageError ? (
+{imageSrc && !imageError ? (
                 <img 
-                  src={imageUrl} 
+                  src={imageSrc} 
                   alt={productName}
                   className="w-full h-full object-cover"
                   onError={() => setImageError(true)}
@@ -67,10 +85,8 @@ const MobileOrderItemCard = ({
                   {brand}
                 </p>
               )}
-              <div className="flex items-center gap-4 text-body-sm text-muted-foreground">
+<div className="flex items-center gap-4 text-body-sm text-muted-foreground">
                 <span>Qty: {item.quantity}</span>
-                <span>•</span>
-                <span>${unitPrice.toFixed(2)} each</span>
               </div>
             </div>
           </div>
@@ -82,15 +98,17 @@ const MobileOrderItemCard = ({
             </div>
             
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onReorder?.(item)}
-                className="touch-target-44 h-9 w-9 p-0"
-                aria-label="Reorder item"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+{onReorder && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onReorder?.(item)}
+                  className="touch-target-44 h-9 w-9 p-0"
+                  aria-label="Reorder item"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
               
               {orderStatus === "delivered" && (
                 <Button

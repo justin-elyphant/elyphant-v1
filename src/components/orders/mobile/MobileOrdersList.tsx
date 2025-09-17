@@ -1,7 +1,7 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import MobileOrderCard from "./MobileOrderCard";
+import MonthlyOrders from "./MonthlyOrders";
 
 interface Order {
   id: string;
@@ -64,34 +64,7 @@ const MobileOrdersList = ({ orders, isLoading, error, onOrderUpdated }: MobileOr
     );
   }
 
-  if (orders.length === 0) {
-    return (
-      <div className="p-8 text-center border rounded-lg pb-safe-or-6"
-        style={{ 
-          paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' 
-        }}
-      >
-        <p className="text-lg font-medium mb-2">No orders found</p>
-        <p className="text-muted-foreground">You haven't placed any orders yet.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4 pb-safe-or-6" 
-      style={{ 
-        paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' 
-      }}
-    >
-      {orders.map((order) => (
-        <MobileOrderCard 
-          key={order.id} 
-          order={order} 
-          onOrderUpdated={onOrderUpdated}
-        />
-      ))}
-    </div>
-  );
+  return <MonthlyOrders orders={orders} onOrderUpdated={onOrderUpdated} />;
 };
 
 export default MobileOrdersList;

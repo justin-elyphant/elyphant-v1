@@ -93,20 +93,20 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
           </div>
         )}
 
-        <div className="space-y-3">
+          <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Tracking Number
             </label>
-            <div className="flex items-center gap-2 mt-1">
-              <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono">
+            <div className="flex items-center gap-2 mt-1 min-w-0">
+              <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono min-w-0 overflow-hidden" style={{ wordBreak: "break-all", overflowWrap: "break-word" }}>
                 {order.tracking_number}
               </code>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyTracking}
-                className="h-9 w-9 p-0"
+                className="h-9 w-9 p-0 flex-shrink-0"
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -114,10 +114,10 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
           </div>
 
           <div className="space-y-2">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 min-w-0"
                 onClick={() => {
                   if (carrierInfo?.url) {
                     window.open(carrierInfo.url, '_blank');
@@ -126,11 +126,12 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
                   }
                 }}
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Track Package
+                <ExternalLink className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Track Package</span>
               </Button>
               <Button
                 variant="outline"
+                className="sm:w-auto flex-shrink-0"
                 onClick={() => {
                   // Simulate opening map with delivery location
                   toast.info("Opening delivery map...");

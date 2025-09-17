@@ -59,13 +59,13 @@ const OrderProgressStepper = ({
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="order-progress-stepper">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center min-w-0">
             {steps.map((step, index) => {
               const stepStatus = getStepStatus(step.id);
               const Icon = step.icon;
               
               return (
-                <div key={step.id} className="order-progress-step flex flex-col items-center text-center flex-1">
+                <div key={step.id} className="order-progress-step flex flex-col items-center text-center flex-1 min-w-0 px-1">
                   <div
                     className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 transition-all",
@@ -81,17 +81,17 @@ const OrderProgressStepper = ({
                     )}
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <h4 className={cn(
-                      "text-sm font-medium",
+                      "text-xs sm:text-sm font-medium truncate",
                       stepStatus === "inactive" && "text-muted-foreground"
                     )}>
                       {step.label}
                     </h4>
                     <p className={cn(
-                      "text-xs",
+                      "text-[10px] sm:text-xs leading-tight overflow-hidden",
                       stepStatus === "inactive" ? "text-muted-foreground" : "text-muted-foreground"
-                    )}>
+                    )} style={{ wordBreak: "break-word", overflowWrap: "break-word" }}>
                       {step.description}
                     </p>
                   </div>

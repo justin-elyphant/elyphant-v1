@@ -160,7 +160,7 @@ const OrderDetail = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8">
+    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8 overflow-x-hidden">
       <div className="mb-6">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -234,8 +234,8 @@ const OrderDetail = () => {
       />
 
       {/* Order Summary and Details Grid */}
-      <div className="grid gap-6 lg:grid-cols-3 mb-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3 mb-6 min-w-0">
+        <div className="lg:col-span-2 space-y-6 min-w-0">
           <OrderSummaryCard order={order} />
           
           {/* Order Items - Responsive */}
@@ -254,7 +254,7 @@ const OrderDetail = () => {
           )}
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <ShippingInfoCard order={order} />
           
           {/* Tracking Information */}

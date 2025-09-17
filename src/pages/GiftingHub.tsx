@@ -6,7 +6,7 @@ import { EventsProvider } from "@/components/gifting/events/context/EventsContex
 const GiftingHub = () => {
   return (
     <SidebarLayout>
-      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4 pb-safe-bottom mobile-container ios-scroll">
+      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-3 sm:px-4 pb-[140px] sm:pb-safe-bottom mobile-container ios-scroll">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             Gifting

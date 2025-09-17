@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Table, 
@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, StopCircle } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { useOrderEligibility } from "@/hooks/useOrderEligibility";
 import OrderCancelDialog from "./OrderCancelDialog";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 
@@ -26,6 +27,7 @@ interface Order {
   order_number?: string;
   stripe_payment_intent_id?: string;
   stripe_session_id?: string;
+  zinc_status?: string;
 }
 
 interface OrderTableProps {
@@ -37,18 +39,37 @@ interface OrderTableProps {
 
 const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProps) => {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [orderEligibility, setOrderEligibility] = useState<any>(null);
   const { cancelOrder, isProcessing } = useOrderActions();
+  const { checkOrderEligibility, getOrderActionButton } = useOrderEligibility();
 
-  const canCancelOrder = (status: string) => {
-    return ['pending', 'failed', 'retry_pending'].includes(status.toLowerCase());
+  // Check eligibility when selected order changes
+  useEffect(() => {
+    if (cancellingOrderId) {
+      const order = orders.find(o => o.id === cancellingOrderId);
+      if (order) {
+        const loadEligibility = async () => {
+          const eligibility = await checkOrderEligibility(order.id);
+          setOrderEligibility(eligibility);
+        };
+        loadEligibility();
+      }
+    }
+  }, [cancellingOrderId, orders, checkOrderEligibility]);
+
+  const canShowActionButton = (order: Order) => {
+    return ['pending', 'failed', 'retry_pending', 'processing'].includes(order.status.toLowerCase()) &&
+           !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
   };
 
-  const handleCancelOrder = async (reason: string) => {
+  const handleOrderAction = async (reason: string) => {
     if (!cancellingOrderId) return;
     
+    // For now, use cancel order for all actions until abortOrder is added to hook
     const success = await cancelOrder(cancellingOrderId, reason);
     if (success) {
       setCancellingOrderId(null);
+      setOrderEligibility(null);
       onOrderUpdated?.();
     }
   };
@@ -122,18 +143,32 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
                       View Details
                     </Link>
                   </Button>
-                  {canCancelOrder(order.status) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCancellingOrderId(order.id)}
-                      disabled={isProcessing}
-                      className="text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Cancel
-                    </Button>
-                  )}
+                  {canShowActionButton(order) && (() => {
+                    const actionButton = getOrderActionButton(order.status, order.zinc_status, 
+                      order.status === 'processing');
+
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCancellingOrderId(order.id)}
+                        disabled={isProcessing}
+                        className="text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
+                      >
+                        {actionButton.type === 'abort' ? (
+                          <>
+                            <StopCircle className="h-3 w-3 mr-1" />
+                            Abort
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-3 w-3 mr-1" />
+                            Cancel
+                          </>
+                        )}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </TableCell>
             </TableRow>
@@ -143,8 +178,11 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
       
       <OrderCancelDialog
         isOpen={!!cancellingOrderId}
-        onClose={() => setCancellingOrderId(null)}
-        onConfirm={handleCancelOrder}
+        onClose={() => {
+          setCancellingOrderId(null);
+          setOrderEligibility(null);
+        }}
+        onConfirm={handleOrderAction}
         isProcessing={isProcessing}
         orderNumber={cancellingOrderId ? 
           orders.find(o => o.id === cancellingOrderId)?.order_number?.split('-').pop() || 
@@ -156,6 +194,8 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
         orderAmount={cancellingOrderId ? 
           orders.find(o => o.id === cancellingOrderId)?.total_amount || 0 : 0
         }
+        isAbort={orderEligibility?.operationRecommendation === 'abort'}
+        abortReason={orderEligibility?.abortReason}
       />
     </>
   );

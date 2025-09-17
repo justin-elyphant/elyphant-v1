@@ -22,6 +22,8 @@ interface OrderCancelDialogProps {
   orderNumber: string;
   orderStatus: string;
   orderAmount: number;
+  isAbort?: boolean;
+  abortReason?: string;
 }
 
 const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
@@ -31,7 +33,9 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
   isProcessing,
   orderNumber,
   orderStatus,
-  orderAmount
+  orderAmount,
+  isAbort = false,
+  abortReason
 }) => {
   const [selectedReason, setSelectedReason] = useState("changed_mind");
   const [customReason, setCustomReason] = useState("");
@@ -61,13 +65,24 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Cancel Order #{orderNumber}
+            {isAbort ? 'Abort' : 'Cancel'} Order #{orderNumber}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
               <p>
-                Are you sure you want to cancel this order? This action cannot be undone.
+                {isAbort ? 
+                  'This will attempt to abort the order with our fulfillment partner before it\'s shipped.' :
+                  'Are you sure you want to cancel this order? This action cannot be undone.'
+                }
               </p>
+              
+              {isAbort && abortReason && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> {abortReason}
+                  </p>
+                </div>
+              )}
               
               {isProcessingStatus && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
@@ -98,7 +113,7 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
 
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
-                  Please tell us why you're cancelling:
+                  Please tell us why you're {isAbort ? 'aborting' : 'cancelling'}:
                 </Label>
                 <RadioGroup 
                   value={selectedReason} 
@@ -125,7 +140,7 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
                     </Label>
                     <Textarea
                       id="custom-reason"
-                      placeholder="Please explain why you're cancelling..."
+                      placeholder={`Please explain why you're ${isAbort ? 'aborting' : 'cancelling'}...`}
                       value={customReason}
                       onChange={(e) => setCustomReason(e.target.value)}
                       className="mt-1"
@@ -154,7 +169,10 @@ const OrderCancelDialog: React.FC<OrderCancelDialogProps> = ({
             disabled={isProcessing || (selectedReason === "other" && !customReason.trim())}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isProcessing ? 'Cancelling...' : 'Cancel Order'}
+            {isProcessing ? 
+              (isAbort ? 'Aborting...' : 'Cancelling...') : 
+              (isAbort ? 'Abort Order' : 'Cancel Order')
+            }
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

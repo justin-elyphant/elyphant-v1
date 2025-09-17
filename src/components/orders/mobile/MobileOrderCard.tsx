@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, StopCircle } from "lucide-react";
 import OrderStatusBadge from "../OrderStatusBadge";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { useOrderEligibility } from "@/hooks/useOrderEligibility";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 import OrderCancelDialog from "../OrderCancelDialog";
 
@@ -17,6 +18,7 @@ interface Order {
   order_number?: string;
   stripe_payment_intent_id?: string;
   stripe_session_id?: string;
+  zinc_status?: string;
 }
 
 interface MobileOrderCardProps {
@@ -26,20 +28,37 @@ interface MobileOrderCardProps {
 
 const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [orderEligibility, setOrderEligibility] = useState<any>(null);
   const { cancelOrder, isProcessing } = useOrderActions();
+  const { checkOrderEligibility, getOrderActionButton } = useOrderEligibility();
 
-  const canCancelOrder = (status: string) => {
-    return ['pending', 'failed', 'retry_pending'].includes(status.toLowerCase());
-  };
+  // Check order eligibility on mount and when order changes
+  useEffect(() => {
+    const loadEligibility = async () => {
+      const eligibility = await checkOrderEligibility(order.id);
+      setOrderEligibility(eligibility);
+    };
+    loadEligibility();
+  }, [order.id, order.status, checkOrderEligibility]);
 
-  const handleCancelOrder = async (reason: string) => {
+  const actionButton = orderEligibility ? 
+    getOrderActionButton(order.status, order.zinc_status, orderEligibility.isProcessingStage) :
+    { type: 'none', label: 'Loading...', disabled: true };
+
+  const handleOrderAction = async (reason: string) => {
     if (!cancellingOrderId) return;
     
+    // For now, use cancel order for all actions until abortOrder is added to hook
     const success = await cancelOrder(cancellingOrderId, reason);
     if (success) {
       setCancellingOrderId(null);
       onOrderUpdated?.();
     }
+  };
+
+  const canShowActionButton = () => {
+    return ['pending', 'failed', 'retry_pending', 'processing'].includes(order.status.toLowerCase()) &&
+           !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
   };
 
   return (
@@ -95,7 +114,7 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
               </Link>
             </Button>
             
-            {canCancelOrder(order.status) && (
+            {canShowActionButton() && (
               <Button
                 variant="outline"
                 size="default"
@@ -103,8 +122,17 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
                 disabled={isProcessing}
                 className="h-11 px-4 touch-manipulation text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
               >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
+                {actionButton.type === 'abort' ? (
+                  <>
+                    <StopCircle className="h-4 w-4 mr-2" />
+                    Abort
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -114,7 +142,7 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
       <OrderCancelDialog
         isOpen={!!cancellingOrderId}
         onClose={() => setCancellingOrderId(null)}
-        onConfirm={handleCancelOrder}
+        onConfirm={handleOrderAction}
         isProcessing={isProcessing}
         orderNumber={cancellingOrderId ? 
           order.order_number?.split('-').pop() || 
@@ -122,6 +150,8 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
         }
         orderStatus={cancellingOrderId ? order.status : 'unknown'}
         orderAmount={cancellingOrderId ? order.total_amount : 0}
+        isAbort={actionButton.type === 'abort'}
+        abortReason={orderEligibility?.abortReason}
       />
     </>
   );

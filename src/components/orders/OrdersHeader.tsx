@@ -10,7 +10,11 @@ interface OrdersHeaderProps {
 
 const OrdersHeader = ({ refreshOrders, isRefreshing }: OrdersHeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center mb-6"
+      style={{ 
+        marginTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 1rem))' 
+      }}
+    >
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">My Orders</h1>
         <p className="text-sm text-muted-foreground">View and manage your order history</p>

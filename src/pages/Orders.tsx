@@ -126,9 +126,9 @@ const Orders = () => {
 
   return (
     <SidebarLayout>
-      <div className="container max-w-6xl mx-auto py-8 px-4 pt-6"
+      <div className="container max-w-6xl mx-auto px-4 pt-8 pb-8"
         style={{ 
-          paddingTop: 'max(1.5rem, calc(env(safe-area-inset-top, 0px) + 1.5rem))' 
+          paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))' 
         }}
       >
         <OrdersHeader 

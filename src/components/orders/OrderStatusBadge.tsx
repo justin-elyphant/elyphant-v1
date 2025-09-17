@@ -32,10 +32,27 @@ const OrderStatusBadge = ({
     return Date.now() - new Date(createdAt).getTime();
   };
 
+  // Filter out internal Zinc statuses and only show customer-facing statuses
+  const getCustomerFacingStatus = (rawStatus: string) => {
+    const status = rawStatus.toLowerCase();
+    
+    // Map internal statuses to customer-facing ones
+    switch (status) {
+      case 'submitted_to_zinc':
+      case 'confirmed':
+        return 'processing';
+      case 'retry_pending':
+        return 'processing';
+      default:
+        return status;
+    }
+  };
+
   // Enhanced status logic for payment verification states
   const getEnhancedStatus = () => {
     const timeSinceCreation = getTimeSinceCreation();
     const minutesSinceCreation = timeSinceCreation / (1000 * 60);
+    const customerStatus = getCustomerFacingStatus(status);
 
     if (status.toLowerCase() === 'payment_verification_failed') {
       if (minutesSinceCreation < 10) {
@@ -67,19 +84,19 @@ const OrderStatusBadge = ({
       }
     }
 
-    // Default status handling for all other statuses
+    // Default status handling for all other statuses using customer-facing status
     return {
-      displayText: status.charAt(0).toUpperCase() + status.slice(1),
-      variant: getVariant(),
-      style: getCustomStyle(),
-      icon: getIcon(),
+      displayText: customerStatus.charAt(0).toUpperCase() + customerStatus.slice(1),
+      variant: getVariant(customerStatus),
+      style: getCustomStyle(customerStatus),
+      icon: getIcon(customerStatus),
       showRefresh: false,
       message: null
     };
   };
 
-  const getVariant = () => {
-    switch (status.toLowerCase()) {
+  const getVariant = (statusToCheck: string = status) => {
+    switch (statusToCheck.toLowerCase()) {
       case "delivered":
         return "default" as const;
       case "shipped":
@@ -94,8 +111,8 @@ const OrderStatusBadge = ({
     }
   };
 
-  const getCustomStyle = () => {
-    switch (status.toLowerCase()) {
+  const getCustomStyle = (statusToCheck: string = status) => {
+    switch (statusToCheck.toLowerCase()) {
       case "delivered":
         return { 
           backgroundColor: "hsl(var(--status-delivered))", 
@@ -132,8 +149,8 @@ const OrderStatusBadge = ({
     }
   };
 
-  const getIcon = () => {
-    switch (status.toLowerCase()) {
+  const getIcon = (statusToCheck: string = status) => {
+    switch (statusToCheck.toLowerCase()) {
       case "delivered":
         return <CheckCircle className="h-3 w-3 mr-1" />;
       case "shipped":

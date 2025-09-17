@@ -2,9 +2,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import OrdersHeader from "@/components/orders/OrdersHeader";
 import OrderTable from "@/components/orders/OrderTable";
+import MobileOrdersList from "@/components/orders/mobile/MobileOrdersList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Order {
   id: string;
@@ -21,6 +23,7 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchOrders = useCallback(async () => {
     setIsRefreshing(true);
@@ -129,12 +132,25 @@ const Orders = () => {
           isRefreshing={isRefreshing}
         />
         
-        <OrderTable 
-          orders={orders} 
-          isLoading={isLoading} 
-          error={error}
-          onOrderUpdated={refreshOrders}
-        />
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <OrderTable 
+            orders={orders} 
+            isLoading={isLoading} 
+            error={error}
+            onOrderUpdated={refreshOrders}
+          />
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="block md:hidden">
+          <MobileOrdersList 
+            orders={orders} 
+            isLoading={isLoading} 
+            error={error}
+            onOrderUpdated={refreshOrders}
+          />
+        </div>
       </div>
     </SidebarLayout>
   );

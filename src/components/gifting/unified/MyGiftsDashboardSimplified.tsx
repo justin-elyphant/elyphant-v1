@@ -65,40 +65,40 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
+      {/* Quick Stats - Mobile optimized */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <Card className="mobile-card">
+          <CardContent className="p-4 md:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-primary">{activeRules.length}</p>
-                <p className="text-sm text-muted-foreground">Auto-Gift Rules</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{activeRules.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Auto-Gift Rules</p>
               </div>
-              <Bot className="h-8 w-8 text-purple-500" />
+              <Bot className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="mobile-card">
+          <CardContent className="p-4 md:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-primary">{scheduledGifts.length}</p>
-                <p className="text-sm text-muted-foreground">Scheduled Gifts</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{scheduledGifts.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Scheduled Gifts</p>
               </div>
-              <Calendar className="h-8 w-8 text-blue-500" />
+              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="mobile-card">
+          <CardContent className="p-4 md:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-primary">{giftHistory.length}</p>
-                <p className="text-sm text-muted-foreground">Gifts Sent</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{giftHistory.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Gifts Sent</p>
               </div>
-              <Gift className="h-8 w-8 text-emerald-500" />
+              <Gift className="h-6 w-6 md:h-8 md:w-8 text-emerald-500" />
             </div>
           </CardContent>
         </Card>
@@ -122,10 +122,11 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
               <Button 
                 size="sm" 
                 onClick={onSwitchToSmartGifting}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 min-h-[44px] marketplace-touch-target text-xs md:text-sm"
               >
-                <Plus className="h-4 w-4" />
-                Add Rule
+                <Plus className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Add Rule</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </CardHeader>
@@ -133,36 +134,47 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
             {activeRules.length > 0 ? (
               <div className="space-y-3">
                 {activeRules.map((rule) => (
-                  <div key={rule.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                        <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <div key={rule.id} className="mobile-card p-3 md:p-4 border rounded-lg">
+                    {/* Mobile: Stack layout, Desktop: Side-by-side */}
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                          <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm md:text-base truncate">{rule.date_type}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">
+                            Budget: ${rule.budget_limit} • Source: {rule.gift_selection_criteria?.source || 'Wishlist'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{rule.date_type}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Budget: ${rule.budget_limit} • Source: {rule.gift_selection_criteria?.source || 'Wishlist'}
-                        </p>
+                      
+                      {/* Mobile: Stack buttons, Desktop: Inline */}
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <Badge className={`${getStatusColor('active')} w-fit`}>
+                          {getStatusIcon('active')}
+                          <span className="ml-1 text-xs">Active</span>
+                        </Badge>
+                        <div className="flex gap-2 w-full md:w-auto">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => onEditRule?.(rule.id)}
+                            className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="ml-1 md:hidden">Edit</span>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target"
+                          >
+                            <Pause className="h-4 w-4" />
+                            <span className="ml-1 md:hidden">Pause</span>
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor('active')}>
-                        {getStatusIcon('active')}
-                        <span className="ml-1">Active</span>
-                      </Badge>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onEditRule?.(rule.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                      >
-                        <Pause className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}

@@ -116,12 +116,12 @@ const SmartGiftingTab = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Gift Path Selector */}
       <div>
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">How would you like to give gifts?</h3>
-          <p className="text-sm text-muted-foreground">
+        <div className="mb-4 md:mb-6">
+          <h3 className="text-base md:text-lg font-semibold mb-2">How would you like to give gifts?</h3>
+          <p className="text-xs md:text-sm text-muted-foreground">
             Choose between AI-powered automation or manual gift selection
           </p>
         </div>
@@ -217,19 +217,19 @@ const GiftingHubCard = () => {
         </CardHeader>
         <CardContent className="p-0">
           <Tabs defaultValue="smart-gifting" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 px-6" data-testid="tabs-list">
-              <TabsTrigger value="smart-gifting">Smart Gifting</TabsTrigger>
-              <TabsTrigger value="my-gifts">My Gifts</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 px-3 md:px-6 marketplace-touch-target" data-testid="tabs-list">
+              <TabsTrigger value="smart-gifting" className="min-h-[44px] text-xs md:text-sm">Smart Gifting</TabsTrigger>
+              <TabsTrigger value="my-gifts" className="min-h-[44px] text-xs md:text-sm">My Gifts</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="smart-gifting" className="mt-6">
-              <div className="px-6 pb-6">
+            <TabsContent value="smart-gifting" className="mt-4 md:mt-6">
+              <div className="px-3 md:px-6 pb-4 md:pb-6 mobile-container">
                 <SmartGiftingTab />
               </div>
             </TabsContent>
             
-            <TabsContent value="my-gifts" className="mt-6">
-              <div className="px-6 pb-6">
+            <TabsContent value="my-gifts" className="mt-4 md:mt-6">
+              <div className="px-3 md:px-6 pb-4 md:pb-6 mobile-container">
                 <MyGiftsTab />
               </div>
             </TabsContent>

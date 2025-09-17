@@ -5,6 +5,7 @@
 @tailwind utilities;
 
 @import './styles/mobile-scrolling.css';
+@import './styles/mobile-gifting.css';
 
 :root {
   /* Design system color tokens */

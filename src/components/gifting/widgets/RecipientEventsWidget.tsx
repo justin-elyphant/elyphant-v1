@@ -108,78 +108,83 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
         {upcomingEvents.length > 0 ? (
           <div className="space-y-3">
             {upcomingEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                    {getEventIcon(event.eventType)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{event.recipientName}</h4>
-                      {event.hasAutoGift && (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                          Auto-Gift Set
-                        </Badge>
-                      )}
+              <div key={event.id} className="mobile-card p-3 md:p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                {/* Mobile: Stack layout, Desktop: Side-by-side */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div className="flex items-start md:items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                      {getEventIcon(event.eventType)}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{event.eventType}</span>
-                      <span>•</span>
-                      <span>{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
-                      {event.daysUntil <= 14 && (
-                        <>
-                          <span>•</span>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-xs ${getUrgencyColor(event.urgency)}`}
-                            >
-                              {event.daysUntil === 0 ? 'Today' : 
-                               event.daysUntil === 1 ? 'Tomorrow' : 
-                               `${event.daysUntil} days`}
-                            </Badge>
-                          </div>
-                        </>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 mb-1">
+                        <h4 className="font-medium truncate text-sm md:text-base">{event.recipientName}</h4>
+                        {event.hasAutoGift && (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 w-fit">
+                            Auto-Gift Set
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Mobile: Stack details vertically */}
+                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span className="truncate">{event.eventType}</span>
+                        <span className="hidden md:inline">•</span>
+                        <span className="truncate">{format(new Date(event.eventDate), 'MMM d, yyyy')}</span>
+                        {event.daysUntil <= 14 && (
+                          <>
+                            <span className="hidden md:inline">•</span>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 flex-shrink-0" />
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs ${getUrgencyColor(event.urgency)}`}
+                              >
+                                {event.daysUntil === 0 ? 'Today' : 
+                                 event.daysUntil === 1 ? 'Tomorrow' : 
+                                 `${event.daysUntil} days`}
+                              </Badge>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  {!event.hasAutoGift && (
+                  
+                  {/* Mobile: Full-width button row, Desktop: Side buttons */}
+                  <div className="flex gap-2 w-full md:w-auto">
+                    {!event.hasAutoGift && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          console.log('🎯 Auto-Gift button clicked for event:', event);
+                          const eventWithInitialData = {
+                            ...event,
+                            initialData: {
+                              recipientId: event.recipientId,
+                              eventType: event.eventType.toLowerCase(),
+                              recipientName: event.recipientName,
+                              eventDate: event.eventDate,
+                              relationshipType: event.relationshipType
+                            }
+                          };
+                          console.log('🎯 Calling onSetupAutoGift with:', eventWithInitialData);
+                          onSetupAutoGift?.(eventWithInitialData);
+                        }}
+                        className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:from-purple-700 hover:to-blue-700 text-xs md:text-sm"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        <span className="md:inline">Auto-Gift</span>
+                      </Button>
+                    )}
                     <Button 
-                      size="sm" 
+                      size="sm"
                       variant="outline"
-                      onClick={() => {
-                        console.log('🎯 Auto-Gift button clicked for event:', event);
-                        const eventWithInitialData = {
-                          ...event,
-                          initialData: {
-                            recipientId: event.recipientId,
-                            eventType: event.eventType.toLowerCase(),
-                            recipientName: event.recipientName,
-                            eventDate: event.eventDate,
-                            relationshipType: event.relationshipType
-                          }
-                        };
-                        console.log('🎯 Calling onSetupAutoGift with:', eventWithInitialData);
-                        onSetupAutoGift?.(eventWithInitialData);
-                      }}
-                      className="flex items-center gap-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:from-purple-700 hover:to-blue-700"
+                      onClick={() => onSendGift?.(event)}
+                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-white text-gray-900 border-gray-200 hover:bg-gray-50 text-xs md:text-sm"
                     >
-                      <Plus className="h-3 w-3" />
-                      Auto-Gift
+                      Send Gift
                     </Button>
-                  )}
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSendGift?.(event)}
-                    className="bg-white text-gray-900 border-gray-200 hover:bg-gray-50"
-                  >
-                    Send Gift
-                  </Button>
+                  </div>
                 </div>
               </div>
             ))}

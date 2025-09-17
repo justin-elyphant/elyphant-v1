@@ -16,8 +16,8 @@ const NotificationBadge: React.FC<BadgeProps> = ({ count, type, className }) => 
 
   const badgeStyles = {
     cart: "bg-primary text-primary-foreground",
-    connections: "bg-blue-500 text-white",
-    messages: "bg-green-500 text-white", 
+    connections: "bg-secondary text-secondary-foreground",
+    messages: "bg-accent text-accent-foreground", 
     notifications: "bg-destructive text-destructive-foreground"
   };
 

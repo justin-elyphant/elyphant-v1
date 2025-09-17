@@ -20,7 +20,7 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   return (
     <span 
       className={cn(
-        "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs min-w-[1.25rem] h-5 px-1",
+        "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs min-w-[1.25rem] h-5 px-1",
         "animate-in fade-in-50 zoom-in-95 duration-300",
         count > maxCount ? "px-1.5" : "", 
         className

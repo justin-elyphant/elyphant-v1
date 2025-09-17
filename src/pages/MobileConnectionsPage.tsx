@@ -14,6 +14,8 @@ import { OptimizedMobileConnectionCard } from "@/components/connections/Optimize
 import { MobileConnectionsHeader } from "@/components/connections/MobileConnectionsHeader";
 import { MobilePullToRefresh } from "@/components/mobile/MobilePullToRefresh";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { AddConnectionFAB } from "@/components/connections/AddConnectionFAB";
+import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
 import { RelationshipType } from "@/types/connections";
 import "@/styles/connections-mobile.css";
 
@@ -29,6 +31,7 @@ export const MobileConnectionsPage = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
     const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
+    const [showAddConnectionSheet, setShowAddConnectionSheet] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     
     console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
@@ -180,7 +183,7 @@ export const MobileConnectionsPage = () => {
               onClick={() => triggerHapticFeedback('selection')}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Discover
+              Suggestions
             </TabsTrigger>
           </TabsList>
 
@@ -211,9 +214,14 @@ export const MobileConnectionsPage = () => {
                     <p className="text-muted-foreground mb-4">
                       {searchTerm ? `No results for "${searchTerm}"` : "You haven't added any friends yet"}
                     </p>
-                    <Button onClick={() => setActiveTab("suggestions")}>
-                      Find Friends
-                    </Button>
+                    <div className="space-y-2">
+                      <Button onClick={() => setActiveTab("suggestions")}>
+                        Browse Suggestions
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowAddConnectionSheet(true)}>
+                        Add Connection
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -267,9 +275,12 @@ export const MobileConnectionsPage = () => {
                   <div className="text-center py-12">
                     <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2">No suggestions found</h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground mb-4">
                       {searchTerm ? `No results for "${searchTerm}"` : "Check back later for new suggestions"}
                     </p>
+                    <Button variant="outline" onClick={() => setShowAddConnectionSheet(true)}>
+                      Add Connection
+                    </Button>
                   </div>
                 )}
               </TabsContent>
@@ -300,6 +311,19 @@ export const MobileConnectionsPage = () => {
           ))}
         </div>
       </MobileBottomSheet>
+
+      {/* Add Connection FAB */}
+      <AddConnectionFAB onClick={() => setShowAddConnectionSheet(true)} />
+
+      {/* Add Connection Bottom Sheet */}
+      <AddConnectionSheet
+        isOpen={showAddConnectionSheet}
+        onClose={() => setShowAddConnectionSheet(false)}
+        onConnectionAdded={() => {
+          refreshPendingConnections();
+          triggerHapticFeedback('success');
+        }}
+      />
     </div>
   );
   } catch (error) {

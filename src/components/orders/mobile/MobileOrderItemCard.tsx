@@ -27,6 +27,12 @@ const MobileOrderItemCard = ({
   const quantity = Number((item as any).quantity ?? (item as any).qty ?? 1);
   const totalPrice = unitPrice * quantity;
   
+  // Helper to detect placeholder/mock images
+  const isPlaceholder = (url?: string) => {
+    if (!url) return true;
+    return /placeholder\.svg|unsplash|dummy|default|no-image/i.test(String(url));
+  };
+  
   // Determine initial image source from various possible fields
   const initialImageUrl = (item as any).product_image || 
                  (item as any).image_url || 
@@ -34,7 +40,9 @@ const MobileOrderItemCard = ({
                  (item as any).images?.[0] ||
                  (item as any).product?.image ||
                  (item as any).product?.images?.[0];
-  const [imageSrc, setImageSrc] = useState<string | undefined>(initialImageUrl);
+  const [imageSrc, setImageSrc] = useState<string | undefined>(
+    isPlaceholder(initialImageUrl) ? undefined : initialImageUrl
+  );
 
   // Try to resolve a real image from Zinc detail or search
   useEffect(() => {
@@ -52,7 +60,7 @@ const MobileOrderItemCard = ({
         if (productId) {
           const prod = await getProductDetail(productId, retailer);
           const pImg = (prod as any)?.image || (prod as any)?.images?.[0];
-          if (!cancelled && pImg) {
+          if (!cancelled && pImg && !isPlaceholder(pImg)) {
             console.log("[MobileOrderItemCard] got image from getProductDetail", pImg);
             setImageSrc(pImg);
             setImageError(false);
@@ -68,7 +76,7 @@ const MobileOrderItemCard = ({
         if (productId) {
           const detail = await enhancedZincApiService.getProductDetails(productId);
           const dImg = detail?.image || detail?.main_image || detail?.images?.[0];
-          if (!cancelled && dImg) {
+          if (!cancelled && dImg && !isPlaceholder(dImg)) {
             console.log("[MobileOrderItemCard] got image from enhanced getProductDetails", dImg);
             setImageSrc(dImg);
             setImageError(false);
@@ -84,7 +92,7 @@ const MobileOrderItemCard = ({
         const res = await enhancedZincApiService.searchProducts(productName, 1, 12);
         const p = res?.results?.[0];
         const sImg = p?.image || p?.main_image || p?.images?.[0];
-        if (!cancelled && sImg) {
+        if (!cancelled && sImg && !isPlaceholder(sImg)) {
           console.log("[MobileOrderItemCard] got image from title search", sImg);
           setImageSrc(sImg);
           setImageError(false);

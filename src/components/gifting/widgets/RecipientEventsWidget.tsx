@@ -87,8 +87,8 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
   return (
     <Card className="mb-24 md:mb-0">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-500" />
               Recipient Events
@@ -98,9 +98,9 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
             </CardDescription>
           </div>
           {upcomingEvents.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {events.length} total
-            </Badge>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+              <span>{events.length} upcoming</span>
+            </div>
           )}
         </div>
       </CardHeader>

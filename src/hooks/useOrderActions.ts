@@ -1,136 +1,178 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useOrderActions = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const cancelOrder = async (orderId: string, reason?: string) => {
+  const abortOrder = async (orderId: string, reason: string = 'User aborted') => {
+    setIsProcessing(true);
+    toast.loading("Aborting order...", { id: `abort-${orderId}` });
+
     try {
-      setIsProcessing(true);
-
-      // First check if order can be cancelled using our database function
-      const { data: canCancel, error: checkError } = await supabase
-        .rpc('can_cancel_order', { order_id: orderId });
-
-      if (checkError) {
-        console.error('Error checking if order can be cancelled:', checkError);
-        toast.error('Error checking order status');
-        return false;
-      }
-
-      if (!canCancel) {
-        toast.error('This order cannot be cancelled in its current state');
-        return false;
-      }
-
-      // Get order details to check if it has a zinc_order_id
-      const { data: order, error: fetchError } = await supabase
-        .from('orders')
-        .select('zinc_order_id, order_number')
-        .eq('id', orderId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching order:', fetchError);
-        toast.error('Error fetching order details');
-        return false;
-      }
-
-      // If order has a zinc_order_id, cancel it through the edge function
-      let zincCancelled = true;
-      if (order.zinc_order_id) {
-        console.log('Cancelling Zinc order via edge function:', order.zinc_order_id);
-        
-        try {
-          const { data, error } = await supabase.functions.invoke('zinc-order-management', {
-            body: {
-              action: 'cancel_order',
-              orderId: orderId,
-              cancellationReason: reason || 'User cancelled'
-            }
-          });
-
-          if (error) {
-            console.warn('Failed to cancel through Zinc edge function:', error);
-            zincCancelled = false;
-          } else if (data?.success) {
-            console.log('✅ Zinc cancellation successful via edge function');
-            zincCancelled = true;
-          } else {
-            console.warn('Zinc cancellation returned unsuccessful result');
-            zincCancelled = false;
-          }
-        } catch (edgeError) {
-          console.warn('Failed to cancel through Zinc edge function:', edgeError);
-          zincCancelled = false;
+      // Use the enhanced Zinc abort functionality
+      const { data, error } = await supabase.functions.invoke('zinc-order-management', {
+        body: {
+          action: 'abort_order',
+          orderId: orderId,
+          cancellationReason: reason
         }
-      }
+      });
 
-      // Cancel in our database using the database function
-      const { data: result, error: cancelError } = await supabase
-        .rpc('cancel_order', { 
-          order_id: orderId, 
-          cancellation_reason: reason || 'User cancelled' 
-        });
-
-      if (cancelError) {
-        console.error('Error cancelling order:', cancelError);
-        toast.error('Failed to cancel order');
+      if (error) {
+        console.error('Order abort failed:', error);
+        toast.error(`Failed to abort order: ${error.message}`, { id: `abort-${orderId}` });
         return false;
       }
 
-      const resultObj = (result as any) || {};
-      if (resultObj.success) {
-        toast.success(`Order ${order.order_number} cancelled successfully`);
+      if (data.success) {
+        let successMessage = 'Order aborted successfully';
+        
+        if (data.operationType === 'cancel') {
+          successMessage = 'Order cancelled successfully (abort not available)';
+        } else if (data.abortMethod === 'immediate') {
+          successMessage = 'Order aborted immediately';
+        } else if (data.abortMethod === 'polled') {
+          successMessage = 'Order aborted after processing';
+        } else if (data.abortMethod === 'timeout_fallback') {
+          successMessage = 'Order cancelled (abort timed out)';
+        }
+        
+        if (data.refundInitiated) {
+          successMessage += '. Refund will be processed within 3-5 business days.';
+        }
+
+        toast.success(successMessage, { id: `abort-${orderId}` });
         return true;
       } else {
-        toast.error(resultObj.error || 'Failed to cancel order');
+        toast.error(data.error || 'Failed to abort order', { id: `abort-${orderId}` });
         return false;
       }
-
     } catch (error) {
-      console.error('Unexpected error during cancellation:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Unexpected error during abort:', error);
+      toast.error('An unexpected error occurred while aborting the order', { id: `abort-${orderId}` });
       return false;
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
-    try {
-      setIsProcessing(true);
+  const cancelOrder = async (orderId: string, reason: string = 'User cancelled') => {
+    setIsProcessing(true);
+    toast.loading("Cancelling order...", { id: `cancel-${orderId}` });
 
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          status, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq('id', orderId);
+    try {
+      // Use the enhanced Zinc order management function
+      const { data, error } = await supabase.functions.invoke('zinc-order-management', {
+        body: {
+          action: 'cancel_order',
+          orderId: orderId,
+          cancellationReason: reason
+        }
+      });
 
       if (error) {
-        console.error('Error updating order status:', error);
-        toast.error('Failed to update order status');
+        console.error('Order cancellation failed:', error);
+        toast.error(`Failed to cancel order: ${error.message}`, { id: `cancel-${orderId}` });
         return false;
       }
 
-      toast.success('Order status updated successfully');
-      return true;
+      if (data.success) {
+        let successMessage = 'Order cancelled successfully';
+        
+        if (data.refundInitiated) {
+          successMessage += '. Refund will be processed within 3-5 business days.';
+        }
+        
+        if (data.zincCancellation === 'successful') {
+          successMessage += ' The order was also cancelled with our fulfillment partner.';
+        }
 
+        toast.success(successMessage, { id: `cancel-${orderId}` });
+        return true;
+      } else {
+        toast.error(data.error || 'Failed to cancel order', { id: `cancel-${orderId}` });
+        return false;
+      }
     } catch (error) {
-      console.error('Unexpected error updating status:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Unexpected error during cancellation:', error);
+      toast.error('An unexpected error occurred while cancelling the order', { id: `cancel-${orderId}` });
       return false;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const retryOrder = async (orderId: string, useZincNativeRetry: boolean = false) => {
+    setIsProcessing(true);
+    toast.loading("Retrying order...", { id: `retry-${orderId}` });
+
+    try {
+      const functionName = useZincNativeRetry ? 'zinc-order-management' : 'process-zma-order';
+      const body = useZincNativeRetry 
+        ? { action: 'retry_with_zinc', orderId }
+        : { orderId, isTestMode: false, retryAttempt: true };
+
+      const { data, error } = await supabase.functions.invoke(functionName, { body });
+
+      if (error) {
+        console.error('Order retry failed:', error);
+        toast.error(`Failed to retry order: ${error.message}`, { id: `retry-${orderId}` });
+        return false;
+      }
+
+      if (data.success) {
+        const message = useZincNativeRetry 
+          ? `Order retried using enhanced system. New tracking ID: ${data.newRequestId}`
+          : 'Order retry initiated successfully';
+        
+        toast.success(message, { id: `retry-${orderId}` });
+        return true;
+      } else {
+        toast.error(data.error || 'Failed to retry order', { id: `retry-${orderId}` });
+        return false;
+      }
+    } catch (error) {
+      console.error('Unexpected error during retry:', error);
+      toast.error('An unexpected error occurred while retrying the order', { id: `retry-${orderId}` });
+      return false;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const checkOrderStatus = async (orderId: string) => {
+    setIsProcessing(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('zinc-order-management', {
+        body: {
+          action: 'check_order_status',
+          orderId: orderId
+        }
+      });
+
+      if (error) {
+        console.error('Order status check failed:', error);
+        toast.error('Failed to check order status');
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Unexpected error during status check:', error);
+      toast.error('An unexpected error occurred while checking order status');
+      return null;
     } finally {
       setIsProcessing(false);
     }
   };
 
   return {
+    abortOrder,
     cancelOrder,
-    updateOrderStatus,
+    retryOrder,
+    checkOrderStatus,
     isProcessing
   };
 };

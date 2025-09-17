@@ -29,7 +29,7 @@ interface MobileOrderCardProps {
 const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [orderEligibility, setOrderEligibility] = useState<any>(null);
-  const { cancelOrder, isProcessing } = useOrderActions();
+  const { abortOrder, cancelOrder, isProcessing } = useOrderActions();
   const { checkOrderEligibility, getOrderActionButton } = useOrderEligibility();
 
   // Check order eligibility on mount and when order changes
@@ -48,8 +48,10 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
   const handleOrderAction = async (reason: string) => {
     if (!cancellingOrderId) return;
     
-    // For now, use cancel order for all actions until abortOrder is added to hook
-    const success = await cancelOrder(cancellingOrderId, reason);
+    const isAbort = actionButton.type === 'abort';
+    const actionFn = isAbort ? abortOrder : cancelOrder;
+    
+    const success = await actionFn(cancellingOrderId, reason);
     if (success) {
       setCancellingOrderId(null);
       onOrderUpdated?.();

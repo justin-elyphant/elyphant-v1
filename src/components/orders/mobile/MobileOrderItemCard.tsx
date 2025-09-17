@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
 import { getProductDetail } from "@/api/product";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 interface MobileOrderItemCardProps {
   item: any;
@@ -49,6 +50,20 @@ useEffect(() => {
 // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [imageError, (item as any).product_id]);
 
+// Fallback: search by product name if we still don't have an image
+useEffect(() => {
+  if (!imageSrc && productName && !imageError) {
+    enhancedZincApiService.searchProducts(productName, 1, 12).then((res) => {
+      const p = res?.results?.[0];
+      const fetched = p?.image || p?.main_image || p?.images?.[0];
+      if (fetched) {
+        setImageSrc(fetched);
+      }
+    }).catch(() => {/* ignore */});
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [imageSrc, productName, imageError]);
+
   return (
     <Card className="mobile-card-hover">
       <CardContent className="touch-padding">
@@ -92,15 +107,14 @@ useEffect(() => {
           </div>
 
           {/* Price and Actions */}
-          <div className="flex-shrink-0 text-right space-y-3">
-            <div className="font-semibold text-body-base">
+          <div className="flex-shrink-0 text-right space-y-2">
+            <div className="font-medium text-body-base">
               ${totalPrice.toFixed(2)}
             </div>
-            
-            <div className="flex gap-2">
-{onReorder && (
+            <div className="flex gap-2 justify-end">
+              {onReorder && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onReorder?.(item)}
                   className="touch-target-44 h-9 w-9 p-0"
@@ -109,10 +123,9 @@ useEffect(() => {
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               )}
-              
               {orderStatus === "delivered" && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onReview?.(item)}
                   className="touch-target-44 h-9 w-9 p-0"

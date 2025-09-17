@@ -1,1 +1,4 @@
 project_id = "dmkxtkvlispxeqfzlczr"
+
+[functions.send-order-receipt]
+verify_jwt = true

@@ -50,7 +50,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         >
           <AppSidebar />
           <SidebarInset className="flex-1">
-            <main className="h-full overflow-y-auto">
+            <main className="h-full overflow-y-auto pb-safe-bottom mobile-container ios-scroll">
               {children}
             </main>
           </SidebarInset>

@@ -23,7 +23,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
 
   if (loading) {
     return (
-      <Card>
+      <Card className="mb-24 md:mb-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-blue-500" />
@@ -51,7 +51,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
 
   if (error) {
     return (
-      <Card>
+      <Card className="mb-24 md:mb-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-blue-500" />
@@ -85,7 +85,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
   };
 
   return (
-    <Card>
+    <Card className="mb-24 md:mb-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

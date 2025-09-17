@@ -56,11 +56,90 @@ serve(async (req) => {
       throw new Error(`Zinc API error: ${zincResult.message || 'Unknown error'}`);
     }
 
-    // Update our database with the current Zinc status
+    // Helper function to map Zinc status to order status
+    function mapZincToOrderStatus(zincStatus: string): string {
+      const statusMap: Record<string, string> = {
+        'placed': 'pending',
+        'validated': 'processing',
+        'shipped': 'shipped',
+        'delivered': 'delivered',
+        'failed': 'failed',
+        'cancelled': 'cancelled'
+      };
+      return statusMap[zincStatus] || 'processing';
+    }
+
+    // Helper function to get event titles
+    function getEventTitle(statusType: string): string {
+      const titleMap: Record<string, string> = {
+        'request.placed': 'Order Placed',
+        'request.finished': 'Order Processed',
+        'shipment.shipped': 'Shipped',
+        'shipment.delivered': 'Delivered',
+        'request.failed': 'Order Failed',
+        'request.cancelled': 'Order Cancelled',
+        'tracking.available': 'Tracking Available'
+      };
+      return titleMap[statusType] || 'Order Update';
+    }
+
+    // Extract timeline events and merchant data from response
+    const timelineEvents = zincResult.status_updates || [];
+    const merchantOrderIds = zincResult.merchant_order_ids || [];
+    
+    // Create structured timeline events
+    const structuredEvents = timelineEvents.map((update: any) => ({
+      id: `zinc_${update.type}_${update._created_at}`,
+      type: update.type,
+      title: getEventTitle(update.type),
+      description: update.message,
+      timestamp: update._created_at,
+      status: 'completed',
+      data: update.data,
+      source: 'zinc'
+    }));
+
+    // Add tracking events from merchant data
+    merchantOrderIds.forEach((merchant: any) => {
+      if (merchant.tracking_url) {
+        structuredEvents.push({
+          id: `tracking_${merchant.merchant_order_id}`,
+          type: 'tracking.available',
+          title: 'Tracking Available',
+          description: `Tracking information available for ${merchant.merchant.toUpperCase()} order`,
+          timestamp: merchant.placed_at || new Date().toISOString(),
+          status: 'completed',
+          data: {
+            tracking_url: merchant.tracking_url,
+            merchant_order_id: merchant.merchant_order_id,
+            merchant: merchant.merchant
+          },
+          source: 'merchant'
+        });
+      }
+    });
+
+    // Sort events by timestamp
+    const sortedEvents = structuredEvents.sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    // Prepare merchant tracking data
+    const merchantTracking = {
+      merchant_order_ids: merchantOrderIds,
+      delivery_dates: zincResult.delivery_dates || [],
+      last_update: new Date().toISOString()
+    };
+
+    // Update our database with enhanced data
     const { error: updateError } = await supabase
       .from('orders')
       .update({
         zinc_status: zincResult.status || 'unknown',
+        status: mapZincToOrderStatus(zincResult.status),
+        zinc_timeline_events: sortedEvents,
+        merchant_tracking_data: merchantTracking,
+        last_zinc_update: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('zinc_order_id', zincOrderId);

@@ -22,6 +22,7 @@ import OrderProgressStepper from "@/components/orders/OrderProgressStepper";
 import TrackingInfoCard from "@/components/orders/TrackingInfoCard";
 import MobileActionBar from "@/components/orders/MobileActionBar";
 import OrderTimeline from "@/components/orders/OrderTimeline";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import {
   Dialog,
   DialogContent,
@@ -268,6 +269,8 @@ const OrderDetail = () => {
           <OrderTimeline 
             orderStatus={order.status}
             orderDate={order.date}
+            zincTimelineEvents={order.zinc_timeline_events}
+            merchantTrackingData={order.merchant_tracking_data}
           />
         </div>
       </div>

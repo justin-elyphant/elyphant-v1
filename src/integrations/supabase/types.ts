@@ -2871,6 +2871,8 @@ export type Database = {
           id: string
           is_gift: boolean | null
           is_surprise_gift: boolean | null
+          last_zinc_update: string | null
+          merchant_tracking_data: Json | null
           next_retry_at: string | null
           order_method: string | null
           order_number: string
@@ -2894,6 +2896,7 @@ export type Database = {
           user_id: string | null
           zinc_order_id: string | null
           zinc_status: string | null
+          zinc_timeline_events: Json | null
           zma_account_used: string | null
           zma_error: string | null
           zma_order_id: string | null
@@ -2919,6 +2922,8 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          last_zinc_update?: string | null
+          merchant_tracking_data?: Json | null
           next_retry_at?: string | null
           order_method?: string | null
           order_number: string
@@ -2942,6 +2947,7 @@ export type Database = {
           user_id?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
+          zinc_timeline_events?: Json | null
           zma_account_used?: string | null
           zma_error?: string | null
           zma_order_id?: string | null
@@ -2967,6 +2973,8 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          last_zinc_update?: string | null
+          merchant_tracking_data?: Json | null
           next_retry_at?: string | null
           order_method?: string | null
           order_number?: string
@@ -2990,6 +2998,7 @@ export type Database = {
           user_id?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
+          zinc_timeline_events?: Json | null
           zma_account_used?: string | null
           zma_error?: string | null
           zma_order_id?: string | null

@@ -73,10 +73,10 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
     
     // Default header
     return {
-      title: "Discover Amazing Products",
+      title: isMobile ? "Elyphant Marketplace" : "Discover Amazing Products",
       subtitle: "Find great gifts from trusted brands",
       icon: null,
-      badges: ["✨ Curated Collections", "🎁 Perfect for Everyone", "🚚 Fast Delivery"]
+      badges: ["🚚 Fast Delivery"]
     };
   };
 

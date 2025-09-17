@@ -13,6 +13,8 @@ import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
 import OrderSummaryCard from "@/components/orders/OrderSummaryCard";
 import ShippingInfoCard from "@/components/orders/ShippingInfoCard";
 import EnhancedOrderItemsTable from "@/components/orders/EnhancedOrderItemsTable";
+import MobileOrderItemsList from "@/components/orders/mobile/MobileOrderItemsList";
+import { useIsMobile } from "@/hooks/use-mobile";
 import OrderNotesCard from "@/components/orders/OrderNotesCard";
 import OrderNotFound from "@/components/orders/OrderNotFound";
 import OrderSkeleton from "@/components/orders/OrderSkeleton";
@@ -35,6 +37,7 @@ const OrderDetail = () => {
   const { orderId } = useParams();
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vendorMessage, setVendorMessage] = useState("");
@@ -235,12 +238,20 @@ const OrderDetail = () => {
         <div className="lg:col-span-2 space-y-6">
           <OrderSummaryCard order={order} />
           
-          {/* Enhanced Order Items */}
-          <EnhancedOrderItemsTable 
-            order={order} 
-            onReorder={handleReorder}
-            onReview={handleReview}
-          />
+          {/* Order Items - Responsive */}
+          {isMobile ? (
+            <MobileOrderItemsList 
+              order={order} 
+              onReorder={handleReorder}
+              onReview={handleReview}
+            />
+          ) : (
+            <EnhancedOrderItemsTable 
+              order={order} 
+              onReorder={handleReorder}
+              onReview={handleReview}
+            />
+          )}
         </div>
         
         <div className="space-y-6">

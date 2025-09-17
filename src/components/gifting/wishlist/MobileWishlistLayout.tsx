@@ -319,7 +319,11 @@ const MobileWishlistLayout: React.FC<MobileWishlistLayoutProps> = ({
             }
           }}
         >
-          <div className="px-4 py-6">
+          <div className="px-4 py-6 pb-safe-or-6"
+            style={{ 
+              paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' 
+            }}
+          >
             {children}
           </div>
         </div>

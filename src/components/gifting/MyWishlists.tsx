@@ -283,7 +283,11 @@ const MyWishlists = () => {
 
           {/* Mobile Wishlists Display */}
           {filteredAndSortedWishlists.length > 0 ? (
-            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}>
+            <div className={`${viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"} pb-safe-or-6`}
+              style={{ 
+                paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 2rem))' 
+              }}
+            >
               {filteredAndSortedWishlists.map((wishlist) => (
                 <MobileWishlistCard
                   key={wishlist.id}
@@ -294,7 +298,11 @@ const MyWishlists = () => {
               ))}
             </div>
           ) : wishlists?.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 pb-safe-or-6"
+              style={{ 
+                paddingBottom: 'max(3rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' 
+              }}
+            >
               <div className="max-w-sm mx-auto">
                 <h3 className="text-lg font-semibold mb-2">Create Your First Wishlist</h3>
                 <p className="text-muted-foreground text-sm mb-6">

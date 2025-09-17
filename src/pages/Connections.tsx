@@ -73,9 +73,9 @@ const Connections = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const forceMobile = urlParams.get('mobile') === 'true';
   
-  // TEMP: Only enable the experimental mobile layout when explicitly requested
-  if (forceMobile) {
-    console.log('📱 [Connections] Rendering mobile version (forced by URL param)');
+  // Use mobile version when on mobile device or explicitly requested
+  if (isMobile || forceMobile) {
+    console.log('📱 [Connections] Rendering mobile version', { isMobile, forceMobile });
     return <MobileConnectionsPage />;
   }
   

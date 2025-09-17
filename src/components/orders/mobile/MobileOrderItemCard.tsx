@@ -158,7 +158,7 @@ const MobileOrderItemCard = ({
           {/* Product Details */}
           <div className="flex-1 min-w-0">
             <div className="space-y-1">
-              <h3 className="font-medium text-body-base leading-tight line-clamp-2">
+              <h3 className="font-medium text-body-base leading-tight truncate">
                 {productName}
               </h3>
               {brand && (

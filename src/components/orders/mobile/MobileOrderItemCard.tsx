@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
@@ -16,11 +16,20 @@ const MobileOrderItemCard = ({
   onReorder, 
   onReview 
 }: MobileOrderItemCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  
   const productName = (item as any).product_name || item.name || "Product";
   const brand = (item as any).brand;
   const unitPrice = (item as any).unit_price || item.price || 0;
   const totalPrice = unitPrice * item.quantity;
-  const imageUrl = (item as any).product_image || (item as any).image_url || (item as any).image;
+  
+  // Enhanced image URL detection with more fallback options
+  const imageUrl = (item as any).product_image || 
+                   (item as any).image_url || 
+                   (item as any).image || 
+                   (item as any).images?.[0] ||
+                   (item as any).product?.image ||
+                   (item as any).product?.images?.[0];
 
   return (
     <Card className="mobile-card-hover">
@@ -28,26 +37,22 @@ const MobileOrderItemCard = ({
         <div className="flex gap-4">
           {/* Product Image */}
           <div className="flex-shrink-0">
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-              {imageUrl ? (
+            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden relative">
+              {imageUrl && !imageError ? (
                 <img 
                   src={imageUrl} 
                   alt={productName}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (placeholder) {
-                      placeholder.style.display = 'flex';
-                    }
-                  }}
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
                 />
-              ) : null}
-              <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
-                <span className="text-sm text-primary font-medium">
-                  {productName.charAt(0)}
-                </span>
-              </div>
+              ) : (
+                <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center">
+                  <span className="text-sm text-primary font-medium">
+                    {productName.charAt(0)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

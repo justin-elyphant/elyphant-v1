@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import Header from "@/components/home/Header";
@@ -9,14 +9,45 @@ interface SidebarLayoutProps {
 }
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
+  const headerWrapperRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(120);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const el = headerWrapperRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Add a small buffer to completely avoid overlap
+      setHeaderHeight(Math.ceil(rect.height) + 8);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    const ro = new ResizeObserver(update);
+    if (headerWrapperRef.current) ro.observe(headerWrapperRef.current);
+
+    return () => {
+      window.removeEventListener("resize", update);
+      ro.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen w-full">
-      {/* Fixed header with higher z-index */}
-      <Header className="fixed top-0 left-0 right-0 z-50" />
+      {/* Fixed header wrapper with measured height */}
+      <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-50">
+        <Header />
+      </div>
       
       {/* Sidebar layout below header */}
       <SidebarProvider defaultOpen={false}>
-        <div className="flex w-full" style={{ height: '100vh', paddingTop: '80px' }}>
+        <div
+          className="flex w-full"
+          style={{
+            height: "100vh",
+            paddingTop: `calc(${headerHeight}px + env(safe-area-inset-top, 0px))`,
+          }}
+        >
           <AppSidebar />
           <SidebarInset className="flex-1">
             <main className="h-full overflow-y-auto">

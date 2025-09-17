@@ -40,8 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('orders')
       .select(`
         *,
-        order_items (*),
-        profiles (email, name)
+        order_items (*)
       `)
       .eq('id', orderId)
       .single();
@@ -49,16 +48,34 @@ const handler = async (req: Request): Promise<Response> => {
     if (orderError || !order) {
       console.error("Error fetching order:", orderError);
       return new Response(
-        JSON.stringify({ error: "Order not found" }),
+        JSON.stringify({ error: "Order not found", details: orderError?.message }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Get customer email
-    const customerEmail = order.profiles?.email;
-    const customerName = order.profiles?.name || order.shipping_info?.name || "Customer";
+    // Get customer email and name from auth.users or order data
+    let customerEmail: string | null = null;
+    let customerName: string = "Customer";
+
+    // First try to get user info from auth.users
+    if (order.user_id) {
+      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(order.user_id);
+      if (authUser?.user && !authError) {
+        customerEmail = authUser.user.email;
+        customerName = authUser.user.user_metadata?.first_name 
+          ? `${authUser.user.user_metadata.first_name} ${authUser.user.user_metadata.last_name || ''}`.trim()
+          : authUser.user.email?.split('@')[0] || "Customer";
+      }
+    }
+
+    // Fallback to shipping info if available
+    if (!customerEmail && order.shipping_info) {
+      customerEmail = order.shipping_info.email;
+      customerName = order.shipping_info.name || customerName;
+    }
 
     if (!customerEmail) {
+      console.error("No customer email found for order:", orderId);
       return new Response(
         JSON.stringify({ error: "Customer email not found" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }

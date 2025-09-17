@@ -129,6 +129,32 @@ const handler = async (req: Request): Promise<Response> => {
     const tax = Number(order.tax_amount ?? 0);
     const total = Number(order.total_amount ?? (subtotal + shipping + tax));
 
+    // Get customer-facing status (hide internal Zinc status)
+    const getCustomerFacingStatus = (rawStatus: string) => {
+      const status = rawStatus.toLowerCase();
+      
+      // Map internal statuses to customer-facing ones
+      switch (status) {
+        case 'submitted_to_zinc':
+        case 'confirmed':
+          return 'Processing';
+        case 'retry_pending':
+          return 'Processing';
+        case 'shipped':
+          return 'Shipped';
+        case 'delivered':
+          return 'Delivered';
+        case 'cancelled':
+          return 'Cancelled';
+        case 'failed':
+          return 'Failed';
+        default:
+          return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    };
+
+    const customerStatus = getCustomerFacingStatus(order.status);
+
     // Create receipt HTML
     const receiptHtml = `
       <!DOCTYPE html>
@@ -161,8 +187,8 @@ const handler = async (req: Request): Promise<Response> => {
               <tr>
                 <td style="padding: 8px 0; font-weight: 600;">Status:</td>
                 <td style="padding: 8px 0; text-align: right;">
-                  <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize;">
-                    ${order.status}
+                  <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                    ${customerStatus}
                   </span>
                 </td>
               </tr>

@@ -261,7 +261,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto pb-safe-bottom">
+        <div className="max-h-[calc(90vh-120px)] md:max-h-none overflow-y-auto mobile-container">&
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
@@ -606,45 +607,54 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsContent>
         </Tabs>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            Step {currentStep + 1} of {steps.length}
-          </div>
-          
-          <div className="flex gap-2">
-            {currentStep > 0 && (
-              <Button variant="outline" onClick={handleBack}>
-                Back
-              </Button>
-            )}
+        {/* Navigation - Fixed at bottom with safe area */}
+        <div className="sticky bottom-0 bg-background border-t pt-4 pb-4 md:pb-4 safe-area-bottom -mx-6 px-6 mt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              Step {currentStep + 1} of {steps.length}
+            </div>
             
-            {currentStep < steps.length - 1 ? (
-              <Button 
-                onClick={handleNext}
-                disabled={
-                  (currentStep === 0 && (!formData.recipientId || !formData.eventType || 
+            <div className="flex gap-2">
+              {currentStep > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleBack}
+                  className="min-h-[44px] marketplace-touch-target"
+                >
+                  Back
+                </Button>
+              )}
+              
+              {currentStep < steps.length - 1 ? (
+                <Button 
+                  onClick={handleNext}
+                  className="min-h-[44px] marketplace-touch-target"
+                  disabled={
+                    (currentStep === 0 && (!formData.recipientId || !formData.eventType || 
+                      (formData.eventType === "holiday" && !formData.specificHoliday) ||
+                      (formData.eventType === "other" && !formData.selectedDate))) ||
+                    (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
+                  }
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleSubmit} 
+                  className="min-h-[44px] marketplace-touch-target"
+                  disabled={isLoading || !formData.recipientId || !formData.eventType ||
                     (formData.eventType === "holiday" && !formData.specificHoliday) ||
-                    (formData.eventType === "other" && !formData.selectedDate))) ||
-                  (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
-                }
-              >
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isLoading || !formData.recipientId || !formData.eventType ||
-                  (formData.eventType === "holiday" && !formData.specificHoliday) ||
-                  (formData.eventType === "other" && !formData.selectedDate) ||
-                  !formData.selectedPaymentMethodId}
-              >
-                {isLoading ? "Creating..." : "Create Auto-Gift Rule"}
-                <CheckCircle className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+                    (formData.eventType === "other" && !formData.selectedDate) ||
+                    !formData.selectedPaymentMethodId}
+                >
+                  {isLoading ? "Creating..." : "Create Auto-Gift Rule"}
+                  <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
+        </div>
         </div>
 
         {/* New Recipient Form Modal */}

@@ -59,7 +59,7 @@
   line-height: 1.375;
 }
 
-/* Safe area handling for newer iPhones */
+/* Safe area handling for newer iPhones and bottom navigation */
 @supports (padding: max(0px)) {
   .safe-area-bottom {
     padding-bottom: max(20px, env(safe-area-inset-bottom));
@@ -67,6 +67,10 @@
   
   .safe-area-top {
     padding-top: max(20px, env(safe-area-inset-top));
+  }
+  
+  .pb-safe-bottom {
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 60px));
   }
 }
 
@@ -119,5 +123,16 @@
 @media (prefers-reduced-motion: reduce) {
   .mobile-smooth-transition {
     transition: none;
+  }
+}
+
+/* Modal bottom navigation handling */
+.modal-with-bottom-nav {
+  padding-bottom: 80px;
+}
+
+@media (max-width: 768px) {
+  .modal-with-bottom-nav {
+    max-height: calc(100vh - 140px);
   }
 }

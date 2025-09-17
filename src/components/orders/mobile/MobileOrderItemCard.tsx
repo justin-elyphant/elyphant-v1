@@ -24,6 +24,8 @@ const MobileOrderItemCard = ({
   const productName = (item as any).product_name || item.name || "Product";
   const brand = (item as any).brand;
   const unitPrice = (item as any).unit_price || item.price || 0;
+  const quantity = Number((item as any).quantity ?? (item as any).qty ?? 1);
+  const totalPrice = unitPrice * quantity;
   
   // Determine initial image source from various possible fields
   const initialImageUrl = (item as any).product_image || 

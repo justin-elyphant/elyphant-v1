@@ -36,43 +36,88 @@ const MobileOrderItemCard = ({
                  (item as any).product?.images?.[0];
   const [imageSrc, setImageSrc] = useState<string | undefined>(initialImageUrl);
 
-  // If we don't have an image (or it failed), try fetching full product details
+  // Try to resolve a real image from Zinc detail or search
   useEffect(() => {
     let cancelled = false;
-    const productId = (item as any).product_id || (item as any).product?.product_id;
-    if ((!initialImageUrl || imageError) && productId) {
+    const resolve = async () => {
+      if (imageSrc && !imageError) return; // already have a working image
       setLoadingImage(true);
+      const productId = (item as any).product_id || (item as any).asin || (item as any).sku || (item as any).product?.product_id;
       const retailer = (item as any).retailer || (item as any).product?.retailer || "amazon";
-      getProductDetail(productId, retailer)
-        .then((prod) => {
-          if (cancelled) return;
-          const fetched = (prod as any)?.image || (prod as any)?.images?.[0];
-          if (fetched) {
-            setImageSrc(fetched);
-            setImageError(false);
-          }
-        })
-        .finally(() => !cancelled && setLoadingImage(false));
-    }
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageError, (item as any).product_id]);
+      console.log("[MobileOrderItemCard] resolving image", { productName, productId, initialImageUrl, retailer, item });
 
-  // Fallback: search by product name immediately if no image
-  useEffect(() => {
-    let cancelled = false;
-    if (!imageSrc && productName) {
-      setLoadingImage(true);
-      enhancedZincApiService.searchProducts(productName, 1, 8).then((res) => {
-        if (cancelled) return;
+      // 1) Product detail via simple helper
+      try {
+        if (productId) {
+          const prod = await getProductDetail(productId, retailer);
+          const pImg = (prod as any)?.image || (prod as any)?.images?.[0];
+          if (!cancelled && pImg) {
+            console.log("[MobileOrderItemCard] got image from getProductDetail", pImg);
+            setImageSrc(pImg);
+            setImageError(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[MobileOrderItemCard] getProductDetail failed", e);
+      }
+
+      // 2) Product detail via enhanced service (edge)
+      try {
+        if (productId) {
+          const detail = await enhancedZincApiService.getProductDetails(productId);
+          const dImg = detail?.image || detail?.main_image || detail?.images?.[0];
+          if (!cancelled && dImg) {
+            console.log("[MobileOrderItemCard] got image from enhanced getProductDetails", dImg);
+            setImageSrc(dImg);
+            setImageError(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[MobileOrderItemCard] enhanced getProductDetails failed", e);
+      }
+
+      // 3) Title search
+      try {
+        const res = await enhancedZincApiService.searchProducts(productName, 1, 12);
         const p = res?.results?.[0];
-        const fetched = p?.image || p?.main_image || p?.images?.[0];
-        if (fetched) setImageSrc(fetched);
-      }).finally(() => !cancelled && setLoadingImage(false));
-    }
+        const sImg = p?.image || p?.main_image || p?.images?.[0];
+        if (!cancelled && sImg) {
+          console.log("[MobileOrderItemCard] got image from title search", sImg);
+          setImageSrc(sImg);
+          setImageError(false);
+          return;
+        }
+      } catch (e) {
+        console.warn("[MobileOrderItemCard] title search failed", e);
+      }
+
+      // 4) Brand search (lightweight)
+      try {
+        const firstWord = String(productName).split(' ')[0];
+        if (firstWord && firstWord.length > 2) {
+          const res = await enhancedZincApiService.searchBrandCategories(firstWord, 1);
+          const p = res?.results?.[0];
+          const bImg = p?.image || p?.main_image || p?.images?.[0];
+          if (!cancelled && bImg) {
+            console.log("[MobileOrderItemCard] got image from brand search", bImg);
+            setImageSrc(bImg);
+            setImageError(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[MobileOrderItemCard] brand search failed", e);
+      } finally {
+        if (!cancelled) setLoadingImage(false);
+      }
+    };
+
+    resolve();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productName]);
+  }, [productName, (item as any).product_id, imageError, imageSrc]);
 
   return (
     <Card className="mobile-card-hover">

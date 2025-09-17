@@ -100,7 +100,12 @@ const CreateWishlistDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto pb-safe-or-6"
+        style={{
+          marginBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))'
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Create New Wishlist</DialogTitle>
           <DialogDescription>
@@ -238,7 +243,11 @@ const CreateWishlistDialog = ({
               />
             </div>
             
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 pb-safe-or-4"
+              style={{
+                paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))'
+              }}
+            >
               <Button
                 type="button"
                 variant="outline"

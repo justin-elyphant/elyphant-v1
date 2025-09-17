@@ -41,25 +41,52 @@ const DashboardGrid = () => {
   
   const wishlistCount = wishlists?.length || 0;
 
-  // Fetch processing orders count
+  // Fetch active orders count (processing, pending, retry_pending, submitted_to_zinc, confirmed)
   useEffect(() => {
-    const fetchProcessingOrders = async () => {
+    const fetchActiveOrders = async () => {
       if (!user) return;
       
       try {
         const { data: orders } = await supabase
           .from('orders')
-          .select('id')
+          .select('id, status')
           .eq('user_id', user.id)
-          .eq('status', 'processing');
+          .in('status', ['processing', 'pending', 'retry_pending', 'submitted_to_zinc', 'confirmed', 'failed']);
         
-        setProcessingOrdersCount(orders?.length || 0);
+        // Count active orders (exclude shipped, delivered, cancelled)
+        const activeCount = orders?.filter(order => 
+          !['shipped', 'delivered', 'cancelled'].includes(order.status)
+        ).length || 0;
+        
+        setProcessingOrdersCount(activeCount);
       } catch (error) {
-        console.error('Error fetching processing orders:', error);
+        console.error('Error fetching active orders:', error);
       }
     };
 
-    fetchProcessingOrders();
+    fetchActiveOrders();
+
+    // Set up realtime subscription for order status changes
+    const ordersChannel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user?.id}`
+        },
+        () => {
+          // Refetch orders when any order changes
+          fetchActiveOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+    };
   }, [user]);
 
   const handleCardSwipe = (direction: 'left' | 'right', cardType: string) => {

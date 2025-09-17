@@ -58,7 +58,9 @@ const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
   };
 
   const getTotalSpent = (orders: Order[]) => {
-    return orders.reduce((total, order) => total + order.total_amount, 0);
+    return orders
+      .filter(order => ['delivered', 'shipped'].includes(order.status.toLowerCase()))
+      .reduce((total, order) => total + order.total_amount, 0);
   };
 
   const toggleMonth = (monthKey: string) => {

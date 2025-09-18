@@ -141,20 +141,70 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
               confidenceScores: intelligenceResult.recommendations.map((r: any) => r.confidence_score).slice(0, 5)
             });
 
-            const products = intelligenceResult.recommendations.map((rec: any) => {
-              const source = rec.source;
-              const tier = source === 'wishlist' ? 1 : source === 'interests' ? 2 : 3;
+            // Normalize mapping, robustly detect sources, then dedupe and diversify preferences
+            const rawProducts = intelligenceResult.recommendations.map((rec: any) => {
+              const sourceStr = String(rec.source || '').toLowerCase();
+              const fromWishlist = sourceStr.includes('wish');
+              const fromPreferences = sourceStr.includes('interest');
+              const tier = fromWishlist ? 1 : fromPreferences ? 2 : 3;
+              const base = rec.product || {};
+              const product_id = base.product_id || base.id || base.asin || base.sku || base.url || `${(base.title || base.name || 'product')}-${Math.random().toString(36).slice(2, 8)}`;
+              const title = base.title || base.name || 'Product';
+              const image = base.image || (Array.isArray(base.images) ? base.images[0] : undefined) || '';
               return {
-                ...rec.product,
+                ...base,
+                product_id,
+                title,
+                image,
                 // Flags used by grouping hook
-                fromWishlist: source === 'wishlist',
-                fromPreferences: source === 'interests',
+                fromWishlist,
+                fromPreferences,
                 // Additional metadata
                 giftingTier: tier,
                 confidenceScore: rec.confidence_score,
                 reasoning: rec.reasoning
-              };
+              } as any;
             });
+
+            // Helpers: dedupe and brand diversity for preferences
+            const dedupeByIdOrTitle = (items: any[]) => {
+              const seen = new Set<string>();
+              return items.filter((p) => {
+                const key = (p.product_id || p.id || p.asin || p.title || p.name)?.toString().toLowerCase();
+                if (!key) return true;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+            };
+            const diversifyByBrand = (items: any[], maxPerBrand = 2) => {
+              const groups: Record<string, any[]> = {};
+              for (const p of items) {
+                const brandKey = (p.brand || p.vendor || p.retailer || 'unknown').toString().toLowerCase();
+                (groups[brandKey] ||= []).push(p);
+              }
+              const queues = Object.values(groups).map((arr) => arr.slice(0, maxPerBrand));
+              const result: any[] = [];
+              let added = true;
+              while (added) {
+                added = false;
+                for (const q of queues) {
+                  const item = q.shift();
+                  if (item) {
+                    result.push(item);
+                    added = true;
+                  }
+                }
+              }
+              return result;
+            };
+
+            const deduped = dedupeByIdOrTitle(rawProducts);
+            const wishlistItems = deduped.filter((p: any) => p.fromWishlist);
+            const preferenceItems = deduped.filter((p: any) => p.fromPreferences);
+            const regularItems = deduped.filter((p: any) => !p.fromWishlist && !p.fromPreferences);
+            const diversifiedPreferences = diversifyByBrand(preferenceItems, 2);
+            const products = [...wishlistItems, ...diversifiedPreferences, ...regularItems];
 
             console.log('✅ [PersonalizedMarketplace] Processed products with tier information:', {
               total: products.length,
@@ -177,6 +227,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
             } catch (e) {
               console.warn('Failed to store personalized context:', e);
             }
+
           } else {
             console.warn('No personalized products returned from Nicole Intelligence Service, using fallback');
             throw new Error('No recommendations from Nicole Intelligence Service');

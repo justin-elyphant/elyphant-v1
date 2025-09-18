@@ -564,8 +564,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} />
       )}
 
-      {/* Products Grid (when search is active or as fallback) */}
-      {(showSearchInfo || !products.length) && paginatedProducts.length > 0 && (
+      {/* Products Grid (when search is active, personalized, or as fallback) */}
+      {(showSearchInfo || !products.length || isPersonalizedActive) && paginatedProducts.length > 0 && (
         <>
           {shouldUseVirtualization ? (
             <VirtualizedProductGrid

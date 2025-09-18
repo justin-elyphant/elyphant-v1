@@ -430,28 +430,35 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       }}
       className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
-      {/* Conditional Hero Section */}
-      {brandCategories ? (
-        hideHeroBanner ? null : (
-          <BrandHeroSection 
-            brandName={brandCategories}
-            productCount={totalCount}
-          />
-        )
-      ) : (currentQuickPickCategory || giftsForHer || giftsForHim || giftsUnder50 || luxuryCategories) ? null : (
-        hideHeroBanner ? null : (
-          <MarketplaceHeroBanner 
-            category={searchParams.get("category") || undefined} 
-            hideFromCategoryNavigation={false}
-            quickPickCategory={currentQuickPickCategory}
-          />
-        )
+      {/* Conditional Hero Section - Hide if personalized */}
+      {personalizedProducts.length === 0 && (
+        <>
+          {brandCategories ? (
+            hideHeroBanner ? null : (
+              <BrandHeroSection 
+                brandName={brandCategories}
+                productCount={totalCount}
+              />
+            )
+          ) : (currentQuickPickCategory || giftsForHer || giftsForHim || giftsUnder50 || luxuryCategories) ? null : (
+            hideHeroBanner ? null : (
+              <MarketplaceHeroBanner 
+                category={searchParams.get("category") || undefined} 
+                hideFromCategoryNavigation={false}
+                quickPickCategory={currentQuickPickCategory}
+              />
+            )
+          )}
+        </>
       )}
       
-      <MarketplaceHeader
-        totalResults={displayProducts.length}
-        filteredProducts={displayProducts}
-      />
+      {/* Only show MarketplaceHeader for non-personalized */}
+      {personalizedProducts.length === 0 && (
+        <MarketplaceHeader
+          totalResults={displayProducts.length}
+          filteredProducts={displayProducts}
+        />
+      )}
 
       {/* Personalized Header */}
       {personalizedContext?.isPersonalized && (
@@ -468,8 +475,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </div>
       )}
 
-      {/* Category or Quick Pick Title */}
-      {showSearchInfo && !brandCategories && (() => {
+      {/* Category or Quick Pick Title - Only for non-personalized */}
+      {showSearchInfo && !brandCategories && personalizedProducts.length === 0 && (() => {
         const quick = currentQuickPickCategory || (giftsForHer ? 'giftsForHer' : giftsForHim ? 'giftsForHim' : giftsUnder50 ? 'giftsUnder50' : luxuryCategories ? 'luxury' : null);
 
         if (quick) {
@@ -542,8 +549,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         );
       })()}
 
-      {/* Quick Filters */}
-      <MarketplaceQuickFilters />
+      {/* Quick Filters - Only for non-personalized */}
+      {personalizedProducts.length === 0 && (
+        <MarketplaceQuickFilters />
+      )}
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && (

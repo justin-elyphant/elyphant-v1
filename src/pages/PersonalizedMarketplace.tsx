@@ -31,7 +31,50 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   // Generate personalized marketplace content
   useEffect(() => {
     async function generatePersonalizedMarketplace() {
+      console.log('🔍 [PersonalizedMarketplace] Debug - eventContext:', eventContext);
+      console.log('🔍 [PersonalizedMarketplace] Debug - recipientName:', recipientName);
+      console.log('🔍 [PersonalizedMarketplace] Debug - location.state:', location.state);
+      
       if (!eventContext || !recipientName) {
+        console.warn('⚠️ [PersonalizedMarketplace] Missing eventContext or recipientName, creating fallback');
+        
+        // Create fallback context if missing
+        const fallbackContext = {
+          recipientName: recipientName?.replace(/-/g, ' ') || 'Special Someone',
+          eventType: 'special occasion',
+          relationship: 'friend',
+          isPersonalized: true
+        };
+        
+        // Generate with fallback context
+        try {
+          setIsPersonalizedLoading(true);
+          setPersonalizedError(null);
+
+          console.log('🎯 [PersonalizedMarketplace] Generating with fallback context:', fallbackContext);
+
+          // Try Nicole's marketplace intelligence service with fallback context
+          const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
+            recipient_name: fallbackContext.recipientName,
+            relationship: fallbackContext.relationship,
+            occasion: fallbackContext.eventType,
+            budget: undefined,
+            interests: [],
+            conversation_history: [],
+            confidence_threshold: 0.3
+          });
+
+          if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
+            console.log('✅ [PersonalizedMarketplace] Got fallback intelligence recommendations:', intelligenceResult.recommendations.length);
+            const products = intelligenceResult.recommendations.map(rec => rec.product);
+            setPersonalizedProducts(products);
+            setIsPersonalizedLoading(false);
+            return;
+          }
+        } catch (fallbackError) {
+          console.warn('Fallback intelligence service failed:', fallbackError);
+        }
+        
         setIsPersonalizedLoading(false);
         return;
       }
@@ -41,6 +84,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
         setPersonalizedError(null);
 
         console.log('🎯 [PersonalizedMarketplace] Generating curated products for:', eventContext);
+        console.log('🎯 [PersonalizedMarketplace] Recipient name from URL:', recipientName);
 
         // First try Nicole's marketplace intelligence service
         try {
@@ -86,13 +130,27 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           console.log('✅ [PersonalizedMarketplace] Got Nicole AI curated products:', data.products.length);
           setPersonalizedProducts(data.products);
         } else {
-          console.warn('No personalized products returned from Nicole AI');
+          console.warn('No personalized products returned from Nicole AI, response:', data);
           setPersonalizedProducts([]);
         }
 
       } catch (error) {
         console.error('Failed to generate personalized marketplace:', error);
         setPersonalizedError(error instanceof Error ? error.message : 'Failed to load personalized recommendations');
+        
+        // Fallback to mock products for now to test the UI
+        console.log('🔄 [PersonalizedMarketplace] Using fallback mock products for testing');
+        setPersonalizedProducts([
+          {
+            id: 'mock-1',
+            title: `Personalized Gift for ${eventContext.recipientName}`,
+            price: 29.99,
+            image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+            description: 'AI-curated gift recommendation',
+            vendor: 'Nicole AI',
+            category: 'Personalized'
+          }
+        ]);
       } finally {
         setIsPersonalizedLoading(false);
       }

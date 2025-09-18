@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import MainLayout from "@/components/layout/MainLayout";
@@ -61,12 +61,12 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
 
-  // Get event context from location state or URL params
-  const eventContext = location.state?.eventContext || {
+  // Get event context from location state or URL params - memoized to prevent re-renders
+  const eventContext = useMemo(() => ({
     recipientName: recipientName?.replace(/-/g, ' '),
     eventType: location.state?.eventType || null,
     relationship: location.state?.relationship || 'friend'
-  };
+  }), [recipientName, location.state?.eventType, location.state?.relationship]);
 
   const displayName = eventContext?.recipientName || recipientName?.replace(/-/g, ' ') || 'Recipient';
 
@@ -329,7 +329,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
     }
 
     generatePersonalizedMarketplace();
-  }, [recipientName, eventContext]);
+  }, [recipientName, eventContext.recipientName, eventContext.eventType, eventContext.relationship]);
 
   // Product interaction handlers
   const handleProductClick = (product: any) => {

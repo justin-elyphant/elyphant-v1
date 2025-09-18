@@ -499,6 +499,85 @@ body {
     border-color: hsl(var(--border-subtle));
   }
 
+  /* Wishlist CTA Section Styling */
+  .wishlist-cta-section {
+    background: linear-gradient(135deg, 
+      hsl(var(--primary) / 0.05), 
+      hsl(221.2 83.2% 58.3% / 0.08)
+    );
+    border: 1px solid hsl(var(--primary) / 0.15);
+    border-radius: calc(var(--radius) + 4px);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+  }
+
+  .wishlist-cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
+  }
+
+  .wishlist-cta-section:hover {
+    border-color: hsl(var(--primary) / 0.25);
+    box-shadow: var(--shadow-floating);
+    transform: translateY(-1px);
+  }
+
+  /* Mobile iOS enhancements for wishlist section */
+  @media (max-width: 768px) {
+    .wishlist-cta-section {
+      margin: -0.5rem;
+      margin-bottom: 1rem;
+      border-radius: var(--radius);
+      padding: 1rem;
+      background: linear-gradient(135deg, 
+        hsl(var(--primary) / 0.08), 
+        hsl(221.2 83.2% 58.3% / 0.12)
+      );
+      /* iOS-style touch feedback */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      animation: subtle-pulse 3s ease-in-out infinite;
+    }
+
+    .wishlist-cta-section:active {
+      transform: scale(0.995);
+      transition: transform 0.1s ease;
+    }
+  }
+
+  /* Subtle pulse animation for mobile attention */
+  @keyframes subtle-pulse {
+    0%, 100% {
+      box-shadow: var(--shadow-card);
+    }
+    50% {
+      box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.15), 
+                  0 2px 6px -1px hsl(var(--primary) / 0.08);
+    }
+  }
+
+  /* Safe area support for iOS */
+  .wishlist-cta-section {
+    margin-left: max(1rem, env(safe-area-inset-left));
+    margin-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  @media (min-width: 769px) {
+    .wishlist-cta-section {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
   /* Unified Card System */
   .card-unified {
     background-color: hsl(var(--card));

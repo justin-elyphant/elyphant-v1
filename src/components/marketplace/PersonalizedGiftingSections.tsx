@@ -32,10 +32,11 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
     if (groupedProducts.wishlistItems.length > 0) {
       sectionData.push({
         key: "wishlist",
-        title: `Gifts from ${recipientName}'s Wishlist`,
+        title: `🎯 Gifts from ${recipientName}'s Wishlist`,
         subtitle: `Items ${recipientName} has added to their wishlist - perfect for guaranteed gift success`,
         products: groupedProducts.wishlistItems,
-        priority: 1
+        priority: 1,
+        isWishlistSection: true
       });
     }
     
@@ -87,17 +88,21 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
   return (
     <div className={`space-y-12 ${className}`}>
       {sections.map((section, index) => (
-        <CategorySection
+        <div 
           key={section.key}
-          title={section.title}
-          subtitle={section.subtitle}
-          products={section.products}
-          onProductClick={onProductClick}
-          onAddToCart={onAddToCart}
-          onShare={onShare}
-          showSeeAll={false} // Don't show "See All" for personalized sections
-          maxItems={15} // Show 15 items per section as requested
-        />
+          className={section.isWishlistSection ? "wishlist-cta-section" : ""}
+        >
+          <CategorySection
+            title={section.title}
+            subtitle={section.subtitle}
+            products={section.products}
+            onProductClick={onProductClick}
+            onAddToCart={onAddToCart}
+            onShare={onShare}
+            showSeeAll={false} // Don't show "See All" for personalized sections
+            maxItems={15} // Show 15 items per section as requested
+          />
+        </div>
       ))}
       
     </div>

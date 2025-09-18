@@ -57,7 +57,7 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
       });
     }
     
-    // Section 3: AI picks (lower priority, but still good options)
+    // Section 3: AI picks (always ensure a section exists)
     if (groupedProducts.regularItems.length > 0) {
       sectionData.push({
         key: "ai-picks",
@@ -68,13 +68,17 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
       });
     }
     
-    // If no grouping detected, show all products as AI picks
-    if (!groupedProducts.hasGrouping && products.length > 0) {
+    // Ensure AI Picks is present even if regularItems is empty
+    if (!sectionData.some((s: any) => s.key === 'ai-picks') && products.length > 0) {
+      const fallbackAIPicks = groupedProducts.regularItems.length > 0
+        ? groupedProducts.regularItems
+        : products.filter((p: any) => !p.fromWishlist && !p.fromPreferences);
+      const aiProducts = fallbackAIPicks.length > 0 ? fallbackAIPicks : products;
       sectionData.push({
         key: "ai-picks",
         title: "Elyphant AI Picks",
         subtitle: `Personalized gift recommendations curated just for ${recipientName}`,
-        products: products,
+        products: aiProducts,
         priority: 3
       });
     }

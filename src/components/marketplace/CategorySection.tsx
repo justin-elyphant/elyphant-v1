@@ -15,6 +15,7 @@ interface CategorySectionProps {
   showSeeAll?: boolean;
   onAddToCart?: (product: Product) => void;
   onShare?: (product: Product) => void;
+  maxItems?: number;
 }
 
 export const CategorySection: React.FC<CategorySectionProps> = ({
@@ -26,18 +27,19 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   onProductClick,
   showSeeAll = true,
   onAddToCart,
-  onShare
+  onShare,
+  maxItems = 5
 }) => {
-  // Memoize product cards for better performance - reduced to 5 for single row
+  // Memoize product cards for better performance - respect maxItems per section
   const memoizedProducts = useMemo(() => {
-    const limitedProducts = products.slice(0, 5);
-    console.log(`CategorySection "${title}": Rendering ${limitedProducts.length} of ${products.length} products`);
+    const limitedProducts = products.slice(0, maxItems);
+    console.log(`CategorySection "${title}": Rendering ${limitedProducts.length} of ${products.length} products (maxItems=${maxItems})`);
     return limitedProducts.map((product, index) => ({ 
       product, 
       index,
       key: product.product_id || product.id || index 
     }));
-  }, [products, title]);
+  }, [products, title, maxItems]);
   if (isLoading) {
     return (
       <div className="space-y-6 border-b border-border/20 pb-8 last:border-b-0">

@@ -191,6 +191,9 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
               const product_id = base.product_id || base.id || base.asin || base.sku || base.url || `${(base.title || base.name || 'product')}-${Math.random().toString(36).slice(2, 8)}`;
               const title = base.title || base.name || 'Product';
               const image = base.image || (Array.isArray(base.images) ? base.images[0] : undefined) || '';
+              
+              console.log(`🔍 [PRODUCT MAPPING] Source: "${sourceStr}" -> wishlist: ${fromWishlist}, preferences: ${fromPreferences}, title: "${title}"`);
+              
               return {
                 ...base,
                 product_id,

@@ -87,10 +87,17 @@ class NicoleMarketplaceIntelligenceService {
       // Fetch items for public wishlists if any
       if (publicWishlists && publicWishlists.length > 0) {
         const wlIds = publicWishlists.map(w => w.id);
-        const { data: items } = await supabase
+        console.log(`🔍 [WISHLIST] Found ${publicWishlists.length} public wishlists, fetching items for:`, wlIds);
+        const { data: items, error: itemsError } = await supabase
           .from('wishlist_items')
           .select('*')
           .in('wishlist_id', wlIds);
+        
+        console.log(`🔍 [WISHLIST] Public wishlist items query result:`, { 
+          itemsCount: items?.length || 0, 
+          error: itemsError?.message || 'none' 
+        });
+        
         const titleMap: Record<string, string> = {};
         for (const w of publicWishlists) titleMap[w.id] = w.title || '';
         wishlistItems = (items || []).map(it => ({
@@ -138,10 +145,22 @@ class NicoleMarketplaceIntelligenceService {
               .eq('user_id', recipientId);
             const wlIds = (duaWishlists || []).map(w => w.id);
             if (wlIds.length) {
-              const { data: items } = await supabase
+              console.log(`🎁 [WISHLIST] Fetching items for ${wlIds.length} Dua Lipa wishlists:`, wlIds);
+              const { data: items, error: itemsError } = await supabase
                 .from('wishlist_items')
                 .select('*')
                 .in('wishlist_id', wlIds);
+              
+              console.log(`🎁 [WISHLIST] Dua Lipa wishlist items query result:`, { 
+                itemsCount: items?.length || 0, 
+                error: itemsError?.message || 'none',
+                firstItem: items?.[0] ? { 
+                  id: items[0].id, 
+                  title: items[0].title || items[0].name,
+                  wishlist_id: items[0].wishlist_id 
+                } : null
+              });
+              
               const titleMap: Record<string, string> = {};
               for (const w of duaWishlists || []) titleMap[w.id] = w.title || '';
               wishlistItems = (items || []).map(it => ({
@@ -153,7 +172,14 @@ class NicoleMarketplaceIntelligenceService {
                 }
               }));
             }
-            console.log(`🎁 [WISHLIST] Found ${wishlistItems?.length || 0} private wishlist items for Dua Lipa`);
+            console.log(`🎁 [WISHLIST] Final processed wishlist items for Dua Lipa:`, {
+              count: wishlistItems?.length || 0,
+              sampleItems: wishlistItems?.slice(0, 2).map(item => ({
+                title: item.title || item.name,
+                price: item.price,
+                wishlist: item.wishlists?.title
+              })) || []
+            });
           } else {
             // Check if users are connected (friends/family)
             const { data: connection } = await supabase
@@ -197,12 +223,21 @@ class NicoleMarketplaceIntelligenceService {
 
       const recommendations: NicoleProductRecommendation[] = [];
 
+      console.log(`🔍 [WISHLIST] Processing ${wishlistItems?.length || 0} wishlist items into products...`);
+
       for (const item of wishlistItems || []) {
+        console.log(`🔍 [WISHLIST] Processing item:`, {
+          id: item.id,
+          title: item.title || item.name,
+          price: item.price,
+          wishlist: item.wishlists?.title
+        });
+
         // Parse product data from wishlist item
         const product: Product = {
           product_id: item.product_id || `wishlist_${item.id}`,
-          name: item.name,
-          title: item.name,
+          name: item.title || item.name || 'Wishlist Item',
+          title: item.title || item.name || 'Wishlist Item',
           price: item.price || 0,
           image: item.image_url,
           description: item.description,
@@ -215,20 +250,37 @@ class NicoleMarketplaceIntelligenceService {
         // Apply budget filter if specified
         if (budget && (budget.min || budget.max)) {
           const price = product.price;
-          if (budget.min && price < budget.min) continue;
-          if (budget.max && price > budget.max) continue;
+          if (budget.min && price < budget.min) {
+            console.log(`💰 [WISHLIST] Skipping item due to min budget: ${price} < ${budget.min}`);
+            continue;
+          }
+          if (budget.max && price > budget.max) {
+            console.log(`💰 [WISHLIST] Skipping item due to max budget: ${price} > ${budget.max}`);
+            continue;
+          }
         }
 
-        recommendations.push({
+        const recommendation = {
           product,
-          reasoning: `This item is on ${item.wishlists.title || 'their wishlist'}, indicating strong interest`,
+          reasoning: `This item is on ${item.wishlists?.title || 'their wishlist'}, indicating strong interest`,
           confidence_score: 0.95, // Very high confidence for wishlist items
-          source: 'wishlist',
+          source: 'wishlist' as const,
           match_factors: ['wishlist_item', 'high_interest', 'verified_desire']
+        };
+
+        recommendations.push(recommendation);
+        
+        console.log(`✅ [WISHLIST] Added recommendation:`, {
+          title: product.title,
+          price: product.price,
+          confidence: recommendation.confidence_score
         });
       }
 
-      console.log(`✅ Found ${recommendations.length} wishlist products`);
+      console.log(`✅ [WISHLIST] Final wishlist recommendations:`, {
+        count: recommendations.length,
+        totalProcessed: wishlistItems?.length || 0
+      });
       return recommendations;
 
     } catch (error) {
@@ -282,29 +334,45 @@ class NicoleMarketplaceIntelligenceService {
   }
 
   /**
-   * TIER 3: AI-curated recommendations using conversation context
+   * TIER 3: AI-curated recommendations using diverse, generic terms (NOT based on recipient interests)
    */
   private async getAICuratedProducts(
     context: NicoleProductContext,
     maxResults: number = 16
   ): Promise<NicoleProductRecommendation[]> {
-    console.log(`🤖 [NICOLE INTELLIGENCE] Generating AI-curated recommendations`);
+    console.log(`🤖 [NICOLE INTELLIGENCE] Generating AI-curated recommendations (diverse, non-interest based)`);
 
     try {
-      // Generate search terms based on conversation context
-      const aiSearchTerms = [this.generateSearchQuery(context)];
-      console.log(`🔍 AI generated search terms:`, aiSearchTerms);
+      // Use DIVERSE, GENERIC search terms instead of interest-based ones
+      // This ensures AI picks are different from interest-based recommendations
+      const diverseSearchTerms = [
+        'trending gifts',
+        'popular items',
+        'bestsellers',
+        'gift ideas',
+        'unique products',
+        'premium gifts',
+        'innovative gadgets',
+        'lifestyle products'
+      ];
+      
+      // Select random terms to ensure variety across different sessions
+      const selectedTerms = diverseSearchTerms
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      
+      console.log(`🔍 [AI PICKS] Using diverse search terms (NOT interest-based):`, selectedTerms);
 
-      // Search for products using AI terms
-      const recommendations = await this.searchProductsByKeywords(aiSearchTerms, context, maxResults);
+      // Search for products using diverse terms
+      const recommendations = await this.searchProductsByKeywords(selectedTerms, context, maxResults);
 
       // Enhance recommendations with AI reasoning
       return recommendations.map(rec => ({
         ...rec,
         source: 'ai_curated' as const,
-        reasoning: `AI analysis suggests this ${rec.product.name} matches the context: ${context.occasion || 'gift'} for ${context.relationship || 'someone special'}`,
-        confidence_score: rec.confidence_score * 0.8, // Slightly lower confidence for AI curation
-        match_factors: [...rec.match_factors, 'ai_analysis', 'context_matching']
+        reasoning: `AI curated trending gift perfect for ${context.relationship || 'someone special'}`,
+        confidence_score: rec.confidence_score * 0.75, // Slightly lower confidence for diverse AI curation
+        match_factors: [...rec.match_factors, 'ai_trending', 'diverse_selection', 'popular_choice']
       }));
 
     } catch (error) {
@@ -357,8 +425,8 @@ class NicoleMarketplaceIntelligenceService {
 
     try {
       const allRecommendations: NicoleProductRecommendation[] = [];
-      // Pull a bit more per interest to ensure a fuller grid and better diversity
-      const productsPerInterest = Math.max(6, Math.ceil((maxResults * 2) / Math.max(1, interests.length)));
+      // Pull significantly more per interest to ensure 15+ products per section
+      const productsPerInterest = Math.max(8, Math.ceil((maxResults * 3) / Math.max(1, interests.length)));
 
       // Search each interest separately to ensure diversity
       for (const interest of interests) {
@@ -366,7 +434,7 @@ class NicoleMarketplaceIntelligenceService {
           console.log(`🔍 [INTEREST SEARCH] "${interest}" - targeting ${productsPerInterest} products`);
           
           const products = await unifiedMarketplaceService.searchProducts(interest, {
-            maxResults: 16 // Increased to ensure we get enough products for 15+ display
+            maxResults: 20 // Further increased to ensure abundant products for 15+ display
           });
 
           console.log(`🔍 [INTEREST SEARCH] "${interest}" - received ${products.length} products from unified marketplace`);
@@ -541,12 +609,12 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      // TIER 2: Interest-based (if we have recipient or interests)
+      // TIER 2: Interest-based (if we have recipient or interests) - increased for 15+ products
       if (context.recipient_id || context.interests?.length) {
         const interestProducts = await this.getInterestBasedProducts(
           context.recipient_id || '', 
           context, 
-          24
+          18 // Significantly increased to ensure 15+ products for interests section
         );
         allRecommendations.push(...interestProducts);
         if (interestProducts.length > 0) {
@@ -554,28 +622,36 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      // TIER 3: Enhanced Category Search (if applicable context)
-      if (allRecommendations.length < 15) {
+      // TIER 3: AI-curated recommendations - diverse, non-interest based  
+      const aiProducts = await this.getAICuratedProducts(context, 18); // Increased to ensure 15+ AI picks
+      allRecommendations.push(...aiProducts);
+      if (aiProducts.length > 0) {
+        intelligenceSource += 'ai-curated+';
+        console.log(`🤖 [TIER 3] AI-curated products added ${aiProducts.length} diverse recommendations`);
+      }
+
+      // TIER 4: Enhanced Category Search (if applicable context)
+      if (allRecommendations.length < 30) {
         const categoryBasedProducts = await this.getCategoryBasedProducts(context);
         if (categoryBasedProducts.length > 0) {
           allRecommendations.push(...categoryBasedProducts);
           intelligenceSource += 'enhanced-category+';
-          console.log(`🎯 [TIER 3] Enhanced category search added ${categoryBasedProducts.length} products`);
+          console.log(`🎯 [TIER 4] Enhanced category search added ${categoryBasedProducts.length} products`);
         }
       }
 
-      // TIER 4: Marketplace Search (semantic keyword matching)
-      if (allRecommendations.length < 20) {
+      // TIER 5: Marketplace Search (semantic keyword matching)
+      if (allRecommendations.length < 40) {
         const marketplaceProducts = await this.getMarketplaceProducts(context);
         if (marketplaceProducts.length > 0) {
           allRecommendations.push(...marketplaceProducts);
           intelligenceSource += 'marketplace+';
-          console.log(`🛍️ [TIER 4] Marketplace search added ${marketplaceProducts.length} products`);
+          console.log(`🛍️ [TIER 5] Marketplace search added ${marketplaceProducts.length} products`);
         }
       }
 
-      // Deduplicate and score (increase cap to surface more diverse products)
-      const finalRecommendations = this.deduplicateAndScore(allRecommendations, 24);
+      // Deduplicate and score (increase cap to surface more diverse products for 45+ total items)
+      const finalRecommendations = this.deduplicateAndScore(allRecommendations, 50);
 
       console.log(`🧠 [FINAL] Returning ${finalRecommendations.length} curated products. Sources: ${intelligenceSource.replace(/\+$/, '')}`);
 

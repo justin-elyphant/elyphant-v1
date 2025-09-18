@@ -71,7 +71,7 @@ class NicoleMarketplaceIntelligenceService {
    * TIER 1: Get products from recipient's wishlist (highest priority)
    */
   private async getWishlistProducts(recipientId: string, budget?: { min?: number; max?: number }): Promise<NicoleProductRecommendation[]> {
-    console.log(`🎯 [NICOLE INTELLIGENCE] Fetching wishlist products for recipient: ${recipientId}`);
+    
 
     try {
       let wishlistItems: any[] | null = null;
@@ -81,7 +81,7 @@ class NicoleMarketplaceIntelligenceService {
         const { data: rpcItems, error: rpcError } = await supabase
           .rpc('get_accessible_wishlist_items', { p_recipient_id: recipientId });
 
-        console.log(`🧩 [WISHLIST RPC] Result -> count: ${rpcItems?.length || 0}, error: ${rpcError?.message || 'none'}`);
+        
 
         if (rpcItems && rpcItems.length > 0) {
           wishlistItems = rpcItems.map((it: any) => ({
@@ -395,7 +395,7 @@ class NicoleMarketplaceIntelligenceService {
     try {
       // Use generic search terms based on occasion and relationship
       const demographicTerms = context.occasion || 'gifts';
-      console.log(`🎯 Demographic search terms:`, demographicTerms);
+      
 
       const recommendations = await this.searchProductsByKeywords([demographicTerms], context, maxResults);
 

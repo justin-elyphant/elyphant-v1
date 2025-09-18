@@ -153,7 +153,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
             }
           }
         } catch (error) {
-          console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');
+          
         }
 
         // Call Nicole Intelligence Service for sophisticated gift curation

@@ -33,10 +33,10 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     ? isWishlisted
     : isProductWishlisted(product.id);
 
-  console.log('WishlistSelectionPopoverButton - Product:', product.id, 'isWishlisted:', computedIsWishlisted);
+  
 
   const handleAdded = async () => {
-    console.log('WishlistSelectionPopoverButton - Item added callback');
+    
     
     // Refresh the wishlist state first
     await loadWishlists();
@@ -47,7 +47,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     
     // Force a small delay to ensure state propagation
     setTimeout(() => {
-      console.log('WishlistSelectionPopoverButton - After delay, isWishlisted:', isProductWishlisted(product.id));
+      // State propagated
     }, 100);
   };
 

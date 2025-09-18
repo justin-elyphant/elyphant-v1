@@ -13,6 +13,7 @@ import PersonalizedGiftingSections from "@/components/marketplace/PersonalizedGi
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { nicoleMarketplaceIntelligenceService } from "@/services/gifting/NicoleMarketplaceIntelligenceService";
 
 // Component to display stats about personalized recommendations
 const PersonalizedHeroStats: React.FC<{
@@ -119,38 +120,29 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
         try {
           console.log('🎯 [PersonalizedMarketplace] Activating sophisticated gift scoring system for:', contextToUse.recipientName);
 
-          const { data, error } = await supabase.functions.invoke('nicole-marketplace-intelligence', {
-            body: {
-              recipientName: contextToUse.recipientName,
-              recipientId: recipientId,
-              recipientInterests: recipientInterests,
-              eventType: contextToUse.eventType,
-              relationship: contextToUse.relationship,
-              context: {
-                isPersonalizedMarketplace: true,
-                requestSource: 'personalized-marketplace-page'
-              }
-            }
+          // Use the client-side Nicole Intelligence Service instead of edge function
+          const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
+            recipient_name: contextToUse.recipientName,
+            recipient_id: recipientId,
+            relationship: contextToUse.relationship,
+            occasion: contextToUse.eventType,
+            interests: recipientInterests,
+            confidence_threshold: 0.7
           });
 
-          if (error) {
-            console.error('Nicole Intelligence Service error:', error);
-            throw new Error(`Nicole AI error: ${error.message}`);
-          }
-
-          if (data?.recommendations && data.recommendations.length > 0) {
+          if (intelligenceResult?.recommendations && intelligenceResult.recommendations.length > 0) {
             console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence hierarchical results:', {
-              total: data.recommendations.length,
+              total: intelligenceResult.recommendations.length,
               tiers: {
-                tier1_wishlist: data.recommendations.filter((r: any) => r.tier === 1).length,
-                tier2_interests: data.recommendations.filter((r: any) => r.tier === 2).length,
-                tier3_ai: data.recommendations.filter((r: any) => r.tier === 3).length
+                tier1_wishlist: intelligenceResult.recommendations.filter((r: any) => r.tier === 1).length,
+                tier2_interests: intelligenceResult.recommendations.filter((r: any) => r.tier === 2).length,
+                tier3_ai: intelligenceResult.recommendations.filter((r: any) => r.tier === 3).length
               },
-              confidenceScores: data.recommendations.map((r: any) => r.confidenceScore).slice(0, 5)
+              confidenceScores: intelligenceResult.recommendations.map((r: any) => r.confidenceScore).slice(0, 5)
             });
 
             // Extract products and add tier information for grouping
-            const products = data.recommendations.map((rec: any) => ({
+            const products = intelligenceResult.recommendations.map((rec: any) => ({
               ...rec.product,
               // Add flags for the useProductDisplay hook
               fromWishlist: rec.tier === 1,
@@ -177,37 +169,64 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
                 eventType: contextToUse.eventType,
                 relationship: contextToUse.relationship,
                 isPersonalized: true,
-                intelligenceSource: 'nicole-ai-agent'
+                intelligenceSource: 'nicole-marketplace-service'
               }));
             } catch (e) {
               console.warn('Failed to store personalized context:', e);
             }
           } else {
-            console.warn('No personalized products returned from Nicole AI, response:', data);
-            setPersonalizedProducts([]);
+            console.warn('No personalized products returned from Nicole Intelligence Service, using fallback');
+            throw new Error('No recommendations from Nicole Intelligence Service');
           }
 
         } catch (nicoleError) {
-          console.error('Nicole Intelligence Service failed, falling back to basic personalization:', nicoleError);
+          console.error('Nicole Intelligence Service failed, falling back to enhanced gift recommendations:', nicoleError);
           
-          // Fallback to basic personalized marketplace hook
-          const { data, error } = await supabase.functions.invoke('get-personalized-products', {
-            body: {
-              recipientName: contextToUse.recipientName,
-              eventType: contextToUse.eventType,
-              relationship: contextToUse.relationship,
-              limit: 20
+          // Fallback to the enhanced gift recommendations edge function
+          try {
+            const { data, error } = await supabase.functions.invoke('enhanced-gift-recommendations', {
+              body: {
+                searchContext: {
+                  recipient: contextToUse.recipientName,
+                  relationship: contextToUse.relationship,
+                  occasion: contextToUse.eventType,
+                  interests: recipientInterests,
+                  budget: [10, 200] // Default budget range
+                },
+                options: {
+                  maxRecommendations: 20,
+                  includeExplanations: true,
+                  fallbackToGeneric: true
+                }
+              }
+            });
+
+            if (error) {
+              throw new Error(`Enhanced gift recommendations failed: ${error.message}`);
             }
-          });
 
-          if (error) {
-            throw new Error(`Fallback personalization failed: ${error.message}`);
-          }
-
-          if (data?.products && data.products.length > 0) {
-            console.log('✅ [PersonalizedMarketplace] Got fallback personalized products:', data.products.length);
-            setPersonalizedProducts(data.products);
-          } else {
+            if (data?.recommendations && data.recommendations.length > 0) {
+              console.log('✅ [PersonalizedMarketplace] Got enhanced gift recommendations:', data.recommendations.length);
+              
+              // Transform the recommendations into products with flags
+              const products = data.recommendations.map((rec: any, index: number) => ({
+                ...rec,
+                // Add flags for grouping - use match score to determine tier
+                fromWishlist: rec.matchScore > 0.8,
+                fromPreferences: rec.matchScore > 0.6 && rec.matchScore <= 0.8,
+                // Additional metadata
+                giftingTier: rec.matchScore > 0.8 ? 1 : rec.matchScore > 0.6 ? 2 : 3,
+                confidenceScore: rec.matchScore,
+                reasoning: rec.matchReasons?.join(', ') || 'AI recommendation'
+              }));
+              
+              setPersonalizedProducts(products);
+            } else {
+              setPersonalizedProducts([]);
+            }
+          } catch (fallbackError) {
+            console.error('All personalization methods failed:', fallbackError);
+            setPersonalizedError('Failed to load personalized recommendations. Please try again.');
             setPersonalizedProducts([]);
           }
         }

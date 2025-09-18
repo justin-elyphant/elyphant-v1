@@ -180,9 +180,10 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={() => onSendGift?.(event)}
-                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-white text-gray-900 border-gray-200 hover:bg-gray-50 text-xs md:text-sm"
+                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-white text-gray-900 border-gray-200 hover:bg-gray-50 text-xs md:text-sm lg:px-6 lg:min-h-[48px]"
                     >
-                      Browse Gifts
+                      <span className="hidden sm:inline">Browse Gifts</span>
+                      <span className="sm:hidden">Browse</span>
                     </Button>
                   </div>
                 </div>

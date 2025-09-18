@@ -11,12 +11,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Heart, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import PersonalizedHeroStats from "@/components/marketplace/PersonalizedHeroStats";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PersonalizedMarketplaceProps {}
 
 const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   const { recipientName } = useParams<{ recipientName: string }>();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(true);
   const [personalizedError, setPersonalizedError] = useState<string | null>(null);
@@ -125,16 +128,16 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           {/* Personalized Hero Section */}
           {eventContext && (
             <div className="bg-gradient-primary text-white">
-              <div className="container-header py-8">
-                <div className="text-center space-y-4">
+              <div className="container-header py-8 lg:py-12">
+                <div className="text-center space-y-4 lg:space-y-6">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Sparkles className="h-6 w-6" />
-                    <span className="text-sm font-medium opacity-90">Personalized Just For Them</span>
+                    <Sparkles className="h-6 w-6 lg:h-8 lg:w-8" />
+                    <span className="text-sm lg:text-base font-medium opacity-90">Personalized Just For Them</span>
                   </div>
-                  <h1 className="text-heading-1 font-bold">
+                  <h1 className="text-heading-1 lg:text-5xl xl:text-6xl font-bold">
                     Perfect Gifts for {displayName}
                   </h1>
-                  <p className="text-body max-w-2xl mx-auto opacity-90">
+                  <p className="text-body lg:text-lg max-w-2xl lg:max-w-4xl mx-auto opacity-90">
                     {eventContext.eventType 
                       ? `Thoughtfully curated ${eventContext.eventType} gifts that match their personality and your relationship`
                       : `Discover meaningful gifts selected just for ${displayName}`
@@ -142,12 +145,21 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
                   </p>
                   
                   {isPersonalizedLoading && (
-                    <div className="flex items-center justify-center gap-2 mt-4">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span className="text-sm">Nicole is curating personalized recommendations...</span>
+                    <div className="flex items-center justify-center gap-2 mt-4 lg:mt-6">
+                      <div className="animate-spin rounded-full h-4 w-4 lg:h-5 lg:w-5 border-b-2 border-white"></div>
+                      <span className="text-sm lg:text-base">Nicole is curating personalized recommendations...</span>
                     </div>
                   )}
                 </div>
+                
+                {/* Desktop-only Stats */}
+                <PersonalizedHeroStats
+                  recipientName={displayName}
+                  eventType={eventContext?.eventType}
+                  relationship={eventContext?.relationship}
+                  productCount={personalizedProducts.length}
+                  isDesktop={!isMobile}
+                />
               </div>
             </div>
           )}
@@ -167,10 +179,10 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           {/* Loading State */}
           {isPersonalizedLoading && (
             <div className="container-header py-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, index) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6">
+                {Array.from({ length: 12 }).map((_, index) => (
                   <Card key={index} className="p-4 space-y-3">
-                    <Skeleton className="h-48 w-full rounded-lg" />
+                    <Skeleton className="h-48 lg:h-56 w-full rounded-lg" />
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
                     <Skeleton className="h-8 w-full" />
@@ -182,10 +194,10 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
 
           {/* Success State with Personalized Products */}
           {!isPersonalizedLoading && personalizedProducts.length > 0 && (
-            <div className="container-header py-4">
-              <div className="flex items-center gap-2 mb-6">
-                <Heart className="h-5 w-5 text-primary" />
-                <span className="text-body-sm text-muted-foreground">
+            <div className="container-header py-4 lg:py-6">
+              <div className="flex items-center gap-2 lg:gap-3 mb-6 lg:mb-8">
+                <Heart className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
+                <span className="text-body-sm lg:text-body text-muted-foreground">
                   {personalizedProducts.length} personalized recommendations curated by Nicole AI
                 </span>
               </div>

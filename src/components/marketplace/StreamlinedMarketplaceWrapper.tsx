@@ -455,14 +455,14 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
       {/* Personalized Header */}
       {personalizedContext?.isPersonalized && (
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-heading-3 font-semibold">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex items-center gap-3 lg:gap-4 mb-4">
+            <Sparkles className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
+            <h2 className="text-heading-3 lg:text-heading-2 font-semibold">
               Curated for {personalizedContext.recipientName}
             </h2>
           </div>
-          <p className="text-body text-muted-foreground">
+          <p className="text-body lg:text-lg text-muted-foreground max-w-3xl">
             These gift recommendations were personally curated by Nicole AI based on your relationship and the occasion.
           </p>
         </div>

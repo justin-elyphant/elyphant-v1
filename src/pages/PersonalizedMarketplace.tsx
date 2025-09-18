@@ -74,6 +74,21 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
         } catch (fallbackError) {
           console.warn('Fallback intelligence service failed:', fallbackError);
         }
+        // Ensure personalized context is stored so the wrapper hides default hero
+        try {
+          sessionStorage.setItem('personalized-context', JSON.stringify({
+            recipientName: fallbackContext.recipientName,
+            eventType: fallbackContext.eventType,
+            relationship: fallbackContext.relationship,
+            isPersonalized: true
+          }));
+          // Optionally store empty products to signal personalization
+          if (!sessionStorage.getItem('personalized-products')) {
+            sessionStorage.setItem('personalized-products', JSON.stringify([]));
+          }
+        } catch (e) {
+          console.warn('Failed to persist fallback personalized context:', e);
+        }
         
         setIsPersonalizedLoading(false);
         return;

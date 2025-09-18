@@ -67,8 +67,13 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   }, []);
 
   // Use personalized products if available, otherwise use regular products
+  const isPersonalizedActive = useMemo(() => {
+    const routePath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isPersonalizedRoute = routePath.includes('/marketplace/for/');
+    return isPersonalizedRoute || Boolean(personalizedContext?.isPersonalized) || (personalizedProducts.length > 0);
+  }, [personalizedProducts.length, personalizedContext]);
   const displayProducts = personalizedProducts.length > 0 ? personalizedProducts : products;
-
+  
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -431,8 +436,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
       {/* Conditional Hero Section - Hide if personalized */}
-      {personalizedProducts.length === 0 && (
-        <>
+      {!isPersonalizedActive && (
+        <> 
           {brandCategories ? (
             hideHeroBanner ? null : (
               <BrandHeroSection 
@@ -453,7 +458,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       )}
       
       {/* Only show MarketplaceHeader for non-personalized */}
-      {personalizedProducts.length === 0 && (
+      {!isPersonalizedActive && (
         <MarketplaceHeader
           totalResults={displayProducts.length}
           filteredProducts={displayProducts}
@@ -476,7 +481,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       )}
 
       {/* Category or Quick Pick Title - Only for non-personalized */}
-      {showSearchInfo && !brandCategories && personalizedProducts.length === 0 && (() => {
+      {showSearchInfo && !brandCategories && !isPersonalizedActive && (() => {
         const quick = currentQuickPickCategory || (giftsForHer ? 'giftsForHer' : giftsForHim ? 'giftsForHim' : giftsUnder50 ? 'giftsUnder50' : luxuryCategories ? 'luxury' : null);
 
         if (quick) {
@@ -550,12 +555,12 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       })()}
 
       {/* Quick Filters - Only for non-personalized */}
-      {personalizedProducts.length === 0 && (
+      {!isPersonalizedActive && (
         <MarketplaceQuickFilters />
       )}
 
       {/* Category Sections (when no search active) */}
-      {!showSearchInfo && (
+      {!showSearchInfo && !isPersonalizedActive && (
         <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} />
       )}
 

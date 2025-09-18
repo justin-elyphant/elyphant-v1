@@ -37,6 +37,8 @@ import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementSe
 import { EventsProvider, useEvents } from "@/components/gifting/events/context/EventsContext";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
+import { useNavigate } from "react-router-dom";
+import { formatRecipientNameForUrl, clearPersonalizedData } from "@/utils/personalizedMarketplaceUtils";
 
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +60,7 @@ const SmartGiftingTab = () => {
   console.log('🔍 File timestamp check:', Date.now());
   const { user } = useAuth();
   const { rules } = useAutoGifting();
+  const navigate = useNavigate();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -90,8 +93,25 @@ const SmartGiftingTab = () => {
   };
 
   const handleSendGift = (event: any) => {
-    // Navigate to marketplace with Nicole for immediate gift selection
-    window.location.href = `/marketplace?mode=nicole&open=true&recipient=${encodeURIComponent(event.recipientName)}&occasion=${encodeURIComponent(event.eventType)}`;
+    // Clear any existing personalized data first
+    clearPersonalizedData();
+    
+    // Navigate to personalized marketplace page
+    const recipientName = formatRecipientNameForUrl(event.recipientName);
+    navigate(`/marketplace/for/${recipientName}`, { 
+      state: { 
+        eventContext: {
+          recipientName: event.recipientName,
+          eventType: event.eventType,
+          eventId: event.id,
+          relationship: event.relationshipType || 'friend',
+          isPersonalized: true
+        }
+      }
+    });
+    toast.success(`Opening personalized gift marketplace for ${event.recipientName}`, {
+      description: "Nicole AI is curating personalized recommendations..."
+    });
   };
 
   const handlePathSelection = (path: 'ai-autopilot' | 'manual-control') => {

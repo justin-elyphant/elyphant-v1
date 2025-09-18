@@ -31,6 +31,15 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
     totalProducts: products.length
   });
 
+  // Debug: Log actual products to verify flags are being set
+  console.log('🔍 [PersonalizedGiftingSections] Sample product flags:', 
+    products.slice(0, 3).map(p => ({
+      name: p.name || p.title,
+      fromWishlist: p.fromWishlist,
+      fromPreferences: p.fromPreferences
+    }))
+  );
+
   // Determine section data based on what we have
   const sections = useMemo(() => {
     const sectionData = [];

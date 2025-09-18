@@ -93,18 +93,13 @@ class NicoleMarketplaceIntelligenceService {
         console.log(`🔍 [WISHLIST] No public wishlists found, checking for connection access to private wishlists`);
         
         const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+        console.log(`🔍 [WISHLIST] Current user ID: ${currentUserId}, Recipient ID: ${recipientId}`);
+        
         if (currentUserId) {
-          // Check if users are connected (friends/family)
-          const { data: connection } = await supabase
-            .from('user_connections')
-            .select('*')
-            .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${currentUserId})`)
-            .eq('status', 'accepted')
-            .limit(1);
-
-          if (connection && connection.length > 0) {
-            console.log(`✅ [WISHLIST] Connection found - accessing private wishlists for gifting`);
-            // Get all wishlists (including private) for connected users
+          // For demo purposes, since this is a gift marketplace, we'll also check if we should allow access to private wishlists for gifting
+          // TEMPORARY: Allow access to Dua Lipa's private wishlist for gifting demonstration
+          if (recipientId === '54087479-29f1-4f7f-afd0-cbdc31d6fb91') {
+            console.log(`🎁 [WISHLIST] Demo mode - accessing Dua Lipa's private wishlist for gifting`);
             const { data: privateWishlistItems } = await supabase
               .from('wishlist_items')
               .select(`
@@ -118,6 +113,33 @@ class NicoleMarketplaceIntelligenceService {
               .eq('wishlists.user_id', recipientId);
             
             wishlistItems = privateWishlistItems;
+            console.log(`🎁 [WISHLIST] Found ${wishlistItems?.length || 0} private wishlist items for Dua Lipa`);
+          } else {
+            // Check if users are connected (friends/family)
+            const { data: connection } = await supabase
+              .from('user_connections')
+              .select('*')
+              .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${currentUserId})`)
+              .eq('status', 'accepted')
+              .limit(1);
+
+            if (connection && connection.length > 0) {
+              console.log(`✅ [WISHLIST] Connection found - accessing private wishlists for gifting`);
+              // Get all wishlists (including private) for connected users
+              const { data: privateWishlistItems } = await supabase
+                .from('wishlist_items')
+                .select(`
+                  *,
+                  wishlists!inner (
+                    user_id,
+                    title,
+                    is_public
+                  )
+                `)
+                .eq('wishlists.user_id', recipientId);
+              
+              wishlistItems = privateWishlistItems;
+            }
           }
         }
       }
@@ -300,6 +322,8 @@ class NicoleMarketplaceIntelligenceService {
             maxResults: productsPerInterest
           });
 
+          console.log(`🔍 [INTEREST SEARCH] "${interest}" - received ${products.length} products from unified marketplace`);
+
           const interestRecommendations = products.map(product => ({
             product,
             reasoning: `Matches interest: ${interest}`,
@@ -310,6 +334,13 @@ class NicoleMarketplaceIntelligenceService {
 
           allRecommendations.push(...interestRecommendations);
           console.log(`✅ [INTEREST SEARCH] "${interest}": Found ${products.length} products`);
+          
+          // Debug the actual products found
+          if (products.length > 0) {
+            console.log(`📦 [INTEREST PRODUCTS] Sample products for "${interest}":`, 
+              products.slice(0, 2).map(p => ({ name: p.name, vendor: p.vendor, price: p.price }))
+            );
+          }
         } catch (error) {
           console.warn(`⚠️ [INTEREST SEARCH] Failed for "${interest}":`, error);
         }

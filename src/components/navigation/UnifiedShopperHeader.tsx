@@ -18,8 +18,8 @@ const UnifiedShopperHeader: React.FC<UnifiedShopperHeaderProps> = ({
 }) => {
   const location = useLocation();
   
-  // Show breadcrumbs on deep pages
-  const showBreadcrumbs = location.pathname.split('/').length > 2;
+  // Breadcrumbs disabled for cleaner header
+  const showBreadcrumbs = false;
 
   return (
     <ModernHeaderManager 

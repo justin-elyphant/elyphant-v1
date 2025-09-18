@@ -74,58 +74,85 @@ class NicoleMarketplaceIntelligenceService {
     console.log(`🎯 [NICOLE INTELLIGENCE] Fetching wishlist products for recipient: ${recipientId}`);
 
     try {
-      // First try to get public wishlists
-      let { data: wishlistItems, error } = await supabase
-        .from('wishlist_items')
-        .select(`
-          *,
-          wishlists!inner (
-            user_id,
-            title,
-            is_public
-          )
-        `)
-        .eq('wishlists.user_id', recipientId)
-        .eq('wishlists.is_public', true);
+      // Two-step approach with RLS-friendly queries
+      // 1) Fetch public wishlists for recipient
+      const { data: publicWishlists, error: publicWlError } = await supabase
+        .from('wishlists')
+        .select('id, title, user_id, is_public')
+        .eq('user_id', recipientId)
+        .eq('is_public', true);
 
-      // If no public wishlists found, check if current user has connection to access private wishlists
-      if ((!wishlistItems || wishlistItems.length === 0) && error === null) {
-        console.log(`🔍 [WISHLIST] No public wishlists found, checking for connection access to private wishlists`);
-        
+      let wishlistItems: any[] | null = null;
+
+      // Fetch items for public wishlists if any
+      if (publicWishlists && publicWishlists.length > 0) {
+        const wlIds = publicWishlists.map(w => w.id);
+        const { data: items } = await supabase
+          .from('wishlist_items')
+          .select('*')
+          .in('wishlist_id', wlIds);
+        const titleMap: Record<string, string> = {};
+        for (const w of publicWishlists) titleMap[w.id] = w.title || '';
+        wishlistItems = (items || []).map(it => ({
+          ...it,
+          wishlists: { title: titleMap[it.wishlist_id], user_id: recipientId, is_public: true }
+        }));
+      }
+
+      // 2) If none found or viewer has access rights, attempt private access
+      if (!wishlistItems || wishlistItems.length === 0) {
+        console.log(`🔍 [WISHLIST] No public items found or RLS blocked (error: ${publicWlError?.message || 'none'})`);
         const currentUserId = (await supabase.auth.getUser()).data.user?.id;
         console.log(`🔍 [WISHLIST] Current user ID: ${currentUserId}, Recipient ID: ${recipientId}`);
-        
+
         if (currentUserId) {
-          // If the viewer is the recipient, allow access to all of their own wishlists
           if (currentUserId === recipientId) {
-            console.log(`🙋 [WISHLIST] Viewer is recipient - accessing private wishlists for own account`);
-            const { data: privateWishlistItems } = await supabase
-              .from('wishlist_items')
-              .select(`
-                *,
-                wishlists!inner (
-                  user_id,
-                  title,
-                  is_public
-                )
-              `)
-              .eq('wishlists.user_id', recipientId);
-            wishlistItems = privateWishlistItems;
+            console.log(`🙋 [WISHLIST] Viewer is recipient - accessing all own wishlists`);
+            const { data: ownWishlists } = await supabase
+              .from('wishlists')
+              .select('id, title, user_id, is_public')
+              .eq('user_id', recipientId);
+            const wlIds = (ownWishlists || []).map(w => w.id);
+            if (wlIds.length) {
+              const { data: items } = await supabase
+                .from('wishlist_items')
+                .select('*')
+                .in('wishlist_id', wlIds);
+              const titleMap: Record<string, string> = {};
+              for (const w of ownWishlists || []) titleMap[w.id] = w.title || '';
+              wishlistItems = (items || []).map(it => ({
+                ...it,
+                wishlists: { 
+                  title: titleMap[it.wishlist_id], 
+                  user_id: recipientId, 
+                  is_public: (ownWishlists || []).find(w=>w.id===it.wishlist_id)?.is_public || false 
+                }
+              }));
+            }
           } else if (recipientId === '54087479-29f1-4f7f-afd0-cbdc31d6fb91') {
             // TEMPORARY: Allow access to Dua Lipa's private wishlist for gifting demonstration
-            console.log(`🎁 [WISHLIST] Demo mode - accessing Dua Lipa's private wishlist for gifting`);
-            const { data: privateWishlistItems } = await supabase
-              .from('wishlist_items')
-              .select(`
-                *,
-                wishlists!inner (
-                  user_id,
-                  title,
-                  is_public
-                )
-              `)
-              .eq('wishlists.user_id', recipientId);
-            wishlistItems = privateWishlistItems;
+            console.log(`🎁 [WISHLIST] Demo mode - accessing Dua Lipa's private wishlists`);
+            const { data: duaWishlists } = await supabase
+              .from('wishlists')
+              .select('id, title, user_id, is_public')
+              .eq('user_id', recipientId);
+            const wlIds = (duaWishlists || []).map(w => w.id);
+            if (wlIds.length) {
+              const { data: items } = await supabase
+                .from('wishlist_items')
+                .select('*')
+                .in('wishlist_id', wlIds);
+              const titleMap: Record<string, string> = {};
+              for (const w of duaWishlists || []) titleMap[w.id] = w.title || '';
+              wishlistItems = (items || []).map(it => ({
+                ...it,
+                wishlists: { 
+                  title: titleMap[it.wishlist_id], 
+                  user_id: recipientId, 
+                  is_public: (duaWishlists || []).find(w=>w.id===it.wishlist_id)?.is_public || false 
+                }
+              }));
+            }
             console.log(`🎁 [WISHLIST] Found ${wishlistItems?.length || 0} private wishlist items for Dua Lipa`);
           } else {
             // Check if users are connected (friends/family)
@@ -138,27 +165,34 @@ class NicoleMarketplaceIntelligenceService {
 
             if (connection && connection.length > 0) {
               console.log(`✅ [WISHLIST] Connection found - accessing private wishlists for gifting`);
-              // Get all wishlists (including private) for connected users
-              const { data: privateWishlistItems } = await supabase
-                .from('wishlist_items')
-                .select(`
-                  *,
-                  wishlists!inner (
-                    user_id,
-                    title,
-                    is_public
-                  )
-                `)
-                .eq('wishlists.user_id', recipientId);
-              wishlistItems = privateWishlistItems;
+              const { data: allWishlists } = await supabase
+                .from('wishlists')
+                .select('id, title, user_id, is_public')
+                .eq('user_id', recipientId);
+              const wlIds = (allWishlists || []).map(w => w.id);
+              if (wlIds.length) {
+                const { data: items } = await supabase
+                  .from('wishlist_items')
+                  .select('*')
+                  .in('wishlist_id', wlIds);
+                const titleMap: Record<string, string> = {};
+                for (const w of allWishlists || []) titleMap[w.id] = w.title || '';
+                wishlistItems = (items || []).map(it => ({
+                  ...it,
+                  wishlists: { 
+                    title: titleMap[it.wishlist_id], 
+                    user_id: recipientId, 
+                    is_public: (allWishlists || []).find(w=>w.id===it.wishlist_id)?.is_public || false 
+                  }
+                }));
+              }
             }
           }
         }
       }
 
-      if (error) {
-        console.error('Error fetching wishlist:', error);
-        return [];
+      if (publicWlError) {
+        console.warn('Public wishlist fetch error (continuing):', publicWlError);
       }
 
       const recommendations: NicoleProductRecommendation[] = [];
@@ -512,7 +546,7 @@ class NicoleMarketplaceIntelligenceService {
         const interestProducts = await this.getInterestBasedProducts(
           context.recipient_id || '', 
           context, 
-          8
+          24
         );
         allRecommendations.push(...interestProducts);
         if (interestProducts.length > 0) {

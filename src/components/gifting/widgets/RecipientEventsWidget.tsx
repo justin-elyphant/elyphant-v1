@@ -182,7 +182,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                       onClick={() => onSendGift?.(event)}
                       className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-white text-gray-900 border-gray-200 hover:bg-gray-50 text-xs md:text-sm"
                     >
-                      Send Gift
+                      Browse Gifts
                     </Button>
                   </div>
                 </div>

@@ -74,7 +74,8 @@ class NicoleMarketplaceIntelligenceService {
     console.log(`🎯 [NICOLE INTELLIGENCE] Fetching wishlist products for recipient: ${recipientId}`);
 
     try {
-      const { data: wishlistItems, error } = await supabase
+      // First try to get public wishlists
+      let { data: wishlistItems, error } = await supabase
         .from('wishlist_items')
         .select(`
           *,
@@ -85,7 +86,41 @@ class NicoleMarketplaceIntelligenceService {
           )
         `)
         .eq('wishlists.user_id', recipientId)
-        .eq('wishlists.is_public', true); // Only get public wishlists for gifting
+        .eq('wishlists.is_public', true);
+
+      // If no public wishlists found, check if current user has connection to access private wishlists
+      if ((!wishlistItems || wishlistItems.length === 0) && error === null) {
+        console.log(`🔍 [WISHLIST] No public wishlists found, checking for connection access to private wishlists`);
+        
+        const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+        if (currentUserId) {
+          // Check if users are connected (friends/family)
+          const { data: connection } = await supabase
+            .from('user_connections')
+            .select('*')
+            .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${currentUserId})`)
+            .eq('status', 'accepted')
+            .limit(1);
+
+          if (connection && connection.length > 0) {
+            console.log(`✅ [WISHLIST] Connection found - accessing private wishlists for gifting`);
+            // Get all wishlists (including private) for connected users
+            const { data: privateWishlistItems } = await supabase
+              .from('wishlist_items')
+              .select(`
+                *,
+                wishlists!inner (
+                  user_id,
+                  title,
+                  is_public
+                )
+              `)
+              .eq('wishlists.user_id', recipientId);
+            
+            wishlistItems = privateWishlistItems;
+          }
+        }
+      }
 
       if (error) {
         console.error('Error fetching wishlist:', error);
@@ -154,7 +189,7 @@ class NicoleMarketplaceIntelligenceService {
 
       if (error || !profile) {
         console.log('No profile found, using context interests');
-        return await this.searchProductsByKeywords(context.interests || [], context, maxResults);
+        return await this.searchDiverseInterestProducts(context.interests || [], context, maxResults);
       }
 
       // Extract interests from profile
@@ -167,8 +202,10 @@ class NicoleMarketplaceIntelligenceService {
         return await this.getDemographicProducts(context, maxResults);
       }
 
-      // Search products based on interests
-      return await this.searchProductsByKeywords(allInterests, context, maxResults);
+      console.log(`🎯 [INTERESTS] Found ${allInterests.length} interests:`, allInterests);
+
+      // Search products with diversification across all interests
+      return await this.searchDiverseInterestProducts(allInterests, context, maxResults);
 
     } catch (error) {
       console.error('Error in interest-based product search:', error);
@@ -239,47 +276,68 @@ class NicoleMarketplaceIntelligenceService {
   }
 
   /**
-   * Search products by keywords with enhanced intelligence
+   * Search products with diversified interest coverage
+   */
+  private async searchDiverseInterestProducts(
+    interests: string[],
+    context: NicoleProductContext,
+    maxResults: number
+  ): Promise<NicoleProductRecommendation[]> {
+    if (!interests.length) return [];
+
+    console.log(`🎯 [DIVERSE SEARCH] Searching for balanced products across ${interests.length} interests:`, interests);
+
+    try {
+      const allRecommendations: NicoleProductRecommendation[] = [];
+      const productsPerInterest = Math.max(2, Math.floor(maxResults / interests.length));
+
+      // Search each interest separately to ensure diversity
+      for (const interest of interests) {
+        try {
+          console.log(`🔍 [INTEREST SEARCH] "${interest}" - targeting ${productsPerInterest} products`);
+          
+          const products = await unifiedMarketplaceService.searchProducts(interest, {
+            maxResults: productsPerInterest
+          });
+
+          const interestRecommendations = products.map(product => ({
+            product,
+            reasoning: `Matches interest: ${interest}`,
+            confidence_score: 0.75, // Higher confidence for diversified searches
+            source: 'interests' as const,
+            match_factors: ['interest_match', 'diverse_coverage', interest.toLowerCase().replace(/\s+/g, '_')]
+          }));
+
+          allRecommendations.push(...interestRecommendations);
+          console.log(`✅ [INTEREST SEARCH] "${interest}": Found ${products.length} products`);
+        } catch (error) {
+          console.warn(`⚠️ [INTEREST SEARCH] Failed for "${interest}":`, error);
+        }
+      }
+
+      // Deduplicate and balance representation
+      const uniqueRecommendations = this.deduplicateAndScore(allRecommendations, maxResults);
+      
+      console.log(`🎯 [DIVERSE SEARCH] Final results: ${uniqueRecommendations.length} products from ${interests.length} interests`);
+      console.log(`📊 [DIVERSITY BREAKDOWN]: ${uniqueRecommendations.length} total products`);
+
+      return uniqueRecommendations;
+
+    } catch (error) {
+      console.error('Error in diverse interest search:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Legacy search method - kept for backward compatibility
    */
   private async searchProductsByKeywords(
     keywords: string[],
     context: NicoleProductContext,
     maxResults: number
   ): Promise<NicoleProductRecommendation[]> {
-    if (!keywords.length) return [];
-
-    try {
-      // Use the first keyword as primary search term
-      const searchQuery = keywords[0];
-      console.log(`🔍 Searching marketplace for: "${searchQuery}"`);
-
-      // Search using UnifiedMarketplaceService
-      const products = await unifiedMarketplaceService.searchProducts(searchQuery, {
-        maxResults
-      });
-
-      console.log(`📦 Found ${products.length} products for "${searchQuery}"`);
-
-      // Convert to recommendations with basic scoring
-      const recommendations: NicoleProductRecommendation[] = products.map(product => {
-        const confidenceScore = 0.6; // Base confidence for interest-based matches
-
-        return {
-          product,
-          reasoning: `Interest-based match for ${keywords}`,
-          confidence_score: confidenceScore,
-          source: 'interests' as const,
-          match_factors: ['interest_match', 'keyword_relevance']
-        };
-      });
-
-      // Sort by confidence score
-      return recommendations.sort((a, b) => b.confidence_score - a.confidence_score);
-
-    } catch (error) {
-      console.error(`Error searching for keywords: ${keywords}`, error);
-      return [];
-    }
+    return this.searchDiverseInterestProducts(keywords, context, maxResults);
   }
 
   /**

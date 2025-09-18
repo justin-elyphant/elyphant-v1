@@ -66,15 +66,38 @@ export const usePersonalizedMarketplace = (
         });
 
         if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-          console.log('✅ [usePersonalizedMarketplace] Nicole Intelligence scoring results:', {
+          const tierBreakdown = intelligenceResult.recommendations.reduce((acc, rec) => {
+            acc[rec.source] = (acc[rec.source] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          console.log('🎯 [NICOLE INTELLIGENCE] Hierarchical scoring results:', {
             total: intelligenceResult.recommendations.length,
-            sources: intelligenceResult.recommendations.reduce((acc, rec) => {
-              acc[rec.source] = (acc[rec.source] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>),
-            avgConfidence: intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length,
-            hasWishlistData: !!recipientId
+            tierActivated: intelligenceResult.intelligence_source,
+            sourceBreakdown: tierBreakdown,
+            avgConfidence: Math.round(intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length * 100) / 100,
+            hasWishlistAccess: !!recipientId,
+            interestsUsed: intelligenceResult.context_used.interests?.length || 0,
+            topConfidenceScores: intelligenceResult.recommendations.slice(0, 3).map(r => ({
+              source: r.source,
+              confidence: Math.round(r.confidence_score * 100) / 100,
+              product: r.product.title || r.product.name
+            }))
           });
+
+          // Log specific tier details for debugging
+          if (tierBreakdown.wishlist > 0) {
+            console.log(`✅ [TIER 1 - WISHLIST] Found ${tierBreakdown.wishlist} wishlist products (highest priority)`);
+          }
+          if (tierBreakdown.interests > 0) {
+            console.log(`✅ [TIER 2 - INTERESTS] Found ${tierBreakdown.interests} interest-based products`);
+          }
+          if (tierBreakdown.ai_curated > 0) {
+            console.log(`✅ [TIER 3 - AI CURATED] Found ${tierBreakdown.ai_curated} AI-curated products`);
+          }
+          if (tierBreakdown.demographic > 0) {
+            console.log(`✅ [TIER 4 - DEMOGRAPHIC] Found ${tierBreakdown.demographic} demographic fallback products`);
+          }
           
           const products = intelligenceResult.recommendations.map(rec => rec.product);
           setProducts(products);

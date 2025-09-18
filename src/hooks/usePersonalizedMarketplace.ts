@@ -34,9 +34,28 @@ export const usePersonalizedMarketplace = (
 
       console.log('🎯 [usePersonalizedMarketplace] Generating products for:', options);
 
-      // First try Nicole's marketplace intelligence service
+      // First try Nicole's marketplace intelligence service with sophisticated scoring
       try {
+        // Try to find recipient profile for enhanced recommendations
+        let recipientId: string | undefined;
+        
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name, username')
+            .or(`name.ilike.%${options.recipientName}%,username.ilike.%${options.recipientName.replace(/\s+/g, '')}%`)
+            .limit(1);
+            
+          if (profiles && profiles.length > 0) {
+            recipientId = profiles[0].id;
+            console.log('✅ [usePersonalizedMarketplace] Found recipient profile for enhanced scoring:', profiles[0].name);
+          }
+        } catch (profileError) {
+          console.log('ℹ️ [usePersonalizedMarketplace] No matching profile found, using AI curation');
+        }
+
         const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
+          recipient_id: recipientId, // Enable wishlist-based recommendations (highest priority)
           recipient_name: options.recipientName,
           relationship: options.relationship || 'friend',
           occasion: options.eventType,
@@ -47,7 +66,16 @@ export const usePersonalizedMarketplace = (
         });
 
         if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-          console.log('✅ [usePersonalizedMarketplace] Got intelligence recommendations:', intelligenceResult.recommendations.length);
+          console.log('✅ [usePersonalizedMarketplace] Nicole Intelligence scoring results:', {
+            total: intelligenceResult.recommendations.length,
+            sources: intelligenceResult.recommendations.reduce((acc, rec) => {
+              acc[rec.source] = (acc[rec.source] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
+            avgConfidence: intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length,
+            hasWishlistData: !!recipientId
+          });
+          
           const products = intelligenceResult.recommendations.map(rec => rec.product);
           setProducts(products);
           setIntelligenceSource('nicole-marketplace-intelligence');

@@ -45,139 +45,78 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
 
       console.log('🎯 [PersonalizedMarketplace] Using context:', contextToUse);
 
-      // Skip the intelligence service and go straight to mock products for now
-      console.log('🔄 [PersonalizedMarketplace] Loading curated products for', contextToUse.recipientName);
+      // Activate Nicole's sophisticated gift scoring system
+      console.log('🎯 [PersonalizedMarketplace] Activating Nicole Intelligence Service for', contextToUse.recipientName);
       
-      // Immediately load mock products for testing
-      const mockProducts = [
-        {
-          id: 'dua-lipa-1',
-          title: 'Premium Wireless Headphones - Perfect for Music Lovers',
-          price: 199.99,
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'High-quality wireless headphones with noise cancellation - ideal for artists and music enthusiasts',
-          vendor: 'SoundTech',
-          category: 'Electronics',
-          tags: ['music', 'audio', 'artist', 'professional']
-        },
-        {
-          id: 'dua-lipa-2', 
-          title: 'Luxury Silk Scarf - Designer Collection',
-          price: 89.99,
-          image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Elegant silk scarf perfect for performers and fashion-forward individuals',
-          vendor: 'LuxeFashion',
-          category: 'Fashion',
-          tags: ['fashion', 'luxury', 'style', 'performance']
-        },
-        {
-          id: 'dua-lipa-3',
-          title: 'Professional Stage Makeup Kit',
-          price: 149.99,
-          image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Complete makeup collection perfect for stage performances and special events',
-          vendor: 'BeautyPro',
-          category: 'Beauty',
-          tags: ['makeup', 'performance', 'professional', 'stage']
-        },
-        {
-          id: 'dua-lipa-4',
-          title: 'Crystal Champagne Flutes Set',
-          price: 119.99,
-          image: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Elegant crystal champagne flutes for celebrating success and special moments',
-          vendor: 'CrystalWare',
-          category: 'Home & Living',
-          tags: ['celebration', 'luxury', 'entertainment', 'crystal']
-        },
-        {
-          id: 'dua-lipa-5',
-          title: 'Vintage Vinyl Record Collection Storage',
-          price: 79.99,
-          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Beautiful wooden storage for vinyl records - perfect for music collectors',
-          vendor: 'VintageVibes',
-          category: 'Home & Living',
-          tags: ['music', 'vintage', 'collection', 'storage']
-        },
-        {
-          id: 'dua-lipa-6',
-          title: 'Luxury Travel Jewelry Case',
-          price: 69.99,
-          image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Compact luxury jewelry case perfect for touring artists and frequent travelers',
-          vendor: 'TravelLux',
-          category: 'Travel',
-          tags: ['travel', 'jewelry', 'luxury', 'organization']
-        },
-        {
-          id: 'dua-lipa-7',
-          title: 'Artisan Perfume Collection',
-          price: 159.99,
-          image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Exclusive artisan perfume collection with unique scents for creative individuals',
-          vendor: 'ScentCraft',
-          category: 'Beauty',
-          tags: ['perfume', 'artisan', 'luxury', 'unique']
-        },
-        {
-          id: 'dua-lipa-8',
-          title: 'Designer Sunglasses - Aviator Style',
-          price: 129.99,
-          image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-          description: 'Premium designer sunglasses perfect for stage appearances and sunny getaways',
-          vendor: 'LuxShades',
-          category: 'Fashion',
-          tags: ['sunglasses', 'designer', 'fashion', 'style']
-        }
-      ];
-
-      console.log('✅ [PersonalizedMarketplace] Loading mock products for', contextToUse.recipientName);
-      setPersonalizedProducts(mockProducts);
+      // Try to find recipient profile first for wishlist-based recommendations
+      let recipientId: string | undefined;
       
-      // Store context for wrapper
       try {
-        sessionStorage.setItem('personalized-context', JSON.stringify({
-          recipientName: contextToUse.recipientName,
-          eventType: contextToUse.eventType,
-          relationship: contextToUse.relationship,
-          isPersonalized: true
-        }));
-      } catch (e) {
-        console.warn('Failed to store personalized context:', e);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, username')
+          .or(`name.ilike.%${contextToUse.recipientName}%,username.ilike.%${contextToUse.recipientName.replace(/\s+/g, '')}%`)
+          .limit(1);
+          
+        if (profiles && profiles.length > 0) {
+          recipientId = profiles[0].id;
+          console.log('✅ [PersonalizedMarketplace] Found recipient profile:', profiles[0].name);
+        }
+      } catch (error) {
+        console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');
       }
-      
-      setIsPersonalizedLoading(false);
-      return;
 
       try {
         setIsPersonalizedLoading(true);
         setPersonalizedError(null);
 
-        console.log('🎯 [PersonalizedMarketplace] Generating curated products for:', eventContext);
-        console.log('🎯 [PersonalizedMarketplace] Recipient name from URL:', recipientName);
+        console.log('🎯 [PersonalizedMarketplace] Activating sophisticated gift scoring system for:', contextToUse.recipientName);
 
-        // First try Nicole's marketplace intelligence service
+        // First try Nicole's marketplace intelligence service with sophisticated scoring
         try {
           const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
-            recipient_name: eventContext.recipientName,
-            relationship: eventContext.relationship || 'friend',
-            occasion: eventContext.eventType,
+            recipient_id: recipientId, // Enable wishlist-based recommendations (Tier 1)
+            recipient_name: contextToUse.recipientName,
+            relationship: contextToUse.relationship || 'friend',
+            occasion: contextToUse.eventType,
             budget: undefined, // Let Nicole determine appropriate budget
-            interests: [], // Could be enhanced with recipient interests
+            interests: [], // Could be enhanced with recipient interests from profile
             conversation_history: [],
-            confidence_threshold: 0.3
+            confidence_threshold: 0.3 // Allow lower confidence for broader recommendations
           });
 
           if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-            console.log('✅ [PersonalizedMarketplace] Got intelligence recommendations:', intelligenceResult.recommendations.length);
+            console.log('✅ [PersonalizedMarketplace] Nicole Intelligence Service results:', {
+              total: intelligenceResult.recommendations.length,
+              sources: intelligenceResult.recommendations.reduce((acc, rec) => {
+                acc[rec.source] = (acc[rec.source] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>),
+              avgConfidence: intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length
+            });
+            
             const products = intelligenceResult.recommendations.map(rec => rec.product);
             setPersonalizedProducts(products);
+            
+            // Store context for wrapper with intelligence source info
+            try {
+              sessionStorage.setItem('personalized-context', JSON.stringify({
+                recipientName: contextToUse.recipientName,
+                eventType: contextToUse.eventType,
+                relationship: contextToUse.relationship,
+                isPersonalized: true,
+                intelligenceSource: intelligenceResult.intelligence_source,
+                hasRecipientProfile: !!recipientId
+              }));
+            } catch (e) {
+              console.warn('Failed to store personalized context:', e);
+            }
+            
             setIsPersonalizedLoading(false);
             return;
           }
         } catch (intelligenceError) {
-          console.warn('Intelligence service failed, falling back to Nicole AI:', intelligenceError);
+          console.warn('Nicole Intelligence Service failed, falling back to Nicole AI:', intelligenceError);
         }
 
         // Fallback to Nicole ChatGPT agent for curation
@@ -185,9 +124,9 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           body: {
             action: 'generate_curated_marketplace',
             context: {
-              recipientName: eventContext.recipientName,
-              eventType: eventContext.eventType,
-              relationship: eventContext.relationship || 'friend',
+              recipientName: contextToUse.recipientName,
+              eventType: contextToUse.eventType,
+              relationship: contextToUse.relationship || 'friend',
               budget: undefined // Let Nicole suggest appropriate range
             }
           }
@@ -200,6 +139,19 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
         if (data?.products && data.products.length > 0) {
           console.log('✅ [PersonalizedMarketplace] Got Nicole AI curated products:', data.products.length);
           setPersonalizedProducts(data.products);
+          
+          // Store context for wrapper
+          try {
+            sessionStorage.setItem('personalized-context', JSON.stringify({
+              recipientName: contextToUse.recipientName,
+              eventType: contextToUse.eventType,
+              relationship: contextToUse.relationship,
+              isPersonalized: true,
+              intelligenceSource: 'nicole-ai-agent'
+            }));
+          } catch (e) {
+            console.warn('Failed to store personalized context:', e);
+          }
         } else {
           console.warn('No personalized products returned from Nicole AI, response:', data);
           setPersonalizedProducts([]);

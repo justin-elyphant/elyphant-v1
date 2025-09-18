@@ -131,27 +131,30 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           });
 
           if (intelligenceResult?.recommendations && intelligenceResult.recommendations.length > 0) {
-            console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence hierarchical results:', {
+            console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence results:', {
               total: intelligenceResult.recommendations.length,
-              tiers: {
-                tier1_wishlist: intelligenceResult.recommendations.filter((r: any) => r.tier === 1).length,
-                tier2_interests: intelligenceResult.recommendations.filter((r: any) => r.tier === 2).length,
-                tier3_ai: intelligenceResult.recommendations.filter((r: any) => r.tier === 3).length
+              sources: {
+                wishlist: intelligenceResult.recommendations.filter((r: any) => r.source === 'wishlist').length,
+                interests: intelligenceResult.recommendations.filter((r: any) => r.source === 'interests').length,
+                other: intelligenceResult.recommendations.filter((r: any) => r.source !== 'wishlist' && r.source !== 'interests').length
               },
-              confidenceScores: intelligenceResult.recommendations.map((r: any) => r.confidenceScore).slice(0, 5)
+              confidenceScores: intelligenceResult.recommendations.map((r: any) => r.confidence_score).slice(0, 5)
             });
 
-            // Extract products and add tier information for grouping
-            const products = intelligenceResult.recommendations.map((rec: any) => ({
-              ...rec.product,
-              // Add flags for the useProductDisplay hook
-              fromWishlist: rec.tier === 1,
-              fromPreferences: rec.tier === 2,
-              // Additional metadata
-              giftingTier: rec.tier,
-              confidenceScore: rec.confidenceScore,
-              reasoning: rec.reasoning
-            }));
+            const products = intelligenceResult.recommendations.map((rec: any) => {
+              const source = rec.source;
+              const tier = source === 'wishlist' ? 1 : source === 'interests' ? 2 : 3;
+              return {
+                ...rec.product,
+                // Flags used by grouping hook
+                fromWishlist: source === 'wishlist',
+                fromPreferences: source === 'interests',
+                // Additional metadata
+                giftingTier: tier,
+                confidenceScore: rec.confidence_score,
+                reasoning: rec.reasoning
+              };
+            });
 
             console.log('✅ [PersonalizedMarketplace] Processed products with tier information:', {
               total: products.length,

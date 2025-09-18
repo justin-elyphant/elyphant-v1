@@ -74,41 +74,61 @@ class NicoleMarketplaceIntelligenceService {
     console.log(`🎯 [NICOLE INTELLIGENCE] Fetching wishlist products for recipient: ${recipientId}`);
 
     try {
-      // Two-step approach with RLS-friendly queries
-      // 1) Fetch public wishlists for recipient
-      const { data: publicWishlists, error: publicWlError } = await supabase
-        .from('wishlists')
-        .select('id, title, user_id, is_public')
-        .eq('user_id', recipientId)
-        .eq('is_public', true);
-
       let wishlistItems: any[] | null = null;
 
-      // Fetch items for public wishlists if any
-      if (publicWishlists && publicWishlists.length > 0) {
-        const wlIds = publicWishlists.map(w => w.id);
-        console.log(`🔍 [WISHLIST] Found ${publicWishlists.length} public wishlists, fetching items for:`, wlIds);
-        const { data: items, error: itemsError } = await supabase
-          .from('wishlist_items')
-          .select('*')
-          .in('wishlist_id', wlIds);
-        
-        console.log(`🔍 [WISHLIST] Public wishlist items query result:`, { 
-          itemsCount: items?.length || 0, 
-          error: itemsError?.message || 'none' 
-        });
-        
-        const titleMap: Record<string, string> = {};
-        for (const w of publicWishlists) titleMap[w.id] = w.title || '';
-        wishlistItems = (items || []).map(it => ({
-          ...it,
-          wishlists: { title: titleMap[it.wishlist_id], user_id: recipientId, is_public: true }
-        }));
+      // 0) Preferred path: RLS-safe RPC that enforces privacy internally
+      try {
+        const { data: rpcItems, error: rpcError } = await supabase
+          .rpc('get_accessible_wishlist_items', { p_recipient_id: recipientId });
+
+        console.log(`🧩 [WISHLIST RPC] Result -> count: ${rpcItems?.length || 0}, error: ${rpcError?.message || 'none'}`);
+
+        if (rpcItems && rpcItems.length > 0) {
+          wishlistItems = rpcItems.map((it: any) => ({
+            ...it,
+            wishlists: {
+              title: it.wishlist_title,
+              user_id: recipientId,
+              is_public: !!it.is_public
+            }
+          }));
+        }
+      } catch (rpcCatch) {
+        console.warn('⚠️ [WISHLIST RPC] Failed, will fall back to direct queries:', rpcCatch);
       }
 
-      // 2) If none found or viewer has access rights, attempt private access
+      // 1) Fallback: public wishlists
       if (!wishlistItems || wishlistItems.length === 0) {
-        console.log(`🔍 [WISHLIST] No public items found or RLS blocked (error: ${publicWlError?.message || 'none'})`);
+        // Two-step approach with RLS-friendly queries
+        // 1) Fetch public wishlists for recipient
+        const { data: publicWishlists, error: publicWlError } = await supabase
+          .from('wishlists')
+          .select('id, title, user_id, is_public')
+          .eq('user_id', recipientId)
+          .eq('is_public', true);
+
+        // Fetch items for public wishlists if any
+        if (publicWishlists && publicWishlists.length > 0) {
+          const wlIds = publicWishlists.map(w => w.id);
+          console.log(`🔍 [WISHLIST] Found ${publicWishlists.length} public wishlists, fetching items for:`, wlIds);
+          const { data: items, error: itemsError } = await supabase
+            .from('wishlist_items')
+            .select('*')
+            .in('wishlist_id', wlIds);
+          console.log(`🔍 [WISHLIST] Public wishlist items query result:`, { itemsCount: items?.length || 0, error: itemsError?.message || 'none' });
+          const titleMap: Record<string, string> = {};
+          for (const w of publicWishlists) titleMap[w.id] = w.title || '';
+          wishlistItems = (items || []).map(it => ({
+            ...it,
+            wishlists: { title: titleMap[it.wishlist_id], user_id: recipientId, is_public: true }
+          }));
+        } else if (publicWlError) {
+          console.warn('Public wishlist fetch error (continuing):', publicWlError);
+        }
+      }
+
+      // 2) Fallback: viewer has access rights (self, demo recipient, or accepted connection)
+      if (!wishlistItems || wishlistItems.length === 0) {
         const currentUserId = (await supabase.auth.getUser()).data.user?.id;
         console.log(`🔍 [WISHLIST] Current user ID: ${currentUserId}, Recipient ID: ${recipientId}`);
 
@@ -150,17 +170,11 @@ class NicoleMarketplaceIntelligenceService {
                 .from('wishlist_items')
                 .select('*')
                 .in('wishlist_id', wlIds);
-              
               console.log(`🎁 [WISHLIST] Dua Lipa wishlist items query result:`, { 
                 itemsCount: items?.length || 0, 
                 error: itemsError?.message || 'none',
-                firstItem: items?.[0] ? { 
-                  id: items[0].id, 
-                  title: items[0].title || items[0].name,
-                  wishlist_id: items[0].wishlist_id 
-                } : null
+                firstItem: items?.[0] ? { id: items[0].id, title: items[0].title || items[0].name, wishlist_id: items[0].wishlist_id } : null
               });
-              
               const titleMap: Record<string, string> = {};
               for (const w of duaWishlists || []) titleMap[w.id] = w.title || '';
               wishlistItems = (items || []).map(it => ({
@@ -217,10 +231,6 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      if (publicWlError) {
-        console.warn('Public wishlist fetch error (continuing):', publicWlError);
-      }
-
       const recommendations: NicoleProductRecommendation[] = [];
 
       console.log(`🔍 [WISHLIST] Processing ${wishlistItems?.length || 0} wishlist items into products...`);
@@ -262,25 +272,17 @@ class NicoleMarketplaceIntelligenceService {
 
         const recommendation = {
           product,
-          reasoning: `This item is on ${item.wishlists?.title || 'their wishlist'}, indicating strong interest`,
+          reasoning: `This item is on ${item.wishlists?.title || 'their wishlist'}, indicating strong interest` ,
           confidence_score: 0.95, // Very high confidence for wishlist items
           source: 'wishlist' as const,
           match_factors: ['wishlist_item', 'high_interest', 'verified_desire']
         };
 
         recommendations.push(recommendation);
-        
-        console.log(`✅ [WISHLIST] Added recommendation:`, {
-          title: product.title,
-          price: product.price,
-          confidence: recommendation.confidence_score
-        });
+        console.log(`✅ [WISHLIST] Added recommendation:`, { title: product.title, price: product.price, confidence: recommendation.confidence_score });
       }
 
-      console.log(`✅ [WISHLIST] Final wishlist recommendations:`, {
-        count: recommendations.length,
-        totalProcessed: wishlistItems?.length || 0
-      });
+      console.log(`✅ [WISHLIST] Final wishlist recommendations:`, { count: recommendations.length, totalProcessed: wishlistItems?.length || 0 });
       return recommendations;
 
     } catch (error) {

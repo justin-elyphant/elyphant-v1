@@ -4807,6 +4807,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_accessible_wishlist_items: {
+        Args: { p_recipient_id: string }
+        Returns: {
+          brand: string
+          description: string
+          id: string
+          image_url: string
+          is_public: boolean
+          name: string
+          price: number
+          title: string
+          wishlist_id: string
+          wishlist_title: string
+        }[]
+      }
       get_nudge_summary: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: {

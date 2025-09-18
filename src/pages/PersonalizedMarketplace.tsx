@@ -1,18 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
-import StreamlinedMarketplaceWrapper from "@/components/marketplace/StreamlinedMarketplaceWrapper";
 import MainLayout from "@/components/layout/MainLayout";
 import SEOWrapper from "@/components/seo/SEOWrapper";
 import { supabase } from "@/integrations/supabase/client";
-import { nicoleMarketplaceIntelligenceService } from "@/services/gifting/NicoleMarketplaceIntelligenceService";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Heart, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import PersonalizedHeroStats from "@/components/marketplace/PersonalizedHeroStats";
+import { AlertCircle, Heart, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import PersonalizedGiftingSections from "@/components/marketplace/PersonalizedGiftingSections";
+import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
+
+// Component to display stats about personalized recommendations
+const PersonalizedHeroStats: React.FC<{
+  recipientName: string;
+  eventType?: string;
+  relationship?: string;
+  productCount: number;
+  isDesktop: boolean;
+}> = ({ recipientName, eventType, relationship, productCount, isDesktop }) => {
+  if (!isDesktop) return null;
+  
+  return (
+    <div className="flex flex-wrap gap-6 text-center">
+      <div className="flex-1 min-w-[120px]">
+        <div className="text-2xl font-bold">{productCount}</div>
+        <div className="text-sm opacity-80">Curated Gifts</div>
+      </div>
+      {eventType && (
+        <div className="flex-1 min-w-[120px]">
+          <div className="text-2xl font-bold">Perfect</div>
+          <div className="text-sm opacity-80">For {eventType}</div>
+        </div>
+      )}
+      {relationship && (
+        <div className="flex-1 min-w-[120px]">
+          <div className="text-2xl font-bold">Personal</div>
+          <div className="text-sm opacity-80">{relationship} Gifts</div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface PersonalizedMarketplaceProps {}
 
@@ -20,175 +52,164 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   const { recipientName } = useParams<{ recipientName: string }>();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { addToCart } = useCart();
+  
   const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(true);
   const [personalizedError, setPersonalizedError] = useState<string | null>(null);
-  
-  // Get event context from navigation state
-  const eventContext = location.state?.eventContext;
-  const displayName = eventContext?.recipientName || recipientName?.replace(/-/g, ' ') || 'Special Someone';
-  
-  // Generate personalized marketplace content
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [showProductDetails, setShowProductDetails] = useState(false);
+
+  // Get event context from location state or URL params
+  const eventContext = location.state?.eventContext || {
+    recipientName: recipientName?.replace(/-/g, ' '),
+    eventType: location.state?.eventType || null,
+    relationship: location.state?.relationship || 'friend'
+  };
+
+  const displayName = eventContext?.recipientName || recipientName?.replace(/-/g, ' ') || 'Recipient';
+
   useEffect(() => {
     async function generatePersonalizedMarketplace() {
       console.log('🔍 [PersonalizedMarketplace] Debug - eventContext:', eventContext);
       console.log('🔍 [PersonalizedMarketplace] Debug - recipientName:', recipientName);
       console.log('🔍 [PersonalizedMarketplace] Debug - location.state:', location.state);
       
-      // For personalized marketplace, we should always try to generate products
-      const contextToUse = eventContext || {
-        recipientName: recipientName?.replace(/-/g, ' ') || 'Special Someone',
-        eventType: 'special occasion',
-        relationship: 'friend',
-        isPersonalized: true
-      };
+      if (!recipientName) {
+        setPersonalizedError("No recipient specified");
+        setIsPersonalizedLoading(false);
+        return;
+      }
 
+      const contextToUse = eventContext;
       console.log('🎯 [PersonalizedMarketplace] Using context:', contextToUse);
 
       // Activate Nicole's sophisticated gift scoring system
       console.log('🎯 [PersonalizedMarketplace] Activating Nicole Intelligence Service for', contextToUse.recipientName);
       
-      // Try to find recipient profile first for wishlist-based recommendations
-      let recipientId: string | undefined;
-      let recipientInterests: string[] = [];
-      
-      try {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, name, username, interests')
-          .or(`name.ilike.%${contextToUse.recipientName}%,username.ilike.%${contextToUse.recipientName.replace(/\s+/g, '')}%`)
-          .limit(1);
-          
-        if (profiles && profiles.length > 0) {
-          recipientId = profiles[0].id;
-          recipientInterests = Array.isArray(profiles[0].interests) ? (profiles[0].interests as string[]) : [];
-          console.log('✅ [PersonalizedMarketplace] Found recipient profile:', {
-            name: profiles[0].name,
-            interests: recipientInterests,
-            hasWishlistAccess: !!recipientId
-          });
-        }
-      } catch (error) {
-        console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');
-      }
-
       try {
         setIsPersonalizedLoading(true);
         setPersonalizedError(null);
 
-        console.log('🎯 [PersonalizedMarketplace] Activating sophisticated gift scoring system for:', contextToUse.recipientName);
+        // First, try to get the recipient's profile for enhanced scoring
+        let recipientId: string | null = null;
+        let recipientInterests: string[] = [];
 
-        // First try Nicole's marketplace intelligence service with sophisticated scoring
         try {
-          const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
-            recipient_id: recipientId, // Enable wishlist-based recommendations (Tier 1)
-            recipient_name: contextToUse.recipientName,
-            relationship: contextToUse.relationship || 'friend',
-            occasion: contextToUse.eventType,
-            budget: undefined, // Let Nicole determine appropriate budget
-            interests: recipientInterests, // Now using actual recipient interests for diversification
-            conversation_history: [],
-            confidence_threshold: 0.3 // Allow lower confidence for broader recommendations
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name, interests')
+            .ilike('name', contextToUse.recipientName)
+            .limit(1);
+
+          if (profiles && profiles.length > 0) {
+            recipientId = profiles[0].id;
+            recipientInterests = Array.isArray(profiles[0].interests) ? (profiles[0].interests as string[]) : [];
+            console.log('✅ [PersonalizedMarketplace] Found recipient profile:', {
+              name: profiles[0].name,
+              id: recipientId,
+              interests: recipientInterests
+            });
+          }
+        } catch (error) {
+          console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');
+        }
+
+        // Call Nicole Intelligence Service for sophisticated gift curation
+        try {
+          console.log('🎯 [PersonalizedMarketplace] Activating sophisticated gift scoring system for:', contextToUse.recipientName);
+
+          const { data, error } = await supabase.functions.invoke('nicole-marketplace-intelligence', {
+            body: {
+              recipientName: contextToUse.recipientName,
+              recipientId: recipientId,
+              recipientInterests: recipientInterests,
+              eventType: contextToUse.eventType,
+              relationship: contextToUse.relationship,
+              context: {
+                isPersonalizedMarketplace: true,
+                requestSource: 'personalized-marketplace-page'
+              }
+            }
           });
 
-          if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-            const tierBreakdown = intelligenceResult.recommendations.reduce((acc, rec) => {
-              acc[rec.source] = (acc[rec.source] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>);
+          if (error) {
+            console.error('Nicole Intelligence Service error:', error);
+            throw new Error(`Nicole AI error: ${error.message}`);
+          }
 
+          if (data?.recommendations && data.recommendations.length > 0) {
             console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence hierarchical results:', {
-              total: intelligenceResult.recommendations.length,
-              tierActivated: intelligenceResult.intelligence_source,
-              sourceBreakdown: tierBreakdown,
-              avgConfidence: Math.round(intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length * 100) / 100,
-              recipientProfile: {
-                hasWishlistAccess: !!recipientId,
-                interestsFound: recipientInterests.length,
-                interests: recipientInterests
+              total: data.recommendations.length,
+              tiers: {
+                tier1_wishlist: data.recommendations.filter((r: any) => r.tier === 1).length,
+                tier2_interests: data.recommendations.filter((r: any) => r.tier === 2).length,
+                tier3_ai: data.recommendations.filter((r: any) => r.tier === 3).length
               },
-              topProducts: intelligenceResult.recommendations.slice(0, 3).map(r => ({
-                source: r.source,
-                confidence: Math.round(r.confidence_score * 100) / 100,
-                product: r.product.title || r.product.name
-              }))
+              confidenceScores: data.recommendations.map((r: any) => r.confidenceScore).slice(0, 5)
             });
 
-            // Log tier-specific results for debugging
-            if (tierBreakdown.wishlist > 0) {
-              console.log(`✅ [TIER 1 - WISHLIST] Found ${tierBreakdown.wishlist} wishlist products (95% confidence)`);
-            }
-            if (tierBreakdown.interests > 0) {
-              console.log(`✅ [TIER 2 - INTERESTS] Found ${tierBreakdown.interests} interest-based products (75% confidence)`);
-              console.log(`🎯 [INTERESTS USED]:`, recipientInterests);
-            }
-            if (tierBreakdown.ai_curated > 0) {
-              console.log(`✅ [TIER 3 - AI CURATED] Found ${tierBreakdown.ai_curated} AI-curated products`);
-            }
-            if (tierBreakdown.demographic > 0) {
-              console.log(`✅ [TIER 4 - DEMOGRAPHIC] Found ${tierBreakdown.demographic} demographic fallback products`);
-            }
-            
-            const products = intelligenceResult.recommendations.map(rec => rec.product);
+            // Extract products and add tier information for grouping
+            const products = data.recommendations.map((rec: any) => ({
+              ...rec.product,
+              // Add flags for the useProductDisplay hook
+              fromWishlist: rec.tier === 1,
+              fromPreferences: rec.tier === 2,
+              // Additional metadata
+              giftingTier: rec.tier,
+              confidenceScore: rec.confidenceScore,
+              reasoning: rec.reasoning
+            }));
+
+            console.log('✅ [PersonalizedMarketplace] Processed products with tier information:', {
+              total: products.length,
+              wishlistFlagged: products.filter((p: any) => p.fromWishlist).length,
+              preferencesFlagged: products.filter((p: any) => p.fromPreferences).length,
+              regularItems: products.filter((p: any) => !p.fromWishlist && !p.fromPreferences).length
+            });
+
             setPersonalizedProducts(products);
-            
-            // Store context for wrapper with intelligence source info
+
+            // Store context for potential future use
             try {
               sessionStorage.setItem('personalized-context', JSON.stringify({
                 recipientName: contextToUse.recipientName,
                 eventType: contextToUse.eventType,
                 relationship: contextToUse.relationship,
                 isPersonalized: true,
-                intelligenceSource: intelligenceResult.intelligence_source,
-                hasRecipientProfile: !!recipientId
+                intelligenceSource: 'nicole-ai-agent'
               }));
             } catch (e) {
               console.warn('Failed to store personalized context:', e);
             }
-            
-            setIsPersonalizedLoading(false);
-            return;
+          } else {
+            console.warn('No personalized products returned from Nicole AI, response:', data);
+            setPersonalizedProducts([]);
           }
-        } catch (intelligenceError) {
-          console.warn('Nicole Intelligence Service failed, falling back to Nicole AI:', intelligenceError);
-        }
 
-        // Fallback to Nicole ChatGPT agent for curation
-        const { data, error } = await supabase.functions.invoke('nicole-chatgpt-agent', {
-          body: {
-            action: 'generate_curated_marketplace',
-            context: {
-              recipientName: contextToUse.recipientName,
-              eventType: contextToUse.eventType,
-              relationship: contextToUse.relationship || 'friend',
-              budget: undefined // Let Nicole suggest appropriate range
-            }
-          }
-        });
-
-        if (error) {
-          throw new Error(error.message || 'Failed to generate personalized marketplace');
-        }
-
-        if (data?.products && data.products.length > 0) {
-          console.log('✅ [PersonalizedMarketplace] Got Nicole AI curated products:', data.products.length);
-          setPersonalizedProducts(data.products);
+        } catch (nicoleError) {
+          console.error('Nicole Intelligence Service failed, falling back to basic personalization:', nicoleError);
           
-          // Store context for wrapper
-          try {
-            sessionStorage.setItem('personalized-context', JSON.stringify({
+          // Fallback to basic personalized marketplace hook
+          const { data, error } = await supabase.functions.invoke('get-personalized-products', {
+            body: {
               recipientName: contextToUse.recipientName,
               eventType: contextToUse.eventType,
               relationship: contextToUse.relationship,
-              isPersonalized: true,
-              intelligenceSource: 'nicole-ai-agent'
-            }));
-          } catch (e) {
-            console.warn('Failed to store personalized context:', e);
+              limit: 20
+            }
+          });
+
+          if (error) {
+            throw new Error(`Fallback personalization failed: ${error.message}`);
           }
-        } else {
-          console.warn('No personalized products returned from Nicole AI, response:', data);
-          setPersonalizedProducts([]);
+
+          if (data?.products && data.products.length > 0) {
+            console.log('✅ [PersonalizedMarketplace] Got fallback personalized products:', data.products.length);
+            setPersonalizedProducts(data.products);
+          } else {
+            setPersonalizedProducts([]);
+          }
         }
 
       } catch (error) {
@@ -203,17 +224,27 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
     generatePersonalizedMarketplace();
   }, [recipientName, eventContext]);
 
-  // Store personalized products in session storage for StreamlinedMarketplaceWrapper to use
-  useEffect(() => {
-    if (personalizedProducts.length > 0) {
-      sessionStorage.setItem('personalized-products', JSON.stringify(personalizedProducts));
-      sessionStorage.setItem('personalized-context', JSON.stringify({
-        recipientName: displayName,
-        eventType: eventContext?.eventType,
-        isPersonalized: true
-      }));
+  // Product interaction handlers
+  const handleProductClick = (product: any) => {
+    console.log('Product clicked:', product);
+    setSelectedProduct(product);
+    setShowProductDetails(true);
+  };
+
+  const handleAddToCart = async (product: any) => {
+    try {
+      await addToCart(product, 1);
+      toast.success(`${product.title || product.name} has been added to your cart.`);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      toast.error("Failed to add item to cart. Please try again.");
     }
-  }, [personalizedProducts, displayName, eventContext]);
+  };
+
+  const handleShare = (product: any) => {
+    console.log('Share product:', product);
+    // TODO: Implement share functionality
+  };
 
   const pageTitle = `Perfect Gifts for ${displayName} | Elyphant`;
   const pageDescription = `Discover personalized gift recommendations for ${displayName}${eventContext?.eventType ? ` for their ${eventContext.eventType}` : ''}. AI-curated selections based on their interests and your relationship.`;
@@ -303,12 +334,29 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
                   {personalizedProducts.length} personalized recommendations curated by Nicole AI
                 </span>
               </div>
+              
+              {/* Personalized Gifting Sections */}
+              <PersonalizedGiftingSections
+                products={personalizedProducts}
+                recipientName={displayName}
+                onProductClick={handleProductClick}
+                onAddToCart={handleAddToCart}
+                onShare={handleShare}
+              />
             </div>
           )}
-
-          {/* Main Marketplace Content */}
-          <StreamlinedMarketplaceWrapper />
         </div>
+        
+        {/* Product Details Dialog */}
+        <ProductDetailsDialog
+          product={selectedProduct}
+          open={showProductDetails}
+          onOpenChange={(open) => {
+            setShowProductDetails(open);
+            if (!open) setSelectedProduct(null);
+          }}
+          userData={null}
+        />
       </MainLayout>
     </SEOWrapper>
   );

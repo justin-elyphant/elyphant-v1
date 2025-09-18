@@ -70,6 +70,7 @@ const Payments = lazy(() => import("./pages/Payments"));
 const RecentlyViewed = lazy(() => import("./pages/RecentlyViewed"));
 const ProductDetailsPage = lazy(() => import("./pages/ProductDetails"));
 const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
+const EnhancedMarketplacePage = lazy(() => import("./pages/EnhancedMarketplacePage"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
@@ -235,6 +236,7 @@ function AppContent() {
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/enhanced-marketplace" element={<EnhancedMarketplacePage />} />
           <Route path="/marketplace/for/:recipientName" element={<Marketplace />} />
           <Route path="/marketplace/product/:id" element={<ProductDetailsPage />} />
           <Route path="/settings" element={<Settings />} />

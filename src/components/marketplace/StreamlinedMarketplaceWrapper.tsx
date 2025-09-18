@@ -29,6 +29,8 @@ import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersecti
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
 import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 import { Sparkles } from "lucide-react";
+import ProductGrid from "./product-grid/ProductGrid";
+import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {

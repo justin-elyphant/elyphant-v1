@@ -12,6 +12,7 @@ interface ProductGridProps {
   renderProductCard?: (product: Product) => React.ReactNode;
   showGroupedSections?: boolean;
   onProductView?: (productId: string) => void;
+  sectionTitles?: { wishlist?: string; preferences?: string; regular?: string };
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({
@@ -20,7 +21,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   viewMode = "grid",
   renderProductCard,
   showGroupedSections = true,
-  onProductView
+  onProductView,
+  sectionTitles
 }) => {
   const { sortedProducts, groupedProducts } = useProductDisplay(products, sortOption);
   
@@ -42,6 +44,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         viewMode={viewMode}
         renderProductCard={productCardRenderer}
         onProductView={onProductView}
+        sectionTitles={sectionTitles}
       />
     );
   }

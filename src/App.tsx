@@ -226,7 +226,8 @@ function AppContent() {
           {/* New dedicated feature pages */}
           <Route path="/gifting" element={<GiftingHub />} />
           <Route path="/events" element={<GiftingHub />} />
-          <Route path="/nicole" element={<Nicole />} />
+          {/* Temporarily hidden - Nicole AI page */}
+          {/* <Route path="/nicole" element={<Nicole />} /> */}
           <Route path="/account" element={<Navigate to="/settings" replace />} />
           
           <Route path="/profile/complete" element={<ProfileComplete />} />

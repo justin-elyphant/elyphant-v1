@@ -294,7 +294,7 @@ const DashboardGrid = () => {
           </CardContent>
         </SwipeableCard>
 
-        {/* Nicole AI */}
+        {/* Temporarily hidden - Nicole AI
         <Card className={cn(
           "hover:shadow-lg transition-all duration-200 cursor-pointer group",
           "touch-manipulation min-h-[140px] sm:min-h-[130px]"
@@ -323,6 +323,7 @@ const DashboardGrid = () => {
             </div>
           </CardContent>
         </Card>
+        */}
 
         {/* Messages */}
         <Card className={cn(

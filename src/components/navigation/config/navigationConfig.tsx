@@ -102,6 +102,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           section: "secondary" as const,
           requiresAuth: true
         },
+        /* Temporarily hidden - Nicole AI
         {
           id: "nicole",
           label: "Nicole AI",
@@ -109,6 +110,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           icon: <Brain className="h-5 w-5" />,
           section: "secondary" as const
         }
+        */
       ]
     }] : []),
 

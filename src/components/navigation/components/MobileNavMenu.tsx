@@ -88,6 +88,7 @@ const MobileNavMenu = ({
               >
                 Gifting Hub
               </Link>
+              {/* Temporarily hidden - Nicole AI
               <Link
                 to="/nicole"
                 className="block px-6 py-2 rounded-md hover:bg-accent flex items-center"
@@ -95,6 +96,7 @@ const MobileNavMenu = ({
               >
                 Nicole AI
               </Link>
+              */}
             </div>
             
             <div className="space-y-1 pt-2">

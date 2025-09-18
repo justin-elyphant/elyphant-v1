@@ -81,11 +81,13 @@ const AppSidebar = () => {
       url: "/gifting",
       icon: Gift,
     },
+    /* Temporarily hidden - Nicole AI
     {
       title: "Nicole AI",
       url: "/nicole",
       icon: Brain,
     },
+    */
   ];
 
   const isActiveRoute = (url: string) => {

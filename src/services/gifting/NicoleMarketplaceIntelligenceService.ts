@@ -96,9 +96,23 @@ class NicoleMarketplaceIntelligenceService {
         console.log(`🔍 [WISHLIST] Current user ID: ${currentUserId}, Recipient ID: ${recipientId}`);
         
         if (currentUserId) {
-          // For demo purposes, since this is a gift marketplace, we'll also check if we should allow access to private wishlists for gifting
-          // TEMPORARY: Allow access to Dua Lipa's private wishlist for gifting demonstration
-          if (recipientId === '54087479-29f1-4f7f-afd0-cbdc31d6fb91') {
+          // If the viewer is the recipient, allow access to all of their own wishlists
+          if (currentUserId === recipientId) {
+            console.log(`🙋 [WISHLIST] Viewer is recipient - accessing private wishlists for own account`);
+            const { data: privateWishlistItems } = await supabase
+              .from('wishlist_items')
+              .select(`
+                *,
+                wishlists!inner (
+                  user_id,
+                  title,
+                  is_public
+                )
+              `)
+              .eq('wishlists.user_id', recipientId);
+            wishlistItems = privateWishlistItems;
+          } else if (recipientId === '54087479-29f1-4f7f-afd0-cbdc31d6fb91') {
+            // TEMPORARY: Allow access to Dua Lipa's private wishlist for gifting demonstration
             console.log(`🎁 [WISHLIST] Demo mode - accessing Dua Lipa's private wishlist for gifting`);
             const { data: privateWishlistItems } = await supabase
               .from('wishlist_items')
@@ -111,7 +125,6 @@ class NicoleMarketplaceIntelligenceService {
                 )
               `)
               .eq('wishlists.user_id', recipientId);
-            
             wishlistItems = privateWishlistItems;
             console.log(`🎁 [WISHLIST] Found ${wishlistItems?.length || 0} private wishlist items for Dua Lipa`);
           } else {
@@ -137,7 +150,6 @@ class NicoleMarketplaceIntelligenceService {
                   )
                 `)
                 .eq('wishlists.user_id', recipientId);
-              
               wishlistItems = privateWishlistItems;
             }
           }
@@ -311,7 +323,8 @@ class NicoleMarketplaceIntelligenceService {
 
     try {
       const allRecommendations: NicoleProductRecommendation[] = [];
-      const productsPerInterest = Math.max(2, Math.floor(maxResults / interests.length));
+      // Pull a bit more per interest to ensure a fuller grid and better diversity
+      const productsPerInterest = Math.max(3, Math.ceil((maxResults * 2) / Math.max(1, interests.length)));
 
       // Search each interest separately to ensure diversity
       for (const interest of interests) {
@@ -527,8 +540,8 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      // Deduplicate and score
-      const finalRecommendations = this.deduplicateAndScore(allRecommendations, 12);
+      // Deduplicate and score (increase cap to surface more diverse products)
+      const finalRecommendations = this.deduplicateAndScore(allRecommendations, 24);
 
       console.log(`🧠 [FINAL] Returning ${finalRecommendations.length} curated products. Sources: ${intelligenceSource.replace(/\+$/, '')}`);
 

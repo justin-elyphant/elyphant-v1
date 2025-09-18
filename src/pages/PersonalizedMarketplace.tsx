@@ -111,6 +111,26 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
               id: recipientId,
               interests: recipientInterests
             });
+          } else {
+            // Fallback: use current logged-in user's profile (safe, respects privacy)
+            const { data: auth } = await supabase.auth.getUser();
+            const currentUserId = auth?.user?.id;
+            if (currentUserId) {
+              const { data: me } = await supabase
+                .from('profiles')
+                .select('id, name, interests')
+                .eq('id', currentUserId)
+                .maybeSingle();
+              if (me) {
+                recipientId = me.id;
+                recipientInterests = Array.isArray(me.interests) ? (me.interests as string[]) : [];
+                console.log('🙋 [PersonalizedMarketplace] Using current user profile as recipient fallback:', {
+                  name: me.name,
+                  id: recipientId,
+                  interests: recipientInterests
+                });
+              }
+            }
           }
         } catch (error) {
           console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');

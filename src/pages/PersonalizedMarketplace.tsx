@@ -50,17 +50,23 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
       
       // Try to find recipient profile first for wishlist-based recommendations
       let recipientId: string | undefined;
+      let recipientInterests: string[] = [];
       
       try {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, name, username')
+          .select('id, name, username, interests')
           .or(`name.ilike.%${contextToUse.recipientName}%,username.ilike.%${contextToUse.recipientName.replace(/\s+/g, '')}%`)
           .limit(1);
           
         if (profiles && profiles.length > 0) {
           recipientId = profiles[0].id;
-          console.log('✅ [PersonalizedMarketplace] Found recipient profile:', profiles[0].name);
+          recipientInterests = Array.isArray(profiles[0].interests) ? (profiles[0].interests as string[]) : [];
+          console.log('✅ [PersonalizedMarketplace] Found recipient profile:', {
+            name: profiles[0].name,
+            interests: recipientInterests,
+            hasWishlistAccess: !!recipientId
+          });
         }
       } catch (error) {
         console.log('ℹ️ [PersonalizedMarketplace] No matching profile found, using AI curation');
@@ -80,20 +86,48 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
             relationship: contextToUse.relationship || 'friend',
             occasion: contextToUse.eventType,
             budget: undefined, // Let Nicole determine appropriate budget
-            interests: [], // Could be enhanced with recipient interests from profile
+            interests: recipientInterests, // Now using actual recipient interests for diversification
             conversation_history: [],
             confidence_threshold: 0.3 // Allow lower confidence for broader recommendations
           });
 
           if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-            console.log('✅ [PersonalizedMarketplace] Nicole Intelligence Service results:', {
+            const tierBreakdown = intelligenceResult.recommendations.reduce((acc, rec) => {
+              acc[rec.source] = (acc[rec.source] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence hierarchical results:', {
               total: intelligenceResult.recommendations.length,
-              sources: intelligenceResult.recommendations.reduce((acc, rec) => {
-                acc[rec.source] = (acc[rec.source] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>),
-              avgConfidence: intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length
+              tierActivated: intelligenceResult.intelligence_source,
+              sourceBreakdown: tierBreakdown,
+              avgConfidence: Math.round(intelligenceResult.recommendations.reduce((sum, rec) => sum + rec.confidence_score, 0) / intelligenceResult.recommendations.length * 100) / 100,
+              recipientProfile: {
+                hasWishlistAccess: !!recipientId,
+                interestsFound: recipientInterests.length,
+                interests: recipientInterests
+              },
+              topProducts: intelligenceResult.recommendations.slice(0, 3).map(r => ({
+                source: r.source,
+                confidence: Math.round(r.confidence_score * 100) / 100,
+                product: r.product.title || r.product.name
+              }))
             });
+
+            // Log tier-specific results for debugging
+            if (tierBreakdown.wishlist > 0) {
+              console.log(`✅ [TIER 1 - WISHLIST] Found ${tierBreakdown.wishlist} wishlist products (95% confidence)`);
+            }
+            if (tierBreakdown.interests > 0) {
+              console.log(`✅ [TIER 2 - INTERESTS] Found ${tierBreakdown.interests} interest-based products (75% confidence)`);
+              console.log(`🎯 [INTERESTS USED]:`, recipientInterests);
+            }
+            if (tierBreakdown.ai_curated > 0) {
+              console.log(`✅ [TIER 3 - AI CURATED] Found ${tierBreakdown.ai_curated} AI-curated products`);
+            }
+            if (tierBreakdown.demographic > 0) {
+              console.log(`✅ [TIER 4 - DEMOGRAPHIC] Found ${tierBreakdown.demographic} demographic fallback products`);
+            }
             
             const products = intelligenceResult.recommendations.map(rec => rec.product);
             setPersonalizedProducts(products);

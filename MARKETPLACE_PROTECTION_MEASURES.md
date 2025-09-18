@@ -24,6 +24,18 @@ The marketplace system is currently working perfectly with:
 - `src/components/marketplace/MarketplaceWrapper.tsx` - Legacy wrapper (still used in some flows)
 - `src/contexts/ProductContext.tsx` - Product state management and types
 
+### Personalized Marketplace System - CRITICAL NEW FEATURE:
+- `src/pages/PersonalizedMarketplace.tsx` - Personalized marketplace entry point
+- `src/components/marketplace/PersonalizedGiftingSections.tsx` - Personalized product sections
+- `src/components/marketplace/hooks/usePersonalizedMarketplace.tsx` - Core personalization logic
+- `src/utils/personalizedMarketplaceUtils.ts` - Personalization utilities
+- `src/components/marketplace/hooks/utils/personalizationUtils.ts` - Product personalization
+
+### Navigation System - ENHANCED ARCHITECTURE:
+- `src/components/navigation/UnifiedShopperHeader.tsx` - Unified header with breadcrumb control
+- `src/components/navigation/ModernHeaderManager.tsx` - Core header management
+- Breadcrumb logic disabled for cleaner header experience
+
 ### Search Integration - CRITICAL SYSTEM:
 - `src/components/search/EnhancedSearchBar.tsx` - Main search component
 - `src/components/search/hooks/useSearchState.tsx` - Search state management
@@ -36,6 +48,12 @@ The marketplace system is currently working perfectly with:
 - `src/components/marketplace/product-grid/components/GroupedProductSection.tsx` - Grouped display
 - `src/components/marketplace/product-item/` - Product card components
 
+### Wishlist & CTA System - CONVERSION OPTIMIZED:
+- `src/components/marketplace/product-item/WishlistButton.tsx` - Core wishlist button
+- `src/components/marketplace/product-item/QuickWishlistButton.tsx` - Quick action button
+- `src/components/gifting/wishlist/WishlistSelectionPopoverButton.tsx` - Enhanced wishlist popover
+- CSS: `.wishlist-cta-*` classes for conversion optimization
+
 ---
 
 ## 🧪 TESTING REQUIREMENTS
@@ -45,6 +63,7 @@ The marketplace system is currently working perfectly with:
    - Test on mobile devices (iOS/Android)
    - Verify safe area handling
    - Check grid layout responsiveness
+   - Verify touch feedback and safe area insets
 
 2. **Search Functionality Test**
    - Test unified search with products, friends, brands
@@ -57,7 +76,18 @@ The marketplace system is currently working perfectly with:
    - Check wishlist functionality
    - Verify buy now flow
 
-4. **Performance Test**
+4. **Personalized Marketplace Test**
+   - Test personalized routes (`/marketplace/for/[name]`)
+   - Verify personalization logic and context
+   - Check recipient name parsing and formatting
+   - Test personalized product sections
+
+5. **Navigation & Header Test**
+   - Verify breadcrumbs are disabled as intended
+   - Test unified header across all views
+   - Check header responsiveness
+
+6. **Performance Test**
    - Check loading states
    - Verify infinite scroll (if implemented)
    - Test search debouncing
@@ -73,17 +103,24 @@ The marketplace system is currently working perfectly with:
 - Performance optimizations (test thoroughly)
 
 ### FORBIDDEN Changes:
-- Modifying core marketplace routing
+- Modifying core marketplace routing (including personalized routes)
 - Changing ProductContext structure without migration
-- Breaking mobile responsiveness
+- Breaking mobile responsiveness or touch feedback
 - Removing error boundaries
 - Modifying search integration without understanding dependencies
+- Changing breadcrumb logic in UnifiedShopperHeader
+- Breaking personalized marketplace session storage
+- Modifying wishlist CTA conversion optimization classes
 
 ### CRITICAL Dependencies:
 - `useIsMobile()` hook - Used extensively for responsive design
 - ProductContext - Core state management
 - Enhanced search integration - Complex system with multiple services
 - Supabase edge functions - Backend dependencies
+- PersonalizedMarketplace → usePersonalizedMarketplace hook
+- PersonalizedGiftingSections → CSS wishlist-cta classes
+- UnifiedShopperHeader → ModernHeaderManager integration
+- Session storage for personalized marketplace context
 
 ---
 

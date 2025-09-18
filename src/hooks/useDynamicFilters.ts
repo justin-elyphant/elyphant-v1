@@ -4,6 +4,9 @@ import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analyzeSearchContext, generateDynamicFilters, SearchContext, DynamicFilterOptions } from "@/services/marketplace/searchAnalysisService";
 
+// Re-export types for external use
+export type { SearchContext, DynamicFilterOptions } from "@/services/marketplace/searchAnalysisService";
+
 export interface DynamicFilterState {
   priceRange: [number, number];
   selectedBrands: string[];
@@ -38,7 +41,29 @@ export const useDynamicFilters = (products: Product[], searchTerm: string = "") 
     return generateDynamicFilters(products, searchContext);
   }, [products, searchContext]);
   
-  // Initialize filter state
+  // Auto-apply smart defaults based on search context
+  const smartDefaults = useMemo(() => {
+    const defaults: Partial<DynamicFilterState> = {};
+    
+    // Auto-select gender if detected
+    if (searchContext.gender && !searchContext.isGiftContext) {
+      defaults.selectedDemographics = [searchContext.gender];
+    }
+    
+    // Auto-select age group for direct searches
+    if (searchContext.ageGroup && searchTerm.toLowerCase().includes(searchContext.ageGroup)) {
+      defaults.selectedDemographics = [...(defaults.selectedDemographics || []), searchContext.ageGroup];
+    }
+    
+    // Auto-select product category if strongly indicated
+    if (searchContext.productCategory && searchTerm.toLowerCase().includes(searchContext.productCategory.toLowerCase())) {
+      defaults.selectedCategories = [searchContext.productCategory];
+    }
+    
+    return defaults;
+  }, [searchContext, searchTerm]);
+  
+  // Initialize filter state with smart defaults
   const [filters, setFilters] = useState<DynamicFilterState>({
     priceRange: [0, 1000],
     selectedBrands: [],
@@ -51,6 +76,16 @@ export const useDynamicFilters = (products: Product[], searchTerm: string = "") 
     favoritesOnly: false,
     sortBy: "relevance"
   });
+  
+  // Apply smart defaults when search context changes
+  useEffect(() => {
+    if (Object.keys(smartDefaults).length > 0) {
+      setFilters(prev => ({
+        ...prev,
+        ...smartDefaults
+      }));
+    }
+  }, [smartDefaults]);
   
   // Update price range when products change
   useEffect(() => {
@@ -155,6 +190,39 @@ export const useDynamicFilters = (products: Product[], searchTerm: string = "") 
     });
   };
   
+  // Apply multiple filters at once (for smart suggestions)
+  const applyFilters = (newFilters: Partial<DynamicFilterState>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }));
+  };
+  
+  // Remove specific filter value
+  const removeFilter = <K extends keyof DynamicFilterState>(
+    filterType: K,
+    value?: any
+  ) => {
+    if (value !== undefined) {
+      updateFilter(filterType, value);
+    } else {
+      // Reset to default value
+      const defaultValues: Record<string, any> = {
+        priceRange: [0, 1000],
+        selectedBrands: [],
+        selectedCategories: [],
+        selectedAttributes: {},
+        selectedOccasions: [],
+        selectedDemographics: [],
+        rating: null,
+        freeShipping: false,
+        favoritesOnly: false,
+        sortBy: "relevance"
+      };
+      updateFilter(filterType, defaultValues[filterType] as DynamicFilterState[K]);
+    }
+  };
+  
   const resetFilters = () => {
     const maxPrice = filterOptions.priceRanges.length > 0 
       ? Math.max(...filterOptions.priceRanges.map(r => r.max === Infinity ? 1000 : r.max))
@@ -186,6 +254,8 @@ export const useDynamicFilters = (products: Product[], searchTerm: string = "") 
     filterOptions,
     searchContext,
     updateFilter,
+    applyFilters,
+    removeFilter,
     resetFilters,
     isMobile,
     // UI guidance flags

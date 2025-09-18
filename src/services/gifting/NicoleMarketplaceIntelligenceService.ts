@@ -572,7 +572,7 @@ class NicoleMarketplaceIntelligenceService {
     try {
       const searchQuery = this.generateSearchQuery(context);
       const products = await unifiedMarketplaceService.searchProducts(searchQuery, {
-        maxResults: 10
+        maxResults: 16
       });
 
       return products.map(product => ({
@@ -596,8 +596,8 @@ class NicoleMarketplaceIntelligenceService {
     
     if (context.occasion) parts.push(context.occasion);
     if (context.interests?.length) parts.push(...context.interests.slice(0, 2));
-    if (context.recipient_name) parts.push(`for ${context.recipient_name}`);
     
+    // Intentionally omit recipient_name to avoid overfitting (e.g., merch-only results)
     return parts.length > 0 ? parts.join(' ') + ' gifts' : 'gifts';
   }
 

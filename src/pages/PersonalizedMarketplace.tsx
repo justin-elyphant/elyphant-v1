@@ -97,10 +97,18 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
         let recipientInterests: string[] = [];
 
         try {
+          // Fuzzy search by name variants (handles spaces, underscores, case)
+          const baseName = (contextToUse.recipientName || '').trim();
+          const patterns = [
+            baseName,
+            baseName.replace(/\s+/g, '_'),
+            baseName.replace(/\s+/g, '')
+          ].filter(Boolean);
+
           const { data: profiles } = await supabase
             .from('profiles')
             .select('id, name, interests')
-            .ilike('name', contextToUse.recipientName)
+            .or(patterns.map(p => `name.ilike.%${p}%`).join(','))
             .limit(1);
 
           if (profiles && profiles.length > 0) {

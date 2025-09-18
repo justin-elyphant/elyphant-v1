@@ -23,22 +23,6 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
   // Use the existing product display hook to group products by their source
   const { groupedProducts } = useProductDisplay(products, "default");
   
-  console.log('🎁 [PersonalizedGiftingSections] Grouped products:', {
-    wishlistItems: groupedProducts.wishlistItems.length,
-    preferenceItems: groupedProducts.preferenceItems.length,
-    regularItems: groupedProducts.regularItems.length,
-    hasGrouping: groupedProducts.hasGrouping,
-    totalProducts: products.length
-  });
-
-  // Debug: Log actual products to verify flags are being set
-  console.log('🔍 [PersonalizedGiftingSections] Sample product flags:', 
-    products.slice(0, 3).map(p => ({
-      name: p.name || p.title,
-      fromWishlist: p.fromWishlist,
-      fromPreferences: p.fromPreferences
-    }))
-  );
 
   // Determine section data based on what we have
   const sections = useMemo(() => {
@@ -116,20 +100,6 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
         />
       ))}
       
-      {/* Debug info - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-8 p-4 bg-muted/20 rounded-lg border border-border/30">
-          <h3 className="font-medium text-sm text-muted-foreground mb-2">Debug: Product Distribution</h3>
-          <div className="text-xs text-muted-foreground space-y-1">
-            <div>Total Products: {products.length}</div>
-            <div>Wishlist Items: {groupedProducts.wishlistItems.length}</div>
-            <div>Interest-based: {groupedProducts.preferenceItems.length}</div>
-            <div>AI Picks: {groupedProducts.regularItems.length}</div>
-            <div>Has Grouping: {groupedProducts.hasGrouping ? 'Yes' : 'No'}</div>
-            <div>Sections Rendered: {sections.length}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -299,7 +299,7 @@ class NicoleMarketplaceIntelligenceService {
     context: NicoleProductContext,
     maxResults: number = 10
   ): Promise<NicoleProductRecommendation[]> {
-    console.log(`🎯 [NICOLE INTELLIGENCE] Getting interest-based products for recipient: ${recipientId}`);
+    
 
     try {
       // Get recipient profile and interests
@@ -324,7 +324,7 @@ class NicoleMarketplaceIntelligenceService {
         return await this.getDemographicProducts(context, maxResults);
       }
 
-      console.log(`🎯 [INTERESTS] Found ${allInterests.length} interests:`, allInterests);
+      
 
       // Search products with diversification across all interests
       return await this.searchDiverseInterestProducts(allInterests, context, maxResults);
@@ -342,7 +342,7 @@ class NicoleMarketplaceIntelligenceService {
     context: NicoleProductContext,
     maxResults: number = 16
   ): Promise<NicoleProductRecommendation[]> {
-    console.log(`🤖 [NICOLE INTELLIGENCE] Generating AI-curated recommendations (diverse, non-interest based)`);
+    
 
     try {
       // Use DIVERSE, GENERIC search terms instead of interest-based ones
@@ -363,7 +363,7 @@ class NicoleMarketplaceIntelligenceService {
         .sort(() => Math.random() - 0.5)
         .slice(0, 3);
       
-      console.log(`🔍 [AI PICKS] Using diverse search terms (NOT interest-based):`, selectedTerms);
+      
 
       // Search for products using diverse terms
       const recommendations = await this.searchProductsByKeywords(selectedTerms, context, maxResults);
@@ -390,7 +390,7 @@ class NicoleMarketplaceIntelligenceService {
     context: NicoleProductContext,
     maxResults: number = 6
   ): Promise<NicoleProductRecommendation[]> {
-    console.log(`👥 [NICOLE INTELLIGENCE] Getting demographic fallback products`);
+    
 
     try {
       // Use generic search terms based on occasion and relationship
@@ -423,43 +423,28 @@ class NicoleMarketplaceIntelligenceService {
   ): Promise<NicoleProductRecommendation[]> {
     if (!interests.length) return [];
 
-    console.log(`🎯 [DIVERSE SEARCH] Searching for balanced products across ${interests.length} interests:`, interests);
-
     try {
       const allRecommendations: NicoleProductRecommendation[] = [];
-      // Pull significantly more per interest to ensure 15+ products per section
       const productsPerInterest = Math.max(8, Math.ceil((maxResults * 3) / Math.max(1, interests.length)));
 
       // Search each interest separately to ensure diversity
       for (const interest of interests) {
         try {
-          console.log(`🔍 [INTEREST SEARCH] "${interest}" - targeting ${productsPerInterest} products`);
-          
           const products = await unifiedMarketplaceService.searchProducts(interest, {
-            maxResults: 20 // Further increased to ensure abundant products for 15+ display
+            maxResults: 20
           });
-
-          console.log(`🔍 [INTEREST SEARCH] "${interest}" - received ${products.length} products from unified marketplace`);
 
           const interestRecommendations = products.map(product => ({
             product,
             reasoning: `Matches interest: ${interest}`,
-            confidence_score: 0.75, // Higher confidence for diversified searches
+            confidence_score: 0.75,
             source: 'interests' as const,
             match_factors: ['interest_match', 'diverse_coverage', interest.toLowerCase().replace(/\s+/g, '_')]
           }));
 
           allRecommendations.push(...interestRecommendations);
-          console.log(`✅ [INTEREST SEARCH] "${interest}": Found ${products.length} products`);
-          
-          // Debug the actual products found
-          if (products.length > 0) {
-            console.log(`📦 [INTEREST PRODUCTS] Sample products for "${interest}":`, 
-              products.slice(0, 2).map(p => ({ name: p.name, vendor: p.vendor, price: p.price }))
-            );
-          }
         } catch (error) {
-          console.warn(`⚠️ [INTEREST SEARCH] Failed for "${interest}":`, error);
+          console.warn(`Failed to search interest "${interest}":`, error);
         }
       }
 
@@ -495,8 +480,6 @@ class NicoleMarketplaceIntelligenceService {
       });
       const uniqueRecommendations = uniqueInterleaved.slice(0, maxResults);
       
-      console.log(`🎯 [DIVERSE SEARCH] Final results: ${uniqueRecommendations.length} products from ${interests.length} interests`);
-      console.log(`📊 [DIVERSITY BREAKDOWN]: ${uniqueRecommendations.length} total products`);
 
       return uniqueRecommendations;
 
@@ -525,7 +508,7 @@ class NicoleMarketplaceIntelligenceService {
       const category = this.mapContextToCategory(context);
       if (!category) return [];
 
-      console.log(`🎯 [ENHANCED CATEGORY] Searching category: ${category}`);
+      
       
       const searchQuery = this.generateSearchQuery(context);
       const products = await CategorySearchService.searchCategory(category, searchQuery, {
@@ -593,7 +576,7 @@ class NicoleMarketplaceIntelligenceService {
    * Main intelligence method: Get curated products using hierarchical approach
    */
   async getCuratedProducts(context: NicoleProductContext): Promise<ProductIntelligenceResult> {
-    console.log(`🧠 [NICOLE INTELLIGENCE] Starting hierarchical product curation`, context);
+    
 
     const allRecommendations: NicoleProductRecommendation[] = [];
     let intelligenceSource = '';
@@ -629,7 +612,7 @@ class NicoleMarketplaceIntelligenceService {
       allRecommendations.push(...aiProducts);
       if (aiProducts.length > 0) {
         intelligenceSource += 'ai-curated+';
-        console.log(`🤖 [TIER 3] AI-curated products added ${aiProducts.length} diverse recommendations`);
+        
       }
 
       // TIER 4: Enhanced Category Search (if applicable context)
@@ -638,7 +621,7 @@ class NicoleMarketplaceIntelligenceService {
         if (categoryBasedProducts.length > 0) {
           allRecommendations.push(...categoryBasedProducts);
           intelligenceSource += 'enhanced-category+';
-          console.log(`🎯 [TIER 4] Enhanced category search added ${categoryBasedProducts.length} products`);
+          
         }
       }
 
@@ -648,14 +631,14 @@ class NicoleMarketplaceIntelligenceService {
         if (marketplaceProducts.length > 0) {
           allRecommendations.push(...marketplaceProducts);
           intelligenceSource += 'marketplace+';
-          console.log(`🛍️ [TIER 5] Marketplace search added ${marketplaceProducts.length} products`);
+          
         }
       }
 
       // Deduplicate and score (increase cap to surface more diverse products for 45+ total items)
       const finalRecommendations = this.deduplicateAndScore(allRecommendations, 50);
 
-      console.log(`🧠 [FINAL] Returning ${finalRecommendations.length} curated products. Sources: ${intelligenceSource.replace(/\+$/, '')}`);
+      
 
       return {
         recommendations: finalRecommendations,

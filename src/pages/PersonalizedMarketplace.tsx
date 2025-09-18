@@ -158,7 +158,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
 
         // Call Nicole Intelligence Service for sophisticated gift curation
         try {
-          console.log('🎯 [PersonalizedMarketplace] Activating sophisticated gift scoring system for:', contextToUse.recipientName);
+          
 
           // Use the client-side Nicole Intelligence Service instead of edge function
           const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
@@ -171,15 +171,6 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
           });
 
           if (intelligenceResult?.recommendations && intelligenceResult.recommendations.length > 0) {
-            console.log('🎯 [PersonalizedMarketplace] Nicole Intelligence results:', {
-              total: intelligenceResult.recommendations.length,
-              sources: {
-                wishlist: intelligenceResult.recommendations.filter((r: any) => r.source === 'wishlist').length,
-                interests: intelligenceResult.recommendations.filter((r: any) => r.source === 'interests').length,
-                other: intelligenceResult.recommendations.filter((r: any) => r.source !== 'wishlist' && r.source !== 'interests').length
-              },
-              confidenceScores: intelligenceResult.recommendations.map((r: any) => r.confidence_score).slice(0, 5)
-            });
 
             // Normalize mapping, robustly detect sources, then dedupe and diversify preferences
             const rawProducts = intelligenceResult.recommendations.map((rec: any) => {
@@ -192,7 +183,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
               const title = base.title || base.name || 'Product';
               const image = base.image || (Array.isArray(base.images) ? base.images[0] : undefined) || '';
               
-              console.log(`🔍 [PRODUCT MAPPING] Source: "${sourceStr}" -> wishlist: ${fromWishlist}, preferences: ${fromPreferences}, title: "${title}"`);
+              
               
               return {
                 ...base,

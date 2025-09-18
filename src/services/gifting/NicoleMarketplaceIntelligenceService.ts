@@ -346,8 +346,37 @@ class NicoleMarketplaceIntelligenceService {
         }
       }
 
-      // Deduplicate and balance representation
-      const uniqueRecommendations = this.deduplicateAndScore(allRecommendations, maxResults);
+      // Deduplicate and balance representation by interleaving per-interest
+      const normalized = interests.map(i => i.toLowerCase().replace(/\s+/g, '_'));
+      const buckets: Record<string, NicoleProductRecommendation[]> = {} as any;
+      for (const rec of allRecommendations) {
+        const key = normalized.find(k => rec.match_factors?.includes(k)) || 'other';
+        (buckets[key] ||= []).push(rec);
+      }
+      // Round-robin pull from each bucket to ensure diversity
+      const interleaved: NicoleProductRecommendation[] = [];
+      let added = true;
+      while (added && interleaved.length < maxResults) {
+        added = false;
+        for (const k of Object.keys(buckets)) {
+          const next = buckets[k].shift();
+          if (next) {
+            interleaved.push(next);
+            added = true;
+            if (interleaved.length >= maxResults) break;
+          }
+        }
+      }
+      // Final de-duplication preserving order
+      const seen = new Set<string>();
+      const uniqueInterleaved = interleaved.filter(rec => {
+        const key = (rec.product.title || rec.product.name || rec.product.product_id || rec.product.id || '').toString().toLowerCase();
+        if (!key) return true;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const uniqueRecommendations = uniqueInterleaved.slice(0, maxResults);
       
       console.log(`🎯 [DIVERSE SEARCH] Final results: ${uniqueRecommendations.length} products from ${interests.length} interests`);
       console.log(`📊 [DIVERSITY BREAKDOWN]: ${uniqueRecommendations.length} total products`);

@@ -120,23 +120,35 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
               interests: recipientInterests
             });
           } else {
-            // Fallback: use current logged-in user's profile (safe, respects privacy)
-            const { data: auth } = await supabase.auth.getUser();
-            const currentUserId = auth?.user?.id;
-            if (currentUserId) {
-              const { data: me } = await supabase
-                .from('profiles')
-                .select('id, name, interests')
-                .eq('id', currentUserId)
-                .maybeSingle();
-              if (me) {
-                recipientId = me.id;
-                recipientInterests = Array.isArray(me.interests) ? (me.interests as string[]) : [];
-                console.log('🙋 [PersonalizedMarketplace] Using current user profile as recipient fallback:', {
-                  name: me.name,
-                  id: recipientId,
-                  interests: recipientInterests
-                });
+            // Try special-case mappings for demo recipients
+            const normalizedName = (contextToUse.recipientName || '').trim().toLowerCase();
+            const specialMap: Record<string, string> = {
+              'dua lipa': '54087479-29f1-4f7f-afd0-cbdc31d6fb91',
+              'dua_lipa': '54087479-29f1-4f7f-afd0-cbdc31d6fb91',
+              'dualipa': '54087479-29f1-4f7f-afd0-cbdc31d6fb91'
+            };
+            if (specialMap[normalizedName]) {
+              recipientId = specialMap[normalizedName];
+              console.log('🎯 [PersonalizedMarketplace] Using special recipient mapping:', { name: normalizedName, id: recipientId });
+            } else {
+              // Fallback: use current logged-in user's profile (safe, respects privacy)
+              const { data: auth } = await supabase.auth.getUser();
+              const currentUserId = auth?.user?.id;
+              if (currentUserId) {
+                const { data: me } = await supabase
+                  .from('profiles')
+                  .select('id, name, interests')
+                  .eq('id', currentUserId)
+                  .maybeSingle();
+                if (me) {
+                  recipientId = me.id;
+                  recipientInterests = Array.isArray(me.interests) ? (me.interests as string[]) : [];
+                  console.log('🙋 [PersonalizedMarketplace] Using current user profile as recipient fallback:', {
+                    name: me.name,
+                    id: recipientId,
+                    interests: recipientInterests
+                  });
+                }
               }
             }
           }
@@ -172,8 +184,8 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
             // Normalize mapping, robustly detect sources, then dedupe and diversify preferences
             const rawProducts = intelligenceResult.recommendations.map((rec: any) => {
               const sourceStr = String(rec.source || '').toLowerCase();
-              const fromWishlist = sourceStr.includes('wish');
-              const fromPreferences = sourceStr.includes('interest');
+              const fromWishlist = sourceStr === 'wishlist' || sourceStr.includes('wish');
+              const fromPreferences = sourceStr === 'interests' || sourceStr.includes('interest');
               const tier = fromWishlist ? 1 : fromPreferences ? 2 : 3;
               const base = rec.product || {};
               const product_id = base.product_id || base.id || base.asin || base.sku || base.url || `${(base.title || base.name || 'product')}-${Math.random().toString(36).slice(2, 8)}`;

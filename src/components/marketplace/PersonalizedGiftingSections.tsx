@@ -103,6 +103,7 @@ export const PersonalizedGiftingSections: React.FC<PersonalizedGiftingSectionsPr
           onAddToCart={onAddToCart}
           onShare={onShare}
           showSeeAll={false} // Don't show "See All" for personalized sections
+          maxItems={15} // Show 15 items per section as requested
         />
       ))}
       

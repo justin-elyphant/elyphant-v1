@@ -286,7 +286,7 @@ class NicoleMarketplaceIntelligenceService {
    */
   private async getAICuratedProducts(
     context: NicoleProductContext,
-    maxResults: number = 8
+    maxResults: number = 16
   ): Promise<NicoleProductRecommendation[]> {
     console.log(`🤖 [NICOLE INTELLIGENCE] Generating AI-curated recommendations`);
 
@@ -358,7 +358,7 @@ class NicoleMarketplaceIntelligenceService {
     try {
       const allRecommendations: NicoleProductRecommendation[] = [];
       // Pull a bit more per interest to ensure a fuller grid and better diversity
-      const productsPerInterest = Math.max(3, Math.ceil((maxResults * 2) / Math.max(1, interests.length)));
+      const productsPerInterest = Math.max(6, Math.ceil((maxResults * 2) / Math.max(1, interests.length)));
 
       // Search each interest separately to ensure diversity
       for (const interest of interests) {
@@ -366,7 +366,7 @@ class NicoleMarketplaceIntelligenceService {
           console.log(`🔍 [INTEREST SEARCH] "${interest}" - targeting ${productsPerInterest} products`);
           
           const products = await unifiedMarketplaceService.searchProducts(interest, {
-            maxResults: productsPerInterest
+            maxResults: 16 // Increased to ensure we get enough products for 15+ display
           });
 
           console.log(`🔍 [INTEREST SEARCH] "${interest}" - received ${products.length} products from unified marketplace`);

@@ -6,14 +6,21 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import BulkGiftingModal from "@/components/marketplace/BulkGiftingModal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
+import PersonalizedMarketplace from "./PersonalizedMarketplace";
 
 const Marketplace = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { recipientName } = useParams<{ recipientName: string }>();
   const [bulkGiftingOpen, setBulkGiftingOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // If this is a personalized marketplace route, render PersonalizedMarketplace
+  if (recipientName) {
+    return <PersonalizedMarketplace />;
+  }
 
   // Scroll to top when route changes
   useEffect(() => {

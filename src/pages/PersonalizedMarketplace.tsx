@@ -1,0 +1,203 @@
+import React, { useState, useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
+import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
+import StreamlinedMarketplaceWrapper from "@/components/marketplace/StreamlinedMarketplaceWrapper";
+import MainLayout from "@/components/layout/MainLayout";
+import SEOWrapper from "@/components/seo/SEOWrapper";
+import { supabase } from "@/integrations/supabase/client";
+import { nicoleMarketplaceIntelligenceService } from "@/services/gifting/NicoleMarketplaceIntelligenceService";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, Heart, Sparkles } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
+interface PersonalizedMarketplaceProps {}
+
+const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
+  const { recipientName } = useParams<{ recipientName: string }>();
+  const location = useLocation();
+  const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
+  const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(true);
+  const [personalizedError, setPersonalizedError] = useState<string | null>(null);
+  
+  // Get event context from navigation state
+  const eventContext = location.state?.eventContext;
+  const displayName = eventContext?.recipientName || recipientName?.replace(/-/g, ' ') || 'Special Someone';
+  
+  // Generate personalized marketplace content
+  useEffect(() => {
+    async function generatePersonalizedMarketplace() {
+      if (!eventContext || !recipientName) {
+        setIsPersonalizedLoading(false);
+        return;
+      }
+
+      try {
+        setIsPersonalizedLoading(true);
+        setPersonalizedError(null);
+
+        console.log('🎯 [PersonalizedMarketplace] Generating curated products for:', eventContext);
+
+        // First try Nicole's marketplace intelligence service
+        try {
+          const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
+            recipient_name: eventContext.recipientName,
+            relationship: eventContext.relationship || 'friend',
+            occasion: eventContext.eventType,
+            budget: undefined, // Let Nicole determine appropriate budget
+            interests: [], // Could be enhanced with recipient interests
+            conversation_history: [],
+            confidence_threshold: 0.3
+          });
+
+          if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
+            console.log('✅ [PersonalizedMarketplace] Got intelligence recommendations:', intelligenceResult.recommendations.length);
+            const products = intelligenceResult.recommendations.map(rec => rec.product);
+            setPersonalizedProducts(products);
+            setIsPersonalizedLoading(false);
+            return;
+          }
+        } catch (intelligenceError) {
+          console.warn('Intelligence service failed, falling back to Nicole AI:', intelligenceError);
+        }
+
+        // Fallback to Nicole ChatGPT agent for curation
+        const { data, error } = await supabase.functions.invoke('nicole-chatgpt-agent', {
+          body: {
+            action: 'generate_curated_marketplace',
+            context: {
+              recipientName: eventContext.recipientName,
+              eventType: eventContext.eventType,
+              relationship: eventContext.relationship || 'friend',
+              budget: undefined // Let Nicole suggest appropriate range
+            }
+          }
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to generate personalized marketplace');
+        }
+
+        if (data?.products && data.products.length > 0) {
+          console.log('✅ [PersonalizedMarketplace] Got Nicole AI curated products:', data.products.length);
+          setPersonalizedProducts(data.products);
+        } else {
+          console.warn('No personalized products returned from Nicole AI');
+          setPersonalizedProducts([]);
+        }
+
+      } catch (error) {
+        console.error('Failed to generate personalized marketplace:', error);
+        setPersonalizedError(error instanceof Error ? error.message : 'Failed to load personalized recommendations');
+      } finally {
+        setIsPersonalizedLoading(false);
+      }
+    }
+
+    generatePersonalizedMarketplace();
+  }, [recipientName, eventContext]);
+
+  // Store personalized products in session storage for StreamlinedMarketplaceWrapper to use
+  useEffect(() => {
+    if (personalizedProducts.length > 0) {
+      sessionStorage.setItem('personalized-products', JSON.stringify(personalizedProducts));
+      sessionStorage.setItem('personalized-context', JSON.stringify({
+        recipientName: displayName,
+        eventType: eventContext?.eventType,
+        isPersonalized: true
+      }));
+    }
+  }, [personalizedProducts, displayName, eventContext]);
+
+  const pageTitle = `Perfect Gifts for ${displayName} | Elyphant`;
+  const pageDescription = `Discover personalized gift recommendations for ${displayName}${eventContext?.eventType ? ` for their ${eventContext.eventType}` : ''}. AI-curated selections based on their interests and your relationship.`;
+
+  return (
+    <SEOWrapper
+      title={pageTitle}
+      description={pageDescription}
+      keywords={`personalized gifts, ${displayName}, ${eventContext?.eventType || 'gift ideas'}, AI recommendations, curated gifts`}
+      url={`/marketplace/for/${recipientName}`}
+    >
+      <MainLayout>
+        <div className="min-h-screen bg-background">
+          {/* Personalized Hero Section */}
+          {eventContext && (
+            <div className="bg-gradient-primary text-white">
+              <div className="container-header py-8">
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Sparkles className="h-6 w-6" />
+                    <span className="text-sm font-medium opacity-90">Personalized Just For Them</span>
+                  </div>
+                  <h1 className="text-heading-1 font-bold">
+                    Perfect Gifts for {displayName}
+                  </h1>
+                  <p className="text-body max-w-2xl mx-auto opacity-90">
+                    {eventContext.eventType 
+                      ? `Thoughtfully curated ${eventContext.eventType} gifts that match their personality and your relationship`
+                      : `Discover meaningful gifts selected just for ${displayName}`
+                    }
+                  </p>
+                  
+                  {isPersonalizedLoading && (
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span className="text-sm">Nicole is curating personalized recommendations...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error State for Personalization */}
+          {personalizedError && (
+            <div className="container-header py-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {personalizedError}. Showing general marketplace instead.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isPersonalizedLoading && (
+            <div className="container-header py-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Card key={index} className="p-4 space-y-3">
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-8 w-full" />
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Success State with Personalized Products */}
+          {!isPersonalizedLoading && personalizedProducts.length > 0 && (
+            <div className="container-header py-4">
+              <div className="flex items-center gap-2 mb-6">
+                <Heart className="h-5 w-5 text-primary" />
+                <span className="text-body-sm text-muted-foreground">
+                  {personalizedProducts.length} personalized recommendations curated by Nicole AI
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Main Marketplace Content */}
+          <StreamlinedMarketplaceWrapper />
+        </div>
+      </MainLayout>
+    </SEOWrapper>
+  );
+};
+
+export default PersonalizedMarketplace;

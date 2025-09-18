@@ -28,6 +28,7 @@ import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteract
 import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
 import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
+import { Sparkles } from "lucide-react";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {
@@ -45,6 +46,28 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     personId,
     occasionType,
   } = useUnifiedMarketplace();
+
+  // Check for personalized products from session storage
+  const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
+  const [personalizedContext, setPersonalizedContext] = useState<any>(null);
+  
+  useEffect(() => {
+    try {
+      const storedProducts = sessionStorage.getItem('personalized-products');
+      const storedContext = sessionStorage.getItem('personalized-context');
+      
+      if (storedProducts && storedContext) {
+        setPersonalizedProducts(JSON.parse(storedProducts));
+        setPersonalizedContext(JSON.parse(storedContext));
+        console.log('📦 [StreamlinedMarketplaceWrapper] Loaded personalized products from session:', JSON.parse(storedProducts).length);
+      }
+    } catch (error) {
+      console.warn('Failed to load personalized products from session storage:', error);
+    }
+  }, []);
+
+  // Use personalized products if available, otherwise use regular products
+  const displayProducts = personalizedProducts.length > 0 ? personalizedProducts : products;
 
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
@@ -198,10 +221,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     refresh: refreshPagination,
     totalCount
   } = useOptimizedProducts({
-    initialProducts: products || [],
+    initialProducts: displayProducts || [],
     pageSize: 20,
     onLoadMore: handleLoadMore,
-    hasMoreFromServer: true, // Always assume there might be more until we get less than a full page
+    hasMoreFromServer: personalizedProducts.length === 0, // Don't try to load more for personalized products
   });
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
@@ -426,9 +449,24 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       )}
       
       <MarketplaceHeader
-        totalResults={products.length}
-        filteredProducts={products}
+        totalResults={displayProducts.length}
+        filteredProducts={displayProducts}
       />
+
+      {/* Personalized Header */}
+      {personalizedContext?.isPersonalized && (
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="text-heading-3 font-semibold">
+              Curated for {personalizedContext.recipientName}
+            </h2>
+          </div>
+          <p className="text-body text-muted-foreground">
+            These gift recommendations were personally curated by Nicole AI based on your relationship and the occasion.
+          </p>
+        </div>
+      )}
 
       {/* Category or Quick Pick Title */}
       {showSearchInfo && !brandCategories && (() => {

@@ -26,9 +26,14 @@ serve(async (req) => {
       return handleInvitationAcceptance(req);
     }
 
-    const { message, context, sessionId, userId } = await req.json();
+    const { message, context, sessionId, userId, action } = await req.json();
 
-    console.log('Nicole ChatGPT Agent:', { message, context, sessionId, userId });
+    console.log('Nicole ChatGPT Agent:', { message, context, sessionId, userId, action });
+
+    // Handle personalized marketplace curation
+    if (action === 'generate_curated_marketplace') {
+      return await handleCuratedMarketplace(context, userId);
+    }
 
     // Check if we should use agent model for this conversation
     const useAgentModel = shouldUseAgentModel(context);
@@ -362,6 +367,240 @@ async function handleAgentModelConversation(
     // Fallback to traditional chat completions
     return await handleTraditionalConversation(message, context, sessionId);
   }
+}
+
+// ============= CURATED MARKETPLACE HANDLER =============
+
+async function handleCuratedMarketplace(context: any, userId?: string): Promise<Response> {
+  try {
+    console.log('🎯 [Nicole] Generating curated marketplace for context:', context);
+    
+    const { recipientName, eventType, relationship = 'friend', budget } = context;
+    
+    if (!recipientName) {
+      throw new Error('Recipient name is required for personalized marketplace');
+    }
+
+    // Generate personalized search queries using Nicole's intelligence
+    const personalizedQueries = generatePersonalizedSearchQueries({
+      recipientName,
+      eventType,
+      relationship,
+      budget
+    });
+
+    console.log('🤖 [Nicole] Generated personalized queries:', personalizedQueries);
+
+    // Use the enhanced Zinc API to get diverse, curated products
+    const curatedProducts = await getCuratedProductsForRecipient({
+      queries: personalizedQueries,
+      maxResults: 24,
+      budget,
+      diversityFactor: 0.8 // High diversity for personalized recommendations
+    });
+
+    return new Response(JSON.stringify({
+      success: true,
+      recipientName,
+      personalizedQueries,
+      products: curatedProducts,
+      metadata: {
+        totalQueries: personalizedQueries.length,
+        productCount: curatedProducts.length,
+        intelligenceSource: 'nicole-ai-curated',
+        timestamp: new Date().toISOString()
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error generating curated marketplace:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      success: false
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+function generatePersonalizedSearchQueries(context: any): string[] {
+  const { recipientName, eventType, relationship, budget } = context;
+  
+  const queries: string[] = [];
+  
+  // Event-specific queries
+  const eventQueries: Record<string, string[]> = {
+    'birthday': [
+      'birthday gifts',
+      'personalized gifts',
+      'unique birthday presents',
+      'birthday surprises'
+    ],
+    'anniversary': [
+      'anniversary gifts',
+      'romantic gifts',
+      'couple gifts',
+      'meaningful presents'
+    ],
+    'graduation': [
+      'graduation gifts',
+      'achievement gifts',
+      'professional gifts',
+      'milestone presents'
+    ],
+    'wedding': [
+      'wedding gifts',
+      'home essentials',
+      'couple gifts',
+      'luxury wedding presents'
+    ],
+    'holiday': [
+      'holiday gifts',
+      'seasonal gifts',
+      'festive presents',
+      'winter gifts'
+    ]
+  };
+
+  // Relationship-specific modifiers
+  const relationshipQueries: Record<string, string[]> = {
+    'family': [
+      'family gifts',
+      'thoughtful family presents',
+      'family member gifts'
+    ],
+    'friend': [
+      'friend gifts',
+      'friendship gifts',
+      'best friend presents'
+    ],
+    'colleague': [
+      'professional gifts',
+      'office gifts',
+      'work appropriate presents'
+    ],
+    'partner': [
+      'romantic gifts',
+      'intimate gifts',
+      'partner presents'
+    ]
+  };
+
+  // Budget-aware queries
+  const budgetQueries: string[] = [];
+  if (budget && budget[0] && budget[1]) {
+    const minPrice = budget[0];
+    const maxPrice = budget[1];
+    
+    if (maxPrice <= 50) {
+      budgetQueries.push('affordable gifts', 'budget-friendly presents', 'gifts under 50');
+    } else if (maxPrice <= 100) {
+      budgetQueries.push('mid-range gifts', 'quality affordable gifts');
+    } else {
+      budgetQueries.push('premium gifts', 'luxury presents', 'high-quality gifts');
+    }
+  }
+
+  // Combine queries strategically
+  queries.push(...(eventQueries[eventType] || ['thoughtful gifts']));
+  queries.push(...(relationshipQueries[relationship] || ['personal gifts']));
+  queries.push(...budgetQueries);
+  
+  // Add general discovery queries
+  queries.push('popular gifts', 'best sellers', 'trending gifts', 'unique finds');
+
+  return queries.slice(0, 8); // Limit to 8 diverse queries
+}
+
+async function getCuratedProductsForRecipient(options: any): Promise<any[]> {
+  const { queries, maxResults, budget, diversityFactor } = options;
+  
+  const allProducts: any[] = [];
+  
+  // Execute searches for each query
+  for (const query of queries) {
+    try {
+      console.log(`🔍 [Nicole] Searching for: "${query}"`);
+      
+      // Make a call to our get-products edge function
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: { 
+          search: query,
+          limit: Math.ceil(maxResults / queries.length),
+          minPrice: budget?.[0],
+          maxPrice: budget?.[1],
+          diversityBoost: true
+        }
+      });
+      
+      if (error) {
+        console.error(`Search error for "${query}":`, error);
+        continue;
+      }
+      
+      if (data?.results) {
+        allProducts.push(...data.results);
+      }
+      
+    } catch (error) {
+      console.error(`Failed to search for "${query}":`, error);
+    }
+  }
+
+  // Deduplicate and diversify products
+  const uniqueProducts = deduplicateProducts(allProducts);
+  const diversifiedProducts = applyDiversityFilter(uniqueProducts, diversityFactor);
+  
+  return diversifiedProducts.slice(0, maxResults);
+}
+
+function deduplicateProducts(products: any[]): any[] {
+  const seen = new Set();
+  return products.filter(product => {
+    const key = `${product.product_id || product.id}_${product.title}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function applyDiversityFilter(products: any[], diversityFactor: number): any[] {
+  // Simple diversity algorithm - can be enhanced later
+  const categories = new Map();
+  const diversified: any[] = [];
+  
+  for (const product of products) {
+    const category = product.category || 'general';
+    const categoryCount = categories.get(category) || 0;
+    
+    // Limit products per category based on diversity factor
+    const maxPerCategory = Math.ceil(products.length * diversityFactor / 10);
+    
+    if (categoryCount < maxPerCategory) {
+      diversified.push(product);
+      categories.set(category, categoryCount + 1);
+    }
+  }
+  
+  return diversified;
+}
+
+async function handleTraditionalConversation(message: string, context: any, sessionId: string): Promise<Response> {
+  // Fallback implementation for traditional conversation handling
+  return new Response(JSON.stringify({
+    message: "I'm having a small technical issue. Let me try again!",
+    context: context || {},
+    capability: 'conversation',
+    actions: [],
+    showSearchButton: false
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 async function getOrCreateNicoleAssistant(): Promise<string> {

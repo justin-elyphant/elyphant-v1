@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ExtendedEventData } from "../types";
 import { useEvents } from "../context/EventsContext";
 import { useNavigate } from "react-router-dom";
+import { formatRecipientNameForUrl, clearPersonalizedData } from "@/utils/personalizedMarketplaceUtils";
 
 export const useEventActions = () => {
   const { events } = useEvents();
@@ -13,17 +14,25 @@ export const useEventActions = () => {
     // Find the event to make sure it exists before navigating
     const event = events.find(e => e.id === id);
     if (event) {
-      // Navigate to marketplace with optional context
-      navigate('/marketplace', { 
+      // Clear any existing personalized data first
+      clearPersonalizedData();
+      
+      // Navigate to personalized marketplace page
+      const recipientName = formatRecipientNameForUrl(event.person);
+      navigate(`/marketplace/for/${recipientName}`, { 
         state: { 
           eventContext: {
             recipientName: event.person,
             eventType: event.type,
-            eventId: id
+            eventId: id,
+            relationship: 'friend', // Default, could be enhanced later
+            isPersonalized: true
           }
         }
       });
-      toast.success(`Opening gift marketplace for ${event.person}'s ${event.type}`);
+      toast.success(`Opening personalized gift marketplace for ${event.person}`, {
+        description: "Nicole AI is curating personalized recommendations..."
+      });
     }
   };
 

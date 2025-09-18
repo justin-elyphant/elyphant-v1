@@ -234,6 +234,7 @@ function AppContent() {
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/marketplace/for/:recipientName" element={<Marketplace />} />
           <Route path="/marketplace/product/:id" element={<ProductDetailsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/payments" element={<Payments />} />

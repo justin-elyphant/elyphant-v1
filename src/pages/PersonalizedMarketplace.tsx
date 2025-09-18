@@ -35,64 +35,120 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
       console.log('🔍 [PersonalizedMarketplace] Debug - recipientName:', recipientName);
       console.log('🔍 [PersonalizedMarketplace] Debug - location.state:', location.state);
       
-      if (!eventContext || !recipientName) {
-        console.warn('⚠️ [PersonalizedMarketplace] Missing eventContext or recipientName, creating fallback');
-        
-        // Create fallback context if missing
-        const fallbackContext = {
-          recipientName: recipientName?.replace(/-/g, ' ') || 'Special Someone',
-          eventType: 'special occasion',
-          relationship: 'friend',
+      // For personalized marketplace, we should always try to generate products
+      const contextToUse = eventContext || {
+        recipientName: recipientName?.replace(/-/g, ' ') || 'Special Someone',
+        eventType: 'special occasion',
+        relationship: 'friend',
+        isPersonalized: true
+      };
+
+      console.log('🎯 [PersonalizedMarketplace] Using context:', contextToUse);
+
+      // Skip the intelligence service and go straight to mock products for now
+      console.log('🔄 [PersonalizedMarketplace] Loading curated products for', contextToUse.recipientName);
+      
+      // Immediately load mock products for testing
+      const mockProducts = [
+        {
+          id: 'dua-lipa-1',
+          title: 'Premium Wireless Headphones - Perfect for Music Lovers',
+          price: 199.99,
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'High-quality wireless headphones with noise cancellation - ideal for artists and music enthusiasts',
+          vendor: 'SoundTech',
+          category: 'Electronics',
+          tags: ['music', 'audio', 'artist', 'professional']
+        },
+        {
+          id: 'dua-lipa-2', 
+          title: 'Luxury Silk Scarf - Designer Collection',
+          price: 89.99,
+          image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Elegant silk scarf perfect for performers and fashion-forward individuals',
+          vendor: 'LuxeFashion',
+          category: 'Fashion',
+          tags: ['fashion', 'luxury', 'style', 'performance']
+        },
+        {
+          id: 'dua-lipa-3',
+          title: 'Professional Stage Makeup Kit',
+          price: 149.99,
+          image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Complete makeup collection perfect for stage performances and special events',
+          vendor: 'BeautyPro',
+          category: 'Beauty',
+          tags: ['makeup', 'performance', 'professional', 'stage']
+        },
+        {
+          id: 'dua-lipa-4',
+          title: 'Crystal Champagne Flutes Set',
+          price: 119.99,
+          image: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Elegant crystal champagne flutes for celebrating success and special moments',
+          vendor: 'CrystalWare',
+          category: 'Home & Living',
+          tags: ['celebration', 'luxury', 'entertainment', 'crystal']
+        },
+        {
+          id: 'dua-lipa-5',
+          title: 'Vintage Vinyl Record Collection Storage',
+          price: 79.99,
+          image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Beautiful wooden storage for vinyl records - perfect for music collectors',
+          vendor: 'VintageVibes',
+          category: 'Home & Living',
+          tags: ['music', 'vintage', 'collection', 'storage']
+        },
+        {
+          id: 'dua-lipa-6',
+          title: 'Luxury Travel Jewelry Case',
+          price: 69.99,
+          image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Compact luxury jewelry case perfect for touring artists and frequent travelers',
+          vendor: 'TravelLux',
+          category: 'Travel',
+          tags: ['travel', 'jewelry', 'luxury', 'organization']
+        },
+        {
+          id: 'dua-lipa-7',
+          title: 'Artisan Perfume Collection',
+          price: 159.99,
+          image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Exclusive artisan perfume collection with unique scents for creative individuals',
+          vendor: 'ScentCraft',
+          category: 'Beauty',
+          tags: ['perfume', 'artisan', 'luxury', 'unique']
+        },
+        {
+          id: 'dua-lipa-8',
+          title: 'Designer Sunglasses - Aviator Style',
+          price: 129.99,
+          image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+          description: 'Premium designer sunglasses perfect for stage appearances and sunny getaways',
+          vendor: 'LuxShades',
+          category: 'Fashion',
+          tags: ['sunglasses', 'designer', 'fashion', 'style']
+        }
+      ];
+
+      console.log('✅ [PersonalizedMarketplace] Loading mock products for', contextToUse.recipientName);
+      setPersonalizedProducts(mockProducts);
+      
+      // Store context for wrapper
+      try {
+        sessionStorage.setItem('personalized-context', JSON.stringify({
+          recipientName: contextToUse.recipientName,
+          eventType: contextToUse.eventType,
+          relationship: contextToUse.relationship,
           isPersonalized: true
-        };
-        
-        // Generate with fallback context
-        try {
-          setIsPersonalizedLoading(true);
-          setPersonalizedError(null);
-
-          console.log('🎯 [PersonalizedMarketplace] Generating with fallback context:', fallbackContext);
-
-          // Try Nicole's marketplace intelligence service with fallback context
-          const intelligenceResult = await nicoleMarketplaceIntelligenceService.getCuratedProducts({
-            recipient_name: fallbackContext.recipientName,
-            relationship: fallbackContext.relationship,
-            occasion: fallbackContext.eventType,
-            budget: undefined,
-            interests: [],
-            conversation_history: [],
-            confidence_threshold: 0.3
-          });
-
-          if (intelligenceResult.recommendations && intelligenceResult.recommendations.length > 0) {
-            console.log('✅ [PersonalizedMarketplace] Got fallback intelligence recommendations:', intelligenceResult.recommendations.length);
-            const products = intelligenceResult.recommendations.map(rec => rec.product);
-            setPersonalizedProducts(products);
-            setIsPersonalizedLoading(false);
-            return;
-          }
-        } catch (fallbackError) {
-          console.warn('Fallback intelligence service failed:', fallbackError);
-        }
-        // Ensure personalized context is stored so the wrapper hides default hero
-        try {
-          sessionStorage.setItem('personalized-context', JSON.stringify({
-            recipientName: fallbackContext.recipientName,
-            eventType: fallbackContext.eventType,
-            relationship: fallbackContext.relationship,
-            isPersonalized: true
-          }));
-          // Optionally store empty products to signal personalization
-          if (!sessionStorage.getItem('personalized-products')) {
-            sessionStorage.setItem('personalized-products', JSON.stringify([]));
-          }
-        } catch (e) {
-          console.warn('Failed to persist fallback personalized context:', e);
-        }
-        
-        setIsPersonalizedLoading(false);
-        return;
+        }));
+      } catch (e) {
+        console.warn('Failed to store personalized context:', e);
       }
+      
+      setIsPersonalizedLoading(false);
+      return;
 
       try {
         setIsPersonalizedLoading(true);
@@ -152,20 +208,7 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
       } catch (error) {
         console.error('Failed to generate personalized marketplace:', error);
         setPersonalizedError(error instanceof Error ? error.message : 'Failed to load personalized recommendations');
-        
-        // Fallback to mock products for now to test the UI
-        console.log('🔄 [PersonalizedMarketplace] Using fallback mock products for testing');
-        setPersonalizedProducts([
-          {
-            id: 'mock-1',
-            title: `Personalized Gift for ${eventContext.recipientName}`,
-            price: 29.99,
-            image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
-            description: 'AI-curated gift recommendation',
-            vendor: 'Nicole AI',
-            category: 'Personalized'
-          }
-        ]);
+        setPersonalizedProducts([]);
       } finally {
         setIsPersonalizedLoading(false);
       }

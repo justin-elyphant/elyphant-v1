@@ -7,7 +7,6 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import BulkGiftingModal from "@/components/marketplace/BulkGiftingModal";
 import { useLocation, useParams } from "react-router-dom";
-import { CartProvider } from "@/contexts/CartContext";
 import PersonalizedMarketplace from "./PersonalizedMarketplace";
 
 const Marketplace = () => {
@@ -89,27 +88,25 @@ const Marketplace = () => {
   }, []);
 
   return (
-    <CartProvider>
-      <ProductProvider>
-        <MainLayout>
-          <Helmet>
-            <title>Gift Marketplace | Find Perfect Gifts</title>
-            <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and relationship." />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-          </Helmet>
-          <div className={`min-h-screen bg-gray-50 ${isMobile ? 'safe-area-inset pb-safe' : ''}`}>
-            <StreamlinedMarketplaceWrapper />
-          </div>
-          
-          {/* Bulk Gifting Modal */}
-          <BulkGiftingModal
-            open={bulkGiftingOpen}
-            onOpenChange={setBulkGiftingOpen}
-            initialProduct={selectedProduct}
-          />
-        </MainLayout>
-      </ProductProvider>
-    </CartProvider>
+    <ProductProvider>
+      <MainLayout>
+        <Helmet>
+          <title>Gift Marketplace | Find Perfect Gifts</title>
+          <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and relationship." />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        </Helmet>
+        <div className={`min-h-screen bg-gray-50 ${isMobile ? 'safe-area-inset pb-safe' : ''}`}>
+          <StreamlinedMarketplaceWrapper />
+        </div>
+        
+        {/* Bulk Gifting Modal */}
+        <BulkGiftingModal
+          open={bulkGiftingOpen}
+          onOpenChange={setBulkGiftingOpen}
+          initialProduct={selectedProduct}
+        />
+      </MainLayout>
+    </ProductProvider>
   );
 };
 

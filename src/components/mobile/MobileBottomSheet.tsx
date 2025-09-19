@@ -82,7 +82,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         )}
         
         {/* Content */}
-        <div className="overflow-y-auto max-h-[85vh] md:max-h-[90vh] pb-[max(96px,env(safe-area-inset-bottom))]">
+        <div className="overflow-y-auto max-h-[100dvh] pb-[calc(env(safe-area-inset-bottom)+160px)]">
           {children}
         </div>
       </div>

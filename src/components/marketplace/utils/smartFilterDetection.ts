@@ -203,11 +203,6 @@ export const generateSmartFilters = (
     ]
   };
   
-  suggestedFilters.shipping = {
-    type: 'checkbox',
-    label: 'Free Shipping',
-    options: [{ value: 'free', label: 'Free Shipping' }]
-  };
   
   // Add category-specific filters
   if (detectedCategory === 'clothing') {

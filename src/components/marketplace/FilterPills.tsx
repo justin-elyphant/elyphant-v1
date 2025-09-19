@@ -152,14 +152,6 @@ const FilterPills = ({ filters, onRemoveFilter, onClearAll }: FilterPillsProps) 
       });
     }
 
-    // Free shipping
-    if (filters.freeShipping) {
-      activeFilters.push({
-        type: 'freeShipping',
-        label: 'Free Shipping',
-        value: true
-      });
-    }
 
     return activeFilters;
   };

@@ -66,9 +66,6 @@ const SimpleFilterContent = ({
     onFiltersChange({ ...filters, rating: Number(value) });
   };
 
-  const handleFreeShippingChange = (checked: boolean) => {
-    onFiltersChange({ ...filters, freeShipping: checked });
-  };
 
   const clearFilters = () => {
     setPriceValues([0, PRICE_MAX]);
@@ -77,7 +74,6 @@ const SimpleFilterContent = ({
       priceRange: [0, PRICE_MAX],
       categories: [],
       rating: null,
-      freeShipping: false,
     });
   };
 
@@ -86,7 +82,6 @@ const SimpleFilterContent = ({
     if (selectedCategories.length > 0) count += 1;
     if (priceValues[0] > 0 || priceValues[1] < PRICE_MAX) count += 1;
     if (filters.rating) count += 1;
-    if (filters.freeShipping) count += 1;
     return count;
   };
 
@@ -180,23 +175,6 @@ const SimpleFilterContent = ({
               );
             }
             
-            if (filterKey === 'shipping') {
-              return (
-                <div key={filterKey}>
-                  <h4 className="font-medium mb-3">Shipping</h4>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="free-shipping"
-                      checked={filters.freeShipping || false}
-                      onCheckedChange={handleFreeShippingChange}
-                    />
-                    <Label htmlFor="free-shipping" className="text-sm cursor-pointer">
-                      Free Shipping
-                    </Label>
-                  </div>
-                </div>
-              );
-            }
             
             // Dynamic checkbox filters (brand, size, color, fit, etc.)
             if (filterConfig.type === 'checkbox' && filterConfig.options?.length > 0) {

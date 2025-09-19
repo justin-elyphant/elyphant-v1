@@ -52,13 +52,9 @@ const ProductInfoDetails = ({ product, source }: ProductInfoDetailsProps) => {
             {specifications.map((item, idx) => (
               <div key={idx} className="grid grid-cols-2 gap-2 py-1 border-b border-muted last:border-0">
                 {Object.entries(item).map(([key, value], index) => (
-                  <React.Fragment key={`${idx}-${index}`}>
-                    {index % 2 === 0 ? (
-                      <span className="font-medium text-muted-foreground">{value as string}:</span>
-                    ) : (
-                      <span className="text-foreground">{value as string}</span>
-                    )}
-                  </React.Fragment>
+                  <div key={`${idx}-${index}`} className={index % 2 === 0 ? "font-medium text-muted-foreground" : "text-foreground"}>
+                    {index % 2 === 0 ? `${String(value)}:` : String(value)}
+                  </div>
                 ))}
               </div>
             ))}

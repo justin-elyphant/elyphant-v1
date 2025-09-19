@@ -83,6 +83,17 @@ export const extractProductAttributes = (products: any[]): Record<string, Set<st
     // Extract attributes from title and description
     const text = `${product.title || ''} ${product.description || ''}`.toLowerCase();
     
+    // Debug logging for gender detection
+    console.log(`🔍 Gender Detection Debug - Product: "${product.title}"`, {
+      text: text.substring(0, 100),
+      productData: {
+        title: product.title,
+        description: product.description?.substring(0, 100),
+        category: product.category,
+        brand: product.brand
+      }
+    });
+    
     // Color detection
     const colors = ['black', 'white', 'blue', 'red', 'green', 'yellow', 'pink', 'purple', 'brown', 'gray', 'grey', 'navy', 'dark', 'light'];
     colors.forEach(color => {
@@ -118,11 +129,15 @@ export const extractProductAttributes = (products: any[]): Record<string, Set<st
     Object.entries(genderKeywords).forEach(([gender, keywords]) => {
       keywords.forEach(keyword => {
         if (text.includes(keyword.toLowerCase())) {
+          console.log(`🔍 Gender Match Found: "${keyword}" → "${gender}" in product: "${product.title}"`);
           attributes.genders.add(gender.charAt(0).toUpperCase() + gender.slice(1));
         }
       });
     });
   });
+  
+  console.log(`🔍 Final Gender Attributes Detected:`, Array.from(attributes.genders));
+  console.log(`🔍 Total Products Processed:`, products.length);
   
   return attributes;
 };

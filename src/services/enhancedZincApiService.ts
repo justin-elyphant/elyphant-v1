@@ -236,11 +236,17 @@ class EnhancedZincApiService {
       let finalQuery = query;
       let finalLimit = limit;
       
-      if (queryEnhancement.searchStrategy === 'multi-size' && detectedCategory === 'clothing') {
+      // TEMPORARILY DISABLE smart enhancement to test if it's causing gender bias
+      // TODO: Re-enable once gender bias is fixed
+      if (false && queryEnhancement.searchStrategy === 'multi-size' && detectedCategory === 'clothing') {
         // Use the first enhanced query for better size representation
         finalQuery = queryEnhancement.enhancedQueries[1] || query; // Skip original, use enhanced
         finalLimit = Math.min(limit * 1.5, 75); // Slightly increase limit for better size variety
         console.log(`🎯 Using enhanced size-aware query: "${finalQuery}" with limit: ${finalLimit}`);
+        console.log(`🎯 Original query was: "${query}"`);
+        console.log(`🎯 Available enhanced queries:`, queryEnhancement.enhancedQueries);
+      } else {
+        console.log(`🎯 Smart enhancement DISABLED for gender bias testing. Using original query: "${query}"`);
       }
 
       // CRITICAL FIX: Ensure price filters are properly formatted for the edge function
@@ -300,6 +306,13 @@ class EnhancedZincApiService {
 
       // Enhance product data with best seller information
       let enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+
+      // Debug logging for gender detection issue
+      console.log(`🔍 API Search Results for "${finalQuery}":`, {
+        totalResults: enhancedResults.length,
+        sampleTitles: enhancedResults.slice(0, 3).map(p => p.title),
+        allTitles: enhancedResults.map(p => p.title)
+      });
 
       // Phase 2: Apply smart filtering if we got more results than requested
       if (enhancedResults.length > limit && queryEnhancement.searchStrategy === 'multi-size') {

@@ -101,9 +101,17 @@ export function enhanceQueryForSizes(query: string): QueryEnhancement {
 
   // For jeans/pants - add size range queries
   if (query.toLowerCase().includes('jeans') || query.toLowerCase().includes('pants')) {
-    // Add waist size variants
-    enhancedQueries.push(`${query} 30W 32W 34W 36W`);
-    enhancedQueries.push(`${query} waist 28 30 32 34 36 38`);
+    // Add BOTH men's and women's waist size variants to avoid gender bias
+    enhancedQueries.push(`${query} women's 26W 28W 30W 32W`); // Women's waist sizes
+    enhancedQueries.push(`${query} men's 30W 32W 34W 36W`);   // Men's waist sizes
+    enhancedQueries.push(`${query} waist sizes various`);      // Gender-neutral sizing
+    
+    console.log(`🎯 Smart Query Enhancement for "${query}":`, {
+      originalQuery: query,
+      detectedAsJeans: true,
+      enhancedQueries: enhancedQueries,
+      note: "Added both men's and women's sizing to avoid gender bias"
+    });
     
     // Add brand-specific enhancements if brand detected
     const brandMatch = query.match(/\b(levis?|gap|old navy|wrangler|lee)\b/i);

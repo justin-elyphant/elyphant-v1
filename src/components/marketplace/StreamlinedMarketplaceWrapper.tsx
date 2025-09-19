@@ -31,6 +31,8 @@ import { CategorySearchService } from "@/services/categoryRegistry/CategorySearc
 import { Sparkles } from "lucide-react";
 import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
+import FilterPills from "./FilterPills";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {
@@ -80,6 +82,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductDetails, setShowProductDetails] = useState(false);
+  const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<any>({});
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { addToCart } = useCart();
@@ -399,8 +403,25 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <MarketplaceHeader />
-        <MarketplaceQuickFilters />
+          <MarketplaceHeader />
+          <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          
+          {/* Filter Pills */}
+          <FilterPills
+            filters={activeFilters}
+            onRemoveFilter={(filterType, value) => {
+              const newFilters = { ...activeFilters };
+              if (filterType === 'category' && value) {
+                newFilters.categories = (newFilters.categories || []).filter((cat: string) => cat !== value);
+              } else if (filterType === 'priceRange') {
+                newFilters.priceRange = [0, 500];
+              } else {
+                delete newFilters[filterType];
+              }
+              setActiveFilters(newFilters);
+            }}
+            onClearAll={() => setActiveFilters({})}
+          />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="space-y-3">
@@ -638,6 +659,15 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           </div>
         </div>
       )}
+      
+      {/* Advanced Filters Drawer */}
+      <AdvancedFiltersDrawer
+        open={showFiltersDrawer}
+        onOpenChange={setShowFiltersDrawer}
+        filters={activeFilters}
+        onFiltersChange={setActiveFilters}
+        categories={[]} // You can extract categories from products if needed
+      />
       
       {/* Product Details Dialog */}
       {selectedProduct && (

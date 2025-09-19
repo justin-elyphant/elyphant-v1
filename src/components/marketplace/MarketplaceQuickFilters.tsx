@@ -13,7 +13,11 @@ import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useNavigate } from "react-router-dom";
 import { getFeaturedCategories } from "@/constants/categories";
 
-const MarketplaceQuickFilters = () => {
+interface MarketplaceQuickFiltersProps {
+  onMoreFilters?: () => void;
+}
+
+const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps = {}) => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const { search } = useUnifiedMarketplace();
   const navigate = useNavigate();
@@ -114,6 +118,7 @@ const MarketplaceQuickFilters = () => {
         <Badge
           variant="outline"
           className="cursor-pointer px-4 py-3 text-sm bg-white text-gray-700 hover:bg-gray-50 border-gray-300 touch-target-44"
+          onClick={onMoreFilters}
         >
           <Filter className="h-3 w-3 mr-1" />
           More filters

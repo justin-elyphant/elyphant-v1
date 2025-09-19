@@ -22,6 +22,7 @@ import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService'
 import { CartItem } from '@/contexts/CartContext';
 import { RecipientAssignment } from '@/types/recipient';
 import { ShippingInfo } from '@/components/marketplace/checkout/useCheckoutState';
+import { Product } from '@/types/product';
 
 // ============================================================================
 // CART HOOK
@@ -32,7 +33,7 @@ export interface UseUnifiedCartReturn {
   cartTotal: number;
   itemCount: number;
   isProcessing: boolean;
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (productOrId: string | Product, quantity?: number) => Promise<void>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -75,10 +76,10 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
   }, [refreshCart]);
 
   // Cart operations
-  const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
+  const addToCart = useCallback(async (productOrId: string | Product, quantity: number = 1) => {
     try {
       setIsProcessing(true);
-      await unifiedPaymentService.addToCart(productId, quantity);
+      await unifiedPaymentService.addToCart(productOrId, quantity);
     } finally {
       setIsProcessing(false);
     }

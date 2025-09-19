@@ -286,6 +286,12 @@ const Cart = () => {
                             <h3 className="font-medium text-sm line-clamp-2 mb-1">
                               {item.product.name || item.product.title}
                             </h3>
+                            {/* Display variation details if available */}
+                            {((item.product as any).variationText || (item.product as any).selectedVariations) && (
+                              <p className="text-xs text-blue-600 mb-1 font-medium">
+                                {(item.product as any).variationText || (item.product as any).selectedVariations}
+                              </p>
+                            )}
                             <p className="text-sm text-muted-foreground mb-2">
                               {item.product.vendor && `By ${item.product.vendor}`}
                             </p>

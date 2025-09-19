@@ -401,24 +401,42 @@ class UnifiedPaymentService {
 
   /**
    * Add product to cart - MUST call UnifiedMarketplaceService for validation
+   * Can accept either a productId string or a full Product object (for variations)
    */
-  async addToCart(productId: string, quantity: number = 1): Promise<void> {
+  async addToCart(productOrId: string | Product, quantity: number = 1): Promise<void> {
     try {
-      console.log(`[CART DEBUG] Adding product ${productId} to cart`);
-      
-      // CRITICAL: Use UnifiedMarketplaceService for product details
-      const rawProduct = await unifiedMarketplaceService.getProductDetails(productId);
-      console.log(`[CART DEBUG] Raw product from service:`, rawProduct);
-      
-      if (!rawProduct) {
-        throw new Error('Product not found');
-      }
+      let product: Product;
+      let productId: string;
 
-      // Standardize the product to ensure correct pricing AND preserve Zinc metadata
-      const product = standardizeProduct(rawProduct);
-      console.log(`[CART DEBUG] Standardized product:`, product);
-      console.log(`[CART DEBUG] Price conversion: ${rawProduct.price} -> ${product.price}`);
-      console.log(`[CART DEBUG] Zinc metadata: productSource=${product.productSource}, isZincApiProduct=${product.isZincApiProduct}`);
+      // Check if we received a full Product object or just an ID
+      if (typeof productOrId === 'string') {
+        productId = productOrId;
+        console.log(`[CART DEBUG] Adding product ${productId} to cart`);
+        
+        // CRITICAL: Use UnifiedMarketplaceService for product details
+        const rawProduct = await unifiedMarketplaceService.getProductDetails(productId);
+        console.log(`[CART DEBUG] Raw product from service:`, rawProduct);
+        
+        if (!rawProduct) {
+          throw new Error('Product not found');
+        }
+
+        // Standardize the product to ensure correct pricing AND preserve Zinc metadata
+        product = standardizeProduct(rawProduct);
+        console.log(`[CART DEBUG] Standardized product:`, product);
+        console.log(`[CART DEBUG] Price conversion: ${rawProduct.price} -> ${product.price}`);
+        console.log(`[CART DEBUG] Zinc metadata: productSource=${product.productSource}, isZincApiProduct=${product.isZincApiProduct}`);
+      } else {
+        // We received a full Product object (with variations)
+        product = productOrId;
+        productId = product.product_id;
+        console.log(`[CART DEBUG] Adding product object to cart:`, {
+          id: productId,
+          title: product.title || product.name,
+          variationText: (product as any).variationText,
+          selectedVariations: (product as any).selectedVariations
+        });
+      }
 
       const existingItemIndex = this.cartItems.findIndex(
         item => item.product.product_id === productId

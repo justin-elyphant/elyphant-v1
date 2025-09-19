@@ -85,7 +85,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cartTotal: 0,
       itemCount: 0,
       isProcessing: false,
-      addToCart: async (productId: string, quantity?: number) => {
+      addToCart: async (productOrId: string | any, quantity?: number) => {
         console.warn('[CartProvider] Cart addToCart called but service unavailable');
       },
       removeFromCart: (productId: string) => {
@@ -124,7 +124,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
 
   const addToCart = async (product: Product, quantity: number = 1) => {
-    await serviceAddToCart(product.product_id, quantity);
+    await serviceAddToCart(product, quantity);
   };
 
   const removeFromCart = (productId: string) => {

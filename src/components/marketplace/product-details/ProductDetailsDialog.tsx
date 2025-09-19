@@ -2,7 +2,8 @@
 import React, {useEffect, useState} from "react";
 import { toast } from "sonner";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import ResponsiveProductModal from "./ResponsiveProductModal";
+import MobileProductLayout from "./MobileProductLayout";
 import ProductCarousel from "./ProductCarousel";
 import ProductInfoHeader from "./ProductInfoHeader";
 import ProductInfoDetails from "./ProductInfoDetails";
@@ -13,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { normalizeProduct, Product } from "@/contexts/ProductContext";
 import { getProductName, getProductImages } from "../product-item/productUtils";
 import { useProductVariations } from "@/hooks/useProductVariations";
+import { useViewport } from "@/hooks/useViewport";
 
 interface ProductDetailsDialogProps {
   productId?: string | null;
@@ -157,87 +159,85 @@ const ProductDetailsDialog = ({
     }
   };
 
+  const { isMobile } = useViewport();
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl">
-            {loading ? "" : (productDetail ? getProductName(productDetail) : "")}
-          </DialogTitle>
-          <DialogDescription asChild>
-            <div className="text-sm text-muted-foreground line-clamp-2">
-              {source && !loading && (
-                <div className="mb-2 text-xs font-medium text-primary">
-                  {source === 'ai' && "🤖 AI picked this for you"}
-                  {source === 'trending' && "📈 Trending now"}
-                  {source === 'interests' && "🎯 Based on your interests"}
-                  {source === 'wishlist' && "❤️ From wishlist"}
+    <ResponsiveProductModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={loading ? "" : (productDetail ? getProductName(productDetail) : "")}
+      description={!loading && productDetail?.description ? productDetail.description : undefined}
+      source={source}
+    >
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Spinner />
+        </div>
+      ) : productDetail ? (
+        isMobile ? (
+          <MobileProductLayout
+            productDetail={productDetail}
+            hasVariations={hasVariations}
+            quantity={quantity}
+            onIncrease={handleIncrease}
+            onDecrease={handleDecrease}
+            isHeartAnimating={isHeartAnimating}
+            onWishlistChange={onWishlistChange}
+            handleVariationChange={handleVariationChange}
+            getEffectiveProductId={getEffectiveProductId}
+            getVariationDisplayText={getVariationDisplayText}
+            isVariationComplete={isVariationComplete}
+            source={source}
+          />
+        ) : (
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 py-4">
+            {/* Image Gallery */}
+            <div className="relative overflow-hidden rounded-lg order-1 lg:order-1">
+              <ProductCarousel 
+                images={getProductImages(productDetail)} 
+                productName={getProductName(productDetail)} 
+              />
+            </div>
+            
+            {/* Product Info - Above the fold content */}
+            <div className="flex flex-col space-y-4 order-2 lg:order-2">
+              <ProductInfoHeader product={productDetail} />
+              
+              {/* Product Variations - Keep prominent */}
+              {hasVariations && productDetail.all_variants && (
+                <div className="p-4 border rounded-lg bg-muted/30">
+                  <VariationSelector
+                    variants={productDetail.all_variants}
+                    currentVariantSpecs={productDetail.variant_specifics}
+                    onVariationChange={handleVariationChange}
+                  />
                 </div>
               )}
-              {!loading && productDetail?.description && (
-                <span>{productDetail.description}</span>
-              )}
+              
+              {/* Purchase Actions - Keep above the fold */}
+              <ProductDetailsActionsSection
+                product={productDetail}
+                quantity={quantity}
+                onIncrease={handleIncrease}
+                onDecrease={handleDecrease}
+                isHeartAnimating={isHeartAnimating}
+                reloadWishlists={onWishlistChange}
+                selectedProductId={getEffectiveProductId()}
+                variationText={getVariationDisplayText()}
+                isVariationComplete={isVariationComplete()}
+              />
             </div>
-          </DialogDescription>
-        </DialogHeader>
-        {
-          loading ? (
-            <div className="flex justify-center py-12">
-              <Spinner />
+            
+            {/* Product Details - Below the fold */}
+            <div className="lg:col-span-2 order-3 border-t pt-6 mt-2">
+              <ProductInfoDetails product={productDetail} source={source} />
             </div>
-          ) : (
-            productDetail ?
-            <>
-              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 py-4">
-                 {/* Image Gallery */}
-                 <div className="relative overflow-hidden rounded-lg order-1 lg:order-1">
-                   <ProductCarousel 
-                     images={getProductImages(productDetail)} 
-                     productName={getProductName(productDetail)} 
-                   />
-                 </div>
-                 
-                 {/* Product Info - Above the fold content */}
-                 <div className="flex flex-col space-y-4 order-2 lg:order-2">
-                   <ProductInfoHeader product={productDetail} />
-                   
-                   {/* Product Variations - Keep prominent */}
-                   {hasVariations && productDetail.all_variants && (
-                     <div className="p-4 border rounded-lg bg-muted/30">
-                       <VariationSelector
-                         variants={productDetail.all_variants}
-                         currentVariantSpecs={productDetail.variant_specifics}
-                         onVariationChange={handleVariationChange}
-                       />
-                     </div>
-                   )}
-                   
-                   {/* Purchase Actions - Keep above the fold */}
-                   <ProductDetailsActionsSection
-                     product={productDetail}
-                     quantity={quantity}
-                     onIncrease={handleIncrease}
-                     onDecrease={handleDecrease}
-                     isHeartAnimating={isHeartAnimating}
-                     reloadWishlists={onWishlistChange}
-                     selectedProductId={getEffectiveProductId()}
-                     variationText={getVariationDisplayText()}
-                     isVariationComplete={isVariationComplete()}
-                   />
-                 </div>
-                 
-                 {/* Product Details - Below the fold */}
-                 <div className="lg:col-span-2 order-3 border-t pt-6 mt-2">
-                   <ProductInfoDetails product={productDetail} source={source} />
-                 </div>
-              </div>
-            </>
-            :
-            <div className="text-center py-8">No Product Data</div>
-          )
-        }
-      </DialogContent>
-    </Dialog>
+          </div>
+        )
+      ) : (
+        <div className="text-center py-8">No Product Data</div>
+      )}
+    </ResponsiveProductModal>
   );
 };
 

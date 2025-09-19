@@ -49,6 +49,19 @@ const ProductDetailsDialog = ({
     getVariationDisplayText
   } = useProductVariations(productDetail || product);
 
+  // Debug variation rendering
+  useEffect(() => {
+    if (productDetail) {
+      console.log('[ProductDetailsDialog] Variation debug:', {
+        hasVariations,
+        hasAllVariants: Boolean(productDetail.all_variants),
+        allVariantsLength: productDetail.all_variants?.length || 0,
+        shouldShowSelector: hasVariations && productDetail.all_variants,
+        productTitle: productDetail.title || productDetail.name
+      });
+    }
+  }, [hasVariations, productDetail]);
+
   const handleIncrease = () => {
     if (quantity < 10) {
       setQuantity(quantity + 1);
@@ -113,7 +126,9 @@ const ProductDetailsDialog = ({
           title: enhancedProduct.title,
           hasVariations: Boolean(enhancedProduct.all_variants && enhancedProduct.all_variants.length > 0),
           variationCount: enhancedProduct.all_variants?.length || 0,
-          currentSpecs: enhancedProduct.variant_specifics?.length || 0
+          currentSpecs: enhancedProduct.variant_specifics?.length || 0,
+          allVariantsData: enhancedProduct.all_variants,
+          variantSpecificsData: enhancedProduct.variant_specifics
         });
         
         setProductDetail(enhancedProduct);

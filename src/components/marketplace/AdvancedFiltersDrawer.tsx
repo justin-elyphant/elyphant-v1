@@ -32,7 +32,7 @@ const AdvancedFiltersDrawer = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side={isMobile ? "bottom" : "right"} 
-        className={isMobile ? "h-[85vh]" : "w-[400px] sm:w-[540px]"}
+        className={isMobile ? "h-[85vh] flex flex-col" : "w-[400px] sm:w-[540px] flex flex-col"}
       >
         <SheetHeader>
           <SheetTitle>Filter Products</SheetTitle>
@@ -41,7 +41,7 @@ const AdvancedFiltersDrawer = ({
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6">
+        <div className="mt-6 overflow-y-auto flex-1 pr-2 max-h-[calc(100vh-12rem)]">
           <SimpleFilterContent
             filters={filters}
             onFiltersChange={onFiltersChange}

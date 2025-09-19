@@ -34,6 +34,7 @@ import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
 import { useFilteredProducts } from "./hooks/useFilteredProducts";
+import { SmartSearchTest } from "./SmartSearchTest";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {
@@ -718,6 +719,9 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           userData={null}
         />
       )}
+      
+      {/* Smart Search Test Component - Development Only */}
+      {process.env.NODE_ENV === 'development' && <SmartSearchTest />}
     </div>
   );
 });

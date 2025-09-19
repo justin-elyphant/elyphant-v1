@@ -2,10 +2,23 @@
  * Smart filter detection based on search context and product data
  */
 
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
+export interface FilterConfig {
+  type: 'range' | 'radio' | 'checkbox';
+  label: string;
+  min?: number;
+  max?: number;
+  options?: FilterOption[];
+}
+
 export interface SmartFilterContext {
   searchTerm: string;
   detectedCategory: string | null;
-  suggestedFilters: Record<string, any>;
+  suggestedFilters: Record<string, FilterConfig>;
   productAttributes: Record<string, Set<string>>;
 }
 
@@ -101,7 +114,7 @@ export const generateSmartFilters = (
   const detectedCategory = detectCategoryFromSearch(searchTerm);
   const productAttributes = extractProductAttributes(products);
   
-  let suggestedFilters: Record<string, any> = {};
+  let suggestedFilters: Record<string, FilterConfig> = {};
   
   // Base filters always available
   suggestedFilters.price = {

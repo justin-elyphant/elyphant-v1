@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
-import { generateSmartFilters } from "./utils/smartFilterDetection";
+import { generateSmartFilters, type FilterConfig, type FilterOption } from "./utils/smartFilterDetection";
 import { useSearchParams } from "react-router-dom";
 
 interface SimpleFilterContentProps {
@@ -121,7 +121,7 @@ const SimpleFilterContent = ({
           )}
 
           {/* Dynamic Smart Filters */}
-          {Object.entries(smartFilterContext.suggestedFilters).map(([filterKey, filterConfig]: [string, any]) => {
+          {Object.entries(smartFilterContext.suggestedFilters).map(([filterKey, filterConfig]: [string, FilterConfig]) => {
             if (filterKey === 'price') {
               return (
                 <div key={filterKey}>
@@ -156,7 +156,7 @@ const SimpleFilterContent = ({
                     onValueChange={handleRatingChange}
                     className="space-y-2"
                   >
-                    {filterConfig.options.map((option: any) => (
+                    {filterConfig.options?.map((option: FilterOption) => (
                       <div key={option.value} className="flex items-center space-x-2">
                         <RadioGroupItem value={option.value} id={`rating${option.value}`} />
                         <Label htmlFor={`rating${option.value}`} className="text-sm cursor-pointer flex items-center">
@@ -201,7 +201,7 @@ const SimpleFilterContent = ({
                 <div key={filterKey}>
                   <h4 className="font-medium mb-3">{filterConfig.label}</h4>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterConfig.options.map((option: any) => (
+                    {filterConfig.options?.map((option: FilterOption) => (
                       <div key={option.value} className="flex items-center space-x-2">
                         <Checkbox 
                           id={`${filterKey}-${option.value}`}

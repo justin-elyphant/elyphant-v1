@@ -35,7 +35,7 @@ const ResponsiveProductModal: React.FC<ResponsiveProductModalProps> = ({
       <MobileBottomSheet
         isOpen={open}
         onClose={() => onOpenChange(false)}
-        className="ios-modal-backdrop mobile-container safe-area-bottom"
+        className="ios-modal-backdrop mobile-container"
       >
         <div className="mobile-card ios-scroll">
           {/* Mobile Header */}

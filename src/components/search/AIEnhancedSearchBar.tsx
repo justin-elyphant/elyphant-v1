@@ -485,6 +485,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
                   setSearchQuery("");
                   setShowSuggestions(false);
                   resetTranscript();
+                  // Navigate back to main marketplace without search params
+                  navigate('/marketplace');
                 }}
                 className="h-8 w-8 p-0 rounded-full hover:bg-gray-200 touch-manipulation min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:h-6 md:w-6"
               >

@@ -60,6 +60,7 @@ export const extractProductAttributes = (products: any[]): Record<string, Set<st
     colors: new Set(),
     sizes: new Set(),
     categories: new Set(),
+    genders: new Set(),
   };
   
   products.forEach(product => {
@@ -99,6 +100,21 @@ export const extractProductAttributes = (products: any[]): Record<string, Set<st
     if (waistMatch) {
       attributes.sizes.add(`${waistMatch[1]}"`);
     }
+    
+    // Gender detection
+    const genderKeywords = {
+      'men': ['men', 'mens', "men's", 'male', 'masculine', 'guy', 'dude', 'man'],
+      'women': ['women', 'womens', "women's", 'female', 'feminine', 'girl', 'lady', 'woman'],
+      'unisex': ['unisex', 'unisex', 'gender neutral', 'for everyone']
+    };
+    
+    Object.entries(genderKeywords).forEach(([gender, keywords]) => {
+      keywords.forEach(keyword => {
+        if (text.includes(keyword.toLowerCase())) {
+          attributes.genders.add(gender.charAt(0).toUpperCase() + gender.slice(1));
+        }
+      });
+    });
   });
   
   return attributes;
@@ -173,6 +189,18 @@ export const generateSmartFilters = (
         options: Array.from(productAttributes.colors).map(color => ({
           value: color.toLowerCase(),
           label: color
+        }))
+      };
+    }
+    
+    // Add gender filter if we detected genders
+    if (productAttributes.genders.size > 0) {
+      suggestedFilters.gender = {
+        type: 'checkbox',
+        label: 'Gender',
+        options: Array.from(productAttributes.genders).map(gender => ({
+          value: gender.toLowerCase(),
+          label: gender
         }))
       };
     }

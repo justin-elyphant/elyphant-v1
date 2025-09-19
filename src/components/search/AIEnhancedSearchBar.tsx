@@ -80,13 +80,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   // Create unique instance ID for this search bar
   const instanceId = React.useMemo(() => `${mobile ? 'mobile' : 'desktop'}-${Math.random()}`, [mobile]);
 
-  // Initialize search term from URL on component mount
+  // Initialize and sync search term from URL
   useEffect(() => {
-    if (urlSearchTerm && urlSearchTerm !== query) {
-      setQuery(urlSearchTerm);
-      setSearchQuery(urlSearchTerm);
-    }
-  }, [urlSearchTerm, query, setSearchQuery]);
+    // Always sync with URL search term (including clearing when no search param)
+    setQuery(urlSearchTerm);
+    setSearchQuery(urlSearchTerm);
+  }, [urlSearchTerm, setSearchQuery]);
 
   // Open Nicole interface when mode becomes nicole (from URL or mode toggle)
   useEffect(() => {

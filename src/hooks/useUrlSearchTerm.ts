@@ -7,10 +7,9 @@ export const useUrlSearchTerm = () => {
 
   useEffect(() => {
     const urlSearchTerm = searchParams.get('search');
-    if (urlSearchTerm && urlSearchTerm !== searchTerm) {
-      setSearchTerm(urlSearchTerm);
-    }
-  }, [searchParams, searchTerm]);
+    // Always update the search term to match URL (including clearing when no search param)
+    setSearchTerm(urlSearchTerm || '');
+  }, [searchParams]);
 
   return {
     searchTerm,

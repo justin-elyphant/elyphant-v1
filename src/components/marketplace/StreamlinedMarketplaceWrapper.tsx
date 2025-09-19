@@ -238,6 +238,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     onLoadMore: handleLoadMore,
     hasMoreFromServer: personalizedProducts.length === 0, // Don't try to load more for personalized products
   });
+
+  // Apply active filters to paginated products before display
+  const sortOption = (activeFilters && activeFilters.sortBy) ? activeFilters.sortBy : 'relevance';
+  const filteredPaginatedProducts = useFilteredProducts(paginatedProducts || [], activeFilters || {}, sortOption);
+
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
     const handleMarketplaceSearchUpdate = (event: CustomEvent) => {
@@ -491,8 +496,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       {/* Only show MarketplaceHeader for non-personalized */}
       {!isPersonalizedActive && (
         <MarketplaceHeader
-          totalResults={displayProducts.length}
-          filteredProducts={displayProducts}
+          totalResults={filteredPaginatedProducts.length}
+          filteredProducts={filteredPaginatedProducts}
         />
       )}
 
@@ -622,11 +627,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       )}
 
       {/* Products Grid (when search is active, personalized, or as fallback) */}
-      {(showSearchInfo || !products.length || isPersonalizedActive) && paginatedProducts.length > 0 && (
+      {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
         <>
           {shouldUseVirtualization ? (
             <VirtualizedProductGrid
-              products={paginatedProducts}
+              products={filteredPaginatedProducts}
               viewMode={viewMode}
               onProductClick={handleProductClick}
               onAddToCart={handleAddToCart}
@@ -638,7 +643,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             />
           ) : (
             <OptimizedProductGrid
-              products={paginatedProducts}
+              products={filteredPaginatedProducts}
               viewMode={viewMode}
               onProductClick={handleProductClick}
               onAddToCart={handleAddToCart}
@@ -675,7 +680,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       )}
 
       {/* Empty State */}
-      {paginatedProducts.length === 0 && !isLoading && (
+      {filteredPaginatedProducts.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
             <div className="text-gray-400 mb-4">

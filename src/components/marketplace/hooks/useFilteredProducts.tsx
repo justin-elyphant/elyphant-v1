@@ -7,123 +7,129 @@ export const useFilteredProducts = (products: any[], activeFilters: any, sortOpt
       return [];
     }
 
+    const f = activeFilters || {};
+    const categories: string[] = f.categories || [];
+    const priceRange: [number, number] | undefined = f.priceRange;
+    const rating: number = f.rating || 0;
+    const inStock: boolean | undefined = f.inStock;
+    const onSale: boolean | undefined = f.onSale;
+    const freeShipping: boolean | undefined = f.freeShipping;
+    const brands: string[] = f.brands || [];
+    const gender: string[] = f.gender || [];
+    const sizes: string[] = f.size || [];
+    const colors: string[] = f.color || [];
+    const fits: string[] = f.fit || [];
+    const smartBrands: string[] = f.brand || [];
+
     let filtered = [...products];
 
-    // Apply category filter
-    if (activeFilters.categories.length > 0) {
-      filtered = filtered.filter(product => 
-        activeFilters.categories.includes(product.category)
-      );
+    // Category filter
+    if (categories.length > 0) {
+      filtered = filtered.filter(product => categories.includes(product.category));
     }
 
-    // Apply price range filter
-    if (activeFilters.priceRange) {
-      const [min, max] = activeFilters.priceRange;
-      filtered = filtered.filter(product => 
-        product.price >= min && product.price <= max
-      );
+    // Price range filter
+    if (priceRange && Array.isArray(priceRange) && priceRange.length === 2) {
+      const [min, max] = priceRange;
+      filtered = filtered.filter(product => {
+        const price = Number(product.price ?? product.current_price ?? product.salePrice ?? product.listPrice);
+        return !Number.isNaN(price) && price >= min && price <= max;
+      });
     }
 
-    // Apply rating filter
-    if (activeFilters.rating > 0) {
-      filtered = filtered.filter(product => 
-        (product.rating || 0) >= activeFilters.rating
-      );
+    // Rating filter
+    if (rating > 0) {
+      filtered = filtered.filter(product => (Number(product.rating || product.stars || 0) >= rating));
     }
 
-    // Apply stock filter
-    if (activeFilters.inStock) {
+    // Stock filter
+    if (inStock) {
       filtered = filtered.filter(product => product.inStock !== false);
     }
 
-    // Apply sale filter
-    if (activeFilters.onSale) {
-      filtered = filtered.filter(product => product.onSale === true);
+    // Sale filter
+    if (onSale) {
+      filtered = filtered.filter(product => product.onSale === true || product.salePrice != null);
     }
 
-    // Apply free shipping filter
-    if (activeFilters.freeShipping) {
+    // Free shipping filter
+    if (freeShipping) {
       filtered = filtered.filter(product => product.freeShipping === true);
     }
 
-    // Apply brand filter
-    if (activeFilters.brands && activeFilters.brands.length > 0) {
-      filtered = filtered.filter(product => 
-        activeFilters.brands.includes(product.brand)
-      );
+    // Brand list filter
+    if (brands.length > 0) {
+      filtered = filtered.filter(product => brands.includes(product.brand));
     }
 
-    // Apply gender filter
-    if (activeFilters.gender && activeFilters.gender.length > 0) {
+    // Gender filter (robust)
+    if (gender.length > 0) {
       filtered = filtered.filter(product => {
-        const productTitle = (product.title || product.name || '').toLowerCase();
-        const productDescription = (product.description || '').toLowerCase();
-        
-        return activeFilters.gender.some((gender: string) => {
-          const genderLower = gender.toLowerCase();
-          // Check if product is for the selected gender
-          if (genderLower === 'men' || genderLower === 'mens') {
-            return (productTitle.includes("men's") || productTitle.includes("mens")) && 
-                   !productTitle.includes("women's") && !productTitle.includes("womens");
-          } else if (genderLower === 'women' || genderLower === 'womens') {
-            return (productTitle.includes("women's") || productTitle.includes("womens")) && 
-                   !productTitle.includes("men's") && !productTitle.includes("mens");
+        const title = String(product.title || product.name || '').toLowerCase();
+        const description = String(product.description || '').toLowerCase();
+        const meta = String(product.gender || '').toLowerCase();
+        const text = `${title} ${description} ${meta}`;
+
+        const hasMen = /\bmen'?s\b|\bmens\b|\bmale\b/.test(text);
+        const hasWomen = /\bwomen'?s\b|\bwomens\b|\bfemale\b/.test(text);
+
+        return gender.some(g => {
+          const gLower = String(g).toLowerCase();
+          if (gLower === 'men' || gLower === 'mens' || gLower === "men's" || gLower === 'male') {
+            return hasMen && !hasWomen;
+          }
+          if (gLower === 'women' || gLower === 'womens' || gLower === "women's" || gLower === 'female') {
+            return hasWomen && !hasMen;
           }
           return false;
         });
       });
     }
 
-    // Apply size filter
-    if (activeFilters.size && activeFilters.size.length > 0) {
+    // Size filter
+    if (sizes.length > 0) {
       filtered = filtered.filter(product => {
-        const productTitle = (product.title || product.name || '').toLowerCase();
-        return activeFilters.size.some((size: string) => 
-          productTitle.includes(size.toLowerCase())
-        );
+        const title = String(product.title || product.name || '').toLowerCase();
+        return sizes.some(size => title.includes(String(size).toLowerCase()));
       });
     }
 
-    // Apply color filter
-    if (activeFilters.color && activeFilters.color.length > 0) {
+    // Color filter
+    if (colors.length > 0) {
       filtered = filtered.filter(product => {
-        const productTitle = (product.title || product.name || '').toLowerCase();
-        const productDescription = (product.description || '').toLowerCase();
-        return activeFilters.color.some((color: string) => 
-          productTitle.includes(color.toLowerCase()) || productDescription.includes(color.toLowerCase())
-        );
+        const title = String(product.title || product.name || '').toLowerCase();
+        const description = String(product.description || '').toLowerCase();
+        return colors.some(color => title.includes(String(color).toLowerCase()) || description.includes(String(color).toLowerCase()));
       });
     }
 
-    // Apply fit filter
-    if (activeFilters.fit && activeFilters.fit.length > 0) {
+    // Fit filter
+    if (fits.length > 0) {
       filtered = filtered.filter(product => {
-        const productTitle = (product.title || product.name || '').toLowerCase();
-        return activeFilters.fit.some((fit: string) => 
-          productTitle.includes(fit.toLowerCase())
-        );
+        const title = String(product.title || product.name || '').toLowerCase();
+        return fits.some(fit => title.includes(String(fit).toLowerCase()));
       });
     }
 
-    // Apply brand filter (smart filter version)
-    if (activeFilters.brand && activeFilters.brand.length > 0) {
+    // Smart brand filter
+    if (smartBrands.length > 0) {
       filtered = filtered.filter(product => {
-        const productBrand = product.brand || '';
-        const productTitle = (product.title || product.name || '').toLowerCase();
-        return activeFilters.brand.some((brand: string) => 
-          productBrand.toLowerCase().includes(brand.toLowerCase()) ||
-          productTitle.includes(brand.toLowerCase())
-        );
+        const brand = String(product.brand || '').toLowerCase();
+        const title = String(product.title || product.name || '').toLowerCase();
+        return smartBrands.some(b => {
+          const bLower = String(b).toLowerCase();
+          return brand.includes(bLower) || title.includes(bLower);
+        });
       });
     }
 
-    // Apply sorting
+    // Sorting
     if (sortOption === 'price-low') {
-      filtered.sort((a, b) => a.price - b.price);
+      filtered.sort((a, b) => (Number(a.price ?? a.current_price ?? a.salePrice ?? a.listPrice) || 0) - (Number(b.price ?? b.current_price ?? b.salePrice ?? b.listPrice) || 0));
     } else if (sortOption === 'price-high') {
-      filtered.sort((a, b) => b.price - a.price);
+      filtered.sort((a, b) => (Number(b.price ?? b.current_price ?? b.salePrice ?? b.listPrice) || 0) - (Number(a.price ?? a.current_price ?? a.salePrice ?? a.listPrice) || 0));
     } else if (sortOption === 'rating') {
-      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      filtered.sort((a, b) => (Number(b.rating || b.stars || 0)) - (Number(a.rating || a.stars || 0)));
     } else if (sortOption === 'newest') {
       filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }

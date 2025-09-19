@@ -49,16 +49,24 @@ const ProductDetailsDialog = ({
     getVariationDisplayText
   } = useProductVariations(productDetail || product);
 
-  // Debug variation rendering
+  // Enhanced debug variation rendering
   useEffect(() => {
+    console.log('[ProductDetailsDialog] Variation debug - productDetail:', productDetail);
+    console.log('[ProductDetailsDialog] Variation debug - hasVariations:', hasVariations);
+    
     if (productDetail) {
-      console.log('[ProductDetailsDialog] Variation debug:', {
+      console.log('[ProductDetailsDialog] Enhanced variation debug:', {
         hasVariations,
         hasAllVariants: Boolean(productDetail.all_variants),
         allVariantsLength: productDetail.all_variants?.length || 0,
+        allVariantsData: productDetail.all_variants,
         shouldShowSelector: hasVariations && productDetail.all_variants,
-        productTitle: productDetail.title || productDetail.name
+        productTitle: productDetail.title || productDetail.name,
+        conditionalCheck: hasVariations && productDetail.all_variants,
+        renderingVariationSelector: hasVariations && productDetail.all_variants
       });
+    } else {
+      console.log('[ProductDetailsDialog] No productDetail available');
     }
   }, [hasVariations, productDetail]);
 

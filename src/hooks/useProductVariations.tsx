@@ -11,7 +11,23 @@ export const useProductVariations = (product: Product | null) => {
 
   // Check if product has variations
   const hasVariations = useMemo(() => {
-    if (!product) return false;
+    if (!product) {
+      console.log('[useProductVariations] No product provided');
+      return false;
+    }
+    
+    // Enhanced debugging for variation detection
+    console.log('[useProductVariations] Product data received:', {
+      productId: product.product_id || product.id,
+      title: product.title || product.name,
+      hasAllVariants: Boolean(product.all_variants),
+      allVariantsType: typeof product.all_variants,
+      allVariantsLength: Array.isArray(product.all_variants) ? product.all_variants.length : 'Not array',
+      allVariantsData: product.all_variants,
+      hasVariantSpecifics: Boolean(product.variant_specifics),
+      variantSpecifics: product.variant_specifics,
+      fullProduct: product
+    });
     
     // Check for variations in the product data
     const hasVariants = Boolean(
@@ -20,12 +36,9 @@ export const useProductVariations = (product: Product | null) => {
       product.all_variants.length > 0
     );
     
-    console.log('[useProductVariations] Variation check:', {
-      productId: product.product_id || product.id,
+    console.log('[useProductVariations] Final variation result:', {
       hasVariants,
-      variantCount: product.all_variants?.length || 0,
-      rawVariants: product.all_variants,
-      variantSpecifics: product.variant_specifics
+      willShowSelector: hasVariants
     });
     
     return hasVariants;

@@ -183,14 +183,26 @@ class EnhancedZincApiService {
 
   /**
    * Search for products using the enhanced Zinc API via Supabase Edge Function
+   * Enhanced with Smart Query Optimization and Size-Aware Searching
    */
   async searchProducts(query: string, page: number = 1, limit: number = 20, filters?: any): Promise<ZincSearchResponse> {
     console.log(`🎯 EnhancedZincApiService: Searching products: "${query}", page: ${page}, limit: ${limit}, filters:`, filters);
     
+    // Import smart query enhancement
+    const { enhanceQueryForSizes } = await import("@/services/smartQueryEnhancer");
+    const { detectCategoryFromSearch } = await import("@/components/marketplace/utils/smartFilterDetection");
+    
+    // Phase 1: Enhanced Query Strategy - Analyze query for size-aware enhancement
+    const queryEnhancement = enhanceQueryForSizes(query);
+    const detectedCategory = detectCategoryFromSearch(query);
+    
+    console.log(`🎯 Query Enhancement:`, queryEnhancement);
+    console.log(`🎯 Detected Category:`, detectedCategory);
+    
     // Generate cache key for enhanced caching
     const cacheKey = `search_${query}_${page}_${limit}_${JSON.stringify(filters || {})}`;
     
-    // Check existing Map cache first (Phase 2: preserving existing cache as primary layer)
+    // Check existing Map cache first (preserving existing cache as primary layer)
     const cachedResult = this.cache.get(cacheKey);
     if (cachedResult && (Date.now() - cachedResult.timestamp) < 30 * 60 * 1000) { // 30 minute TTL
       console.log(`🎯 Cache HIT (Map): ${cacheKey}`);
@@ -220,12 +232,30 @@ class EnhancedZincApiService {
     }
     
     try {
+      // Phase 1: Use enhanced query if search strategy suggests it
+      let finalQuery = query;
+      let finalLimit = limit;
+      
+      if (queryEnhancement.searchStrategy === 'multi-size' && detectedCategory === 'clothing') {
+        // Use the first enhanced query for better size representation
+        finalQuery = queryEnhancement.enhancedQueries[1] || query; // Skip original, use enhanced
+        finalLimit = Math.min(limit * 1.5, 75); // Slightly increase limit for better size variety
+        console.log(`🎯 Using enhanced size-aware query: "${finalQuery}" with limit: ${finalLimit}`);
+      }
+
       // CRITICAL FIX: Ensure price filters are properly formatted for the edge function
       const requestBody: any = {
-        query,
+        query: finalQuery,
         page,
-        limit,
-        filters: filters || {}
+        limit: finalLimit,
+        filters: filters || {},
+        // Add smart search metadata
+        smartSearchMeta: {
+          originalQuery: query,
+          enhancement: queryEnhancement.searchStrategy,
+          expectedSizeTypes: queryEnhancement.expectedSizeTypes,
+          detectedCategory
+        }
       };
 
       // Add price filters directly to the request body for edge function compatibility
@@ -269,13 +299,26 @@ class EnhancedZincApiService {
       }
 
       // Enhance product data with best seller information
-      const enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
+      let enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
 
-      // Cache successful results in Map cache (Phase 2: enhanced with cache key)
+      // Phase 2: Apply smart filtering if we got more results than requested
+      if (enhancedResults.length > limit && queryEnhancement.searchStrategy === 'multi-size') {
+        // Smart product selection for better size distribution
+        enhancedResults = await this.smartFilterForSizeDistribution(enhancedResults, limit, queryEnhancement.expectedSizeTypes);
+        console.log(`🎯 Applied smart size distribution filtering: ${enhancedResults.length} products selected`);
+      }
+
+      // Cache successful results in Map cache (enhanced with cache key and metadata)
       if (enhancedResults && enhancedResults.length > 0) {
         this.cache.set(cacheKey, {
           data: enhancedResults,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          smartMeta: {
+            originalQuery: query,
+            enhancement: queryEnhancement.searchStrategy,
+            detectedCategory,
+            sizeTypes: queryEnhancement.expectedSizeTypes
+          }
         });
       }
 
@@ -355,6 +398,84 @@ class EnhancedZincApiService {
         error: error instanceof Error ? error.message : `Search failed for ${category}`
       };
     }
+  }
+
+  /**
+   * NEW: Smart filtering for better size distribution
+   */
+  private async smartFilterForSizeDistribution(products: any[], targetCount: number, expectedSizeTypes: string[]): Promise<any[]> {
+    const { extractAdvancedSizes } = await import("@/utils/advancedSizeDetection");
+    
+    // If we don't need size filtering, return first N products
+    if (expectedSizeTypes.length === 0) {
+      return products.slice(0, targetCount);
+    }
+
+    // Group products by detected sizes
+    const sizeGroups = new Map<string, any[]>();
+    const productsWithSizes: any[] = [];
+    const productsWithoutSizes: any[] = [];
+
+    products.forEach(product => {
+      const text = `${product.title || ''} ${product.description || ''}`;
+      const sizes = extractAdvancedSizes([product]);
+      
+      let hasSizes = false;
+      
+      // Check if product has sizes in expected types
+      expectedSizeTypes.forEach(sizeType => {
+        if (sizes[sizeType as keyof typeof sizes].length > 0) {
+          sizes[sizeType as keyof typeof sizes].forEach(size => {
+            const key = `${sizeType}_${size}`;
+            if (!sizeGroups.has(key)) {
+              sizeGroups.set(key, []);
+            }
+            sizeGroups.get(key)!.push(product);
+            hasSizes = true;
+          });
+        }
+      });
+
+      if (hasSizes) {
+        productsWithSizes.push(product);
+      } else {
+        productsWithoutSizes.push(product);
+      }
+    });
+
+    // Smart selection: ensure size diversity
+    const selectedProducts: any[] = [];
+    const usedProductIds = new Set<string>();
+    
+    // First pass: Get one product from each size group
+    Array.from(sizeGroups.values()).forEach(group => {
+      if (selectedProducts.length < targetCount && group.length > 0) {
+        const product = group[0];
+        if (!usedProductIds.has(product.product_id)) {
+          selectedProducts.push(product);
+          usedProductIds.add(product.product_id);
+        }
+      }
+    });
+
+    // Second pass: Fill remaining spots with products with sizes
+    productsWithSizes.forEach(product => {
+      if (selectedProducts.length < targetCount && !usedProductIds.has(product.product_id)) {
+        selectedProducts.push(product);
+        usedProductIds.add(product.product_id);
+      }
+    });
+
+    // Third pass: Fill any remaining spots with products without detected sizes
+    productsWithoutSizes.forEach(product => {
+      if (selectedProducts.length < targetCount && !usedProductIds.has(product.product_id)) {
+        selectedProducts.push(product);
+        usedProductIds.add(product.product_id);
+      }
+    });
+
+    console.log(`🎯 Size distribution: ${sizeGroups.size} unique sizes found, ${selectedProducts.length} products selected`);
+    return selectedProducts;
   }
 
   /**

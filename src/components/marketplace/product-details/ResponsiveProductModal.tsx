@@ -60,6 +60,7 @@ const ResponsiveProductModal: React.FC<ResponsiveProductModalProps> = ({
           {/* Mobile Content */}
           <div className="px-4 pb-24 safe-area-bottom">
             {children}
+            <div className="h-[140px] safe-area-bottom" />
           </div>
         </div>
       </MobileBottomSheet>

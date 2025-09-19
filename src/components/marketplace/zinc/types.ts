@@ -1,18 +1,81 @@
-// Zinc API product type
+// Zinc API Variant Specific type (for individual variation dimensions)
+export type ZincVariantSpecific = {
+  dimension: string;
+  value: string;
+};
+
+// Zinc API Variant type (represents a single product variant)
+export type ZincVariant = {
+  variant_specifics: ZincVariantSpecific[];
+  product_id: string;
+};
+
+// Zinc API Package Dimensions type
+export type ZincPackageDimension = {
+  amount: number;
+  unit: string;
+};
+
+// Zinc API EPID type
+export type ZincEpid = {
+  type: string;
+  value: string;
+};
+
+// Enhanced Zinc API product type with full API response structure
 export type ZincProduct = {
+  // Core product information
   product_id: string;
   title: string;
   price: number;
-  image: string;
+  
+  // Images
+  main_image?: string;
+  image?: string; // Backward compatibility
   images?: string[];
-  description?: string;
+  
+  // Product details
+  product_details?: string[];
+  feature_bullets?: string[];
+  product_description?: string;
   brand?: string;
-  category?: string;
-  retailer: string;
-  // Support both naming conventions from the API
-  rating?: number;
-  review_count?: number;
+  categories?: string[];
+  authors?: string[];
+  
+  // Variations - NEW CORE FEATURE
+  variant_specifics?: ZincVariantSpecific[];
+  all_variants?: ZincVariant[];
+  
+  // Pricing and ratings
+  original_retail_price?: number;
   stars?: number;
+  review_count?: number;
+  question_count?: number;
+  
+  // Product metadata
+  asin?: string;
+  epids?: ZincEpid[];
+  epids_map?: string[];
+  package_dimensions?: ZincPackageDimension[];
+  item_location?: string;
+  item_number?: string;
+  
+  // Product flags
+  fresh?: boolean;
+  pantry?: boolean;
+  handmade?: boolean;
+  digital?: boolean;
+  buyapi_hint?: boolean;
+  
+  // API metadata
+  status?: string;
+  retailer?: string;
+  timestamp?: string;
+  
+  // Backward compatibility fields (legacy)
+  description?: string;
+  category?: string;
+  rating?: number;
   num_reviews?: number;
   num_sales?: number;
   features?: string[];

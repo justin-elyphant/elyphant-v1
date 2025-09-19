@@ -117,15 +117,25 @@ serve(async (req) => {
       
       // Process best seller data for the product detail
       const bestSellerData = processBestSellerData(data);
+      
+      // Enhanced data with full API response structure + backward compatibility
       const enhancedData = {
         ...data,
-        ...bestSellerData
+        ...bestSellerData,
+        // Backward compatibility mappings
+        image: data.main_image || data.image,
+        description: data.product_description || data.description,
+        rating: data.stars || data.rating,
+        // Variation detection flag for gradual rollout
+        hasVariations: Boolean(data.all_variants && data.all_variants.length > 0),
+        // Legacy retailer field
+        retailer: retailer || data.retailer
       };
 
       return new Response(JSON.stringify(enhancedData), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
-      });      
+      });
     } catch(error) {
       console.log('Error', error);
       return new Response(

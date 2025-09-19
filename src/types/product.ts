@@ -37,6 +37,29 @@ export type Product = {
   isBestSeller?: boolean;
   variants?: string[];
   
+  // Enhanced Zinc API variation fields
+  variant_specifics?: Array<{
+    dimension: string;
+    value: string;
+  }>;
+  all_variants?: Array<{
+    variant_specifics: Array<{
+      dimension: string;
+      value: string;
+    }>;
+    product_id: string;
+  }>;
+  main_image?: string;
+  feature_bullets?: string[];
+  product_description?: string;
+  categories?: string[];
+  authors?: string[];
+  original_retail_price?: number;
+  question_count?: number;
+  asin?: string;
+  handmade?: boolean;
+  digital?: boolean;
+  
   // Enhanced best seller fields from Zinc API
   bestSellerType?: 'amazon_choice' | 'best_seller' | 'popular' | 'top_rated' | 'highly_rated' | null;
   badgeText?: string | null;

@@ -3,7 +3,7 @@
  */
 
 import { extractEnhancedFilters, matchesEnhancedFilters } from './enhancedFilterDetection';
-import { extractSizesFromProducts, matchesSizeFilters, ComprehensiveSizes } from './enhancedSizeDetection';
+import { extractSizesFromProducts, matchesSizeFilters, ComprehensiveSizes, WAIST_SIZES, INSEAM_LENGTHS, CLOTHING_SIZES } from './enhancedSizeDetection';
 
 export interface FilterOption {
   value: string;
@@ -169,6 +169,19 @@ export const generateSmartFilters = (
   
   console.log(`🎯 Enhanced Filters:`, enhancedFilters);
   
+  // Provide sensible defaults when size signals are missing to match modern retail UI
+  const isJeansOrPants = /\b(jeans|denim|pants)\b/i.test(searchTerm);
+  const effectiveSizes: ComprehensiveSizes = {
+    waist: enhancedFilters.sizes.waist.length > 0 ? enhancedFilters.sizes.waist : (detectedCategory === 'clothing' && isJeansOrPants ? WAIST_SIZES : []),
+    inseam: enhancedFilters.sizes.inseam.length > 0 ? enhancedFilters.sizes.inseam : (detectedCategory === 'clothing' && isJeansOrPants ? INSEAM_LENGTHS : []),
+    clothing: enhancedFilters.sizes.clothing.length > 0 ? enhancedFilters.sizes.clothing : (detectedCategory === 'clothing' ? CLOTHING_SIZES : []),
+    shoes: enhancedFilters.sizes.shoes,
+  };
+  if ((effectiveSizes.waist.length || effectiveSizes.inseam.length || effectiveSizes.clothing.length) &&
+      (enhancedFilters.sizes.waist.length === 0 && enhancedFilters.sizes.inseam.length === 0 && enhancedFilters.sizes.clothing.length === 0)) {
+    console.log('🎯 Using fallback size options for smart filters', effectiveSizes);
+  }
+  
   let suggestedFilters: Record<string, FilterConfig> = {};
   
   // Base filters always available
@@ -209,39 +222,39 @@ export const generateSmartFilters = (
     }
     
     // Enhanced size filters with separate categories
-    if (enhancedFilters.sizes.waist.length > 0) {
-      console.log(`🎯 Adding waist size filter with ${enhancedFilters.sizes.waist.length} options:`, enhancedFilters.sizes.waist);
+    if (effectiveSizes.waist.length > 0) {
+      console.log(`🎯 Adding waist size filter with ${effectiveSizes.waist.length} options:`, effectiveSizes.waist);
       suggestedFilters.waist = {
         type: 'checkbox',
         label: 'Waist Size',
         sizeType: 'waist',
-        options: enhancedFilters.sizes.waist.map(size => ({
+        options: effectiveSizes.waist.map(size => ({
           value: size,
           label: `${size}"`
         }))
       };
     }
     
-    if (enhancedFilters.sizes.inseam.length > 0) {
-      console.log(`🎯 Adding inseam length filter with ${enhancedFilters.sizes.inseam.length} options:`, enhancedFilters.sizes.inseam);
+    if (effectiveSizes.inseam.length > 0) {
+      console.log(`🎯 Adding inseam length filter with ${effectiveSizes.inseam.length} options:`, effectiveSizes.inseam);
       suggestedFilters.inseam = {
         type: 'checkbox',
         label: 'Inseam Length',
         sizeType: 'inseam',
-        options: enhancedFilters.sizes.inseam.map(size => ({
+        options: effectiveSizes.inseam.map(size => ({
           value: size,
           label: `${size}"`
         }))
       };
     }
     
-    if (enhancedFilters.sizes.clothing.length > 0) {
-      console.log(`🎯 Adding clothing size filter with ${enhancedFilters.sizes.clothing.length} options:`, enhancedFilters.sizes.clothing);
+    if (effectiveSizes.clothing.length > 0) {
+      console.log(`🎯 Adding clothing size filter with ${effectiveSizes.clothing.length} options:`, effectiveSizes.clothing);
       suggestedFilters.size = {
         type: 'checkbox',
         label: 'Clothing Size',
         sizeType: 'clothing',
-        options: enhancedFilters.sizes.clothing.map(size => ({
+        options: effectiveSizes.clothing.map(size => ({
           value: size.toLowerCase(),
           label: size
         }))

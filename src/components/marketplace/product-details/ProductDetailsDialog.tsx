@@ -107,6 +107,15 @@ const ProductDetailsDialog = ({
           isZincApiProduct: true,
           retailer: retailer || 'amazon'
         };
+        
+        // Log variation detection for debugging
+        console.log('[ProductDetailsDialog] Enhanced product loaded:', {
+          title: enhancedProduct.title,
+          hasVariations: Boolean(enhancedProduct.all_variants && enhancedProduct.all_variants.length > 0),
+          variationCount: enhancedProduct.all_variants?.length || 0,
+          currentSpecs: enhancedProduct.variant_specifics?.length || 0
+        });
+        
         setProductDetail(enhancedProduct);
         console.log('Successfully enhanced product details:', enhancedProduct.title || enhancedProduct.name);
         console.log('Product price from API:', enhancedProduct.price, 'marked as Zinc API product:', enhancedProduct.isZincApiProduct);

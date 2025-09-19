@@ -34,6 +34,11 @@ import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
 import { useFilteredProducts } from "./hooks/useFilteredProducts";
+import VariationTestPage from "./VariationTestPage";
+import QuickVariationTest from "./QuickVariationTest";
+
+// Add test mode flag - set to true to show variation test page
+const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
 
 
 
@@ -827,6 +832,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         categories={[]} // You can extract categories from products if needed
         products={displayProducts} // Pass ALL products for comprehensive smart detection
       />
+      
+      {/* Variation Test Mode - for development */}
+      {SHOW_VARIATION_TEST && (
+        <VariationTestPage />
+      )}
       
       {/* Product Details Dialog */}
       {selectedProduct && (

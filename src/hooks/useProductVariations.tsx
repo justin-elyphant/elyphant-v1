@@ -11,10 +11,21 @@ export const useProductVariations = (product: Product | null) => {
 
   // Check if product has variations
   const hasVariations = useMemo(() => {
-    return Boolean(
+    const result = Boolean(
       (product as any)?.hasVariations || 
       (product?.all_variants && product.all_variants.length > 0)
     );
+    
+    if (product) {
+      console.log('[useProductVariations] Variation check:', {
+        productId: product.product_id,
+        hasVariationsFlag: (product as any)?.hasVariations,
+        allVariantsLength: product.all_variants?.length || 0,
+        finalResult: result
+      });
+    }
+    
+    return result;
   }, [product]);
 
   // Initialize selected variations when product changes

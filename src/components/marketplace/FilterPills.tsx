@@ -33,6 +33,61 @@ const FilterPills = ({ filters, onRemoveFilter, onClearAll }: FilterPillsProps) 
       });
     }
 
+    // Smart Filters - Gender
+    if (filters.gender && filters.gender.length > 0) {
+      filters.gender.forEach((gender: string) => {
+        activeFilters.push({
+          type: 'gender',
+          label: gender.charAt(0).toUpperCase() + gender.slice(1),
+          value: gender
+        });
+      });
+    }
+
+    // Smart Filters - Brand
+    if (filters.brand && filters.brand.length > 0) {
+      filters.brand.forEach((brand: string) => {
+        activeFilters.push({
+          type: 'brand',
+          label: brand,
+          value: brand
+        });
+      });
+    }
+
+    // Smart Filters - Size
+    if (filters.size && filters.size.length > 0) {
+      filters.size.forEach((size: string) => {
+        activeFilters.push({
+          type: 'size',
+          label: size,
+          value: size
+        });
+      });
+    }
+
+    // Smart Filters - Color
+    if (filters.color && filters.color.length > 0) {
+      filters.color.forEach((color: string) => {
+        activeFilters.push({
+          type: 'color',
+          label: color.charAt(0).toUpperCase() + color.slice(1),
+          value: color
+        });
+      });
+    }
+
+    // Smart Filters - Fit
+    if (filters.fit && filters.fit.length > 0) {
+      filters.fit.forEach((fit: string) => {
+        activeFilters.push({
+          type: 'fit',
+          label: fit.charAt(0).toUpperCase() + fit.slice(1),
+          value: fit
+        });
+      });
+    }
+
     // Rating
     if (filters.rating) {
       activeFilters.push({
@@ -74,9 +129,11 @@ const FilterPills = ({ filters, onRemoveFilter, onClearAll }: FilterPillsProps) 
             size="sm"
             className="h-4 w-4 p-0 hover:bg-transparent"
             onClick={() => {
-              if (filter.type === 'category') {
-                onRemoveFilter('category', filter.value);
+              // Smart filters and categories use value-based removal
+              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filter.type)) {
+                onRemoveFilter(filter.type, filter.value);
               } else {
+                // Single-value filters use type-based removal
                 onRemoveFilter(filter.type);
               }
             }}

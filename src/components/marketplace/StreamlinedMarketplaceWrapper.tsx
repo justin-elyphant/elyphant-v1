@@ -411,13 +411,20 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             filters={activeFilters}
             onRemoveFilter={(filterType, value) => {
               const newFilters = { ...activeFilters };
-              if (filterType === 'category' && value) {
-                newFilters.categories = (newFilters.categories || []).filter((cat: string) => cat !== value);
+              
+              // Handle array-based filters (categories and smart filters)
+              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filterType) && value) {
+                newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
+                if (newFilters[filterType].length === 0) {
+                  delete newFilters[filterType];
+                }
               } else if (filterType === 'priceRange') {
                 newFilters.priceRange = [0, 500];
               } else {
+                // Handle single-value filters
                 delete newFilters[filterType];
               }
+              
               setActiveFilters(newFilters);
             }}
             onClearAll={() => setActiveFilters({})}
@@ -587,13 +594,20 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             filters={activeFilters}
             onRemoveFilter={(filterType, value) => {
               const newFilters = { ...activeFilters };
-              if (filterType === 'category' && value) {
-                newFilters.categories = (newFilters.categories || []).filter((cat: string) => cat !== value);
+              
+              // Handle array-based filters (categories and smart filters)
+              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filterType) && value) {
+                newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
+                if (newFilters[filterType].length === 0) {
+                  delete newFilters[filterType];
+                }
               } else if (filterType === 'priceRange') {
                 newFilters.priceRange = [0, 500];
               } else {
+                // Handle single-value filters
                 delete newFilters[filterType];
               }
+              
               setActiveFilters(newFilters);
             }}
             onClearAll={() => setActiveFilters({})}

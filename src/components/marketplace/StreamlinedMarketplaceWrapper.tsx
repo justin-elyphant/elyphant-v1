@@ -201,7 +201,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
       const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
       
-      // For other search types, use optimized marketplace service
+      // For other search types, use optimized marketplace service with filter context
       const searchOptions = {
         page,
         limit: 20,
@@ -212,10 +212,17 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         ...(nicoleContext && { nicoleContext }), // Pass Nicole context for budget filtering
         ...(minPrice !== undefined ? { minPrice } : {}),
         ...(maxPrice !== undefined ? { maxPrice } : {}),
+        // Enhanced filter support from URL params
+        ...(searchParams.get('waist') && { waist: searchParams.get('waist')?.split(',') }),
+        ...(searchParams.get('inseam') && { inseam: searchParams.get('inseam')?.split(',') }),
+        ...(searchParams.get('size') && { size: searchParams.get('size')?.split(',') }),
+        ...(searchParams.get('brand') && { brand: searchParams.get('brand')?.split(',') }),
+        ...(searchParams.get('color') && { color: searchParams.get('color')?.split(',') }),
+        ...(searchParams.get('gender') && { gender: searchParams.get('gender')?.split(',') }),
       };
       
       const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
-      console.log('🔍 Optimized searching with options:', searchOptions);
+      console.log('🔍 Optimized searching with enhanced options:', searchOptions);
       const result = await optimizedMarketplaceService.searchProducts(searchTerm, searchOptions);
       
       return result || [];
@@ -284,49 +291,77 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     if (!urlSearchTerm) return;
     
     try {
-      console.log('🚀 Triggering enhanced search with filters:', filters);
+      console.log('🚀 TRIGGERED: Enhanced search with filters:', filters);
+      console.log('🚀 Current URL search term:', urlSearchTerm);
       toast.loading('Searching with filters...', { id: 'filter-search' });
       
-      // Build enhanced search options from filters
-      const searchOptions = {
-        page: 1,
-        limit: 20,
-        // Core filters
-        ...(filters.priceRange && filters.priceRange[0] > 0 && { minPrice: filters.priceRange[0] }),
-        ...(filters.priceRange && filters.priceRange[1] < 500 && { maxPrice: filters.priceRange[1] }),
-        // Smart filters for enhanced query building
-        ...(filters.waist?.length > 0 && { waist: filters.waist }),
-        ...(filters.inseam?.length > 0 && { inseam: filters.inseam }),
-        ...(filters.size?.length > 0 && { size: filters.size }),
-        ...(filters.brand?.length > 0 && { brand: filters.brand }),
-        ...(filters.color?.length > 0 && { color: filters.color }),
-        ...(filters.material?.length > 0 && { material: filters.material }),
-        ...(filters.style?.length > 0 && { style: filters.style }),
-        ...(filters.features?.length > 0 && { features: filters.features }),
-        ...(filters.gender?.length > 0 && { gender: filters.gender }),
-      };
+      // Build enhanced query with filter context
+      const enhancedQuery = buildEnhancedQuery(urlSearchTerm, filters);
+      console.log('🎯 Enhanced query:', enhancedQuery);
       
-      console.log('🎯 Enhanced search options:', searchOptions);
+      // Store filter context for the handleLoadMore function
+      sessionStorage.setItem('active-filters', JSON.stringify(filters));
       
-      // Use optimized marketplace service with enhanced filters
-      const results = await optimizedMarketplaceService.searchProducts(urlSearchTerm, searchOptions);
+      // Update the search params to include filter information
+      const newSearchParams = new URLSearchParams(window.location.search);
+      newSearchParams.set('search', enhancedQuery);
       
-      if (results && results.length > 0) {
-        console.log(`✅ Enhanced search found ${results.length} products`);
-        toast.success(`Found ${results.length} products`, { id: 'filter-search' });
-        
-        // Force refresh the paginated products with new results
-        refreshPagination();
-      } else {
-        console.log('⚠️ Enhanced search returned no results, falling back to original search');
-        toast.warning('No products match these filters', { id: 'filter-search' });
-      }
+      // Add filter params to URL for proper caching and state management
+      if (filters.waist?.length) newSearchParams.set('waist', filters.waist.join(','));
+      if (filters.inseam?.length) newSearchParams.set('inseam', filters.inseam.join(','));
+      if (filters.size?.length) newSearchParams.set('size', filters.size.join(','));
+      if (filters.brand?.length) newSearchParams.set('brand', filters.brand.join(','));
+      if (filters.color?.length) newSearchParams.set('color', filters.color.join(','));
+      if (filters.gender?.length) newSearchParams.set('gender', filters.gender.join(','));
+      
+      // Update URL without page reload
+      window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
+      
+      // Manually trigger refreshPagination to reload with new search
+      refreshPagination();
+      
+      toast.success('Search updated with filters', { id: 'filter-search' });
       
     } catch (error) {
       console.error('Enhanced search failed:', error);
       toast.error('Search with filters failed', { id: 'filter-search' });
     }
   }, [urlSearchTerm, refreshPagination]);
+
+  // Helper function to build enhanced queries
+  const buildEnhancedQuery = useCallback((baseQuery: string, filters: any): string => {
+    const queryParts = [baseQuery];
+    
+    // Add filter terms to enhance search relevance
+    if (filters.gender?.length) {
+      queryParts.push(...filters.gender);
+    }
+    if (filters.brand?.length) {
+      queryParts.push(...filters.brand);
+    }
+    if (filters.color?.length) {
+      queryParts.push(...filters.color);
+    }
+    if (filters.material?.length) {
+      queryParts.push(...filters.material);
+    }
+    if (filters.style?.length) {
+      queryParts.push(...filters.style);
+    }
+    if (filters.features?.length) {
+      queryParts.push(...filters.features);
+    }
+    
+    // Add size context for better matching
+    if (filters.waist?.length) {
+      queryParts.push(`waist ${filters.waist.join(' ')}`);
+    }
+    if (filters.inseam?.length) {
+      queryParts.push(`inseam ${filters.inseam.join(' ')}`);
+    }
+    
+    return queryParts.join(' ').trim();
+  }, []);
 
   // Debug logging for the current state - MOVED TO useEffect
   useEffect(() => {

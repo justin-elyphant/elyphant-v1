@@ -99,18 +99,21 @@ export function enhanceQueryForSizes(query: string): QueryEnhancement {
   const expectedSizeTypes = detectExpectedSizeTypes(query);
   const enhancedQueries: string[] = [query]; // Always include original
 
-  // For jeans/pants - add size range queries
+  // For jeans/pants - add size range queries with gender inclusivity
   if (query.toLowerCase().includes('jeans') || query.toLowerCase().includes('pants')) {
-    // Add BOTH men's and women's waist size variants to avoid gender bias
-    enhancedQueries.push(`${query} women's 26W 28W 30W 32W`); // Women's waist sizes
-    enhancedQueries.push(`${query} men's 30W 32W 34W 36W`);   // Men's waist sizes
-    enhancedQueries.push(`${query} waist sizes various`);      // Gender-neutral sizing
+    // Add gender-neutral sizing queries first (most important)
+    enhancedQueries.push(`${query} various sizes available`);
+    enhancedQueries.push(`${query} different waist sizes`);
+    
+    // Add specific size ranges but be gender-inclusive
+    enhancedQueries.push(`${query} women's 24W 26W 28W 30W 32W`); // Women's waist sizes
+    enhancedQueries.push(`${query} men's 30W 32W 34W 36W 38W`);   // Men's waist sizes
     
     console.log(`🎯 Smart Query Enhancement for "${query}":`, {
       originalQuery: query,
       detectedAsJeans: true,
       enhancedQueries: enhancedQueries,
-      note: "Added both men's and women's sizing to avoid gender bias"
+      strategy: "Gender-inclusive sizing with neutral queries first"
     });
     
     // Add brand-specific enhancements if brand detected

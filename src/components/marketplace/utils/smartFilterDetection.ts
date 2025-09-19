@@ -196,6 +196,7 @@ export const generateSmartFilters = (
     
     // Enhanced size filters with separate categories
     if (enhancedFilters.sizes.waist.length > 0) {
+      console.log(`🎯 Adding waist size filter with ${enhancedFilters.sizes.waist.length} options:`, enhancedFilters.sizes.waist);
       suggestedFilters.waist = {
         type: 'checkbox',
         label: 'Waist Size',
@@ -208,6 +209,7 @@ export const generateSmartFilters = (
     }
     
     if (enhancedFilters.sizes.inseam.length > 0) {
+      console.log(`🎯 Adding inseam length filter with ${enhancedFilters.sizes.inseam.length} options:`, enhancedFilters.sizes.inseam);
       suggestedFilters.inseam = {
         type: 'checkbox',
         label: 'Inseam Length',
@@ -220,6 +222,7 @@ export const generateSmartFilters = (
     }
     
     if (enhancedFilters.sizes.clothing.length > 0) {
+      console.log(`🎯 Adding clothing size filter with ${enhancedFilters.sizes.clothing.length} options:`, enhancedFilters.sizes.clothing);
       suggestedFilters.size = {
         type: 'checkbox',
         label: 'Clothing Size',
@@ -232,6 +235,7 @@ export const generateSmartFilters = (
     }
     
     if (enhancedFilters.sizes.shoes.length > 0) {
+      console.log(`🎯 Adding shoe size filter with ${enhancedFilters.sizes.shoes.length} options:`, enhancedFilters.sizes.shoes);
       suggestedFilters.shoeSize = {
         type: 'checkbox',
         label: 'Shoe Size',
@@ -245,6 +249,7 @@ export const generateSmartFilters = (
     
     // Enhanced color filter
     if (enhancedFilters.colors.length > 0) {
+      console.log(`🎯 Adding color filter with ${enhancedFilters.colors.length} options:`, enhancedFilters.colors);
       suggestedFilters.color = {
         type: 'checkbox',
         label: 'Color',

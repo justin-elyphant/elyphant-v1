@@ -24,6 +24,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('bottom-sheet-open');
       
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -34,6 +35,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
       document.addEventListener('keydown', handleEscape);
       return () => {
         document.body.style.overflow = 'unset';
+        document.body.classList.remove('bottom-sheet-open');
         document.removeEventListener('keydown', handleEscape);
       };
     }
@@ -62,7 +64,7 @@ export const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
       />
       
       {/* Bottom Sheet */}
-      <div className={`connection-bottom-sheet ${isOpen ? 'open' : ''} ${className}`}>
+      <div className={`connection-bottom-sheet z-[9999] ${isOpen ? 'open' : ''} ${className}`}>
         {/* Handle */}
         <div className="connection-bottom-sheet-handle" />
         

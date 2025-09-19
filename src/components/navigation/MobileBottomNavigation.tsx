@@ -125,7 +125,7 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-t border-border">
+    <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-t border-border">
       <div className="safe-area-bottom">
         <div className="flex items-center justify-around px-safe py-1">
           {tabs.map((tab) => {

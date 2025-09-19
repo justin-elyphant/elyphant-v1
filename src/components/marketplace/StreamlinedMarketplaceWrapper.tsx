@@ -554,8 +554,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       }}
       className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
-      {/* Conditional Hero Section - Hide if personalized */}
-      {!isPersonalizedActive && (
+      {/* Conditional Hero Section - Hide if personalized or there's an active search */}
+      {!isPersonalizedActive && !urlSearchTerm && (
         <> 
           {brandCategories ? (
             hideHeroBanner ? null : (
@@ -599,8 +599,28 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </div>
       )}
 
-      {/* Category or Quick Pick Title - Only for non-personalized */}
+      {/* Search Results Header - Enhanced for active searches */}
       {showSearchInfo && !brandCategories && !isPersonalizedActive && (() => {
+        // Prioritize search term display for active searches
+        if (urlSearchTerm) {
+          return (
+            <div className="mb-8">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-foreground mb-2 capitalize">
+                  {urlSearchTerm}
+                </h1>
+                <p className="text-lg text-muted-foreground mb-4">
+                  Search results for "{urlSearchTerm}"
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {totalCount} {totalCount === 1 ? 'product' : 'products'} found
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        // Quick pick categories
         const quick = currentQuickPickCategory || (giftsForHer ? 'giftsForHer' : giftsForHim ? 'giftsForHim' : giftsUnder50 ? 'giftsUnder50' : luxuryCategories ? 'luxury' : null);
 
         if (quick) {
@@ -651,16 +671,15 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           }
         }
 
+        // Category-based results
         const categoryParam = searchParams.get("category");
         const category = categoryParam ? getCategoryByValue(categoryParam) : null;
-        
-        // Show title/description for all categories including flowers
         
         return (
           <div className="mb-8">
             <div className="text-center">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                {category ? (category.displayName || category.name) : "Search Results"}
+                {category ? (category.displayName || category.name) : "Browse Products"}
               </h1>
               <p className="text-lg text-muted-foreground mb-4">
                 {category ? category.description : "Browse our curated selection"}

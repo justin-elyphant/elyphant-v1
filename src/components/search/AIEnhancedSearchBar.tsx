@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUrlSearchTerm } from "@/hooks/useUrlSearchTerm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   const { user } = useAuth();
   const { recentSearches, addSearch } = useUserSearchHistory();
   const isMobile = useIsMobile();
+  const { searchTerm: urlSearchTerm } = useUrlSearchTerm();
   
   // Voice recognition hook - only for mobile Nicole mode
   const {
@@ -77,6 +79,14 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
   
   // Create unique instance ID for this search bar
   const instanceId = React.useMemo(() => `${mobile ? 'mobile' : 'desktop'}-${Math.random()}`, [mobile]);
+
+  // Initialize search term from URL on component mount
+  useEffect(() => {
+    if (urlSearchTerm && urlSearchTerm !== query) {
+      setQuery(urlSearchTerm);
+      setSearchQuery(urlSearchTerm);
+    }
+  }, [urlSearchTerm, query, setSearchQuery]);
 
   // Open Nicole interface when mode becomes nicole (from URL or mode toggle)
   useEffect(() => {

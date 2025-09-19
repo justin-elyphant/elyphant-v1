@@ -55,13 +55,68 @@ const FilterPills = ({ filters, onRemoveFilter, onClearAll }: FilterPillsProps) 
       });
     }
 
-    // Smart Filters - Size
+    // Smart Filters - Size (General)
     if (filters.size && filters.size.length > 0) {
       filters.size.forEach((size: string) => {
         activeFilters.push({
           type: 'size',
           label: size,
           value: size
+        });
+      });
+    }
+
+    // Smart Filters - Waist Size
+    if (filters.waist && filters.waist.length > 0) {
+      filters.waist.forEach((waist: string) => {
+        activeFilters.push({
+          type: 'waist',
+          label: `Waist ${waist}"`,
+          value: waist
+        });
+      });
+    }
+
+    // Smart Filters - Inseam Length
+    if (filters.inseam && filters.inseam.length > 0) {
+      filters.inseam.forEach((inseam: string) => {
+        activeFilters.push({
+          type: 'inseam',
+          label: `Inseam ${inseam}"`,
+          value: inseam
+        });
+      });
+    }
+
+    // Smart Filters - Material
+    if (filters.material && filters.material.length > 0) {
+      filters.material.forEach((material: string) => {
+        activeFilters.push({
+          type: 'material',
+          label: material,
+          value: material
+        });
+      });
+    }
+
+    // Smart Filters - Style
+    if (filters.style && filters.style.length > 0) {
+      filters.style.forEach((style: string) => {
+        activeFilters.push({
+          type: 'style',
+          label: style,
+          value: style
+        });
+      });
+    }
+
+    // Smart Filters - Features
+    if (filters.features && filters.features.length > 0) {
+      filters.features.forEach((feature: string) => {
+        activeFilters.push({
+          type: 'features',
+          label: feature,
+          value: feature
         });
       });
     }
@@ -130,7 +185,7 @@ const FilterPills = ({ filters, onRemoveFilter, onClearAll }: FilterPillsProps) 
             className="h-4 w-4 p-0 hover:bg-transparent"
             onClick={() => {
               // Smart filters and categories use value-based removal
-              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filter.type)) {
+              if (['category', 'gender', 'brand', 'size', 'color', 'fit', 'waist', 'inseam', 'material', 'style', 'features'].includes(filter.type)) {
                 onRemoveFilter(filter.type, filter.value);
               } else {
                 // Single-value filters use type-based removal

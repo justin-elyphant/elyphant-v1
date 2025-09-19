@@ -279,7 +279,54 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     };
   }, [startTimer]);
 
-
+  // Enhanced search trigger function
+  const triggerEnhancedSearch = useCallback(async (filters: any) => {
+    if (!urlSearchTerm) return;
+    
+    try {
+      console.log('🚀 Triggering enhanced search with filters:', filters);
+      toast.loading('Searching with filters...', { id: 'filter-search' });
+      
+      // Build enhanced search options from filters
+      const searchOptions = {
+        page: 1,
+        limit: 20,
+        // Core filters
+        ...(filters.priceRange && filters.priceRange[0] > 0 && { minPrice: filters.priceRange[0] }),
+        ...(filters.priceRange && filters.priceRange[1] < 500 && { maxPrice: filters.priceRange[1] }),
+        // Smart filters for enhanced query building
+        ...(filters.waist?.length > 0 && { waist: filters.waist }),
+        ...(filters.inseam?.length > 0 && { inseam: filters.inseam }),
+        ...(filters.size?.length > 0 && { size: filters.size }),
+        ...(filters.brand?.length > 0 && { brand: filters.brand }),
+        ...(filters.color?.length > 0 && { color: filters.color }),
+        ...(filters.material?.length > 0 && { material: filters.material }),
+        ...(filters.style?.length > 0 && { style: filters.style }),
+        ...(filters.features?.length > 0 && { features: filters.features }),
+        ...(filters.gender?.length > 0 && { gender: filters.gender }),
+      };
+      
+      console.log('🎯 Enhanced search options:', searchOptions);
+      
+      // Use optimized marketplace service with enhanced filters
+      const results = await optimizedMarketplaceService.searchProducts(urlSearchTerm, searchOptions);
+      
+      if (results && results.length > 0) {
+        console.log(`✅ Enhanced search found ${results.length} products`);
+        toast.success(`Found ${results.length} products`, { id: 'filter-search' });
+        
+        // Force refresh the paginated products with new results
+        refreshPagination();
+      } else {
+        console.log('⚠️ Enhanced search returned no results, falling back to original search');
+        toast.warning('No products match these filters', { id: 'filter-search' });
+      }
+      
+    } catch (error) {
+      console.error('Enhanced search failed:', error);
+      toast.error('Search with filters failed', { id: 'filter-search' });
+    }
+  }, [urlSearchTerm, refreshPagination]);
 
   // Debug logging for the current state - MOVED TO useEffect
   useEffect(() => {
@@ -602,8 +649,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             onRemoveFilter={(filterType, value) => {
               const newFilters = { ...activeFilters };
               
-              // Handle array-based filters (categories and smart filters)
-              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filterType) && value) {
+              // Handle array-based filters (categories and smart filters) - EXPANDED
+              if (['category', 'gender', 'brand', 'size', 'color', 'fit', 'waist', 'inseam', 'material', 'style', 'features'].includes(filterType) && value) {
                 newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
                 if (newFilters[filterType].length === 0) {
                   delete newFilters[filterType];
@@ -616,8 +663,25 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               }
               
               setActiveFilters(newFilters);
+              
+              // Check if this is a critical filter change that should trigger new search
+              const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+              if (criticalFilters.includes(filterType) && urlSearchTerm) {
+                console.log('🔍 Critical filter removed, triggering enhanced search...');
+                setTimeout(() => {
+                  triggerEnhancedSearch(newFilters);
+                }, 100);
+              }
             }}
-            onClearAll={() => setActiveFilters({})}
+            onClearAll={() => {
+              setActiveFilters({});
+              // Reset to original search when clearing all filters
+              if (urlSearchTerm) {
+                setTimeout(() => {
+                  triggerEnhancedSearch({});
+                }, 100);
+              }
+            }}
           />
         </>
       )}

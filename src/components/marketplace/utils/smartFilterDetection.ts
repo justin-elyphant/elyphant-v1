@@ -179,8 +179,10 @@ export const generateSmartFilters = (
   };
   if ((effectiveSizes.waist.length || effectiveSizes.inseam.length || effectiveSizes.clothing.length) &&
       (enhancedFilters.sizes.waist.length === 0 && enhancedFilters.sizes.inseam.length === 0 && enhancedFilters.sizes.clothing.length === 0)) {
-    console.log('🎯 Using fallback size options for smart filters', effectiveSizes);
+    console.log('🎯 Using fallback size options for smart filters (jeans/denim detected)', effectiveSizes);
   }
+  
+  console.log('🎯 Final effective sizes for filter UI:', effectiveSizes);
   
   let suggestedFilters: Record<string, FilterConfig> = {};
   

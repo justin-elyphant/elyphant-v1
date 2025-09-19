@@ -12,6 +12,16 @@ interface SearchOptions {
   nicoleContext?: any;
   minPrice?: number;
   maxPrice?: number;
+  // Enhanced filter options for smart searching
+  waist?: string[];
+  inseam?: string[];
+  size?: string[];
+  brand?: string[];
+  color?: string[];
+  material?: string[];
+  style?: string[];
+  features?: string[];
+  gender?: string[];
 }
 
 interface CacheEntry {
@@ -40,7 +50,23 @@ class OptimizedMarketplaceService {
   }, 50);
 
   private createCacheKey(query: string, options: SearchOptions): string {
-    return this.memoizedCreateCacheKey(query, options);
+    // Include filter options in cache key for filter-aware caching
+    const filterKey = this.createFilterKey(options);
+    return this.memoizedCreateCacheKey(query + filterKey, options);
+  }
+
+  private createFilterKey(options: SearchOptions): string {
+    const filterParts = [];
+    if (options.waist?.length) filterParts.push(`waist:${options.waist.join(',')}`);
+    if (options.inseam?.length) filterParts.push(`inseam:${options.inseam.join(',')}`);
+    if (options.size?.length) filterParts.push(`size:${options.size.join(',')}`);
+    if (options.brand?.length) filterParts.push(`brand:${options.brand.join(',')}`);
+    if (options.color?.length) filterParts.push(`color:${options.color.join(',')}`);
+    if (options.material?.length) filterParts.push(`material:${options.material.join(',')}`);
+    if (options.style?.length) filterParts.push(`style:${options.style.join(',')}`);
+    if (options.features?.length) filterParts.push(`features:${options.features.join(',')}`);
+    if (options.gender?.length) filterParts.push(`gender:${options.gender.join(',')}`);
+    return filterParts.length > 0 ? `|${filterParts.join('|')}` : '';
   }
 
   private cleanupCache(): void {
@@ -93,14 +119,89 @@ class OptimizedMarketplaceService {
     try {
       console.log('🚀 Optimized search performing:', { query, options });
 
-      // Use enhanced Zinc API service
-      const response = await enhancedZincApiService.searchProducts(query, options.limit || 20);
+      // Build enhanced query with filter context
+      const enhancedQuery = this.buildEnhancedQuery(query, options);
+      
+      // Prepare filter options for Zinc API
+      const zincFilters = this.buildZincFilters(options);
+
+      // Use enhanced Zinc API service with filters
+      const response = await enhancedZincApiService.searchProducts(
+        enhancedQuery, 
+        1, 
+        options.limit || 20, 
+        zincFilters
+      );
 
       return response.results || [];
     } catch (error) {
       console.error('Search error in OptimizedMarketplaceService:', error);
       throw error;
     }
+  }
+
+  private buildEnhancedQuery(baseQuery: string, options: SearchOptions): string {
+    const queryParts = [baseQuery];
+    
+    // Add filter terms to enhance search relevance
+    if (options.gender?.length) {
+      queryParts.push(...options.gender);
+    }
+    if (options.brand?.length) {
+      queryParts.push(...options.brand);
+    }
+    if (options.color?.length) {
+      queryParts.push(...options.color);
+    }
+    if (options.material?.length) {
+      queryParts.push(...options.material);
+    }
+    if (options.style?.length) {
+      queryParts.push(...options.style);
+    }
+    if (options.features?.length) {
+      queryParts.push(...options.features);
+    }
+    
+    // Add size context for better matching
+    if (options.waist?.length) {
+      queryParts.push(`waist sizes`);
+    }
+    if (options.inseam?.length) {
+      queryParts.push(`inseam lengths`);
+    }
+    
+    const enhancedQuery = queryParts.join(' ');
+    console.log('🎯 Enhanced query built:', { original: baseQuery, enhanced: enhancedQuery });
+    
+    return enhancedQuery;
+  }
+
+  private buildZincFilters(options: SearchOptions): any {
+    const filters: any = {};
+    
+    // Price filters
+    if (options.minPrice !== undefined) {
+      filters.minPrice = options.minPrice;
+      filters.min_price = options.minPrice;
+    }
+    if (options.maxPrice !== undefined) {
+      filters.maxPrice = options.maxPrice;
+      filters.max_price = options.maxPrice;
+    }
+    
+    // Smart filters for API
+    if (options.waist?.length) filters.waist = options.waist;
+    if (options.inseam?.length) filters.inseam = options.inseam;
+    if (options.size?.length) filters.size = options.size;
+    if (options.brand?.length) filters.brand = options.brand;
+    if (options.color?.length) filters.color = options.color;
+    if (options.material?.length) filters.material = options.material;
+    if (options.style?.length) filters.style = options.style;
+    if (options.features?.length) filters.features = options.features;
+    if (options.gender?.length) filters.gender = options.gender;
+    
+    return filters;
   }
 
   async searchProducts(query: string, options: SearchOptions = {}): Promise<Product[]> {

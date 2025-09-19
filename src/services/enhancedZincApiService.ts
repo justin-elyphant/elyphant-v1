@@ -263,7 +263,12 @@ class EnhancedZincApiService {
           originalQuery: query,
           enhancement: queryEnhancement.searchStrategy,
           expectedSizeTypes: queryEnhancement.expectedSizeTypes,
-          detectedCategory
+          detectedCategory,
+          // Include filter awareness for enhanced search
+          hasAdvancedFilters: !!(filters?.waist?.length || filters?.inseam?.length || 
+                                 filters?.size?.length || filters?.brand?.length || 
+                                 filters?.color?.length || filters?.material?.length || 
+                                 filters?.style?.length || filters?.features?.length)
         }
       };
 

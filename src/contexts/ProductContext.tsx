@@ -37,6 +37,30 @@ export type Product = {
   isBestSeller?: boolean;
   variants?: string[];
   
+  // Enhanced Zinc API variation fields
+  variant_specifics?: Array<{
+    dimension: string;
+    value: string;
+  }>;
+  all_variants?: Array<{
+    variant_specifics: Array<{
+      dimension: string;
+      value: string;
+    }>;
+    product_id: string;
+  }>;
+  main_image?: string;
+  feature_bullets?: string[];
+  product_description?: string;
+  categories?: string[];
+  authors?: string[];
+  original_retail_price?: number;
+  question_count?: number;
+  asin?: string;
+  handmade?: boolean;
+  digital?: boolean;
+  hasVariations?: boolean;
+  
   // New fields for wishlist and preference tracking
   tags?: string[];
   fromWishlist?: boolean;

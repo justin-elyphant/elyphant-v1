@@ -175,8 +175,23 @@ export const standardizeProduct = (product: any): any => {
       if (Array.isArray(product.images) && product.images.length > 0) {
         return product.images.filter(img => img && typeof img === 'string');
       }
-      return [product.image || "/placeholder.svg"];
+      return [product.main_image || product.image || "/placeholder.svg"];
     })(),
+    
+    // NEW: Preserve enhanced Zinc API variation fields
+    variant_specifics: product.variant_specifics || undefined,
+    all_variants: product.all_variants || undefined,
+    main_image: product.main_image || product.image,
+    feature_bullets: product.feature_bullets || undefined,
+    product_description: product.product_description || product.description,
+    categories: product.categories || undefined,
+    authors: product.authors || undefined,
+    original_retail_price: product.original_retail_price || undefined,
+    question_count: product.question_count || undefined,
+    asin: product.asin || undefined,
+    handmade: product.handmade || undefined,
+    digital: product.digital || undefined,
+    hasVariations: product.hasVariations || Boolean(product.all_variants && product.all_variants.length > 0),
     
     // CRITICAL: Enhanced Zinc API product identification with multiple detection paths
     isZincApiProduct: (() => {

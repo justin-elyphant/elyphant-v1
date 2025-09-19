@@ -504,6 +504,54 @@ const FiltersSidebar = ({
           
           <Separator />
           
+          {/* Variation filters - Size & Color extracted from available products */}
+          {activeFilters.availableVariations && Object.keys(activeFilters.availableVariations).length > 0 && (
+            <>
+              <div>
+                <h4 className="font-medium mb-3">Product Options</h4>
+                <div className="space-y-4">
+                  {Object.entries(activeFilters.availableVariations).map(([variationType, options]) => (
+                    <div key={variationType}>
+                      <h5 className="text-sm font-medium mb-2 capitalize">{variationType}</h5>
+                      <div className={isMobile ? "grid grid-cols-3 gap-2" : "space-y-2"}>
+                        {(options as string[]).map((option) => (
+                          <div key={option} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`${variationType}-${option}`}
+                              checked={(activeFilters.selectedVariations?.[variationType] || []).includes(option)}
+                              onCheckedChange={(checked) => {
+                                const currentSelections = activeFilters.selectedVariations || {};
+                                const currentOptions = currentSelections[variationType] || [];
+                                const newOptions = checked 
+                                  ? [...currentOptions, option]
+                                  : currentOptions.filter(o => o !== option);
+                                onFilterChange({ 
+                                  ...activeFilters, 
+                                  selectedVariations: {
+                                    ...currentSelections,
+                                    [variationType]: newOptions
+                                  }
+                                });
+                              }}
+                            />
+                            <Label 
+                              htmlFor={`${variationType}-${option}`}
+                              className="text-sm cursor-pointer truncate"
+                            >
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Separator />
+            </>
+          )}
+
           {/* Special filters section - mobile friendly with grid layout */}
           <div>
             <h4 className="font-medium mb-3">Special Filters</h4>

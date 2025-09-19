@@ -115,8 +115,25 @@ serve(async (req) => {
 
       const data = await response.json();
       
+      console.log('Raw Zinc API response for product detail:', JSON.stringify(data, null, 2));
+      
       // Process best seller data for the product detail
       const bestSellerData = processBestSellerData(data);
+      
+      // Extract and format description from multiple possible fields
+      const extractDescription = (product: any) => {
+        // Try multiple fields for description
+        if (product.product_description && typeof product.product_description === 'string') {
+          return product.product_description;
+        }
+        if (product.feature_bullets && Array.isArray(product.feature_bullets)) {
+          return product.feature_bullets.join(' • ');
+        }
+        if (product.description && typeof product.description === 'string') {
+          return product.description;
+        }
+        return '';
+      };
       
       // Enhanced data with full API response structure + backward compatibility
       const enhancedData = {
@@ -124,13 +141,23 @@ serve(async (req) => {
         ...bestSellerData,
         // Backward compatibility mappings
         image: data.main_image || data.image,
-        description: data.product_description || data.description,
+        description: extractDescription(data),
         rating: data.stars || data.rating,
+        // Proper variation handling - ensure arrays are preserved
+        all_variants: Array.isArray(data.all_variants) ? data.all_variants : [],
+        variant_specifics: Array.isArray(data.variant_specifics) ? data.variant_specifics : [],
         // Variation detection flag for gradual rollout
-        hasVariations: Boolean(data.all_variants && data.all_variants.length > 0),
+        hasVariations: Boolean(data.all_variants && Array.isArray(data.all_variants) && data.all_variants.length > 0),
         // Legacy retailer field
         retailer: retailer || data.retailer
       };
+      
+      console.log('Enhanced product data with variations:', {
+        title: enhancedData.title,
+        hasVariations: enhancedData.hasVariations,
+        variantCount: enhancedData.all_variants?.length || 0,
+        description: enhancedData.description ? enhancedData.description.substring(0, 100) + '...' : 'No description'
+      });
 
       return new Response(JSON.stringify(enhancedData), {
         status: 200,

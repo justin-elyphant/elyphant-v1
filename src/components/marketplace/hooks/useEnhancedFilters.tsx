@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { extractVariationOptions, productMatchesVariationFilters, VariationOptions } from "@/utils/variationExtraction";
 
 export type FilterOptions = {
   priceRange: [number, number];
@@ -10,6 +11,8 @@ export type FilterOptions = {
   freeShipping: boolean;
   favoritesOnly: boolean;
   sortBy: string;
+  availableVariations?: VariationOptions;
+  selectedVariations?: { [dimension: string]: string[] };
 };
 
 export const useEnhancedFilters = (products: Product[]) => {
@@ -19,10 +22,24 @@ export const useEnhancedFilters = (products: Product[]) => {
     rating: null,
     freeShipping: false,
     favoritesOnly: false,
-    sortBy: "relevance"
+    sortBy: "relevance",
+    selectedVariations: {}
   });
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const isMobile = useIsMobile();
+  
+  // Extract available variations from products
+  const availableVariations = useMemo(() => {
+    return extractVariationOptions(products);
+  }, [products]);
+  
+  // Update filters with available variations
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      availableVariations
+    }));
+  }, [availableVariations]);
   
   // Extract unique categories from products
   const categories = useMemo(() => {
@@ -77,6 +94,13 @@ export const useEnhancedFilters = (products: Product[]) => {
       // Apply free shipping filter if product has that property
       if (filters.freeShipping) {
         result = result.filter(product => (product as any).free_shipping === true);
+      }
+      
+      // Filter by variations
+      if (filters.selectedVariations) {
+        result = result.filter(product => 
+          productMatchesVariationFilters(product, filters.selectedVariations!)
+        );
       }
       
       // Apply favorites filter if selected
@@ -152,7 +176,8 @@ export const useEnhancedFilters = (products: Product[]) => {
       rating: null,
       freeShipping: false,
       favoritesOnly: false,
-      sortBy: "relevance"
+      sortBy: "relevance",
+      selectedVariations: {}
     });
   };
   

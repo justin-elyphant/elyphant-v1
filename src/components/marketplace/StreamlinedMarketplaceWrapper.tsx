@@ -33,6 +33,7 @@ import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
+import { useFilteredProducts } from "./hooks/useFilteredProducts";
 
 
 const StreamlinedMarketplaceWrapper = memo(() => {

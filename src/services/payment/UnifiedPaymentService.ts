@@ -449,9 +449,13 @@ class UnifiedPaymentService {
         this.cartItems.push({
           product,
           quantity,
-          recipientAssignment: undefined
+          recipientAssignment: undefined,
+          variationText: typeof productOrId === 'object' ? (productOrId as any).variationText : undefined,
+          selectedVariations: typeof productOrId === 'object' ? (productOrId as any).selectedVariations : undefined
         });
-        console.log(`[CART DEBUG] Added new item to cart`);
+        console.log(`[CART DEBUG] Added new item to cart with variations:`, {
+          variationText: typeof productOrId === 'object' ? (productOrId as any).variationText : undefined
+        });
       }
 
       toast.success('Added to cart', {

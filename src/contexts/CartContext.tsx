@@ -32,6 +32,8 @@ export interface CartItem {
   product: Product;
   quantity: number;
   recipientAssignment?: RecipientAssignment;
+  variationText?: string;
+  selectedVariations?: string;
 }
 
 interface CartContextType {

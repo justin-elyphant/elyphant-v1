@@ -62,6 +62,9 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
               </div>
               <div className="flex-grow">
                 <p className="font-medium text-sm">{item.product.name}</p>
+                {item.variationText && (
+                  <p className="text-xs text-muted-foreground">{item.variationText}</p>
+                )}
                 <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
               </div>
               <div className="text-right">

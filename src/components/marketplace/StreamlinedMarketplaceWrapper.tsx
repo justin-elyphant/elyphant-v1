@@ -579,7 +579,26 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
       {/* Quick Filters - Only for non-personalized */}
       {!isPersonalizedActive && (
-        <MarketplaceQuickFilters />
+        <>
+          <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          
+          {/* Filter Pills */}
+          <FilterPills
+            filters={activeFilters}
+            onRemoveFilter={(filterType, value) => {
+              const newFilters = { ...activeFilters };
+              if (filterType === 'category' && value) {
+                newFilters.categories = (newFilters.categories || []).filter((cat: string) => cat !== value);
+              } else if (filterType === 'priceRange') {
+                newFilters.priceRange = [0, 500];
+              } else {
+                delete newFilters[filterType];
+              }
+              setActiveFilters(newFilters);
+            }}
+            onClearAll={() => setActiveFilters({})}
+          />
+        </>
       )}
 
       {/* Category Sections (when no search active) */}

@@ -152,8 +152,22 @@ export const generateSmartFilters = (
   const detectedCategory = detectCategoryFromSearch(searchTerm);
   const productAttributes = extractProductAttributes(products);
   
+  console.log(`🎯 Smart Filter Generation:`, {
+    searchTerm,
+    detectedCategory,
+    productCount: products.length,
+    productAttributes: {
+      brands: Array.from(productAttributes.brands),
+      genders: Array.from(productAttributes.genders),
+      colors: Array.from(productAttributes.colors),
+      sizes: Array.from(productAttributes.sizes)
+    }
+  });
+  
   // Extract enhanced filters for modern e-commerce experience
   const enhancedFilters = extractEnhancedFilters(products);
+  
+  console.log(`🎯 Enhanced Filters:`, enhancedFilters);
   
   let suggestedFilters: Record<string, FilterConfig> = {};
   
@@ -262,6 +276,7 @@ export const generateSmartFilters = (
     
     // Add gender filter if we detected genders
     if (productAttributes.genders.size > 0) {
+      console.log(`🎯 Adding gender filter with options:`, Array.from(productAttributes.genders));
       suggestedFilters.gender = {
         type: 'checkbox',
         label: 'Gender',

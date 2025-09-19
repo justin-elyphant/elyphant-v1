@@ -152,6 +152,8 @@ export function detectSizesFromText(text: string): SizeDetectionResult {
  * Extracts sizes from product array and categorizes them
  */
 export function extractSizesFromProducts(products: any[]): ComprehensiveSizes {
+  console.log(`🎯 Size extraction starting with ${products.length} products`);
+  
   const sizes: ComprehensiveSizes = {
     waist: [],
     inseam: [],
@@ -166,14 +168,17 @@ export function extractSizesFromProducts(products: any[]): ComprehensiveSizes {
 
   products.forEach(product => {
     const text = `${product.title || product.name || ''} ${product.description || ''}`;
+    console.log(`🎯 Size detection for product: "${product.title}" with text: "${text.substring(0, 50)}..."`);
+    
     const detected = detectSizesFromText(text);
+    console.log(`🎯 Detected sizes for "${product.title}":`, detected);
 
     detected.waistSizes.forEach(size => waistSet.add(size));
     detected.inseamLengths.forEach(size => inseamSet.add(size));
     detected.shoeSizes.forEach(size => shoeSet.add(size));
     detected.clothingSizes.forEach(size => clothingSet.add(size));
   });
-
+  
   // Sort numerically for waist and inseam
   sizes.waist = Array.from(waistSet).sort((a, b) => parseInt(a) - parseInt(b));
   sizes.inseam = Array.from(inseamSet).sort((a, b) => parseInt(a) - parseInt(b));
@@ -187,6 +192,13 @@ export function extractSizesFromProducts(products: any[]): ComprehensiveSizes {
   const sizeOrder = [...CLOTHING_SIZES, ...PLUS_SIZES];
   sizes.clothing = Array.from(clothingSet).sort((a, b) => {
     return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+  });
+
+  console.log(`🎯 Final extracted sizes:`, {
+    waist: sizes.waist,
+    inseam: sizes.inseam, 
+    shoes: sizes.shoes,
+    clothing: sizes.clothing
   });
 
   return sizes;

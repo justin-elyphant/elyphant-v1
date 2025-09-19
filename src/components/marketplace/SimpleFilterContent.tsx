@@ -29,7 +29,10 @@ const SimpleFilterContent = ({
   
   // Generate smart filters based on search context and products
   const smartFilterContext = useMemo(() => {
-    return generateSmartFilters(searchTerm, products);
+    console.log(`🎯 Generating smart filters for "${searchTerm}" with ${products.length} products`);
+    const context = generateSmartFilters(searchTerm, products);
+    console.log(`🎯 Smart filter context generated:`, context);
+    return context;
   }, [searchTerm, products]);
   
   const PRICE_MAX = 500;

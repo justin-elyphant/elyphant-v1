@@ -114,6 +114,8 @@ const PRICE_RANGES = [
  * Extracts enhanced filter options from product array
  */
 export function extractEnhancedFilters(products: any[]): EnhancedFilterDetection {
+  console.log(`🎯 Enhanced Filter Extraction starting with ${products.length} products`);
+  
   const materialCounts = new Map<string, number>();
   const styleCounts = new Map<string, number>();
   const featureCounts = new Map<string, number>();
@@ -123,9 +125,14 @@ export function extractEnhancedFilters(products: any[]): EnhancedFilterDetection
 
   // Extract sizes using enhanced size detection
   const sizes = extractSizesFromProducts(products);
+  
+  console.log(`🎯 Extracted sizes:`, sizes);
 
   products.forEach(product => {
     const text = `${product.title || product.name || ''} ${product.description || ''}`.toLowerCase();
+    
+    console.log(`🎯 Processing product: "${product.title}" with text: "${text.substring(0, 50)}..."`);
+    
     
     // Extract materials
     Object.entries(MATERIAL_PATTERNS).forEach(([material, pattern]) => {

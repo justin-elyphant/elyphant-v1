@@ -188,42 +188,48 @@ const ProductDetailsDialog = ({
           ) : (
             productDetail ?
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                 <div className="relative overflow-hidden rounded-md">
+              <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 py-4">
+                 {/* Image Gallery */}
+                 <div className="relative overflow-hidden rounded-lg order-1 lg:order-1">
                    <ProductCarousel 
                      images={getProductImages(productDetail)} 
                      productName={getProductName(productDetail)} 
                    />
                  </div>
                  
-                    <div className="flex flex-col space-y-4">
-                      <ProductInfoHeader product={productDetail} />
-                      
-                      {/* Product Variations - Feature flagged */}
-                      {hasVariations && productDetail.all_variants && (
-                        <div className="p-4 border rounded-lg bg-muted/20">
-                          <VariationSelector
-                            variants={productDetail.all_variants}
-                            currentVariantSpecs={productDetail.variant_specifics}
-                            onVariationChange={handleVariationChange}
-                          />
-                        </div>
-                      )}
-                      
-                      <ProductDetailsActionsSection
-                        product={productDetail}
-                        quantity={quantity}
-                        onIncrease={handleIncrease}
-                        onDecrease={handleDecrease}
-                        isHeartAnimating={isHeartAnimating}
-                        reloadWishlists={onWishlistChange}
-                        // Pass variation data for cart handling
-                        selectedProductId={getEffectiveProductId()}
-                        variationText={getVariationDisplayText()}
-                        isVariationComplete={isVariationComplete()}
-                      />
-                      <ProductInfoDetails product={productDetail} source={source} />
-                   </div>
+                 {/* Product Info - Above the fold content */}
+                 <div className="flex flex-col space-y-4 order-2 lg:order-2">
+                   <ProductInfoHeader product={productDetail} />
+                   
+                   {/* Product Variations - Keep prominent */}
+                   {hasVariations && productDetail.all_variants && (
+                     <div className="p-4 border rounded-lg bg-muted/30">
+                       <VariationSelector
+                         variants={productDetail.all_variants}
+                         currentVariantSpecs={productDetail.variant_specifics}
+                         onVariationChange={handleVariationChange}
+                       />
+                     </div>
+                   )}
+                   
+                   {/* Purchase Actions - Keep above the fold */}
+                   <ProductDetailsActionsSection
+                     product={productDetail}
+                     quantity={quantity}
+                     onIncrease={handleIncrease}
+                     onDecrease={handleDecrease}
+                     isHeartAnimating={isHeartAnimating}
+                     reloadWishlists={onWishlistChange}
+                     selectedProductId={getEffectiveProductId()}
+                     variationText={getVariationDisplayText()}
+                     isVariationComplete={isVariationComplete()}
+                   />
+                 </div>
+                 
+                 {/* Product Details - Below the fold */}
+                 <div className="lg:col-span-2 order-3 border-t pt-6 mt-2">
+                   <ProductInfoDetails product={productDetail} source={source} />
+                 </div>
               </div>
             </>
             :

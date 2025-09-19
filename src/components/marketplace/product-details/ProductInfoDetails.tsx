@@ -1,4 +1,6 @@
 import React from "react";
+import ExpandableDescription from "./ExpandableDescription";
+import CollapsibleSection from "./CollapsibleSection";
 
 interface ProductInfoDetailsProps {
   product: any;
@@ -28,42 +30,40 @@ const ProductInfoDetails = ({ product, source }: ProductInfoDetailsProps) => {
   const specifications = product.variant_specifics || [];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h4 className="font-medium mb-2">Description</h4>
-        <p className="text-sm text-muted-foreground overflow-y-auto max-h-52">{description}</p>
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <h4 className="font-medium text-sm">Description</h4>
+        <ExpandableDescription description={description} maxLength={150} />
       </div>
 
       {features.length > 0 && (
-        <div>
-          <h4 className="font-medium mb-2">Features</h4>
-          <ul className="list-disc list-inside text-sm text-muted-foreground max-h-44 overflow-y-auto">
+        <CollapsibleSection title="Features" className="border rounded-lg">
+          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
             {features.map((feature, idx) => (
-              <li key={idx}>{feature}</li>
+              <li key={idx} className="leading-relaxed">{feature}</li>
             ))}
           </ul>
-        </div>
+        </CollapsibleSection>
       )}
       
       {Object.keys(specifications).length > 0 && (
-        <div>
-          <h4 className="font-medium mb-2">Specifications</h4>
-          <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-2">
-            {specifications.map((item, idx) => {
-              return (
-                <div key={idx}>
-                  {
-                    Object.entries(item).map((spec, index) => (
-                      <span key={idx * 2 + index} className="mr-1">{spec[1] as string} 
-                        {index % 2 == 0 ? ":" : ""}
-                      </span>
-                    ))
-                  }
-                </div>
-              )
-            })}
+        <CollapsibleSection title="Specifications" className="border rounded-lg">
+          <div className="text-sm space-y-2 max-h-40 overflow-y-auto">
+            {specifications.map((item, idx) => (
+              <div key={idx} className="grid grid-cols-2 gap-2 py-1 border-b border-muted last:border-0">
+                {Object.entries(item).map(([key, value], index) => (
+                  <React.Fragment key={`${idx}-${index}`}>
+                    {index % 2 === 0 ? (
+                      <span className="font-medium text-muted-foreground">{value as string}:</span>
+                    ) : (
+                      <span className="text-foreground">{value as string}</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            ))}
           </div>
-        </div>
+        </CollapsibleSection>
       )}
     </div>
   );

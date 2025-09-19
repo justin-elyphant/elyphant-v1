@@ -16,6 +16,10 @@ interface ProductDetailsActionsSectionProps {
   isHeartAnimating: boolean;
   isWishlisted?: boolean;
   reloadWishlists?: () => void;
+  // New variation props
+  selectedProductId?: string;
+  variationText?: string;
+  isVariationComplete?: boolean;
 }
 
 const ProductDetailsActionsSection = ({
@@ -26,16 +30,41 @@ const ProductDetailsActionsSection = ({
   isHeartAnimating,
   isWishlisted = false,
   reloadWishlists,
+  selectedProductId,
+  variationText,
+  isVariationComplete = true,
 }: ProductDetailsActionsSectionProps) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
 
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+    // Check if variations are complete before adding to cart
+    if (!isVariationComplete) {
+      toast.error("Please select all product options before adding to cart");
+      return;
     }
-    toast.success(`Added ${quantity} ${product.title || product.name}(s) to cart`);
+
+    // Create enhanced product object with variation data
+    const productToAdd = {
+      ...product,
+      // Use selected product ID if variations are present
+      product_id: selectedProductId || product.product_id,
+      id: selectedProductId || product.id,
+      // Add variation display text for cart display
+      variationText: variationText || "",
+      selectedVariations: variationText || ""
+    };
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart(productToAdd);
+    }
+    
+    const successMessage = variationText 
+      ? `Added ${quantity} ${product.title || product.name}(s) (${variationText}) to cart`
+      : `Added ${quantity} ${product.title || product.name}(s) to cart`;
+    
+    toast.success(successMessage);
   };
 
   const handleWishlistClick = () => {
@@ -82,9 +111,20 @@ const ProductDetailsActionsSection = ({
           </div>
         </div>
 
+        {/* Variation validation warning */}
+        {!isVariationComplete && (
+          <div className="text-sm text-orange-600 bg-orange-50 p-2 rounded border">
+            ⚠️ Please select all product options above
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button onClick={handleAddToCart} className="flex-1">
+          <Button 
+            onClick={handleAddToCart} 
+            className="flex-1"
+            disabled={!isVariationComplete}
+          >
             <ShoppingBag className="h-4 w-4 mr-2" />
             Add to Cart
           </Button>
@@ -93,7 +133,7 @@ const ProductDetailsActionsSection = ({
           {user ? (
             <WishlistSelectionPopoverButton
               product={{
-                id: String(product.product_id || product.id),
+                id: String(selectedProductId || product.product_id || product.id),
                 name: product.title || product.name || "",
                 image: product.image || "",
                 price: product.price,

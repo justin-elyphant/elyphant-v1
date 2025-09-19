@@ -7,10 +7,12 @@ import ProductCarousel from "./ProductCarousel";
 import ProductInfoHeader from "./ProductInfoHeader";
 import ProductInfoDetails from "./ProductInfoDetails";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
+import VariationSelector from "./VariationSelector";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
 import { normalizeProduct, Product } from "@/contexts/ProductContext";
 import { getProductName, getProductImages } from "../product-item/productUtils";
+import { useProductVariations } from "@/hooks/useProductVariations";
 
 interface ProductDetailsDialogProps {
   productId?: string | null;
@@ -35,6 +37,17 @@ const ProductDetailsDialog = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+  
+  // Use product variations hook
+  const {
+    hasVariations,
+    selectedVariations,
+    selectedProductId,
+    handleVariationChange,
+    getEffectiveProductId,
+    isVariationComplete,
+    getVariationDisplayText
+  } = useProductVariations(productDetail || product);
 
   const handleIncrease = () => {
     if (quantity < 10) {
@@ -151,17 +164,33 @@ const ProductDetailsDialog = ({
                    />
                  </div>
                  
-                   <div className="flex flex-col space-y-4">
-                     <ProductInfoHeader product={productDetail} />
-                     <ProductDetailsActionsSection
-                       product={productDetail}
-                       quantity={quantity}
-                       onIncrease={handleIncrease}
-                       onDecrease={handleDecrease}
-                       isHeartAnimating={isHeartAnimating}
-                       reloadWishlists={onWishlistChange}
-                     />
-                     <ProductInfoDetails product={productDetail} source={source} />
+                    <div className="flex flex-col space-y-4">
+                      <ProductInfoHeader product={productDetail} />
+                      
+                      {/* Product Variations - Feature flagged */}
+                      {hasVariations && productDetail.all_variants && (
+                        <div className="p-4 border rounded-lg bg-muted/20">
+                          <VariationSelector
+                            variants={productDetail.all_variants}
+                            currentVariantSpecs={productDetail.variant_specifics}
+                            onVariationChange={handleVariationChange}
+                          />
+                        </div>
+                      )}
+                      
+                      <ProductDetailsActionsSection
+                        product={productDetail}
+                        quantity={quantity}
+                        onIncrease={handleIncrease}
+                        onDecrease={handleDecrease}
+                        isHeartAnimating={isHeartAnimating}
+                        reloadWishlists={onWishlistChange}
+                        // Pass variation data for cart handling
+                        selectedProductId={getEffectiveProductId()}
+                        variationText={getVariationDisplayText()}
+                        isVariationComplete={isVariationComplete()}
+                      />
+                      <ProductInfoDetails product={productDetail} source={source} />
                    </div>
               </div>
             </>

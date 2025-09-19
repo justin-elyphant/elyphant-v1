@@ -686,6 +686,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         filters={activeFilters}
         onFiltersChange={setActiveFilters}
         categories={[]} // You can extract categories from products if needed
+        products={paginatedProducts} // Pass products for smart detection
       />
       
       {/* Product Details Dialog */}

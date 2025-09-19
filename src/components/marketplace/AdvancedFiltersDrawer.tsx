@@ -15,6 +15,7 @@ interface AdvancedFiltersDrawerProps {
   filters: any;
   onFiltersChange: (filters: any) => void;
   categories: string[];
+  products?: any[]; // Add products for smart detection
 }
 
 const AdvancedFiltersDrawer = ({
@@ -23,6 +24,7 @@ const AdvancedFiltersDrawer = ({
   filters,
   onFiltersChange,
   categories,
+  products = [],
 }: AdvancedFiltersDrawerProps) => {
   const isMobile = useIsMobile();
 
@@ -44,6 +46,7 @@ const AdvancedFiltersDrawer = ({
             filters={filters}
             onFiltersChange={onFiltersChange}
             categories={categories}
+            products={products}
           />
         </div>
       </SheetContent>

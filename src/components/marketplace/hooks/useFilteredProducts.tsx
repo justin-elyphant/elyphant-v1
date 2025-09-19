@@ -1,5 +1,7 @@
 
 import { useMemo } from "react";
+import { matchesSizeFilters } from '../utils/enhancedSizeDetection';
+import { matchesEnhancedFilters } from '../utils/enhancedFilterDetection';
 
 export const useFilteredProducts = (products: any[], activeFilters: any, sortOption: string) => {
   return useMemo(() => {
@@ -86,7 +88,24 @@ export const useFilteredProducts = (products: any[], activeFilters: any, sortOpt
       });
     }
 
-    // Size filter
+    // Enhanced size filtering with separate waist, inseam, clothing, and shoe sizes
+    const waistSizes = f.waist || [];
+    const inseamSizes = f.inseam || [];
+    const clothingSizes = f.size || [];
+    const shoeSizes = f.shoeSize || [];
+    
+    if (waistSizes.length > 0 || inseamSizes.length > 0 || clothingSizes.length > 0 || shoeSizes.length > 0) {
+      filtered = filtered.filter(product => {
+        return matchesSizeFilters(product, {
+          waist: waistSizes,
+          inseam: inseamSizes,
+          clothing: clothingSizes,
+          shoes: shoeSizes
+        });
+      });
+    }
+    
+    // Legacy size filter for backward compatibility
     if (sizes.length > 0) {
       filtered = filtered.filter(product => {
         const title = String(product.title || product.name || '').toLowerCase();
@@ -103,6 +122,24 @@ export const useFilteredProducts = (products: any[], activeFilters: any, sortOpt
       });
     }
 
+    // Enhanced material, style, and feature filtering
+    const materials = f.material || [];
+    const styles = f.style || [];
+    const features = f.features || [];
+    const seasons = f.season || [];
+    
+    if (materials.length > 0 || styles.length > 0 || features.length > 0 || seasons.length > 0) {
+      filtered = filtered.filter(product => {
+        return matchesEnhancedFilters(product, {
+          materials,
+          styles,
+          features,
+          seasons,
+          colors: f.color || []
+        });
+      });
+    }
+    
     // Fit filter
     if (fits.length > 0) {
       filtered = filtered.filter(product => {

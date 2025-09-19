@@ -2,17 +2,22 @@
  * Smart filter detection based on search context and product data
  */
 
+import { extractEnhancedFilters, matchesEnhancedFilters } from './enhancedFilterDetection';
+import { extractSizesFromProducts, matchesSizeFilters, ComprehensiveSizes } from './enhancedSizeDetection';
+
 export interface FilterOption {
   value: string;
   label: string;
+  count?: number;
 }
 
 export interface FilterConfig {
-  type: 'range' | 'radio' | 'checkbox';
+  type: 'range' | 'radio' | 'checkbox' | 'size_range';
   label: string;
   min?: number;
   max?: number;
   options?: FilterOption[];
+  sizeType?: 'waist' | 'inseam' | 'shoes' | 'clothing';
 }
 
 export interface SmartFilterContext {
@@ -20,6 +25,7 @@ export interface SmartFilterContext {
   detectedCategory: string | null;
   suggestedFilters: Record<string, FilterConfig>;
   productAttributes: Record<string, Set<string>>;
+  enhancedFilters?: any;
 }
 
 /**
@@ -85,21 +91,22 @@ export const extractProductAttributes = (products: any[]): Record<string, Set<st
       }
     });
     
-    // Size detection for clothing
-    const clothingSizes = ['xs', 'x-small', 's', 'small', 'm', 'medium', 'l', 'large', 'xl', 'x-large', 'xxl', 'xx-large'];
-    const pantSizes = ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42'];
+    // Enhanced size detection using new utilities
+    const sizeDetection = extractSizesFromProducts([product]);
     
-    [...clothingSizes, ...pantSizes].forEach(size => {
+    // Add all detected sizes to attributes
+    sizeDetection.waist.forEach(size => attributes.sizes.add(`${size}W`));
+    sizeDetection.inseam.forEach(size => attributes.sizes.add(`${size}L`));
+    sizeDetection.shoes.forEach(size => attributes.sizes.add(`${size} (shoes)`));
+    sizeDetection.clothing.forEach(size => attributes.sizes.add(size));
+    
+    // Legacy size detection for compatibility
+    const clothingSizes = ['xs', 'x-small', 's', 'small', 'm', 'medium', 'l', 'large', 'xl', 'x-large', 'xxl', 'xx-large'];
+    clothingSizes.forEach(size => {
       if (text.includes(size)) {
         attributes.sizes.add(size.toUpperCase());
       }
     });
-    
-    // Extract waist sizes for jeans specifically
-    const waistMatch = text.match(/\b(\d{2})\s?(inch|")\s?(waist|w)\b/);
-    if (waistMatch) {
-      attributes.sizes.add(`${waistMatch[1]}"`);
-    }
     
     // Gender detection
     const genderKeywords = {
@@ -130,6 +137,9 @@ export const generateSmartFilters = (
   const detectedCategory = detectCategoryFromSearch(searchTerm);
   const productAttributes = extractProductAttributes(products);
   
+  // Extract enhanced filters for modern e-commerce experience
+  const enhancedFilters = extractEnhancedFilters(products);
+  
   let suggestedFilters: Record<string, FilterConfig> = {};
   
   // Base filters always available
@@ -157,38 +167,75 @@ export const generateSmartFilters = (
   
   // Add category-specific filters
   if (detectedCategory === 'clothing') {
-    // Add brand filter if we detected brands from products
-    if (productAttributes.brands.size > 0) {
+    // Enhanced brand filter
+    if (enhancedFilters.brands.length > 0) {
       suggestedFilters.brand = {
         type: 'checkbox',
         label: 'Brand',
-        options: Array.from(productAttributes.brands).map(brand => ({
+        options: enhancedFilters.brands.map(brand => ({
           value: brand.toLowerCase(),
           label: brand
         }))
       };
     }
     
-    // Add size filter if we detected sizes
-    if (productAttributes.sizes.size > 0) {
+    // Enhanced size filters with separate categories
+    if (enhancedFilters.sizes.waist.length > 0) {
+      suggestedFilters.waist = {
+        type: 'checkbox',
+        label: 'Waist Size',
+        sizeType: 'waist',
+        options: enhancedFilters.sizes.waist.map(size => ({
+          value: size,
+          label: `${size}"`
+        }))
+      };
+    }
+    
+    if (enhancedFilters.sizes.inseam.length > 0) {
+      suggestedFilters.inseam = {
+        type: 'checkbox',
+        label: 'Inseam Length',
+        sizeType: 'inseam',
+        options: enhancedFilters.sizes.inseam.map(size => ({
+          value: size,
+          label: `${size}"`
+        }))
+      };
+    }
+    
+    if (enhancedFilters.sizes.clothing.length > 0) {
       suggestedFilters.size = {
         type: 'checkbox',
-        label: 'Size',
-        options: Array.from(productAttributes.sizes).map(size => ({
+        label: 'Clothing Size',
+        sizeType: 'clothing',
+        options: enhancedFilters.sizes.clothing.map(size => ({
           value: size.toLowerCase(),
           label: size
         }))
       };
     }
     
-    // Add color filter if we detected colors
-    if (productAttributes.colors.size > 0) {
+    if (enhancedFilters.sizes.shoes.length > 0) {
+      suggestedFilters.shoeSize = {
+        type: 'checkbox',
+        label: 'Shoe Size',
+        sizeType: 'shoes',
+        options: enhancedFilters.sizes.shoes.map(size => ({
+          value: size,
+          label: size
+        }))
+      };
+    }
+    
+    // Enhanced color filter
+    if (enhancedFilters.colors.length > 0) {
       suggestedFilters.color = {
         type: 'checkbox',
         label: 'Color',
-        options: Array.from(productAttributes.colors).map(color => ({
+        options: enhancedFilters.colors.map(color => ({
           value: color.toLowerCase(),
-          label: color
+          label: color.charAt(0).toUpperCase() + color.slice(1)
         }))
       };
     }
@@ -205,6 +252,45 @@ export const generateSmartFilters = (
       };
     }
     
+    // Enhanced materials filter
+    if (enhancedFilters.materials.length > 0) {
+      suggestedFilters.material = {
+        type: 'checkbox',
+        label: 'Material',
+        options: enhancedFilters.materials.slice(0, 8).map(material => ({
+          value: material.value,
+          label: material.label,
+          count: material.count
+        }))
+      };
+    }
+
+    // Enhanced styles filter
+    if (enhancedFilters.styles.length > 0) {
+      suggestedFilters.style = {
+        type: 'checkbox',
+        label: 'Style',
+        options: enhancedFilters.styles.slice(0, 6).map(style => ({
+          value: style.value,
+          label: style.label,
+          count: style.count
+        }))
+      };
+    }
+
+    // Enhanced features filter
+    if (enhancedFilters.features.length > 0) {
+      suggestedFilters.features = {
+        type: 'checkbox',
+        label: 'Features',
+        options: enhancedFilters.features.slice(0, 8).map(feature => ({
+          value: feature.value,
+          label: feature.label,
+          count: feature.count
+        }))
+      };
+    }
+
     // For jeans specifically, add fit types
     if (searchTerm.toLowerCase().includes('jeans')) {
       suggestedFilters.fit = {
@@ -226,5 +312,6 @@ export const generateSmartFilters = (
     detectedCategory,
     suggestedFilters,
     productAttributes,
+    enhancedFilters,
   };
 };

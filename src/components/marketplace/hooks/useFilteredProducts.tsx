@@ -47,10 +47,74 @@ export const useFilteredProducts = (products: any[], activeFilters: any, sortOpt
     }
 
     // Apply brand filter
-    if (activeFilters.brands.length > 0) {
+    if (activeFilters.brands && activeFilters.brands.length > 0) {
       filtered = filtered.filter(product => 
         activeFilters.brands.includes(product.brand)
       );
+    }
+
+    // Apply gender filter
+    if (activeFilters.gender && activeFilters.gender.length > 0) {
+      filtered = filtered.filter(product => {
+        const productTitle = (product.title || product.name || '').toLowerCase();
+        const productDescription = (product.description || '').toLowerCase();
+        
+        return activeFilters.gender.some((gender: string) => {
+          const genderLower = gender.toLowerCase();
+          // Check if product is for the selected gender
+          if (genderLower === 'men' || genderLower === 'mens') {
+            return (productTitle.includes("men's") || productTitle.includes("mens")) && 
+                   !productTitle.includes("women's") && !productTitle.includes("womens");
+          } else if (genderLower === 'women' || genderLower === 'womens') {
+            return (productTitle.includes("women's") || productTitle.includes("womens")) && 
+                   !productTitle.includes("men's") && !productTitle.includes("mens");
+          }
+          return false;
+        });
+      });
+    }
+
+    // Apply size filter
+    if (activeFilters.size && activeFilters.size.length > 0) {
+      filtered = filtered.filter(product => {
+        const productTitle = (product.title || product.name || '').toLowerCase();
+        return activeFilters.size.some((size: string) => 
+          productTitle.includes(size.toLowerCase())
+        );
+      });
+    }
+
+    // Apply color filter
+    if (activeFilters.color && activeFilters.color.length > 0) {
+      filtered = filtered.filter(product => {
+        const productTitle = (product.title || product.name || '').toLowerCase();
+        const productDescription = (product.description || '').toLowerCase();
+        return activeFilters.color.some((color: string) => 
+          productTitle.includes(color.toLowerCase()) || productDescription.includes(color.toLowerCase())
+        );
+      });
+    }
+
+    // Apply fit filter
+    if (activeFilters.fit && activeFilters.fit.length > 0) {
+      filtered = filtered.filter(product => {
+        const productTitle = (product.title || product.name || '').toLowerCase();
+        return activeFilters.fit.some((fit: string) => 
+          productTitle.includes(fit.toLowerCase())
+        );
+      });
+    }
+
+    // Apply brand filter (smart filter version)
+    if (activeFilters.brand && activeFilters.brand.length > 0) {
+      filtered = filtered.filter(product => {
+        const productBrand = product.brand || '';
+        const productTitle = (product.title || product.name || '').toLowerCase();
+        return activeFilters.brand.some((brand: string) => 
+          productBrand.toLowerCase().includes(brand.toLowerCase()) ||
+          productTitle.includes(brand.toLowerCase())
+        );
+      });
     }
 
     // Apply sorting

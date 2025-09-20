@@ -120,7 +120,7 @@ const SavedPaymentMethodsSection: React.FC<SavedPaymentMethodsSectionProps> = ({
   }
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-4">
       <RadioGroup value={selectedValue} onValueChange={handleSelectionChange}>
         {paymentMethods.map((method) => (
           <div key={method.id} className="relative">

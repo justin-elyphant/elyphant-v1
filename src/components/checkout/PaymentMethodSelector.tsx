@@ -105,7 +105,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     if (method) {
       setTimeout(() => {
         try {
-          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch {}
       }, 0);
     }
@@ -279,7 +279,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       {/* CRITICAL: Selected payment method processing */}
       {selectedSavedMethod && (
         <div ref={payCardRef}>
-          <Card className="mb-20">
+          <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex justify-between items-center">
                 <div>
@@ -302,23 +302,14 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               </div>
             </CardContent>
           </Card>
-          {/* Mobile fixed action bar */}
-          <div className="sm:hidden payment-button-fixed">
-            <Button
-              onClick={handleUseExistingCard}
-              disabled={isProcessingPayment}
-              size="lg"
-              className="w-full mobile-button-optimize"
-            >
-              {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-            </Button>
-          </div>
+          {/* Mobile spacer to prevent overlap with bottom nav */}
+          <div className="sm:hidden bottom-action-spacer" aria-hidden="true" />
         </div>
       )}
 
       {/* CRITICAL: New payment method form */}
       {showNewCardForm && (
-        <div className="space-y-4 pb-20">
+        <div className="space-y-4 pb-4">
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -333,7 +324,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 Save this card for future purchases
               </label>
             </div>
-            <div className="pb-16">
+            <div className="pb-4">
               <Elements stripe={stripeClientManager.getStripePromise()}>
                 <UnifiedPaymentForm
                   clientSecret={clientSecret}
@@ -357,6 +348,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </div>
       )}
+      <div className="sm:hidden bottom-action-spacer" aria-hidden="true" />
     </div>
   );
 };

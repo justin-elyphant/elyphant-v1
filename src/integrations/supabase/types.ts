@@ -2603,8 +2603,10 @@ export type Database = {
           recipient_connection_id: string | null
           recipient_gift_message: string | null
           scheduled_delivery_date: string | null
+          selected_variations: Json | null
           total_price: number
           unit_price: number
+          variation_text: string | null
           vendor: string | null
         }
         Insert: {
@@ -2619,8 +2621,10 @@ export type Database = {
           recipient_connection_id?: string | null
           recipient_gift_message?: string | null
           scheduled_delivery_date?: string | null
+          selected_variations?: Json | null
           total_price: number
           unit_price: number
+          variation_text?: string | null
           vendor?: string | null
         }
         Update: {
@@ -2635,8 +2639,10 @@ export type Database = {
           recipient_connection_id?: string | null
           recipient_gift_message?: string | null
           scheduled_delivery_date?: string | null
+          selected_variations?: Json | null
           total_price?: number
           unit_price?: number
+          variation_text?: string | null
           vendor?: string | null
         }
         Relationships: [

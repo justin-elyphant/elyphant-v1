@@ -162,6 +162,8 @@ export interface OrderItem {
   delivery_group_id?: string;
   recipient_gift_message?: string;
   scheduled_delivery_date?: string;
+  variation_text?: string;
+  selected_variations?: any;
 }
 
 /*
@@ -269,7 +271,9 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       recipient_connection_id: sanitizedRecipientData.connectionId,
       delivery_group_id: sanitizedRecipientData.deliveryGroupId,
       recipient_gift_message: recipientAssignment?.giftMessage || orderData.giftOptions?.giftMessage || null,
-      scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null
+      scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null,
+      variation_text: item.variationText || null,
+      selected_variations: item.selectedVariations ? JSON.parse(item.selectedVariations) : null
     };
   });
 

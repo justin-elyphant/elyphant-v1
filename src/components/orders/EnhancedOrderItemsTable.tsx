@@ -82,6 +82,11 @@ const EnhancedOrderItemsTable = ({
                         .replace(/,?\s*\d+\s*(EA|ea|each|pack|ct|count|piece|pc|pcs|unit|units)\.?$/i, '')
                         .trim()}
                     </p>
+                    {(item as any).variation_text && (
+                      <p className="text-xs text-muted-foreground">
+                        {(item as any).variation_text}
+                      </p>
+                    )}
                     {(item as any).brand && (
                       <p className="text-sm text-muted-foreground">
                         {(item as any).brand}

@@ -328,6 +328,9 @@ const OrderConfirmation = () => {
                     <div key={item.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
                       <div className="flex-1">
                         <p className="font-medium">{item.product_name}</p>
+                        {item.variation_text && (
+                          <p className="text-xs text-muted-foreground">{item.variation_text}</p>
+                        )}
                         <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                       </div>
                       <p className="font-semibold">${item.total_price.toFixed(2)}</p>

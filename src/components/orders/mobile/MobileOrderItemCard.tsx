@@ -161,12 +161,17 @@ const MobileOrderItemCard = ({
               <h3 className="font-medium text-body-base leading-tight truncate">
                 {productName}
               </h3>
+              {(item as any).variation_text && (
+                <p className="text-xs text-muted-foreground">
+                  {(item as any).variation_text}
+                </p>
+              )}
               {brand && (
                 <p className="text-body-sm text-muted-foreground">
                   {brand}
                 </p>
               )}
-<div className="flex items-center gap-4 text-body-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-body-sm text-muted-foreground">
                 <span>Qty: {item.quantity}</span>
               </div>
             </div>

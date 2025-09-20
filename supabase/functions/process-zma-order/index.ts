@@ -787,11 +787,33 @@ return await (async () => {
     const zincOrderData = {
       retailer: "amazon",
       addax: true, // CRITICAL: Enables ZMA ordering
-      products: orderItems.map(item => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        variants: [] // Required field for ZMA
-      })),
+      products: orderItems.map(item => {
+        // Build variants array from variation data if available
+        let variants = [];
+        if (item.selected_variations) {
+          try {
+            const variations = typeof item.selected_variations === 'string' 
+              ? JSON.parse(item.selected_variations) 
+              : item.selected_variations;
+            
+            // Convert variations to Zinc format
+            variants = Object.entries(variations).map(([dimension, value]) => ({
+              dimension: dimension,
+              value: value
+            }));
+            
+            console.log(`📦 Product ${item.product_id} variants:`, variants);
+          } catch (error) {
+            console.warn(`⚠️ Failed to parse variations for product ${item.product_id}:`, error);
+          }
+        }
+        
+        return {
+          product_id: item.product_id,
+          quantity: item.quantity,
+          variants: variants // Include parsed variants or empty array
+        };
+      }),
       max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
       shipping_address: shippingAddress,
       shipping_method: "cheapest", // Required field

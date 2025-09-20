@@ -105,7 +105,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     if (method) {
       setTimeout(() => {
         try {
-          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
         } catch {}
       }, 0);
     }
@@ -303,7 +303,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             </CardContent>
           </Card>
           {/* Mobile spacer to prevent overlap with bottom nav */}
-          <div className="sm:hidden bottom-action-spacer" aria-hidden="true" />
+          <div className="lg:hidden bottom-action-spacer" aria-hidden="true" />
         </div>
       )}
 
@@ -348,7 +348,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </div>
       )}
-      <div className="sm:hidden bottom-action-spacer" aria-hidden="true" />
+      <div className="lg:hidden bottom-action-spacer" aria-hidden="true" />
     </div>
   );
 };

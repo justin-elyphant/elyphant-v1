@@ -21,6 +21,8 @@
   .ios-scroll {
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
+    /* Prevent content from sitting under bottom nav when scrolling into view */
+    scroll-padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
   }
   
   /* Prevent horizontal overflow on mobile */

@@ -416,7 +416,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container mobile-content-spacing">
+    <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container checkout-content-spacing">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Button

@@ -169,11 +169,6 @@ body.bottom-sheet-open .mobile-bottom-nav {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Mobile content spacing for checkout/cart pages */
-.mobile-content-spacing {
-  padding-bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
-}
-
 /* Optimized checkout form layout for mobile */
 @media (max-width: 768px) {
   .mobile-checkout-grid {
@@ -191,6 +186,20 @@ body.bottom-sheet-open .mobile-bottom-nav {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
+  
+  /* Payment button mobile optimizations */
+  .payment-button-fixed {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 20px);
+    left: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    background: hsl(var(--background));
+    border-top: 1px solid hsl(var(--border));
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
 }
 
 /* Mobile-optimized buttons for cart and checkout */
@@ -199,6 +208,27 @@ body.bottom-sheet-open .mobile-bottom-nav {
   min-width: 44px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile content spacing with safe area - Enhanced for payment pages */
+.mobile-content-spacing {
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 180px);
+}
+
+/* Enhanced checkout content spacing for dynamic payment forms */
+.checkout-content-spacing {
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 280px);
+}
+
+/* Payment form mobile optimizations */
+.payment-form-mobile {
+  margin-bottom: 150px;
+}
+
+/* Dynamic content safe spacing */
+.dynamic-content-safe {
+  min-height: 50vh;
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 250px);
 }
 
 /* Prevent horizontal scroll on mobile */

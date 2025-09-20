@@ -258,7 +258,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 payment-form-mobile dynamic-content-safe">
       {/* CRITICAL: Saved payment methods section */}
       <SavedPaymentMethodsSection
         onSelectPaymentMethod={handleSelectPaymentMethod}
@@ -269,7 +269,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {/* CRITICAL: Selected payment method processing */}
       {selectedSavedMethod && (
-        <Card>
+        <Card className="mb-20">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div>
@@ -284,6 +284,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 onClick={handleUseExistingCard}
                 disabled={isProcessingPayment}
                 size="lg"
+                className="mobile-button-optimize"
               >
                 {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
               </Button>
@@ -294,7 +295,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {/* CRITICAL: New payment method form */}
       {showNewCardForm && (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20">
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -309,25 +310,27 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 Save this card for future purchases
               </label>
             </div>
-            <Elements stripe={stripeClientManager.getStripePromise()}>
-              <UnifiedPaymentForm
-                clientSecret={clientSecret}
-                amount={totalAmount}
-                onSuccess={(paymentIntentId, saveCard) => {
-                  // Handle saving payment method if requested
-                  if (saveNewCard && saveCard) {
-                    // This will be handled in the parent component
-                    onRefreshKeyChange(refreshKey + 1);
-                  }
-                  onPaymentSuccess(paymentIntentId, paymentIntentId); // Use paymentIntentId as second param for compatibility
-                }}
-                onError={onPaymentError}
-                isProcessing={isProcessingPayment}
-                onProcessingChange={onProcessingChange}
-                allowSaveCard={saveNewCard}
-                mode="payment"
-              />
-            </Elements>
+            <div className="pb-16">
+              <Elements stripe={stripeClientManager.getStripePromise()}>
+                <UnifiedPaymentForm
+                  clientSecret={clientSecret}
+                  amount={totalAmount}
+                  onSuccess={(paymentIntentId, saveCard) => {
+                    // Handle saving payment method if requested
+                    if (saveNewCard && saveCard) {
+                      // This will be handled in the parent component
+                      onRefreshKeyChange(refreshKey + 1);
+                    }
+                    onPaymentSuccess(paymentIntentId, paymentIntentId); // Use paymentIntentId as second param for compatibility
+                  }}
+                  onError={onPaymentError}
+                  isProcessing={isProcessingPayment}
+                  onProcessingChange={onProcessingChange}
+                  allowSaveCard={saveNewCard}
+                  mode="payment"
+                />
+              </Elements>
+            </div>
           </div>
         </div>
       )}

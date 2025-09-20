@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Mail
 } from 'lucide-react';
+import { formatScheduledDate, formatScheduledDateTime } from '@/utils/date-formatting';
 import { format } from 'date-fns';
 
 interface OrderSourceDisplayProps {
@@ -124,7 +125,7 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
           {analysis.sourceType === 'scheduled' && analysis.scheduledDate && (
             <div className="flex items-center gap-1.5">
               <Clock className="h-3 w-3" />
-              Delivery: {format(new Date(analysis.scheduledDate), 'MMM d, yyyy')}
+              Delivery: {formatScheduledDate(analysis.scheduledDate)}
               {analysis.giftMessage && <span className="ml-2 text-xs">• Gift</span>}
             </div>
           )}
@@ -151,7 +152,7 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
                 Delivery Schedule
               </div>
               <p className="text-sm text-muted-foreground">
-                Scheduled for {format(new Date(analysis.scheduledDate), 'EEEE, MMMM d, yyyy')}
+                Scheduled for {formatScheduledDateTime(analysis.scheduledDate, 'EEEE, MMMM d, yyyy')}
               </p>
             </div>
           )}

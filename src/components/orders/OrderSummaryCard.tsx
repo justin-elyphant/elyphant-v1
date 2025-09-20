@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { formatScheduledDate } from "@/utils/date-formatting";
 import { toast } from "sonner";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 import OrderStatusBadge from "./OrderStatusBadge";
@@ -70,7 +70,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
                 Scheduled Delivery:
               </dt>
               <dd className="font-medium text-primary">
-                {format(new Date((order as any).scheduled_delivery_date), 'EEEE, MMM d, yyyy')}
+                {formatScheduledDate((order as any).scheduled_delivery_date)}
               </dd>
             </div>
           )}

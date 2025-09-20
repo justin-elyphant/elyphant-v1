@@ -8,7 +8,8 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { Mail, Calendar } from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
 import OrderStatusBadge from "./OrderStatusBadge";
@@ -60,6 +61,20 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
             <dt className="text-muted-foreground">Order Date:</dt>
             <dd>{new Date(order.date!).toLocaleDateString()}</dd>
           </div>
+          
+          {/* Scheduled Delivery Date - show prominently if available */}
+          {(order as any).scheduled_delivery_date && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Scheduled Delivery:
+              </dt>
+              <dd className="font-medium text-primary">
+                {format(new Date((order as any).scheduled_delivery_date), 'EEEE, MMM d, yyyy')}
+              </dd>
+            </div>
+          )}
+          
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Order Number:</dt>
             <dd>{formatOrderNumberWithHash(order.id)}</dd>

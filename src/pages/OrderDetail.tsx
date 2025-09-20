@@ -73,7 +73,9 @@ const OrderDetail = () => {
           const transformedOrder = {
             id: data.id,
             date: data.created_at,
+            created_at: data.created_at,
             status: data.status,
+            scheduled_delivery_date: data.scheduled_delivery_date,
             total: data.total_amount,
             subtotal: pricingBreakdown.subtotal,
             shipping_cost: pricingBreakdown.shipping_cost,

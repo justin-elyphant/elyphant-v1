@@ -59,7 +59,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
         <dl className="space-y-4">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Order Date:</dt>
-            <dd>{new Date(order.created_at!).toLocaleDateString()}</dd>
+            <dd>{new Date((order as any).date || (order as any).created_at).toLocaleDateString()}</dd>
           </div>
           
           {/* Scheduled Delivery Date - show prominently if available */}

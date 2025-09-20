@@ -161,3 +161,65 @@ body.bottom-sheet-open .mobile-bottom-nav {
   pointer-events: none;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
+
+/* Enhanced mobile container to prevent horizontal overflow */
+.mobile-container {
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile content spacing for checkout/cart pages */
+.mobile-content-spacing {
+  padding-bottom: max(120px, calc(env(safe-area-inset-bottom) + 100px));
+}
+
+/* Optimized checkout form layout for mobile */
+@media (max-width: 768px) {
+  .mobile-checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .mobile-checkout-order-summary {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: hsl(var(--background));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Mobile-optimized buttons for cart and checkout */
+.mobile-button-optimize {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+  .mobile-no-scroll {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  .mobile-grid-fix {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .mobile-text-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+}

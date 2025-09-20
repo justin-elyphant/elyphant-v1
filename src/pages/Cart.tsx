@@ -185,7 +185,7 @@ const Cart = () => {
   return (
     <SidebarLayout>
       <ZincMetadataDebugger />
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container mobile-content-spacing">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Button
@@ -221,7 +221,7 @@ const Cart = () => {
               </Button>
             </div>
           ) : (
-            <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
+            <div className={`grid gap-4 lg:gap-6 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-1 lg:grid-cols-3'}`}>
               {/* Cart Content */}
               <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
                 {/* Multi-Destination Summary */}
@@ -262,8 +262,8 @@ const Cart = () => {
                   
                   <div className="space-y-4">
                     {cartItems.map((item) => (
-                      <div key={item.product.product_id} className="p-4 border rounded-lg">
-                        <div className="flex gap-4">
+                      <div key={item.product.product_id} className="p-4 border rounded-lg mobile-card">
+                        <div className="flex gap-3 lg:gap-4">
                           <div className="flex-shrink-0">
                             <img 
                               src={(() => {
@@ -273,7 +273,7 @@ const Cart = () => {
                                 return imageUrl;
                               })()} 
                               alt={item.product.name || item.product.title}
-                              className="w-20 h-20 object-cover rounded-md bg-gray-100"
+                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md bg-gray-100"
                               loading="lazy"
                               onError={(e) => {
                                 console.log(`[CART IMAGE] Image failed to load: ${e.currentTarget.src}`);

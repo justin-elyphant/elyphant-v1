@@ -416,7 +416,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl mobile-content-spacing">
+    <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container mobile-content-spacing">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Button
@@ -432,7 +432,7 @@ const UnifiedCheckoutForm: React.FC = () => {
         <p className="text-muted-foreground ml-11">Review your order and complete payment</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Main Checkout Content - Mobile: Stack vertically */}
         <div className="lg:col-span-2 space-y-4 lg:space-y-6">
           {/* Shipping Review Section - Mobile: Collapsible */}

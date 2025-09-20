@@ -38,7 +38,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
     }
   }
   return (
-    <Card>
+    <Card className="mobile-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShoppingBag className="h-5 w-5" />
@@ -49,8 +49,8 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
         {/* Items */}
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.product.id} className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
+            <div key={item.product.id} className="flex items-center gap-3 mobile-card">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded overflow-hidden flex-shrink-0">
                 <img 
                   src={getPrimaryProductImage(item.product)}
                   alt={item.product.name || item.product.title || 'Product'}
@@ -60,8 +60,8 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                   }}
                 />
               </div>
-              <div className="flex-grow">
-                <p className="font-medium text-sm">{item.product.name}</p>
+              <div className="flex-grow min-w-0">
+                <p className="font-medium text-sm mobile-truncate">{item.product.name}</p>
                 {item.variationText && (
                   <p className="text-xs text-muted-foreground">{item.variationText}</p>
                 )}

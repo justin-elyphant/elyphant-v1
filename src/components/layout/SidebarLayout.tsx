@@ -32,6 +32,31 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     };
   }, []);
 
+  // Measure bottom navigation height and expose as CSS variable for safe spacing
+  useLayoutEffect(() => {
+    const updateBottomNav = () => {
+      try {
+        const nav = document.querySelector('.mobile-bottom-nav') as HTMLElement | null;
+        if (!nav) return;
+        const rect = nav.getBoundingClientRect();
+        const height = Math.ceil(rect.height);
+        document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+      } catch {}
+    };
+
+    updateBottomNav();
+    window.addEventListener('resize', updateBottomNav);
+
+    const nav = document.querySelector('.mobile-bottom-nav') as HTMLElement | null;
+    const ro2 = nav ? new ResizeObserver(() => updateBottomNav()) : null;
+    if (nav && ro2) ro2.observe(nav);
+
+    return () => {
+      window.removeEventListener('resize', updateBottomNav);
+      ro2?.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen w-full">
       {/* Fixed header wrapper with measured height */}

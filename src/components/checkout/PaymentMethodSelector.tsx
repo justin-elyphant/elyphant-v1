@@ -105,7 +105,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     if (method) {
       setTimeout(() => {
         try {
-          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } catch {}
       }, 0);
     }
@@ -278,7 +278,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {/* CRITICAL: Selected payment method processing */}
       {selectedSavedMethod && (
-        <div ref={payCardRef}>
+        <div ref={payCardRef} className="scroll-safe-bottom">
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex justify-between items-center">

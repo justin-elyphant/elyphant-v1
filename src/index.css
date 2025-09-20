@@ -6,6 +6,7 @@
 
 @import './styles/mobile-scrolling.css';
 @import './styles/mobile-gifting.css';
+@import './styles/ios-optimizations.css';
 
 :root {
   /* Design system color tokens */

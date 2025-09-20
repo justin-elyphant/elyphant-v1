@@ -238,6 +238,11 @@ body.bottom-sheet-open .mobile-bottom-nav {
   height: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
 }
 
+/* Ensure scrollIntoView targets avoid overlap with bottom nav */
+.scroll-safe-bottom {
+  scroll-margin-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px);
+}
+
 /* Prevent horizontal scroll on mobile */
 @media (max-width: 768px) {
   .mobile-no-scroll {

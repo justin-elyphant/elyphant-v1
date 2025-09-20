@@ -26,7 +26,7 @@
  * ========================================================================
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { Button } from '@/components/ui/button';
@@ -91,6 +91,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [saveNewCard, setSaveNewCard] = useState(false);
+  const payCardRef = useRef<HTMLDivElement | null>(null);
 
   /*
    * 🔗 CRITICAL: Payment method selection handler
@@ -100,6 +101,14 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
     setShowNewCardForm(!method);
+    // Ensure the pay button/card is visible above the bottom nav on mobile
+    if (method) {
+      setTimeout(() => {
+        try {
+          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch {}
+      }, 0);
+    }
   };
 
   /*
@@ -269,28 +278,42 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {/* CRITICAL: Selected payment method processing */}
       {selectedSavedMethod && (
-        <Card className="mb-20">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium">
-                  {selectedSavedMethod.card_type} ending in {selectedSavedMethod.last_four}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Expires {selectedSavedMethod.exp_month.toString().padStart(2, '0')}/{selectedSavedMethod.exp_year}
-                </p>
+        <div ref={payCardRef}>
+          <Card className="mb-20">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">
+                    {selectedSavedMethod.card_type} ending in {selectedSavedMethod.last_four}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Expires {selectedSavedMethod.exp_month.toString().padStart(2, '0')}/{selectedSavedMethod.exp_year}
+                  </p>
+                </div>
+                {/* Desktop/Tablet button */}
+                <Button 
+                  onClick={handleUseExistingCard}
+                  disabled={isProcessingPayment}
+                  size="lg"
+                  className="mobile-button-optimize hidden sm:inline-flex"
+                >
+                  {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+                </Button>
               </div>
-              <Button 
-                onClick={handleUseExistingCard}
-                disabled={isProcessingPayment}
-                size="lg"
-                className="mobile-button-optimize"
-              >
-                {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          {/* Mobile fixed action bar */}
+          <div className="sm:hidden payment-button-fixed">
+            <Button
+              onClick={handleUseExistingCard}
+              disabled={isProcessingPayment}
+              size="lg"
+              className="w-full mobile-button-optimize"
+            >
+              {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* CRITICAL: New payment method form */}

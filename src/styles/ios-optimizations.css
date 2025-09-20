@@ -193,7 +193,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
     bottom: env(safe-area-inset-bottom, 20px);
     left: 1rem;
     right: 1rem;
-    z-index: 1000;
+    z-index: 2000;
     background: hsl(var(--background));
     border-top: 1px solid hsl(var(--border));
     padding: 1rem;

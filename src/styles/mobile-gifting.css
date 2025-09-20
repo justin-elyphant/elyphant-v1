@@ -70,7 +70,8 @@
   }
   
   .pb-safe-bottom {
-    padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 60px));
+    /* Dynamic padding that respects the actual bottom nav height + iOS safe area */
+    padding-bottom: max(80px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px));
   }
 }
 

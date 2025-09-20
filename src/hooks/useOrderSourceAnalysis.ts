@@ -105,13 +105,23 @@ export const useOrderSourceAnalysis = (order: ZincOrder) => {
 
           setAnalysis(sourceAnalysis);
         } else {
-          // Check if this is a scheduled order
+          // Check if this is a scheduled order - prioritize order status and scheduling fields
           const scheduledDate = (order as any).scheduled_delivery_date;
+          const orderStatus = (order as any).status;
+          const isGift = (order as any).is_gift;
           
-          if (scheduledDate) {
+          console.log('[ORDER SOURCE ANALYSIS] Order details:', {
+            orderId: order.id,
+            status: orderStatus,
+            scheduled_delivery_date: scheduledDate,
+            is_gift: isGift
+          });
+          
+          if (scheduledDate || orderStatus === 'scheduled') {
             setAnalysis({
               sourceType: 'scheduled',
-              scheduledDate
+              scheduledDate: scheduledDate,
+              giftMessage: (order as any).gift_message
             });
           } else {
             // Standard order

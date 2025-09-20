@@ -113,6 +113,13 @@ serve(async (req) => {
           let earliestDeliveryDate = null
           let latestDeliveryDate = null
           
+          // Check Stripe metadata for scheduled delivery date first
+          const sessionScheduledDate = session.metadata?.scheduled_delivery_date || session.metadata?.scheduledDeliveryDate
+          console.log(`[VERIFY-CHECKOUT] Stripe session metadata:`, {
+            scheduled_delivery_date: sessionScheduledDate,
+            all_metadata: session.metadata
+          })
+          
           // Check package-level scheduling from delivery groups metadata
           try {
             const deliveryGroupsMetadata = session.metadata?.delivery_groups ? JSON.parse(session.metadata.delivery_groups) : {}
@@ -142,6 +149,20 @@ serve(async (req) => {
             }
           } catch (e) {
             console.warn(`[VERIFY-CHECKOUT] Failed to parse delivery groups metadata:`, e)
+          }
+          
+          // Check session metadata for scheduled delivery date
+          if (!shouldSchedule && sessionScheduledDate) {
+            const scheduledDate = new Date(sessionScheduledDate)
+            const daysDifference = Math.ceil((scheduledDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+            shouldSchedule = daysDifference > 4
+            earliestDeliveryDate = scheduledDate
+            
+            console.log(`[VERIFY-CHECKOUT] Session metadata scheduling check:`, {
+              session_scheduled_date: sessionScheduledDate,
+              days_until_delivery: daysDifference,
+              should_schedule: shouldSchedule
+            })
           }
           
           // Fallback to order-level scheduled delivery date

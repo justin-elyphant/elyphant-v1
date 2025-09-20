@@ -124,7 +124,8 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
           {analysis.sourceType === 'scheduled' && analysis.scheduledDate && (
             <div className="flex items-center gap-1.5">
               <Clock className="h-3 w-3" />
-              Scheduled for {format(new Date(analysis.scheduledDate), 'MMM d, yyyy')}
+              Delivery: {format(new Date(analysis.scheduledDate), 'MMM d, yyyy')}
+              {analysis.giftMessage && <span className="ml-2 text-xs">• Gift</span>}
             </div>
           )}
           

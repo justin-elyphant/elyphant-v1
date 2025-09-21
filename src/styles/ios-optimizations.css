@@ -237,7 +237,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
 
 /* Spacer to prevent overlap with bottom navigation */
 .bottom-action-spacer {
-  height: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
+  height: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 
 /* Ensure scrollIntoView targets avoid overlap with bottom nav */

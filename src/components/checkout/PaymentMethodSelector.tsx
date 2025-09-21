@@ -101,11 +101,40 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
     setShowNewCardForm(!method);
-    // Ensure the pay button/card is visible above the bottom nav on mobile
+    // Ensure the pay button/card is visible above the bottom nav on mobile/tablet
     if (method) {
       setTimeout(() => {
         try {
-          payCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
+          const el = payCardRef.current;
+          if (!el) return;
+
+          // Find the primary scroll container used in SidebarLayout
+          const container = (el.closest('.ios-scroll') as HTMLElement) 
+            || (document.querySelector('main.ios-scroll') as HTMLElement)
+            || (document.scrollingElement as HTMLElement | null);
+
+          const elRect = el.getBoundingClientRect();
+          const containerRect = container
+            ? container.getBoundingClientRect()
+            : ({ top: 0, bottom: window.innerHeight } as DOMRect);
+
+          const rootStyle = getComputedStyle(document.documentElement);
+          const navVar = rootStyle.getPropertyValue('--bottom-nav-height').trim();
+          const navHeight = parseInt(navVar || '64', 10) || 64;
+          const extra = 24; // breathing room
+          const safeBottom = containerRect.bottom - (navHeight + extra);
+
+          if (elRect.bottom > safeBottom) {
+            const delta = elRect.bottom - safeBottom;
+            if (container && typeof (container as any).scrollBy === 'function') {
+              (container as any).scrollBy({ top: delta, behavior: 'smooth' });
+            } else {
+              window.scrollBy({ top: delta, behavior: 'smooth' });
+            }
+          } else {
+            // Fallback alignment that respects scroll-margin-bottom
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+          }
         } catch {}
       }, 0);
     }

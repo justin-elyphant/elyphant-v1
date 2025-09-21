@@ -331,8 +331,19 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               </div>
             </CardContent>
           </Card>
-          {/* Mobile spacer to prevent overlap with bottom nav */}
-          <div className="lg:hidden bottom-action-spacer" aria-hidden="true" />
+          {/* Mobile sticky Pay CTA for saved card */}
+          <div className="sm:hidden sticky-pay-cta">
+            <Button
+              onClick={handleUseExistingCard}
+              disabled={isProcessingPayment}
+              size="lg"
+              className="w-full mobile-button-optimize"
+            >
+              {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+            </Button>
+          </div>
+          {/* Mobile/Tablet spacer to prevent overlap with bottom nav */}
+          <div className="xl:hidden bottom-action-spacer" aria-hidden="true" />
         </div>
       )}
 
@@ -377,7 +388,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </div>
       )}
-      <div className="lg:hidden bottom-action-spacer" aria-hidden="true" />
+      <div className="xl:hidden bottom-action-spacer" aria-hidden="true" />
     </div>
   );
 };

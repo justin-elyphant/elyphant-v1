@@ -296,7 +296,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   }
 
   return (
-    <div className="space-y-6 payment-form-mobile dynamic-content-safe">
+    <div className="space-y-6 payment-form-mobile dynamic-content-safe pb-safe-bottom">
       {/* CRITICAL: Saved payment methods section */}
       <SavedPaymentMethodsSection
         onSelectPaymentMethod={handleSelectPaymentMethod}

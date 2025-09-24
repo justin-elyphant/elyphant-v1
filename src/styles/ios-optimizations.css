@@ -247,7 +247,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
 
 /* Checkout content spacing - nav-aware */
 .checkout-content-spacing {
-  padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 48px);
 }
 
 /* Payment form mobile optimizations */
@@ -258,7 +258,13 @@ body.bottom-sheet-open .mobile-bottom-nav {
 /* Dynamic content safe spacing */
 .dynamic-content-safe {
   min-height: 0;
-  padding-bottom: 0;
+  padding-bottom: 0; /* default for desktop */
+}
+
+@media (max-width: 1024px) {
+  .dynamic-content-safe {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  }
 }
 
 /* Spacer to prevent overlap with bottom navigation */

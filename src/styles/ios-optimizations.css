@@ -209,7 +209,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
 /* Sticky Pay CTA (defaults to sticky; fixed on small screens to escape stacking contexts) */
 .sticky-pay-cta {
   position: sticky;
-  bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 28px);
+  bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 28px));
   z-index: 200; /* Ensure above bottom nav and content */
   background: hsl(var(--background) / 0.9);
   backdrop-filter: blur(10px);
@@ -226,7 +226,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
     position: fixed;
     left: 1rem;
     right: 1rem;
-    bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 28px);
+    bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px));
     z-index: 200; /* Above nav and any content */
     border-radius: 0.75rem;
   }
@@ -269,7 +269,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
 
 /* Spacer to prevent overlap with bottom navigation */
 .bottom-action-spacer {
-  height: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 96px);
+  height: max(140px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 112px));
 }
 
 /* Ensure scrollIntoView targets avoid overlap with bottom nav */

@@ -121,7 +121,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           const rootStyle = getComputedStyle(document.documentElement);
           const navVar = rootStyle.getPropertyValue('--bottom-nav-height').trim();
           const navHeight = parseInt(navVar || '64', 10) || 64;
-          const extra = 24; // breathing room
+          const extra = 48; // breathing room
           const safeBottom = containerRect.bottom - (navHeight + extra);
 
           if (elRect.bottom > safeBottom) {

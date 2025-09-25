@@ -206,11 +206,11 @@ body.bottom-sheet-open .mobile-bottom-nav {
   }
 }
 
-/* Sticky Pay CTA (defaults to sticky; fixed on small screens to escape stacking contexts) */
+/* Sticky Pay CTA (for in-document positioning) */
 .sticky-pay-cta {
   position: sticky;
   bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 28px));
-  z-index: 1000; /* Increased for portal rendering */
+  z-index: 200;
   background: hsl(var(--background) / 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -220,16 +220,45 @@ body.bottom-sheet-open .mobile-bottom-nav {
   -webkit-transform: translateZ(0);
 }
 
-/* Force fixed on mobile to ensure it sits above the bottom nav regardless of stacking contexts */
+/* Force fixed on mobile for in-document sticky */
 @media (max-width: 768px) {
   .sticky-pay-cta {
     position: fixed;
     left: 1rem;
     right: 1rem;
     bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px));
-    z-index: 200; /* Above nav and any content */
+    z-index: 200;
     border-radius: 0.75rem;
   }
+}
+
+/* Portal Pay CTA (for document.body portal rendering) */
+.portal-pay-cta {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px));
+  z-index: 9999; /* Highest z-index to ensure it's above everything */
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0.75rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.1);
+}
+
+/* Apple Pay button styling within portal */
+.portal-pay-cta .apple-pay-container {
+  width: 100%;
+}
+
+.portal-pay-cta .apple-pay-container .apple-pay-button-container {
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 /* Mobile-optimized buttons for cart and checkout */

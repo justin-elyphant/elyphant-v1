@@ -73,7 +73,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <MapPin className="h-5 w-5 flex-shrink-0" />
-            <span className="truncate">Shipping Information</span>
+            <span className="font-semibold">Shipping</span>
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0 text-xs">
               {totalDestinations} dest{totalDestinations > 1 ? 's' : ''}
             </Badge>

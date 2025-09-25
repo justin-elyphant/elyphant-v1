@@ -26,7 +26,8 @@
  * ========================================================================
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
 import UnifiedPaymentForm from '@/components/payments/UnifiedPaymentForm';
 
@@ -92,6 +94,25 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [saveNewCard, setSaveNewCard] = useState(false);
   const payCardRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobile();
+
+  // Portal management for mobile CTA
+  useEffect(() => {
+    const shouldShowPortalCTA = isMobile && selectedSavedMethod;
+    
+    if (shouldShowPortalCTA) {
+      console.log('🚀 Activating portal CTA and hiding bottom nav');
+      document.body.classList.add('bottom-sheet-open');
+    } else {
+      console.log('🔄 Deactivating portal CTA and restoring bottom nav');
+      document.body.classList.remove('bottom-sheet-open');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('bottom-sheet-open');
+    };
+  }, [isMobile, selectedSavedMethod]);
 
   /*
    * 🔗 CRITICAL: Payment method selection handler
@@ -331,20 +352,22 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               </div>
             </CardContent>
           </Card>
-          {/* Mobile sticky Pay CTA for saved card */}
-          <div className="sm:hidden sticky-pay-cta">
-            <Button
-              onClick={handleUseExistingCard}
-              disabled={isProcessingPayment}
-              size="lg"
-              className="w-full mobile-button-optimize"
-            >
-              {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-            </Button>
-          </div>
-          {/* Mobile/Tablet spacer to prevent overlap with bottom nav */}
-          <div className="xl:hidden bottom-action-spacer" aria-hidden="true" />
         </div>
+      )}
+
+      {/* Portal-based mobile CTA for saved card - renders to document.body */}
+      {isMobile && selectedSavedMethod && createPortal(
+        <div className="sticky-pay-cta">
+          <Button
+            onClick={handleUseExistingCard}
+            disabled={isProcessingPayment}
+            size="lg"
+            className="w-full mobile-button-optimize"
+          >
+            {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+          </Button>
+        </div>,
+        document.body
       )}
 
       {/* CRITICAL: New payment method form */}

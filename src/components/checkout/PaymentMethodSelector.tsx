@@ -341,12 +341,12 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                     Expires {selectedSavedMethod.exp_month.toString().padStart(2, '0')}/{selectedSavedMethod.exp_year}
                   </p>
                 </div>
-                {/* Desktop/Tablet button */}
+                {/* Pay button - always visible */}
                 <Button 
                   onClick={handleUseExistingCard}
                   disabled={isProcessingPayment}
                   size="lg"
-                  className="mobile-button-optimize hidden sm:inline-flex"
+                  className="mobile-button-optimize inline-flex"
                 >
                   {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
                 </Button>
@@ -361,6 +361,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Elements stripe={stripeClientManager.getStripePromise()}>
           <div className="portal-pay-cta space-y-3">
             {(() => {
+              console.log('Portal CTA mounted');
               // Device-specific payment method display
               const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
               
@@ -385,16 +386,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   </div>
                 );
               } else {
-                // Other mobile: Show only card payment button
+                // Other mobile: Show blue primary payment button
                 return (
                   <Button
                     onClick={handleUseExistingCard}
                     disabled={isProcessingPayment}
                     size="lg"
                     className="w-full mobile-button-optimize"
-                    variant="outline"
+                    variant="default"
                   >
-                    {isProcessingPayment ? 'Processing...' : `Pay with Card $${totalAmount.toFixed(2)}`}
+                    {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
                   </Button>
                 );
               }

@@ -239,7 +239,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
   position: fixed;
   left: 1rem;
   right: 1rem;
-  bottom: max(96px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px));
+  bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
   z-index: 9999; /* Highest z-index to ensure it's above everything */
   background: hsl(var(--background) / 0.95);
   backdrop-filter: blur(20px);

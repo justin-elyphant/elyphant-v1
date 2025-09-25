@@ -119,10 +119,14 @@ const MobileBottomNavigation: React.FC = () => {
     return location.pathname.startsWith(tab.href);
   };
 
-  // Don't show on auth pages to avoid clutter
-  if (location.pathname === "/auth" || location.pathname === "/reset-password") {
-    return null;
-  }
+// Don't show on auth pages or checkout to avoid CTA overlap
+if (
+  location.pathname === "/auth" ||
+  location.pathname === "/reset-password" ||
+  location.pathname.startsWith("/checkout")
+) {
+  return null;
+}
 
   return (
     <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-t border-border">

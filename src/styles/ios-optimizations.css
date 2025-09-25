@@ -163,6 +163,7 @@ body.bottom-sheet-open .mobile-bottom-nav {
   transform: translateY(100%);
   opacity: 0;
   pointer-events: none;
+  display: none !important;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -298,7 +299,12 @@ body.bottom-sheet-open .mobile-bottom-nav {
 
 /* Spacer to prevent overlap with bottom navigation */
 .bottom-action-spacer {
-  height: max(140px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 112px));
+  height: max(180px, calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 152px));
+}
+
+/* Universal scroll-padding for main scroll container */
+.ios-scroll {
+  scroll-padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Ensure scrollIntoView targets avoid overlap with bottom nav */

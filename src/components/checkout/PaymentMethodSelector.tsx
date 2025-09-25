@@ -1,29 +1,9 @@
 
-/*
- * ========================================================================
- * 🎯 PAYMENT METHOD SELECTOR - PHASE 3 UNIFIED INTEGRATION
- * ========================================================================
+/**
+ * Payment Method Selector Component
  * 
- * MIGRATION COMPLETED - Phase 3:
- * ✅ Updated to use UnifiedPaymentForm instead of StripePaymentForm
- * ✅ Integrated with UnifiedPaymentMethodManager for consistent UX
- * ✅ Preserved all existing functionality and protection measures
- * ✅ Enhanced error handling and user experience
- * 
- * INTEGRATION WITH PROTECTION MEASURES:
- * - Uses StripeClientManager for centralized Stripe client management
- * - Integrates with UnifiedPaymentService for payment processing
- * - Respects existing rate limiting and circuit breaker patterns
- * - Maintains audit trail and error logging
- * 
- * 🔗 DEPENDENCIES:
- * - UnifiedPaymentService: Centralized payment orchestration
- * - UnifiedPaymentForm: Consolidated payment form component
- * - UnifiedPaymentMethodManager: Payment method management
- * - SavedPaymentMethodsSection: Legacy compatibility wrapper
- * 
- * Phase 3 Implementation - 2025-01-24
- * ========================================================================
+ * Provides comprehensive payment method selection with support for
+ * both saved and new payment methods, including mobile-optimized UX.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -102,10 +82,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     const shouldShowPortalCTA = isMobile && selectedSavedMethod;
     
     if (shouldShowPortalCTA) {
-      console.log('🚀 Activating portal CTA and hiding bottom nav');
       document.body.classList.add('bottom-sheet-open');
     } else {
-      console.log('🔄 Deactivating portal CTA and restoring bottom nav');
       document.body.classList.remove('bottom-sheet-open');
     }
 
@@ -361,7 +339,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Elements stripe={stripeClientManager.getStripePromise()}>
           <div className="portal-pay-cta space-y-3">
             {(() => {
-              console.log('Portal CTA mounted');
               // Device-specific payment method display
               const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
               

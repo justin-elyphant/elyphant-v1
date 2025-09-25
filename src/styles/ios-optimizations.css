@@ -288,6 +288,13 @@ body.bottom-sheet-open .mobile-bottom-nav {
   scroll-margin-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
+/* Checkout Mobile Layout Constraints */
+.checkout-content-spacing {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 /* Prevent horizontal scroll on mobile */
 @media (max-width: 768px) {
   .mobile-no-scroll {
@@ -307,6 +314,39 @@ body.bottom-sheet-open .mobile-bottom-nav {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
+  }
+  
+  /* Enhanced checkout mobile constraints */
+  .checkout-content-spacing {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Ensure all checkout content respects mobile constraints */
+  .checkout-content-spacing * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Specific card constraints */
+  .checkout-content-spacing .card {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Form and input constraints */
+  .checkout-content-spacing input,
+  .checkout-content-spacing textarea,
+  .checkout-content-spacing select {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Grid system mobile override */
+  .checkout-content-spacing .grid {
+    width: 100%;
     max-width: 100%;
   }
 }

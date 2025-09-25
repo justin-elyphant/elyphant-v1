@@ -68,17 +68,17 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Shipping Information
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              {totalDestinations} destination{totalDestinations > 1 ? 's' : ''}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <MapPin className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Shipping Information</span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0 text-xs">
+              {totalDestinations} dest{totalDestinations > 1 ? 's' : ''}
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Mobile: Collapsible toggle */}
             <Button
               variant="ghost"
@@ -132,31 +132,31 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
           });
           
           return (
-          <div key={group.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-100 rounded-full">
+          <div key={group.id} className="w-full p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-start gap-3 w-full">
+              <div className="p-2 bg-green-100 rounded-full flex-shrink-0">
                 <Users className="h-4 w-4 text-green-600" />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium text-green-800">{group.connectionName}</p>
-                  <div className="flex items-center gap-1">
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <p className="font-medium text-green-800 truncate flex-1">{group.connectionName}</p>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 text-xs">
                       <Package className="h-3 w-3 mr-1" />
-                      {group.items.length} item{group.items.length > 1 ? 's' : ''}
+                      {group.items.length}
                     </Badge>
                   </div>
                 </div>
                 
                 {group.shippingAddress && (
                   <div className="text-sm text-green-700 mb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
                         {group.isPrivateAddress ? (
                           <div className="flex items-center gap-2">
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium flex items-center gap-2">
-                                Hidden Address
+                                <span className="truncate">Hidden Address</span>
                                 <AddressVerificationBadge
                                   verified={group.address_verified ?? unifiedProfile?.address_verified}
                                   verificationMethod={group.address_verification_method ?? unifiedProfile?.address_verification_method}
@@ -166,15 +166,15 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                                   showText={false}
                                 />
                               </p>
-                              <p className="text-muted-foreground">
+                              <p className="text-muted-foreground truncate">
                                 {group.shippingAddress.city}, {group.shippingAddress.state}
                               </p>
                             </div>
                           </div>
                         ) : (
-                          <div>
+                          <div className="min-w-0">
                             <p className="font-medium flex items-center gap-2">
-                              {group.shippingAddress.name}
+                              <span className="truncate">{group.shippingAddress.name}</span>
                               <AddressVerificationBadge
                                 verified={group.address_verified ?? unifiedProfile?.address_verified}
                                 verificationMethod={group.address_verification_method ?? unifiedProfile?.address_verification_method}
@@ -184,8 +184,8 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                                 showText={false}
                               />
                             </p>
-                            <p>{group.shippingAddress.address}</p>
-                            <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                            <p className="break-words">{group.shippingAddress.address}</p>
+                            <p className="break-words">{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
                           </div>
                         )}
                       </div>
@@ -245,24 +245,24 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
 
         {/* Your Address (Unassigned Items) */}
         {unassignedItems.length > 0 && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 rounded-full">
+          <div className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3 w-full">
+              <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
                 <User className="h-4 w-4 text-blue-600" />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium text-blue-800">Your Address</p>
-                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <p className="font-medium text-blue-800 truncate flex-1">Your Address</p>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs flex-shrink-0">
                     <Package className="h-3 w-3 mr-1" />
-                    {unassignedItems.length} item{unassignedItems.length > 1 ? 's' : ''}
+                    {unassignedItems.length}
                   </Badge>
                 </div>
                 
                 {hasCompleteAddress && shippingAddress ? (
                   <div className="text-sm text-blue-700">
                     <p className="font-medium flex items-center gap-2">
-                      {profile?.name}
+                      <span className="truncate">{profile?.name}</span>
                       <AddressVerificationBadge
                         verified={unifiedProfile?.address_verified}
                         verificationMethod={unifiedProfile?.address_verification_method}
@@ -272,17 +272,17 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                         showText={false}
                       />
                     </p>
-                    <p>{shippingAddress.address_line1 || shippingAddress.street}</p>
+                    <p className="break-words">{shippingAddress.address_line1 || shippingAddress.street}</p>
                     {shippingAddress.address_line2 && (
-                      <p>{shippingAddress.address_line2}</p>
+                      <p className="break-words">{shippingAddress.address_line2}</p>
                     )}
-                    <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code || shippingAddress.zipCode}</p>
+                    <p className="break-words">{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code || shippingAddress.zipCode}</p>
                   </div>
                 ) : (
                   <div className="text-sm text-orange-600">
                     <p className="flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      No shipping address configured
+                      <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">No shipping address configured</span>
                     </p>
                   </div>
                 )}

@@ -416,25 +416,26 @@ const UnifiedCheckoutForm: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container checkout-content-spacing">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/cart')}
-            className="p-1 h-8 w-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container checkout-content-spacing">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/cart')}
+              className="p-1 h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
+          </div>
+          <p className="text-muted-foreground ml-11">Review your order and complete payment</p>
         </div>
-        <p className="text-muted-foreground ml-11">Review your order and complete payment</p>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        {/* Main Checkout Content - Mobile: Stack vertically */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+        <div className="w-full max-w-full grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* Main Checkout Content - Mobile: Stack vertically */}
+          <div className="w-full lg:col-span-2 space-y-4 lg:space-y-6 min-w-0">
           {/* Shipping Review Section - Mobile: Collapsible */}
           <CheckoutShippingReview shippingCost={shippingCost} />
 
@@ -477,19 +478,20 @@ const UnifiedCheckoutForm: React.FC = () => {
           </Card>
         </div>
 
-        {/* Order Summary Sidebar - Mobile: Full width, stacked */}
-        <div className="lg:col-span-1 order-first lg:order-last">
-          <div className="lg:sticky lg:top-6">
-            <CheckoutOrderSummary
-            items={cartItems}
-            subtotal={subtotal}
-            shippingCost={shippingCost}
-            giftingFee={giftingFee}
-            giftingFeeName={giftingFeeName}
-            giftingFeeDescription={giftingFeeDescription}
-            taxAmount={taxAmount}
-            totalAmount={totalAmount}
-            />
+          {/* Order Summary Sidebar - Mobile: Full width, stacked */}
+          <div className="w-full lg:col-span-1 order-first lg:order-last min-w-0">
+            <div className="lg:sticky lg:top-6">
+              <CheckoutOrderSummary
+                items={cartItems}
+                subtotal={subtotal}
+                shippingCost={shippingCost}
+                giftingFee={giftingFee}
+                giftingFeeName={giftingFeeName}
+                giftingFeeDescription={giftingFeeDescription}
+                taxAmount={taxAmount}
+                totalAmount={totalAmount}
+              />
+            </div>
           </div>
         </div>
       </div>

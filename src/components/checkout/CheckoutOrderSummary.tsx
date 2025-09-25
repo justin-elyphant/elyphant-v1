@@ -38,7 +38,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
     }
   }
   return (
-    <Card className="mobile-card">
+    <Card className="w-full lg:sticky lg:top-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShoppingBag className="h-5 w-5" />
@@ -49,7 +49,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
         {/* Items */}
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.product.id} className="flex items-center gap-3 mobile-card">
+            <div key={item.product.id} className="flex items-center gap-3 w-full">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded overflow-hidden flex-shrink-0">
                 <img 
                   src={getPrimaryProductImage(item.product)}
@@ -60,14 +60,14 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                   }}
                 />
               </div>
-              <div className="flex-grow min-w-0">
-                <p className="font-medium text-sm mobile-truncate">{item.product.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm break-words">{item.product.name}</p>
                 {item.variationText && (
-                  <p className="text-xs text-muted-foreground">{item.variationText}</p>
+                  <p className="text-xs text-muted-foreground break-words">{item.variationText}</p>
                 )}
                 <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
               </div>
             </div>

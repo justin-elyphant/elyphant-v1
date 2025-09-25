@@ -119,11 +119,13 @@ const MobileBottomNavigation: React.FC = () => {
     return location.pathname.startsWith(tab.href);
   };
 
-// Don't show on auth pages or checkout to avoid CTA overlap
+// Don't show on auth pages, checkout, or home page to avoid CTA overlap
 if (
   location.pathname === "/auth" ||
   location.pathname === "/reset-password" ||
-  location.pathname.startsWith("/checkout")
+  location.pathname.startsWith("/checkout") ||
+  location.pathname === "/" ||
+  location.pathname === "/home"
 ) {
   return null;
 }

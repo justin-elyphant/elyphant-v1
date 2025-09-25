@@ -273,8 +273,8 @@ const UnifiedPaymentForm: React.FC<UnifiedPaymentFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Express Checkout Buttons - Only for payment mode */}
-      {paymentRequest && canMakePayment && mode === 'payment' && (
+      {/* Express Checkout Buttons - Temporarily hidden for MVP */}
+      {false && paymentRequest && canMakePayment && mode === 'payment' && (
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

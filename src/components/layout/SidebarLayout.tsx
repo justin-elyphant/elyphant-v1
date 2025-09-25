@@ -58,16 +58,16 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full overflow-x-hidden max-w-[100vw]">
       {/* Fixed header wrapper with measured height */}
-      <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-50">
+      <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-50 overflow-x-hidden max-w-[100vw]">
         <Header />
       </div>
       
       {/* Sidebar layout below header */}
       <SidebarProvider defaultOpen={false}>
         <div
-          className="flex w-full"
+          className="flex w-full overflow-x-hidden"
           style={{
             height: "100vh",
             paddingTop: `calc(${headerHeight}px + env(safe-area-inset-top, 0px))`,
@@ -75,7 +75,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         >
           <AppSidebar />
           <SidebarInset className="flex-1">
-            <main className="h-full overflow-y-auto pb-safe-bottom mobile-container ios-scroll">
+            <main className="h-full overflow-y-auto overflow-x-hidden pb-safe-bottom mobile-container ios-scroll max-w-[100vw]">
               {children}
             </main>
           </SidebarInset>

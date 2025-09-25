@@ -358,46 +358,48 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {/* Portal-based mobile CTA for saved card - renders to document.body */}
       {isMobile && selectedSavedMethod && createPortal(
-        <div className="portal-pay-cta space-y-3">
-          {/* Apple Pay option (iOS Safari only) */}
-          <div className="apple-pay-container">
-            <ApplePayButton
-              items={[{ 
-                id: 'checkout-total', 
-                name: 'Total Order', 
-                price: totalAmount, 
-                image: '', 
-                product_id: 'total', 
-                quantity: 1 
-              }]}
-              totalAmount={totalAmount}
-              onPaymentSuccess={onPaymentSuccess}
-              onPaymentError={onPaymentError}
+        <Elements stripe={stripeClientManager.getStripePromise()}>
+          <div className="portal-pay-cta space-y-3">
+            {/* Apple Pay option (iOS Safari only) */}
+            <div className="apple-pay-container">
+              <ApplePayButton
+                items={[{ 
+                  id: 'checkout-total', 
+                  name: 'Total Order', 
+                  price: totalAmount, 
+                  image: '', 
+                  product_id: 'total', 
+                  quantity: 1 
+                }]}
+                totalAmount={totalAmount}
+                onPaymentSuccess={onPaymentSuccess}
+                onPaymentError={onPaymentError}
+                disabled={isProcessingPayment}
+              />
+            </div>
+            
+            {/* Separator between Apple Pay and card payment */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-muted-foreground/20" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+            
+            {/* Traditional card payment button */}
+            <Button
+              onClick={handleUseExistingCard}
               disabled={isProcessingPayment}
-            />
+              size="lg"
+              className="w-full mobile-button-optimize"
+              variant="outline"
+            >
+              {isProcessingPayment ? 'Processing...' : `Pay with Card $${totalAmount.toFixed(2)}`}
+            </Button>
           </div>
-          
-          {/* Separator between Apple Pay and card payment */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-muted-foreground/20" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">or</span>
-            </div>
-          </div>
-          
-          {/* Traditional card payment button */}
-          <Button
-            onClick={handleUseExistingCard}
-            disabled={isProcessingPayment}
-            size="lg"
-            className="w-full mobile-button-optimize"
-            variant="outline"
-          >
-            {isProcessingPayment ? 'Processing...' : `Pay with Card $${totalAmount.toFixed(2)}`}
-          </Button>
-        </div>,
+        </Elements>,
         document.body
       )}
 

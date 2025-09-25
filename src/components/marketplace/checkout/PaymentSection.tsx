@@ -148,18 +148,21 @@ const PaymentSection = ({
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <RadioGroup value={paymentMethod} onValueChange={onPaymentMethodChange}>
-            <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
-              paymentMethod === 'express' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
-            }`}>
-              <RadioGroupItem value="express" id="express" />
-              <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
-                <Smartphone className="h-4 w-4" />
-                Express Checkout (Apple Pay, Google Pay)
-              </Label>
-              {paymentMethod === 'express' && (
-                <CheckCircle className="h-4 w-4 text-primary" />
-              )}
-            </div>
+            {/* Express checkout temporarily hidden for MVP */}
+            {false && (
+              <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
+                paymentMethod === 'express' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
+              }`}>
+                <RadioGroupItem value="express" id="express" />
+                <Label htmlFor="express" className="flex items-center gap-2 flex-1 cursor-pointer text-sm">
+                  <Smartphone className="h-4 w-4" />
+                  Express Checkout (Apple Pay, Google Pay)
+                </Label>
+                {paymentMethod === 'express' && (
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                )}
+              </div>
+            )}
             
             <div className={`flex items-center space-x-2 p-3 border rounded-lg transition-all ${
               paymentMethod === 'card' ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/50'
@@ -208,41 +211,11 @@ const PaymentSection = ({
         </Card>
       )}
 
-      {/* Express Checkout - Use Stripe's native PaymentRequest */}
-      {paymentMethod === 'express' && (
+      {/* Express Checkout - Temporarily hidden for MVP */}
+      {false && paymentMethod === 'express' && (
         <Card>
           <CardContent className="pt-4">
-            {isCreatingPaymentIntent ? (
-              <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mx-auto mb-3" />
-                <p className="text-sm">Setting up express checkout...</p>
-              </div>
-            ) : clientSecret ? (
-              <Elements stripe={stripeClientManager.getStripePromise()} options={{ clientSecret }}>
-                <UnifiedPaymentForm
-                  clientSecret={clientSecret}
-                  amount={totalAmount}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                  isProcessing={paymentProcessing}
-                  onProcessingChange={setPaymentProcessing}
-                  allowSaveCard={false}
-                  mode="payment"
-                />
-              </Elements>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-destructive text-sm">Failed to initialize express checkout</p>
-                <Button 
-                  variant="outline" 
-                  onClick={createPaymentIntent}
-                  className="mt-3 h-9"
-                  size="sm"
-                >
-                  Try Again
-                </Button>
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">Express checkout temporarily unavailable</p>
           </CardContent>
         </Card>
       )}

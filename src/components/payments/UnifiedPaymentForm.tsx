@@ -98,6 +98,10 @@ const UnifiedPaymentForm: React.FC<UnifiedPaymentFormProps> = ({
       },
       requestPayerName: true,
       requestPayerEmail: true,
+      requestPayerPhone: false,
+      requestShipping: false,
+      // Enable Apple Pay and Google Pay
+      disableWallets: [],
     });
 
     pr.canMakePayment().then(result => {
@@ -282,7 +286,18 @@ const UnifiedPaymentForm: React.FC<UnifiedPaymentFormProps> = ({
           </div>
           
           <div className="max-w-sm mx-auto">
-            <PaymentRequestButtonElement options={{ paymentRequest }} />
+            <PaymentRequestButtonElement 
+              options={{ 
+                paymentRequest,
+                style: {
+                  paymentRequestButton: {
+                    type: 'default', // 'default' | 'book' | 'buy' | 'checkout' | 'donate'
+                    theme: 'dark', // 'dark' | 'light' | 'light-outline'
+                    height: '40px',
+                  },
+                },
+              }} 
+            />
           </div>
           
           <div className="relative">

@@ -50,7 +50,7 @@ const PaymentSection = ({
   const [actualPaymentMethod, setActualPaymentMethod] = useState<string>('');
 
   useEffect(() => {
-    if (paymentMethod === 'card' && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
+    if ((paymentMethod === 'card' || paymentMethod === 'express') && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
       createPaymentIntent();
     }
   }, [paymentMethod, totalAmount]);
@@ -208,16 +208,43 @@ const PaymentSection = ({
         </Card>
       )}
 
-      {/* Express Checkout */}
+      {/* Express Checkout - Use Stripe's native PaymentRequest */}
       {paymentMethod === 'express' && (
-        <ExpressCheckoutButton
-          cartItems={cartItems}
-          totalAmount={totalAmount}
-          shippingInfo={shippingInfo}
-          giftOptions={giftOptions}
-          onProcessing={() => {}}
-          onSuccess={() => {}}
-        />
+        <Card>
+          <CardContent className="pt-4">
+            {isCreatingPaymentIntent ? (
+              <div className="text-center py-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent mx-auto mb-3" />
+                <p className="text-sm">Setting up express checkout...</p>
+              </div>
+            ) : clientSecret ? (
+              <Elements stripe={stripeClientManager.getStripePromise()} options={{ clientSecret }}>
+                <UnifiedPaymentForm
+                  clientSecret={clientSecret}
+                  amount={totalAmount}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                  isProcessing={paymentProcessing}
+                  onProcessingChange={setPaymentProcessing}
+                  allowSaveCard={false}
+                  mode="payment"
+                />
+              </Elements>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-destructive text-sm">Failed to initialize express checkout</p>
+                <Button 
+                  variant="outline" 
+                  onClick={createPaymentIntent}
+                  className="mt-3 h-9"
+                  size="sm"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Card Payment */}

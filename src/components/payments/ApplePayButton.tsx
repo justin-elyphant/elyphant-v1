@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 import { PaymentRequestButtonElement, useStripe } from '@stripe/react-stripe-js';
 import { useAuth } from '@/contexts/auth';
 import { CheckoutItem } from '@/types/checkout';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApplePayButtonProps {
   items: CheckoutItem[];
@@ -47,6 +48,10 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
   useEffect(() => {
     if (!stripe) return;
+
+    // Only show on iOS Safari
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    if (!isIOSSafari) return;
 
     // Create payment request for Apple Pay
     const pr = stripe.paymentRequest({
@@ -77,21 +82,27 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       try {
         console.log('🍎 Apple Pay payment method created:', event.paymentMethod.id);
         
-        // Create payment intent on backend
-        const response = await fetch('/api/create-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        // Create payment intent on backend using Supabase edge function
+        const { data, error: functionError } = await supabase.functions.invoke('create-payment-intent', {
+          body: {
             amount: Math.round(totalAmount * 100),
-            payment_method_id: event.paymentMethod.id,
-            user_id: user?.id,
-            items: items,
-          }),
+            currency: 'usd',
+            metadata: {
+              user_id: user?.id,
+              order_type: 'marketplace_purchase',
+              item_count: items.length,
+              scheduledDeliveryDate: '',
+              isScheduledDelivery: false,
+              deliveryDate: ''
+            }
+          }
         });
 
-        const { client_secret, payment_intent_id } = await response.json();
+        if (functionError) {
+          throw new Error(functionError.message || 'Failed to create payment intent');
+        }
+
+        const { client_secret, payment_intent_id } = data;
 
         if (!client_secret) {
           throw new Error('Failed to create payment intent');

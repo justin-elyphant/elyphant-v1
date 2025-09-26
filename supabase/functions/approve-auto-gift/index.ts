@@ -28,7 +28,7 @@ function getGiftMessage(execution: any): string {
   
   console.log('🎁 [approve-auto-gift] Generating personalized gift message for occasion:', occasion);
   
-  const personalizedMessages = {
+  const personalizedMessages: { [key: string]: string } = {
     'birthday': `Happy Birthday, ${recipientName}! 🎂 Hope your special day is amazing!`,
     'anniversary': `Happy Anniversary, ${recipientName}! 💕 Celebrating this special milestone with you!`,
     'christmas': `Merry Christmas, ${recipientName}! 🎄 Wishing you joy and happiness this holiday season!`,
@@ -182,7 +182,7 @@ serve(async (req) => {
     console.log('📦 [approve-auto-gift] Processing product selection...');
     if (selectedProductIds && selectedProductIds.length > 0) {
       console.log('🎯 [approve-auto-gift] Filtering to selected products:', selectedProductIds);
-      finalProducts = execution.selected_products?.filter(product => 
+      finalProducts = execution.selected_products?.filter((product: any) => 
         selectedProductIds.includes(product.id)
       ) || [];
     }
@@ -191,7 +191,7 @@ serve(async (req) => {
 
     // Update execution to approved status
     console.log('📝 [approve-auto-gift] Updating execution to approved status...');
-    const totalAmount = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+    const totalAmount = finalProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0);
     console.log('💰 [approve-auto-gift] Total amount:', totalAmount);
     
     await supabase
@@ -231,7 +231,7 @@ serve(async (req) => {
       console.log('   - Rule gift_preferences:', JSON.stringify(rule.gift_preferences, null, 2));
 
       // Process real payment using stored payment method
-      const orderTotal = finalProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+      const orderTotal = finalProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0);
       
       console.log(`💰 Processing auto-gift order of $${orderTotal.toFixed(2)} with real Stripe payment`);
       
@@ -364,7 +364,7 @@ serve(async (req) => {
       console.log(`✅ Created order ${newOrder.id} for execution ${executionId}`);
 
       // Add order items using correct schema columns (matching marketplace orders)
-      const orderItemsData = finalProducts.map(product => {
+      const orderItemsData = finalProducts.map((product: any) => {
         const unitPrice = product.price;
         const quantity = 1;
         return {
@@ -501,11 +501,11 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } catch (orderError) {
+    } catch (orderError: any) {
       console.error(`❌ Error in order placement for execution ${executionId}:`, orderError);
       
       // Check if this is a payment-related error and provide specific messaging
-      let errorMessage = orderError.message;
+      let errorMessage = orderError?.message || 'Unknown error occurred';
       let shouldRetry = true;
       
       if (errorMessage.includes('Payment')) {

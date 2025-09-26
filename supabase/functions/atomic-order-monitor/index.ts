@@ -56,11 +56,11 @@ Deno.serve(async (req) => {
     // Calculate metrics
     const metrics = {
       totalOrders: orders.length,
-      ordersByStatus: orders.reduce((acc, order) => {
+      ordersByStatus: orders.reduce((acc: any, order: any) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       }, {}),
-      ordersByZincStatus: orders.reduce((acc, order) => {
+      ordersByZincStatus: orders.reduce((acc: any, order: any) => {
         const status = order.zinc_status || 'null';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
@@ -109,11 +109,11 @@ Deno.serve(async (req) => {
       status: 200
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in atomic monitoring:', error);
     return new Response(JSON.stringify({
       error: 'Internal server error',
-      message: error.message
+      message: error?.message || 'Unknown error occurred'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -40,7 +40,7 @@ serve(async (req) => {
       for (const order of problematicOrders) {
         console.log(`🔍 Auditing order ${order.order_number} (${order.id})`);
         
-        const audit = {
+        const audit: any = {
           orderId: order.id,
           orderNumber: order.order_number,
           currentStatus: order.status,
@@ -104,12 +104,12 @@ serve(async (req) => {
       status: 200
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('🚨 Audit error:', error);
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: error?.message || 'Unknown error occurred',
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -26,8 +26,9 @@ const NavigationBar = () => {
             <div className="hidden md:flex items-center space-x-4">
               <div className="h-10 w-20 surface-secondary rounded animate-pulse" />
             </div>
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center gap-tight">
               <div className="h-10 w-10 surface-secondary rounded animate-pulse" />
+              <AuthButtons />
             </div>
           </div>
         </div>

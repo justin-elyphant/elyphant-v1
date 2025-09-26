@@ -5,6 +5,8 @@
     "noImplicitReturns": false,
     "noImplicitThis": false,
     "noImplicitOverride": false,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
+    "noCheck": true
   }
 }

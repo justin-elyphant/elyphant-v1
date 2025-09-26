@@ -167,7 +167,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Enhanced Gift Recommendations Error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timeElapsed: Date.now() - startTime 
     }), {
       status: 500,
@@ -559,8 +559,8 @@ async function gatherRapidRecipientIntelligence(recipientIdentifier: string, use
     
     // Compile available intelligence
     const intelligence = {
-      data_sources: [],
-      confidence_level: 'low',
+      data_sources: [] as string[],
+      confidence_level: 'low' as 'low' | 'medium' | 'high',
       
       // From invitation context
       relationship_context: invitationData ? {

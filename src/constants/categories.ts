@@ -71,7 +71,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 5,
     name: "Home & Living",
     value: "home",
-    searchTerm: "best selling home products decor furniture accessories", // Enhanced for variety
+    searchTerm: "home decor furniture kitchen accessories bedding curtains pillows candles", // Optimized for home products
     icon: Home,
     description: "Decor and household items",
     displayName: "Home & Garden"
@@ -80,7 +80,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 6,
     name: "Beauty",
     value: "beauty",
-    searchTerm: "best selling beauty products skincare makeup cosmetics", // Enhanced
+    searchTerm: "skincare makeup cosmetics beauty products lipstick foundation moisturizer", // Optimized for specific beauty products
     icon: Heart,
     description: "Skincare and cosmetics",
     displayName: "Beauty & Personal Care"
@@ -116,7 +116,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 9,
     name: "Toys & Games",
     value: "toys",
-    searchTerm: "best selling toys games educational kids lego disney", // Enhanced for brand diversity
+    searchTerm: "toys games kids children educational puzzles building blocks dolls action figures", // Optimized for toy products
     icon: Gamepad2,
     description: "Fun for all ages"
   },
@@ -132,7 +132,7 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     id: 11,
     name: "Arts & Crafts",
     value: "arts",
-    searchTerm: "best arts crafts supplies crayola fiskars michaels hobby lobby painting drawing knitting sewing scrapbooking", // Enhanced for brand diversity
+    searchTerm: "art supplies craft supplies drawing materials paint brushes canvas markers colored pencils craft kits scrapbook paper", // Optimized for better product relevance
     icon: Palette,
     description: "Creative supplies and tools",
     displayName: "Craft Supplies & Tools"

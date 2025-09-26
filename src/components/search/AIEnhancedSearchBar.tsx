@@ -21,6 +21,7 @@ import UnifiedSearchSuggestions from "@/components/search/UnifiedSearchSuggestio
 import RecentSearches from "@/components/search/RecentSearches";
 import { FriendSearchResult } from "@/services/search/friendSearchService";
 import { Product } from "@/types/product";
+import { getCategoryDisplayNameFromSearchTerm, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
 
 // Global state to prevent duplicate Nicole interfaces
 let globalNicoleState = {
@@ -82,9 +83,13 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
   // Initialize and sync search term from URL
   useEffect(() => {
-    // Always sync with URL search term (including clearing when no search param)
-    setQuery(urlSearchTerm);
-    setSearchQuery(urlSearchTerm);
+    // Check if this is a category search term and display the clean name
+    const displayTerm = isCategorySearchTerm(urlSearchTerm) 
+      ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
+      : urlSearchTerm;
+    
+    setQuery(displayTerm);
+    setSearchQuery(displayTerm);
   }, [urlSearchTerm, setSearchQuery]);
 
   // Open Nicole interface when mode becomes nicole (from URL or mode toggle)

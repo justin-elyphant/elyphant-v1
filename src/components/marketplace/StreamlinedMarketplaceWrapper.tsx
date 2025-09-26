@@ -36,6 +36,7 @@ import FilterPills from "./FilterPills";
 import { useFilteredProducts } from "./hooks/useFilteredProducts";
 import VariationTestPage from "./VariationTestPage";
 import QuickVariationTest from "./QuickVariationTest";
+import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
 
 // Add test mode flag - set to true to show variation test page
 const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
@@ -608,14 +609,26 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       {showSearchInfo && !brandCategories && !isPersonalizedActive && (() => {
         // Prioritize search term display for active searches
         if (urlSearchTerm) {
+          // Check if this is a category search and get the clean display name
+          const displayTitle = isCategorySearchTerm(urlSearchTerm) 
+            ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
+            : urlSearchTerm;
+            
+          // Also check for category parameter
+          const categoryParam = searchParams.get('category');
+          const categoryDisplayName = categoryParam ? getCategoryDisplayNameFromValue(categoryParam) : null;
+          
+          // Use category name if available, otherwise use the cleaned search term
+          const finalTitle = categoryDisplayName || displayTitle;
+          
           return (
             <div className="mb-8">
               <div className="text-center">
                 <h1 className="text-3xl font-bold text-foreground mb-2 capitalize">
-                  {urlSearchTerm}
+                  {finalTitle}
                 </h1>
                 <p className="text-lg text-muted-foreground mb-4">
-                  Search results for "{urlSearchTerm}"
+                  {categoryDisplayName ? `Browse ${finalTitle.toLowerCase()}` : `Search results for "${finalTitle}"`}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {totalCount} {totalCount === 1 ? 'product' : 'products'} found

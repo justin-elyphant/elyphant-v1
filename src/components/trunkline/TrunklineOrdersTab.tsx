@@ -5,6 +5,7 @@ import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
 import RetryNotificationService from "@/components/admin/RetryNotificationService";
+import WebhookRecoveryPanel from "./orders/WebhookRecoveryPanel";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
@@ -47,6 +48,14 @@ const TrunklineOrdersTab = () => {
         loading={loading}
         onOrderClick={handleOrderClick}
         onOrderUpdated={refetch}
+      />
+
+      {/* Webhook Failure Recovery */}
+      <WebhookRecoveryPanel 
+        onOrderRecovered={(orderId) => {
+          console.log(`Order ${orderId} recovered from webhook failure`);
+          refetch(); // Refresh the orders list
+        }}
       />
 
       {/* Retry Processing Queue */}

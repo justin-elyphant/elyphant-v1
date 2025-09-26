@@ -28,7 +28,7 @@ const TrunklineOrdersTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden pr-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Order Management</h1>
         <p className="text-slate-600 mt-1">

@@ -118,9 +118,9 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
           Orders ({orders.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="max-w-full">
-          <div className="rounded-md border min-w-[800px]">
+      <CardContent className="p-0">
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[800px] border rounded-md">{/* Fixed: Remove scrollarea, use plain overflow */}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -253,7 +253,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
             </TableBody>
           </Table>
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
       
       <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>

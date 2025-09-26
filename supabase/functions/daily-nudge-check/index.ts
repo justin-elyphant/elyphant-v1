@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -150,60 +147,24 @@ They've been looking forward to connecting with you and sharing something specia
         // Create signup link
         const signupLink = `https://dmkxtkvlispxeqfzlczr.supabase.co/auth/v1/verify?token=signup&type=signup&redirect_to=${encodeURIComponent('https://dmkxtkvlispxeqfzlczr.supabase.co/streamlined-signup')}`;
 
-        // Send email
-        const emailResponse = await resend.emails.send({
-          from: "Gift Invitations <gifts@elyphant.com>",
-          to: [connection.recipient_email],
-          subject: `${senderName} sent you a gift invitation!`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0; font-size: 28px;">🎁 Gift Invitation</h1>
-                <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">From ${senderName}</p>
-              </div>
-              
-              <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #555;">
-                    ${automaticMessage.replace(/\n/g, '<br>')}
-                  </p>
-                </div>
-                
-                <div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0; color: #1565c0; font-size: 14px;">
-                    <strong>Automated Reminder:</strong> This is reminder #${nudgeInfo.total_nudges + 1} of 3. We send these to make sure you don't miss out on ${senderName}'s thoughtful gift!
-                  </p>
-                </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${signupLink}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    Accept Gift Invitation
-                  </a>
-                </div>
-                
-                <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
-                  <p style="font-size: 14px; color: #666; margin: 0;">
-                    <strong>What happens next?</strong><br>
-                    1. Click the button above to join our platform<br>
-                    2. Complete your profile setup<br>
-                    3. See what ${senderName} has planned for you!
-                  </p>
-                </div>
-                
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                  <p style="font-size: 12px; color: #999; margin: 0;">
-                    This is an automated reminder from our gift platform.
-                    <br>If you don't want to receive these reminders, please reply to this email.
-                  </p>
-                </div>
-              </div>
-            </div>
-          `,
+        // Send email via send-email-notification function
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email-notification', {
+          body: {
+            type: 'gift_invitation_nudge',
+            to: connection.recipient_email,
+            data: {
+              senderName,
+              recipientName: connection.recipient_name,
+              signupLink,
+              automaticMessage,
+              nudgeNumber: nudgeInfo.total_nudges + 1
+            }
+          }
         });
 
-        if (emailResponse.error) {
-          console.error(`Error sending email to ${connection.recipient_email}:`, emailResponse.error);
-          errors.push(`Failed to send email to ${connection.recipient_email}: ${emailResponse.error}`);
+        if (emailError) {
+          console.error(`Error sending email to ${connection.recipient_email}:`, emailError);
+          errors.push(`Failed to send email to ${connection.recipient_email}: ${emailError.message}`);
         } else {
           // Record the nudge in the database
           const { error: insertError } = await supabase

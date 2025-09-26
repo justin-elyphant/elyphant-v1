@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,42 +87,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email notification
     if (requestData.include_notifications) {
-      const emailResponse = await resend.emails.send({
-        from: "Elyphant <noreply@elyphant.com>",
-        to: [requestData.recipient_email],
-        subject: `${requesterProfile.name} needs your address for gift delivery`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #2563eb; text-align: center;">Address Request</h2>
-            
-            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>${requesterProfile.name}</strong> has requested your shipping address for gift delivery.</p>
-              
-              <div style="background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2563eb;">
-                <p style="margin: 0; font-style: italic;">"${requestData.message}"</p>
-              </div>
-              
-              <p style="color: #64748b; font-size: 14px;">
-                This request will expire in ${requestData.expires_in_days} days.
-                Your address will only be used for gift deliveries and kept private.
-              </p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${Deno.env.get('SUPABASE_URL')?.replace('https://', 'https://app.')}/connections?tab=address-requests" 
-                 style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                Share Your Address
-              </a>
-            </div>
-            
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; color: #64748b; font-size: 12px; text-align: center;">
-              <p>This request was sent through Elyphant. If you don't want to receive these notifications, you can update your preferences in your account settings.</p>
-            </div>
-          </div>
-        `,
+      // Use send-email-notification function instead of direct resend
+      const supabaseServiceRole = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: emailResult, error: emailError } = await supabaseServiceRole.functions.invoke('send-email-notification', {
+        body: {
+          type: 'address_request',
+          to: requestData.recipient_email,
+          data: {
+            requesterName: requesterProfile.name,
+            message: requestData.message,
+            expiresInDays: requestData.expires_in_days,
+            requestId: addressRequest.id
+          }
+        }
       });
 
-      console.log('Address request email sent:', emailResponse);
+      console.log('Address request email sent:', emailResult);
     }
 
     return new Response(JSON.stringify({ 

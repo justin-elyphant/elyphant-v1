@@ -64,10 +64,10 @@ const NavigationBar = () => {
             {user ? <UserButton /> : <AuthButtons />}
           </div>
 
-          {/* Mobile Right Side - Only Cart and User */}
+          {/* Mobile Right Side - Cart and Auth */}
           <div className="md:hidden flex items-center gap-tight">
             {shouldShowCart && <OptimizedShoppingCartButton />}
-            {user && <UserButton />}
+            {user ? <UserButton /> : <AuthButtons />}
           </div>
         </div>
 

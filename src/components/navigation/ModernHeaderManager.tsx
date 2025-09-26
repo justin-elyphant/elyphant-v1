@@ -105,9 +105,9 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
 
             {/* Mobile Right Side - always consistent */}
-            <div className="md:hidden flex items-center ml-auto gap-3">
+            <div className="md:hidden flex items-center ml-auto gap-2">
               {config.showCart && <OptimizedShoppingCartButton />}
-              {user && <UserButton />}
+              {user ? <UserButton /> : <AuthButtons />}
             </div>
           </div>
 

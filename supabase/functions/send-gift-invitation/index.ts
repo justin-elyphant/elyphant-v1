@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,8 @@ const handler = async (req: Request): Promise<Response> => {
     const dateText = eventDate ? ` on ${new Date(eventDate).toLocaleDateString()}` : '';
     
     const invitationUrl = `${Deno.env.get("SUPABASE_URL") || 'https://your-project.supabase.co'}/profile-setup?invited=true&giftor=${encodeURIComponent(giftorName)}&occasion=${occasion || ''}&relationship=${relationship}`;
+
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "");
 
     const emailResponse = await resend.emails.send({
       from: "Elyphant <invitations@elyphant.com>",

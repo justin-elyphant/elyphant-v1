@@ -750,21 +750,21 @@ return await (async () => {
     const requiredBillingFields = ['first_name', 'last_name', 'address_line1', 'city', 'state', 'zip_code', 'country'];
     
     console.log('🔍 Validating shipping address fields...');
-    for (const field of requiredShippingFields) {
-      if (!shippingAddress[field]) {
-        console.error(`❌ Missing shipping field: ${field}`, shippingAddress);
-        throw new Error(`Missing required shipping field: ${field}`);
-      }
-    }
+for (const field of requiredShippingFields) {
+  if (!((shippingAddress as any)[field])) {
+    console.error(`❌ Missing shipping field: ${field}`, shippingAddress);
+    throw new Error(`Missing required shipping field: ${field}`);
+  }
+}
     console.log('✅ Shipping address validation passed');
     
     console.log('🔍 Validating billing address fields...');
-    for (const field of requiredBillingFields) {
-      if (!billingAddress[field]) {
-        console.error(`❌ Missing billing field: ${field}`, billingAddress);
-        throw new Error(`Missing required billing field: ${field}`);
-      }
-    }
+for (const field of requiredBillingFields) {
+  if (!((billingAddress as any)[field])) {
+    console.error(`❌ Missing billing field: ${field}`, billingAddress);
+    throw new Error(`Missing required billing field: ${field}`);
+  }
+}
     
     // Generate a secure webhook token for this order
     const webhookToken = btoa(JSON.stringify({
@@ -790,7 +790,7 @@ return await (async () => {
       addax: true, // CRITICAL: Enables ZMA ordering
       products: orderItems.map(item => {
         // Build variants array from variation data if available
-        let variants = [];
+        let variants: any[] = [];
         if (item.selected_variations) {
           try {
             const variations = typeof item.selected_variations === 'string' 
@@ -820,7 +820,7 @@ return await (async () => {
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
       gift_message: collectGiftMessage(orderItems, orderData),
-      addax: true, // Required for ZMA orders
+      // addax enabled above
       client_notes: {
         our_internal_order_id: orderData.order_number,
         supabase_order_id: orderId,
@@ -850,22 +850,22 @@ return await (async () => {
       endDate.setDate(endDate.getDate() + 1);
       
       // Use root-level start/end fields as per ZMA API docs
-      zincOrderData.start = startDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-      zincOrderData.end = endDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      (zincOrderData as any).start = startDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      (zincOrderData as any).end = endDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       
       console.log(`📅 [ZMA-ORDER] Added scheduled delivery window to Zinc request:`, {
         target_date: finalDeliveryDate,
-        delivery_window: { start_date: zincOrderData.start, end_date: zincOrderData.end }
+        delivery_window: { start_date: (zincOrderData as any).start, end_date: (zincOrderData as any).end }
       });
     }
     
     // Validate that we don't send undefined values to Zinc
-    Object.keys(zincOrderData).forEach(key => {
-      if (zincOrderData[key] === undefined) {
-        console.warn(`⚠️ Removing undefined field from Zinc request: ${key}`);
-        delete zincOrderData[key];
-      }
-    });
+Object.keys(zincOrderData).forEach((key) => {
+  if ((zincOrderData as any)[key] === undefined) {
+    console.warn(`⚠️ Removing undefined field from Zinc request: ${key}`);
+    delete (zincOrderData as any)[key];
+  }
+});
     
     console.log('✅ Zinc order data prepared with billing address');
     console.log('📄 Shipping Address:', JSON.stringify(shippingAddress, null, 2));
@@ -974,7 +974,7 @@ return await (async () => {
             zinc_status: 'awaiting_retry',
             zma_error: JSON.stringify(zincResult),
             retry_count: (orderData.retry_count || 0) + 1,
-            next_retry_at: new Date(Date.now() + (errorClassification.retryDelay * 1000)).toISOString(),
+            next_retry_at: new Date(Date.now() + ((errorClassification.retryDelay ?? 60) * 1000)).toISOString(),
             retry_reason: errorClassification.type,
             updated_at: new Date().toISOString()
           })
@@ -1007,7 +1007,7 @@ return await (async () => {
           error: errorClassification.userFriendlyMessage,
           retryable: true,
           retryScheduled: true,
-          nextRetryAt: new Date(Date.now() + (errorClassification.retryDelay * 1000)).toISOString(),
+          nextRetryAt: new Date(Date.now() + ((errorClassification.retryDelay ?? 60) * 1000)).toISOString(),
           details: errorMessage
         }), {
           status: 202, // Accepted for retry

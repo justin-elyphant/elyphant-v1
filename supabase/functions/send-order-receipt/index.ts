@@ -66,10 +66,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (order.user_id) {
       const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(order.user_id);
       if (authUser?.user && !authError) {
-        customerEmail = authUser.user.email;
+        customerEmail = authUser.user.email ?? null;
         customerName = authUser.user.user_metadata?.first_name 
           ? `${authUser.user.user_metadata.first_name} ${authUser.user.user_metadata.last_name || ''}`.trim()
-          : authUser.user.email?.split('@')[0] || "Customer";
+          : (authUser.user.email?.split('@')[0] || "Customer");
       }
     }
 

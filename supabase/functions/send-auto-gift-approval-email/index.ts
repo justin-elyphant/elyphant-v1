@@ -74,7 +74,7 @@ serve(async (req) => {
     const rejectUrl = `${baseUrl}/auto-gift-approval?token=${token}&action=reject`
 
     // Format gift details for email
-    const productList = giftDetails.selectedProducts?.map(product => 
+    const productList = giftDetails.selectedProducts?.map((product: any) => 
       `• ${product.title} - $${product.price.toFixed(2)}`
     ).join('\n') || 'No products selected'
 
@@ -161,10 +161,11 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('❌ Error sending approval email:', error)
+    const message = error instanceof Error ? error.message : String(error)
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

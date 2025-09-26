@@ -78,10 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
       : 'Demo Payment'
 
     // Create Supabase client for calling email service
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Reuse existing Supabase client for sending email notifications
 
     const emailResponse = await supabase.functions.invoke('send-email-notification', {
       body: {
@@ -230,7 +227,8 @@ const handler = async (req: Request): Promise<Response> => {
         
       } catch (fallbackError) {
         console.error('❌ Both primary and fallback email methods failed:', fallbackError);
-        throw new Error(`Email delivery failed: ${fallbackError.message}`);
+        const fbMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        throw new Error(`Email delivery failed: ${fbMsg}`);
       }
       
     } else {

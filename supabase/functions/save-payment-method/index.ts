@@ -97,14 +97,16 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    const errMessage = error instanceof Error ? error.message : String(error)
+    const errStack = error instanceof Error ? error.stack : undefined
     console.error('❌ Error saving payment method:', {
-      error: error.message,
-      stack: error.stack,
+      error: errMessage,
+      stack: errStack,
       timestamp: new Date().toISOString()
     })
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

@@ -130,7 +130,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
     
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    // Removed unused Resend client to avoid missing import; using send-email-notification edge function instead
     
     const { executionId, hoursRemaining, tokenId }: ReminderRequest = await req.json();
 
@@ -253,9 +253,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in send-reminder-email:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: message,
         success: false 
       }),
       {

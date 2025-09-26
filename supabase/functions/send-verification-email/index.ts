@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate verification link using Supabase's generateLink method
     const origin = req.headers.get('origin') || 'https://elyphant.ai';
     const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'signup',
+      type: 'magiclink',
       email: email,
       options: {
         redirectTo: `${origin}/auth/callback`
@@ -148,11 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Create Supabase client for calling email service
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // Reuse existing Supabase client for email invocation
 
     // Send email using email notification service
     const emailResponse = await supabase.functions.invoke('send-email-notification', {

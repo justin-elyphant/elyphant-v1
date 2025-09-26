@@ -234,7 +234,8 @@ const handler = async (req: Request): Promise<Response> => {
           return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop&auto=format&q=80';
         };
 
-        let finalRecommendations: ProductRecommendation[] = [...completed].slice(0, 6);
+        const combined: ProductRecommendation[] = [...withImages, ...withoutImages];
+        let finalRecommendations: ProductRecommendation[] = combined.slice(0, 6);
 
         // If we still have fewer than 6, top up with curated items
         if (finalRecommendations.length < 6) {

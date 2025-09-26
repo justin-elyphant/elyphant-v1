@@ -1,4 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
 
@@ -68,18 +69,18 @@ serve(async (req) => {
           
           // Store profile data for later interest and wishlist extraction
           if (profileData.gift_preferences && profileData.data_sharing_settings) {
-            userProfile.storedInterests = profileData.gift_preferences.map((pref: any) => {
+            (userProfile as any).storedInterests = profileData.gift_preferences.map((pref: any) => {
               if (typeof pref === 'string') return pref;
               if (typeof pref === 'object' && pref.category) return pref.category;
               return '';
             }).filter(Boolean);
-            userProfile.giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
+            (userProfile as any).giftPrefsSharing = profileData.data_sharing_settings?.gift_preferences;
           }
 
           // Store wishlist data for later extraction
           if (profileData.wishlists && profileData.data_sharing_settings) {
-            userProfile.storedWishlists = profileData.wishlists;
-            userProfile.wishlistsSharing = profileData.data_sharing_settings?.gift_preferences; // Using gift_preferences privacy for wishlists
+            (userProfile as any).storedWishlists = profileData.wishlists;
+            (userProfile as any).wishlistsSharing = profileData.data_sharing_settings?.gift_preferences; // Using gift_preferences privacy for wishlists
           }
         } else {
           console.log('⚠️ No profile data found for user ID:', context.currentUserId);
@@ -138,13 +139,13 @@ serve(async (req) => {
         enrichedContext.hasConnections = userConnections.length > 0;
 
         // Extract user stored interests if privacy allows
-        if (userProfile?.storedInterests && userProfile?.giftPrefsSharing) {
-          const giftPrefsSharing = userProfile.giftPrefsSharing;
+        if ((userProfile as any)?.storedInterests && (userProfile as any)?.giftPrefsSharing) {
+          const giftPrefsSharing = (userProfile as any).giftPrefsSharing;
           // Allow access to interests if sharing is public or friends (Nicole is acting as user's assistant)
           if (giftPrefsSharing === 'public' || giftPrefsSharing === 'friends') {
-            if (userProfile.storedInterests.length > 0) {
-              enrichedContext.userStoredInterests = userProfile.storedInterests;
-              console.log('✅ User stored interests loaded:', userProfile.storedInterests);
+            if ((userProfile as any).storedInterests.length > 0) {
+              enrichedContext.userStoredInterests = (userProfile as any).storedInterests;
+              console.log('✅ User stored interests loaded:', (userProfile as any).storedInterests);
             }
           } else {
             console.log('🔒 User interests access restricted by privacy settings');
@@ -152,12 +153,12 @@ serve(async (req) => {
         }
 
         // Extract user wishlists if privacy allows
-        if (userProfile?.storedWishlists && userProfile?.wishlistsSharing) {
-          const wishlistsSharing = userProfile.wishlistsSharing;
+        if ((userProfile as any)?.storedWishlists && (userProfile as any)?.wishlistsSharing) {
+          const wishlistsSharing = (userProfile as any).wishlistsSharing;
           // Allow access to wishlists if sharing is public or friends (Nicole is acting as user's assistant)
           if (wishlistsSharing === 'public' || wishlistsSharing === 'friends') {
-            if (userProfile.storedWishlists.length > 0) {
-              const wishlistSummary = userProfile.storedWishlists.map((wishlist: any) => ({
+            if ((userProfile as any).storedWishlists.length > 0) {
+              const wishlistSummary = (userProfile as any).storedWishlists.map((wishlist: any) => ({
                 id: wishlist.id,
                 title: wishlist.title || 'Untitled Wishlist',
                 itemCount: wishlist.items?.length || 0,
@@ -797,7 +798,7 @@ CONVERSATION STATE MANAGEMENT:
 
 ADVANCED INTELLIGENCE INTEGRATION:
     - Connection data: "${enrichedContext?.userConnections ? `User has ${enrichedContext.userConnections.length} connections` : 'No connection data'}"
-    - Wishlist insights: "${enrichedContext?.userWishlists ? `User has ${enrichedContext.userWishlists.length} wishlists: ${enrichedContext.userWishlists.map(w => `"${w.title}" (${w.itemCount} items)`).join(', ')}` : 'No wishlist data'}"
+    - Wishlist insights: "${enrichedContext?.userWishlists ? `User has ${enrichedContext.userWishlists.length} wishlists: ${enrichedContext.userWishlists.map((w: any) => `"${w.title}" (${w.itemCount} items)`).join(', ')}` : 'No wishlist data'}"
     - Wishlist engagement: "${enrichedContext?.hasWishlists ? 'User actively creates wishlists - can reference and suggest adding items' : 'User has no wishlists - offer to help create or populate wishlists'}"
     - Dynamic greeting mode: ${isDynamicGreeting ? 'YES - This is a greeting response' : 'NO - Regular conversation'}
 

@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     console.error('Error checking order status:', error);
     return new Response(JSON.stringify({
       error: 'Internal server error',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

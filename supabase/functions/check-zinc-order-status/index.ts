@@ -120,7 +120,7 @@ serve(async (req) => {
     });
 
     // Sort events by timestamp
-    const sortedEvents = structuredEvents.sort((a, b) => 
+    const sortedEvents = structuredEvents.sort((a: any, b: any) => 
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
@@ -164,7 +164,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

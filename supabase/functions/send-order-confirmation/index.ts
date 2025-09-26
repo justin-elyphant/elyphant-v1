@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,11 +77,17 @@ const handler = async (req: Request): Promise<Response> => {
       ? 'Express Checkout'
       : 'Demo Payment'
 
-    const emailResponse = await resend.emails.send({
-      from: "Elyphant Orders <hello@elyphant.ai>",
-      to: [user_email],
-      subject: `Order Confirmation - ${order.order_number}`,
-      html: `
+    // Create Supabase client for calling email service
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const emailResponse = await supabase.functions.invoke('send-email-notification', {
+      body: {
+        recipientEmail: user_email,
+        subject: `Order Confirmation - ${order.order_number}`,
+        htmlContent: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -178,7 +181,9 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         </body>
         </html>
-      `,
+        `,
+        notificationType: 'order_confirmation'
+      }
     });
 
     // Robust handling of provider response with fallback

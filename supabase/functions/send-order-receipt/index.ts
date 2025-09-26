@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,27 +22,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("📨 send-order-receipt invoked", { orderId, ts: new Date().toISOString() });
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     console.log("Env present", {
       hasSRK: !!supabaseServiceKey,
       hasURL: !!supabaseUrl,
-      hasResend: !!resendApiKey,
     });
 
     if (!orderId) {
       return new Response(
         JSON.stringify({ error: "Order ID is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (!resendApiKey) {
-      return new Response(
-        JSON.stringify({ error: "Missing RESEND_API_KEY. Please add it in Supabase Function Secrets." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -262,29 +250,31 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Send email using Resend
-    const emailResponse = await resend.emails.send({
-      from: "Elyphant Orders <hello@elyphant.ai>",
-      to: [customerEmail],
-      subject: `Order Receipt - #${orderId.slice(-6)}`,
-      html: receiptHtml,
+    // Send email using the send-email-notification function
+    const emailResponse = await supabase.functions.invoke('send-email-notification', {
+      body: {
+        recipientEmail: customerEmail,
+        subject: `Order Receipt - #${orderId.slice(-6)}`,
+        htmlContent: receiptHtml,
+        notificationType: 'order_receipt'
+      }
     });
 
     if (emailResponse.error) {
-      console.error("❌ Resend error:", emailResponse.error);
+      console.error("❌ Email service error:", emailResponse.error);
       return new Response(
-        JSON.stringify({ error: emailResponse.error.message || "Resend failed" }),
+        JSON.stringify({ error: emailResponse.error.message || "Email service failed" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log("📧 Order receipt email sent:", emailResponse.data?.id);
+    console.log("📧 Order receipt email sent:", emailResponse.data?.messageId);
     // Log the email send event (lightweight note)
     await supabase
       .from('order_notes')
       .insert({
         order_id: orderId,
-        note_content: `Order receipt emailed to ${customerEmail} (Resend ID: ${emailResponse.data?.id || 'n/a'})`,
+        note_content: `Order receipt emailed to ${customerEmail} (Message ID: ${emailResponse.data?.messageId || 'n/a'})`,
         note_type: 'email_sent',
         is_internal: false
       });
@@ -293,7 +283,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: "Receipt sent successfully",
-        messageId: emailResponse.data?.id 
+        messageId: emailResponse.data?.messageId 
       }),
       {
         status: 200,

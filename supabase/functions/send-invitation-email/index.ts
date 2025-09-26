@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -28,13 +27,9 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return new Response(JSON.stringify({ error: "Missing Supabase env" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
-  }
-  if (!resendApiKey) {
-    return new Response(JSON.stringify({ error: "Missing RESEND_API_KEY" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -73,8 +68,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: analyticsError.message }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    const resend = new Resend(resendApiKey);
-
     // Generate contextual invitation URL
     const invitationUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/handle-invitation-acceptance?invitation_id=${analyticsRow.id}`;
     
@@ -98,14 +91,17 @@ serve(async (req) => {
       </div>
     `;
 
-    const email = await resend.emails.send({
-      from: "Elyphant <hello@elyphant.ai>",
-      to: [payload.recipientEmail],
-      subject,
-      html,
+    // Send email using the send-email-notification function
+    const emailResponse = await supabase.functions.invoke('send-email-notification', {
+      body: {
+        recipientEmail: payload.recipientEmail,
+        subject,
+        htmlContent: html,
+        notificationType: 'invitation'
+      }
     });
 
-    console.log("Invitation email sent", email);
+    console.log("Invitation email sent", emailResponse);
 
     // Create conversion event record for email_sent
     await supabase.from("invitation_conversion_events").insert({

@@ -1,13 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface VerificationEmailRequest {
   email: string;
@@ -151,12 +148,20 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Send email using Resend with verified domain
-    const emailResponse = await resend.emails.send({
-      from: 'Elyphant <noreply@elyphant.com>', // Using main domain instead of marketplace subdomain
-      to: [email],
-      subject: emailSubject,
-      html: emailHtml,
+    // Create Supabase client for calling email service
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Send email using email notification service
+    const emailResponse = await supabase.functions.invoke('send-email-notification', {
+      body: {
+        recipientEmail: email,
+        subject: emailSubject,
+        htmlContent: emailHtml,
+        notificationType: 'verification'
+      }
     });
 
     if (emailResponse.error) {

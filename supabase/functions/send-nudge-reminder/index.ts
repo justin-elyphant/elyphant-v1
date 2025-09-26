@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -106,58 +103,60 @@ const handler = async (req: Request): Promise<Response> => {
           ? `${senderName} sent you a gift invitation!`
           : `Reminder: ${senderName} is waiting for you to join!`;
 
-        const emailResponse = await resend.emails.send({
-          from: "Gift Invitations <gifts@elyphant.com>",
-          to: [recipientEmail],
-          subject: nudgeSubject,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0; font-size: 28px;">🎁 Gift Invitation ${currentNudgeCount > 0 ? 'Reminder' : ''}</h1>
-                <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">From ${senderName}</p>
-              </div>
-              
-              <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h2 style="color: #333; margin-top: 0;">Hi ${recipientName}! 👋</h2>
-                
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #555;">
-                    ${customMessage.replace(/\n/g, '<br>')}
-                  </p>
+        const emailResponse = await supabase.functions.invoke('send-email-notification', {
+          body: {
+            recipientEmail: recipientEmail,
+            subject: nudgeSubject,
+            htmlContent: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                  <h1 style="margin: 0; font-size: 28px;">🎁 Gift Invitation ${currentNudgeCount > 0 ? 'Reminder' : ''}</h1>
+                  <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">From ${senderName}</p>
                 </div>
                 
-                ${currentNudgeCount > 0 ? `
-                  <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; color: #856404; font-size: 14px;">
-                      <strong>Friendly reminder:</strong> This is nudge #${currentNudgeCount + 1} of 3. ${senderName} is really excited to connect with you!
+                <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <h2 style="color: #333; margin-top: 0;">Hi ${recipientName}! 👋</h2>
+                  
+                  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #555;">
+                      ${customMessage.replace(/\n/g, '<br>')}
                     </p>
                   </div>
-                ` : ''}
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${signupLink}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    Accept Gift Invitation
-                  </a>
-                </div>
-                
-                <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
-                  <p style="font-size: 14px; color: #666; margin: 0;">
-                    <strong>What happens next?</strong><br>
-                    1. Click the button above to join our platform<br>
-                    2. Complete your profile setup<br>
-                    3. See what ${senderName} has planned for you!
-                  </p>
-                </div>
-                
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                  <p style="font-size: 12px; color: #999; margin: 0;">
-                    This invitation was sent by ${senderName} through our gift platform.
-                    <br>If you don't want to receive these reminders, please reply to this email.
-                  </p>
+                  
+                  ${currentNudgeCount > 0 ? `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                      <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>Friendly reminder:</strong> This is nudge #${currentNudgeCount + 1} of 3. ${senderName} is really excited to connect with you!
+                      </p>
+                    </div>
+                  ` : ''}
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${signupLink}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                      Accept Gift Invitation
+                    </a>
+                  </div>
+                  
+                  <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
+                    <p style="font-size: 14px; color: #666; margin: 0;">
+                      <strong>What happens next?</strong><br>
+                      1. Click the button above to join our platform<br>
+                      2. Complete your profile setup<br>
+                      3. See what ${senderName} has planned for you!
+                    </p>
+                  </div>
+                  
+                  <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #999; margin: 0;">
+                      This invitation was sent by ${senderName} through our gift platform.
+                      <br>If you don't want to receive these reminders, please reply to this email.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          `,
+            `,
+            notificationType: 'nudge_reminder'
+          }
         });
 
         if (emailResponse.error) {

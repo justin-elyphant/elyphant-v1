@@ -36,6 +36,14 @@ const TrunklineOrdersTab = () => {
         </p>
       </div>
 
+      {/* Recovery Tools - Prominent Position */}
+      <WebhookRecoveryPanel 
+        onOrderRecovered={(orderId) => {
+          console.log(`Order ${orderId} recovered from webhook failure`);
+          refetch(); // Refresh the orders list
+        }}
+      />
+
       <OrderSearch
         filters={filters}
         onFiltersChange={setFilters}
@@ -48,14 +56,6 @@ const TrunklineOrdersTab = () => {
         loading={loading}
         onOrderClick={handleOrderClick}
         onOrderUpdated={refetch}
-      />
-
-      {/* Webhook Failure Recovery */}
-      <WebhookRecoveryPanel 
-        onOrderRecovered={(orderId) => {
-          console.log(`Order ${orderId} recovered from webhook failure`);
-          refetch(); // Refresh the orders list
-        }}
       />
 
       {/* Retry Processing Queue */}

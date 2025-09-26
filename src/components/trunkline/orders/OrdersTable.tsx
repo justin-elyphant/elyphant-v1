@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle, X } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
 import { useOrderActions } from "@/hooks/useOrderActions";
@@ -118,21 +119,22 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>External ID</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+        <ScrollArea className="max-w-full">
+          <div className="rounded-md border min-w-[800px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead className="hidden md:table-cell">Customer</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead className="hidden lg:table-cell">Items</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date</TableHead>
+                  <TableHead className="hidden xl:table-cell">Method</TableHead>
+                  <TableHead className="hidden xl:table-cell">External ID</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {orders.map((order) => (
                 <TableRow key={order.id} className="cursor-pointer hover:bg-slate-50">
@@ -146,13 +148,13 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div>
                       <div className="font-medium">
-                        {order.profiles?.name || 'Unknown'}
+                        User ID: {order.user_id?.slice(0, 8) || 'Unknown'}
                       </div>
                       <div className="text-sm text-slate-600">
-                        {order.profiles?.email || 'No email'}
+                        {order.user_id ? `${order.user_id.slice(0, 8)}...` : 'No user ID'}
                       </div>
                     </div>
                   </TableCell>
@@ -172,7 +174,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                       {order.currency}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="flex items-center gap-1">
                       <Package className="h-3 w-3 text-slate-400" />
                       <span className="text-sm">
@@ -180,7 +182,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">
                       {new Date(order.created_at).toLocaleDateString()}
                     </div>
@@ -188,7 +190,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                       {new Date(order.created_at).toLocaleTimeString()}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     <div className="space-y-1">
                       <Badge variant={order.order_method === 'zma' ? 'default' : 'secondary'} className="text-xs">
                         {order.order_method === 'zma' ? 'ZMA' : 'Zinc API'}
@@ -200,7 +202,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     {order.zinc_order_id ? (
                       <div className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
                         Zinc: {order.zinc_order_id}
@@ -250,7 +252,8 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </ScrollArea>
       </CardContent>
       
       <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>

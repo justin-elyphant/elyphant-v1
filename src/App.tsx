@@ -15,6 +15,7 @@ import { EmployeeRouteGuard } from "./components/auth/EmployeeRouteGuard";
 import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandler";
 import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
 
 
 // Immediate load for critical pages

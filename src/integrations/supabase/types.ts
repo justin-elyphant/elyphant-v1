@@ -3985,6 +3985,36 @@ export type Database = {
           },
         ]
       }
+      user_carts: {
+        Row: {
+          cart_data: Json
+          created_at: string
+          expires_at: string
+          id: string
+          session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cart_data?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cart_data?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_connections: {
         Row: {
           blocked_at: string | null

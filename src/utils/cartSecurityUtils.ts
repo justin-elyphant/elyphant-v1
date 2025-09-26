@@ -62,14 +62,17 @@ export const validateCartSecurity = async (): Promise<boolean> => {
       const key = localStorage.key(i);
       if (key && key.startsWith('cart_')) {
         if (user) {
-          // If user is logged in, only their cart should exist
+          // If user is logged in, only their cart and preserved cart should exist
           const expectedKey = `cart_${user.id}`;
-          if (key !== expectedKey && key !== `${expectedKey}_version`) {
+          const preservedKey = `cart_${user.id}_preserved`;
+          if (key !== expectedKey && key !== `${expectedKey}_version` && key !== preservedKey) {
             suspiciousKeys.push(key);
           }
         } else {
-          // If no user is logged in, no user cart should exist
-          suspiciousKeys.push(key);
+          // If no user is logged in, no user cart should exist (except preserved ones)
+          if (!key.includes('_preserved')) {
+            suspiciousKeys.push(key);
+          }
         }
       }
     }

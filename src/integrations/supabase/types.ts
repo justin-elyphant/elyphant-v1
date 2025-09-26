@@ -4950,7 +4950,12 @@ export type Database = {
               zinc_request_id_param: string
               zinc_status_param?: string
             }
-        Returns: Json
+          | {
+              final_status?: string
+              order_uuid: string
+              zinc_order_id_param: string
+            }
+        Returns: boolean
       }
       delete_user_account: {
         Args: { target_user_id: string }
@@ -5152,6 +5157,10 @@ export type Database = {
       recover_stuck_orders: {
         Args: { max_age_minutes?: number }
         Returns: Json
+      }
+      release_order_submission_lock: {
+        Args: { error_message?: string; order_uuid: string }
+        Returns: undefined
       }
       search_users_for_friends: {
         Args: {

@@ -91,17 +91,43 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
         }
       });
 
-      if (error) throw error;
+      // Handle both explicit errors and non-2xx responses
+      if (error) {
+        console.error(`Edge function error for order ${orderId}:`, error);
+        
+        // Check if this is just a status code issue but the order was actually processed
+        if (error.message?.includes('non-2xx status code')) {
+          // Wait a moment and check if the order status changed
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Refresh stuck orders to see if this one was processed
+          await fetchStuckOrders();
+          
+          // Check if the order is no longer stuck
+          const isStillStuck = stuckOrders.some(o => o.id === orderId);
+          
+          if (!isStillStuck) {
+            toast.success(`Order ${orderId} was processed successfully!`, {
+              description: 'The order was recovered despite the status code error'
+            });
+            onOrderRecovered?.(orderId);
+            return;
+          }
+        }
+        
+        throw error;
+      }
 
-      if (data.success) {
+      // Success case
+      if (data?.success || data?.message) {
         toast.success(`Order ${orderId} processing triggered successfully!`, {
-          description: `Order orchestrator invoked with trigger source: ${source}`
+          description: data.message || `Order orchestrator invoked with trigger source: ${source}`
         });
         onOrderRecovered?.(orderId);
         await fetchStuckOrders(); // Refresh the list
       } else {
         toast.error(`Failed to trigger processing for order ${orderId}`, {
-          description: data.error || 'Unknown error'
+          description: data?.error || 'Unknown error'
         });
       }
     } catch (error) {

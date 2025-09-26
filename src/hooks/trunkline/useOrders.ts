@@ -37,7 +37,7 @@ export const useOrders = () => {
         .select(`
           *,
           order_items(*),
-          profiles!orders_user_id_fkey(name, email)
+          profiles(name, email)
         `)
         .order('created_at', { ascending: false });
 

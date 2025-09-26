@@ -46,7 +46,7 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
           created_at,
           updated_at,
           zinc_order_id,
-          profiles!inner(email)
+          profiles(email)
         `)
         .in('status', ['payment_confirmed', 'pending'])
         .eq('payment_status', 'succeeded')

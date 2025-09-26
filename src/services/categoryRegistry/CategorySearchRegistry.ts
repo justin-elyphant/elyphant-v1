@@ -50,6 +50,28 @@ export type CategoryKey =
   | 'mothers-day'
   | 'fathers-day'
   | 'christmas'
+  // New categories from UNIVERSAL_CATEGORIES
+  | 'flowers'
+  | 'fashion'
+  | 'pets'
+  | 'home'
+  | 'beauty'
+  | 'sports'
+  | 'athleisure'
+  | 'books'
+  | 'toys'
+  | 'food'
+  | 'arts'
+  | 'health'
+  | 'baby'
+  | 'jewelry'
+  | 'kitchen'
+  | 'tech'
+  | 'music'
+  | 'gaming'
+  | 'wedding'
+  | 'gifts'
+  | 'bags-purses'
   | 'default';
 
 /**
@@ -204,6 +226,154 @@ export const CATEGORY_SEARCH_REGISTRY: Record<CategoryKey, CategorySearchStrateg
     description: 'Spread holiday joy and cheer',
     isActive: true
   },
+  // New categories from UNIVERSAL_CATEGORIES
+  'flowers': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'fresh flowers bouquet delivery roses tulips sunflowers orchids wedding flowers sympathy arrangements seasonal blooms',
+    description: 'Fresh flowers and arrangements',
+    isActive: true
+  },
+  'fashion': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling fashion clothing apparel shoes accessories',
+    description: 'Clothing and accessories',
+    isActive: true
+  },
+  'pets': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling pet products dog cat supplies toys treats',
+    description: 'Pet supplies and accessories',
+    isActive: true
+  },
+  'home': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'home decor furniture kitchen accessories bedding curtains pillows candles',
+    description: 'Decor and household items',
+    isActive: true
+  },
+  'beauty': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'skincare makeup cosmetics beauty products lipstick foundation moisturizer',
+    description: 'Skincare and cosmetics',
+    isActive: true
+  },
+  'sports': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling sports equipment nike adidas under armour wilson spalding yeti coleman outdoor gear fitness',
+    description: 'Fitness and outdoor gear',
+    isActive: true
+  },
+  'athleisure': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'athletic wear yoga pants leggings activewear nike adidas lululemon under armour alo yoga',
+    description: 'Athletic and activewear',
+    isActive: true
+  },
+  'books': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling books',
+    description: 'Literature and educational',
+    isActive: true
+  },
+  'toys': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'toys games kids children educational puzzles building blocks dolls action figures',
+    description: 'Fun for all ages',
+    isActive: true
+  },
+  'food': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best gourmet food specialty snacks organic coffee tea chocolate wine cheese gift baskets',
+    description: 'Gourmet and specialty items',
+    isActive: true
+  },
+  'arts': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'art supplies craft supplies drawing materials paint brushes canvas markers colored pencils craft kits scrapbook paper',
+    description: 'Creative supplies and tools',
+    isActive: true
+  },
+  'health': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best wellness products',
+    description: 'Wellness and self-care',
+    isActive: true
+  },
+  'baby': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling baby products',
+    description: 'Baby care and essentials',
+    isActive: true
+  },
+  'jewelry': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling jewelry',
+    description: 'Fine and fashion jewelry',
+    isActive: true
+  },
+  'kitchen': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling kitchen products',
+    description: 'Cooking and dining essentials',
+    isActive: true
+  },
+  'tech': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling tech products electronics gadgets smart devices',
+    description: 'Technology and gadgets',
+    isActive: true
+  },
+  'music': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling music',
+    description: 'Musical instruments and audio',
+    isActive: true
+  },
+  'gaming': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling gaming',
+    description: 'Video games and accessories',
+    isActive: true
+  },
+  'wedding': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'wedding gifts bridal party engagement ceremony reception decorations invitations favors',
+    description: 'Wedding essentials and gifts',
+    isActive: true
+  },
+  'gifts': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling gifts',
+    description: 'Perfect gift ideas',
+    isActive: true
+  },
+  'bags-purses': {
+    searchMethod: 'searchProducts',
+    edgeFunction: 'get-products',
+    fallbackQuery: 'best selling bags purses',
+    description: 'Handbags and accessories',
+    isActive: true
+  },
   'default': {
     searchMethod: 'searchProducts',
     edgeFunction: 'get-products',
@@ -314,10 +484,12 @@ export class CategorySearchRegistry {
             { minPrice: options.minPrice, maxPrice: options.maxPrice }
           );
 
+        // All other categories use the standard searchProducts method with their optimized search terms
         default:
-          // Default search with protective measures
+          const searchQuery = searchTerm || strategy.fallbackQuery;
+          console.log(`[CategorySearchRegistry] Using searchProducts for category: ${category} with query: "${searchQuery}"`);
           return await enhancedZincApiService.searchProducts(
-            searchTerm || strategy.fallbackQuery,
+            searchQuery,
             options.page || 1,
             options.limit || 20,
             { minPrice: options.minPrice, maxPrice: options.maxPrice }

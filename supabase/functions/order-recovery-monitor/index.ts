@@ -150,7 +150,7 @@ serve(async (req) => {
       } catch (orderError) {
         logStep("Error processing order", { 
           orderId: order.id, 
-          error: orderError.message 
+          error: orderError instanceof Error ? orderError.message : 'Unknown error' 
         })
 
         // Log the failed recovery attempt
@@ -160,9 +160,9 @@ serve(async (req) => {
             order_id: order.id,
             recovery_type: 'payment_verification_recovery',
             recovery_status: 'failed',
-            error_message: orderError.message,
+            error_message: orderError instanceof Error ? orderError.message : 'Unknown error',
             metadata: {
-              error_details: orderError.message,
+              error_details: orderError instanceof Error ? orderError.message : 'Unknown error',
               attempted_at: new Date().toISOString()
             }
           })

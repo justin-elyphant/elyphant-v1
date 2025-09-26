@@ -134,9 +134,9 @@ Talk like their friend who happens to be amazing at gifts, and naturally guide t
   } catch (error) {
     console.error('Error in nicole-chatgpt-agent function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       message: "Oops! I'm having a little tech hiccup right now. Give me another try? I promise I'm usually way better at this! 😊",
-      context: context || {},
+      context: {},
       capability: 'conversation',
       actions: [],
       showSearchButton: false
@@ -418,7 +418,7 @@ async function handleCuratedMarketplace(context: any, userId?: string): Promise<
   } catch (error) {
     console.error('Error generating curated marketplace:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       success: false
     }), {
       status: 500,
@@ -591,7 +591,7 @@ function applyDiversityFilter(products: any[], diversityFactor: number): any[] {
   return diversified;
 }
 
-async function handleTraditionalConversation(message: string, context: any, sessionId: string): Promise<Response> {
+async function handleTraditionalConversationLite(message: string, context: any, sessionId: string): Promise<Response> {
   // Fallback implementation for traditional conversation handling
   return new Response(JSON.stringify({
     message: "I'm having a small technical issue. Let me try again!",
@@ -980,7 +980,7 @@ async function handleAnalyzeRecipientPreferences(args: any): Promise<string> {
       message: `Analyzed and stored preferences for ${args.recipientName}`
     });
   } catch (error) {
-    return JSON.stringify({ error: error.message });
+    return JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 
@@ -1017,7 +1017,7 @@ async function handleSearchProducts(args: any): Promise<string> {
     
     return JSON.stringify(response.data || { products: [] });
   } catch (error) {
-    return JSON.stringify({ error: error.message });
+    return JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 
@@ -1067,7 +1067,7 @@ async function handleCreateAutoGiftRule(args: any): Promise<string> {
     
     return JSON.stringify(response.data || { success: true });
   } catch (error) {
-    return JSON.stringify({ error: error.message });
+    return JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 

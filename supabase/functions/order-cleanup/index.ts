@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     console.error('Order cleanup failed:', error)
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         success: false
       }),
       {

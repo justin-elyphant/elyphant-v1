@@ -32,16 +32,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Log the trigger attempt
-    await supabase
+    // Log the trigger attempt (non-critical)
+    const { error: logError } = await supabase
       .from('order_processing_signals')
       .insert({
         order_id: orderId,
         trigger_source: triggerSource,
         signal_metadata: metadata,
         processed_at: new Date().toISOString()
-      })
-      .onError((error) => console.log('Non-critical: Failed to log signal:', error));
+      });
+    if (logError) console.log('Non-critical: Failed to log signal:', logError);
 
     // Get current order status
     const { data: order, error: orderError } = await supabase
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     console.error('🚨 ORDER ORCHESTRATOR ERROR:', error);
     return new Response(JSON.stringify({
       error: 'Internal server error',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -978,7 +978,7 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
     // First, use clean interests from recipient profile if available
     if (updatedContext.recipientProfile?.interests && Array.isArray(updatedContext.recipientProfile.interests)) {
       console.log("🎯 Using clean recipient profile interests:", updatedContext.recipientProfile.interests);
-      updatedContext.interests = [...updatedContext.recipientProfile.interests.map(i => i.toLowerCase())];
+      updatedContext.interests = [...updatedContext.recipientProfile.interests.map((i: string) => i.toLowerCase())];
     } else {
       // Fallback to conversation-based extraction, but be more selective
       const interestPatterns = [
@@ -1132,7 +1132,7 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
             'Show me gift options'
           ] :
           contextAnalysis.shouldSuggestAction ?
-            contextAnalysis.nextSteps.map(step => step.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())) :
+            (Array.isArray(contextAnalysis.nextSteps) ? contextAnalysis.nextSteps : []).map((step: string) => step.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())) :
             [
               "Tell me more about the recipient",
               "What's the occasion?",
@@ -1152,7 +1152,7 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
   } catch (error) {
     console.error('Error in nicole-chat function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       message: "I'm sorry, I encountered an error. Please try again!",
       context: {},
       showSearchButton: false,

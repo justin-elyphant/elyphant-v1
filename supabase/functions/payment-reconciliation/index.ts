@@ -169,7 +169,7 @@ serve(async (req) => {
       } catch (orderError) {
         logStep("Error reconciling order", { 
           orderId: order.id, 
-          error: orderError.message 
+           error: (orderError instanceof Error ? orderError.message : String(orderError)) 
         })
 
         // Log failed reconciliation
@@ -180,7 +180,7 @@ serve(async (req) => {
             stripe_payment_intent_id: order.stripe_payment_intent_id,
             verification_method: 'reconciliation_check',
             verification_status: 'error',
-            error_details: { error: orderError.message },
+            error_details: { error: (orderError instanceof Error ? orderError.message : String(orderError)) },
             metadata: {
               error_type: 'reconciliation_failure',
               attempted_at: new Date().toISOString()
@@ -210,11 +210,11 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    logStep("ERROR in payment reconciliation", { message: error.message })
+    logStep("ERROR in payment reconciliation", { message: (error instanceof Error ? error.message : String(error)) })
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: (error instanceof Error ? error.message : String(error)) 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

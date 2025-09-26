@@ -210,7 +210,7 @@ export function getEmergencyFallbackProducts(
 /**
  * Log detailed error information to database for debugging
  */
-async function logExecutionError(supabaseClient: any, executionId: string, error: any, event: AutoGiftEvent) {
+async function logExecutionError(supabaseClient: any, executionId: string, error: any, event: any) {
   try {
     console.log(`📊 [ERROR LOGGING] Logging error for execution ${executionId}`)
     

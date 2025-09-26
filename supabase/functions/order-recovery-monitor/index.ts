@@ -200,7 +200,7 @@ serve(async (req) => {
             logStep("ZMA processing initiated for missing order", { orderId: order.id })
           }
         } catch (error) {
-          logStep("Error triggering ZMA for missing order", { orderId: order.id, error: error.message })
+          logStep("Error triggering ZMA for missing order", { orderId: order.id, error: (error instanceof Error ? error.message : String(error)) })
         }
       }
     }
@@ -226,11 +226,11 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    logStep("ERROR in recovery monitor", { message: error.message })
+    logStep("ERROR in recovery monitor", { message: (error instanceof Error ? error.message : String(error)) })
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: (error instanceof Error ? error.message : String(error)) 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

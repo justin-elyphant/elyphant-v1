@@ -36,10 +36,7 @@ serve(async (req) => {
       .single()
 
     const cronLogId = cronLog?.id
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+// removed duplicate supabase client
 
     // Calculate the processing cutoff date (4 days from now for Amazon 2-day shipping)
     const processingCutoffDate = new Date()
@@ -58,6 +55,7 @@ serve(async (req) => {
         user_id,
         total_amount,
         payment_status,
+        retry_count,
         package_scheduling_metadata
       `)
       .eq('status', 'scheduled')
@@ -91,7 +89,7 @@ serve(async (req) => {
     let failureCount = 0
 
     // Process each order
-    for (const order of ordersToProcess) {
+    for (const order of (ordersToProcess as any[])) {
       try {
         console.log(`🔄 Processing scheduled order: ${order.order_number} (${order.id})`)
         console.log(`   Scheduled delivery: ${order.scheduled_delivery_date}`)
@@ -231,7 +229,7 @@ serve(async (req) => {
           orderId: order.id,
           orderNumber: order.order_number,
           success: false,
-          error: orderError.message
+          error: (orderError instanceof Error ? orderError.message : String(orderError))
         })
         failureCount++
       }
@@ -296,7 +294,7 @@ serve(async (req) => {
         .update({
           execution_completed_at: new Date().toISOString(),
           status: 'failed',
-          error_message: error.message,
+          error_message: (error instanceof Error ? error.message : String(error)),
           execution_metadata: {
             trigger_source: 'cron',
             execution_date: new Date().toISOString(),
@@ -309,7 +307,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: (error instanceof Error ? error.message : String(error)) 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

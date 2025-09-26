@@ -223,7 +223,7 @@ serve(async (req) => {
         results.push({
           orderId: order.id,
           success: false,
-          error: orderError.message || 'Unexpected error',
+          error: (orderError instanceof Error ? orderError.message : String(orderError)),
           attempt: (order.retry_count || 0) + 1
         });
       }
@@ -248,7 +248,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

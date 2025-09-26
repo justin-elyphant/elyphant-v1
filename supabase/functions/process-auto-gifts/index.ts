@@ -268,11 +268,11 @@ serve(async (req) => {
             .update({
               status: finalStatus,
               selected_products: selectedProducts,
-              total_amount: selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+              total_amount: selectedProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0),
               updated_at: new Date().toISOString(),
               ai_agent_source: {
                 agent: 'nicole',
-                data_sources: selectedProducts.map(p => p.source),
+                data_sources: selectedProducts.map((p: any) => p.source),
                 confidence_score: 0.85,
                 discovery_method: 'wishlist_optimization'
               }
@@ -300,7 +300,7 @@ serve(async (req) => {
           const notificationType = shouldAutoApprove ? 'gift_auto_approved' : 'gift_suggestions_ready';
           const title = shouldAutoApprove ? 'Gift Auto-Approved & Scheduled' : 'Gift Suggestions Ready for Review';
           const message = shouldAutoApprove 
-            ? `Auto-approved ${selectedProducts.length} gift(s) totaling $${selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0).toFixed(2)}`
+            ? `Auto-approved ${selectedProducts.length} gift(s) totaling $${selectedProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0).toFixed(2)}`
             : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget - review needed`;
 
           await supabase
@@ -319,7 +319,7 @@ serve(async (req) => {
             .from('automated_gift_executions')
             .update({
               status: 'failed',
-              error_message: `Processing failed: ${processError.message}`,
+              error_message: `Processing failed: ${(processError instanceof Error ? processError.message : String(processError))}`,
               updated_at: new Date().toISOString()
             })
             .eq('id', execution.id);
@@ -333,7 +333,7 @@ serve(async (req) => {
           .from('automated_gift_executions')
           .update({
             status: 'failed',
-            error_message: `Unexpected error: ${executionError.message}`,
+            error_message: `Unexpected error: ${(executionError instanceof Error ? executionError.message : String(executionError))}`,
             updated_at: new Date().toISOString()
           })
           .eq('id', execution.id);
@@ -357,7 +357,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: (error instanceof Error ? error.message : String(error)) 
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -484,7 +484,7 @@ async function getEnhancedEmergencyProducts(
       return aiEnhancedProducts;
     }
   } catch (aiError) {
-    console.log(`⚠️ AI enhancement failed, using enhanced emergency fallback:`, aiError.message);
+    console.log(`⚠️ AI enhancement failed, using enhanced emergency fallback:`, (aiError instanceof Error ? aiError.message : String(aiError)));
   }
   
   console.log(`✅ Returning ${emergencyProducts.length} enhanced emergency products`);

@@ -101,7 +101,7 @@ serve(async (req) => {
           orderId: order.id,
           orderNumber: order.order_number,
           success: false,
-          error: orderError.message
+          error: (orderError instanceof Error ? orderError.message : String(orderError))
         });
       }
     }
@@ -146,7 +146,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
       healthStatus: 'error',
       timestamp: new Date().toISOString()
     }), {

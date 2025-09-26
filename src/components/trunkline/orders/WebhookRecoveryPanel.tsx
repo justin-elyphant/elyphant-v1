@@ -46,7 +46,7 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
           created_at,
           updated_at,
           zinc_order_id,
-          profiles(email)
+          user_id
         `)
         .in('status', ['payment_confirmed', 'pending'])
         .eq('payment_status', 'succeeded')
@@ -57,10 +57,10 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
 
       if (error) throw error;
 
-      const formattedOrders = data?.map(order => ({
+      const formattedOrders = (data || []).map(order => ({
         ...order,
-        customer_email: (order.profiles as any)?.email || 'Unknown'
-      })) || [];
+        customer_email: order.user_id || 'Unknown'
+      }));
 
       setStuckOrders(formattedOrders);
     } catch (error) {

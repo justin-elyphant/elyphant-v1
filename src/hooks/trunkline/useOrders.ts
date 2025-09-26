@@ -36,14 +36,13 @@ export const useOrders = () => {
         .from('orders')
         .select(`
           *,
-          order_items(*),
-          profiles(name, email)
+          order_items(*)
         `)
         .order('created_at', { ascending: false });
 
       // Apply filters
       if (filters.search) {
-        query = query.or(`order_number.ilike.%${filters.search}%,profiles.email.ilike.%${filters.search}%,zinc_order_id.ilike.%${filters.search}%`);
+        query = query.or(`order_number.ilike.%${filters.search}%,user_id.ilike.%${filters.search}%,zinc_order_id.ilike.%${filters.search}%`);
       }
 
       if (filters.status) {

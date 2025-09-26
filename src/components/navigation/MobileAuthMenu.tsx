@@ -40,7 +40,7 @@ const MobileAuthMenu = () => {
             variant="ghost" 
             size="lg"
             onClick={handleSignIn}
-            className="w-full justify-start text-muted-foreground hover:text-foreground h-12"
+            className="w-full text-foreground hover:text-foreground h-12"
           >
             Sign In
           </Button>

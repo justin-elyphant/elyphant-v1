@@ -2251,6 +2251,51 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_processing_logs: {
+        Row: {
+          action_details: Json
+          action_type: string
+          admin_user_id: string | null
+          created_at: string
+          id: string
+          result: Json | null
+          target_order_id: string | null
+        }
+        Insert: {
+          action_details?: Json
+          action_type: string
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          result?: Json | null
+          target_order_id?: string | null
+        }
+        Update: {
+          action_details?: Json
+          action_type?: string
+          admin_user_id?: string | null
+          created_at?: string
+          id?: string
+          result?: Json | null
+          target_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_processing_logs_target_order_id_fkey"
+            columns: ["target_order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_processing_logs_target_order_id_fkey"
+            columns: ["target_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_mentions: {
         Row: {
           created_at: string | null
@@ -3789,6 +3834,7 @@ export type Database = {
           order_id: string | null
           resolved_at: string | null
           scheduled_delivery_date: string | null
+          updated_at: string
         }
         Insert: {
           alert_message: string
@@ -3801,6 +3847,7 @@ export type Database = {
           order_id?: string | null
           resolved_at?: string | null
           scheduled_delivery_date?: string | null
+          updated_at?: string
         }
         Update: {
           alert_message?: string
@@ -3813,6 +3860,7 @@ export type Database = {
           order_id?: string | null
           resolved_at?: string | null
           scheduled_delivery_date?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

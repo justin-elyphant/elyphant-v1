@@ -1050,6 +1050,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_execution_logs: {
+        Row: {
+          created_at: string | null
+          cron_job_name: string
+          error_message: string | null
+          execution_completed_at: string | null
+          execution_metadata: Json | null
+          execution_started_at: string | null
+          failure_count: number | null
+          id: string
+          orders_processed: number | null
+          status: string
+          success_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          cron_job_name: string
+          error_message?: string | null
+          execution_completed_at?: string | null
+          execution_metadata?: Json | null
+          execution_started_at?: string | null
+          failure_count?: number | null
+          id?: string
+          orders_processed?: number | null
+          status?: string
+          success_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          cron_job_name?: string
+          error_message?: string | null
+          execution_completed_at?: string | null
+          execution_metadata?: Json | null
+          execution_started_at?: string | null
+          failure_count?: number | null
+          id?: string
+          orders_processed?: number | null
+          status?: string
+          success_count?: number | null
+        }
+        Relationships: []
+      }
       elyphant_amazon_credentials: {
         Row: {
           created_at: string | null
@@ -3735,6 +3777,45 @@ export type Database = {
           },
         ]
       }
+      scheduled_order_alerts: {
+        Row: {
+          alert_message: string
+          alert_type: string
+          created_at: string | null
+          days_overdue: number | null
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          order_id: string | null
+          resolved_at: string | null
+          scheduled_delivery_date: string | null
+        }
+        Insert: {
+          alert_message: string
+          alert_type: string
+          created_at?: string | null
+          days_overdue?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          order_id?: string | null
+          resolved_at?: string | null
+          scheduled_delivery_date?: string | null
+        }
+        Update: {
+          alert_message?: string
+          alert_type?: string
+          created_at?: string | null
+          days_overdue?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          order_id?: string | null
+          resolved_at?: string | null
+          scheduled_delivery_date?: string | null
+        }
+        Relationships: []
+      }
       security_audit: {
         Row: {
           access_granted: boolean
@@ -4773,6 +4854,10 @@ export type Database = {
       check_message_rate_limit: {
         Args: { sender_uuid: string }
         Returns: boolean
+      }
+      check_missed_scheduled_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       check_request_fingerprint: {
         Args: {

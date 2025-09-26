@@ -20,6 +20,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Log cron execution start
+    const { data: cronLog, error: cronLogError } = await supabase
+      .from('cron_execution_logs')
+      .insert({
+        cron_job_name: 'process-scheduled-orders-daily',
+        execution_started_at: new Date().toISOString(),
+        status: 'running',
+        execution_metadata: {
+          trigger_source: 'cron',
+          execution_date: new Date().toISOString()
+        }
+      })
+      .select()
+      .single()
+
+    const cronLogId = cronLog?.id
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
     // Calculate the processing cutoff date (4 days from now for Amazon 2-day shipping)
     const processingCutoffDate = new Date()
     processingCutoffDate.setDate(processingCutoffDate.getDate() + 4)
@@ -221,6 +242,29 @@ serve(async (req) => {
     console.log(`   ❌ Failures: ${failureCount}`)
     console.log(`   📦 Total: ${ordersToProcess.length}`)
 
+    // Update cron execution log
+    if (cronLogId) {
+      await supabase
+        .from('cron_execution_logs')
+        .update({
+          execution_completed_at: new Date().toISOString(),
+          status: 'completed',
+          orders_processed: ordersToProcess.length,
+          success_count: successCount,
+          failure_count: failureCount,
+          execution_metadata: {
+            trigger_source: 'cron',
+            execution_date: new Date().toISOString(),
+            processing_cutoff_date: cutoffDateString,
+            results_summary: results
+          }
+        })
+        .eq('id', cronLogId)
+    }
+
+    // Check for missed orders and create alerts
+    await supabase.rpc('check_missed_scheduled_orders')
+
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -238,6 +282,30 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error in process-scheduled-orders function:', error)
+    
+    // Create Supabase client for error logging
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    
+    // Update cron execution log with error
+    if (cronLogId) {
+      await supabase
+        .from('cron_execution_logs')
+        .update({
+          execution_completed_at: new Date().toISOString(),
+          status: 'failed',
+          error_message: error.message,
+          execution_metadata: {
+            trigger_source: 'cron',
+            execution_date: new Date().toISOString(),
+            error_details: error.stack || error.toString()
+          }
+        })
+        .eq('id', cronLogId)
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false,

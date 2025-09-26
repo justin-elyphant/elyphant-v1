@@ -10,6 +10,7 @@ import AuthButtons from "@/components/home/components/AuthButtons";
 import UserButton from "@/components/auth/UserButton";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
+import MobileAuthMenu from "./MobileAuthMenu";
 
 interface ModernHeaderManagerProps {
   mode?: "main" | "minimal" | "marketplace-focused";
@@ -107,7 +108,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             {/* Mobile Right Side - always consistent */}
             <div className="md:hidden flex items-center ml-auto gap-2">
               {config.showCart && <OptimizedShoppingCartButton />}
-              {user ? <UserButton /> : <AuthButtons />}
+              {user ? <UserButton /> : <MobileAuthMenu />}
             </div>
           </div>
 

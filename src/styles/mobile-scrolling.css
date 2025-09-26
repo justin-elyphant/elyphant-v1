@@ -19,13 +19,25 @@
 
 .ios-smooth-scroll {
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Changed from smooth to prevent blocking */
+  overscroll-behavior: contain;
+  will-change: scroll-position;
 }
 
 /* Grid touch improvements */
 .grid-touch-optimize {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile grid performance optimization */
+.mobile-grid-optimized {
+  touch-action: manipulation;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 /* Floating Action Button animations */

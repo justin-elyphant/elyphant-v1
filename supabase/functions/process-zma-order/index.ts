@@ -7,13 +7,13 @@ const corsHeaders = {
 };
 
 // ZMA Security Validation Functions
-async function performZmaSecurityValidation(context, supabase) {
+async function performZmaSecurityValidation(context: any, supabase: any) {
   const result = {
     passed: true,
     blocked: false,
-    warnings: [],
-    errors: [],
-    metadata: {}
+    warnings: [] as string[],
+    errors: [] as string[],
+    metadata: {} as any
   };
 
   try {
@@ -66,7 +66,7 @@ async function performZmaSecurityValidation(context, supabase) {
     console.log('🔍 Running order validation...');
     // 3. Order Validation (duplicates, suspicious patterns)
     const orderHash = btoa(JSON.stringify({
-      products: context.orderData.products?.map(p => ({ id: p.product_id, quantity: p.quantity })),
+      products: context.orderData.products?.map((p: any) => ({ id: p.product_id, quantity: p.quantity })),
       shipping: context.orderData.shipping_info,
       amount: context.orderData.total_amount
     }));
@@ -128,7 +128,7 @@ async function performZmaSecurityValidation(context, supabase) {
   return result;
 }
 
-function collectGiftMessage(orderItems, orderData) {
+function collectGiftMessage(orderItems: any, orderData: any) {
   // First check if there's a direct gift message on the order
   if (orderData.gift_message) {
     console.log('📝 Using gift message from order:', orderData.gift_message);
@@ -137,8 +137,8 @@ function collectGiftMessage(orderItems, orderData) {
 
   // Collect gift messages from order items
   const giftMessages = orderItems
-    .map(item => item.recipient_gift_message)
-    .filter(message => message && message.trim() !== '');
+    .map((item: any) => item.recipient_gift_message)
+    .filter((message: any) => message && message.trim() !== '');
 
   if (giftMessages.length === 0) {
     console.log('📝 No gift message found in order or items');
@@ -158,7 +158,7 @@ function collectGiftMessage(orderItems, orderData) {
   return combinedMessage;
 }
 
-async function logZmaSecurityEvent(eventType, eventData, severity, supabase) {
+async function logZmaSecurityEvent(eventType: any, eventData: any, severity: any, supabase: any) {
   try {
     await supabase
       .from('zma_security_events')
@@ -176,7 +176,7 @@ async function logZmaSecurityEvent(eventType, eventData, severity, supabase) {
   }
 }
 
-async function trackZmaOrderSuccess(userId, orderId, cost, supabase) {
+async function trackZmaOrderSuccess(userId: any, orderId: any, cost: any, supabase: any) {
   try {
     // Track the cost
     await supabase.rpc('track_zma_cost', {
@@ -200,7 +200,7 @@ async function trackZmaOrderSuccess(userId, orderId, cost, supabase) {
   }
 }
 
-async function trackZmaOrderFailure(userId, orderId, errorType, errorDetails, supabase) {
+async function trackZmaOrderFailure(userId: any, orderId: any, errorType: any, errorDetails: any, supabase: any) {
   try {
     // Increment consecutive failures
     const { data: currentData } = await supabase
@@ -234,7 +234,7 @@ async function trackZmaOrderFailure(userId, orderId, errorType, errorDetails, su
 }
 
 // Enhanced payment verification function with UUID validation
-async function verifyPaymentStatus(orderId, supabase) {
+async function verifyPaymentStatus(orderId: any, supabase: any) {
   console.log('💳 Verifying payment status before ZMA processing...');
   
   // Validate orderId format
@@ -285,7 +285,7 @@ async function verifyPaymentStatus(orderId, supabase) {
       'payment_verification_failed': 'Payment could not be verified. Please contact support.'
     };
     
-    const errorMessage = errorMessages[orderData.payment_status] || 
+    const errorMessage = errorMessages[orderData.payment_status as keyof typeof errorMessages] || 
                         `Payment status "${orderData.payment_status}" is not valid for processing.`;
     
     throw new Error(`${errorMessage} Cannot process order until payment is successful.`);
@@ -337,7 +337,7 @@ async function verifyPaymentStatus(orderId, supabase) {
         throw new Error(`Payment is still processing. Current status: ${paymentIntent.status}`);
       }
     } catch (stripeError) {
-      console.error('❌ Stripe verification failed:', stripeError.message);
+      console.error('❌ Stripe verification failed:', (stripeError instanceof Error ? stripeError.message : String(stripeError)));
       
       // Log verification failure for audit but don't change order status to failed immediately
       // This prevents premature failure states during transient Stripe issues
@@ -345,26 +345,27 @@ async function verifyPaymentStatus(orderId, supabase) {
         .from('order_notes')
         .insert({
           order_id: orderId,
-          note_content: `Payment verification attempt failed: ${stripeError.message}`,
+          note_content: `Payment verification attempt failed: ${(stripeError instanceof Error ? stripeError.message : String(stripeError))}`,
           note_type: 'system_error',
           is_internal: true,
           admin_user_id: null
         })
-        .then(({ error }) => {
+        .then(({ error }: any) => {
           if (error) console.error('Failed to log verification failure:', error);
         });
       
       // Only set payment_verification_failed for definitive failures, not transient issues
-      const isDefinitiveFailure = stripeError.message?.includes('No such payment_intent') ||
-                                 stripeError.message?.includes('invalid') ||
-                                 stripeError.message?.includes('not found');
+      const stripeErrorMessage = (stripeError instanceof Error ? stripeError.message : String(stripeError));
+      const isDefinitiveFailure = stripeErrorMessage?.includes('No such payment_intent') ||
+                                 stripeErrorMessage?.includes('invalid') ||
+                                 stripeErrorMessage?.includes('not found');
       
       if (isDefinitiveFailure) {
         await supabase
           .from('orders')
           .update({
             status: 'payment_verification_failed',
-            payment_verification_error: stripeError.message,
+            payment_verification_error: stripeErrorMessage,
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId);
@@ -402,7 +403,7 @@ return await (async () => {
       console.log('✅ Request body parsed:', JSON.stringify(body));
     } catch (parseError) {
       console.error('❌ JSON parsing failed:', parseError);
-      throw new Error(`Invalid JSON: ${parseError.message}`);
+      throw new Error(`Invalid JSON: ${(parseError instanceof Error ? parseError.message : String(parseError))}`);
     }
 
     const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate, packageSchedulingData, hasMultiplePackages } = body;
@@ -426,7 +427,7 @@ return await (async () => {
       console.log('✅ Supabase client created');
     } catch (supabaseError) {
       console.error('❌ Supabase client creation failed:', supabaseError);
-      throw new Error(`Supabase setup failed: ${supabaseError.message}`);
+      throw new Error(`Supabase setup failed: ${(supabaseError instanceof Error ? supabaseError.message : String(supabaseError))}`);
     }
 
     // Step 3: CRITICAL - Verify payment status before any ZMA processing
@@ -449,7 +450,7 @@ return await (async () => {
       return new Response(JSON.stringify({
         success: false,
         error: 'Payment verification failed',
-        details: paymentError.message,
+        details: (paymentError instanceof Error ? paymentError.message : String(paymentError)),
         preventDuplicateCharge: true
       }), {
         status: 400,

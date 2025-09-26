@@ -11,6 +11,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  let cronLogId: string | undefined;
+
   try {
     console.log('🕘 [process-scheduled-orders] Daily scheduled order processing started')
 
@@ -35,8 +37,7 @@ serve(async (req) => {
       .select()
       .single()
 
-    const cronLogId = cronLog?.id
-// removed duplicate supabase client
+    cronLogId = cronLog?.id
 
     // Calculate the processing cutoff date (4 days from now for Amazon 2-day shipping)
     const processingCutoffDate = new Date()
@@ -282,14 +283,14 @@ serve(async (req) => {
     console.error('❌ Error in process-scheduled-orders function:', error)
     
     // Create Supabase client for error logging
-    const supabase = createClient(
+    const supabaseErrorClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
     
-    // Update cron execution log with error
+    // Get cronLogId from outer scope
     if (cronLogId) {
-      await supabase
+      await supabaseErrorClient
         .from('cron_execution_logs')
         .update({
           execution_completed_at: new Date().toISOString(),
@@ -298,7 +299,7 @@ serve(async (req) => {
           execution_metadata: {
             trigger_source: 'cron',
             execution_date: new Date().toISOString(),
-            error_details: error.stack || error.toString()
+            error_details: (error instanceof Error ? (error.stack || error.toString()) : String(error))
           }
         })
         .eq('id', cronLogId)

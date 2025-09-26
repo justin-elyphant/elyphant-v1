@@ -16,6 +16,7 @@ const files = [
   'process-auto-gifts/index.ts',
   'process-email-queue/index.ts',
   'process-retry-pending-orders/index.ts',
+  'process-scheduled-orders/index.ts',
   'process-zinc-order/index.ts',
   'process-zma-order/index.ts',
   'retry-failed-order/index.ts',

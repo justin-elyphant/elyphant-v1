@@ -396,24 +396,29 @@ serve(async (req) => {
       );
       
       // Include address resolution context in critical error logs for auto-gifts
-      let errorNoteContent = `Critical error during Zinc order processing: ${error.message}`;
-      if (error.message.includes('address') || error.message.includes('execution')) {
+      let errorNoteContent = `Critical error during Zinc order processing: ${(error instanceof Error ? error.message : String(error))}`;
+      const errorMessage = (error instanceof Error ? error.message : String(error));
+      if (errorMessage.includes('address') || errorMessage.includes('execution')) {
         errorNoteContent += ` (This may be related to auto-gift address resolution)`;
       }
       
-      await supabaseClient
+      const { error: noteError } = await supabaseClient
         .from('order_notes')
         .insert({
           order_id: orderId,
           note_content: errorNoteContent,
           note_type: 'error',
           is_internal: true
-        }).catch(console.error);
+        });
+      
+      if (noteError) {
+        console.error('Failed to insert error note:', noteError);
+      }
     }
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

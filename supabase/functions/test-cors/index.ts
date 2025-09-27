@@ -34,7 +34,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Test function error:', error);
     
     return new Response(

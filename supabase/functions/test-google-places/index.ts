@@ -100,7 +100,7 @@ serve(async (req) => {
           firstResult: textSearchData.results?.[0]?.name || null
         }
       },
-      recommendations: []
+      recommendations: [] as string[]
     };
 
     // Generate recommendations based on test results
@@ -122,7 +122,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(diagnostics), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error testing Google Places API:', error);
     return new Response(JSON.stringify({ 
       success: false,

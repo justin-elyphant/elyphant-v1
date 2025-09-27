@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-serve(async (req) => {
+serve(async (req): Promise<Response> => {
   const {method} = req;
   if (method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -40,4 +40,9 @@ serve(async (req) => {
       );
     }
   }
+  
+  return new Response(JSON.stringify({error: 'Method not allowed'}), {
+    status: 405,
+    headers: corsHeaders
+  });
 })

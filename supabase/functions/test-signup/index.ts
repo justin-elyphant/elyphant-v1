@@ -95,7 +95,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Test signup exception:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),

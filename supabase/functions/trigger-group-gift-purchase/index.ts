@@ -84,10 +84,10 @@ serve(async (req) => {
           amount: captured.amount / 100
         });
         return captured;
-      } catch (error) {
+      } catch (error: any) {
         logStep("Payment capture failed", { 
           paymentIntentId: contribution.stripe_payment_intent_id,
-          error: error.message 
+          error: error.message
         });
         throw error;
       }

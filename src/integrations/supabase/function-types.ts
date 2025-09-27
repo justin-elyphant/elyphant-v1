@@ -8,7 +8,7 @@ export enum SUPABASE_FUNCTIONS {
   SEND_INVITATION_EMAIL = "send-invitation-email",
   HANDLE_INVITATION_ACCEPTANCE = "handle-invitation-acceptance",
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
-  PROCESS_ZMA_ORDER = "process-zma-order",
+  SIMPLE_ORDER_PROCESSOR = "simple-order-processor",
   CLEANUP_DUPLICATE_ORDERS = "cleanup-duplicate-orders"
-  // Note: process-zinc-order is disabled - all orders use ZMA
+  // Note: Simplified order processing - removed complex orchestrator
 }

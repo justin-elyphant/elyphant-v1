@@ -18,7 +18,10 @@ const TestZMAOrder = () => {
       
       const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
-          orderId: testOrderId
+          orderId: testOrderId,
+          isTestMode: false,
+          debugMode: true,
+          retryAttempt: true
         }
       });
       

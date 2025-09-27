@@ -11,8 +11,8 @@ const TestZMAOrder = () => {
   const testZMAOrder = async () => {
     setIsLoading(true);
     try {
-      // Test with the order we just created
-      const testOrderId = '009ff1ea-ac9c-4acb-bab4-bcbab927f722'; // From the migration result
+      // Process the stuck order directly through ZMA
+      const testOrderId = '40175959-7c4e-498f-92df-f6cd5bf38d28'; // Stuck order from payment_confirmed
       
       console.log('Testing ZMA order processing for order:', testOrderId);
       

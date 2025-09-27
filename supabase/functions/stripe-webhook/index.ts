@@ -33,7 +33,7 @@ serve(async (req) => {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       console.log(`✅ Webhook verified: ${event.type}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Webhook signature verification failed:', err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
@@ -66,7 +66,7 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Webhook processing error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
@@ -103,19 +103,19 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     if (order) {
       console.log(`✅ Order ${order.id} updated for successful payment`);
       
-      // PRIMARY TRIGGER: Use orchestrator for controlled processing
+      // Call simplified order processor directly
       try {
-        await supabase.functions.invoke('order-orchestrator', {
+        await supabase.functions.invoke('simple-order-processor', {
           body: { 
             orderId: order.id,
             triggerSource: 'stripe-webhook',
-            metadata: {
-              eventType: 'payment_intent.succeeded',
-              webhookProcessedAt: new Date().toISOString()
-            }
+            isScheduled: order.scheduled_delivery_date ? true : false,
+            scheduledDeliveryDate: order.scheduled_delivery_date,
+            isAutoGift: order.is_auto_gift || false,
+            autoGiftContext: order.auto_gift_context
           }
         });
-        console.log(`🚀 PRIMARY TRIGGER: Orchestrator invoked for order ${order.id}`);
+        console.log(`🚀 Simplified processor invoked for order ${order.id}`);
       } catch (processError) {
         console.error('⚠️ Failed to trigger order processing:', processError);
         // Don't fail the webhook, order processing can be retried later
@@ -175,20 +175,19 @@ async function handleCheckoutCompleted(session: any, supabase: any) {
       if (order) {
         console.log(`✅ Order ${order.id} updated for completed checkout`);
         
-        // PRIMARY TRIGGER: Use orchestrator for checkout completion
+        // Call simplified order processor directly
         try {
-          await supabase.functions.invoke('order-orchestrator', {
+          await supabase.functions.invoke('simple-order-processor', {
             body: { 
               orderId: order.id,
               triggerSource: 'stripe-webhook',
-              metadata: {
-                sessionId: session.id,
-                eventType: 'checkout.session.completed',
-                webhookProcessedAt: new Date().toISOString()
-              }
+              isScheduled: order.scheduled_delivery_date ? true : false,
+              scheduledDeliveryDate: order.scheduled_delivery_date,
+              isAutoGift: order.is_auto_gift || false,
+              autoGiftContext: order.auto_gift_context
             }
           });
-          console.log(`🚀 PRIMARY TRIGGER: Orchestrator invoked for checkout order ${order.id}`);
+          console.log(`🚀 Simplified processor invoked for checkout order ${order.id}`);
         } catch (processError) {
           console.error('⚠️ Failed to trigger order processing:', processError);
         }

@@ -2804,33 +2804,6 @@ export type Database = {
           },
         ]
       }
-      order_processing_signals: {
-        Row: {
-          created_at: string
-          id: string
-          order_id: string
-          processed_at: string
-          signal_metadata: Json | null
-          trigger_source: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          order_id: string
-          processed_at?: string
-          signal_metadata?: Json | null
-          trigger_source: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          order_id?: string
-          processed_at?: string
-          signal_metadata?: Json | null
-          trigger_source?: string
-        }
-        Relationships: []
-      }
       order_recovery_logs: {
         Row: {
           created_at: string
@@ -2964,6 +2937,7 @@ export type Database = {
           id: string
           is_gift: boolean | null
           is_surprise_gift: boolean | null
+          last_processing_attempt: string | null
           last_zinc_update: string | null
           merchant_tracking_data: Json | null
           next_retry_at: string | null
@@ -2971,6 +2945,7 @@ export type Database = {
           order_number: string
           payment_confirmation_sent: boolean | null
           payment_status: string | null
+          processing_attempts: number | null
           processing_status: string | null
           retry_count: number | null
           retry_reason: string | null
@@ -2987,7 +2962,6 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
-          webhook_token: string | null
           zinc_order_id: string | null
           zinc_status: string | null
           zinc_timeline_events: Json | null
@@ -3016,6 +2990,7 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          last_processing_attempt?: string | null
           last_zinc_update?: string | null
           merchant_tracking_data?: Json | null
           next_retry_at?: string | null
@@ -3023,6 +2998,7 @@ export type Database = {
           order_number: string
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
+          processing_attempts?: number | null
           processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
@@ -3039,7 +3015,6 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
-          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null
@@ -3068,6 +3043,7 @@ export type Database = {
           id?: string
           is_gift?: boolean | null
           is_surprise_gift?: boolean | null
+          last_processing_attempt?: string | null
           last_zinc_update?: string | null
           merchant_tracking_data?: Json | null
           next_retry_at?: string | null
@@ -3075,6 +3051,7 @@ export type Database = {
           order_number?: string
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
+          processing_attempts?: number | null
           processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
@@ -3091,7 +3068,6 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
-          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null
@@ -4707,33 +4683,6 @@ export type Database = {
         }
         Relationships: []
       }
-      zma_order_validation_cache: {
-        Row: {
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          order_amount: number
-          order_hash: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          order_amount: number
-          order_hash: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          order_amount?: number
-          order_hash?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       zma_security_events: {
         Row: {
           created_at: string | null
@@ -4822,10 +4771,6 @@ export type Database = {
       }
     }
     Functions: {
-      acquire_order_submission_lock: {
-        Args: { order_uuid: string }
-        Returns: boolean
-      }
       add_business_admin: {
         Args: {
           admin_level_param: string
@@ -4950,12 +4895,7 @@ export type Database = {
               zinc_request_id_param: string
               zinc_status_param?: string
             }
-          | {
-              final_status?: string
-              order_uuid: string
-              zinc_order_id_param: string
-            }
-        Returns: boolean
+        Returns: Json
       }
       delete_user_account: {
         Args: { target_user_id: string }
@@ -5091,6 +5031,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      increment_processing_attempts: {
+        Args: { order_uuid: string }
+        Returns: undefined
+      }
       initialize_default_auto_gifting_settings: {
         Args: { target_user_id: string }
         Returns: string
@@ -5157,10 +5101,6 @@ export type Database = {
       recover_stuck_orders: {
         Args: { max_age_minutes?: number }
         Returns: Json
-      }
-      release_order_submission_lock: {
-        Args: { error_message?: string; order_uuid: string }
-        Returns: undefined
       }
       search_users_for_friends: {
         Args: {

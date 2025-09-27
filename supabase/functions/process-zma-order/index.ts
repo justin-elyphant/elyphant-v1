@@ -876,7 +876,7 @@ Object.keys(zincOrderData).forEach((key) => {
     // ATOMIC SUBMISSION LOCK - Single point of truth for order processing
     console.log('🔒 Attempting atomic submission lock (replaces old dual-lock system)...');
     const { data: lockAcquired, error: lockError } = await supabase
-      .rpc('acquire_order_submission_lock', { order_uuid: orderId });
+      .rpc('start_order_processing', { order_uuid: orderId });
 
     if (lockError) {
       console.error('❌ Failed to acquire atomic submission lock:', lockError);

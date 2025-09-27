@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log(`📅 Processing orders scheduled for delivery on or before: ${cutoffDateString}`)
 
-    // Enhanced query to include package scheduling metadata
+    // Enhanced query with correct columns from database schema
     const { data: ordersToProcess, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -57,7 +57,9 @@ serve(async (req) => {
         total_amount,
         payment_status,
         retry_count,
-        package_scheduling_metadata
+        gift_scheduling_options,
+        delivery_groups,
+        has_multiple_recipients
       `)
       .eq('status', 'scheduled')
       .lte('scheduled_delivery_date', cutoffDateString)
@@ -162,16 +164,18 @@ serve(async (req) => {
           continue
         }
 
-        // Enhanced ZMA processing with package-level data
+        // Enhanced ZMA processing with correct scheduling data
         console.log(`🚀 Invoking process-zma-order for scheduled order ${order.id}`)
         
-        const packageData = order.package_scheduling_metadata ? JSON.parse(order.package_scheduling_metadata) : {}
-        const hasMultiplePackages = Object.keys(packageData).length > 1
+        const giftSchedulingOptions = order.gift_scheduling_options || {}
+        const deliveryGroups = order.delivery_groups || []
+        const hasMultipleRecipients = order.has_multiple_recipients || false
         
-        console.log(`📦 Package analysis for order ${order.id}:`, {
-          packageCount: Object.keys(packageData).length,
+        console.log(`📦 Scheduling analysis for order ${order.id}:`, {
+          giftSchedulingOptions,
+          deliveryGroupCount: deliveryGroups.length,
           scheduledDeliveryDate: order.scheduled_delivery_date,
-          hasMultiplePackages
+          hasMultipleRecipients
         })
         
         const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
@@ -181,8 +185,9 @@ serve(async (req) => {
             debugMode: false,
             scheduledProcessing: true,
             scheduledDeliveryDate: order.scheduled_delivery_date,
-            packageSchedulingData: order.package_scheduling_metadata,
-            hasMultiplePackages
+            giftSchedulingOptions,
+            deliveryGroups,
+            hasMultipleRecipients
           }
         })
 

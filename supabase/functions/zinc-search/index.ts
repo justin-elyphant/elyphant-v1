@@ -132,7 +132,7 @@ serve(async (req) => {
         }
       );
 
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       clearTimeout(timeoutId);
       
       if (fetchError.name === 'AbortError') {
@@ -153,7 +153,7 @@ serve(async (req) => {
       throw fetchError;
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in zinc-search function:', error);
     return new Response(
       JSON.stringify({ 

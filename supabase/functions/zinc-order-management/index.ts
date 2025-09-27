@@ -347,7 +347,7 @@ serve(async (req) => {
         throw new Error(`Unknown action: ${action}`);
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('🚨 [ZINC-ORDER-MANAGEMENT] Error:', error);
     
     return new Response(JSON.stringify({
@@ -441,10 +441,10 @@ async function handleZincAbort(orderId: string, supabase: any) {
         console.log('⚠️ [ZINC-ABORT] Order not eligible for abort, falling back to cancellation');
         const result = await cancelOrderWithZinc(orderId, 'User cancelled', supabase);
         return new Response(JSON.stringify({
+          ...result,
           success: true,
           message: 'Order cancelled successfully (abort not available)',
-          operationType: 'cancel',
-          ...result
+          operationType: 'cancel'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200
@@ -458,10 +458,10 @@ async function handleZincAbort(orderId: string, supabase: any) {
     const abortResult = await performZincAbort(orderData, supabase);
     
     return new Response(JSON.stringify({
+      ...abortResult,
       success: true,
       message: 'Order aborted successfully',
-      operationType: 'abort',
-      ...abortResult
+      operationType: 'abort'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
@@ -480,9 +480,9 @@ async function handleOrderCancellation(orderId: string, reason: string, supabase
   const result = await cancelOrderWithZinc(orderId, reason, supabase);
   
   return new Response(JSON.stringify({
+    ...result,
     success: true,
-    message: 'Order cancelled successfully',
-    ...result
+    message: 'Order cancelled successfully'
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     status: 200

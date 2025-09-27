@@ -79,7 +79,8 @@ export async function performZincAbort(orderData: any, supabase: any) {
     throw new Error('No active ZMA account found');
   }
 
-  const { ZincApiManager } = await import('./index.ts');
+  const zincModule = await import('./index.ts');
+  const ZincApiManager = (zincModule as any).ZincApiManager;
   const zincApi = new ZincApiManager(zmaAccount.api_key);
 
   // Attempt abort

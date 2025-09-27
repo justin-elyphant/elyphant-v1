@@ -33,7 +33,7 @@ serve(async (req) => {
       console.log(`[VERIFY-CHECKOUT] Payment successful for session: ${session_id}`)
       
       // Enhanced verification audit logging
-      const auditEntry = {
+      const auditEntry: any = {
         stripe_session_id: session_id,
         stripe_payment_intent_id: session.payment_intent,
         verification_method: 'session_id_primary',
@@ -126,13 +126,13 @@ serve(async (req) => {
             console.log(`[VERIFY-CHECKOUT] Checking delivery groups for scheduling:`, deliveryGroupsMetadata)
             
             const scheduledDates = Object.values(deliveryGroupsMetadata)
-              .map(group => group.scheduledDeliveryDate)
+              .map((group: any) => group.scheduledDeliveryDate)
               .filter(date => date)
               .map(date => new Date(date))
             
             if (scheduledDates.length > 0) {
-              earliestDeliveryDate = new Date(Math.min(...scheduledDates))
-              latestDeliveryDate = new Date(Math.max(...scheduledDates))
+              earliestDeliveryDate = new Date(Math.min(...scheduledDates.map(d => d.getTime())))
+              latestDeliveryDate = new Date(Math.max(...scheduledDates.map(d => d.getTime())))
               
               // Check if ANY package is scheduled more than 4 days away
               const daysDifference = Math.ceil((earliestDeliveryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))

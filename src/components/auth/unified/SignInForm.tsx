@@ -104,7 +104,12 @@ const SignInForm = () => {
         </Button>
         
         <div className="text-center">
-          <Button variant="link" size="touch" className="text-body-sm text-muted-foreground p-0 touch-target-44">
+          <Button 
+            variant="link" 
+            size="touch" 
+            className="text-body-sm text-muted-foreground p-0 touch-target-44"
+            onClick={() => navigate("/forgot-password")}
+          >
             Forgot your password?
           </Button>
         </div>

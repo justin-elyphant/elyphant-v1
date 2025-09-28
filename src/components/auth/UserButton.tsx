@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -118,38 +118,61 @@ const UserButton = () => {
     navigate("/marketplace");
   };
 
-  const handleAvatarClick = () => {
-    if (isMobile) {
-      navigate("/dashboard");
-    }
-  };
-  
-  // On mobile, render a simple button that navigates to dashboard
+  // On mobile, render a minimalist dropdown with essential account actions
   if (isMobile) {
     return (
-      <button 
-        onClick={handleAvatarClick}
-        className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation"
-      >
-        <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
-          <AvatarImage 
-            src={
-              profile?.profile_image || 
-              user?.user_metadata?.avatar_url || 
-              user?.user_metadata?.picture
-            } 
-          />
-          <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-            {userInitials}
-          </AvatarFallback>
-        </Avatar>
-        {totalNotificationCount > 0 && (
-          <NotificationBadge 
-            count={totalNotificationCount}
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs shadow-md"
-          />
-        )}
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
+            <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+              <AvatarImage 
+                src={
+                  profile?.profile_image || 
+                  user?.user_metadata?.avatar_url || 
+                  user?.user_metadata?.picture
+                } 
+              />
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {totalNotificationCount > 0 && (
+              <NotificationBadge 
+                count={totalNotificationCount}
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-xs shadow-md"
+              />
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        
+        <DropdownMenuContent align="end" className="w-48 bg-background border border-border shadow-lg rounded-lg z-50">
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/dashboard")}
+          >
+            <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Dashboard</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/settings")}
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Account Settings</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator className="my-1 bg-border" />
+          
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 hover:bg-destructive/10 hover:text-destructive cursor-pointer text-destructive"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="font-medium">Sign Out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
   

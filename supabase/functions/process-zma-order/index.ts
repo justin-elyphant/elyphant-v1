@@ -766,23 +766,30 @@ for (const field of requiredBillingFields) {
   }
 }
     
-    // Generate a secure webhook token for this order
-    const webhookToken = btoa(JSON.stringify({
-      orderId: orderId,
-      timestamp: Date.now(),
-      nonce: Math.random().toString(36).substring(2)
-    }));
+    // Check if webhook token already exists (from scheduled orders) or generate new one
+    let webhookToken = orderData.webhook_token;
+    
+    if (!webhookToken) {
+      // Generate a secure webhook token for this order
+      webhookToken = btoa(JSON.stringify({
+        orderId: orderId,
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(2)
+      }));
 
-    // Store webhook token for validation
-    await supabase
-      .from('orders')
-      .update({
-        webhook_token: webhookToken,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', orderId);
+      // Store webhook token for validation
+      await supabase
+        .from('orders')
+        .update({
+          webhook_token: webhookToken,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
 
-    console.log('🔐 Generated webhook security token for order:', orderId);
+      console.log('🔐 Generated new webhook security token for order:', orderId);
+    } else {
+      console.log('🔗 Using existing webhook token for scheduled order:', orderId);
+    }
 
     // For ZMA orders, exclude payment_method, billing_address, and retailer_credentials
     const zincOrderData = {

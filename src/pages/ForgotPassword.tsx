@@ -20,17 +20,43 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Add timeout to prevent getting stuck
+      const timeoutPromise = new Promise<any>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout - trying alternative method')), 10000)
+      );
+
+      const resetPromise = supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) {
-        toast.error(error.message);
+      const result = await Promise.race([resetPromise, timeoutPromise]);
+
+      if (result.error) {
+        throw result.error;
       } else {
         toast.success('Password reset email sent! Check your inbox.');
       }
-    } catch (error) {
-      toast.error('Failed to send reset email');
+    } catch (error: any) {
+      console.log('Supabase auth timeout, switching to custom email service');
+      
+      // Fallback to our custom edge function if Supabase times out
+      try {
+        const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-email', {
+          body: {
+            email: email,
+            resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
+            userName: email.split('@')[0]
+          }
+        });
+
+        if (emailError) {
+          toast.error(`Failed to send reset email: ${emailError.message}`);
+        } else {
+          toast.success('Password reset email sent via backup service! Check your inbox.');
+        }
+      } catch (fallbackError) {
+        toast.error('Both email services are currently unavailable. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }

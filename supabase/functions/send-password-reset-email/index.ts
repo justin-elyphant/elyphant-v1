@@ -148,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending password reset email to: ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <noreply@resend.dev>", // Update this with your verified domain
+      from: "Elyphant <noreply@elyphant.ai>",
       to: [email],
       subject: "🔐 Reset Your Password - Action Required",
       html: generatePasswordResetEmail(resetLink, userName),

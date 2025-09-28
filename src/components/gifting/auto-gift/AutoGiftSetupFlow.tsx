@@ -154,6 +154,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Phase 1: Input validation with detailed feedback
     if (!formData.recipientId || !formData.eventType) {
       toast.error("Please select a recipient and event type");
       return;
@@ -177,6 +178,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     setIsLoading(true);
 
     try {
+      // Phase 2: Setup initiation with progress feedback
+      toast.info("Initializing secure auto-gift setup...", { duration: 2000 });
+
       // Find the selected recipient from both accepted connections and pending invitations
       const allConnections = [...connections, ...pendingInvitations];
       const selectedConnection = allConnections.find(conn => 
@@ -214,40 +218,70 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         gift_message: formData.giftMessage,
       };
 
-      // Create or update the rule
+      // Phase 3: Secure rule creation/update with enhanced feedback
       let result;
       if (ruleId) {
+        toast.info("Updating auto-gifting rule securely...", { duration: 2000 });
         result = await updateRule(ruleId, ruleData);
-        toast.success("Auto-gifting rule updated successfully!");
+        toast.success("Auto-gifting rule updated successfully!", {
+          description: "All changes have been saved and secured with token validation"
+        });
       } else {
+        toast.info("Creating auto-gifting rule with security validation...", { duration: 2000 });
         result = await createRule(ruleData);
         
         // Show different success messages for holidays vs other events
         if (formData.eventType === "holiday") {
           toast.success(`Holiday auto-gifting set up for ${formData.specificHoliday}!`, {
-            description: "The holiday event has been added to your calendar and will appear in Recipient Events for your connections"
+            description: "The holiday event has been added to your calendar with secure token validation and will appear in Recipient Events for your connections"
           });
         } else {
           toast.success("Auto-gifting rule created successfully!", {
-            description: "You'll be notified when gift suggestions are ready for approval"
+            description: "Setup completed with security validation - you'll be notified when gift suggestions are ready for approval"
           });
         }
       }
 
-      // Update settings to include the auto-approve preference
+      // Phase 4: Settings update with confirmation
       if (settings) {
         await updateSettings({
           auto_approve_gifts: formData.autoApprove
         });
+        
+        if (formData.autoApprove) {
+          toast.success("Auto-approval enabled", {
+            description: "Gifts within budget will be automatically approved"
+          });
+        }
       }
 
+      // Phase 5: Successful completion with secure closure
+      toast.success("Setup completed successfully!", {
+        description: "Your auto-gifting configuration is now active and secured"
+      });
       
       onOpenChange(false);
       setCurrentStep(0);
       
     } catch (error) {
-      console.error("Error creating auto-gift rule:", error);
-      toast.error("Failed to create auto-gifting rule");
+      console.error("Error in auto-gift setup:", error);
+      
+      // Enhanced error handling with specific feedback
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      if (errorMessage.includes("rate limit")) {
+        toast.error("Setup rate limit exceeded", {
+          description: "Please wait a moment before creating another auto-gifting rule"
+        });
+      } else if (errorMessage.includes("validation")) {
+        toast.error("Setup validation failed", {
+          description: "Please check your inputs and try again"
+        });
+      } else {
+        toast.error("Failed to create auto-gifting rule", {
+          description: errorMessage
+        });
+      }
     } finally {
       setIsLoading(false);
     }

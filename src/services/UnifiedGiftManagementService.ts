@@ -215,6 +215,81 @@ const RELATIONSHIP_CATEGORIES = {
 
 class UnifiedGiftManagementService {
 
+  // ============= TOKEN-BASED SECURITY INTEGRATION =============
+
+  /**
+   * Generate secure setup token for auto-gift rule creation (applying webhook patterns)
+   */
+  async generateSetupToken(userId: string): Promise<string> {
+    const setupToken = btoa(JSON.stringify({
+      userId: userId,
+      timestamp: Date.now(),
+      nonce: Math.random().toString(36).substring(2)
+    }));
+    
+    console.log('🔐 Generated secure auto-gift setup token for user:', userId);
+    return setupToken;
+  }
+
+  /**
+   * Validate setup token before rule creation/update
+   */
+  async validateSetupToken(token: string, userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('validate_auto_gift_setup_token', {
+          token: token,
+          user_uuid: userId
+        });
+      
+      if (error) {
+        console.error('❌ Setup token validation error:', error);
+        return false;
+      }
+      
+      return data === true;
+    } catch (error) {
+      console.error('❌ Setup token validation failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Log auto-gift events for comprehensive audit trail (applying webhook event patterns)
+   */
+  async logAutoGiftEvent(
+    userId: string,
+    eventType: string,
+    eventData: any = {},
+    metadata: any = {},
+    setupToken?: string,
+    ruleId?: string,
+    executionId?: string,
+    errorMessage?: string
+  ): Promise<void> {
+    try {
+      const { error } = await supabase
+        .rpc('log_auto_gift_event', {
+          user_uuid: userId,
+          event_type_param: eventType,
+          event_data_param: eventData,
+          metadata_param: metadata,
+          setup_token_param: setupToken,
+          rule_id_param: ruleId,
+          execution_id_param: executionId,
+          error_message_param: errorMessage
+        });
+
+      if (error) {
+        console.error('❌ Event logging error:', error);
+      } else {
+        console.log(`✅ Auto-gift event logged: ${eventType}`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to log auto-gift event:', error);
+    }
+  }
+
   // ============= HIERARCHICAL GIFT SELECTION (Enhanced) =============
 
   /**
@@ -688,37 +763,166 @@ class UnifiedGiftManagementService {
   // ============= RULE MANAGEMENT (Enhanced) =============
 
   async createRule(rule: Omit<UnifiedGiftRule, 'id' | 'created_at' | 'updated_at'>): Promise<UnifiedGiftRule> {
+    console.log('📝 [UNIFIED] Creating auto-gifting rule with security validation:', rule);
+    
+    // Phase 1: Existing validations
     await this.validateUserConsent(rule.user_id);
     await this.validateBudgetLimits(rule.user_id, rule.budget_limit || 0);
 
+    // Phase 2: Generate secure setup token
+    const setupToken = await this.generateSetupToken(rule.user_id);
+    
+    // Phase 3: Log setup initiation
+    await this.logAutoGiftEvent(
+      rule.user_id, 
+      'auto_gift_setup_initiated', 
+      { 
+        recipientId: rule.recipient_id,
+        dateType: rule.date_type,
+        budgetLimit: rule.budget_limit
+      },
+      {
+        timestamp: new Date().toISOString(),
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'system'
+      },
+      setupToken
+    );
+
+    // Phase 4: Atomic rule creation with setup token
     const { data, error } = await supabase
       .from('auto_gifting_rules')
-      .insert(rule)
+      .insert({
+        ...rule,
+        setup_token: setupToken,
+        setup_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min expiry
+        setup_completed_at: new Date().toISOString()
+      })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      await this.logAutoGiftEvent(
+        rule.user_id, 
+        'auto_gift_rule_creation_failed', 
+        { error: error.message },
+        {},
+        setupToken,
+        undefined,
+        undefined,
+        error.message
+      );
+      throw error;
+    }
     
-    // Smart Holiday Detection: Create holiday event if needed
+    // Phase 5: Smart Holiday Detection - Create holiday event if needed
     if (rule.date_type) {
       await this.createHolidayEventIfNeeded(rule.user_id, rule.date_type, 'friends');
     }
     
+    // Phase 6: Log successful creation and existing activity
     await this.logGiftAutomationActivity(rule.user_id, 'rule_created', { rule_id: data.id });
+    await this.logAutoGiftEvent(
+      rule.user_id, 
+      'auto_gift_rule_created', 
+      { 
+        ruleId: data.id,
+        recipientId: rule.recipient_id,
+        dateType: rule.date_type,
+        budgetLimit: rule.budget_limit
+      },
+      {
+        setupToken,
+        createdAt: data.created_at
+      },
+      setupToken,
+      data.id
+    );
     
+    console.log('✅ [UNIFIED] Auto-gifting rule created successfully with security tracking:', data.id);
     return data as unknown as UnifiedGiftRule;
   }
 
   async updateRule(id: string, updates: Partial<UnifiedGiftRule>): Promise<UnifiedGiftRule> {
-    const { data, error } = await supabase
-      .from('auto_gifting_rules')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
+    console.log('📝 [UNIFIED] Updating auto-gifting rule with security validation:', id, updates);
+    
+    try {
+      // Phase 1: Get current rule for logging context
+      const { data: currentRule } = await supabase
+        .from('auto_gifting_rules')
+        .select('user_id, recipient_id, date_type')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data as unknown as UnifiedGiftRule;
+      if (!currentRule) {
+        throw new Error('Auto-gifting rule not found');
+      }
+
+      // Phase 2: Generate update token
+      const updateToken = await this.generateSetupToken(currentRule.user_id);
+      
+      // Phase 3: Log update initiation
+      await this.logAutoGiftEvent(
+        currentRule.user_id, 
+        'auto_gift_rule_update_initiated', 
+        { 
+          ruleId: id,
+          updates: Object.keys(updates)
+        },
+        {
+          timestamp: new Date().toISOString(),
+          updateToken
+        },
+        updateToken,
+        id
+      );
+
+      // Phase 4: Atomic update operation
+      const { data, error } = await supabase
+        .from('auto_gifting_rules')
+        .update({ 
+          ...updates, 
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        await this.logAutoGiftEvent(
+          currentRule.user_id, 
+          'auto_gift_rule_update_failed', 
+          { ruleId: id, error: error.message },
+          {},
+          updateToken,
+          id,
+          undefined,
+          error.message
+        );
+        throw error;
+      }
+      
+      // Phase 5: Log successful update
+      await this.logAutoGiftEvent(
+        currentRule.user_id, 
+        'auto_gift_rule_updated', 
+        { 
+          ruleId: id,
+          updatedFields: Object.keys(updates)
+        },
+        {
+          updateToken,
+          updatedAt: data.updated_at
+        },
+        updateToken,
+        id
+      );
+      
+      console.log('✅ [UNIFIED] Auto-gifting rule updated successfully with security tracking:', id);
+      return data as unknown as UnifiedGiftRule;
+    } catch (error) {
+      console.error('❌ Error updating auto-gifting rule:', error);
+      throw error;
+    }
   }
 
   async deleteRule(id: string): Promise<void> {

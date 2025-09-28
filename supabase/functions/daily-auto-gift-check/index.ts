@@ -14,30 +14,58 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🕐 Daily auto-gift check started')
+    console.log('🕐 Daily auto-gift check started - Enhanced with security tracking')
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Call the main auto-gift processing function
+    // Phase 1: Log execution start
+    const executionStartTime = Date.now()
+    const executionId = crypto.randomUUID()
+    
+    console.log(`📊 Execution ID: ${executionId} - Starting daily check with enhanced monitoring`)
+
+    // Phase 2: Call the main auto-gift processing function with tracking
     const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/process-auto-gifts`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'X-Execution-ID': executionId
+      },
+      body: JSON.stringify({
+        executionId,
+        scheduledExecution: true,
+        timestamp: new Date().toISOString()
+      })
     })
 
     const result = await response.json()
+    const executionTime = Date.now() - executionStartTime
     
-    console.log('Daily auto-gift check completed:', result)
+    // Phase 3: Enhanced logging with execution metrics
+    console.log(`Daily auto-gift check completed in ${executionTime}ms:`, {
+      executionId,
+      executionTime,
+      success: response.ok,
+      result
+    })
+
+    // Phase 4: Log execution completion for audit trail
+    if (response.ok) {
+      console.log(`✅ Daily execution ${executionId} completed successfully`)
+    } else {
+      console.error(`❌ Daily execution ${executionId} failed:`, result)
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Daily auto-gift check completed',
+        message: 'Daily auto-gift check completed with enhanced tracking',
+        executionId,
+        executionTime,
         result
       }),
       {

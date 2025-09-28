@@ -475,6 +475,48 @@ export type Database = {
           },
         ]
       }
+      auto_gift_event_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_data: Json
+          event_type: string
+          execution_id: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json
+          rule_id: string | null
+          setup_token: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json
+          event_type: string
+          execution_id?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          rule_id?: string | null
+          setup_token?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json
+          event_type?: string
+          execution_id?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          rule_id?: string | null
+          setup_token?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       auto_gift_notifications: {
         Row: {
           created_at: string | null
@@ -539,6 +581,9 @@ export type Database = {
           relationship_context: Json | null
           scheduled_date: string | null
           seasonal_adjustment_factors: Json | null
+          setup_completed_at: string | null
+          setup_expires_at: string | null
+          setup_token: string | null
           success_metrics: Json | null
           updated_at: string | null
           user_id: string
@@ -562,6 +607,9 @@ export type Database = {
           relationship_context?: Json | null
           scheduled_date?: string | null
           seasonal_adjustment_factors?: Json | null
+          setup_completed_at?: string | null
+          setup_expires_at?: string | null
+          setup_token?: string | null
           success_metrics?: Json | null
           updated_at?: string | null
           user_id: string
@@ -585,6 +633,9 @@ export type Database = {
           relationship_context?: Json | null
           scheduled_date?: string | null
           seasonal_adjustment_factors?: Json | null
+          setup_completed_at?: string | null
+          setup_expires_at?: string | null
+          setup_token?: string | null
           success_metrics?: Json | null
           updated_at?: string | null
           user_id?: string
@@ -5066,6 +5117,19 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
+      log_auto_gift_event: {
+        Args: {
+          error_message_param?: string
+          event_data_param?: Json
+          event_type_param: string
+          execution_id_param?: string
+          metadata_param?: Json
+          rule_id_param?: string
+          setup_token_param?: string
+          user_uuid: string
+        }
+        Returns: string
+      }
       log_business_payment_access: {
         Args: {
           additional_data?: Json
@@ -5179,6 +5243,10 @@ export type Database = {
           resource_id?: string
           resource_type: string
         }
+        Returns: boolean
+      }
+      validate_auto_gift_setup_token: {
+        Args: { token: string; user_uuid: string }
         Returns: boolean
       }
       validate_webhook_token: {

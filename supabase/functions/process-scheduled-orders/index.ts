@@ -403,8 +403,28 @@ serve(async (req) => {
 
         console.log(`✅ Payment validation passed for scheduled order ${order.order_number}`);
 
-        // STEP 4: Enhanced ZMA processing with proven robustness patterns
-        console.log(`🚀 Step 4: Enhanced ZMA processing for scheduled order ${order.id}`)
+        // STEP 4: Generate webhook token for real-time status updates
+        console.log(`🔐 Step 4a: Generating webhook security token for scheduled order ${order.id}`)
+        
+        const webhookToken = btoa(JSON.stringify({
+          orderId: order.id,
+          timestamp: Date.now(),
+          nonce: Math.random().toString(36).substring(2)
+        }));
+
+        // Store webhook token for secure validation
+        await supabase
+          .from('orders')
+          .update({
+            webhook_token: webhookToken,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', order.id);
+
+        console.log('🔗 Webhook integration enabled for real-time order status updates');
+
+        // STEP 5: Enhanced ZMA processing with proven robustness patterns
+        console.log(`🚀 Step 5: Enhanced ZMA processing for scheduled order ${order.id}`)
         
         const giftSchedulingOptions = order.gift_scheduling_options || {}
         const deliveryGroups = order.delivery_groups || []
@@ -417,7 +437,8 @@ serve(async (req) => {
           hasMultipleRecipients,
           paymentStatus: order.payment_status,
           totalAmount: order.total_amount,
-          retryCount: order.retry_count || 0
+          retryCount: order.retry_count || 0,
+          webhookToken: webhookToken ? 'generated' : 'not_generated'
         })
         
         const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
@@ -434,7 +455,7 @@ serve(async (req) => {
           }
         })
 
-        // STEP 5: Enhanced Error Classification and Handling
+        // STEP 6: Enhanced Error Classification and Handling
         if (zmaError) {
           console.error(`❌ ZMA processing failed for scheduled order ${order.order_number}:`, zmaError)
           
@@ -511,7 +532,8 @@ serve(async (req) => {
           })
           failureCount++
         } else {
-          console.log(`✅ Successfully processed scheduled order ${order.order_number}`)
+          console.log(`✅ Successfully processed scheduled order ${order.order_number} with webhook integration`)
+          console.log(`🔗 Real-time status updates will be received via webhook system`)
           
           // Track success metrics
           await trackZmaOrderSuccess(order.user_id, order.id, order.total_amount, supabase);

@@ -2962,6 +2962,7 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
+          webhook_token: string | null
           zinc_order_id: string | null
           zinc_status: string | null
           zinc_timeline_events: Json | null
@@ -3015,6 +3016,7 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null
@@ -3068,6 +3070,7 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null

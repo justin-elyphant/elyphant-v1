@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.admin-scheduled-orders]
 verify_jwt = false
+
+[functions.send-password-reset-email]
+verify_jwt = false

@@ -33,43 +33,44 @@ const ResetPassword = () => {
   const [errors, setErrors] = useState<Partial<PasswordForm>>({});
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-  // Get token and type from URL parameters
-  const token = searchParams.get('access_token') || searchParams.get('token');
+  // Get token and type from URL parameters (Supabase format)
+  const accessToken = searchParams.get('access_token');
+  const refreshToken = searchParams.get('refresh_token');
   const type = searchParams.get('type') || 'recovery';
   const email = searchParams.get('email');
 
   useEffect(() => {
-    const verifyToken = async () => {
-      if (!token) {
+    const verifyAndSetSession = async () => {
+      if (!accessToken || !refreshToken) {
         setIsValidToken(false);
-        toast.error('Invalid or missing reset token');
+        toast.error('Invalid or missing reset tokens');
         return;
       }
 
       try {
-        // Verify the session with Supabase
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'recovery'
+        // Set the session using the tokens from the URL
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
         });
 
         if (error) {
-          console.error('Token verification error:', error);
+          console.error('Session setup error:', error);
           setIsValidToken(false);
-          toast.error('Invalid or expired reset token');
+          toast.error('Invalid or expired reset link');
         } else {
           setIsValidToken(true);
-          toast.success('Reset token verified successfully!');
+          toast.success('Reset link verified successfully!');
         }
       } catch (error) {
-        console.error('Token verification failed:', error);
+        console.error('Session verification failed:', error);
         setIsValidToken(false);
-        toast.error('Failed to verify reset token');
+        toast.error('Failed to verify reset link');
       }
     };
 
-    verifyToken();
-  }, [token]);
+    verifyAndSetSession();
+  }, [accessToken, refreshToken]);
 
   const validateForm = () => {
     try {
@@ -107,7 +108,7 @@ const ResetPassword = () => {
     }
 
     if (!isValidToken) {
-      toast.error('Invalid reset token. Please request a new password reset.');
+      toast.error('Invalid reset session. Please request a new password reset.');
       return;
     }
 
@@ -161,7 +162,7 @@ const ResetPassword = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Verifying reset token...</p>
+              <p className="text-muted-foreground">Verifying reset link...</p>
             </div>
           </CardContent>
         </Card>

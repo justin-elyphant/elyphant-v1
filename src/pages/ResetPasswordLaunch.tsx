@@ -17,10 +17,10 @@ const ResetPasswordLaunch: React.FC = () => {
 
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
-  // Auto-continue when token is present (direct to password form)
+  // Auto-continue when token is present - DIRECT to password form (no UI shown)
   useEffect(() => {
     if (resetToken && !isProcessing && !isAutoProcessing) {
-      console.log('Auto-processing reset token for direct password form access:', resetToken.substring(0, 8) + '...');
+      console.log('Auto-processing reset token for DIRECT password form access:', resetToken.substring(0, 8) + '...');
       setIsAutoProcessing(true);
       handleContinue();
     }
@@ -180,6 +180,28 @@ const ResetPasswordLaunch: React.FC = () => {
 
   const canonical = `${window.location.origin}/reset-password/launch`;
 
+  // If we have a token and auto-processing is active, show minimal loading
+  if (resetToken && isAutoProcessing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Helmet>
+          <title>Verifying Reset Link | Elyphant</title>
+          <meta name="description" content="Verifying your password reset link securely." />
+          <link rel="canonical" href={canonical} />
+        </Helmet>
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Verifying reset link...</p>
+              <p className="text-xs text-muted-foreground mt-2">You'll be redirected automatically</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Helmet>
@@ -200,8 +222,8 @@ const ResetPasswordLaunch: React.FC = () => {
         <CardContent>
           {resetToken ? (
             <>
-              <Button className="w-full" onClick={handleContinue} disabled={isProcessing || isAutoProcessing}>
-                {isAutoProcessing ? 'Verifying...' : 'Continue to Secure Reset'}
+              <Button className="w-full" onClick={handleContinue} disabled={isProcessing}>
+                Continue to Secure Reset
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
                 For your security, this link can only be used once and expires in 1 hour.

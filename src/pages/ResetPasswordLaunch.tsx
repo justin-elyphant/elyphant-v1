@@ -52,27 +52,33 @@ const ResetPasswordLaunch: React.FC = () => {
 
       if (error) {
         console.error('Supabase function invoke error:', error, 'raw data:', data);
-        const status = (error as any)?.context?.response?.status;
-        const serverMsg = (error as any)?.context?.error || (error as any)?.message;
 
-        // Try to extract a useful message from the response body
+        // Try to extract HTTP status and body message from the error context
+        let status: number | undefined = undefined;
         let bodyMsg = '' as string;
         try {
-          if (typeof data === 'string') {
-            const parsed = JSON.parse(data);
-            bodyMsg = parsed?.error || parsed?.message || '';
-          } else if (data && typeof data === 'object') {
-            bodyMsg = (data as any)?.error || (data as any)?.message || '';
+          const res = (error as any)?.context?.response as Response | undefined;
+          status = res?.status;
+          if (res) {
+            const text = await res.text();
+            try {
+              const parsed = JSON.parse(text);
+              bodyMsg = parsed?.error || parsed?.message || text;
+            } catch {
+              bodyMsg = text;
+            }
           }
-        } catch {}
+        } catch (parseErr) {
+          console.warn('Could not parse error response body', parseErr);
+        }
 
+        const serverMsg = (error as any)?.context?.error || (error as any)?.message;
         const combinedMsg = bodyMsg || serverMsg || '';
-        const isUsedOrExpired = /(expired|already been used)/i.test(combinedMsg);
+        const isUsedOrExpired = status === 401 || /(expired|already been used)/i.test(combinedMsg);
 
         // Handle common token issues gracefully (401 or recognizable message)
-        if (status === 401 || isUsedOrExpired) {
+        if (isUsedOrExpired) {
           toast.error(combinedMsg || 'This reset link is invalid or has expired.');
-          // Only send new email if specifically requested, not automatically
           navigate('/forgot-password');
           setIsProcessing(false);
           setIsAutoProcessing(false);

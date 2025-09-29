@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
@@ -9,6 +9,7 @@ import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { user, isLoading } = useAuth();
   const { profileData } = useProfileRetrieval();
   const [showQuickInterests, setShowQuickInterests] = useState(false);
@@ -16,6 +17,9 @@ const Auth = () => {
   // Detect initial mode from URL parameters
   const mode = searchParams.get('mode') as 'signin' | 'signup' | null;
   const initialMode = mode || 'signup'; // Default to signup if no mode specified
+
+  // Get pre-filled email from password reset navigation state
+  const preFilledEmail = location.state?.email;
 
   // Handle post-signup interests modal and redirect
   useEffect(() => {
@@ -71,7 +75,7 @@ const Auth = () => {
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <UnifiedAuthView initialMode={initialMode} />
+        <UnifiedAuthView initialMode={preFilledEmail ? 'signin' : initialMode} preFilledEmail={preFilledEmail} />
       </div>
       
       {/* Quick Interests Modal */}

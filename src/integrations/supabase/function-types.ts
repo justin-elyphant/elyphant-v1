@@ -9,6 +9,7 @@ export enum SUPABASE_FUNCTIONS {
   HANDLE_INVITATION_ACCEPTANCE = "handle-invitation-acceptance",
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
   SIMPLE_ORDER_PROCESSOR = "simple-order-processor",
-  CLEANUP_DUPLICATE_ORDERS = "cleanup-duplicate-orders"
+  CLEANUP_DUPLICATE_ORDERS = "cleanup-duplicate-orders",
+  SEND_PASSWORD_CHANGE_NOTIFICATION = "send-password-change-notification"
   // Note: Simplified order processing - removed complex orchestrator
 }

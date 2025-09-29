@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.authenticate-reset-token]
 verify_jwt = false
+
+[functions.send-password-change-notification]
+verify_jwt = false

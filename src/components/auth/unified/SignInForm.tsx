@@ -18,13 +18,20 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-const SignInForm = () => {
+interface SignInFormProps {
+  preFilledEmail?: string;
+}
+
+const SignInForm: React.FC<SignInFormProps> = ({ preFilledEmail }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema)
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: preFilledEmail || ""
+    }
   });
 
   const onSubmit = async (data: SignInFormData) => {

@@ -157,9 +157,37 @@ const ResetPassword = () => {
       if (error) {
         toast.error(`Failed to reset password: ${error.message}`);
       } else {
-        toast.success('Password reset successfully! You can now sign in with your new password.');
+        // Industry best practice: Invalidate all other sessions for security
+        try {
+          await supabase.auth.signOut({ scope: 'others' });
+          console.log('Other sessions invalidated for security');
+        } catch (signOutError) {
+          console.warn('Could not invalidate other sessions:', signOutError);
+        }
+
+        // Send security notification email (industry best practice)
+        if (lastResetEmail) {
+          try {
+            await supabase.functions.invoke('send-password-change-notification', {
+              body: { email: lastResetEmail }
+            });
+          } catch (notificationError) {
+            console.warn('Could not send security notification:', notificationError);
+          }
+        }
+
+        toast.success('Password reset successfully! For security, all other sessions have been signed out.');
+        
+        // Clear reset-related storage
+        localStorage.removeItem('lastResetEmail');
+        sessionStorage.removeItem('password_reset_tokens');
+        
+        // Navigate to login with pre-filled email for better UX
         setTimeout(() => {
-          navigate('/auth', { replace: true });
+          navigate('/auth', { 
+            replace: true,
+            state: { email: lastResetEmail }
+          });
         }, 2000);
       }
     } catch (error: any) {

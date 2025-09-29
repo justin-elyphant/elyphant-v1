@@ -7,9 +7,13 @@ import SignUpForm from "./SignUpForm";
 
 interface UnifiedAuthViewProps {
   initialMode?: "signin" | "signup";
+  preFilledEmail?: string;
 }
 
-const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ initialMode = "signup" }) => {
+const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ 
+  initialMode = "signup", 
+  preFilledEmail 
+}) => {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">(initialMode);
 
   return (
@@ -30,10 +34,10 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ initialMode = "signup
               <div className="text-center mb-space-loose">
                 <h2 className="text-heading-2 text-foreground">Welcome Back</h2>
                 <p className="text-body-sm text-muted-foreground mt-space-minimal">
-                  Sign in to your account
+                  {preFilledEmail ? 'Sign in with your new password' : 'Sign in to your account'}
                 </p>
               </div>
-              <SignInForm />
+              <SignInForm preFilledEmail={preFilledEmail} />
             </div>
           </TabsContent>
           

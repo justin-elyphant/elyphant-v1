@@ -17,10 +17,10 @@ const ResetPasswordLaunch: React.FC = () => {
 
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
-  // Auto-continue when token is present
+  // Auto-continue when token is present (direct to password form)
   useEffect(() => {
     if (resetToken && !isProcessing && !isAutoProcessing) {
-      console.log('Auto-processing reset token:', resetToken.substring(0, 8) + '...');
+      console.log('Auto-processing reset token for direct password form access:', resetToken.substring(0, 8) + '...');
       setIsAutoProcessing(true);
       handleContinue();
     }
@@ -72,50 +72,25 @@ const ResetPasswordLaunch: React.FC = () => {
         // Handle common token issues gracefully (401 or recognizable message)
         if (status === 401 || isUsedOrExpired) {
           toast.error(combinedMsg || 'This reset link is invalid or has expired.');
-          // If we know the email used to request reset, proactively send a new link
-          if (lastResetEmail) {
-            try {
-              const { error: resendError } = await supabase.functions.invoke('send-password-reset-email', {
-                body: { email: lastResetEmail }
-              });
-              if (resendError) {
-                toast.error(`Couldn't send a new link: ${resendError.message}`);
-              } else {
-                toast.success('A new secure reset link was sent to your email.');
-              }
-            } catch (e) {
-              console.warn('Auto-resend failed:', e);
-            }
-          } else {
-            // No email in storage, redirect to request a new one
-            navigate('/forgot-password');
-          }
+          // Only send new email if specifically requested, not automatically
+          navigate('/forgot-password');
           setIsProcessing(false);
           setIsAutoProcessing(false);
           return;
         }
 
+        // Log detailed error for debugging but show user-friendly message
+        console.error('Password reset authentication failed:', {
+          status,
+          serverMsg,
+          bodyMsg,
+          combinedMsg,
+          originalError: error
+        });
+        
         const details = combinedMsg || (error as any)?.context?.response?.statusText || (error as any)?.message;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
-
-        // Fallback: attempt to auto-resend a fresh reset link on any error
-        if (lastResetEmail) {
-          try {
-            const { error: resendError } = await supabase.functions.invoke('send-password-reset-email', {
-              body: { email: lastResetEmail }
-            });
-            if (resendError) {
-              toast.error(`Couldn't send a new link: ${resendError.message}`);
-            } else {
-              toast.success('A new secure reset link was sent to your email. Please use the latest email.');
-            }
-          } catch (e) {
-            console.warn('Auto-resend fallback failed:', e);
-          }
-        } else {
-          navigate('/forgot-password');
-        }
-
+        navigate('/forgot-password');
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;
@@ -129,11 +104,20 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
-      console.log('authenticate-reset-token response:', data);
+      console.log('authenticate-reset-token response structure:', {
+        hasSuccess: 'success' in data,
+        hasAccessToken: 'access_token' in data,
+        hasRefreshToken: 'refresh_token' in data,
+        dataKeys: Object.keys(data)
+      });
 
-      if (!data.success) {
+      // Enhanced response parsing - check for success flag or presence of tokens
+      const isSuccessResponse = data.success === true || (data.access_token && data.refresh_token);
+      
+      if (!isSuccessResponse) {
         console.error('Reset service returned error:', data);
         toast.error(data.error || 'Invalid or expired reset link.');
+        navigate('/forgot-password');
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;

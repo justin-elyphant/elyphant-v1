@@ -37,8 +37,8 @@ const ForgotPassword = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto p-8 max-w-md">
-        <div className="bg-card rounded-lg border p-6 shadow-sm">
+      <div className="container mx-auto py-16 px-8 max-w-md min-h-[calc(100vh-200px)] flex items-center">
+        <div className="w-full bg-card rounded-lg border p-6 shadow-sm">
           <h1 className="text-2xl font-bold mb-6 text-center">Reset Password</h1>
           
           <form onSubmit={handlePasswordReset} className="space-y-4">

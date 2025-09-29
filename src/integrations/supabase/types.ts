@@ -3145,7 +3145,6 @@ export type Database = {
           email: string
           expires_at: string
           id: string
-          recovery_link: string
           token: string
           used_at: string | null
         }
@@ -3154,7 +3153,6 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
-          recovery_link: string
           token: string
           used_at?: string | null
         }
@@ -3163,7 +3161,6 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
-          recovery_link?: string
           token?: string
           used_at?: string | null
         }

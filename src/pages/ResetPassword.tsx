@@ -49,19 +49,10 @@ const ResetPassword = () => {
 
 useEffect(() => {
     const verifyTokenOrSession = async () => {
-      console.log('Reset password parameters:', { accessToken, refreshToken, email, type, urlError, urlErrorCode });
+      console.log('Reset password parameters:', { accessToken, refreshToken, type });
 
-      // If Supabase indicates an error (e.g., otp_expired), short-circuit
-      if (urlError === 'access_denied' || urlErrorCode === 'otp_expired') {
-        setIsValidToken(false);
-        toast.error('Your reset link is invalid or has expired.');
-        return;
-      }
-      
-      // Check if we have Supabase auth tokens (preferred method)
       if (accessToken && refreshToken) {
         try {
-          // Set the session using the tokens from the URL
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
@@ -80,24 +71,15 @@ useEffect(() => {
           setIsValidToken(false);
           toast.error('Failed to verify reset link');
         }
-      } 
-      // Fallback: Check if we have at least an email (from any reset link)
-      else if (email) {
-        console.log('Using email-only reset flow for:', email);
-        // For custom reset links, we'll allow the reset but require the user to be careful
-        setIsValidToken(true);
-        toast.success('Reset link verified! Please set your new password.');
-      }
-      // No valid tokens or email
-      else {
-        console.log('No valid tokens or email found');
+      } else {
+        console.log('No valid tokens found');
         setIsValidToken(false);
         toast.error('Invalid or missing reset tokens');
       }
     };
 
     verifyTokenOrSession();
-  }, [accessToken, refreshToken, email, type, urlError, urlErrorCode]);
+  }, [accessToken, refreshToken, type]);
 
   const validateForm = () => {
     try {
@@ -142,39 +124,17 @@ useEffect(() => {
     setLoading(true);
 
     try {
-      // If we have auth tokens, use updateUser (preferred method)
-      if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.updateUser({
-          password: formData.password
-        });
+      const { error } = await supabase.auth.updateUser({
+        password: formData.password
+      });
 
-        if (error) {
-          toast.error(`Failed to reset password: ${error.message}`);
-        } else {
-          toast.success('Password reset successfully! You can now sign in with your new password.');
-          // Redirect to auth page after a short delay
-          setTimeout(() => {
-            navigate('/auth', { replace: true });
-          }, 2000);
-        }
-      } 
-      // Fallback: If we only have email, use admin reset (requires user to confirm via email)
-      else if (email) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
-        });
-
-        if (error) {
-          toast.error(`Failed to send new reset link: ${error.message}`);
-        } else {
-          toast.success('A new password reset link has been sent to your email. Please check your inbox and follow the link to complete the reset.');
-          setTimeout(() => {
-            navigate('/auth', { replace: true });
-          }, 3000);
-        }
+      if (error) {
+        toast.error(`Failed to reset password: ${error.message}`);
       } else {
-        toast.error('Unable to reset password. Please request a new reset link.');
-        navigate('/forgot-password');
+        toast.success('Password reset successfully! You can now sign in with your new password.');
+        setTimeout(() => {
+          navigate('/auth', { replace: true });
+        }, 2000);
       }
     } catch (error: any) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -233,10 +193,7 @@ useEffect(() => {
       setLoading(true);
       try {
         const { error } = await supabase.functions.invoke('send-password-reset-email', {
-          body: {
-            email: lastResetEmail,
-            resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(lastResetEmail)}&type=recovery`
-          }
+          body: { email: lastResetEmail }
         });
         if (error) {
           toast.error(`Failed to send new link: ${error.message}`);
@@ -307,12 +264,7 @@ useEffect(() => {
           </div>
           <CardTitle>Reset Your Password</CardTitle>
           <CardDescription>
-            {accessToken && refreshToken 
-              ? (email ? `Resetting password for ${email}` : 'Enter your new password below')
-              : email 
-                ? `We'll send a secure reset link to ${email}` 
-                : 'Enter your new password below'
-            }
+            Enter your new password below
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -384,10 +336,7 @@ useEffect(() => {
                 className="w-full"
                 disabled={loading || !formData.password || !formData.confirmPassword}
               >
-                {loading 
-                  ? (accessToken && refreshToken ? 'Updating Password...' : 'Sending Reset Link...') 
-                  : (accessToken && refreshToken ? 'Change Password' : 'Send New Reset Link')
-                }
+                {loading ? 'Updating Password...' : 'Change Password'}
               </Button>
               
               <Button

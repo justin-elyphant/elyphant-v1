@@ -15,11 +15,22 @@ const ResetPasswordLaunch: React.FC = () => {
 
   const resetToken = searchParams.get('token');
 
+  // Idempotency lock to prevent duplicate processing (handles Strict Mode double mount and scanners)
+  const tokenLockKey = resetToken ? `reset_processing_${resetToken}` : null;
+
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
   // Auto-continue when token is present - DIRECT to password form (no UI shown)
   useEffect(() => {
     if (resetToken && !isProcessing && !isAutoProcessing) {
+      // Prevent duplicate processing across remounts
+      if (tokenLockKey && sessionStorage.getItem(tokenLockKey)) {
+        console.log('Reset token already being processed, skipping duplicate.');
+        return;
+      }
+      if (tokenLockKey) {
+        try { sessionStorage.setItem(tokenLockKey, '1'); } catch {}
+      }
       console.log('Auto-processing reset token for DIRECT password form access:', resetToken.substring(0, 8) + '...');
       setIsAutoProcessing(true);
       handleContinue();
@@ -30,6 +41,15 @@ const ResetPasswordLaunch: React.FC = () => {
     if (!resetToken) {
       toast.error('Missing or invalid reset token.');
       return;
+    }
+
+    // Idempotency guard - avoid duplicate invocations
+    if (tokenLockKey) {
+      if (sessionStorage.getItem(tokenLockKey)) {
+        console.log('Duplicate processing prevented for token');
+        return;
+      }
+      try { sessionStorage.setItem(tokenLockKey, '1'); } catch {}
     }
 
     setIsProcessing(true);

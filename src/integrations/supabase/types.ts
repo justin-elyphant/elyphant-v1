@@ -3139,6 +3139,36 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          recovery_link: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          recovery_link: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          recovery_link?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           card_type: string
@@ -4925,6 +4955,10 @@ export type Database = {
       cleanup_expired_invitation_cache: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      cleanup_expired_reset_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_failed_orders: {
         Args: Record<PropertyKey, never>

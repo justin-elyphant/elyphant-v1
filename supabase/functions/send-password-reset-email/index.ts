@@ -173,32 +173,48 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Generate proper Supabase auth recovery link using Admin API
-    let finalResetLink = resetLink;
-    try {
-      const { data: recoveryData, error: recoveryError } = await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email: email,
-        options: {
-          redirectTo: `${new URL(resetLink).origin}/reset-password`
-        }
-      });
-
-      if (!recoveryError && recoveryData?.properties?.action_link) {
-        finalResetLink = recoveryData.properties.action_link;
-        console.log('Generated secure Supabase recovery link');
-      } else {
-        console.log('Failed to generate Supabase recovery link, using fallback:', recoveryError);
-        // Keep the original email-only link as fallback
+    // Generate secure recovery link using Supabase admin
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: {
+        redirectTo: `${new URL(resetLink).origin}/reset-password`
       }
-    } catch (adminError) {
-      console.log('Admin API error, using fallback link:', adminError);
-      // Keep the original email-only link as fallback
+    });
+
+    if (linkError) {
+      console.error('Failed to generate recovery link:', linkError);
+      throw new Error(`Failed to generate recovery link: ${linkError.message}`);
     }
 
-    // Build scanner-safe interstitial link that requires explicit click
+    const finalResetLink = linkData?.properties?.action_link;
+    if (!finalResetLink) {
+      throw new Error('No action link generated');
+    }
+
+    console.log('Generated secure Supabase recovery link');
+    
+    // Store the recovery link temporarily in database with a unique token
+    const resetToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    const { error: insertError } = await supabase
+      .from('password_reset_tokens')
+      .insert({
+        token: resetToken,
+        email,
+        recovery_link: finalResetLink,
+        expires_at: expiresAt.toISOString()
+      });
+
+    if (insertError) {
+      console.error('Failed to store reset token:', insertError);
+      throw new Error('Failed to store reset token');
+    }
+    
+    // Create scanner-safe interstitial link using our token
     const origin = new URL(resetLink).origin;
-    const interstitialLink = `${origin}/reset-password/launch?link=${encodeURIComponent(btoa(finalResetLink))}`;
+    const interstitialLink = `${origin}/reset-password/launch?token=${resetToken}`;
 
     const emailResponse = await resend.emails.send({
       from: "Elyphant <noreply@elyphant.ai>",

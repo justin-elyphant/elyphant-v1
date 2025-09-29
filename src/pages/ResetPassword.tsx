@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,25 +34,35 @@ const ResetPassword = () => {
   const [errors, setErrors] = useState<Partial<PasswordForm>>({});
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-  // Get token and type from URL parameters (supports both query and hash fragments)
+// Get token and type from URL parameters (supports both query and hash fragments)
   const hashString = typeof window !== 'undefined' ? window.location.hash : '';
   const hashParams = new URLSearchParams(hashString ? hashString.replace(/^#/, '') : '');
-
+  
   const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
   const type = searchParams.get('type') || hashParams.get('type') || 'recovery';
   const rawEmail = searchParams.get('email') || hashParams.get('email');
   const email = rawEmail ? decodeURIComponent(rawEmail) : null;
+  const urlError = searchParams.get('error') || hashParams.get('error');
+  const urlErrorCode = searchParams.get('error_code') || hashParams.get('error_code');
+  const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
-  useEffect(() => {
+useEffect(() => {
     const verifyTokenOrSession = async () => {
-      console.log('Reset password parameters:', { accessToken, refreshToken, email, type });
+      console.log('Reset password parameters:', { accessToken, refreshToken, email, type, urlError, urlErrorCode });
+
+      // If Supabase indicates an error (e.g., otp_expired), short-circuit
+      if (urlError === 'access_denied' || urlErrorCode === 'otp_expired') {
+        setIsValidToken(false);
+        toast.error('Your reset link is invalid or has expired.');
+        return;
+      }
       
       // Check if we have Supabase auth tokens (preferred method)
       if (accessToken && refreshToken) {
         try {
           // Set the session using the tokens from the URL
-          const { data, error } = await supabase.auth.setSession({
+          const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
@@ -86,7 +97,7 @@ const ResetPassword = () => {
     };
 
     verifyTokenOrSession();
-  }, [accessToken, refreshToken, email, type]);
+  }, [accessToken, refreshToken, email, type, urlError, urlErrorCode]);
 
   const validateForm = () => {
     try {
@@ -195,6 +206,11 @@ const ResetPassword = () => {
   if (isValidToken === null) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
+        <Helmet>
+          <title>Verifying Reset | Elyphant</title>
+          <meta name="description" content="Verifying your password reset link." />
+          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+        </Helmet>
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
@@ -209,8 +225,38 @@ const ResetPassword = () => {
 
   // Show error state for invalid token
   if (isValidToken === false) {
+    const handleResend = async () => {
+      if (!lastResetEmail) {
+        navigate('/forgot-password');
+        return;
+      }
+      setLoading(true);
+      try {
+        const { error } = await supabase.functions.invoke('send-password-reset-email', {
+          body: {
+            email: lastResetEmail,
+            resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(lastResetEmail)}&type=recovery`
+          }
+        });
+        if (error) {
+          toast.error(`Failed to send new link: ${error.message}`);
+        } else {
+          toast.success('New secure reset link sent. Check your email.');
+        }
+      } catch (e) {
+        toast.error('Unable to send a new link.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
+        <Helmet>
+          <title>Invalid Reset Link | Elyphant</title>
+          <meta name="description" content="Your password reset link is invalid or expired. Request a new secure link." />
+          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+        </Helmet>
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 text-red-500">
@@ -222,12 +268,23 @@ const ResetPassword = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={() => navigate('/forgot-password')} 
-              className="w-full"
-            >
-              Request New Reset Link
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={handleResend}
+                className="w-full"
+                disabled={loading}
+              >
+                {lastResetEmail ? 'Send Me a New Secure Link' : 'Request New Reset Link'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/auth')}
+              >
+                Back to Sign In
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -238,6 +295,11 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <Helmet>
+        <title>Reset Password | Elyphant</title>
+        <meta name="description" content="Reset your Elyphant account password securely." />
+        <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+      </Helmet>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 text-green-500">

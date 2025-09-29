@@ -196,11 +196,15 @@ const handler = async (req: Request): Promise<Response> => {
       // Keep the original email-only link as fallback
     }
 
+    // Build scanner-safe interstitial link that requires explicit click
+    const origin = new URL(resetLink).origin;
+    const interstitialLink = `${origin}/reset-password/launch?link=${encodeURIComponent(btoa(finalResetLink))}`;
+
     const emailResponse = await resend.emails.send({
       from: "Elyphant <noreply@elyphant.ai>",
       to: [email],
       subject: "🔐 Reset Your Password - Action Required",
-      html: generatePasswordResetEmail(finalResetLink, displayName),
+      html: generatePasswordResetEmail(interstitialLink, displayName),
     });
 
     console.log("Password reset email sent successfully:", emailResponse);

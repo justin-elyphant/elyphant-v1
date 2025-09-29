@@ -40,6 +40,7 @@ const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ResetPasswordLaunch = lazy(() => import("./pages/ResetPasswordLaunch"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Settings = lazy(() => import("./pages/Settings"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
@@ -238,6 +239,7 @@ function AppContent() {
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password/launch" element={<ResetPasswordLaunch />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/enhanced-marketplace" element={<EnhancedMarketplacePage />} />
           <Route path="/marketplace/for/:recipientName" element={<Marketplace />} />

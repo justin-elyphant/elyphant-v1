@@ -162,9 +162,15 @@ const ResetPasswordLaunch: React.FC = () => {
         dataKeys: Object.keys(data)
       });
 
-      // Enhanced response parsing - check for success flag or presence of tokens
-      const isSuccessResponse = data.success === true || (data.access_token && data.refresh_token);
-      
+      // Enhanced response parsing - check for success flag or presence of tokens or action link
+      const isSuccessResponse = data.success === true || !!data.action_link || (data.access_token && data.refresh_token);
+      // If backend returns an action_link, follow it to complete Supabase recovery and get tokens via redirect
+      if (data.action_link) {
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
+        window.location.replace(data.action_link as string);
+        return;
+      }
+
       if (!isSuccessResponse) {
         console.error('Reset service returned error:', data);
         const msg = (data && (data.error || data.message)) || '';

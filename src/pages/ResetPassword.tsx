@@ -39,24 +39,51 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const verifyTokenOrSession = async () => {
-      // Try to get tokens from session storage (one-time use)
+      // 1) Try to extract tokens from URL hash (when coming from Supabase recovery link)
+      const hash = typeof window !== 'undefined' ? window.location.hash : '';
+      if (hash && /access_token=/.test(hash)) {
+        try {
+          const params = new URLSearchParams(hash.replace('#', ''));
+          const access_token = params.get('access_token');
+          const refresh_token = params.get('refresh_token');
+
+          if (access_token && refresh_token) {
+            // Clean URL immediately to avoid leaking tokens
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+
+            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (error) {
+              console.error('Error setting session from URL tokens:', error);
+              toast.error('Invalid or expired reset link.');
+              setIsValidToken(false);
+              return;
+            }
+
+            console.log('Password reset session established from URL tokens');
+            toast.success('Reset link verified successfully!');
+            setIsValidToken(true);
+            return;
+          }
+        } catch (err) {
+          console.warn('Failed to process URL hash tokens:', err);
+        }
+      }
+
+      // 2) Try to get tokens from session storage (one-time use path when launch parsed tokens)
       const storedTokensJson = sessionStorage.getItem('password_reset_tokens');
-      
       if (storedTokensJson) {
         try {
           const tokenData = JSON.parse(storedTokensJson);
-          
-          // SECURITY: Validate token freshness (must be within 5 minutes)
           const now = Date.now();
           const tokenAge = now - tokenData.timestamp;
           const isExpired = now > tokenData.expires;
-          
+
           console.log('Password reset token validation:', {
             tokenAge: Math.floor(tokenAge / 1000) + 's',
             isExpired,
             hasTokens: !!(tokenData.access_token && tokenData.refresh_token)
           });
-          
+
           if (isExpired) {
             console.warn('SECURITY: Password reset tokens expired');
             sessionStorage.removeItem('password_reset_tokens');
@@ -64,11 +91,11 @@ const ResetPassword = () => {
             setIsValidToken(false);
             return;
           }
-          
+
           if (tokenData.access_token && tokenData.refresh_token) {
             // Clear tokens immediately after reading (one-time use)
             sessionStorage.removeItem('password_reset_tokens');
-            
+
             const { error } = await supabase.auth.setSession({
               access_token: tokenData.access_token,
               refresh_token: tokenData.refresh_token
@@ -91,8 +118,8 @@ const ResetPassword = () => {
           setIsValidToken(false);
         }
       }
-      
-      // Fallback: Check if there's already an active session
+
+      // 3) Fallback: Check if there's already an active session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         console.log('Using existing session for password reset');

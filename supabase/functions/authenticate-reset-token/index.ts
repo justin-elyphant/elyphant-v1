@@ -85,47 +85,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Generate fresh recovery link using Supabase admin
+    const redirectTo = 'https://elyphant.ai/reset-password';
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: tokenData.email,
+      options: { redirectTo }
     });
 
     if (linkError || !linkData) {
       console.error('Failed to generate recovery link:', linkError);
       return new Response(
-        JSON.stringify({ error: "Failed to generate authentication session" }),
+        JSON.stringify({ error: "Failed to generate recovery link" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-
-    // Will mark token as used after successful token extraction
-
 
     console.log('Token authenticated successfully for:', tokenData.email);
 
-    // Extract tokens from the generated link
     const actionLink = linkData.properties?.action_link;
     if (!actionLink) {
       return new Response(
-        JSON.stringify({ error: "Failed to generate authentication tokens" }),
+        JSON.stringify({ error: "Failed to build recovery link" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Parse tokens from action link hash
-    const url = new URL(actionLink);
-    const hashParams = new URLSearchParams(url.hash.replace('#', ''));
-    const accessToken = hashParams.get('access_token');
-    const refreshToken = hashParams.get('refresh_token');
-
-    if (!accessToken || !refreshToken) {
-      return new Response(
-        JSON.stringify({ error: "Failed to extract authentication tokens" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Mark token as used only after successful token extraction
+    // Mark token as used immediately after link generation to prevent reuse
     const { error: updateError } = await supabase
       .from('password_reset_tokens')
       .update({ used_at: new Date().toISOString() })
@@ -134,20 +119,15 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Failed to mark token as used:', updateError);
     }
 
+    // Return the recovery action link; frontend will follow it to establish session
     return new Response(
       JSON.stringify({
         success: true,
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        user: {
-          id: user.id,
-          email: user.email
-        }
+        action_link: actionLink,
+        redirect_to: redirectTo,
+        user: { id: user.id, email: user.email }
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 
   } catch (error: any) {

@@ -98,15 +98,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Mark token as used
-    const { error: updateError } = await supabase
-      .from('password_reset_tokens')
-      .update({ used_at: new Date().toISOString() })
-      .eq('token', token);
+    // Will mark token as used after successful token extraction
 
-    if (updateError) {
-      console.error('Failed to mark token as used:', updateError);
-    }
 
     console.log('Token authenticated successfully for:', tokenData.email);
 
@@ -130,6 +123,15 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Failed to extract authentication tokens" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Mark token as used only after successful token extraction
+    const { error: updateError } = await supabase
+      .from('password_reset_tokens')
+      .update({ used_at: new Date().toISOString() })
+      .eq('token', token);
+    if (updateError) {
+      console.error('Failed to mark token as used:', updateError);
     }
 
     return new Response(

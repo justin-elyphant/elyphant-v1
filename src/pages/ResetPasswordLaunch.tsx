@@ -97,6 +97,25 @@ const ResetPasswordLaunch: React.FC = () => {
 
         const details = combinedMsg || (error as any)?.context?.response?.statusText || (error as any)?.message;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
+
+        // Fallback: attempt to auto-resend a fresh reset link on any error
+        if (lastResetEmail) {
+          try {
+            const { error: resendError } = await supabase.functions.invoke('send-password-reset-email', {
+              body: { email: lastResetEmail }
+            });
+            if (resendError) {
+              toast.error(`Couldn't send a new link: ${resendError.message}`);
+            } else {
+              toast.success('A new secure reset link was sent to your email. Please use the latest email.');
+            }
+          } catch (e) {
+            console.warn('Auto-resend fallback failed:', e);
+          }
+        } else {
+          navigate('/forgot-password');
+        }
+
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;

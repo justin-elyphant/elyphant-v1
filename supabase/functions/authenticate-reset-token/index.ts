@@ -72,9 +72,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get user by email
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
-    const user = users?.find(u => u.email === tokenData.email);
+    // Get user by email (use direct API)
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(tokenData.email);
+    const user = userData?.user;
 
     if (userError || !user) {
       console.error('User not found:', userError);

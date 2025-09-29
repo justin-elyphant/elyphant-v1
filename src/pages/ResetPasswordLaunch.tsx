@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
 
 const ResetPasswordLaunch: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -74,7 +75,19 @@ const ResetPasswordLaunch: React.FC = () => {
 
     setIsProcessing(true);
     try {
-      // Invoke edge function to authenticate the reset token
+      // Use UnifiedAuthService for enhanced token validation with caching
+      const tokenValidation = await unifiedAuthService.validateResetToken(resetToken);
+      
+      if (!tokenValidation.isValid) {
+        toast.error(tokenValidation.error || 'Invalid or expired reset token.');
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
+        navigate('/forgot-password');
+        setIsProcessing(false);
+        setIsAutoProcessing(false);
+        return;
+      }
+
+      // Fallback to direct edge function call for token processing
       const invokeResult = await supabase.functions.invoke('authenticate-reset-token', {
         body: { token: resetToken }
       });
@@ -220,13 +233,12 @@ const ResetPasswordLaunch: React.FC = () => {
     }
     setIsProcessing(true);
     try {
-      const { error } = await supabase.functions.invoke('send-password-reset-email', {
-        body: { email: lastResetEmail }
-      });
-      if (error) {
-        toast.error(`Failed to send new link: ${error.message}`);
+      // Use UnifiedAuthService for consistent error handling and security
+      const result = await unifiedAuthService.initiatePasswordReset(lastResetEmail);
+      if (result.success) {
+        toast.success(result.message || 'New secure reset link sent. Check your inbox.');
       } else {
-        toast.success('New secure reset link sent. Check your inbox.');
+        toast.error(result.error || 'Failed to send new link.');
       }
     } catch (e) {
       toast.error('Unable to send a new link.');

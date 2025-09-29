@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
 
 const passwordSchema = z.object({
   password: z.string()
@@ -39,84 +40,20 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const verifyTokenOrSession = async () => {
-      // 1) Try to extract tokens from URL hash (when coming from Supabase recovery link)
-      const hash = typeof window !== 'undefined' ? window.location.hash : '';
-      if (hash && /access_token=/.test(hash)) {
-        try {
-          const params = new URLSearchParams(hash.replace('#', ''));
-          const access_token = params.get('access_token');
-          const refresh_token = params.get('refresh_token');
-
-          if (access_token && refresh_token) {
-            // Clean URL immediately to avoid leaking tokens
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
-            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-            if (error) {
-              console.error('Error setting session from URL tokens:', error);
-              toast.error('Invalid or expired reset link.');
-              setIsValidToken(false);
-              return;
-            }
-
-            console.log('Password reset session established from URL tokens');
-            toast.success('Reset link verified successfully!');
-            setIsValidToken(true);
-            return;
-          }
-        } catch (err) {
-          console.warn('Failed to process URL hash tokens:', err);
-        }
+      // 1) Try to process URL tokens using UnifiedAuthService
+      const urlResult = await unifiedAuthService.processUrlTokens();
+      if (urlResult.isValid) {
+        toast.success('Reset link verified successfully!');
+        setIsValidToken(true);
+        return;
       }
 
-      // 2) Try to get tokens from session storage (one-time use path when launch parsed tokens)
-      const storedTokensJson = sessionStorage.getItem('password_reset_tokens');
-      if (storedTokensJson) {
-        try {
-          const tokenData = JSON.parse(storedTokensJson);
-          const now = Date.now();
-          const tokenAge = now - tokenData.timestamp;
-          const isExpired = now > tokenData.expires;
-
-          console.log('Password reset token validation:', {
-            tokenAge: Math.floor(tokenAge / 1000) + 's',
-            isExpired,
-            hasTokens: !!(tokenData.access_token && tokenData.refresh_token)
-          });
-
-          if (isExpired) {
-            console.warn('SECURITY: Password reset tokens expired');
-            sessionStorage.removeItem('password_reset_tokens');
-            toast.error('Reset link expired. Please request a new one.');
-            setIsValidToken(false);
-            return;
-          }
-
-          if (tokenData.access_token && tokenData.refresh_token) {
-            // Clear tokens immediately after reading (one-time use)
-            sessionStorage.removeItem('password_reset_tokens');
-
-            const { error } = await supabase.auth.setSession({
-              access_token: tokenData.access_token,
-              refresh_token: tokenData.refresh_token
-            });
-
-            if (error) {
-              console.error('Error setting session:', error);
-              toast.error('Invalid or expired reset link.');
-              setIsValidToken(false);
-            } else {
-              console.log('Password reset session established successfully');
-              toast.success('Reset link verified successfully!');
-              setIsValidToken(true);
-            }
-            return;
-          }
-        } catch (error) {
-          console.error('Error processing stored tokens:', error);
-          sessionStorage.removeItem('password_reset_tokens');
-          setIsValidToken(false);
-        }
+      // 2) Try to process stored tokens using UnifiedAuthService
+      const storedResult = await unifiedAuthService.processStoredTokens();
+      if (storedResult.isValid) {
+        toast.success('Reset link verified successfully!');
+        setIsValidToken(true);
+        return;
       }
 
       // 3) Fallback: Check if there's already an active session
@@ -177,40 +114,20 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: formData.password
+      // Use UnifiedAuthService for enhanced password reset with security features
+      const result = await unifiedAuthService.completePasswordReset(formData.password, {
+        validateToken: true,
+        sendNotification: true,
+        invalidateOtherSessions: true
       });
 
-      if (error) {
-        toast.error(`Failed to reset password: ${error.message}`);
-      } else {
-        // Industry best practice: Invalidate all other sessions for security
-        try {
-          await supabase.auth.signOut({ scope: 'others' });
-          console.log('Other sessions invalidated for security');
-        } catch (signOutError) {
-          console.warn('Could not invalidate other sessions:', signOutError);
-        }
-
-        // Send security notification email (industry best practice)
-        if (lastResetEmail) {
-          try {
-            await supabase.functions.invoke('send-password-change-notification', {
-              body: { email: lastResetEmail }
-            });
-          } catch (notificationError) {
-            console.warn('Could not send security notification:', notificationError);
-          }
-        }
-
-        toast.success('Password reset successfully! For security, all other sessions have been signed out.');
-        
-        // Clear reset-related storage
-        localStorage.removeItem('lastResetEmail');
-        sessionStorage.removeItem('password_reset_tokens');
+      if (result.success) {
+        toast.success(result.message || 'Password reset successfully! For security, all other sessions have been signed out.');
         
         // Navigate directly to main app after successful password reset
         navigate('/gifting', { replace: true });
+      } else {
+        toast.error(result.error || 'Failed to reset password. Please try again.');
       }
     } catch (error: any) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -268,13 +185,12 @@ const ResetPassword = () => {
       }
       setLoading(true);
       try {
-        const { error } = await supabase.functions.invoke('send-password-reset-email', {
-          body: { email: lastResetEmail }
-        });
-        if (error) {
-          toast.error(`Failed to send new link: ${error.message}`);
+        // Use UnifiedAuthService for consistent error handling
+        const result = await unifiedAuthService.initiatePasswordReset(lastResetEmail);
+        if (result.success) {
+          toast.success(result.message || 'New secure reset link sent. Check your email.');
         } else {
-          toast.success('New secure reset link sent. Check your email.');
+          toast.error(result.error || 'Failed to send new link.');
         }
       } catch (e) {
         toast.error('Unable to send a new link.');

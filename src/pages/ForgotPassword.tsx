@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -19,16 +19,13 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      try { localStorage.setItem('lastResetEmail', email); } catch {}
-
-      const { error } = await supabase.functions.invoke('send-password-reset-email', {
-        body: { email }
-      });
-
-      if (error) {
-        toast.error(`Unable to send reset email: ${error.message}`);
+      // Use UnifiedAuthService for enhanced security and logging
+      const result = await unifiedAuthService.initiatePasswordReset(email);
+      
+      if (result.success) {
+        toast.success(result.message || 'Password reset email sent! Check your inbox.');
       } else {
-        toast.success('Password reset email sent! Check your inbox.');
+        toast.error(result.error || 'Unable to send reset email. Please try again.');
       }
     } catch (error: any) {
       toast.error('Unable to send reset email. Please try again later.');

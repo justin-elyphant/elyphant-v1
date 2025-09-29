@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,10 +11,20 @@ const ResetPasswordLaunch: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAutoProcessing, setIsAutoProcessing] = useState(false);
 
   const resetToken = searchParams.get('token');
 
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
+
+  // Auto-continue when token is present
+  useEffect(() => {
+    if (resetToken && !isProcessing && !isAutoProcessing) {
+      console.log('Auto-processing reset token:', resetToken.substring(0, 8) + '...');
+      setIsAutoProcessing(true);
+      handleContinue();
+    }
+  }, [resetToken]);
 
   const handleContinue = async () => {
     if (!resetToken) {
@@ -167,8 +177,8 @@ const ResetPasswordLaunch: React.FC = () => {
         <CardContent>
           {resetToken ? (
             <>
-              <Button className="w-full" onClick={handleContinue} disabled={isProcessing}>
-                Continue to Secure Reset
+              <Button className="w-full" onClick={handleContinue} disabled={isProcessing || isAutoProcessing}>
+                {isAutoProcessing ? 'Verifying...' : 'Continue to Secure Reset'}
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
                 For your security, this link can only be used once and expires in 1 hour.

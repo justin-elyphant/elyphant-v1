@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ const ResetPasswordLaunch: React.FC = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoProcessing, setIsAutoProcessing] = useState(false);
+  const attemptedRef = useRef(false); // prevent repeated auto attempts
 
   const resetToken = searchParams.get('token');
 
@@ -30,11 +31,11 @@ const ResetPasswordLaunch: React.FC = () => {
       !/bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot/i.test(navigator.userAgent);
 
     const tryProceed = () => {
-      if (shouldAutoProceed()) {
-        console.log('Auto-processing reset token for DIRECT password form access:', resetToken!.substring(0, 8) + '...');
-        setIsAutoProcessing(true);
-        handleContinue();
-      }
+      if (!shouldAutoProceed() || attemptedRef.current) return;
+      attemptedRef.current = true;
+      console.log('Auto-processing reset token for DIRECT password form access:', resetToken!.substring(0, 8) + '...');
+      setIsAutoProcessing(true);
+      handleContinue();
     };
 
     // Try immediately, otherwise wait for visibility/focus

@@ -64,12 +64,12 @@ const ResetPassword = () => {
           toast.error('Failed to verify reset link');
         }
       } 
-      // Fallback: Check if we have at least an email (from custom reset link)
-      else if (email && type === 'recovery') {
+      // Fallback: Check if we have at least an email (from any reset link)
+      else if (email) {
         // For custom reset links, we'll allow the reset but require the user to be careful
         setIsValidToken(true);
         toast.success('Reset link verified! Please set your new password.');
-      } 
+      }
       // No valid tokens or email
       else {
         setIsValidToken(false);

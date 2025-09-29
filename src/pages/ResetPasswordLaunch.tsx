@@ -24,13 +24,26 @@ const ResetPasswordLaunch: React.FC = () => {
 
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('authenticate-reset-token', {
+      // Invoke edge function to authenticate the reset token
+      const invokeResult = await supabase.functions.invoke('authenticate-reset-token', {
         body: { token: resetToken }
       });
 
+      let { data, error } = invokeResult as any;
+
+      // In some environments the body may arrive as a string; try to parse
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          console.warn('Could not parse function response as JSON:', data);
+        }
+      }
+
       if (error) {
         console.error('Supabase function invoke error:', error);
-        toast.error('Failed to connect to reset service.');
+        const details = (error as any)?.message || (error as any)?.context?.error || (error as any)?.context?.response?.statusText;
+        toast.error(`Reset service error${details ? `: ${details}` : ''}`);
         setIsProcessing(false);
         return;
       }
@@ -42,6 +55,8 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
+      console.log('authenticate-reset-token response:', data);
+
       if (!data.success) {
         console.error('Reset service returned error:', data);
         toast.error(data.error || 'Invalid or expired reset link.');
@@ -49,7 +64,10 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
-      if (!data.access_token || !data.refresh_token) {
+      const access_token = data.access_token ?? data?.tokens?.access_token;
+      const refresh_token = data.refresh_token ?? data?.tokens?.refresh_token;
+
+      if (!access_token || !refresh_token) {
         console.error('Missing tokens in response:', data);
         toast.error('Authentication tokens not received.');
         setIsProcessing(false);
@@ -58,8 +76,8 @@ const ResetPasswordLaunch: React.FC = () => {
 
       // SECURITY FIX: Use session storage instead of URL hash to prevent token leakage
       const resetTokenData = {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
+        access_token,
+        refresh_token,
         timestamp: Date.now(),
         expires: Date.now() + (5 * 60 * 1000) // 5 minute expiry
       };

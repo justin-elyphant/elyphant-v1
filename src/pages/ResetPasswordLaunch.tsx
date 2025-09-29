@@ -28,7 +28,15 @@ const ResetPasswordLaunch: React.FC = () => {
         body: { token: resetToken }
       });
 
-      if (error || !data) {
+      if (error) {
+        console.error('Supabase function invoke error:', error);
+        toast.error('Failed to connect to reset service.');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!data || !data.access_token || !data.refresh_token) {
+        console.error('Invalid response from reset service:', data);
         toast.error('Invalid or expired reset link.');
         setIsProcessing(false);
         return;

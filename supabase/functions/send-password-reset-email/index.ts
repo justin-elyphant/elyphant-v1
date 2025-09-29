@@ -88,7 +88,8 @@ const generatePasswordResetEmail = (resetLink: string, userName?: string) => {
                 🛡️ Security Notice
             </h3>
             <ul style="color: #9c4221; margin: 0; padding-left: 20px; font-size: 14px;">
-                <li>This link will expire in 1 hour for your security</li>
+                <li>This secure link will expire in 1 hour for your security</li>
+                <li>This link can only be used once</li>
                 <li>If you didn't request this reset, please contact support</li>
                 <li>Never share this link with anyone</li>
             </ul>
@@ -172,11 +173,34 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Generate proper Supabase auth recovery link using Admin API
+    let finalResetLink = resetLink;
+    try {
+      const { data: recoveryData, error: recoveryError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: email,
+        options: {
+          redirectTo: `${new URL(resetLink).origin}/reset-password`
+        }
+      });
+
+      if (!recoveryError && recoveryData?.properties?.action_link) {
+        finalResetLink = recoveryData.properties.action_link;
+        console.log('Generated secure Supabase recovery link');
+      } else {
+        console.log('Failed to generate Supabase recovery link, using fallback:', recoveryError);
+        // Keep the original email-only link as fallback
+      }
+    } catch (adminError) {
+      console.log('Admin API error, using fallback link:', adminError);
+      // Keep the original email-only link as fallback
+    }
+
     const emailResponse = await resend.emails.send({
       from: "Elyphant <noreply@elyphant.ai>",
       to: [email],
       subject: "🔐 Reset Your Password - Action Required",
-      html: generatePasswordResetEmail(resetLink, displayName),
+      html: generatePasswordResetEmail(finalResetLink, displayName),
     });
 
     console.log("Password reset email sent successfully:", emailResponse);

@@ -35,9 +35,23 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
-      if (!data || !data.access_token || !data.refresh_token) {
-        console.error('Invalid response from reset service:', data);
-        toast.error('Invalid or expired reset link.');
+      if (!data) {
+        console.error('No response from reset service');
+        toast.error('Failed to connect to reset service.');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!data.success) {
+        console.error('Reset service returned error:', data);
+        toast.error(data.error || 'Invalid or expired reset link.');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!data.access_token || !data.refresh_token) {
+        console.error('Missing tokens in response:', data);
+        toast.error('Authentication tokens not received.');
         setIsProcessing(false);
         return;
       }

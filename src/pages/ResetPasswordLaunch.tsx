@@ -33,7 +33,7 @@ const ResetPasswordLaunch: React.FC = () => {
     const tryProceed = () => {
       if (!shouldAutoProceed() || attemptedRef.current) return;
       attemptedRef.current = true;
-      console.log('Auto-processing reset token for DIRECT password form access:', resetToken!.substring(0, 8) + '...');
+      
       setIsAutoProcessing(true);
       handleContinue();
     };
@@ -59,7 +59,7 @@ const ResetPasswordLaunch: React.FC = () => {
     if (tokenLockKey) {
       const locked = sessionStorage.getItem(tokenLockKey);
       if (locked) {
-        console.log('Duplicate processing detected for token');
+        
         const tokensJson = sessionStorage.getItem('password_reset_tokens');
         if (tokensJson) {
           // If tokens already exist, proceed to the reset form
@@ -155,12 +155,6 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
-      console.log('authenticate-reset-token response structure:', {
-        hasSuccess: 'success' in data,
-        hasAccessToken: 'access_token' in data,
-        hasRefreshToken: 'refresh_token' in data,
-        dataKeys: Object.keys(data)
-      });
 
       // Enhanced response parsing - check for success flag or presence of tokens or action link
       const isSuccessResponse = data.success === true || !!data.action_link || (data.access_token && data.refresh_token);
@@ -206,7 +200,7 @@ const ResetPasswordLaunch: React.FC = () => {
       
       sessionStorage.setItem('password_reset_tokens', JSON.stringify(resetTokenData));
       
-      console.log('Password reset tokens stored securely in session storage');
+      
       
       // Clear lock and navigate without tokens in URL
       if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }

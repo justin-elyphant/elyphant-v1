@@ -34,22 +34,17 @@ const ResetPassword = () => {
   const [errors, setErrors] = useState<Partial<PasswordForm>>({});
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-// Get token and type from URL parameters (supports both query and hash fragments)
+  // Get tokens from URL hash (set by authenticate-reset-token flow)
   const hashString = typeof window !== 'undefined' ? window.location.hash : '';
   const hashParams = new URLSearchParams(hashString ? hashString.replace(/^#/, '') : '');
   
   const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
-  const type = searchParams.get('type') || hashParams.get('type') || 'recovery';
-  const rawEmail = searchParams.get('email') || hashParams.get('email');
-  const email = rawEmail ? decodeURIComponent(rawEmail) : null;
-  const urlError = searchParams.get('error') || hashParams.get('error');
-  const urlErrorCode = searchParams.get('error_code') || hashParams.get('error_code');
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
 useEffect(() => {
     const verifyTokenOrSession = async () => {
-      console.log('Reset password parameters:', { accessToken, refreshToken, type });
+      console.log('Reset password parameters:', { accessToken, refreshToken });
 
       if (accessToken && refreshToken) {
         try {
@@ -79,7 +74,7 @@ useEffect(() => {
     };
 
     verifyTokenOrSession();
-  }, [accessToken, refreshToken, type]);
+  }, [accessToken, refreshToken]);
 
   const validateForm = () => {
     try {

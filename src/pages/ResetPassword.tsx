@@ -323,8 +323,8 @@ const ResetPassword = () => {
                 disabled={loading || !formData.password || !formData.confirmPassword}
               >
                 {loading 
-                  ? (accessToken && refreshToken ? 'Resetting Password...' : 'Sending Reset Link...') 
-                  : (accessToken && refreshToken ? 'Reset Password' : 'Send New Reset Link')
+                  ? (accessToken && refreshToken ? 'Updating Password...' : 'Sending Reset Link...') 
+                  : (accessToken && refreshToken ? 'Change Password' : 'Send New Reset Link')
                 }
               </Button>
               

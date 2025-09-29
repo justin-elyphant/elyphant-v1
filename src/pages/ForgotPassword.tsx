@@ -44,7 +44,7 @@ const ForgotPassword = () => {
         const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-email', {
           body: {
             email: email,
-            resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
+            resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}&type=recovery`,
             // Let the edge function determine the best display name
           }
         });

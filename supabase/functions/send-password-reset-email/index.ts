@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.1.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -147,11 +152,31 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending password reset email to: ${email}`);
 
+    // Try to get user's first name from profiles table
+    let displayName = userName || "there";
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('email', email)
+        .single();
+      
+      if (profile?.first_name) {
+        displayName = profile.first_name;
+      }
+    } catch (error) {
+      console.log('Could not fetch profile for personalization:', error);
+      // Fall back to username from email if no profile found
+      if (!userName) {
+        displayName = email.split('@')[0];
+      }
+    }
+
     const emailResponse = await resend.emails.send({
       from: "Elyphant <noreply@elyphant.ai>",
       to: [email],
       subject: "🔐 Reset Your Password - Action Required",
-      html: generatePasswordResetEmail(resetLink, userName),
+      html: generatePasswordResetEmail(resetLink, displayName),
     });
 
     console.log("Password reset email sent successfully:", emailResponse);

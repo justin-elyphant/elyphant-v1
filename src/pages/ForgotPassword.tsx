@@ -45,7 +45,7 @@ const ForgotPassword = () => {
           body: {
             email: email,
             resetLink: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
-            userName: email.split('@')[0]
+            // Let the edge function determine the best display name
           }
         });
 
@@ -75,7 +75,7 @@ const ForgotPassword = () => {
         body: {
           email: email,
           resetLink: `${window.location.origin}/reset-password?token=test-token-123`,
-          userName: 'Test User'
+          // Let the edge function determine the best display name
         }
       });
 

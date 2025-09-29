@@ -37,10 +37,12 @@ const ResetPassword = () => {
   const accessToken = searchParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token');
   const type = searchParams.get('type') || 'recovery';
-  const email = searchParams.get('email');
+  const email = searchParams.get('email') ? decodeURIComponent(searchParams.get('email')!) : null;
 
   useEffect(() => {
     const verifyTokenOrSession = async () => {
+      console.log('Reset password parameters:', { accessToken, refreshToken, email, type });
+      
       // Check if we have Supabase auth tokens (preferred method)
       if (accessToken && refreshToken) {
         try {
@@ -66,12 +68,14 @@ const ResetPassword = () => {
       } 
       // Fallback: Check if we have at least an email (from any reset link)
       else if (email) {
+        console.log('Using email-only reset flow for:', email);
         // For custom reset links, we'll allow the reset but require the user to be careful
         setIsValidToken(true);
         toast.success('Reset link verified! Please set your new password.');
       }
       // No valid tokens or email
       else {
+        console.log('No valid tokens or email found');
         setIsValidToken(false);
         toast.error('Invalid or missing reset tokens');
       }

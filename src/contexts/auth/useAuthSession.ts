@@ -17,13 +17,35 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
 
-  // Process OAuth tokens from URL - simplified with guards
+  // Process OAuth tokens from URL - SECURITY: Only on allowed routes
   useEffect(() => {
     let isProcessed = false;
     
     const processAuthRedirect = async () => {
+      const currentPath = window.location.pathname;
       const fragment = window.location.hash.substring(1);
-      if (!fragment || isProcessed) return;
+      
+      // SECURITY FIX: Only process tokens on specific allowed routes
+      const allowedRoutes = ['/oauth-complete', '/verify-email'];
+      const isAllowedRoute = allowedRoutes.some(route => currentPath.startsWith(route));
+      
+      // Block token processing on auth pages and launch pages
+      const blockedRoutes = ['/auth', '/reset-password/launch', '/reset-password'];
+      const isBlockedRoute = blockedRoutes.some(route => currentPath.startsWith(route));
+      
+      console.log('Token processing attempt:', { 
+        currentPath, 
+        isAllowedRoute, 
+        isBlockedRoute,
+        hasFragment: !!fragment 
+      });
+      
+      if (!fragment || isProcessed || isBlockedRoute || !isAllowedRoute) {
+        if (fragment && isBlockedRoute) {
+          console.warn('SECURITY: Blocked token processing on restricted route:', currentPath);
+        }
+        return;
+      }
 
       const params = new URLSearchParams(fragment);
       const accessToken = params.get('access_token');

@@ -34,8 +34,20 @@ const ResetPasswordLaunch: React.FC = () => {
         return;
       }
 
-      // Navigate to reset password page with tokens in hash
-      navigate(`/reset-password#access_token=${data.access_token}&refresh_token=${data.refresh_token}&type=recovery`);
+      // SECURITY FIX: Use session storage instead of URL hash to prevent token leakage
+      const resetTokenData = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        timestamp: Date.now(),
+        expires: Date.now() + (5 * 60 * 1000) // 5 minute expiry
+      };
+      
+      sessionStorage.setItem('password_reset_tokens', JSON.stringify(resetTokenData));
+      
+      console.log('Password reset tokens stored securely in session storage');
+      
+      // Navigate without tokens in URL
+      navigate('/reset-password');
     } catch (error) {
       console.error('Error authenticating token:', error);
       toast.error('Failed to verify reset link.');

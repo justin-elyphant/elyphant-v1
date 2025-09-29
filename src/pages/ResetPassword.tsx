@@ -34,47 +34,78 @@ const ResetPassword = () => {
   const [errors, setErrors] = useState<Partial<PasswordForm>>({});
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-  // Get tokens from URL hash (set by authenticate-reset-token flow)
-  const hashString = typeof window !== 'undefined' ? window.location.hash : '';
-  const hashParams = new URLSearchParams(hashString ? hashString.replace(/^#/, '') : '');
-  
-  const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+  // SECURITY FIX: Get tokens from secure session storage instead of URL
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
-useEffect(() => {
+  useEffect(() => {
     const verifyTokenOrSession = async () => {
-      console.log('Reset password parameters:', { accessToken, refreshToken });
-
-      if (accessToken && refreshToken) {
+      // Try to get tokens from session storage (one-time use)
+      const storedTokensJson = sessionStorage.getItem('password_reset_tokens');
+      
+      if (storedTokensJson) {
         try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+          const tokenData = JSON.parse(storedTokensJson);
+          
+          // SECURITY: Validate token freshness (must be within 5 minutes)
+          const now = Date.now();
+          const tokenAge = now - tokenData.timestamp;
+          const isExpired = now > tokenData.expires;
+          
+          console.log('Password reset token validation:', {
+            tokenAge: Math.floor(tokenAge / 1000) + 's',
+            isExpired,
+            hasTokens: !!(tokenData.access_token && tokenData.refresh_token)
           });
-
-          if (error) {
-            console.error('Session setup error:', error);
+          
+          if (isExpired) {
+            console.warn('SECURITY: Password reset tokens expired');
+            sessionStorage.removeItem('password_reset_tokens');
+            toast.error('Reset link expired. Please request a new one.');
             setIsValidToken(false);
-            toast.error('Invalid or expired reset link');
-          } else {
-            setIsValidToken(true);
-            toast.success('Reset link verified successfully!');
+            return;
+          }
+          
+          if (tokenData.access_token && tokenData.refresh_token) {
+            // Clear tokens immediately after reading (one-time use)
+            sessionStorage.removeItem('password_reset_tokens');
+            
+            const { error } = await supabase.auth.setSession({
+              access_token: tokenData.access_token,
+              refresh_token: tokenData.refresh_token
+            });
+
+            if (error) {
+              console.error('Error setting session:', error);
+              toast.error('Invalid or expired reset link.');
+              setIsValidToken(false);
+            } else {
+              console.log('Password reset session established successfully');
+              toast.success('Reset link verified successfully!');
+              setIsValidToken(true);
+            }
+            return;
           }
         } catch (error) {
-          console.error('Session verification failed:', error);
+          console.error('Error processing stored tokens:', error);
+          sessionStorage.removeItem('password_reset_tokens');
           setIsValidToken(false);
-          toast.error('Failed to verify reset link');
         }
+      }
+      
+      // Fallback: Check if there's already an active session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('Using existing session for password reset');
+        setIsValidToken(true);
       } else {
-        console.log('No valid tokens found');
-        setIsValidToken(false);
+        console.warn('No valid tokens or session found for password reset');
         toast.error('Invalid or missing reset tokens');
+        setIsValidToken(false);
       }
     };
 
     verifyTokenOrSession();
-  }, [accessToken, refreshToken]);
+  }, []);
 
   const validateForm = () => {
     try {
@@ -232,7 +263,12 @@ useEffect(() => {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  // SECURITY: Clear all auth state when going back
+                  sessionStorage.removeItem('password_reset_tokens');
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  navigate('/auth');
+                }}
               >
                 Back to Sign In
               </Button>
@@ -338,7 +374,12 @@ useEffect(() => {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  // SECURITY: Clear all auth state when going back
+                  sessionStorage.removeItem('password_reset_tokens');
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  navigate('/auth');
+                }}
               >
                 Back to Sign In
               </Button>

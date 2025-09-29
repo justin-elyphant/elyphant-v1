@@ -159,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('profiles')
         .select('first_name')
         .eq('email', email)
-        .single();
+        .maybeSingle();
       
       if (profile?.first_name) {
         displayName = profile.first_name;

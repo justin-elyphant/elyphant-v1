@@ -20,13 +20,32 @@ const ResetPasswordLaunch: React.FC = () => {
 
   const lastResetEmail = typeof window !== 'undefined' ? localStorage.getItem('lastResetEmail') : null;
 
-  // Auto-continue when token is present - DIRECT to password form (no UI shown)
+  // Auto-continue when token is present - only when page is visible and focused (avoid email/link preview scanners)
   useEffect(() => {
-    if (resetToken && !isProcessing && !isAutoProcessing) {
-      console.log('Auto-processing reset token for DIRECT password form access:', resetToken.substring(0, 8) + '...');
-      setIsAutoProcessing(true);
-      handleContinue();
-    }
+    const shouldAutoProceed = () =>
+      !!resetToken && !isProcessing && !isAutoProcessing &&
+      typeof document !== 'undefined' &&
+      document.visibilityState === 'visible' &&
+      typeof document.hasFocus === 'function' && document.hasFocus() &&
+      !/bot|crawler|spider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot/i.test(navigator.userAgent);
+
+    const tryProceed = () => {
+      if (shouldAutoProceed()) {
+        console.log('Auto-processing reset token for DIRECT password form access:', resetToken!.substring(0, 8) + '...');
+        setIsAutoProcessing(true);
+        handleContinue();
+      }
+    };
+
+    // Try immediately, otherwise wait for visibility/focus
+    tryProceed();
+    const onVisible = () => tryProceed();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [resetToken, isProcessing, isAutoProcessing]);
 
   const handleContinue = async () => {
@@ -117,8 +136,10 @@ const ResetPasswordLaunch: React.FC = () => {
         
         const details = combinedMsg || (error as any)?.context?.response?.statusText || (error as any)?.message;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
-        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
-        navigate('/forgot-password');
+        if (isUsedOrExpired) {
+          if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
+          navigate('/forgot-password');
+        }
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;
@@ -145,9 +166,12 @@ const ResetPasswordLaunch: React.FC = () => {
       
       if (!isSuccessResponse) {
         console.error('Reset service returned error:', data);
-        toast.error(data.error || 'Invalid or expired reset link.');
-        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
-        navigate('/forgot-password');
+        const msg = (data && (data.error || data.message)) || '';
+        toast.error(msg || 'Invalid or expired reset link.');
+        if (/expired|already been used|invalid/i.test(msg)) {
+          if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
+          navigate('/forgot-password');
+        }
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;

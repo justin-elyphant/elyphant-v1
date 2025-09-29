@@ -77,12 +77,14 @@ const ResetPasswordLaunch: React.FC = () => {
             navigate('/forgot-password');
           }
           setIsProcessing(false);
+          setIsAutoProcessing(false);
           return;
         }
 
         const details = (error as any)?.message || (error as any)?.context?.error || (error as any)?.context?.response?.statusText;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
         setIsProcessing(false);
+        setIsAutoProcessing(false);
         return;
       }
 
@@ -90,6 +92,7 @@ const ResetPasswordLaunch: React.FC = () => {
         console.error('No response from reset service');
         toast.error('Failed to connect to reset service.');
         setIsProcessing(false);
+        setIsAutoProcessing(false);
         return;
       }
 
@@ -99,6 +102,7 @@ const ResetPasswordLaunch: React.FC = () => {
         console.error('Reset service returned error:', data);
         toast.error(data.error || 'Invalid or expired reset link.');
         setIsProcessing(false);
+        setIsAutoProcessing(false);
         return;
       }
 
@@ -109,6 +113,7 @@ const ResetPasswordLaunch: React.FC = () => {
         console.error('Missing tokens in response:', data);
         toast.error('Authentication tokens not received.');
         setIsProcessing(false);
+        setIsAutoProcessing(false);
         return;
       }
 
@@ -130,6 +135,7 @@ const ResetPasswordLaunch: React.FC = () => {
       console.error('Error authenticating token:', error);
       toast.error('Failed to verify reset link.');
       setIsProcessing(false);
+      setIsAutoProcessing(false);
     }
   };
 

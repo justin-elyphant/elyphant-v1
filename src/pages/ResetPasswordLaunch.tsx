@@ -42,6 +42,34 @@ const ResetPasswordLaunch: React.FC = () => {
 
       if (error) {
         console.error('Supabase function invoke error:', error);
+        const status = (error as any)?.context?.response?.status;
+        const serverMsg = (error as any)?.context?.error || (error as any)?.message;
+
+        // Handle common token issues gracefully
+        if (status === 401 && serverMsg && /(expired|already been used)/i.test(serverMsg)) {
+          toast.error(serverMsg);
+          // If we know the email used to request reset, proactively send a new link
+          if (lastResetEmail) {
+            try {
+              const { error: resendError } = await supabase.functions.invoke('send-password-reset-email', {
+                body: { email: lastResetEmail }
+              });
+              if (resendError) {
+                toast.error(`Couldn't send a new link: ${resendError.message}`);
+              } else {
+                toast.success('A new secure reset link was sent to your email.');
+              }
+            } catch (e) {
+              console.warn('Auto-resend failed:', e);
+            }
+          } else {
+            // No email in storage, redirect to request a new one
+            navigate('/forgot-password');
+          }
+          setIsProcessing(false);
+          return;
+        }
+
         const details = (error as any)?.message || (error as any)?.context?.error || (error as any)?.context?.response?.statusText;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
         setIsProcessing(false);

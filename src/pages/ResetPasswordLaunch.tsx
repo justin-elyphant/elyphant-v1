@@ -23,19 +23,11 @@ const ResetPasswordLaunch: React.FC = () => {
   // Auto-continue when token is present - DIRECT to password form (no UI shown)
   useEffect(() => {
     if (resetToken && !isProcessing && !isAutoProcessing) {
-      // Prevent duplicate processing across remounts
-      if (tokenLockKey && sessionStorage.getItem(tokenLockKey)) {
-        console.log('Reset token already being processed, skipping duplicate.');
-        return;
-      }
-      if (tokenLockKey) {
-        try { sessionStorage.setItem(tokenLockKey, '1'); } catch {}
-      }
       console.log('Auto-processing reset token for DIRECT password form access:', resetToken.substring(0, 8) + '...');
       setIsAutoProcessing(true);
       handleContinue();
     }
-  }, [resetToken]);
+  }, [resetToken, isProcessing, isAutoProcessing]);
 
   const handleContinue = async () => {
     if (!resetToken) {
@@ -45,9 +37,17 @@ const ResetPasswordLaunch: React.FC = () => {
 
     // Idempotency guard - avoid duplicate invocations
     if (tokenLockKey) {
-      if (sessionStorage.getItem(tokenLockKey)) {
-        console.log('Duplicate processing prevented for token');
-        return;
+      const locked = sessionStorage.getItem(tokenLockKey);
+      if (locked) {
+        console.log('Duplicate processing detected for token');
+        const tokensJson = sessionStorage.getItem('password_reset_tokens');
+        if (tokensJson) {
+          // If tokens already exist, proceed to the reset form
+          navigate('/reset-password');
+          return;
+        }
+        // No tokens yet — clear stale lock and continue
+        try { sessionStorage.removeItem(tokenLockKey); } catch {}
       }
       try { sessionStorage.setItem(tokenLockKey, '1'); } catch {}
     }
@@ -99,6 +99,7 @@ const ResetPasswordLaunch: React.FC = () => {
         // Handle common token issues gracefully (401 or recognizable message)
         if (isUsedOrExpired) {
           toast.error(combinedMsg || 'This reset link is invalid or has expired.');
+          if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
           navigate('/forgot-password');
           setIsProcessing(false);
           setIsAutoProcessing(false);
@@ -116,6 +117,7 @@ const ResetPasswordLaunch: React.FC = () => {
         
         const details = combinedMsg || (error as any)?.context?.response?.statusText || (error as any)?.message;
         toast.error(`Reset service error${details ? `: ${details}` : ''}`);
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
         navigate('/forgot-password');
         setIsProcessing(false);
         setIsAutoProcessing(false);
@@ -125,6 +127,7 @@ const ResetPasswordLaunch: React.FC = () => {
       if (!data) {
         console.error('No response from reset service');
         toast.error('Failed to connect to reset service.');
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;
@@ -143,6 +146,7 @@ const ResetPasswordLaunch: React.FC = () => {
       if (!isSuccessResponse) {
         console.error('Reset service returned error:', data);
         toast.error(data.error || 'Invalid or expired reset link.');
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
         navigate('/forgot-password');
         setIsProcessing(false);
         setIsAutoProcessing(false);
@@ -155,6 +159,7 @@ const ResetPasswordLaunch: React.FC = () => {
       if (!access_token || !refresh_token) {
         console.error('Missing tokens in response:', data);
         toast.error('Authentication tokens not received.');
+        if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
         setIsProcessing(false);
         setIsAutoProcessing(false);
         return;
@@ -172,7 +177,8 @@ const ResetPasswordLaunch: React.FC = () => {
       
       console.log('Password reset tokens stored securely in session storage');
       
-      // Navigate without tokens in URL
+      // Clear lock and navigate without tokens in URL
+      if (tokenLockKey) { try { sessionStorage.removeItem(tokenLockKey); } catch {} }
       navigate('/reset-password');
     } catch (error) {
       console.error('Error authenticating token:', error);

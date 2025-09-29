@@ -209,13 +209,8 @@ const ResetPassword = () => {
         localStorage.removeItem('lastResetEmail');
         sessionStorage.removeItem('password_reset_tokens');
         
-        // Navigate to login with pre-filled email for better UX
-        setTimeout(() => {
-          navigate('/auth', { 
-            replace: true,
-            state: { email: lastResetEmail }
-          });
-        }, 2000);
+        // Navigate directly to main app after successful password reset
+        navigate('/gifting', { replace: true });
       }
     } catch (error: any) {
       toast.error('An unexpected error occurred. Please try again.');

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuthSession } from "@/contexts/auth/useAuthSession";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import { unifiedNicoleAI } from "@/services/ai/unified/UnifiedNicoleAIService";
+import { UnifiedNicoleAIService } from "@/services/ai/unified/UnifiedNicoleAIService";
 import { UnifiedNicoleContext, NicoleResponse, NicoleCapability } from "@/services/ai/unified/types";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
@@ -102,7 +102,7 @@ export const useUnifiedNicoleAI = ({
         recipient: context.recipient
       });
       
-      const response = await unifiedNicoleAI.chat(message, context, currentSessionId);
+      const response = await UnifiedNicoleAIService.getInstance().chat(message, context, currentSessionId);
       
       console.log('🤖 useUnifiedNicoleAI: Nicole response received:', {
         budget: response.context.budget,
@@ -133,28 +133,28 @@ export const useUnifiedNicoleAI = ({
    */
   const updateContext = useCallback((updates: Partial<UnifiedNicoleContext>) => {
     setContext(prev => ({ ...prev, ...updates }));
-    unifiedNicoleAI.updateConversationContext(currentSessionId, updates);
+    UnifiedNicoleAIService.getInstance().updateConversationContext(currentSessionId, updates);
   }, [currentSessionId]);
 
   /**
    * Generate a search query from current context
    */
   const generateSearchQuery = useCallback((): string => {
-    return unifiedNicoleAI.generateSearchQuery(context);
+    return UnifiedNicoleAIService.getInstance().generateSearchQuery(context);
   }, [context]);
 
   /**
    * Get available capabilities for current context
    */
   const getAvailableCapabilities = useCallback((): NicoleCapability[] => {
-    return unifiedNicoleAI.getAvailableCapabilities(context);
+    return UnifiedNicoleAIService.getInstance().getAvailableCapabilities(context);
   }, [context]);
 
   /**
    * Clear the conversation
    */
   const clearConversation = useCallback(() => {
-    unifiedNicoleAI.clearConversation(currentSessionId);
+    UnifiedNicoleAIService.getInstance().clearConversation(currentSessionId);
     setContext({
       conversationPhase: 'greeting',
       capability: 'conversation',
@@ -192,7 +192,7 @@ export const useUnifiedNicoleAI = ({
    * Get conversation context for external use
    */
   const getConversationContext = useCallback((): UnifiedNicoleContext => {
-    return unifiedNicoleAI.getConversationContext(currentSessionId);
+    return UnifiedNicoleAIService.getInstance().getConversationContext(currentSessionId);
   }, [currentSessionId]);
 
   return {

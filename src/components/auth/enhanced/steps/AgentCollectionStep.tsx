@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2, Gift } from "lucide-react";
-import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 
 interface AgentCollectionStepProps {
   onComplete: (data: any) => void;
@@ -25,19 +25,11 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
-    chatWithNicole,
-    loading,
-    lastResponse,
+    sendMessage,
+    isLoading,
     context,
-    isReadyToSearch,
     updateContext
-  } = useUnifiedNicoleAI({
-    initialContext: {
-      capability: 'gift_advisor',
-      conversationPhase: 'quick-gift',
-      giftCollectionPhase: 'recipient'
-    }
-  });
+  } = useSimpleNicole();
 
   // Initialize with welcome message
   useEffect(() => {
@@ -57,17 +49,8 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
     }
   }, [suggestedIntent, updateContext]);
 
-  // Add Nicole's response to messages
-  useEffect(() => {
-    if (lastResponse && lastResponse.message) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: lastResponse.message,
-        timestamp: new Date()
-      }]);
-      setIsTyping(false);
-    }
-  }, [lastResponse]);
+  // Note: In SimpleNicole, messages are managed by the hook
+  // This component would need refactoring to work with the new architecture
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -76,20 +59,20 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
 
   // Check if ready to proceed to gift selection
   useEffect(() => {
-    if (isReadyToSearch() && lastResponse?.showSearchButton) {
-      // Pass collected data to parent
+    // Simplified completion logic
+    if (context.recipient && context.occasion) {
       onComplete({
-        recipientInfo: context.recipientInfo,
+        recipientInfo: { name: context.recipient },
         occasion: context.occasion,
         budget: context.budget,
         conversationContext: context
       });
     }
-  }, [isReadyToSearch, lastResponse, context, onComplete]);
+  }, [context, onComplete]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || loading) return;
+    if (!inputValue.trim() || isLoading) return;
 
     const userMessage = inputValue.trim();
     
@@ -104,7 +87,13 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
     setIsTyping(true);
 
     try {
-      await chatWithNicole(userMessage);
+      const response = await sendMessage(userMessage);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: response.message,
+        timestamp: new Date()
+      }]);
+      setIsTyping(false);
     } catch (error) {
       console.error('Failed to send message:', error);
       setMessages(prev => [...prev, {
@@ -117,10 +106,11 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
   };
 
   const getCollectionProgress = () => {
-    const phase = context.giftCollectionPhase;
-    const steps = ['recipient', 'occasion', 'budget', 'payment', 'confirmation'];
-    const currentIndex = steps.indexOf(phase || 'recipient');
-    return ((currentIndex + 1) / steps.length) * 100;
+    let progress = 0;
+    if (context.recipient) progress += 40;
+    if (context.occasion) progress += 30;
+    if (context.budget) progress += 30;
+    return progress;
   };
 
   return (
@@ -148,7 +138,7 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
             />
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {context.giftCollectionPhase === 'confirmation' ? 'Ready to search!' : 'Collecting gift details...'}
+            {getCollectionProgress() === 100 ? 'Ready to search!' : 'Collecting gift details...'}
           </p>
         </div>
       </div>
@@ -195,15 +185,15 @@ const AgentCollectionStep: React.FC<AgentCollectionStepProps> = ({
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Type your message..."
             className="flex-1"
-            disabled={loading}
+            disabled={isLoading}
           />
           <Button
             type="submit"
             size="sm"
-            disabled={!inputValue.trim() || loading}
+            disabled={!inputValue.trim() || isLoading}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            {loading ? (
+            {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Send className="w-4 h-4" />

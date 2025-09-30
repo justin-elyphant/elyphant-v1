@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
 import { toast } from "sonner";
-import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 import { useAuth } from "@/contexts/auth";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 
@@ -29,7 +29,7 @@ const AutoGiftConfirmationStep = ({
 }: AutoGiftConfirmationStepProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
-  const { chatWithNicole } = useUnifiedNicoleAI({ initialContext: { capability: 'auto_gifting' } });
+  const { sendMessage } = useSimpleNicole();
 
   const recipient = botState.selectedFriend;
   const occasion = botState.occasion || 'birthday';
@@ -48,7 +48,7 @@ const AutoGiftConfirmationStep = ({
       const recipientName = recipient?.name || recipient?.connected_user_id || 'Unknown User';
 
       // Let Nicole know (keeps flow under unified nicole-chat with safe context)
-      await chatWithNicole(
+      await sendMessage(
         `Please set up auto-gifting for ${recipientName} (${occasion}) with a $${budget.min}-${budget.max} budget.`
       );
 

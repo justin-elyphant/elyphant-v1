@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Sparkles, X, Bot } from "lucide-react";
 import { toast } from "sonner";
-import { NicoleUnifiedInterface } from "@/components/ai/unified/NicoleUnifiedInterface";
-import { NicolePortalContainer } from "@/components/nicole/NicolePortalContainer";
+import SimpleNicolePopup from "@/components/ai/SimpleNicolePopup";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
@@ -42,7 +41,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 }) => {
   const [query, setQuery] = useState("");
   const [isNicoleOpen, setIsNicoleOpen] = useState(false);
-  const [nicoleContext, setNicoleContext] = useState<any>(null);
+  const [nicoleWelcomeMessage, setNicoleWelcomeMessage] = useState<string | undefined>();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const navigate = useNavigate();
@@ -101,10 +100,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         globalNicoleState.currentInstance = instanceId;
         
         setIsNicoleOpen(true);
-        setNicoleContext({
-          capability: 'gift_advisor',
-          conversationPhase: 'greeting'
-        });
+        setNicoleWelcomeMessage("Hey! I'm Nicole, your AI gift advisor. Let's find the perfect gift together!");
         
         toast.success("Nicole is ready to help!", {
           description: "Ask me anything about finding the perfect gift"
@@ -123,14 +119,12 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         globalNicoleState.isOpen = true;
         globalNicoleState.currentInstance = instanceId;
         
-        // Set Nicole context based on event detail
-        setNicoleContext({
-          capability: event.detail.capability || 'conversation',
-          selectedIntent: event.detail.selectedIntent,
-          greetingContext: event.detail.greetingContext,
-          autoGreeting: event.detail.autoGreeting,
-          conversationPhase: 'greeting'
-        });
+        // Set welcome message based on event detail
+        if (event.detail.greetingContext || event.detail.autoGreeting) {
+          setNicoleWelcomeMessage(event.detail.autoGreeting || "I'm here to help with your gifting needs!");
+        } else {
+          setNicoleWelcomeMessage(undefined);
+        }
         
         // Open Nicole interface
         setIsNicoleOpen(true);
@@ -195,11 +189,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       addSearch(query.trim());
       
       if (isNicoleMode) {
-        // In Nicole mode, open the conversation
-        setNicoleContext({
-          capability: 'search',
-          conversationPhase: 'greeting'
-        });
+        // In Nicole mode, open the conversation with search context
+        setNicoleWelcomeMessage(`I'd love to help you search for "${query.trim()}". Let me find some great options!`);
         setIsNicoleOpen(true);
       } else {
         // In search mode, navigate to results
@@ -293,7 +284,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         globalNicoleState.currentInstance = null;
       }
       setIsNicoleOpen(false);
-      setNicoleContext(null);
+      setNicoleWelcomeMessage(undefined);
     }
   };
 
@@ -304,7 +295,7 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       globalNicoleState.currentInstance = null;
     }
     setIsNicoleOpen(false);
-    setNicoleContext(null);
+    setNicoleWelcomeMessage(undefined);
     setMode("search"); // Reset to search mode when closing
   };
 
@@ -562,15 +553,11 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
 
       {/* Nicole Interface - Only render if this instance owns the global state */}
       {isNicoleMode && isNicoleOpen && globalNicoleState.currentInstance === instanceId && (
-        <NicolePortalContainer isVisible={true}>
-          <NicoleUnifiedInterface
-            isOpen={isNicoleOpen}
-            onClose={handleNicoleClose}
-            onNavigateToResults={handleNicoleNavigate}
-            initialContext={nicoleContext}
-            className="w-full"
-          />
-        </NicolePortalContainer>
+        <SimpleNicolePopup
+          isOpen={isNicoleOpen}
+          onClose={handleNicoleClose}
+          welcomeMessage={nicoleWelcomeMessage}
+        />
       )}
 
     </div>

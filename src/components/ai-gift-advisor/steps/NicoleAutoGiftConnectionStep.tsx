@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Heart, Calendar, Gift, Sparkles, ArrowRight, CheckCircle2, Users, Search, UserPlus, Mail } from "lucide-react";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
 import { useConnections } from "@/hooks/profile/useConnections";
-import { useUnifiedNicoleAI } from "@/hooks/useUnifiedNicoleAI";
+import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 import { useFriendSearch } from "@/hooks/useFriendSearch";
 import { toast } from "sonner";
 
@@ -25,9 +25,7 @@ const NicoleAutoGiftConnectionStep = ({
   const [loadingSetup, setLoadingSetup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const { chatWithNicole } = useUnifiedNicoleAI({
-    initialContext: { capability: 'auto_gifting' }
-  });
+  const { sendMessage } = useSimpleNicole();
   const { results: searchResults, isLoading: searchLoading, searchForFriends, sendFriendRequest } = useFriendSearch();
 
   // Enhanced connections with upcoming events and relationship data
@@ -55,7 +53,7 @@ const NicoleAutoGiftConnectionStep = ({
       // Step 1: Use optimal 2-question flow - Nicole intelligently pre-analyzes
       const analysisMessage = `Set up auto-gifting for ${connection.connected_user_id}`;
       
-      const nicoleResponse = await chatWithNicole(analysisMessage);
+      const nicoleResponse = await sendMessage(analysisMessage);
       
       // Step 2: Auto-configure based on Nicole's analysis
       if (connection.upcomingEvents.length > 0) {

@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Send, CheckCircle, XCircle, MessageCircle, Gift } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
-import { nicoleAIService } from '@/services/ai/unified/nicoleAIService';
+// nicoleAIService temporarily disabled during migration
 import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import { toast } from 'sonner';
 
@@ -101,11 +101,12 @@ const NicoleApprovalInterface: React.FC<NicoleApprovalInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      // Get Nicole's response
-      const nicoleResponse = await nicoleAIService.continueApprovalConversation(
-        conversationId,
-        inputMessage
-      );
+      // Temporarily disabled during migration
+      const nicoleResponse = { 
+        message: 'This feature is temporarily unavailable during system migration. Please try again later.',
+        metadata: {},
+        actions: []
+      };
 
       const nicoleMessage: ApprovalMessage = {
         id: (Date.now() + 1).toString(),

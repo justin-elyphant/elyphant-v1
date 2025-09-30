@@ -7,7 +7,7 @@ import { Search, Loader2, Sparkles, Bot } from 'lucide-react';
 import TypingIndicator from '@/components/messaging/TypingIndicator';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Profile } from '@/types/profile';
-import WishlistRecommendations from '@/components/ai/enhanced/WishlistRecommendations';
+// WishlistRecommendations temporarily disabled during migration
 import ProductTilesDisplay from '@/components/ai/enhanced/ProductTilesDisplay';
 import { NicoleCTAButtons } from './NicoleCTAButtons';
 
@@ -125,11 +125,9 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
             >
               {message.type === 'recommendations' ? (
                 <div className="-mx-2">
-                  <WishlistRecommendations
-                    recommendations={message.payload?.recommendations || []}
-                    userBudget={message.payload?.userBudget}
-                    onSelectItem={(item) => onSelectRecommendation?.(item)}
-                  />
+                  <div className="text-muted-foreground text-sm">
+                    Recommendations feature temporarily unavailable during migration
+                  </div>
                 </div>
               ) : message.type === 'product_tiles' ? (
                 <div className="-mx-2">

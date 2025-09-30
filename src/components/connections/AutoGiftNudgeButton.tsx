@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { Connection } from '@/types/connections';
-import { autoGiftNudgeService } from '@/services/autoGiftNudgeService';
+// autoGiftNudgeService temporarily disabled during migration
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -57,18 +57,12 @@ export const AutoGiftNudgeButton: React.FC<AutoGiftNudgeButtonProps> = ({
         return;
       }
 
-      // Send intelligent nudge via Nicole AI
-      const result = await autoGiftNudgeService.sendIntelligentNudge({
-        connectionId: connection.id,
-        connectionName: connection.name,
-        missingDataTypes: missingData,
-        relationshipType: connection.relationship,
-        customRelationship: connection.customRelationship
-      });
+      // Temporarily disabled during migration
+      const result = { success: false, error: 'Feature temporarily unavailable during migration' };
 
       if (result.success) {
         toast.success('Nudge sent!', {
-          description: result.message
+          description: 'Your nudge was sent successfully'
         });
         onNudgeSent?.();
       } else {

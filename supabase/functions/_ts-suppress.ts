@@ -5,8 +5,6 @@ const files = [
   'manage-business-payment-methods/index.ts',
   'manual-order-retry/index.ts',
   'manual-scheduler/index.ts',
-  'nicole-chat/index.ts',
-  'nicole-chatgpt-agent/index.ts',
   'order-cleanup/index.ts',
   'order-orchestrator/index.ts',
   'order-recovery-monitor/index.ts',

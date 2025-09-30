@@ -5,7 +5,6 @@ import { Maximize2, X, Send, Loader2 } from "lucide-react";
 import { useNicoleDropdown } from "./NicoleDropdownContext";
 import { Textarea } from "@/components/ui/textarea";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
-import { NicoleAutoGiftBridge } from "@/services/ai/NicoleAutoGiftBridge";
 
 interface NicoleSearchDropdownProps {
   onExpand: () => void;
@@ -67,15 +66,18 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
     console.log('🎯 CTA Clicked:', ctaButton);
     
     if (ctaButton.action === 'setup_auto_gift') {
-      // Transform Nicole context to AutoGiftSetupFlow format
-      const transformedData = NicoleAutoGiftBridge.transformContext({
+      // Pass data directly in the format AutoGiftSetupFlow expects
+      const initialData = {
         recipientName: ctaButton.data?.recipientName || context.recipient,
-        occasion: ctaButton.data?.occasion || context.occasion,
-        budgetRange: ctaButton.data?.suggestedBudget || context.budget,
-        relationshipType: context.relationship
-      });
+        eventType: ctaButton.data?.occasion || context.occasion,
+        budgetLimit: Array.isArray(ctaButton.data?.suggestedBudget) 
+          ? ctaButton.data.suggestedBudget[1] 
+          : (ctaButton.data?.budget || context.budget || 50),
+        giftMessage: ctaButton.data?.message || `Happy ${ctaButton.data?.occasion || context.occasion || 'celebration'}!`
+      };
       
-      setAutoGiftInitialData(transformedData);
+      console.log('🎁 Opening AutoGiftSetupFlow with data:', initialData);
+      setAutoGiftInitialData(initialData);
       setAutoGiftModalOpen(true);
     } else if (ctaButton.action === 'show_gift_recommendations') {
       // Navigate to search results with enhanced query

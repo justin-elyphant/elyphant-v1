@@ -61,7 +61,9 @@ serve(async (req) => {
 
     // Handle dynamic greeting directly without OpenAI call for consistency
     if (message === '__START_DYNAMIC_CHAT__') {
+      console.log('🎉 Processing dynamic greeting:', { isAuthenticated, userId, hasProfile: !!userProfile });
       const greetingMessage = buildDynamicGreeting({ isAuthenticated, userProfile, context });
+      console.log('📝 Final greeting message:', greetingMessage);
       
       return new Response(JSON.stringify({
         message: greetingMessage,
@@ -239,11 +241,14 @@ Stay natural, helpful, and focused on their gift-giving needs.`;
 }
 
 function buildDynamicGreeting({ isAuthenticated, userProfile, context }: any): string {
-  if (!isAuthenticated) {
+  console.log('🎯 Building greeting:', { isAuthenticated, userProfile: userProfile?.first_name, context });
+  
+  if (!isAuthenticated || !userProfile) {
     return "Hi there! I'm Nicole, your AI gifting assistant. How can I help you find the perfect gift today?";
   }
   
   const userName = userProfile?.first_name || userProfile?.name || 'there';
+  console.log('✅ Using personalized greeting for:', userName);
   
   // Return the exact greeting directly - no OpenAI call needed
   return `Hi ${userName}! How can I help you find the perfect gift today?`;

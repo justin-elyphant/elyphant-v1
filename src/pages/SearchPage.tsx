@@ -1,10 +1,40 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import SEOWrapper from "@/components/seo/SEOWrapper";
 import { NicoleDropdownProvider } from "@/components/search/nicole/NicoleDropdownContext";
 import { UnifiedSearchBar } from "@/components/search/unified/UnifiedSearchBar";
 
 const SearchPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleNavigateToResults = (searchQuery: string, nicoleContext?: any) => {
+    const marketplaceUrl = new URL('/marketplace', window.location.origin);
+    marketplaceUrl.searchParams.set('search', searchQuery);
+    
+    if (nicoleContext) {
+      marketplaceUrl.searchParams.set('source', 'nicole');
+      
+      if (nicoleContext.budget) {
+        const budget = nicoleContext.budget;
+        if (Array.isArray(budget) && budget.length === 2) {
+          const [min, max] = budget;
+          if (typeof min === 'number') marketplaceUrl.searchParams.set('minPrice', String(min));
+          if (typeof max === 'number') marketplaceUrl.searchParams.set('maxPrice', String(max));
+        }
+      }
+      
+      if (nicoleContext.recipient) {
+        marketplaceUrl.searchParams.set('recipient', nicoleContext.recipient);
+      }
+      if (nicoleContext.occasion) {
+        marketplaceUrl.searchParams.set('occasion', nicoleContext.occasion);
+      }
+    }
+    
+    navigate(marketplaceUrl.pathname + marketplaceUrl.search);
+  };
+
   return (
     <SEOWrapper
       title="Search Gifts - AI-Powered Gift Finder | Elyphant"
@@ -22,8 +52,8 @@ const SearchPage: React.FC = () => {
 
           {/* Unified Search Bar with Nicole Integration */}
           <Card className="p-4">
-            <NicoleDropdownProvider>
-              <UnifiedSearchBar />
+            <NicoleDropdownProvider onNavigateToResults={handleNavigateToResults}>
+              <UnifiedSearchBar onNavigateToResults={handleNavigateToResults} />
             </NicoleDropdownProvider>
           </Card>
 

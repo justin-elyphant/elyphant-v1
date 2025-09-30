@@ -31,15 +31,18 @@ const SimpleNicolePopup = ({
     messages, 
     context, 
     isLoading, 
+    isAuthLoading,
     sendMessage, 
     startDynamicGreeting,
     clearConversation 
   } = useSimpleNicole();
 
-  // Send welcome message when opening - simplified to avoid multiple greetings
+  // Send welcome message when opening - wait for auth to load first
   useEffect(() => {
-    if (isOpen && messages.length === 0 && !greetingInitialized.current) {
+    if (isOpen && messages.length === 0 && !greetingInitialized.current && !isAuthLoading) {
       greetingInitialized.current = true;
+      
+      console.log('🚀 Starting greeting with auth loaded, user:', user?.email);
       
       if (welcomeMessage) {
         // Use the hook's internal mechanism via startDynamicGreeting with custom message
@@ -49,7 +52,7 @@ const SimpleNicolePopup = ({
         startDynamicGreeting();
       }
     }
-  }, [isOpen, messages.length, welcomeMessage]);
+  }, [isOpen, messages.length, welcomeMessage, isAuthLoading, user]);
 
   // Reset greeting flag when popup closes
   useEffect(() => {

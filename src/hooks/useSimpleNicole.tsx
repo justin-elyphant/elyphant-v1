@@ -33,7 +33,7 @@ export const useSimpleNicole = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; ctaButtons?: NicoleCTAButton[] }>>([]);
   const [context, setContext] = useState<SimpleNicoleContext>({});
   const [isLoading, setIsLoading] = useState(false);
-  const { session } = useAuthSession();
+  const { session, isLoading: isAuthLoading } = useAuthSession();
 
   const sendMessage = useCallback(async (message: string): Promise<SimpleNicoleResponse> => {
     setIsLoading(true);
@@ -159,6 +159,7 @@ export const useSimpleNicole = () => {
     messages,
     context,
     isLoading,
+    isAuthLoading,
     sendMessage,
     startDynamicGreeting,
     clearConversation,

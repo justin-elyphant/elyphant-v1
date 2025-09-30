@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ const SimpleNicolePopup = ({
   const [message, setMessage] = useState("");
   const [autoGiftFlowOpen, setAutoGiftFlowOpen] = useState(false);
   const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
+  const greetingInitialized = useRef(false);
   const { user } = useAuth();
   
   const { 
@@ -37,7 +38,9 @@ const SimpleNicolePopup = ({
 
   // Send welcome message when opening - simplified to avoid multiple greetings
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
+    if (isOpen && messages.length === 0 && !greetingInitialized.current) {
+      greetingInitialized.current = true;
+      
       if (welcomeMessage) {
         // Use the hook's internal mechanism via startDynamicGreeting with custom message
         startDynamicGreeting({ customGreeting: welcomeMessage });
@@ -46,7 +49,14 @@ const SimpleNicolePopup = ({
         startDynamicGreeting();
       }
     }
-  }, [isOpen, messages.length, welcomeMessage, startDynamicGreeting]);
+  }, [isOpen, messages.length, welcomeMessage]);
+
+  // Reset greeting flag when popup closes
+  useEffect(() => {
+    if (!isOpen) {
+      greetingInitialized.current = false;
+    }
+  }, [isOpen]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
@@ -121,6 +131,7 @@ const SimpleNicolePopup = ({
 
   const handleClose = () => {
     clearConversation();
+    greetingInitialized.current = false; // Reset greeting flag
     
     // Clean up URL parameters - remove mode=nicole
     const url = new URL(window.location.href);

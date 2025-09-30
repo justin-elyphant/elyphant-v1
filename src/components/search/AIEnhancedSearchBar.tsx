@@ -100,11 +100,8 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
         globalNicoleState.currentInstance = instanceId;
         
         setIsNicoleOpen(true);
-        setNicoleWelcomeMessage("Hey! I'm Nicole, your AI gift advisor. Let's find the perfect gift together!");
-        
-        toast.success("Nicole is ready to help!", {
-          description: "Ask me anything about finding the perfect gift"
-        });
+        // Let SimpleNicolePopup handle the greeting internally
+        setNicoleWelcomeMessage(undefined);
       }
     }
   }, [isNicoleMode, isNicoleOpen, instanceId]);
@@ -294,6 +291,14 @@ const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = ({
       globalNicoleState.isOpen = false;
       globalNicoleState.currentInstance = null;
     }
+    
+    // Clean up URL parameters - remove mode=nicole
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('mode') === 'nicole') {
+      url.searchParams.delete('mode');
+      window.history.replaceState({}, '', url.toString());
+    }
+    
     setIsNicoleOpen(false);
     setNicoleWelcomeMessage(undefined);
     setMode("search"); // Reset to search mode when closing

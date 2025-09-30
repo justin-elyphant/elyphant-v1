@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,18 +35,18 @@ const SimpleNicolePopup = ({
     clearConversation 
   } = useSimpleNicole();
 
-  // Send welcome message when opening
+  // Send welcome message when opening - simplified to avoid multiple greetings
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       if (welcomeMessage) {
-        // Send custom welcome message
-        sendMessage(welcomeMessage);
+        // Use the hook's internal mechanism via startDynamicGreeting with custom message
+        startDynamicGreeting({ customGreeting: welcomeMessage });
       } else {
         // Start with dynamic greeting
         startDynamicGreeting();
       }
     }
-  }, [isOpen, messages.length, welcomeMessage, sendMessage, startDynamicGreeting]);
+  }, [isOpen, messages.length, welcomeMessage, startDynamicGreeting]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
@@ -121,6 +121,14 @@ const SimpleNicolePopup = ({
 
   const handleClose = () => {
     clearConversation();
+    
+    // Clean up URL parameters - remove mode=nicole
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('mode') === 'nicole') {
+      url.searchParams.delete('mode');
+      window.history.replaceState({}, '', url.toString());
+    }
+    
     onClose();
   };
 
@@ -136,14 +144,6 @@ const SimpleNicolePopup = ({
                 </AvatarFallback>
               </Avatar>
               Nicole AI Assistant
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClose}
-                className="ml-auto h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </DialogTitle>
           </DialogHeader>
 

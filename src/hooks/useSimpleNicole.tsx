@@ -93,8 +93,58 @@ export const useSimpleNicole = () => {
   }, [context, session]);
 
   const startDynamicGreeting = useCallback(async (greetingContext?: any): Promise<SimpleNicoleResponse> => {
-    return sendMessage('__START_DYNAMIC_CHAT__');
-  }, [sendMessage]);
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('nicole-unified-agent', {
+        body: {
+          message: '__START_DYNAMIC_CHAT__',
+          context: greetingContext || {},
+          userId: session?.user?.id,
+          sessionId: `session-${Date.now()}`
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const response: SimpleNicoleResponse = data;
+      
+      // Update context with response
+      setContext(response.context);
+      
+      // Add assistant response to chat (no user message for greetings)
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: response.message,
+        ctaButtons: response.ctaButtons
+      }]);
+
+      return response;
+      
+    } catch (error) {
+      console.error('Nicole greeting error:', error);
+      
+      const fallbackResponse: SimpleNicoleResponse = {
+        message: "Hey! I'm Nicole, your AI gift advisor. Let's find the perfect gift together!",
+        context: greetingContext || {},
+        capability: 'conversation',
+        ctaButtons: [],
+        actions: [],
+        showSearchButton: false
+      };
+      
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: fallbackResponse.message 
+      }]);
+      
+      return fallbackResponse;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [context, session]);
 
   const clearConversation = useCallback(() => {
     setMessages([]);

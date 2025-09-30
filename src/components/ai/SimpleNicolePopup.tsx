@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Sparkles, X, Bot } from "lucide-react";
+import { Send, Sparkles, X, Bot, Minimize2 } from "lucide-react";
 import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 import { toast } from "sonner";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
@@ -14,12 +14,18 @@ interface SimpleNicolePopupProps {
   isOpen: boolean;
   onClose: () => void;
   welcomeMessage?: string;
+  onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
+  canMinimize?: boolean;
+  onMinimize?: () => void;
 }
 
 const SimpleNicolePopup = ({ 
   isOpen, 
   onClose, 
-  welcomeMessage 
+  welcomeMessage,
+  onNavigateToResults,
+  canMinimize = false,
+  onMinimize
 }: SimpleNicolePopupProps) => {
   const [message, setMessage] = useState("");
   const [autoGiftFlowOpen, setAutoGiftFlowOpen] = useState(false);
@@ -151,14 +157,27 @@ const SimpleNicolePopup = ({
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
-                  <Bot className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              Nicole AI Assistant
-            </DialogTitle>
+            <div className="flex items-center justify-between w-full">
+              <DialogTitle className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+                    <Bot className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                Nicole AI Assistant
+              </DialogTitle>
+              {canMinimize && onMinimize && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onMinimize}
+                  className="mr-8"
+                  title="Minimize to search bar"
+                >
+                  <Minimize2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </DialogHeader>
 
           {/* Messages Area */}

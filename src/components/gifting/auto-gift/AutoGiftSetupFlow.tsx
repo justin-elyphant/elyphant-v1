@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +57,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useLocalStorage('autoGiftDraft', {
     recipientId: recipientId || "",
     eventType: eventType || "",
     specificHoliday: "",
@@ -259,6 +260,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       toast.success("Setup completed successfully!", {
         description: "Your auto-gifting configuration is now active and secured"
       });
+      
+      // Clear the draft after successful completion
+      localStorage.removeItem('autoGiftDraft');
       
       onOpenChange(false);
       setCurrentStep(0);

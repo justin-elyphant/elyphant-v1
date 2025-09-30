@@ -118,6 +118,27 @@ serve(async (req) => {
                 required: ['recipient_name', 'occasion', 'confidence', 'cta_text']
               }
             }
+          },
+          {
+            type: 'function',
+            function: {
+              name: 'generate_gift_recommendations',
+              description: 'Generate enhanced search query for immediate gift shopping based on conversation context',
+              parameters: {
+                type: 'object',
+                properties: {
+                  search_query: { type: 'string', description: 'Enhanced search query for product search' },
+                  recipient_name: { type: 'string', description: 'Name of the gift recipient' },
+                  occasion: { type: 'string', description: 'Type of occasion' },
+                  relationship: { type: 'string', description: 'Relationship to recipient (wife, friend, etc.)' },
+                  budget: { type: 'array', items: { type: 'number' }, description: 'Budget range [min, max]' },
+                  interests: { type: 'array', items: { type: 'string' }, description: 'Recipient interests or preferences' },
+                  confidence: { type: 'number', description: 'Confidence score 0-1' },
+                  cta_text: { type: 'string', description: 'Suggested CTA button text' }
+                },
+                required: ['search_query', 'confidence', 'cta_text']
+              }
+            }
           }
         ],
         tool_choice: 'auto'
@@ -152,7 +173,27 @@ serve(async (req) => {
               }
             });
           } catch (error) {
-            console.error('Error parsing tool call arguments:', error);
+            console.error('Error parsing auto-gift tool call:', error);
+          }
+        } else if (toolCall.function.name === 'generate_gift_recommendations') {
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            ctaButtons.push({
+              id: `gift-recs-${Date.now()}`,
+              text: args.cta_text,
+              action: 'show_gift_recommendations',
+              data: {
+                searchQuery: args.search_query,
+                recipientName: args.recipient_name,
+                occasion: args.occasion,
+                relationship: args.relationship,
+                budget: args.budget,
+                interests: args.interests,
+                confidence: args.confidence
+              }
+            });
+          } catch (error) {
+            console.error('Error parsing gift recommendations tool call:', error);
           }
         }
       }
@@ -218,14 +259,24 @@ ${isAuthenticated ?
   - Welcome them to Elyphant and explain how you can help`
 }
 
-**Auto-Gifting Detection:**
-When users mention:
+**Tool Usage Guidelines:**
+
+Use detect_auto_gift_opportunity when users mention:
 - Setting up gifts for birthdays, anniversaries, or special occasions
 - Wanting to "never forget" someone's special day
 - Automating gift-giving for family/friends
 - Managing multiple people's gift needs
+- Future recurring gift-giving scenarios
 
-Use the detect_auto_gift_opportunity tool to suggest setting up auto-gifting with a natural CTA button.
+Use generate_gift_recommendations when users want:
+- Immediate gift shopping for a specific occasion
+- Product recommendations for an upcoming event
+- Help finding gifts right now
+- One-time gift purchases
+
+You can use BOTH tools when appropriate to offer users a choice between:
+1. Setting up automated gifting (primary option)
+2. Shopping for gifts immediately (secondary option)
 
 **Conversation Flow:**
 1. Understand their gift-giving need or question

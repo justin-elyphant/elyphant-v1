@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Maximize2, X, Send, Loader2 } from "lucide-react";
 import { useNicoleDropdown } from "./NicoleDropdownContext";
 import { Textarea } from "@/components/ui/textarea";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import { NicoleAutoGiftBridge } from "@/services/ai/NicoleAutoGiftBridge";
 
 interface NicoleSearchDropdownProps {
   onExpand: () => void;
@@ -18,13 +20,17 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
     isDropdownOpen,
     closeDropdown,
     messages,
+    context,
     isLoading,
     isAuthLoading,
     sendMessage,
-    startDynamicGreeting
+    startDynamicGreeting,
+    onNavigateToResults
   } = useNicoleDropdown();
 
   const [inputValue, setInputValue] = useState("");
+  const [autoGiftModalOpen, setAutoGiftModalOpen] = useState(false);
+  const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const greetingInitialized = useRef(false);
@@ -56,6 +62,39 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
       greetingInitialized.current = false;
     }
   }, [isDropdownOpen]);
+
+  const handleCTAClick = (ctaButton: any) => {
+    console.log('🎯 CTA Clicked:', ctaButton);
+    
+    if (ctaButton.action === 'setup_auto_gift') {
+      // Transform Nicole context to AutoGiftSetupFlow format
+      const transformedData = NicoleAutoGiftBridge.transformContext({
+        recipientName: ctaButton.data?.recipientName || context.recipient,
+        occasion: ctaButton.data?.occasion || context.occasion,
+        budgetRange: ctaButton.data?.suggestedBudget || context.budget,
+        relationshipType: context.relationship
+      });
+      
+      setAutoGiftInitialData(transformedData);
+      setAutoGiftModalOpen(true);
+    } else if (ctaButton.action === 'show_gift_recommendations') {
+      // Navigate to search results with enhanced query
+      const searchQuery = ctaButton.data?.searchQuery || 
+        `gifts for ${ctaButton.data?.recipientName || 'them'} ${ctaButton.data?.occasion || ''}`.trim();
+      
+      const enhancedContext = {
+        ...context,
+        recipient: ctaButton.data?.recipientName,
+        occasion: ctaButton.data?.occasion,
+        budget: ctaButton.data?.budget,
+        interests: ctaButton.data?.interests,
+        relationship: ctaButton.data?.relationship
+      };
+      
+      closeDropdown();
+      onNavigateToResults?.(searchQuery, enhancedContext);
+    }
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -90,7 +129,8 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
   if (!isDropdownOpen) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-200">
+    <>
+      <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-200">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-purple-50 to-indigo-50">
         <div className="flex items-center gap-2">
@@ -136,20 +176,16 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
                 
                 {/* CTA Buttons */}
                 {message.ctaButtons && message.ctaButtons.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="flex flex-col gap-2 mt-3">
                     {message.ctaButtons.map((button, btnIndex) => (
                       <Button
                         key={btnIndex}
-                        variant="outline"
+                        variant={button.action === 'setup_auto_gift' ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => {
-                          if (button.action) {
-                            button.action();
-                          }
-                        }}
-                        className="text-xs"
+                        onClick={() => handleCTAClick(button)}
+                        className="text-xs w-full"
                       >
-                        {button.label}
+                        {button.text}
                       </Button>
                     ))}
                   </div>
@@ -192,6 +228,14 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Auto-Gift Setup Modal */}
+      <AutoGiftSetupFlow
+        open={autoGiftModalOpen}
+        onOpenChange={setAutoGiftModalOpen}
+        initialData={autoGiftInitialData}
+      />
+    </>
   );
 };

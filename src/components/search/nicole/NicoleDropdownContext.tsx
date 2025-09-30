@@ -22,6 +22,9 @@ interface NicoleDropdownContextValue {
   sendMessage: (message: string) => Promise<any>;
   startDynamicGreeting: (greetingContext?: any) => Promise<any>;
   clearConversation: () => void;
+  
+  // Navigation
+  onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
 }
 
 const NicoleDropdownContext = createContext<NicoleDropdownContextValue | undefined>(undefined);
@@ -36,9 +39,10 @@ export const useNicoleDropdown = () => {
 
 interface NicoleDropdownProviderProps {
   children: ReactNode;
+  onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
 }
 
-export const NicoleDropdownProvider: React.FC<NicoleDropdownProviderProps> = ({ children }) => {
+export const NicoleDropdownProvider: React.FC<NicoleDropdownProviderProps> = ({ children, onNavigateToResults }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -90,6 +94,7 @@ export const NicoleDropdownProvider: React.FC<NicoleDropdownProviderProps> = ({ 
     expandToModal,
     minimizeToDropdown,
     closeAll,
+    onNavigateToResults,
     ...nicoleHook
   };
 

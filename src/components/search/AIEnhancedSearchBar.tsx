@@ -15,7 +15,7 @@ interface AIEnhancedSearchBarProps {
 
 const AIEnhancedSearchBar: React.FC<AIEnhancedSearchBarProps> = (props) => {
   return (
-    <NicoleDropdownProvider>
+    <NicoleDropdownProvider onNavigateToResults={props.onNavigateToResults}>
       <UnifiedSearchBar {...props} />
     </NicoleDropdownProvider>
   );

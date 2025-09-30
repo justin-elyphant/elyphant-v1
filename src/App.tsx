@@ -16,6 +16,7 @@ import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandl
 import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
+import { SimpleNicoleProvider } from "./components/ai/SimpleNicoleProvider";
 
 
 // Immediate load for critical pages
@@ -302,6 +303,8 @@ function AppContent() {
       <MobileBottomNavigation />
       <Toaster />
       
+      {/* Simple Nicole Provider - Test Implementation */}
+      <SimpleNicoleProvider />
     </div>
   );
 }

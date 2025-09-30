@@ -9,16 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const Nicole = () => {
   const handleOpenNicole = () => {
     console.log("Opening Nicole AI interface");
-    window.dispatchEvent(new CustomEvent('triggerNicole', {
+    // Test the new simplified Nicole system
+    window.dispatchEvent(new CustomEvent('triggerSimpleNicole', {
       detail: {
-        capability: 'general_assistance',
-        selectedIntent: 'chat',
-        source: 'nicole-page',
-        autoGreeting: true,
-        greetingContext: {
-          greeting: 'general-welcome',
-          activeMode: 'chat'
-        }
+        welcomeMessage: 'Hi! I\'d like to learn about your gifting features and how you can help me.'
       }
     }));
   };

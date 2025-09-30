@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/auth';
 import { useEnhancedGiftRecommendations } from '@/hooks/useEnhancedGiftRecommendations';
 import { useUnifiedSearch } from '@/hooks/useUnifiedSearch';
 import { Product } from '@/types/product';
+import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
+import { NicoleAutoGiftBridge } from '@/services/ai/NicoleAutoGiftBridge';
 
 interface NicoleUnifiedInterfaceProps {
   isOpen: boolean;
@@ -34,6 +36,14 @@ interface Message {
   content?: string;
   type?: 'text' | 'recommendations' | 'product_tiles';
   payload?: any;
+  ctaData?: {
+    type: 'auto_gift_setup' | 'gift_recommendations' | 'wishlist_creation';
+    label: string;
+    recipientName?: string;
+    occasion?: string;
+    budgetRange?: [number, number];
+    confidence?: number;
+  };
 }
 
 export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
@@ -46,6 +56,10 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   onNavigateToResults
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Auto-gift setup flow state
+  const [autoGiftFlowOpen, setAutoGiftFlowOpen] = useState(false);
+  const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
   
   // Curated flow state
   const [curatedActive, setCuratedActive] = useState(false);
@@ -116,7 +130,13 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
   } = useUnifiedNicoleAI({
     initialContext: buildInitialContext(),
     onResponse: async (response) => {
-      setMessages(prev => [...prev, { role: 'assistant', content: response.message }]);
+      // Add Nicole's response with CTA data if present
+      const newMessage: Message = { 
+        role: 'assistant', 
+        content: response.message,
+        ctaData: response.ctaData || response.metadata?.ctaData
+      };
+      setMessages(prev => [...prev, newMessage]);
       
       // Handle product tiles display when Nicole provides search context
       if (response.showProductTiles) {
@@ -415,6 +435,60 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
     }
   };
 
+  // Handle CTA button clicks - bridge to appropriate flows
+  const handleCTAClick = (cta: any) => {
+    console.log('🎯 CTA clicked:', cta);
+    
+    switch (cta.type) {
+      case 'auto_gift_setup':
+        // Use bridge service to transform Nicole context to AutoGiftSetupFlow format
+        const conversationHistory = messages.filter(m => m.content).map(m => ({
+          role: m.role,
+          content: m.content!
+        }));
+        
+        const extractedInfo = NicoleAutoGiftBridge.extractRecipientInfo(conversationHistory);
+        const currentContext = getConversationContext();
+        
+        const bridgeContext = {
+          recipientName: cta.recipientName || extractedInfo.recipientName,
+          occasion: cta.occasion || currentContext.occasion,
+          budgetRange: cta.budgetRange || currentContext.budget,
+          relationshipType: extractedInfo.relationship || currentContext.relationship,
+          recipientId: currentContext.mentionedConnection?.userId
+        };
+        
+        const initialData = NicoleAutoGiftBridge.transformContext(bridgeContext);
+        
+        setAutoGiftInitialData(initialData);
+        setAutoGiftFlowOpen(true);
+        
+        // Add confirmation message
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `Perfect! I'm opening the auto-gift setup for ${bridgeContext.recipientName}'s ${bridgeContext.occasion}. I've pre-filled what we discussed to save you time.`
+        }]);
+        break;
+        
+      case 'gift_recommendations':
+        // Trigger product recommendations
+        const ctx = getConversationContext();
+        if (ctx.recipient) {
+          chatWithNicole(`Show me gift recommendations for ${ctx.recipient}`);
+        }
+        break;
+        
+      case 'wishlist_creation':
+        // Navigate to wishlist creation
+        toast.info('Opening wishlist creation...');
+        // Could trigger navigation or modal here
+        break;
+        
+      default:
+        console.warn('Unknown CTA type:', cta.type);
+    }
+  };
+
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
 
@@ -659,6 +733,13 @@ export const NicoleUnifiedInterface: React.FC<NicoleUnifiedInterfaceProps> = ({
         onSendMessage={handleSendMessage}
         disabled={loading}
         placeholder="Type your message..."
+      />
+      
+      {/* Auto-Gift Setup Flow Modal */}
+      <AutoGiftSetupFlow
+        open={autoGiftFlowOpen}
+        onOpenChange={setAutoGiftFlowOpen}
+        initialData={autoGiftInitialData}
       />
     </div>
   );

@@ -123,6 +123,14 @@ export interface NicoleResponse {
   searchQuery?: string;
   showSearchButton: boolean;
   showProductTiles?: boolean;
+  ctaData?: {
+    type: 'auto_gift_setup' | 'gift_recommendations' | 'wishlist_creation';
+    label: string;
+    recipientName?: string;
+    occasion?: string;
+    budgetRange?: [number, number];
+    confidence?: number;
+  };
   metadata?: {
     confidence?: number;
     suggestedFollowups?: string[];
@@ -130,6 +138,14 @@ export interface NicoleResponse {
     agentModel?: boolean;
     threadId?: string;
     fallback?: boolean;
+    ctaData?: {
+      type: 'auto_gift_setup' | 'gift_recommendations' | 'wishlist_creation';
+      label: string;
+      recipientName?: string;
+      occasion?: string;
+      budgetRange?: [number, number];
+      confidence?: number;
+    };
   };
 }
 

@@ -9,12 +9,21 @@ import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Profile } from '@/types/profile';
 import WishlistRecommendations from '@/components/ai/enhanced/WishlistRecommendations';
 import ProductTilesDisplay from '@/components/ai/enhanced/ProductTilesDisplay';
+import { NicoleCTAButtons } from './NicoleCTAButtons';
 
 interface Message {
   role: string;
   content?: string;
   type?: 'text' | 'recommendations' | 'product_tiles';
   payload?: any;
+  ctaData?: {
+    type: 'auto_gift_setup' | 'gift_recommendations' | 'wishlist_creation';
+    label: string;
+    recipientName?: string;
+    occasion?: string;
+    budgetRange?: [number, number];
+    confidence?: number;
+  };
 }
 
 interface NicoleConversationDisplayProps {
@@ -25,6 +34,7 @@ interface NicoleConversationDisplayProps {
   context?: any;
   onSelectRecommendation?: (item: any) => void;
   onProductTileAction?: (action: 'wishlist' | 'gift' | 'details', product: any) => void;
+  onCTAClick?: (cta: any) => void;
 }
 
 export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps> = ({
@@ -35,6 +45,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
   context,
   onSelectRecommendation,
   onProductTileAction,
+  onCTAClick,
 }) => {
   const { profile } = useProfile();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -130,7 +141,15 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
                   />
                 </div>
               ) : (
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <div>
+                  <p className="text-sm leading-relaxed">{message.content}</p>
+                  {message.ctaData && onCTAClick && (
+                    <NicoleCTAButtons
+                      ctaData={message.ctaData}
+                      onCTAClick={onCTAClick}
+                    />
+                  )}
+                </div>
               )}
             </div>
 

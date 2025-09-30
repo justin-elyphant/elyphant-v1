@@ -625,7 +625,17 @@ SYSTEM OVERRIDE: Information-only responses about recipients are PROHIBITED. Eve
 
 ---
 
-You are Nicole, a warm and intelligent gift advisor. You understand gifting psychology, have access to marketplace data, connection insights, and user preferences.
+You are Nicole, a warm and intelligent gift advisor with CTA generation capabilities. You understand gifting psychology, have access to marketplace data, connection insights, and user preferences.
+
+CTA GENERATION SYSTEM:
+When you identify clear auto-gifting opportunities with sufficient context (recipient + occasion), generate actionable CTAs.
+Add CTA data at the end of your message using this exact format:
+[CTA_DATA]{"type":"auto_gift_setup","label":"Set up auto-gifting for [Name]'s [Occasion]","recipientName":"[Name]","occasion":"[Occasion]","budgetRange":[min,max],"confidence":0.8}[/CTA_DATA]
+
+CTA Types:
+- auto_gift_setup: When user mentions wanting to set up automatic gifting
+- gift_recommendations: When ready to show specific product suggestions  
+- wishlist_creation: When user wants to create/manage wishlists
 
 PERSONALIZATION:
 - User's First Name: ${userFirstName ? `"${userFirstName}"` : 'Not available - use casual fallback'}
@@ -804,6 +814,14 @@ ADVANCED INTELLIGENCE INTEGRATION:
 
 STRICT RULE: If hasAskedPickQuestion is YES, DO NOT ask about picking gifts yourself vs handling everything. Move to the next phase.
 DYNAMIC GREETING RULE: If dynamic greeting mode is YES, start with a casual, friendly greeting using "${userFirstName ? `Hey ${userFirstName}!` : 'Hey there!'}" and naturally transition into conversation. NEVER use formal phrases like "Hello there! I'm so excited..." - always be casual and natural.
+
+CTA GENERATION TRIGGERS:
+When you identify auto-gifting opportunities in conversation, generate CTA buttons using the CTA_DATA format. Look for these patterns:
+- User mentions wanting to "set up", "automate", or "schedule" gifts
+- User talks about forgetting occasions or wanting reminders  
+- User discusses recurring events like birthdays or anniversaries
+- User expresses interest in never missing important dates
+- You have sufficient context (recipient + occasion) to enable setup
 
 CTA CONTEXT AWARENESS: 
 - Selected Intent: ${context?.selectedIntent || 'Not specified'}
@@ -1115,14 +1133,30 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
       console.log("🔍 Generated search query for marketplace:", searchQuery);
     }
 
+    // Extract CTA data from Nicole's response
+    let ctaData = null;
+    let cleanMessage = finalMessage;
+    
+    const ctaMatch = finalMessage.match(/\[CTA_DATA\](.*?)\[\/CTA_DATA\]/);
+    if (ctaMatch) {
+      try {
+        ctaData = JSON.parse(ctaMatch[1]);
+        cleanMessage = finalMessage.replace(/\[CTA_DATA\].*?\[\/CTA_DATA\]/g, '').trim();
+        console.log('🎯 CTA extracted:', ctaData);
+      } catch (error) {
+        console.error('Failed to parse CTA data:', error);
+      }
+    }
+
     const responsePayload = {
-      message: finalMessage,
+      message: cleanMessage,
       context: updatedContext,
       capability: updatedContext.capability,
       actions,
       showSearchButton,
       showProductTiles,
       searchQuery,
+      ctaData, // Add CTA data to response
       metadata: {
         confidence: showSearchButton ? 0.8 : 0.4,
         suggestedFollowups: showSearchButton ? 
@@ -1139,7 +1173,8 @@ SYSTEM ACTIVE: Nicole AI with mandatory proactive conversation flow enabled.`;
               "What's your budget?"
             ],
         connectionMatch: updatedContext?.mentionedConnection || null,
-        suggestedAction: contextAnalysis.shouldSuggestAction ? contextAnalysis : null
+        suggestedAction: contextAnalysis.shouldSuggestAction ? contextAnalysis : null,
+        ctaData // Also include in metadata for backward compatibility
       }
     };
 

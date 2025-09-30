@@ -192,8 +192,8 @@ ${userName ? `**User Name:** ${userName}` : ''}
 
 **Greeting Guidelines:**
 ${isAuthenticated ? 
-  `- For returning users: "Hi ${userName}! How can I help you find the perfect gift today?"
-  - Reference their profile naturally if relevant` :
+  `- When asked for a greeting, respond with exactly: "Hi ${userName}! How can I help you find the perfect gift today?"
+  - Use this exact format for consistency` :
   `- For new visitors: "Hi there! I'm Nicole, your AI gifting assistant. How can I help you find the perfect gift today?"
   - Welcome them to Elyphant and explain how you can help`
 }
@@ -227,11 +227,8 @@ function buildDynamicGreeting({ isAuthenticated, userProfile, context }: any): s
   
   const userName = userProfile?.first_name || userProfile?.name || 'there';
   
-  if (context.greetingContext?.greeting === 'general-welcome') {
-    return `Hi ${userName}! I'm ready to help with any gifting questions or needs you have.`;
-  }
-  
-  return `Hello ${userName}! What can I help you with today?`;
+  // Always return the same consistent greeting format for authenticated users
+  return `Please respond with exactly: "Hi ${userName}! How can I help you find the perfect gift today?"`;
 }
 
 function analyzeAndUpdateContext(aiMessage: string, userMessage: string, currentContext: any): any {

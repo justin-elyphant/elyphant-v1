@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import UnifiedSearchSuggestions from "../UnifiedSearchSuggestions";
 import RecentSearches from "../RecentSearches";
 import { useNicoleDropdown } from "../nicole/NicoleDropdownContext";
 import { NicoleSearchDropdown } from "../nicole/NicoleSearchDropdown";
-import SimpleNicolePopup from "@/components/ai/SimpleNicolePopup";
+// Lazy load modal for better performance
+const SimpleNicolePopup = lazy(() => import("@/components/ai/SimpleNicolePopup"));
 import { FriendSearchResult } from "@/services/search/friendSearchService";
 import { Product } from "@/types/product";
 
@@ -411,18 +412,22 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
         </div>
       )}
 
-      {/* Full Modal */}
+      {/* Full Modal - Lazy Loaded */}
       {isModalOpen && (
-        <SimpleNicolePopup
-          isOpen={isModalOpen}
-          onClose={handleNicoleClose}
-          onNavigateToResults={handleNicoleNavigate}
-          canMinimize={true}
-          onMinimize={() => {
-            closeAll();
-            openDropdown();
-          }}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-background rounded-lg p-4">Loading Nicole...</div>
+        </div>}>
+          <SimpleNicolePopup
+            isOpen={isModalOpen}
+            onClose={handleNicoleClose}
+            onNavigateToResults={handleNicoleNavigate}
+            canMinimize={true}
+            onMinimize={() => {
+              closeAll();
+              openDropdown();
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -74,8 +74,18 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeDropdown();
     }
   };
+
+  // Focus management
+  useEffect(() => {
+    if (isDropdownOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isDropdownOpen]);
 
   if (!isDropdownOpen) return null;
 

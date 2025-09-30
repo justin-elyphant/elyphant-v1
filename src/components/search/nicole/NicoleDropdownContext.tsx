@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 
 interface NicoleDropdownContextValue {
@@ -44,6 +44,13 @@ export const NicoleDropdownProvider: React.FC<NicoleDropdownProviderProps> = ({ 
   
   // Get Nicole functionality from the hook
   const nicoleHook = useSimpleNicole();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      nicoleHook.clearConversation();
+    };
+  }, []);
 
   const openDropdown = useCallback(() => {
     setIsDropdownOpen(true);

@@ -105,6 +105,22 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     console.log('🔍 AutoGiftSetupFlow - Props received:', { recipientId, eventType, initialData, ruleId });
     console.log('🔍 AutoGiftSetupFlow - Current formData before update:', formData);
     
+    // Check if we have a saved draft and show notification
+    const existingDraft = localStorage.getItem('autoGiftDraft');
+    if (existingDraft && open && !initialData) {
+      try {
+        const parsedDraft = JSON.parse(existingDraft);
+        // Only show toast if there's meaningful data in the draft
+        if (parsedDraft.recipientId || parsedDraft.eventType || parsedDraft.giftMessage) {
+          toast.info("Draft restored", {
+            description: "Your previous auto-gift setup has been restored"
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing draft:', error);
+      }
+    }
+    
     if (recipientId) setFormData(prev => ({ ...prev, recipientId }));
     if (eventType) setFormData(prev => ({ ...prev, eventType }));
     
@@ -263,6 +279,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       
       // Clear the draft after successful completion
       localStorage.removeItem('autoGiftDraft');
+      console.log('✅ Auto-gift draft cleared after successful setup');
       
       onOpenChange(false);
       setCurrentStep(0);

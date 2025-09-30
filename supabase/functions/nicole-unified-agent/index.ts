@@ -59,10 +59,28 @@ serve(async (req) => {
       context
     });
 
-    // Handle dynamic greeting or regular conversation
-    const actualMessage = message === '__START_DYNAMIC_CHAT__' 
-      ? buildDynamicGreeting({ isAuthenticated, userProfile, context })
-      : message;
+    // Handle dynamic greeting directly without OpenAI call for consistency
+    if (message === '__START_DYNAMIC_CHAT__') {
+      const greetingMessage = buildDynamicGreeting({ isAuthenticated, userProfile, context });
+      
+      return new Response(JSON.stringify({
+        message: greetingMessage,
+        context,
+        capability: 'conversation',
+        ctaButtons: [],
+        actions: ['continue_conversation'],
+        showSearchButton: false,
+        metadata: {
+          isAuthenticated,
+          hasProfile: !!userProfile,
+          contextUpdates: 0,
+          agentModel: 'simplified',
+          isGreeting: true
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     console.log('🎯 Sending to OpenAI with auth status:', isAuthenticated);
 
@@ -76,7 +94,7 @@ serve(async (req) => {
         model: 'gpt-4.1-2025-04-14',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: actualMessage }
+          { role: 'user', content: message }
         ],
         temperature: 0.7,
         max_tokens: 500,
@@ -139,7 +157,7 @@ serve(async (req) => {
     }
 
     // Analyze conversation for context updates
-    const updatedContext = analyzeAndUpdateContext(aiMessage, actualMessage, context);
+    const updatedContext = analyzeAndUpdateContext(aiMessage, message, context);
 
     return new Response(JSON.stringify({
       message: aiMessage,
@@ -222,13 +240,13 @@ Stay natural, helpful, and focused on their gift-giving needs.`;
 
 function buildDynamicGreeting({ isAuthenticated, userProfile, context }: any): string {
   if (!isAuthenticated) {
-    return "I'd like to learn about Elyphant's gifting features";
+    return "Hi there! I'm Nicole, your AI gifting assistant. How can I help you find the perfect gift today?";
   }
   
   const userName = userProfile?.first_name || userProfile?.name || 'there';
   
-  // Always return the same consistent greeting format for authenticated users
-  return `Please respond with exactly: "Hi ${userName}! How can I help you find the perfect gift today?"`;
+  // Return the exact greeting directly - no OpenAI call needed
+  return `Hi ${userName}! How can I help you find the perfect gift today?`;
 }
 
 function analyzeAndUpdateContext(aiMessage: string, userMessage: string, currentContext: any): any {

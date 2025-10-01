@@ -316,8 +316,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto pb-safe-bottom">
-        <div className="max-h-[calc(90vh-120px)] md:max-h-none overflow-y-auto mobile-container ios-smooth-scroll">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto pb-safe-bottom pb-[env(safe-area-inset-bottom)]">
+        <div className="max-h-[calc(90vh-120px)] md:max-h-none overflow-y-auto mobile-container ios-smooth-scroll pb-36 md:pb-40 pb-[env(safe-area-inset-bottom)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />

@@ -60,6 +60,10 @@
 }
 
 /* Safe area handling for newer iPhones and bottom navigation */
+/* Fallbacks for browsers that don't support env() or max() */
+.pb-safe-bottom { padding-bottom: 96px; }
+.safe-area-bottom { padding-bottom: 24px; }
+
 @supports (padding: max(0px)) {
   .safe-area-bottom {
     padding-bottom: max(20px, env(safe-area-inset-bottom));

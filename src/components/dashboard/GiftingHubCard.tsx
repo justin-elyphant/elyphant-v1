@@ -39,6 +39,7 @@ import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { getUserOrders, Order } from "@/services/orderService";
 import { useNavigate } from "react-router-dom";
 import { formatRecipientNameForUrl, clearPersonalizedData } from "@/utils/personalizedMarketplaceUtils";
+import { useStableNavigation } from "@/hooks/useStableNavigation";
 
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,7 @@ const SmartGiftingTab = () => {
   const { user } = useAuth();
   const { rules } = useAutoGifting();
   const navigate = useNavigate();
+  const { stableNavigate } = useStableNavigation();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -118,12 +120,12 @@ const SmartGiftingTab = () => {
     if (path === 'ai-autopilot') {
       setAutoGiftSetupOpen(true);
     } else {
-      navigate('/marketplace');
+      stableNavigate('/marketplace');
     }
   };
 
   const handleScheduleGift = () => {
-    navigate('/marketplace');
+    stableNavigate('/marketplace');
   };
 
   const handleViewHistory = () => {
@@ -177,7 +179,7 @@ const SmartGiftingTab = () => {
 
 // Enhanced My Gifts Tab Component (Tracking & Management)
 const MyGiftsTab = () => {
-  const navigate = useNavigate();
+  const { stableNavigate } = useStableNavigation();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
 
@@ -188,7 +190,7 @@ const MyGiftsTab = () => {
   };
 
   const handleScheduleGift = () => {
-    navigate('/marketplace');
+    stableNavigate('/marketplace');
   };
 
   const handleSwitchToSmartGifting = () => {

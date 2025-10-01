@@ -317,7 +317,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto pb-safe-bottom">
-        <div className="max-h-[calc(90vh-120px)] md:max-h-none overflow-y-auto mobile-container">&
+        <div className="max-h-[calc(90vh-120px)] md:max-h-none overflow-y-auto mobile-container ios-smooth-scroll">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
@@ -345,7 +345,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsList>
 
           {/* Step 1: Recipient Selection */}
-          <TabsContent value="0" className="space-y-4">
+          <TabsContent value="0" className="space-y-4 pb-32">
             {initialData?.recipientName && (
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
@@ -519,7 +519,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsContent>
 
           {/* Step 2: Budget & Payment */}
-          <TabsContent value="1" className="space-y-4">
+          <TabsContent value="1" className="space-y-4 pb-32">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -584,7 +584,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsContent>
 
           {/* Step 3: Notifications & Approval */}
-          <TabsContent value="2" className="space-y-4">
+          <TabsContent value="2" className="space-y-4 pb-32">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

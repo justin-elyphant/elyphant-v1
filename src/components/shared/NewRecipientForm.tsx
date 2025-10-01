@@ -176,7 +176,7 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-6 overflow-y-auto ios-smooth-scroll">
+      <CardContent className="p-6 pb-32 overflow-y-auto ios-smooth-scroll">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

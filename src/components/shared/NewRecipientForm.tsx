@@ -160,8 +160,8 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="border-b">
+    <Card className="w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col">
+      <CardHeader className="border-b shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Button 
             variant="ghost" 
@@ -176,7 +176,7 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-6">
+      <CardContent className="p-6 overflow-y-auto ios-smooth-scroll">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

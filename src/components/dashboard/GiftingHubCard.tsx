@@ -118,12 +118,12 @@ const SmartGiftingTab = () => {
     if (path === 'ai-autopilot') {
       setAutoGiftSetupOpen(true);
     } else {
-      window.location.href = '/marketplace';
+      navigate('/marketplace');
     }
   };
 
   const handleScheduleGift = () => {
-    window.location.href = '/marketplace';
+    navigate('/marketplace');
   };
 
   const handleViewHistory = () => {
@@ -177,6 +177,7 @@ const SmartGiftingTab = () => {
 
 // Enhanced My Gifts Tab Component (Tracking & Management)
 const MyGiftsTab = () => {
+  const navigate = useNavigate();
   const [autoGiftSetupOpen, setAutoGiftSetupOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
 
@@ -187,7 +188,7 @@ const MyGiftsTab = () => {
   };
 
   const handleScheduleGift = () => {
-    window.location.href = '/marketplace';
+    navigate('/marketplace');
   };
 
   const handleSwitchToSmartGifting = () => {

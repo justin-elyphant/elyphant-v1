@@ -131,125 +131,158 @@ serve(async (req) => {
         }
 
         const rule = execution.auto_gifting_rules;
-        
-        // Core gift automation logic integrated directly here
-        console.log(`🎁 Processing gift for recipient ${rule.recipient_id}, budget: ${rule.budget_limit}, occasion: ${rule.date_type}`);
-        
+
+        // ✨ Handle both registered recipients AND pending invitations
+        const isPendingInvitation = !rule.recipient_id && rule.pending_recipient_email;
+
+        console.log(`🎁 Processing gift - Type: ${isPendingInvitation ? 'PENDING INVITATION' : 'REGISTERED'}, Budget: ${rule.budget_limit}, Occasion: ${rule.date_type}`);
+
         try {
-          // Get recipient profile and wishlist
-          const { data: recipientProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', rule.recipient_id)
-            .single();
-
-          if (profileError || !recipientProfile) {
-            throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
-          }
-
-          // Get recipient's wishlists (should work with updated RLS policy)
-          const { data: wishlists, error: wishlistError } = await supabase
-            .from('wishlists')
-            .select(`
-              *,
-              wishlist_items (
-                *
-              )
-            `)
-            .eq('user_id', rule.recipient_id);
-
-          if (wishlistError) {
-            console.error(`❌ Error fetching wishlists:`, wishlistError);
-            throw new Error(`Failed to fetch recipient wishlists: ${wishlistError.message}`);
-          }
-
-          console.log(`📋 Found ${wishlists?.length || 0} wishlists for recipient`);
-          
-          // Collect all wishlist items within budget
-          const allWishlistItems = [];
-          for (const wishlist of wishlists || []) {
-            for (const item of wishlist.wishlist_items || []) {
-              if (item.price && item.price <= (rule.budget_limit || 50)) {
-                allWishlistItems.push({
-                  ...item,
-                  wishlist_title: wishlist.title
-                });
-              }
-            }
-          }
-
-          console.log(`🛍️ Found ${allWishlistItems.length} wishlist items within budget`);
-
+          let recipientProfile = null;
           let selectedProducts = [];
-          
-          if (allWishlistItems.length > 0) {
-            // Sort by price to find best budget combination
-            allWishlistItems.sort((a, b) => (b.price || 0) - (a.price || 0));
+
+          // Path A: Registered recipient (existing logic)
+          if (rule.recipient_id) {
+            console.log(`✅ Registered recipient: ${rule.recipient_id}`);
             
-            // Simple budget optimization: try to get close to budget limit
-            let totalCost = 0;
-            const budgetLimit = rule.budget_limit || 50;
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', rule.recipient_id)
+              .single();
+
+            if (profileError || !profile) {
+              throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
+            }
             
-            for (const item of allWishlistItems) {
-              if (totalCost + (item.price || 0) <= budgetLimit) {
-                selectedProducts.push({
-                  id: item.id,
-                  product_id: item.product_id || item.id,
-                  title: item.product_name,
-                  product_name: item.product_name,
-                  name: item.product_name, // Additional alias
-                  price: item.price,
-                  image: item.image_url,
-                  image_url: item.image_url,
-                  source: 'wishlist',
-                  vendor: 'Wishlist',
-                  category: item.category,
-                  brand: item.brand,
-                  wishlist_title: item.wishlist_title,
-                  description: item.description || `From ${item.wishlist_title || 'wishlist'}`,
-                  product_details: item.product_details,
-                  features: item.features
-                });
-                totalCost += item.price || 0;
-                
-                // Stop if we're at or very close to budget
-                if (totalCost >= budgetLimit * 0.85) break;
+            recipientProfile = profile;
+
+            // Get recipient's wishlists (should work with updated RLS policy)
+            const { data: wishlists, error: wishlistError } = await supabase
+              .from('wishlists')
+              .select(`
+                *,
+                wishlist_items (
+                  *
+                )
+              `)
+              .eq('user_id', rule.recipient_id);
+
+            if (wishlistError) {
+              console.error(`❌ Error fetching wishlists:`, wishlistError);
+              throw new Error(`Failed to fetch recipient wishlists: ${wishlistError.message}`);
+            }
+
+            console.log(`📋 Found ${wishlists?.length || 0} wishlists for recipient`);
+            
+            // Collect all wishlist items within budget
+            const allWishlistItems = [];
+            for (const wishlist of wishlists || []) {
+              for (const item of wishlist.wishlist_items || []) {
+                if (item.price && item.price <= (rule.budget_limit || 50)) {
+                  allWishlistItems.push({
+                    ...item,
+                    wishlist_title: wishlist.title
+                  });
+                }
               }
             }
+
+            console.log(`🛍️ Found ${allWishlistItems.length} wishlist items within budget`);
             
-            console.log(`💰 Selected ${selectedProducts.length} products totaling $${totalCost.toFixed(2)} (${Math.round(totalCost/budgetLimit*100)}% of $${budgetLimit} budget)`);
-          } else {
-            console.log(`📝 No wishlist items found, checking for invitation context and emergency AI logic...`);
-            
-            // Check if recipient is a new/invited user with limited profile
-            const invitationContext = await getInvitationContext(userId, rule.recipient_id, supabase);
-            
-            if (invitationContext.isNewUser || invitationContext.isInvitedUser) {
-              console.log(`🆕 Detected new/invited user, using enhanced emergency AI logic`);
-              selectedProducts = await getEnhancedEmergencyProducts(
-                rule.budget_limit || 50,
-                rule.date_type,
-                invitationContext,
-                recipientProfile,
-                supabase
-              );
+            if (allWishlistItems.length > 0) {
+              // Sort by price to find best budget combination
+              allWishlistItems.sort((a, b) => (b.price || 0) - (a.price || 0));
+              
+              // Simple budget optimization: try to get close to budget limit
+              let totalCost = 0;
+              const budgetLimit = rule.budget_limit || 50;
+              
+              for (const item of allWishlistItems) {
+                if (totalCost + (item.price || 0) <= budgetLimit) {
+                  selectedProducts.push({
+                    id: item.id,
+                    product_id: item.product_id || item.id,
+                    title: item.product_name,
+                    product_name: item.product_name,
+                    name: item.product_name,
+                    price: item.price,
+                    image: item.image_url,
+                    image_url: item.image_url,
+                    source: 'wishlist',
+                    vendor: 'Wishlist',
+                    category: item.category,
+                    brand: item.brand,
+                    wishlist_title: item.wishlist_title,
+                    description: item.description || `From ${item.wishlist_title || 'wishlist'}`,
+                    product_details: item.product_details,
+                    features: item.features
+                  });
+                  totalCost += item.price || 0;
+                  
+                  if (totalCost >= budgetLimit * 0.85) break;
+                }
+              }
+              
+              console.log(`💰 Selected ${selectedProducts.length} products totaling $${totalCost.toFixed(2)}`);
             } else {
-              // Standard AI recommendation for existing users
-              selectedProducts = [{
-                id: `ai-${Date.now()}`,
-                product_id: `ai-${Date.now()}`,
-                title: `AI Recommended Gift for ${rule.date_type}`,
-                product_name: `AI Recommended Gift for ${rule.date_type}`,
-                name: `AI Recommended Gift for ${rule.date_type}`,
-                price: Math.min(rule.budget_limit || 50, 25),
-                image: null,
-                image_url: null,
-                source: 'ai_recommendation',
-                vendor: 'AI Recommendation',
-                category: rule.date_type,
-                description: `AI-generated gift suggestion for ${rule.date_type} occasion`
-              }];
+              console.log(`📝 No wishlist items, checking invitation context...`);
+              
+              const invitationContext = await getInvitationContext(userId, rule.recipient_id, supabase);
+              
+              if (invitationContext.isNewUser || invitationContext.isInvitedUser) {
+                console.log(`🆕 Using enhanced emergency AI logic`);
+                selectedProducts = await getEnhancedEmergencyProducts(
+                  rule.budget_limit || 50,
+                  rule.date_type,
+                  invitationContext,
+                  recipientProfile,
+                  supabase
+                );
+              } else {
+                selectedProducts = [{
+                  id: `ai-${Date.now()}`,
+                  product_id: `ai-${Date.now()}`,
+                  title: `AI Recommended Gift for ${rule.date_type}`,
+                  product_name: `AI Recommended Gift for ${rule.date_type}`,
+                  name: `AI Recommended Gift for ${rule.date_type}`,
+                  price: Math.min(rule.budget_limit || 50, 25),
+                  image: null,
+                  image_url: null,
+                  source: 'ai_recommendation',
+                  vendor: 'AI Recommendation',
+                  category: rule.date_type,
+                  description: `AI-generated gift suggestion for ${rule.date_type} occasion`
+                }];
+              }
             }
+          }
+          
+          // Path B: Pending invitation - use emergency AI logic
+          else if (isPendingInvitation) {
+            console.log(`🆕 Pending invitation: ${rule.pending_recipient_email}`);
+            
+            // Get invitation context by email
+            const invitationContext = await getInvitationContextByEmail(
+              userId, 
+              rule.pending_recipient_email, 
+              supabase
+            );
+            
+            // Use emergency product selection for pending recipients
+            selectedProducts = await getEmergencyGiftsForPendingRecipient(
+              rule.budget_limit || 50,
+              rule.date_type,
+              invitationContext,
+              rule.pending_recipient_email,
+              supabase
+            );
+            
+            console.log(`🎁 Emergency AI selected ${selectedProducts.length} gifts for pending recipient`);
+          }
+          
+          else {
+            throw new Error('Invalid rule: Missing both recipient_id and pending_recipient_email');
           }
 
           // Check auto-approve setting
@@ -363,6 +396,107 @@ serve(async (req) => {
     );
   }
 });
+
+// Get invitation context by email (for pending invitations)
+async function getInvitationContextByEmail(
+  userId: string, 
+  recipientEmail: string, 
+  supabase: any
+) {
+  console.log(`🔍 Getting invitation context for email: ${recipientEmail}`);
+  
+  try {
+    // Check gift_invitation_analytics
+    const { data: invitationAnalytics } = await supabase
+      .from('gift_invitation_analytics')
+      .select('*')
+      .eq('user_id', userId)
+      .ilike('recipient_email', recipientEmail)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    // Get connection details
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('relationship_type, created_at')
+      .eq('user_id', userId)
+      .ilike('pending_recipient_email', recipientEmail)
+      .maybeSingle();
+    
+    // Get giftor's profile for proxy intelligence
+    const { data: giftorProfile } = await supabase
+      .from('profiles')
+      .select('enhanced_gift_preferences, enhanced_gifting_history')
+      .eq('id', userId)
+      .single();
+    
+    return {
+      isNewUser: true,
+      isInvitedUser: true,
+      isPendingInvitation: true,
+      hasLimitedProfile: true,
+      relationshipType: connection?.relationship_type || 'friend',
+      recipientEmail: recipientEmail,
+      invitationData: invitationAnalytics,
+      giftorPreferences: giftorProfile?.enhanced_gift_preferences,
+      giftorHistory: giftorProfile?.enhanced_gifting_history,
+    };
+  } catch (error) {
+    console.error('❌ Error getting invitation context by email:', error);
+    return {
+      isNewUser: true,
+      isInvitedUser: true,
+      isPendingInvitation: true,
+      hasLimitedProfile: true,
+      relationshipType: 'friend',
+      recipientEmail: recipientEmail,
+    };
+  }
+}
+
+// Emergency gift selection for pending recipients
+async function getEmergencyGiftsForPendingRecipient(
+  budget: number,
+  occasion: string,
+  invitationContext: any,
+  recipientEmail: string,
+  supabase: any
+): Promise<any[]> {
+  console.log(`🚨 Emergency gift selection for pending recipient: ${recipientEmail}`);
+  
+  // Use conservative, universally-appreciated gift categories
+  const safeCategories = [
+    'Gift Cards',
+    'Books & Reading',
+    'Gourmet Food & Snacks',
+    'Home & Kitchen Essentials',
+    'Self-Care & Wellness'
+  ];
+  
+  // Return conservative emergency products
+  return [
+    {
+      id: `emergency-${Date.now()}-1`,
+      product_id: `emergency-${Date.now()}-1`,
+      title: `${occasion} Gift Card`,
+      product_name: `${occasion} Gift Card`,
+      name: `${occasion} Gift Card`,
+      price: Math.min(budget * 0.7, 50),
+      image_url: null,
+      source: 'emergency_ai_pending',
+      vendor: 'Emergency AI Selection',
+      category: 'Gift Cards',
+      description: `Safe gift card option for pending recipient - ${occasion}`,
+      emergency_context: {
+        isPendingInvitation: true,
+        recipientEmail: recipientEmail,
+        relationshipType: invitationContext.relationshipType,
+        occasion: occasion
+      }
+    }
+  ];
+}
 
 // Enhanced invitation context detection for new/invited users
 async function getInvitationContext(userId: string, recipientId: string, supabase: any) {

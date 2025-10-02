@@ -3,9 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Bot, Calendar, Clock, Gift, Package, Settings, 
-  CheckCircle, AlertCircle, Pause, Play, Edit, Trash2, Plus, Target 
+  CheckCircle, AlertCircle, Pause, Play, Edit, Trash2, Plus, Target,
+  Mail, Info
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
@@ -198,9 +205,23 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                                 {occasionName}
                               </h4>
                               {isPending && (
-                                <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 shrink-0">
-                                  Invitation Pending
-                                </Badge>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-300 bg-yellow-50 shrink-0 flex items-center gap-1">
+                                        <Mail className="h-3 w-3" />
+                                        Invitation Pending
+                                        <Info className="h-3 w-3 ml-1" />
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>
+                                        Gift will be sent on the occasion date even if {recipientName} hasn't joined yet. 
+                                        We'll use smart AI selection to choose the perfect gift.
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground">

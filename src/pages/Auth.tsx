@@ -6,6 +6,8 @@ import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
 import QuickInterestsModal from "@/components/auth/QuickInterestsModal";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -24,6 +26,30 @@ const Auth = () => {
   // Handle post-signup interests modal and redirect
   useEffect(() => {
     if (user && !isLoading) {
+      // NEW: Check for and link pending auto-gift rules
+      const linkPendingRules = async () => {
+        try {
+          const { data, error } = await supabase
+            .rpc('link_pending_rules_manual', {
+              p_user_id: user.id,
+              p_email: user.email
+            });
+          
+          if (!error && data && typeof data === 'object' && 'linked_count' in data) {
+            const linkedCount = (data as { linked_count: number }).linked_count;
+            if (linkedCount > 0) {
+              toast.success(`🎁 ${linkedCount} auto-gift rule(s) activated for you!`, {
+                description: "Your friend has set up automatic gifting"
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to link pending rules:', error);
+        }
+      };
+      
+      linkPendingRules();
+
       // Check if we should show the quick interests modal
       const shouldShowQuickInterests = localStorage.getItem("showQuickInterests") === "true";
       

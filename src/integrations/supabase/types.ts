@@ -5148,6 +5148,10 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
+      link_pending_rules_manual: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: Json
+      }
       log_auto_gift_event: {
         Args: {
           error_message_param?: string

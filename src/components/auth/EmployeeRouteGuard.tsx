@@ -15,18 +15,18 @@ export const EmployeeRouteGuard: React.FC<EmployeeRouteGuardProps> = ({ children
 
   useEffect(() => {
     const checkAndRedirectIfNeeded = async () => {
-      // Skip checks if still loading auth or already checking
-      if (isLoading || isChecking || !user) {
+      // Skip checks if still loading auth or no user
+      if (isLoading || !user) {
         return;
       }
 
-      setIsChecking(true);
-
-      try {
-        const currentPath = location.pathname;
+      const currentPath = location.pathname;
+      
+      // Only check if user is trying to access Trunkline (employee-only area)
+      if (EmployeeDetectionService.isEmployeeOnlyPath(currentPath)) {
+        setIsChecking(true);
         
-        // Only check if user is trying to access Trunkline (employee-only area)
-        if (EmployeeDetectionService.isEmployeeOnlyPath(currentPath)) {
+        try {
           // Detect if user is an employee
           const detection = await EmployeeDetectionService.detectEmployee(user);
 
@@ -46,27 +46,25 @@ export const EmployeeRouteGuard: React.FC<EmployeeRouteGuardProps> = ({ children
             navigate('/dashboard', { replace: true });
             return;
           }
+        } catch (error) {
+          console.error('Employee Route Guard: Error during detection', error);
+          // On error, allow navigation to continue for safety
+          console.log('Error occurred, allowing navigation to continue');
+        } finally {
+          setIsChecking(false);
         }
-        
-        // Employees can access both Trunkline AND consumer features (additive permissions)
-        // No blocking of consumer paths for employees
-
-      } catch (error) {
-        console.error('Employee Route Guard: Error during detection', error);
-        // On error, allow navigation to continue (fail open for consumer paths)
-        if (!EmployeeDetectionService.isEmployeeOnlyPath(location.pathname)) {
-          console.log('Error occurred but allowing access to consumer path');
-        }
-      } finally {
-        setIsChecking(false);
       }
+      
+      // For consumer paths: no checks needed, render normally
+      // Employees can access both Trunkline AND consumer features (additive permissions)
     };
 
     checkAndRedirectIfNeeded();
-  }, [user, isLoading, location.pathname, navigate]); // Removed isChecking to prevent infinite loop
+  }, [user, isLoading, location.pathname, navigate]);
 
-  // Show loading state while checking employee status
-  if (isChecking) {
+  // Only show loading state when actively checking Trunkline access
+  // This prevents breaking the component tree for regular marketplace navigation
+  if (isChecking && EmployeeDetectionService.isEmployeeOnlyPath(location.pathname)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

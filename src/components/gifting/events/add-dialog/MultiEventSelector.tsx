@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Gift, Sparkles, GraduationCap, TrendingUp, Heart } from "lucide-react";
-import HolidaySelector from "./HolidaySelector";
+import MultiHolidaySelector from "./MultiHolidaySelector";
 import { DatePicker } from "@/components/ui/date-picker";
 
 export interface SelectedEvent {
@@ -35,10 +35,18 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
     return value.some(e => e.eventType === eventType);
   };
 
+  const getSelectedHolidays = () => {
+    return value
+      .filter(e => e.eventType === "holiday")
+      .map(e => e.specificHoliday)
+      .filter(Boolean) as string[];
+  };
+
   const handleEventToggle = (eventType: string) => {
     if (eventType === "holiday") {
-      setShowHolidaySelector(!isEventSelected(eventType));
-      if (isEventSelected(eventType)) {
+      setShowHolidaySelector(!showHolidaySelector);
+      if (showHolidaySelector) {
+        // Remove all holiday events when closing
         onChange(value.filter(e => e.eventType !== "holiday"));
       }
       return;
@@ -59,10 +67,15 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
     }
   };
 
-  const handleHolidaySelected = (holiday: string) => {
+  const handleHolidaysSelected = (holidays: string[]) => {
+    // Remove all existing holiday events
     const filtered = value.filter(e => e.eventType !== "holiday");
-    onChange([...filtered, { eventType: "holiday", specificHoliday: holiday }]);
-    setShowHolidaySelector(false);
+    // Add new holiday events for each selected holiday
+    const holidayEvents = holidays.map(holiday => ({
+      eventType: "holiday",
+      specificHoliday: holiday
+    }));
+    onChange([...filtered, ...holidayEvents]);
   };
 
   const handleDateSelected = (date: Date | undefined) => {
@@ -150,12 +163,12 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
                 </div>
               </div>
 
-              {/* Holiday Selector */}
+              {/* Multi-Holiday Selector */}
               {option.value === "holiday" && showHolidaySelector && (
                 <div className="mt-2 p-3 border rounded-lg bg-background">
-                  <HolidaySelector
-                    value={value.find(e => e.eventType === "holiday")?.specificHoliday || ""}
-                    onChange={handleHolidaySelected}
+                  <MultiHolidaySelector
+                    selectedHolidays={getSelectedHolidays()}
+                    onChange={handleHolidaysSelected}
                   />
                 </div>
               )}

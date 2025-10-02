@@ -672,12 +672,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
               
               {currentStep < steps.length - 1 ? (
                 <Button 
-                  onClick={handleNext}
+                  onClick={handleNext} 
                   className="min-h-[44px] marketplace-touch-target"
                   disabled={
-                    (currentStep === 0 && (!formData.recipientId || !formData.eventType || 
-                      (formData.eventType === "holiday" && !formData.specificHoliday) ||
-                      (formData.eventType === "other" && !formData.selectedDate))) ||
+                    (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
                     (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
                   }
                 >

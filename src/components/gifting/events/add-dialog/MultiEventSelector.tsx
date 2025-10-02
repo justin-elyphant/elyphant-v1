@@ -18,7 +18,7 @@ interface MultiEventSelectorProps {
   onChange: (events: SelectedEvent[]) => void;
 }
 
-const MultiEventSelector = ({ value, onChange }: MultiEventSelectorProps) => {
+const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) => {
   const [showHolidaySelector, setShowHolidaySelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 

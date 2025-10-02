@@ -194,11 +194,8 @@ const MyGiftsTab = () => {
   };
 
   const handleSwitchToSmartGifting = () => {
-    const tabsList = document.querySelector('[data-testid="tabs-list"]');
-    const smartGiftingTab = tabsList?.querySelector('[value="smart-gifting"]');
-    if (smartGiftingTab) {
-      (smartGiftingTab as HTMLElement).click();
-    }
+    setEditingRule(null); // Ensure it's a fresh setup, not editing
+    setAutoGiftSetupOpen(true);
   };
 
   return (

@@ -686,10 +686,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                 <Button 
                   onClick={handleSubmit} 
                   className="min-h-[44px] marketplace-touch-target"
-                  disabled={isLoading || !formData.recipientId || !formData.eventType ||
-                    (formData.eventType === "holiday" && !formData.specificHoliday) ||
-                    (formData.eventType === "other" && !formData.selectedDate) ||
-                    !formData.selectedPaymentMethodId}
+                  disabled={
+                    isLoading || 
+                    !formData.recipientId || 
+                    formData.selectedEvents.length === 0 ||
+                    !formData.selectedPaymentMethodId ||
+                    formData.budgetLimit < 5
+                  }
                 >
                   {isLoading ? "Creating..." : "Create Auto-Gift Rule"}
                   <CheckCircle className="ml-2 h-4 w-4" />

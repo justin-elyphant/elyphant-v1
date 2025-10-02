@@ -80,35 +80,15 @@ export class EmployeeDetectionService {
 
   /**
    * Gets the appropriate redirect path for a user after login
+   * Employees get access to Trunkline + consumer features (additive permissions)
    */
   static getPostLoginRoute(isEmployee: boolean, intendedPath?: string): string {
-    if (intendedPath && !this.isConsumerOnlyPath(intendedPath)) {
+    // If user has an intended path and it's not employee-only, respect it
+    if (intendedPath && !this.isEmployeeOnlyPath(intendedPath)) {
       return intendedPath;
     }
     
     return this.getDefaultRoute(isEmployee);
-  }
-
-  /**
-   * Checks if a path is consumer-only and should redirect employees
-   */
-  static isConsumerOnlyPath(path: string): boolean {
-    const consumerPaths = [
-      '/dashboard',
-      '/profile',
-      '/cart',
-      '/checkout',
-      '/orders',
-      '/marketplace',
-      '/connections',
-      '/wishlists',
-      '/messages',
-      '/settings'
-    ];
-
-    return consumerPaths.some(consumerPath => 
-      path === consumerPath || path.startsWith(`${consumerPath}/`)
-    );
   }
 
   /**

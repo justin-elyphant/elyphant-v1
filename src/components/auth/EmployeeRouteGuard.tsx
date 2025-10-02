@@ -23,36 +23,40 @@ export const EmployeeRouteGuard: React.FC<EmployeeRouteGuardProps> = ({ children
       setIsChecking(true);
 
       try {
-        // Detect if user is an employee
-        const detection = await EmployeeDetectionService.detectEmployee(user);
         const currentPath = location.pathname;
+        
+        // Only check if user is trying to access Trunkline (employee-only area)
+        if (EmployeeDetectionService.isEmployeeOnlyPath(currentPath)) {
+          // Detect if user is an employee
+          const detection = await EmployeeDetectionService.detectEmployee(user);
 
-        // Log detection result in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Employee Route Guard:', {
-            isEmployee: detection.isEmployee,
-            reason: detection.reason,
-            currentPath,
-            userEmail: user.email
-          });
-        }
+          // Log detection result in development
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Employee Route Guard - Trunkline Access Check:', {
+              isEmployee: detection.isEmployee,
+              reason: detection.reason,
+              currentPath,
+              userEmail: user.email
+            });
+          }
 
-        // Handle employee accessing consumer paths
-        if (detection.isEmployee && EmployeeDetectionService.isConsumerOnlyPath(currentPath)) {
-          console.log('Redirecting employee from consumer path to Trunkline');
-          navigate('/trunkline', { replace: true });
-          return;
+          // Only redirect non-employees away from Trunkline
+          if (!detection.isEmployee) {
+            console.log('Redirecting non-employee from Trunkline to dashboard');
+            navigate('/dashboard', { replace: true });
+            return;
+          }
         }
-
-        // Handle non-employee accessing employee paths (except login)
-        if (!detection.isEmployee && EmployeeDetectionService.isEmployeeOnlyPath(currentPath)) {
-          console.log('Redirecting non-employee from employee path to dashboard');
-          navigate('/dashboard', { replace: true });
-          return;
-        }
+        
+        // Employees can access both Trunkline AND consumer features (additive permissions)
+        // No blocking of consumer paths for employees
 
       } catch (error) {
         console.error('Employee Route Guard: Error during detection', error);
+        // On error, allow navigation to continue (fail open for consumer paths)
+        if (!EmployeeDetectionService.isEmployeeOnlyPath(location.pathname)) {
+          console.log('Error occurred but allowing access to consumer path');
+        }
       } finally {
         setIsChecking(false);
       }

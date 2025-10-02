@@ -16,7 +16,9 @@ import { BudgetEditor } from "./BudgetEditor";
 import { 
   getOccasionDisplayName, 
   getRecurrenceDescription, 
-  getSourceDisplayName 
+  getSourceDisplayName,
+  getRecipientDisplayName,
+  isPendingInvitation
 } from "@/utils/autoGiftDisplayHelpers";
 import { toast } from "sonner";
 
@@ -179,6 +181,8 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                   const occasionName = getOccasionDisplayName(rule.date_type);
                   const recurrenceText = getRecurrenceDescription(rule);
                   const sourceText = getSourceDisplayName(rule.gift_selection_criteria?.source);
+                  const recipientName = getRecipientDisplayName(rule);
+                  const isPending = isPendingInvitation(rule);
                   
                   return (
                     <div key={rule.id} className="mobile-card p-4 border rounded-lg hover:border-purple-300 transition-colors">
@@ -189,11 +193,18 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                             <Gift className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-base truncate">
-                              {occasionName}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-base truncate">
+                                {occasionName}
+                              </h4>
+                              {isPending && (
+                                <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 shrink-0">
+                                  Invitation Pending
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground">
-                              {recurrenceText}
+                              {isPending ? `For ${recipientName} • ${recurrenceText}` : recurrenceText}
                             </p>
                           </div>
                         </div>

@@ -25,7 +25,8 @@ import { toast } from "sonner";
 export interface UnifiedGiftRule {
   id: string;
   user_id: string;
-  recipient_id: string;
+  recipient_id: string | null; // Nullable for pending invitations
+  pending_recipient_email?: string; // For pending invitations
   date_type: string;
   event_id?: string;
   is_active: boolean;
@@ -801,25 +802,35 @@ class UnifiedGiftManagementService {
   async createRule(rule: Omit<UnifiedGiftRule, 'id' | 'created_at' | 'updated_at'>): Promise<UnifiedGiftRule> {
     console.log('📝 [UNIFIED] Creating auto-gifting rule with security validation:', rule);
     
-    // Phase 1: Existing validations
+    // Phase 1: Validate that we have either recipient_id OR pending_recipient_email
+    if (!rule.recipient_id && !rule.pending_recipient_email) {
+      throw new Error('Either recipient_id or pending_recipient_email must be provided');
+    }
+    
+    const isPendingInvitation = !rule.recipient_id && !!rule.pending_recipient_email;
+    
+    // Phase 2: Existing validations
     await this.validateUserConsent(rule.user_id);
     await this.validateBudgetLimits(rule.user_id, rule.budget_limit || 0);
 
-    // Phase 2: Generate secure setup token
+    // Phase 3: Generate secure setup token
     const setupToken = await this.generateSetupToken(rule.user_id);
     
-    // Phase 3: Log setup initiation
+    // Phase 4: Log setup initiation with pending invitation flag
     await this.logAutoGiftEvent(
       rule.user_id, 
       'auto_gift_setup_initiated', 
       { 
         recipientId: rule.recipient_id,
+        pendingRecipientEmail: rule.pending_recipient_email,
+        isPendingInvitation,
         dateType: rule.date_type,
         budgetLimit: rule.budget_limit
       },
       {
         timestamp: new Date().toISOString(),
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'system'
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'system',
+        isPendingInvitation
       },
       setupToken
     );
@@ -859,22 +870,25 @@ class UnifiedGiftManagementService {
     await this.logGiftAutomationActivity(rule.user_id, 'rule_created', { rule_id: data.id });
     await this.logAutoGiftEvent(
       rule.user_id, 
-      'auto_gift_rule_created', 
+      isPendingInvitation ? 'auto_gift_rule_created_pending' : 'auto_gift_rule_created', 
       { 
         ruleId: data.id,
         recipientId: rule.recipient_id,
+        pendingRecipientEmail: rule.pending_recipient_email,
+        isPendingInvitation,
         dateType: rule.date_type,
         budgetLimit: rule.budget_limit
       },
       {
         setupToken,
-        createdAt: data.created_at
+        createdAt: data.created_at,
+        isPendingInvitation
       },
       setupToken,
       data.id
     );
     
-    console.log('✅ [UNIFIED] Auto-gifting rule created successfully with security tracking:', data.id);
+    console.log(`✅ [UNIFIED] Auto-gifting rule created successfully ${isPendingInvitation ? '(pending invitation)' : ''} with security tracking:`, data.id);
     return data as unknown as UnifiedGiftRule;
   }
 

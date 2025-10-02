@@ -78,3 +78,32 @@ export const formatBudgetDisplay = (budget?: number): string => {
   if (!budget) return 'Up to $50';
   return `Up to $${budget}`;
 };
+
+/**
+ * Get recipient display name (handles both profiles and pending invitations)
+ */
+export const getRecipientDisplayName = (rule: UnifiedGiftRule): string => {
+  // If we have a profile, use the name
+  if (rule.recipient?.name) {
+    return rule.recipient.name;
+  }
+  
+  // For pending invitations, format the email
+  if (rule.pending_recipient_email) {
+    const emailName = rule.pending_recipient_email.split('@')[0];
+    return emailName
+      .replace(/[._]/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  
+  return 'Unknown Recipient';
+};
+
+/**
+ * Check if this is a pending invitation
+ */
+export const isPendingInvitation = (rule: UnifiedGiftRule): boolean => {
+  return rule.recipient_id === null && !!rule.pending_recipient_email;
+};

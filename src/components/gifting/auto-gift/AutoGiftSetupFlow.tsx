@@ -224,12 +224,23 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
       // Determine if this is a pending invitation or accepted connection
       const isPendingInvitation = selectedConnection?.status === 'pending_invitation';
-      const actualRecipientId = isPendingInvitation ? selectedConnection?.id || formData.recipientId : formData.recipientId;
+      
+      console.log('🔍 Auto-gift setup - Connection type:', {
+        isPendingInvitation,
+        connectionStatus: selectedConnection?.status,
+        connectionId: selectedConnection?.id,
+        pendingEmail: selectedConnection?.pending_recipient_email
+      });
       
       // Create rule data for each selected event
       const rulesToCreate = formData.selectedEvents.map(event => ({
         user_id: "", // Will be set by service
-        recipient_id: actualRecipientId,
+        // For pending invitations: set recipient_id to null and use pending_recipient_email
+        // For accepted connections: use the connected_user_id as recipient_id
+        recipient_id: isPendingInvitation ? null : formData.recipientId,
+        pending_recipient_email: isPendingInvitation 
+          ? selectedConnection?.pending_recipient_email 
+          : null,
         date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
         scheduled_date: event.eventType === "other" && event.customDate 
           ? event.customDate.toISOString().split('T')[0] 
@@ -266,8 +277,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         toast.info(`Creating ${rulesToCreate.length} auto-gifting rules...`, { duration: 2000 });
         
         // Use batch creation service
+        // Pass the recipient_id from the first rule (will be null for pending invitations)
+        const recipientIdentifier = rulesToCreate[0].recipient_id || rulesToCreate[0].pending_recipient_email || '';
         await unifiedGiftManagementService.createBatchRulesForRecipient(
-          actualRecipientId,
+          recipientIdentifier,
           rulesToCreate
         );
       }

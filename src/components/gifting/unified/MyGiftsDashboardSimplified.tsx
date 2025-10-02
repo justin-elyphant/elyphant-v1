@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { 
   Bot, Calendar, Clock, Gift, Package, Settings, 
   CheckCircle, AlertCircle, Pause, Play, Edit, Trash2, Plus, Target 
@@ -11,6 +12,13 @@ import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import ScheduledGiftsSection from "@/components/gifting/sections/ScheduledGiftsSection";
 import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
+import { BudgetEditor } from "./BudgetEditor";
+import { 
+  getOccasionDisplayName, 
+  getRecurrenceDescription, 
+  getSourceDisplayName 
+} from "@/utils/autoGiftDisplayHelpers";
+import { toast } from "sonner";
 
 interface MyGiftsDashboardSimplifiedProps {
   onEditRule?: (ruleId: string) => void;
@@ -24,7 +32,41 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
   onSwitchToSmartGifting
 }) => {
   const { user } = useAuth();
-  const { rules, loading } = useAutoGifting();
+  const { rules, loading, updateRule, deleteRule, refreshData } = useAutoGifting();
+
+  const handleToggleActive = async (ruleId: string, isActive: boolean) => {
+    try {
+      await updateRule(ruleId, { is_active: isActive });
+      toast.success(isActive ? "Auto-gifting enabled" : "Auto-gifting paused");
+    } catch (error) {
+      toast.error("Failed to update. Please try again.");
+    }
+  };
+
+  const handleBudgetUpdate = async (ruleId: string, newBudget: number) => {
+    try {
+      await updateRule(ruleId, { budget_limit: newBudget });
+      toast.success(`Budget updated to $${newBudget}`);
+      refreshData();
+    } catch (error) {
+      toast.error("Failed to update budget. Please try again.");
+      throw error;
+    }
+  };
+
+  const handleDeleteRule = async (ruleId: string) => {
+    if (!confirm("Remove this auto-gift occasion? You can always set it up again later.")) {
+      return;
+    }
+    
+    try {
+      await deleteRule(ruleId);
+      toast.success("Occasion removed");
+      refreshData();
+    } catch (error) {
+      toast.error("Failed to remove. Please try again.");
+    }
+  };
 
   const activeRules = rules?.filter(rule => rule.is_active) || [];
   const scheduledGifts = []; // TODO: Integrate with actual scheduled gifts data
@@ -106,17 +148,17 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
 
       {/* Unified Tracking View */}
       <div className="space-y-6">
-        {/* Active Auto-Gift Rules */}
+        {/* Gift Autopilot */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Bot className="h-5 w-5 text-purple-500" />
-                  Active Auto-Gift Rules
+                  🎁 Gift Autopilot
                 </CardTitle>
                 <CardDescription>
-                  Quick edit and pause options for your automation rules
+                  Your occasions are set up and ready to go automatically
                 </CardDescription>
               </div>
               <Button 
@@ -125,7 +167,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                 className="flex items-center gap-2 min-h-[44px] marketplace-touch-target text-xs md:text-sm"
               >
                 <Plus className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Add Rule</span>
+                <span className="hidden sm:inline">Set Up Another</span>
                 <span className="sm:hidden">Add</span>
               </Button>
             </div>
@@ -133,58 +175,82 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
           <CardContent>
             {activeRules.length > 0 ? (
               <div className="space-y-3">
-                {activeRules.map((rule) => (
-                  <div key={rule.id} className="mobile-card p-3 md:p-4 border rounded-lg">
-                    {/* Mobile: Stack layout, Desktop: Side-by-side */}
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
-                          <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                {activeRules.map((rule) => {
+                  const occasionName = getOccasionDisplayName(rule.date_type);
+                  const recurrenceText = getRecurrenceDescription(rule);
+                  const sourceText = getSourceDisplayName(rule.gift_selection_criteria?.source);
+                  
+                  return (
+                    <div key={rule.id} className="mobile-card p-4 border rounded-lg hover:border-purple-300 transition-colors">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                            <Gift className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-base truncate">
+                              {occasionName}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {recurrenceText}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm md:text-base truncate">{rule.date_type}</p>
-                          <p className="text-xs md:text-sm text-muted-foreground truncate">
-                            Budget: ${rule.budget_limit} • Source: {rule.gift_selection_criteria?.source || 'Wishlist'}
-                          </p>
-                        </div>
+                        
+                        {/* Active/Pause Switch */}
+                        <Switch 
+                          checked={rule.is_active}
+                          onCheckedChange={(checked) => handleToggleActive(rule.id, checked)}
+                          className="shrink-0"
+                        />
                       </div>
                       
-                      {/* Mobile: Stack buttons, Desktop: Inline */}
-                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-                        <Badge className={`${getStatusColor('active')} w-fit`}>
-                          {getStatusIcon('active')}
-                          <span className="ml-1 text-xs">Active</span>
-                        </Badge>
-                        <div className="flex gap-2 w-full md:w-auto">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => onEditRule?.(rule.id)}
-                            className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target"
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="ml-1 md:hidden">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target"
-                          >
-                            <Pause className="h-4 w-4" />
-                            <span className="ml-1 md:hidden">Pause</span>
-                          </Button>
-                        </div>
+                      {/* Budget & Source Row with Inline Editor */}
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t text-sm">
+                        <BudgetEditor 
+                          ruleId={rule.id}
+                          currentBudget={rule.budget_limit || 50}
+                          onSave={handleBudgetUpdate}
+                        />
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground">{sourceText}</span>
+                      </div>
+                      
+                      {/* Action Buttons Row */}
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => onEditRule?.(rule.id)}
+                          className="text-xs h-8"
+                        >
+                          <Settings className="h-3 w-3 mr-1" />
+                          Advanced Settings
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteRule(rule.id)}
+                          className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 h-8"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Remove
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8">
                 <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground mb-4">No auto-gift rules set up yet</p>
+                <p className="text-sm text-muted-foreground mb-2">Never forget a special occasion</p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Set up auto-gifting and we'll handle the rest—on time, every time
+                </p>
                 <Button onClick={onSwitchToSmartGifting}>
-                  Create Your First Rule
+                  Get Started
                 </Button>
               </div>
             )}

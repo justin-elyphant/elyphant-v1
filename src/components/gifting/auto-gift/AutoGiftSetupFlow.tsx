@@ -24,6 +24,8 @@ import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelec
 import SmartHolidayInfo from "./SmartHolidayInfo";
 import { DatePicker } from "@/components/ui/date-picker";
 import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
+import MultiEventSelector, { SelectedEvent } from "@/components/gifting/events/add-dialog/MultiEventSelector";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -59,7 +61,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   const [formData, setFormData] = useLocalStorage('autoGiftDraft', {
     recipientId: recipientId || "",
-    eventType: eventType || "",
+    selectedEvents: [] as SelectedEvent[],
+    eventType: eventType || "", // Keep for backward compatibility
     specificHoliday: "",
     calculatedDate: null as string | null,
     selectedDate: undefined as Date | undefined,
@@ -172,18 +175,31 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   const handleSubmit = async () => {
     // Phase 1: Input validation with detailed feedback
-    if (!formData.recipientId || !formData.eventType) {
-      toast.error("Please select a recipient and event type");
+    if (!formData.recipientId) {
+      toast.error("Please select a recipient");
       return;
     }
 
-    if (formData.eventType === "holiday" && !formData.specificHoliday) {
-      toast.error("Please select a specific holiday");
+    if (formData.selectedEvents.length === 0) {
+      toast.error("Please select at least one gift occasion");
       return;
     }
 
-    if (formData.eventType === "other" && !formData.selectedDate) {
-      toast.error("Please select a date for your gift delivery");
+    // Validate holiday events have specific holiday selected
+    const hasIncompleteHoliday = formData.selectedEvents.some(
+      e => e.eventType === "holiday" && !e.specificHoliday
+    );
+    if (hasIncompleteHoliday) {
+      toast.error("Please select a specific holiday for all holiday events");
+      return;
+    }
+
+    // Validate "Just Because" events have dates
+    const hasIncompleteDate = formData.selectedEvents.some(
+      e => e.eventType === "other" && !e.customDate
+    );
+    if (hasIncompleteDate) {
+      toast.error("Please select dates for all 'Just Because' gifts");
       return;
     }
 
@@ -208,13 +224,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
       // Determine if this is a pending invitation or accepted connection
       const isPendingInvitation = selectedConnection?.status === 'pending_invitation';
+      const actualRecipientId = isPendingInvitation ? selectedConnection?.id || formData.recipientId : formData.recipientId;
       
-      const ruleData = {
-        // Always include recipient_id (use connection ID for pending invitations)
-        recipient_id: isPendingInvitation ? selectedConnection?.id || formData.recipientId : formData.recipientId,
-        date_type: formData.eventType === "holiday" ? formData.specificHoliday : formData.eventType,
-        // For "just because" events, store the selected date in scheduled_date
-        scheduled_date: formData.eventType === "other" && formData.selectedDate ? formData.selectedDate.toISOString().split('T')[0] : null,
+      // Create rule data for each selected event
+      const rulesToCreate = formData.selectedEvents.map(event => ({
+        user_id: "", // Will be set by service
+        recipient_id: actualRecipientId,
+        date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
+        scheduled_date: event.eventType === "other" && event.customDate 
+          ? event.customDate.toISOString().split('T')[0] 
+          : null,
         event_id: eventId,
         is_active: true,
         budget_limit: formData.budgetLimit,
@@ -225,38 +244,32 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           push: false,
         },
         gift_selection_criteria: {
-          source: "both" as const, // Use "both" to leverage the smart cascading logic
+          source: "both" as const,
           max_price: formData.budgetLimit,
           min_price: Math.max(1, formData.budgetLimit * 0.1),
-          categories: [], // Let the backend handle category preferences automatically
+          categories: [],
           exclude_items: [],
         },
         payment_method_id: formData.selectedPaymentMethodId,
         gift_message: formData.giftMessage,
-      };
+      }));
 
-      // Phase 3: Secure rule creation/update with enhanced feedback
-      let result;
+      // Phase 3: Batch rule creation with enhanced feedback
       if (ruleId) {
+        // For editing, only update the first rule (legacy single-event mode)
         toast.info("Updating auto-gifting rule securely...", { duration: 2000 });
-        result = await updateRule(ruleId, ruleData);
+        await updateRule(ruleId, rulesToCreate[0]);
         toast.success("Auto-gifting rule updated successfully!", {
           description: "All changes have been saved and secured with token validation"
         });
       } else {
-        toast.info("Creating auto-gifting rule with security validation...", { duration: 2000 });
-        result = await createRule(ruleData);
+        toast.info(`Creating ${rulesToCreate.length} auto-gifting rules...`, { duration: 2000 });
         
-        // Show different success messages for holidays vs other events
-        if (formData.eventType === "holiday") {
-          toast.success(`Holiday auto-gifting set up for ${formData.specificHoliday}!`, {
-            description: "The holiday event has been added to your calendar with secure token validation and will appear in Recipient Events for your connections"
-          });
-        } else {
-          toast.success("Auto-gifting rule created successfully!", {
-            description: "Setup completed with security validation - you'll be notified when gift suggestions are ready for approval"
-          });
-        }
+        // Use batch creation service
+        await unifiedGiftManagementService.createBatchRulesForRecipient(
+          actualRecipientId,
+          rulesToCreate
+        );
       }
 
       // Phase 4: Settings update with confirmation
@@ -274,7 +287,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
       // Phase 5: Successful completion with secure closure
       toast.success("Setup completed successfully!", {
-        description: "Your auto-gifting configuration is now active and secured"
+        description: `${rulesToCreate.length} auto-gifting events configured and secured`
       });
       
       // Clear the draft after successful completion
@@ -299,7 +312,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           description: "Please check your inputs and try again"
         });
       } else {
-        toast.error("Failed to create auto-gifting rule", {
+        toast.error("Failed to create auto-gifting rules", {
           description: errorMessage
         });
       }
@@ -433,59 +446,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="eventType" className="flex items-center gap-2">
-                    Event Type
-                    {initialData?.eventType && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        Pre-filled
-                      </Badge>
-                    )}
-                  </Label>
-                  <Select 
-                    value={formData.eventType} 
-                    onValueChange={(value) => setFormData(prev => ({ 
-                      ...prev, 
-                      eventType: value,
-                      specificHoliday: value === "holiday" ? prev.specificHoliday : "",
-                      calculatedDate: value === "holiday" ? prev.calculatedDate : null,
-                      selectedDate: value === "other" ? prev.selectedDate : undefined
-                    }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select event type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {eventTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.eventType === "holiday" && (
-                  <HolidaySelector
-                    value={formData.specificHoliday}
-                    onChange={(holiday) => setFormData(prev => ({ ...prev, specificHoliday: holiday }))}
-                    onDateCalculated={(date) => setFormData(prev => ({ ...prev, calculatedDate: date }))}
-                  />
-                )}
-
-                {formData.eventType === "other" && (
-                  <div className="space-y-2">
-                    <Label>Select Delivery Date</Label>
-                    <DatePicker
-                      date={formData.selectedDate}
-                      setDate={(date) => setFormData(prev => ({ ...prev, selectedDate: date }))}
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Choose any future date to schedule your "just because" gift delivery
-                    </p>
-                  </div>
-                )}
+                <MultiEventSelector
+                  value={formData.selectedEvents}
+                  onChange={(events) => setFormData(prev => ({ ...prev, selectedEvents: events }))}
+                />
 
                 {formData.eventType === "holiday" && formData.specificHoliday && (
                   <SmartHolidayInfo 

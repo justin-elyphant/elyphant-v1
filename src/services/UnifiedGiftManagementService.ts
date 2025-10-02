@@ -762,6 +762,42 @@ class UnifiedGiftManagementService {
 
   // ============= RULE MANAGEMENT (Enhanced) =============
 
+  async createBatchRulesForRecipient(
+    recipientId: string,
+    rules: Array<Omit<UnifiedGiftRule, 'id' | 'created_at' | 'updated_at'>>
+  ): Promise<UnifiedGiftRule[]> {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user) throw new Error("Not authenticated");
+
+    // Generate single setup token for entire batch
+    const setupToken = await this.generateSetupToken(user.user.id);
+
+    // Log batch creation event
+    await this.logAutoGiftEvent(
+      user.user.id,
+      'batch_rule_creation_initiated',
+      { recipient_id: recipientId, rule_count: rules.length }
+    );
+
+    // Create all rules using existing createRule method
+    const createdRules = await Promise.all(
+      rules.map(rule => this.createRule({ ...rule, user_id: user.user.id }))
+    );
+
+    // Log success
+    await this.logAutoGiftEvent(
+      user.user.id,
+      'batch_rule_creation_completed',
+      { recipient_id: recipientId, created_rules: createdRules.length }
+    );
+
+    toast.success(`${createdRules.length} auto-gifting events configured!`, {
+      description: `All events set up for your recipient with $${rules[0].budget_limit} budget each`
+    });
+
+    return createdRules;
+  }
+
   async createRule(rule: Omit<UnifiedGiftRule, 'id' | 'created_at' | 'updated_at'>): Promise<UnifiedGiftRule> {
     console.log('📝 [UNIFIED] Creating auto-gifting rule with security validation:', rule);
     

@@ -161,18 +161,21 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
 
   return (
     <Card className="w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col">
-      <CardHeader className="border-b shrink-0 pt-6 pb-3 bg-background">
-        <CardTitle className="flex items-center gap-2 leading-normal mt-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+      <CardHeader className="sticky top-0 z-10 bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b shrink-0 pt-5 pb-3">
+        <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2 leading-tight text-center">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onCancel}
-            className="mr-2"
+            className="-ml-2 justify-self-start"
+            aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <UserPlus className="h-5 w-5" />
-          {title}
+          <span className="justify-self-center">{title}</span>
+          <span className="justify-self-end w-5 h-5">
+            <UserPlus className="h-5 w-5 mx-auto" />
+          </span>
         </CardTitle>
       </CardHeader>
       

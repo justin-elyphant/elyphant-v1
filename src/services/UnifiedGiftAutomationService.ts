@@ -8,7 +8,8 @@ import { toast } from "sonner";
 export interface UnifiedGiftRule {
   id: string;
   user_id: string;
-  recipient_id: string;
+  recipient_id: string | null; // Nullable for pending invitations
+  pending_recipient_email?: string; // For pending invitations
   date_type: string;
   event_id?: string;
   is_active: boolean;

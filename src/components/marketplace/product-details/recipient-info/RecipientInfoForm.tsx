@@ -80,7 +80,7 @@ export const RecipientInfoForm: React.FC<RecipientInfoFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           <h3 className="text-lg font-medium">Recipient Information</h3>
           <ContextualHelp
             id="recipient-info"

@@ -161,8 +161,8 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
 
   return (
     <Card className="w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col">
-      <CardHeader className="border-b shrink-0">
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="border-b shrink-0 pt-3 pb-2 bg-background">
+        <CardTitle className="flex items-center gap-2 leading-normal">
           <Button 
             variant="ghost" 
             size="sm" 

@@ -58,6 +58,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
+  
+  // Ref for the scrollable container
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useLocalStorage('autoGiftDraft', {
     recipientId: recipientId || "",
@@ -160,6 +163,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       console.log('🔍 AutoGiftSetupFlow - No initialData provided');
     }
   }, [recipientId, eventType, initialData, ruleId, open]);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -343,7 +353,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden">
-        <div className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom">
+        <div 
+          ref={scrollContainerRef}
+          className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom"
+        >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />

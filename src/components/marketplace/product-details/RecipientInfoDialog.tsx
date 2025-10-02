@@ -19,7 +19,7 @@ const RecipientInfoDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="sticky top-0 z-10 bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b pt-2 pb-3">
           <DialogTitle>Gift Recipient Information</DialogTitle>
           <DialogDescription>
             Please provide details about who this gift is for. We'll notify them about their gift.

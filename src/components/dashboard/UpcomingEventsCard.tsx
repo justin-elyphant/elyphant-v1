@@ -97,13 +97,13 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
 
   if (isLoading) {
     return (
-      <Card className="border-2 border-purple-100 h-full">
+      <Card className="border-2 border-orange-100 h-full">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl font-semibold flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-purple-500" />
-                Auto-Gift Hub
+                <AlertCircle className="h-5 w-5 mr-2 text-orange-500" />
+                Upcoming Friend Events
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground mt-1">
                 Loading your upcoming events...

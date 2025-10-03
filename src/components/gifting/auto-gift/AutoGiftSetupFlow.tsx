@@ -245,10 +245,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       // Determine if this is a pending invitation or accepted connection
       const isPendingInvitation = selectedConnection?.status === 'pending_invitation';
       
+      // Get the actual recipient ID (UUID) from the connection
+      const actualRecipientId = isPendingInvitation 
+        ? null 
+        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id);
+      
       console.log('🔍 Auto-gift setup - Connection type:', {
         isPendingInvitation,
         connectionStatus: selectedConnection?.status,
         connectionId: selectedConnection?.id,
+        actualRecipientId,
+        formDataRecipientId: formData.recipientId,
         pendingEmail: selectedConnection?.pending_recipient_email
       });
       
@@ -256,8 +263,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       const rulesToCreate = formData.selectedEvents.map(event => ({
         user_id: "", // Will be set by service
         // For pending invitations: set recipient_id to null and use pending_recipient_email
-        // For accepted connections: use the connected_user_id as recipient_id
-        recipient_id: isPendingInvitation ? null : formData.recipientId,
+        // For accepted connections: use the actual connected_user_id (UUID)
+        recipient_id: actualRecipientId,
         pending_recipient_email: isPendingInvitation 
           ? selectedConnection?.pending_recipient_email 
           : null,

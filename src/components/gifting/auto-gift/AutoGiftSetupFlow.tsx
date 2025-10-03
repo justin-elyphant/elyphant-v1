@@ -218,7 +218,15 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       return;
     }
 
-    setIsLoading(true);
+      setIsLoading(true);
+      
+      // Normalize eventId (strip special- prefix and validate UUID)
+      const normalizeUuid = (val?: string | null) => {
+        if (!val) return null;
+        const stripped = val.startsWith('special-') ? val.slice(8) : val;
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stripped) ? stripped : null;
+      };
+      const normalizedEventId = normalizeUuid(eventId || null);
 
     try {
       // Phase 2: Setup initiation with progress feedback
@@ -229,51 +237,47 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       
       // Try to find connection by ID first, then by email if recipientId looks like an email
       const isEmail = formData.recipientId.includes('@');
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.recipientId);
       const selectedConnection = allConnections.find(conn => {
         if (isEmail) {
-          // Match by email for pending invitations or connected user profiles
-          return conn.pending_recipient_email === formData.recipientId ||
-                 conn.profile_email === formData.recipientId;
-        } else {
-          // Match by UUID
-          return conn.id === formData.recipientId || 
-                 conn.display_user_id === formData.recipientId || 
-                 conn.connected_user_id === formData.recipientId;
+          return conn.pending_recipient_email === formData.recipientId || conn.profile_email === formData.recipientId;
+        } else if (isUuid) {
+          return conn.id === formData.recipientId || conn.display_user_id === formData.recipientId || conn.connected_user_id === formData.recipientId;
         }
+        return false;
       });
 
-      // Determine if this is a pending invitation or accepted connection
+      // Determine invitation vs accepted and resolve identifiers safely
       const isPendingInvitation = (selectedConnection?.status === 'pending_invitation') || (isEmail && !selectedConnection);
-      
-      // Resolve recipient identifiers
-      const actualRecipientId = isPendingInvitation 
-        ? null 
-        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || (!isEmail ? formData.recipientId : null));
-      const pendingEmail = isPendingInvitation 
-        ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : undefined)) 
+      const emailFromInitial = initialData?.recipientEmail as string | undefined;
+
+      const actualRecipientId = isPendingInvitation
+        ? null
+        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || (isUuid ? formData.recipientId : null));
+
+      const pendingEmail = isPendingInvitation
+        ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : emailFromInitial))
         : null;
-      
-      console.log('🔍 Auto-gift setup - Connection type:', {
+
+      console.log('🔍 Auto-gift setup - Connection resolution:', {
         isPendingInvitation,
+        hasSelectedConnection: !!selectedConnection,
         connectionStatus: selectedConnection?.status,
-        connectionId: selectedConnection?.id,
         actualRecipientId,
-        formDataRecipientId: formData.recipientId,
-        pendingEmail
+        pendingEmail,
+        formDataRecipientId: formData.recipientId
       });
       
       // Create rule data for each selected event
       const rulesToCreate = formData.selectedEvents.map(event => ({
         user_id: "", // Will be set by service
-        // For pending invitations: set recipient_id to null and use pending_recipient_email
-        // For accepted connections: use the actual connected_user_id (UUID)
         recipient_id: actualRecipientId,
         pending_recipient_email: pendingEmail,
         date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
         scheduled_date: event.eventType === "other" && event.customDate 
           ? event.customDate.toISOString().split('T')[0] 
           : null,
-        event_id: eventId,
+        event_id: normalizedEventId,
         is_active: true,
         budget_limit: formData.budgetLimit,
         notification_preferences: {

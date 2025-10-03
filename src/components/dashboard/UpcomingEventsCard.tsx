@@ -1,14 +1,14 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Gift, Clock, Settings } from "lucide-react";
+import { Calendar, Gift, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/auth";
-import { supabase } from "@/integrations/supabase/client";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import { eventsService } from "@/services/eventsService";
+import EmptyState from "@/components/common/EmptyState";
 
 interface UpcomingEventsCardContentProps {
   onAddEvent?: () => void;
@@ -22,124 +22,72 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
   console.log('UpcomingEventsCard: Component mounted. User:', user);
   console.log('UpcomingEventsCard: Location:', location.pathname);
   
-  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [autoGiftRules, setAutoGiftRules] = useState<any[]>([]);
-  const [connections, setConnections] = useState<any[]>([]);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load auto-gift rules and connections
+  // Load all events from user_special_dates
   React.useEffect(() => {
-    const loadData = async () => {
+    const loadEvents = async () => {
       if (!user) {
         console.log('UpcomingEventsCard: No user found');
         return;
       }
       
-      console.log('UpcomingEventsCard: Loading data for user:', user.id);
+      console.log('UpcomingEventsCard: Loading events for user:', user.id);
       
       try {
-        const [rulesResult, connectionsResult] = await Promise.all([
-          supabase
-            .from('auto_gifting_rules')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_active', true),
-          supabase
-            .from('user_connections')
-            .select('*')
-            .eq('user_id', user.id)
-        ]);
-
-        console.log('UpcomingEventsCard: Rules result:', rulesResult);
-        console.log('UpcomingEventsCard: Connections result:', connectionsResult);
-
-        setAutoGiftRules(rulesResult.data || []);
-        setConnections(connectionsResult.data || []);
+        const fetchedEvents = await eventsService.fetchUserEvents();
+        console.log('UpcomingEventsCard: Fetched events:', fetchedEvents);
+        setAllEvents(fetchedEvents);
       } catch (error) {
-        console.error('UpcomingEventsCard: Error loading auto-gift data:', error);
+        console.error('UpcomingEventsCard: Error loading events:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
+    loadEvents();
   }, [user]);
 
-  // Transform auto-gift rules into upcoming events
+  // Filter to show ONLY events without auto-gifting enabled
   const upcomingEvents = React.useMemo(() => {
-    console.log('UpcomingEventsCard: Computing upcoming events from rules:', autoGiftRules);
-    console.log('UpcomingEventsCard: Available connections:', connections);
+    console.log('UpcomingEventsCard: All events:', allEvents);
     
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    const result = autoGiftRules
-      .map(rule => {
-        const connection = connections.find(c => c.id === rule.recipient_id);
-        
-        // Calculate next event date based on rule type
-        let nextDate: Date | null = null;
-        let displayType = rule.date_type;
-        
-        if (rule.date_type === 'just_because' && rule.scheduled_date) {
-          nextDate = new Date(rule.scheduled_date);
-          displayType = 'Surprise Gift';
-        } else if (rule.date_type === 'birthday' && rule.event_date) {
-          const birthDate = new Date(rule.event_date);
-          const thisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-          nextDate = thisYear > today ? thisYear : new Date(today.getFullYear() + 1, birthDate.getMonth(), birthDate.getDate());
-          displayType = 'Birthday';
-        } else if (rule.date_type === 'anniversary' && rule.event_date) {
-          const anniversaryDate = new Date(rule.event_date);
-          const thisYear = new Date(today.getFullYear(), anniversaryDate.getMonth(), anniversaryDate.getDate());
-          nextDate = thisYear > today ? thisYear : new Date(today.getFullYear() + 1, anniversaryDate.getMonth(), anniversaryDate.getDate());
-          displayType = 'Anniversary';
-        } else if (['christmas', 'valentines', 'mothers_day', 'fathers_day'].includes(rule.date_type)) {
-          const holidayDates = {
-            christmas: new Date(today.getFullYear(), 11, 25),
-            valentines: new Date(today.getFullYear(), 1, 14),
-            mothers_day: new Date(today.getFullYear(), 4, 14), // Approximate
-            fathers_day: new Date(today.getFullYear(), 5, 18), // Approximate
-          };
-          nextDate = holidayDates[rule.date_type as keyof typeof holidayDates];
-          if (nextDate && nextDate < today) {
-            nextDate = new Date(today.getFullYear() + 1, nextDate.getMonth(), nextDate.getDate());
-          }
-          displayType = rule.date_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-        }
-        
-        if (!nextDate) return null;
-        
-        const daysAway = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const eventsNeedingAttention = allEvents
+      .filter(event => {
+        // Only show events that DON'T have auto-gifting enabled
+        return !event.autoGiftEnabled;
+      })
+      .map(event => {
+        const eventDate = new Date(event.date);
+        const daysAway = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
         return {
-          id: rule.id,
-          person: connection?.connected_user_name || 'Unknown',
-          type: displayType,
-          dateObj: nextDate,
+          ...event,
+          dateObj: eventDate,
           daysAway,
           urgency: daysAway <= 7 ? 'high' : daysAway <= 30 ? 'medium' : 'low',
-          autoGiftEnabled: true,
-          autoGiftAmount: rule.budget_max || rule.budget_min || 50,
-          rule
         };
       })
-      .filter(Boolean)
-      .sort((a, b) => (a?.daysAway || 0) - (b?.daysAway || 0))
+      .filter(event => event.daysAway >= 0) // Only future events
+      .sort((a, b) => a.daysAway - b.daysAway)
       .slice(0, 3);
       
-    console.log('UpcomingEventsCard: Final upcoming events:', result);
-    return result;
-  }, [autoGiftRules, connections]);
+    console.log('UpcomingEventsCard: Events needing attention:', eventsNeedingAttention);
+    return eventsNeedingAttention;
+  }, [allEvents]);
 
-  const handleSetupAutoGift = (event: any) => {
-    setSelectedEvent(event);
-    setSetupDialogOpen(true);
+  const handleScheduleGift = (event: any) => {
+    // Navigate to gifting flow for this event
+    window.location.href = `/gifting?event=${event.id}&person=${encodeURIComponent(event.person)}`;
   };
 
-  const handleSendNow = async (event: any) => {
-    // Redirect to Nicole for immediate gift selection
-    window.location.href = `/nicole?giftFor=${encodeURIComponent(event.person)}&occasion=${encodeURIComponent(event.type)}&budget=${event.autoGiftAmount}`;
+  const handleSetupAutoGift = (event: any) => {
+    // Navigate to auto-gift setup for this event
+    window.location.href = `/gifting?autoGift=true&event=${event.id}`;
   };
 
   // Don't show the card if user is not authenticated
@@ -184,23 +132,23 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
 
   return (
     <>
-      <Card className="border-2 border-purple-100 h-full">
+      <Card className="border-2 border-orange-100 h-full">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl font-semibold flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-purple-500" />
-                Auto-Gift Hub
+                <AlertCircle className="h-5 w-5 mr-2 text-orange-500" />
+                Upcoming Friend Events
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground mt-1">
                 {upcomingEvents.length > 0 
-                  ? `${upcomingEvents.length} upcoming gift occasion${upcomingEvents.length > 1 ? 's' : ''}`
-                  : "No upcoming events scheduled"
+                  ? `${upcomingEvents.length} event${upcomingEvents.length > 1 ? 's' : ''} need${upcomingEvents.length === 1 ? 's' : ''} your attention`
+                  : "All events are on autopilot"
                 }
               </CardDescription>
             </div>
-            <Link to="/events" className="text-sm text-muted-foreground hover:text-primary flex items-center">
-              <Settings className="h-4 w-4" />
+            <Link to="/gifting" className="text-sm text-muted-foreground hover:text-primary flex items-center">
+              View All
             </Link>
           </div>
         </CardHeader>
@@ -209,20 +157,20 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
             {upcomingEvents.length > 0 ? (
               <>
                 {upcomingEvents.map((event) => (
-                  <div key={event.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg">
+                  <div key={event.id} className="flex items-center justify-between p-3 bg-orange-50/50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        {event.type.toLowerCase().includes("birthday") ? (
-                          <Gift className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                        {event.type?.toLowerCase().includes("birthday") ? (
+                          <Gift className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                         ) : (
-                          <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold">{event.person}</h4>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-xs">
-                            Auto-Gift
+                          <Badge variant="outline" className="bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 text-xs border-orange-300">
+                            Not Auto-Gifted
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -241,15 +189,6 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
                               </span>
                             </>
                           )}
-                          
-                          {event.autoGiftEnabled && (
-                            <>
-                              <span>•</span>
-                              <span className="text-green-600 dark:text-green-400 font-medium">
-                                Auto-Gift: ${event.autoGiftAmount}
-                              </span>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -260,73 +199,33 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
                         variant="outline"
                         onClick={() => handleSetupAutoGift(event)}
                       >
-                        Modify Plan
+                        Set Up Auto-Gift
                       </Button>
                       <Button 
                         size="sm" 
-                        onClick={() => handleSendNow(event)}
+                        onClick={() => handleScheduleGift(event)}
                       >
-                        Send Now
+                        Schedule Gift
                       </Button>
                     </div>
                   </div>
                 ))}
-                
-                {autoGiftRules.length > 3 && (
-                  <div className="text-center pt-2">
-                    <Link to="/gifting" className="text-sm text-muted-foreground hover:text-primary">
-                      +{autoGiftRules.length - 3} more auto-gift{autoGiftRules.length - 3 > 1 ? 's' : ''}
-                    </Link>
-                  </div>
-                )}
               </>
             ) : (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No upcoming events</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Add special occasions to set up automated gifting
-                </p>
-                <Button 
-                  variant="default" 
-                  onClick={() => setSetupDialogOpen(true)}
-                  className="mb-4"
-                >
-                  Set Up Auto-Gifting
-                </Button>
-              </div>
-            )}
-            
-            {/* Conditional button logic based on current page */}
-            {isOnEventsPage && onAddEvent ? (
-              <Button 
-                variant="outline" 
-                className="w-full border-dashed" 
-                onClick={onAddEvent}
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                Add New Event
-              </Button>
-            ) : (
-              <Button variant="outline" className="w-full border-dashed" asChild>
-                <Link to="/events?action=add">
-                  <Gift className="h-4 w-4 mr-2" />
-                  Add New Event
-                </Link>
-              </Button>
+              <EmptyState
+                icon={Calendar}
+                title="All events on autopilot! 🎉"
+                description="Every upcoming event has auto-gifting enabled. You're all set!"
+                action={{
+                  label: "View Gift Autopilot",
+                  onClick: () => window.location.href = '/gifting',
+                  variant: "outline"
+                }}
+              />
             )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Auto-Gift Setup Flow */}
-      <AutoGiftSetupFlow
-        open={setupDialogOpen}
-        onOpenChange={setSetupDialogOpen}
-        eventId={selectedEvent?.id}
-        eventType={selectedEvent?.type}
-        recipientId={selectedEvent?.connectionId}
-      />
     </>
   );
 };

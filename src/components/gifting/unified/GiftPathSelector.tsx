@@ -59,7 +59,7 @@ export const GiftPathSelector: React.FC<GiftPathSelectorProps> = ({
               className="w-full min-h-[44px] bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 marketplace-touch-target text-sm md:text-base"
             >
               <Zap className="h-4 w-4 mr-2" />
-              Set Up Auto-Gifting
+              Schedule a Gift
             </Button>
           </div>
           

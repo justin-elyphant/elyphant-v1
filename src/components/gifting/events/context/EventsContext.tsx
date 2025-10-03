@@ -38,7 +38,9 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
 
   const openAutoGiftSetupForEvent = (event: ExtendedEventData) => {
     const initialData = {
+      recipientId: event.connectionId || event.recipientEmail, // Pass the actual connection ID or email
       recipientName: event.person,
+      recipientEmail: event.recipientEmail,
       relationshipType: event.relationshipType || 'Friend',
       giftingEvents: [{
         dateType: event.type,

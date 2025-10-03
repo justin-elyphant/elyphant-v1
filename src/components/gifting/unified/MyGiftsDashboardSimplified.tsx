@@ -21,13 +21,11 @@ import ScheduledGiftsSection from "@/components/gifting/sections/ScheduledGiftsS
 import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
 import { BudgetEditor } from "./BudgetEditor";
 import { 
-  getOccasionDisplayName, 
-  getRecurrenceDescription, 
-  getSourceDisplayName,
   getRecipientDisplayName,
   isPendingInvitation
 } from "@/utils/autoGiftDisplayHelpers";
 import { toast } from "sonner";
+import { RecipientGiftCard } from "./RecipientGiftCard";
 
 interface MyGiftsDashboardSimplifiedProps {
   onEditRule?: (ruleId: string) => void;
@@ -77,7 +75,30 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
     }
   };
 
-  const activeRules = rules?.filter(rule => rule.is_active) || [];
+  // Group rules by recipient
+  const groupedRules = React.useMemo(() => {
+    const activeRules = rules?.filter(rule => rule.is_active) || [];
+    const groups = new Map<string, typeof activeRules>();
+    
+    activeRules.forEach(rule => {
+      const recipientKey = rule.recipient_id || rule.pending_recipient_email || 'unknown';
+      if (!groups.has(recipientKey)) {
+        groups.set(recipientKey, []);
+      }
+      groups.get(recipientKey)!.push(rule);
+    });
+    
+    return Array.from(groups.entries()).map(([key, recipientRules]) => ({
+      recipientKey: key,
+      recipientName: getRecipientDisplayName(recipientRules[0]),
+      isPending: isPendingInvitation(recipientRules[0]),
+      recipientEmail: recipientRules[0].pending_recipient_email,
+      recipientId: recipientRules[0].recipient_id,
+      rules: recipientRules,
+      totalBudget: recipientRules.reduce((sum, r) => sum + (r.budget_limit || 50), 0)
+    }));
+  }, [rules]);
+
   const scheduledGifts = []; // TODO: Integrate with actual scheduled gifts data
   const giftHistory = []; // TODO: Integrate with actual gift history
 
@@ -122,8 +143,8 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
           <CardContent className="p-4 md:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl md:text-2xl font-bold text-primary">{activeRules.length}</p>
-                <p className="text-xs md:text-sm text-muted-foreground">Auto-Gift Rules</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">{groupedRules.length}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">People Auto-Gifted</p>
               </div>
               <Bot className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
             </div>
@@ -182,97 +203,23 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
             </div>
           </CardHeader>
           <CardContent>
-            {activeRules.length > 0 ? (
+            {groupedRules.length > 0 ? (
               <div className="space-y-3">
-                {activeRules.map((rule) => {
-                  const occasionName = getOccasionDisplayName(rule.date_type);
-                  const recurrenceText = getRecurrenceDescription(rule);
-                  const sourceText = getSourceDisplayName(rule.gift_selection_criteria?.source);
-                  const recipientName = getRecipientDisplayName(rule);
-                  const isPending = isPendingInvitation(rule);
-                  
-                  return (
-                    <div key={rule.id} className="mobile-card p-4 border rounded-lg hover:border-purple-300 transition-colors">
-                      {/* Header Row */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
-                            <Gift className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-base truncate">
-                                {occasionName}
-                              </h4>
-                              {isPending && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-300 bg-yellow-50 shrink-0 flex items-center gap-1">
-                                        <Mail className="h-3 w-3" />
-                                        Invitation Pending
-                                        <Info className="h-3 w-3 ml-1" />
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>
-                                        Gift will be sent on the occasion date even if {recipientName} hasn't joined yet. 
-                                        We'll use smart AI selection to choose the perfect gift.
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {isPending ? `For ${recipientName} • ${recurrenceText}` : recurrenceText}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Active/Pause Switch */}
-                        <Switch 
-                          checked={rule.is_active}
-                          onCheckedChange={(checked) => handleToggleActive(rule.id, checked)}
-                          className="shrink-0"
-                        />
-                      </div>
-                      
-                      {/* Budget & Source Row with Inline Editor */}
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t text-sm">
-                        <BudgetEditor 
-                          ruleId={rule.id}
-                          currentBudget={rule.budget_limit || 50}
-                          onSave={handleBudgetUpdate}
-                        />
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">{sourceText}</span>
-                      </div>
-                      
-                      {/* Action Buttons Row */}
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => onEditRule?.(rule.id)}
-                          className="text-xs h-8"
-                        >
-                          <Settings className="h-3 w-3 mr-1" />
-                          Advanced Settings
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteRule(rule.id)}
-                          className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 h-8"
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {groupedRules.map((group) => (
+                  <RecipientGiftCard
+                    key={group.recipientKey}
+                    recipientName={group.recipientName}
+                    recipientId={group.recipientId}
+                    recipientEmail={group.recipientEmail}
+                    isPending={group.isPending}
+                    rules={group.rules}
+                    totalBudget={group.totalBudget}
+                    onEditRule={onEditRule!}
+                    onToggleRule={handleToggleActive}
+                    onDeleteRule={handleDeleteRule}
+                    onBudgetUpdate={handleBudgetUpdate}
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">

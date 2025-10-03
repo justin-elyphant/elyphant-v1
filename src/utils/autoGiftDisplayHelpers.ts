@@ -95,7 +95,12 @@ export const getRecipientDisplayName = (rule: UnifiedGiftRule): string => {
     return rule.recipient.name;
   }
   
-  // For pending invitations, format the email
+  // For pending invitations, check pending_recipient_name from connection
+  if (rule.pending_recipient_name) {
+    return rule.pending_recipient_name;
+  }
+  
+  // For pending invitations without a name, format the email
   if (rule.pending_recipient_email) {
     const emailName = rule.pending_recipient_email.split('@')[0];
     return emailName

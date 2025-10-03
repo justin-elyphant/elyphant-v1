@@ -27,6 +27,7 @@ export interface UnifiedGiftRule {
   user_id: string;
   recipient_id: string | null; // Nullable for pending invitations
   pending_recipient_email?: string; // For pending invitations
+  pending_recipient_name?: string; // For pending invitations - from connection data
   date_type: string;
   event_id?: string;
   is_active: boolean;
@@ -40,6 +41,9 @@ export interface UnifiedGiftRule {
     first_name: string;
     last_name: string;
     profile_image?: string;
+  };
+  connection?: {
+    pending_recipient_name?: string;
   };
   executions?: {
     id: string;
@@ -1024,7 +1028,30 @@ class UnifiedGiftManagementService {
       .eq('user_id', userId);
 
     if (error) throw error;
-    return (data || []) as unknown as UnifiedGiftRule[];
+    
+    // For pending invitations, fetch the connection data to get pending_recipient_name
+    const rulesWithConnectionData = await Promise.all(
+      (data || []).map(async (rule) => {
+        if (rule.pending_recipient_email && !rule.recipient_id) {
+          // Fetch connection data for pending invitations
+          const { data: connectionData } = await supabase
+            .from('user_connections')
+            .select('pending_recipient_name')
+            .eq('user_id', userId)
+            .eq('pending_recipient_email', rule.pending_recipient_email)
+            .maybeSingle();
+          
+          return {
+            ...rule,
+            pending_recipient_name: connectionData?.pending_recipient_name,
+            connection: connectionData
+          };
+        }
+        return rule;
+      })
+    );
+    
+    return rulesWithConnectionData as unknown as UnifiedGiftRule[];
   }
 
   // ============= SETTINGS MANAGEMENT (Enhanced) =============

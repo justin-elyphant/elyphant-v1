@@ -195,6 +195,8 @@ const MyGiftsTab = () => {
 
   const handleSwitchToSmartGifting = () => {
     setEditingRule(null); // Ensure it's a fresh setup, not editing
+    // Clear any existing draft for fresh start
+    localStorage.removeItem('autoGiftDraft');
     setAutoGiftSetupOpen(true);
   };
 

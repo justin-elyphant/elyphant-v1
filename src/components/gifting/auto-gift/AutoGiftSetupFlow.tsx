@@ -226,11 +226,21 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
       // Find the selected recipient from both accepted connections and pending invitations
       const allConnections = [...connections, ...pendingInvitations];
-      const selectedConnection = allConnections.find(conn => 
-        conn.id === formData.recipientId || 
-        conn.display_user_id === formData.recipientId || 
-        conn.connected_user_id === formData.recipientId
-      );
+      
+      // Try to find connection by ID first, then by email if recipientId looks like an email
+      const isEmail = formData.recipientId.includes('@');
+      const selectedConnection = allConnections.find(conn => {
+        if (isEmail) {
+          // Match by email for pending invitations or connected user profiles
+          return conn.pending_recipient_email === formData.recipientId ||
+                 conn.profile_email === formData.recipientId;
+        } else {
+          // Match by UUID
+          return conn.id === formData.recipientId || 
+                 conn.display_user_id === formData.recipientId || 
+                 conn.connected_user_id === formData.recipientId;
+        }
+      });
 
       // Determine if this is a pending invitation or accepted connection
       const isPendingInvitation = selectedConnection?.status === 'pending_invitation';

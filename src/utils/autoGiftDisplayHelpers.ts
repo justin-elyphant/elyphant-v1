@@ -83,7 +83,14 @@ export const formatBudgetDisplay = (budget?: number): string => {
  * Get recipient display name (handles both profiles and pending invitations)
  */
 export const getRecipientDisplayName = (rule: UnifiedGiftRule): string => {
-  // If we have a profile, use the name
+  // If we have a profile with first/last name, use those
+  if (rule.recipient?.first_name || rule.recipient?.last_name) {
+    const firstName = rule.recipient.first_name || '';
+    const lastName = rule.recipient.last_name || '';
+    return `${firstName} ${lastName}`.trim();
+  }
+  
+  // Fallback to name field if available
   if (rule.recipient?.name) {
     return rule.recipient.name;
   }

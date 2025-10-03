@@ -91,6 +91,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
     return Array.from(groups.entries()).map(([key, recipientRules]) => ({
       recipientKey: key,
       recipientName: getRecipientDisplayName(recipientRules[0]),
+      recipientProfileImage: recipientRules[0].recipient?.profile_image,
       isPending: isPendingInvitation(recipientRules[0]),
       recipientEmail: recipientRules[0].pending_recipient_email,
       recipientId: recipientRules[0].recipient_id,
@@ -211,6 +212,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                     recipientName={group.recipientName}
                     recipientId={group.recipientId}
                     recipientEmail={group.recipientEmail}
+                    recipientProfileImage={group.recipientProfileImage}
                     isPending={group.isPending}
                     rules={group.rules}
                     totalBudget={group.totalBudget}

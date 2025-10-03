@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +22,7 @@ interface RecipientGiftCardProps {
   recipientName: string;
   recipientId?: string;
   recipientEmail?: string;
+  recipientProfileImage?: string;
   isPending: boolean;
   rules: Array<any>;
   totalBudget: number;
@@ -144,6 +145,7 @@ const OccasionRow: React.FC<{
 
 export const RecipientGiftCard: React.FC<RecipientGiftCardProps> = ({
   recipientName,
+  recipientProfileImage,
   isPending,
   rules,
   totalBudget,
@@ -163,6 +165,9 @@ export const RecipientGiftCard: React.FC<RecipientGiftCardProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar className="h-10 w-10 shrink-0">
+            {recipientProfileImage && (
+              <AvatarImage src={recipientProfileImage} alt={recipientName} />
+            )}
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
               {recipientName[0]?.toUpperCase()}
             </AvatarFallback>

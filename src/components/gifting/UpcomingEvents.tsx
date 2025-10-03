@@ -21,8 +21,8 @@ const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingE
     refreshEvents
   } = useEvents();
 
-  // Use provided events or fall back to all events
-  const eventsToDisplay = filteredEvents || allEvents;
+  // Use provided events or fall back to all events, then show only those without auto-gifting
+  const eventsToDisplay = (filteredEvents || allEvents).filter(e => !e.autoGiftEnabled);
 
   const handleAutoGiftSetupClose = () => {
     setIsAutoGiftSetupOpen(false);

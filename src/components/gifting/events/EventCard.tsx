@@ -94,7 +94,7 @@ const EventCard = ({
             onToggleAutoGift();
           }}
         >
-          {event.autoGiftEnabled ? "Auto-Gift On" : "Set Auto-Gift"}
+          {event.autoGiftEnabled ? "Auto-Gift On" : "Schedule Gift"}
         </Button>
       </>
     );

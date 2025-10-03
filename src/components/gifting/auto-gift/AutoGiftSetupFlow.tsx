@@ -243,12 +243,15 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       });
 
       // Determine if this is a pending invitation or accepted connection
-      const isPendingInvitation = selectedConnection?.status === 'pending_invitation';
+      const isPendingInvitation = (selectedConnection?.status === 'pending_invitation') || (isEmail && !selectedConnection);
       
-      // Get the actual recipient ID (UUID) from the connection
+      // Resolve recipient identifiers
       const actualRecipientId = isPendingInvitation 
         ? null 
-        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id);
+        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || (!isEmail ? formData.recipientId : null));
+      const pendingEmail = isPendingInvitation 
+        ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : undefined)) 
+        : null;
       
       console.log('🔍 Auto-gift setup - Connection type:', {
         isPendingInvitation,
@@ -256,7 +259,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         connectionId: selectedConnection?.id,
         actualRecipientId,
         formDataRecipientId: formData.recipientId,
-        pendingEmail: selectedConnection?.pending_recipient_email
+        pendingEmail
       });
       
       // Create rule data for each selected event
@@ -265,9 +268,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         // For pending invitations: set recipient_id to null and use pending_recipient_email
         // For accepted connections: use the actual connected_user_id (UUID)
         recipient_id: actualRecipientId,
-        pending_recipient_email: isPendingInvitation 
-          ? selectedConnection?.pending_recipient_email 
-          : null,
+        pending_recipient_email: pendingEmail,
         date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
         scheduled_date: event.eventType === "other" && event.customDate 
           ? event.customDate.toISOString().split('T')[0] 
@@ -340,16 +341,22 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     } catch (error) {
       console.error("Error in auto-gift setup:", error);
       
-      // Enhanced error handling with specific feedback
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const e: any = error;
+      const errorMessage = e?.message || e?.error?.message || e?.hint || e?.code || 'Unknown error occurred';
+      const errorDetails = e?.details || e?.error_description || e?.name;
+      if (errorDetails) console.error('Auto-gift setup details:', errorDetails);
       
-      if (errorMessage.includes("rate limit")) {
+      if (typeof error === 'object') {
+        try { console.error('Auto-gift setup raw:', JSON.stringify(error)); } catch {}
+      }
+      
+      if (String(errorMessage).toLowerCase().includes("rate limit")) {
         toast.error("Setup rate limit exceeded", {
           description: "Please wait a moment before creating another auto-gifting rule"
         });
-      } else if (errorMessage.includes("validation")) {
+      } else if (String(errorMessage).toLowerCase().includes("validation") || String(errorMessage).toLowerCase().includes("recipient")) {
         toast.error("Setup validation failed", {
-          description: "Please check your inputs and try again"
+          description: errorMessage
         });
       } else {
         toast.error("Failed to create auto-gifting rules", {

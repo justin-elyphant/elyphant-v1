@@ -253,7 +253,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
       const actualRecipientId = isPendingInvitation
         ? null
-        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || (isUuid ? formData.recipientId : null));
+        : (selectedConnection?.display_user_id || (isUuid ? formData.recipientId : null));
 
       const pendingEmail = isPendingInvitation
         ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : emailFromInitial))

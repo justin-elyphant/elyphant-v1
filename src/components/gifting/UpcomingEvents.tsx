@@ -21,6 +21,13 @@ const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingE
     refreshEvents
   } = useEvents();
 
+  // Refresh events when auto-gift setup dialog closes
+  React.useEffect(() => {
+    if (!isAutoGiftSetupOpen) {
+      refreshEvents();
+    }
+  }, [isAutoGiftSetupOpen, refreshEvents]);
+
   // Use provided events or fall back to all events, then show only those without auto-gifting
   const eventsToDisplay = (filteredEvents || allEvents).filter(e => !e.autoGiftEnabled);
 

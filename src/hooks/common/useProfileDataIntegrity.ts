@@ -17,12 +17,18 @@ interface DataIntegrityIssue {
 
 export function useProfileDataIntegrity() {
   const { user } = useAuth();
-  const { profile, refetchProfile } = useProfile();
+  
+  // Call hooks unconditionally (React rules)
+  const profileContext = useProfile();
   const { connections } = useEnhancedConnections();
   const { wishlists } = useWishlists();
   const [isChecking, setIsChecking] = useState(false);
   const [issues, setIssues] = useState<DataIntegrityIssue[]>([]);
   const [completionScore, setCompletionScore] = useState(0);
+  
+  // Use profile from context only if user is authenticated
+  const profile = user ? profileContext.profile : null;
+  const refetchProfile = profileContext.refetchProfile;
 
   // Debounced integrity check to prevent excessive calls
   const checkDataIntegrity = useCallback(async (showToasts = true, formValues?: any) => {

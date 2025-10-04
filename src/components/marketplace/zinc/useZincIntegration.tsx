@@ -15,13 +15,12 @@ export const useZincIntegration = () => {
 
   const init = async () => {
     const data = await getZincApiKey();
-    if(!data.key) {
-      toast.error("loading the zinc api key");
+    if(!data || !data.key) {
+      toast.error("Error loading the Zinc API key");
     } else {
       setApiKey(data.key);
       setRowId(String(data.id));
     }
-
   }
 
   const handleConnect = async () => {

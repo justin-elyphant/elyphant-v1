@@ -3,6 +3,7 @@ import React from 'react';
 import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
 import OrderRetryTool from '@/components/admin/OrderRetryTool';
 import ZMAAccountManager from '@/components/admin/ZMAAccountManager';
+import SyncZincOrdersButton from '@/components/admin/SyncZincOrdersButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -32,11 +33,14 @@ const TrunklineZincDebuggerTab = () => {
           </TabsList>
             <TabsContent value="debugger" className="mt-6">
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Debug Tools</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Check order status, view detailed logs, and manually verify orders that may be stuck.
-                  </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Debug Tools</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Check order status, view detailed logs, and manually verify orders that may be stuck.
+                    </p>
+                  </div>
+                  <SyncZincOrdersButton />
                 </div>
                 <ZincOrderDebugger />
               </div>

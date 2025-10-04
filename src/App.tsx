@@ -78,6 +78,7 @@ const EnhancedMarketplacePage = lazy(() => import("./pages/EnhancedMarketplacePa
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
+const ZincDebugger = lazy(() => import("./pages/ZincDebugger"));
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
 const TestEmailSystem = lazy(() => import("./pages/TestEmailSystem"));
@@ -270,6 +271,7 @@ function AppContent() {
           
           
           {/* ZMA Testing Routes */}
+          <Route path="/zinc-debugger" element={<ZincDebugger />} />
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
           <Route path="/test-retry-function" element={<TestRetryFunction />} />
         <Route path="/test-email-system" element={<TestEmailSystem />} />

@@ -19,15 +19,23 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
 }) => {
   const { events, loading, error } = useRecipientEvents();
   
-  console.log('📊 RecipientEventsWidget rendering:', { eventsCount: events.length, loading, error, events });
+  // Filter out events that already have auto-gifting enabled
+  const eventsWithoutAutoGift = events.filter(event => !event.hasAutoGift);
+  
+  console.log('📊 RecipientEventsWidget rendering:', { 
+    totalEvents: events.length, 
+    eventsNeedingAttention: eventsWithoutAutoGift.length,
+    loading, 
+    error 
+  });
 
   if (loading) {
     return (
       <Card className="mb-24 md:mb-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-500" />
-            Upcoming Friend Events
+            <Users className="h-5 w-5 text-orange-500" />
+            Action Needed
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -54,8 +62,8 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
       <Card className="mb-24 md:mb-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-500" />
-            Upcoming Friend Events
+            <Users className="h-5 w-5 text-orange-500" />
+            Action Needed
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -67,7 +75,7 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
     );
   }
 
-  const upcomingEvents = events.slice(0, maxEvents);
+  const upcomingEvents = eventsWithoutAutoGift.slice(0, maxEvents);
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -90,16 +98,16 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              Upcoming Friend Events
+              <Users className="h-5 w-5 text-orange-500" />
+              Action Needed
             </CardTitle>
             <CardDescription>
-              Upcoming birthdays and special occasions for your connections
+              Events that need auto-gift setup or manual attention
             </CardDescription>
           </div>
           {upcomingEvents.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-              <span>{events.length} upcoming</span>
+              <span>{eventsWithoutAutoGift.length} need attention</span>
             </div>
           )}
         </div>
@@ -118,11 +126,6 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 mb-1">
                         <h4 className="font-medium truncate text-sm md:text-base">{event.recipientName}</h4>
-                        {event.hasAutoGift && (
-                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 w-fit">
-                            Auto-Gift Set
-                          </Badge>
-                        )}
                       </div>
                       {/* Mobile: Stack details vertically */}
                       <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs md:text-sm text-muted-foreground">
@@ -151,38 +154,36 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
                   
                   {/* Mobile: Full-width button row, Desktop: Side buttons */}
                   <div className="flex gap-2 w-full md:w-auto">
-                    {!event.hasAutoGift && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          console.log('🎯 Auto-Gift button clicked for event:', event);
-                          const eventWithInitialData = {
-                            ...event,
-                            initialData: {
-                              recipientId: event.recipientId,
-                              eventType: event.eventType.toLowerCase(),
-                              recipientName: event.recipientName,
-                              eventDate: event.eventDate,
-                              relationshipType: event.relationshipType
-                            }
-                          };
-                          console.log('🎯 Calling onSetupAutoGift with:', eventWithInitialData);
-                          onSetupAutoGift?.(eventWithInitialData);
-                        }}
-                        className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:from-purple-700 hover:to-blue-700 text-xs md:text-sm"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        <span className="md:inline">Auto-Gift</span>
-                      </Button>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant="default"
+                      onClick={() => {
+                        console.log('🎯 Auto-Gift button clicked for event:', event);
+                        const eventWithInitialData = {
+                          ...event,
+                          initialData: {
+                            recipientId: event.recipientId,
+                            eventType: event.eventType.toLowerCase(),
+                            recipientName: event.recipientName,
+                            eventDate: event.eventDate,
+                            relationshipType: event.relationshipType
+                          }
+                        };
+                        console.log('🎯 Calling onSetupAutoGift with:', eventWithInitialData);
+                        onSetupAutoGift?.(eventWithInitialData);
+                      }}
+                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-gradient-to-r from-orange-600 to-yellow-600 text-white border-0 hover:from-orange-700 hover:to-yellow-700 text-xs md:text-sm"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      <span>Set Up Auto-Gift</span>
+                    </Button>
                     <Button 
                       size="sm"
                       variant="outline"
                       onClick={() => onSendGift?.(event)}
-                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target bg-white text-gray-900 border-gray-200 hover:bg-gray-50 text-xs md:text-sm lg:px-6 lg:min-h-[48px]"
+                      className="flex-1 md:flex-initial min-h-[44px] marketplace-touch-target text-xs md:text-sm"
                     >
-                      <span className="hidden sm:inline">Browse Gifts</span>
+                      <span className="hidden sm:inline">Or Browse Gifts</span>
                       <span className="sm:hidden">Browse</span>
                     </Button>
                   </div>
@@ -190,24 +191,42 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
               </div>
             ))}
             
-            {events.length > maxEvents && (
+            {eventsWithoutAutoGift.length > maxEvents && (
               <div className="text-center pt-2">
                 <p className="text-sm text-muted-foreground">
-                  +{events.length - maxEvents} more upcoming events
+                  +{eventsWithoutAutoGift.length - maxEvents} more events need attention
                 </p>
               </div>
             )}
           </div>
         ) : (
           <div className="text-center py-8">
-            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No upcoming events</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Connect with friends and family to see their special occasions
-            </p>
-            <Button variant="outline" size="sm">
-              Invite Connections
-            </Button>
+            {events.length > 0 ? (
+              <>
+                <Gift className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">All events are on autopilot! 🎉</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  All your upcoming events have auto-gifting enabled
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                >
+                  View Auto-Gift Rules
+                </Button>
+              </>
+            ) : (
+              <>
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">No upcoming events</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Connect with friends and family to see their special occasions
+                </p>
+                <Button variant="outline" size="sm">
+                  Invite Connections
+                </Button>
+              </>
+            )}
           </div>
         )}
       </CardContent>

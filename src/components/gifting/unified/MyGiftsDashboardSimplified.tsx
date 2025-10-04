@@ -41,6 +41,15 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
   const { user } = useAuth();
   const { rules, loading, updateRule, deleteRule, refreshData } = useAutoGifting();
 
+  // Refs for smooth scrolling to sections
+  const autopilotRef = React.useRef<HTMLDivElement>(null);
+  const scheduledRef = React.useRef<HTMLDivElement>(null);
+  const historyRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleToggleActive = async (ruleId: string, isActive: boolean) => {
     try {
       await updateRule(ruleId, { is_active: isActive });
@@ -138,49 +147,85 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats - Mobile optimized */}
+      {/* Quick Stats - Mobile optimized with clickable navigation */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-        <Card className="mobile-card">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-primary">{groupedRules.length}</p>
-                <p className="text-xs md:text-sm text-muted-foreground">People Auto-Gifted</p>
-              </div>
-              <Bot className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card 
+                className="mobile-card cursor-pointer transition-all hover:scale-105 hover:border-primary hover:shadow-lg"
+                onClick={() => scrollToSection(autopilotRef)}
+              >
+                <CardContent className="p-4 md:pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-primary">{groupedRules.length}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">People Auto-Gifted</p>
+                    </div>
+                    <Bot className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View your active auto-gift rules below</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        <Card className="mobile-card">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-primary">{scheduledGifts.length}</p>
-                <p className="text-xs md:text-sm text-muted-foreground">Scheduled Gifts</p>
-              </div>
-              <Calendar className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card 
+                className="mobile-card cursor-pointer transition-all hover:scale-105 hover:border-primary hover:shadow-lg"
+                onClick={() => scrollToSection(scheduledRef)}
+              >
+                <CardContent className="p-4 md:pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-primary">{scheduledGifts.length}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Scheduled Gifts</p>
+                    </div>
+                    <Calendar className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to see upcoming deliveries</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        <Card className="mobile-card">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl md:text-2xl font-bold text-primary">{giftHistory.length}</p>
-                <p className="text-xs md:text-sm text-muted-foreground">Gifts Sent</p>
-              </div>
-              <Gift className="h-6 w-6 md:h-8 md:w-8 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card 
+                className="mobile-card cursor-pointer transition-all hover:scale-105 hover:border-primary hover:shadow-lg"
+                onClick={() => scrollToSection(historyRef)}
+              >
+                <CardContent className="p-4 md:pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-primary">{giftHistory.length}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Gifts Sent</p>
+                    </div>
+                    <Gift className="h-6 w-6 md:h-8 md:w-8 text-emerald-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to see your gift history</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Unified Tracking View */}
       <div className="space-y-6">
         {/* Gift Autopilot */}
-        <Card>
+        <Card ref={autopilotRef}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -239,14 +284,16 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
         </Card>
 
         {/* Scheduled Gifts with Delivery Tracking */}
-        <ScheduledGiftsSection 
+        <div ref={scheduledRef}>
+          <ScheduledGiftsSection
           onScheduleNew={onScheduleGift}
           onTrackOrder={(orderId) => console.log('Track order:', orderId)}
           onCancelGift={(giftId) => console.log('Cancel gift:', giftId)}
-        />
+          />
+        </div>
 
         {/* Recent Gift History with Reorder Options */}
-        <Card>
+        <Card ref={historyRef}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-emerald-500" />

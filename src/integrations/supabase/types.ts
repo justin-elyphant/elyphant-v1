@@ -4656,6 +4656,48 @@ export type Database = {
           },
         ]
       }
+      zinc_sync_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          metadata: Json | null
+          orders_checked: number | null
+          orders_failed: number | null
+          orders_updated: number | null
+          status: string
+          sync_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          orders_checked?: number | null
+          orders_failed?: number | null
+          orders_updated?: number | null
+          status?: string
+          sync_type: string
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          orders_checked?: number | null
+          orders_failed?: number | null
+          orders_updated?: number | null
+          status?: string
+          sync_type?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       zma_accounts: {
         Row: {
           account_balance: number | null

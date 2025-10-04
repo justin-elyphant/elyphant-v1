@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
 import { Skeleton } from "@/components/ui/skeleton";
 import RetryOrderButton from '@/components/admin/RetryOrderButton';
+import SyncZincOrdersButton from '@/components/admin/SyncZincOrdersButton';
 
 const ZincDebugger = () => {
   const { user, isLoading } = useAuth();
@@ -67,6 +68,7 @@ const ZincDebugger = () => {
           </p>
           
           <div className="mt-4 flex gap-4">
+            <SyncZincOrdersButton />
             <RetryOrderButton 
               orderId="0260ac01-88cc-4451-a760-f4447dcc95cd"
               className="w-auto"

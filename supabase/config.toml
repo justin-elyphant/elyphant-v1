@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.nicole-unified-agent]
 verify_jwt = false
+
+[functions.sync-zinc-orders]
+verify_jwt = false

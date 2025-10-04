@@ -124,17 +124,41 @@ serve(async (req) => {
           throw new Error(`Zinc API error: ${zincResult.message || 'Unknown error'}`);
         }
 
-        // Helper function to map Zinc status to order status
-        function mapZincToOrderStatus(zincStatus: string): string {
-          const statusMap: Record<string, string> = {
-            'placed': 'pending',
-            'validated': 'processing',
-            'shipped': 'shipped',
-            'delivered': 'delivered',
-            'failed': 'failed',
-            'cancelled': 'cancelled'
-          };
-          return statusMap[zincStatus] || 'processing';
+        // Derive order status from Zinc response (no top-level status field)
+        function deriveOrderStatus(zincData: any): { status: string; zincStatus: string } {
+          // Check tracking for delivered status (most accurate)
+          if (zincData.tracking && Array.isArray(zincData.tracking)) {
+            const hasDelivered = zincData.tracking.some((t: any) => 
+              t.delivery_status === 'Delivered' || t.delivery_status === 'delivered'
+            );
+            if (hasDelivered) {
+              return { status: 'delivered', zincStatus: 'delivered' };
+            }
+          }
+
+          // Check status_updates for latest event
+          const statusUpdates = zincData.status_updates || [];
+          if (statusUpdates.length > 0) {
+            // Get most recent update
+            const latestUpdate = statusUpdates[statusUpdates.length - 1];
+            
+            // Map event types to statuses
+            if (latestUpdate.type === 'shipment.shipped') {
+              return { status: 'shipped', zincStatus: 'shipped' };
+            }
+            if (latestUpdate.type === 'request.failed') {
+              return { status: 'failed', zincStatus: 'failed' };
+            }
+            if (latestUpdate.type === 'request.cancelled') {
+              return { status: 'cancelled', zincStatus: 'cancelled' };
+            }
+            if (latestUpdate.type === 'request.finished' && latestUpdate.data?.success) {
+              return { status: 'processing', zincStatus: 'placed' };
+            }
+          }
+
+          // Default fallback
+          return { status: 'processing', zincStatus: 'unknown' };
         }
 
         // Helper function to get event titles
@@ -199,12 +223,15 @@ serve(async (req) => {
           last_update: new Date().toISOString()
         };
 
+        // Derive correct status from Zinc data
+        const { status: derivedStatus, zincStatus: derivedZincStatus } = deriveOrderStatus(zincResult);
+
         // Update order in database
         const { error: updateError } = await supabase
           .from('orders')
           .update({
-            zinc_status: zincResult.status || 'unknown',
-            status: mapZincToOrderStatus(zincResult.status),
+            zinc_status: derivedZincStatus,
+            status: derivedStatus,
             zinc_timeline_events: sortedEvents,
             merchant_tracking_data: merchantTracking,
             last_zinc_update: new Date().toISOString(),
@@ -217,7 +244,7 @@ serve(async (req) => {
         }
 
         ordersUpdated++;
-        console.log(`✅ Updated order ${order.order_number}: ${zincResult.status}`);
+        console.log(`✅ Updated order ${order.order_number}: ${derivedStatus} (zinc: ${derivedZincStatus})`);
 
       } catch (error) {
         ordersFailed++;

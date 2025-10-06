@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.process-email-queue]
 verify_jwt = false
+
+[functions.check-zma-funding-status]
+verify_jwt = false
+
+[functions.send-zma-funding-alert]
+verify_jwt = false

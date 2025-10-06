@@ -26,12 +26,24 @@ const TrunklineZincDebuggerTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="debugger" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="funding" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="funding">💰 Funding</TabsTrigger>
             <TabsTrigger value="debugger">Order Debugger</TabsTrigger>
             <TabsTrigger value="retry">Order Retry Tool</TabsTrigger>
             <TabsTrigger value="zma">ZMA Accounts</TabsTrigger>
           </TabsList>
+            <TabsContent value="funding" className="mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">ZMA Funding Management</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Monitor your ZMA balance and manage funding for pending orders. Orders are automatically held when balance is insufficient.
+                  </p>
+                </div>
+                <ZMAFundingDashboard />
+              </div>
+            </TabsContent>
             <TabsContent value="debugger" className="mt-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-4">

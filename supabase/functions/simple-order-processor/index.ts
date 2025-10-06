@@ -26,9 +26,9 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { orderId, triggerSource = 'stripe-webhook', isScheduled = false, scheduledDeliveryDate, isAutoGift = false, autoGiftContext } = body;
+    const { orderId, triggerSource = 'stripe-webhook', isScheduled = false, scheduledDeliveryDate, isAutoGift = false, autoGiftContext, bypassFundingCheck = false } = body;
 
-    console.log(`🚀 SIMPLE ORDER PROCESSOR: Processing order ${orderId} from ${triggerSource}`);
+    console.log(`🚀 SIMPLE ORDER PROCESSOR: Processing order ${orderId} from ${triggerSource}${bypassFundingCheck ? ' (BYPASS FUNDING CHECK)' : ''}`);
 
     if (!orderId) {
       return new Response(JSON.stringify({
@@ -111,16 +111,46 @@ Deno.serve(async (req) => {
     }
 
     // ZMA FUNDING CHECK: Check if we have enough balance before processing
-    console.log(`💰 Checking ZMA balance for order ${orderId}...`);
-    
-    // Get current ZMA balance
-    const { data: balanceData, error: balanceError } = await supabase.functions.invoke('manage-zma-accounts', {
-      body: { action: 'checkBalance' }
-    });
-
-    if (balanceError) {
-      console.error(`❌ Failed to check ZMA balance:`, balanceError);
+    // BYPASS: Force process orders (VIP override) skip this check
+    if (bypassFundingCheck) {
+      console.log(`🚨 BYPASS: Skipping funding check for order ${orderId} (force processed)`);
+      
+      // Mark as funded immediately
+      await supabase
+        .from('orders')
+        .update({
+          funding_status: 'funded',
+          funding_allocated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
     } else {
+      console.log(`💰 Checking ZMA balance for order ${orderId}...`);
+      
+      try {
+        // Get current ZMA balance
+        const { data: balanceData, error: balanceError } = await supabase.functions.invoke('manage-zma-accounts', {
+          body: { action: 'checkBalance' }
+        });
+
+        if (balanceError) {
+          console.error(`❌ Failed to check ZMA balance:`, balanceError);
+          // Fallback: Mark as funded and proceed (admin can handle manually if needed)
+          console.warn(`⚠️ FALLBACK: Proceeding without balance check for order ${orderId}`);
+          await supabase
+            .from('orders')
+            .update({
+              funding_status: 'funded',
+              funding_allocated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+          
+          await supabase.from('order_notes').insert({
+            order_id: orderId,
+            note_content: 'Warning: Processed without funding check due to balance API error',
+            note_type: 'funding_warning',
+            is_internal: true
+          });
+        } else {
       const currentBalance = balanceData?.balance || 0;
       
       // Get pending orders value
@@ -204,8 +234,19 @@ Deno.serve(async (req) => {
         })
         .eq('id', orderId);
       
-      console.log(`✅ ZMA funding confirmed for order ${orderId}`);
+        console.log(`✅ ZMA funding confirmed for order ${orderId}`);
+      }
+    } catch (fundingError) {
+      console.error(`🚨 Funding check error for order ${orderId}:`, fundingError);
+      // Fallback: Proceed but log error
+      await supabase.from('order_notes').insert({
+        order_id: orderId,
+        note_content: `Funding check error: ${fundingError instanceof Error ? fundingError.message : 'Unknown error'}`,
+        note_type: 'funding_error',
+        is_internal: true
+      });
     }
+  }
 
     // Update order status to processing
     await supabase

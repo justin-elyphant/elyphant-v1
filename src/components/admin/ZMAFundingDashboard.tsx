@@ -102,6 +102,26 @@ export const ZMAFundingDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleCheckFundingStatus = async () => {
+    try {
+      toast.info('Checking funding status and processing queued orders...');
+      
+      const { data, error } = await supabase.functions.invoke('check-zma-funding-status', {
+        body: { manualTrigger: true }
+      });
+
+      if (error) throw error;
+
+      toast.success(data?.message || 'Funding status checked');
+      
+      // Refresh status after check
+      setTimeout(fetchFundingStatus, 2000);
+    } catch (error: any) {
+      console.error('Failed to check funding status:', error);
+      toast.error('Failed to check funding status');
+    }
+  };
+
   const handleConfirmTransfer = async () => {
     if (!transferAmount || parseFloat(transferAmount) <= 0) {
       toast.error('Please enter a valid transfer amount');
@@ -197,9 +217,14 @@ export const ZMAFundingDashboard = () => {
               {getStatusIcon()}
               <CardTitle>ZMA Funding Status</CardTitle>
             </div>
-            <Button onClick={fetchFundingStatus} variant="outline" size="sm">
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={fetchFundingStatus} variant="outline" size="sm">
+                Refresh Balance
+              </Button>
+              <Button onClick={handleCheckFundingStatus} variant="default" size="sm">
+                Check Funding Status
+              </Button>
+            </div>
           </div>
           <CardDescription>
             Monitor your ZMA balance and pending order funding

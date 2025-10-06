@@ -31,17 +31,61 @@ Deno.serve(async (req) => {
 
     console.log('[ZMA-FUNDING-STATUS] Starting funding status check...');
 
-    // Step 1: Get current ZMA balance
-    const balanceResponse = await supabase.functions.invoke('manage-zma-accounts', {
-      body: { action: 'checkBalance' }
-    });
+    // Step 1: Get current ZMA balance with retry logic
+    let currentBalance = 0;
+    let balanceCheckFailed = false;
+    
+    try {
+      const balanceResponse = await supabase.functions.invoke('manage-zma-accounts', {
+        body: { action: 'checkBalance' }
+      });
 
-    if (balanceResponse.error) {
-      throw new Error(`Failed to fetch ZMA balance: ${balanceResponse.error.message}`);
+      if (balanceResponse.error) {
+        console.error('[ZMA-FUNDING-STATUS] Balance check error:', balanceResponse.error);
+        balanceCheckFailed = true;
+        
+        // Try one more time after 2 seconds
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryResponse = await supabase.functions.invoke('manage-zma-accounts', {
+          body: { action: 'checkBalance' }
+        });
+        
+        if (retryResponse.error) {
+          throw new Error(`Failed to fetch ZMA balance after retry: ${retryResponse.error.message}`);
+        }
+        
+        const retryData = retryResponse.data as ZMABalanceResponse;
+        currentBalance = retryData.balance || 0;
+        balanceCheckFailed = false;
+      } else {
+        const balanceData = balanceResponse.data as ZMABalanceResponse;
+        currentBalance = balanceData.balance || 0;
+      }
+    } catch (error: any) {
+      console.error('[ZMA-FUNDING-STATUS] Failed to check balance:', error);
+      
+      // Log error but don't fail completely
+      await supabase.from('admin_alerts').insert({
+        alert_type: 'zma_balance_check_failed',
+        severity: 'high',
+        message: `Failed to check ZMA balance: ${error.message}`,
+        requires_action: true,
+        metadata: {
+          error: error.message,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      // Return error response but don't throw
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to check ZMA balance',
+          message: error.message
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    const balanceData = balanceResponse.data as ZMABalanceResponse;
-    const currentBalance = balanceData.balance || 0;
 
     console.log(`[ZMA-FUNDING-STATUS] Current ZMA balance: $${currentBalance}`);
 

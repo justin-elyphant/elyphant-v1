@@ -151,102 +151,102 @@ Deno.serve(async (req) => {
             is_internal: true
           });
         } else {
-      const currentBalance = balanceData?.balance || 0;
-      
-      // Get pending orders value
-      const { data: pendingOrders } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .eq('funding_status', 'awaiting_funds');
-      
-      const pendingValue = pendingOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
-      const availableBalance = currentBalance - pendingValue;
-      
-      // Get total amount for current order
-      const { data: orderTotal } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .eq('id', orderId)
-        .single();
-      
-      const orderAmount = orderTotal?.total_amount || 0;
-      
-      console.log(`💰 ZMA Balance: $${currentBalance}, Pending: $${pendingValue}, Available: $${availableBalance}, Order: $${orderAmount}`);
-      
-      if (availableBalance < orderAmount) {
-        console.warn(`⚠️ Insufficient ZMA balance for order ${orderId} - scheduling for later`);
-        
-        // Calculate expected funding date (Stripe settlement = 4 days)
-        const expectedFundingDate = new Date();
-        expectedFundingDate.setDate(expectedFundingDate.getDate() + 4);
-        const expectedFundingDateStr = expectedFundingDate.toISOString().split('T')[0];
-        
-        // Calculate scheduled delivery date (funding date + 1 day for processing)
-        const scheduledDeliveryDate = new Date(expectedFundingDate);
-        scheduledDeliveryDate.setDate(scheduledDeliveryDate.getDate() + 1);
-        const scheduledDeliveryDateStr = scheduledDeliveryDate.toISOString().split('T')[0];
-        
-        // Update order to awaiting funds
-        await supabase
-          .from('orders')
-          .update({
-            status: 'scheduled',
-            funding_status: 'awaiting_funds',
-            funding_hold_reason: 'Insufficient ZMA balance - waiting for Stripe payout',
-            expected_funding_date: expectedFundingDateStr,
-            scheduled_delivery_date: scheduledDeliveryDateStr,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', orderId);
-        
-        // Log funding hold
+          const currentBalance = balanceData?.balance || 0;
+          
+          // Get pending orders value
+          const { data: pendingOrders } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .eq('funding_status', 'awaiting_funds');
+          
+          const pendingValue = pendingOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
+          const availableBalance = currentBalance - pendingValue;
+          
+          // Get total amount for current order
+          const { data: orderTotal } = await supabase
+            .from('orders')
+            .select('total_amount')
+            .eq('id', orderId)
+            .single();
+          
+          const orderAmount = orderTotal?.total_amount || 0;
+          
+          console.log(`💰 ZMA Balance: $${currentBalance}, Pending: $${pendingValue}, Available: $${availableBalance}, Order: $${orderAmount}`);
+          
+          if (availableBalance < orderAmount) {
+            console.warn(`⚠️ Insufficient ZMA balance for order ${orderId} - scheduling for later`);
+            
+            // Calculate expected funding date (Stripe settlement = 4 days)
+            const expectedFundingDate = new Date();
+            expectedFundingDate.setDate(expectedFundingDate.getDate() + 4);
+            const expectedFundingDateStr = expectedFundingDate.toISOString().split('T')[0];
+            
+            // Calculate scheduled delivery date (funding date + 1 day for processing)
+            const scheduledDeliveryDate = new Date(expectedFundingDate);
+            scheduledDeliveryDate.setDate(scheduledDeliveryDate.getDate() + 1);
+            const scheduledDeliveryDateStr = scheduledDeliveryDate.toISOString().split('T')[0];
+            
+            // Update order to awaiting funds
+            await supabase
+              .from('orders')
+              .update({
+                status: 'scheduled',
+                funding_status: 'awaiting_funds',
+                funding_hold_reason: 'Insufficient ZMA balance - waiting for Stripe payout',
+                expected_funding_date: expectedFundingDateStr,
+                scheduled_delivery_date: scheduledDeliveryDateStr,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', orderId);
+            
+            // Log funding hold
+            await supabase.from('order_notes').insert({
+              order_id: orderId,
+              note_content: `Order scheduled for ${scheduledDeliveryDateStr} - awaiting ZMA funding (shortfall: $${(orderAmount - availableBalance).toFixed(2)})`,
+              note_type: 'funding_hold',
+              is_internal: true
+            });
+            
+            // Trigger funding check to create alert
+            await supabase.functions.invoke('check-zma-funding-status', {
+              body: { triggerSource: 'order_processor' }
+            });
+            
+            return new Response(JSON.stringify({
+              success: true,
+              message: 'Order scheduled - awaiting ZMA funding',
+              orderId,
+              status: 'scheduled',
+              funding_status: 'awaiting_funds',
+              expected_funding_date: expectedFundingDateStr,
+              scheduled_delivery_date: scheduledDeliveryDateStr
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+          
+          // Mark order as funded
+          await supabase
+            .from('orders')
+            .update({
+              funding_status: 'funded',
+              funding_allocated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+          
+          console.log(`✅ ZMA funding confirmed for order ${orderId}`);
+        }
+      } catch (fundingError) {
+        console.error(`🚨 Funding check error for order ${orderId}:`, fundingError);
+        // Fallback: Proceed but log error
         await supabase.from('order_notes').insert({
           order_id: orderId,
-          note_content: `Order scheduled for ${scheduledDeliveryDateStr} - awaiting ZMA funding (shortfall: $${(orderAmount - availableBalance).toFixed(2)})`,
-          note_type: 'funding_hold',
+          note_content: `Funding check error: ${fundingError instanceof Error ? fundingError.message : 'Unknown error'}`,
+          note_type: 'funding_error',
           is_internal: true
         });
-        
-        // Trigger funding check to create alert
-        await supabase.functions.invoke('check-zma-funding-status', {
-          body: { triggerSource: 'order_processor' }
-        });
-        
-        return new Response(JSON.stringify({
-          success: true,
-          message: 'Order scheduled - awaiting ZMA funding',
-          orderId,
-          status: 'scheduled',
-          funding_status: 'awaiting_funds',
-          expected_funding_date: expectedFundingDateStr,
-          scheduled_delivery_date: scheduledDeliveryDateStr
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
       }
-      
-      // Mark order as funded
-      await supabase
-        .from('orders')
-        .update({
-          funding_status: 'funded',
-          funding_allocated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-      
-        console.log(`✅ ZMA funding confirmed for order ${orderId}`);
-      }
-    } catch (fundingError) {
-      console.error(`🚨 Funding check error for order ${orderId}:`, fundingError);
-      // Fallback: Proceed but log error
-      await supabase.from('order_notes').insert({
-        order_id: orderId,
-        note_content: `Funding check error: ${fundingError instanceof Error ? fundingError.message : 'Unknown error'}`,
-        note_type: 'funding_error',
-        is_internal: true
-      });
     }
-  }
 
     // Update order status to processing
     await supabase

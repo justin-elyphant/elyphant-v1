@@ -57,38 +57,52 @@ const OrderProgressStepper = ({
   ];
 
   const getStepStatus = (stepId: string) => {
-    // If we have real Zinc timeline events, use them for accurate progress
-    if (zincTimelineEvents.length > 0) {
+    const stepOrder = ['placed', 'processing', 'shipped', 'delivered'];
+    const currentStepIndex = stepOrder.indexOf(stepId);
+    
+    // PRIORITY 1: If order status indicates completion, override timeline events
+    if (status === "delivered") {
+      const deliveredIndex = stepOrder.indexOf('delivered');
+      if (currentStepIndex < deliveredIndex) return "completed";
+      if (currentStepIndex === deliveredIndex) return "active";
+    }
+    
+    if (status === "shipped") {
+      const shippedIndex = stepOrder.indexOf('shipped');
+      if (currentStepIndex < shippedIndex) return "completed";
+      if (currentStepIndex === shippedIndex) return "active";
+      if (currentStepIndex > shippedIndex) return "inactive";
+    }
+    
+    // PRIORITY 2: Use timeline events for in-progress orders
+    if (zincTimelineEvents.length > 0 && status !== "delivered" && status !== "shipped") {
       const eventTypeMap: Record<string, string> = {
         'request.placed': 'placed',
         'request.finished': 'processing', 
         'shipment.shipped': 'shipped',
-        'shipment.delivered': 'delivered'
+        'shipment.delivered': 'delivered',
+        'tracking.available': 'shipped'
       };
       
-      // Find the latest completed step from timeline events
       const completedSteps = zincTimelineEvents
         .map(event => eventTypeMap[event.type])
         .filter(Boolean);
       
-      if (completedSteps.includes(stepId)) {
-        // Find the latest step in our progression
-        const stepOrder = ['placed', 'processing', 'shipped', 'delivered'];
+      if (completedSteps.length > 0) {
         const latestCompletedIndex = Math.max(...completedSteps.map(step => stepOrder.indexOf(step)));
-        const currentStepIndex = stepOrder.indexOf(stepId);
         
         if (currentStepIndex < latestCompletedIndex) return "completed";
         if (currentStepIndex === latestCompletedIndex) return "active";
+        return "inactive";
       }
-      return "inactive";
     }
 
-    // Fallback: Use order status mapping for orders without timeline events
+    // PRIORITY 3: Fallback to order status mapping
     const statusProgressMap: Record<string, string[]> = {
       "pending": ["placed"],
       "payment_confirmed": ["placed"], 
       "processing": ["placed", "processing"],
-      "submitted_to_zinc": ["placed", "processing"], // Map Zinc status to processing completed
+      "submitted_to_zinc": ["placed", "processing"],
       "shipped": ["placed", "processing", "shipped"],
       "delivered": ["placed", "processing", "shipped", "delivered"],
       "cancelled": ["placed"],

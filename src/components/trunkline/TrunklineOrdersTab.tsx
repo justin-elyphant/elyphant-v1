@@ -5,7 +5,6 @@ import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
 import RetryNotificationService from "@/components/admin/RetryNotificationService";
-import WebhookRecoveryPanel from "./orders/WebhookRecoveryPanel";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
@@ -35,14 +34,6 @@ const TrunklineOrdersTab = () => {
           Monitor and manage orders from the Enhanced Zinc API System
         </p>
       </div>
-
-      {/* Recovery Tools - Prominent Position */}
-      <WebhookRecoveryPanel 
-        onOrderRecovered={(orderId) => {
-          console.log(`Order ${orderId} recovered from webhook failure`);
-          refetch(); // Refresh the orders list
-        }}
-      />
 
       <OrderSearch
         filters={filters}

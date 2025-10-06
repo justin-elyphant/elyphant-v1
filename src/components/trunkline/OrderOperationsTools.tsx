@@ -6,6 +6,7 @@ import ZMAAccountManager from '@/components/admin/ZMAAccountManager';
 import SyncZincOrdersButton from '@/components/admin/SyncZincOrdersButton';
 import { ZMAFundingDashboard } from '@/components/admin/ZMAFundingDashboard';
 import ForceProcessOrder from '@/components/admin/ForceProcessOrder';
+import WebhookRecoveryPanel from './orders/WebhookRecoveryPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -28,8 +29,9 @@ const OrderOperationsTools = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="funding" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="funding">Funding</TabsTrigger>
+            <TabsTrigger value="recovery">Recovery</TabsTrigger>
             <TabsTrigger value="debugger">Diagnostics</TabsTrigger>
             <TabsTrigger value="retry">Retry Orders</TabsTrigger>
             <TabsTrigger value="force">Force Process</TabsTrigger>
@@ -44,6 +46,19 @@ const OrderOperationsTools = () => {
                   </p>
                 </div>
                 <ZMAFundingDashboard />
+              </div>
+            </TabsContent>
+            <TabsContent value="recovery" className="mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Webhook Failure Recovery</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Recover orders that were successfully paid but missed webhook processing due to system issues.
+                  </p>
+                </div>
+                <WebhookRecoveryPanel onOrderRecovered={(orderId) => {
+                  console.log(`Order ${orderId} recovered from webhook failure`);
+                }} />
               </div>
             </TabsContent>
             <TabsContent value="debugger" className="mt-6">

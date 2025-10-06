@@ -75,14 +75,32 @@ serve(async (req) => {
       case 'checkBalance':
         const { account_id } = data;
         
-        const { data: account, error: accountError } = await supabase
-          .from('zma_accounts')
-          .select('*')
-          .eq('id', account_id)
-          .single();
+        let account;
+        let accountError;
+        
+        // If no account_id provided, get the default account
+        if (!account_id) {
+          const { data: defaultAccount, error: defaultError } = await supabase
+            .from('zma_accounts')
+            .select('*')
+            .eq('is_default', true)
+            .single();
+          
+          account = defaultAccount;
+          accountError = defaultError;
+        } else {
+          const { data: specificAccount, error: specificError } = await supabase
+            .from('zma_accounts')
+            .select('*')
+            .eq('id', account_id)
+            .single();
+          
+          account = specificAccount;
+          accountError = specificError;
+        }
 
         if (accountError || !account) {
-          throw new Error('ZMA account not found');
+          throw new Error('ZMA account not found. Please add a ZMA account first.');
         }
 
         const balanceResponse = await fetch('https://api.priceyak.com/v2/account/balance', {

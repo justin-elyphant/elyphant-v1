@@ -25,7 +25,6 @@ const handler = async (req: Request): Promise<Response> => {
       .select('*')
       .eq('status', 'pending')
       .lte('scheduled_for', new Date().toISOString())
-      .lt('attempts', 'max_attempts')
       .order('scheduled_for', { ascending: true })
       .limit(50); // Process up to 50 emails at a time
 

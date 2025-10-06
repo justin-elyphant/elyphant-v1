@@ -260,13 +260,6 @@ const OrderDetail = () => {
       </div>
       
 
-      <div className="mt-6 flex justify-end">
-        {order.status === "delivered" && (
-          <Button variant="default" onClick={() => navigate(`/returns/${order.id}`)}>
-            Start Return
-          </Button>
-        )}
-      </div>
 
       {/* Mobile Action Bar */}
       <MobileActionBar 

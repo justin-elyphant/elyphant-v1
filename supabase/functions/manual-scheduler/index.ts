@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { action, orderId, newDate } = await req.json()
+    const { action, orderId, newDate, alertId } = await req.json()
 
     console.log(`🔧 [manual-scheduler] Manual action: ${action}`)
 
@@ -120,8 +120,6 @@ serve(async (req) => {
         )
 
       case 'resolve_alert':
-        const { alertId } = await req.json()
-        
         if (!alertId) {
           throw new Error('alertId is required')
         }

@@ -1,6 +1,6 @@
-
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,29 +22,78 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     })
 
+    // Create request fingerprint for deduplication
+    const requestFingerprint = btoa(JSON.stringify({
+      amount: Math.round(amount),
+      cart_items: metadata.cart_items?.map((i: any) => ({ id: i.product_id, qty: i.quantity })),
+      timestamp: new Date().setMinutes(new Date().getMinutes(), 0, 0) // Round to minute
+    }));
+
+    // Initialize Supabase client for deduplication check
+    const authHeader = req.headers.get('Authorization');
+    let user_id = null;
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    );
+
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (user) {
+          user_id = user.id;
+          
+          // Check for existing intent within last 5 minutes
+          const { data: existingCache } = await supabase
+            .from('payment_intents_cache')
+            .select('stripe_payment_intent_id')
+            .eq('user_id', user_id)
+            .eq('request_fingerprint', requestFingerprint)
+            .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+            .maybeSingle();
+
+          if (existingCache) {
+            console.log('🔄 Returning existing payment intent:', existingCache.stripe_payment_intent_id);
+            const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
+              Deno.env.get('STRIPE_SECRET_KEY') || '',
+              { apiVersion: '2023-10-16' }
+            );
+            const existingIntent = await stripe.paymentIntents.retrieve(existingCache.stripe_payment_intent_id);
+            
+            return new Response(
+              JSON.stringify({ 
+                client_secret: existingIntent.client_secret,
+                payment_intent_id: existingIntent.id,
+                status: existingIntent.status,
+                deduplicated: true
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              },
+            );
+          }
+        }
+      } catch (authError) {
+        console.log('⚠️ Auth error during deduplication check:', authError);
+      }
+    }
+
     const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
       { apiVersion: '2023-10-16' }
     )
 
-    // Check if we should use an existing payment method
-    const useExistingPaymentMethod = metadata.useExistingPaymentMethod;
-    const paymentMethodId = metadata.paymentMethodId;
-
-    // Get the user's email from the request to find or create Stripe customer
-    const authHeader = req.headers.get('Authorization');
+    // Get customer if authenticated
     let customer_id = null;
-    
-    if (authHeader) {
+    if (authHeader && user_id) {
       try {
         const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await (await import('https://esm.sh/@supabase/supabase-js@2.45.0')).createClient(
-          Deno.env.get('SUPABASE_URL') || '',
-          Deno.env.get('SUPABASE_ANON_KEY') || ''
-        ).auth.getUser(token);
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         
         if (user?.email) {
-          // Find or create Stripe customer
           const customers = await stripe.customers.list({ 
             email: user.email,
             limit: 1 
@@ -54,12 +103,9 @@ serve(async (req) => {
             customer_id = customers.data[0].id;
             console.log('🔍 Found existing customer:', customer_id);
           } else {
-            // Create new customer
             const customer = await stripe.customers.create({
               email: user.email,
-              metadata: {
-                user_id: user.id
-              }
+              metadata: { user_id: user.id }
             });
             customer_id = customer.id;
             console.log('✨ Created new customer:', customer_id);
@@ -80,24 +126,23 @@ serve(async (req) => {
       }
     };
 
-    // Add customer if we have one
     if (customer_id) {
       paymentIntentData.customer = customer_id;
     }
 
-    // Get origin for return URL
     const origin = req.headers.get('origin') || 'https://your-domain.com';
-    
-    // CRITICAL: Check if this is a scheduled delivery (should not be charged immediately)
     const isScheduledDelivery = metadata.scheduledDeliveryDate && metadata.scheduledDeliveryDate !== '';
+    
     console.log('🗓️ Scheduled delivery check:', {
       isScheduledDelivery,
       scheduledDate: metadata.scheduledDeliveryDate,
       shouldHoldPayment: isScheduledDelivery
     });
     
+    const useExistingPaymentMethod = metadata.useExistingPaymentMethod;
+    const paymentMethodId = metadata.paymentMethodId;
+
     if (useExistingPaymentMethod && paymentMethodId && customer_id) {
-      // Enhanced payment method handling with better error recovery
       try {
         const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
         console.log('🔍 Retrieved payment method:', {
@@ -106,16 +151,13 @@ serve(async (req) => {
           type: paymentMethod.type
         });
         
-        // Check if payment method belongs to a different customer
         if (paymentMethod.customer && paymentMethod.customer !== customer_id) {
           console.log('⚠️ Payment method belongs to different customer, creating new payment intent for manual attachment');
-          // Don't auto-attach, let frontend handle this case
           paymentIntentData.automatic_payment_methods = {
             enabled: true,
             allow_redirects: 'never',
           };
         } else {
-          // Payment method is either unattached or belongs to correct customer
           if (!paymentMethod.customer) {
             await stripe.paymentMethods.attach(paymentMethodId, {
               customer: customer_id,
@@ -123,12 +165,11 @@ serve(async (req) => {
             console.log('🔗 Successfully attached payment method to customer');
           }
           
-          // CRITICAL: Only confirm payment immediately for non-scheduled deliveries
           if (isScheduledDelivery) {
             console.log('⏰ Scheduled delivery detected - creating payment intent WITHOUT immediate confirmation');
             paymentIntentData.payment_method = paymentMethodId;
             paymentIntentData.confirmation_method = 'manual';
-            paymentIntentData.confirm = false; // Do NOT charge immediately for scheduled deliveries
+            paymentIntentData.confirm = false;
             paymentIntentData.return_url = `${origin}/payment-success`;
           } else {
             console.log('⚡ Immediate delivery - confirming payment now');
@@ -141,15 +182,12 @@ serve(async (req) => {
       } catch (attachError) {
         console.log('⚠️ Payment method attachment/retrieval error:', attachError);
         console.log('📋 Falling back to manual payment method selection');
-        
-        // Fallback: Create payment intent without auto-attachment
         paymentIntentData.automatic_payment_methods = {
           enabled: true,
           allow_redirects: 'never',
         };
       }
     } else {
-      // New payment method or missing required parameters
       paymentIntentData.automatic_payment_methods = {
         enabled: true,
         allow_redirects: 'never',
@@ -157,6 +195,24 @@ serve(async (req) => {
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+
+    // Cache the payment intent for deduplication
+    if (user_id) {
+      try {
+        await supabase
+          .from('payment_intents_cache')
+          .insert({
+            user_id: user_id,
+            request_fingerprint: requestFingerprint,
+            stripe_payment_intent_id: paymentIntent.id,
+            amount: Math.round(amount),
+            metadata: metadata
+          });
+        console.log('💾 Cached payment intent for deduplication');
+      } catch (cacheError) {
+        console.log('⚠️ Failed to cache payment intent (non-critical):', cacheError);
+      }
+    }
 
     console.log('✅ Payment intent created successfully:', {
       id: paymentIntent.id,

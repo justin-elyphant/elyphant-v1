@@ -103,9 +103,9 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     if (order) {
       console.log(`✅ Order ${order.id} updated for successful payment`);
       
-      // Call simplified order processor directly
+      // Call process-zma-order directly (consolidated, single path)
       try {
-        await supabase.functions.invoke('simple-order-processor', {
+        await supabase.functions.invoke('process-zma-order', {
           body: { 
             orderId: order.id,
             triggerSource: 'stripe-webhook',
@@ -115,7 +115,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             autoGiftContext: order.auto_gift_context
           }
         });
-        console.log(`🚀 Simplified processor invoked for order ${order.id}`);
+        console.log(`🚀 Direct ZMA processor invoked for order ${order.id}`);
       } catch (processError) {
         console.error('⚠️ Failed to trigger order processing:', processError);
         // Don't fail the webhook, order processing can be retried later

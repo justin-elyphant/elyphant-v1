@@ -309,48 +309,13 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       const hasAmazonProducts = amazonProducts.length > 0;
 
+      // Order processing now happens via Stripe webhook ONLY
+      // Removed direct process-zma-order call to eliminate dual-path duplicate submissions
       if (hasAmazonProducts) {
-        console.log(`🛒 ${amazonProducts.length} Amazon products detected, processing through ZMA...`);
-        console.log('📋 Amazon products:', amazonProducts.map(item => item.product.product_id));
-        toast.info(`Processing ${amazonProducts.length} Amazon product${amazonProducts.length > 1 ? 's' : ''} with fulfillment partner...`);
-        
-        try {
-          console.log('🔄 Calling ZMA processing function...');
-          const zmaStart = Date.now();
-          
-          // Call the existing process-zma-order edge function
-          const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
-            body: {
-              orderId: order.id,
-              debugMode: process.env.NODE_ENV === 'development',
-              isTestMode: false
-            }
-          });
-
-          const zmaElapsed = Date.now() - zmaStart;
-          console.log(`⏱️ ZMA processing took ${zmaElapsed}ms`);
-
-          if (zmaError) {
-            console.error('❌ ZMA processing error:', zmaError);
-            toast.error('Order created but Amazon fulfillment failed. Support will follow up.');
-            // Continue with checkout completion - order was created successfully
-          } else if (zmaResult?.success) {
-            console.log('✅ ZMA processing successful:', zmaResult);
-            if (zmaResult.zinc_order_id) {
-              console.log(`🔗 Zinc Order ID: ${zmaResult.zinc_order_id}`);
-            }
-            toast.success('Order successfully submitted to Amazon for fulfillment!');
-          } else {
-            console.warn('⚠️ ZMA processing had issues:', zmaResult);
-            toast.warning('Order created but Amazon fulfillment may be delayed. Support will follow up.');
-          }
-        } catch (zmaProcessingError) {
-          console.error('💥 ZMA processing exception:', zmaProcessingError);
-          toast.error('Order created but Amazon fulfillment processing failed. Support will follow up.');
-          // Continue with checkout completion - order was created successfully
-        }
+        console.log(`🛒 ${amazonProducts.length} Amazon products detected - will be processed by webhook`);
+        toast.success('Order placed! Processing Amazon fulfillment...');
       } else {
-        console.log('ℹ️ No Amazon products detected - skipping ZMA processing');
+        console.log('ℹ️ No Amazon products detected');
         toast.success('Order placed successfully!');
       }
       

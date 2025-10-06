@@ -3178,6 +3178,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_intents_cache: {
+        Row: {
+          amount: number
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          request_fingerprint: string
+          stripe_payment_intent_id: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          request_fingerprint: string
+          stripe_payment_intent_id: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          request_fingerprint?: string
+          stripe_payment_intent_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           card_type: string

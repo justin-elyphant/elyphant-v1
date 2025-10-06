@@ -882,7 +882,7 @@ Object.keys(zincOrderData).forEach((key) => {
 
     // ATOMIC SUBMISSION LOCK - Single point of truth for order processing
     console.log('🔒 Attempting atomic submission lock (replaces old dual-lock system)...');
-    const { data: lockAcquired, error: lockError } = await supabase
+    const { data: lockResult, error: lockError } = await supabase
       .rpc('start_order_processing', { order_uuid: orderId });
 
     if (lockError) {
@@ -890,9 +890,11 @@ Object.keys(zincOrderData).forEach((key) => {
       throw new Error(`Submission lock error: ${lockError.message}`);
     }
 
-    if (!lockAcquired) {
+    // CRITICAL FIX: Check the success field, not the object itself
+    if (!lockResult?.success) {
       console.warn('🛑 ATOMIC DUPLICATE PREVENTION: Another process already claimed this order.');
       console.log(`📊 Order ${orderId} - Atomic lock failed - order being processed elsewhere`);
+      console.log('Lock result:', lockResult);
       
       // Check final order status for proper response
       const { data: finalOrderCheck } = await supabase

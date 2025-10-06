@@ -20,6 +20,7 @@ import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { resolveProductImageUrl } from "@/utils/resolveProductImageUrl";
 
 const Cart = () => {
   const { user } = useAuth();
@@ -267,18 +268,8 @@ const Cart = () => {
                           <div className="flex-shrink-0">
                             <img 
                               src={(() => {
-                                // Robust image selection chain with all fallbacks
-                                const imageUrl = item.product.images?.[0] || 
-                                                item.product.image || 
-                                                (item.product as any).main_image || 
-                                                (item.product as any).image_url || 
-                                                "/placeholder.svg";
-                                console.log(`[CART IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`, {
-                                  images: item.product.images,
-                                  image: item.product.image,
-                                  main_image: (item.product as any).main_image,
-                                  image_url: (item.product as any).image_url
-                                });
+                                const imageUrl = resolveProductImageUrl(item.product);
+                                console.log(`[CART IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`);
                                 return imageUrl;
                               })()} 
                               alt={item.product.name || item.product.title}

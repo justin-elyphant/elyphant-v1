@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       
       try {
         await resend.emails.send({
-          from: 'Elyphant Admin <admin@resend.dev>',
+          from: 'Elyphant <hello@elyphant.ai>',
           to: adminEmails,
           subject: subject,
           html: htmlContent

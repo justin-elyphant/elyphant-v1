@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "");
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <invitations@elyphant.com>",
+      from: "Elyphant <hello@elyphant.ai>",
       to: [recipientEmail],
       subject: `${giftorName} wants to make sure you get the perfect gifts!`,
       html: `

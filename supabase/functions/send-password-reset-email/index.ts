@@ -195,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
     const interstitialLink = `https://elyphant.ai/reset-password/launch?token=${resetToken}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <noreply@elyphant.ai>",
+      from: "Elyphant <hello@elyphant.ai>",
       to: [email],
       subject: "🔐 Reset Your Password - Action Required",
       html: generatePasswordResetEmail(interstitialLink, displayName),

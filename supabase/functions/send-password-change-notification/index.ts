@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending password change notification to:', email);
 
     const emailResponse = await resend.emails.send({
-      from: "Elyphant Security <security@elyphant.com>",
+      from: "Elyphant <hello@elyphant.ai>",
       to: [email],
       subject: "Password Changed Successfully",
       html: `

@@ -66,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "Elyphant <noreply@elyphant.ai>",
+      from: "Elyphant <hello@elyphant.ai>",
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,

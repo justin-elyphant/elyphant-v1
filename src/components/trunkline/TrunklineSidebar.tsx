@@ -81,26 +81,21 @@ const communicationItems = [
   },
 ];
 
-const systemItems = [
+const settingsItems = [
   {
-    title: "Amazon Credentials",
+    title: "Amazon Integration",
     url: "/trunkline/amazon",
-    icon: CreditCard,
+    icon: ShoppingCart,
   },
   {
-    title: "Business Payment Methods",
-    url: "/trunkline/business-payments",
-    icon: CreditCard,
-  },
-  {
-    title: "Zinc Integration",
+    title: "API Configuration",
     url: "/trunkline/zinc",
     icon: Settings,
   },
   {
-    title: "Zinc Debugger",
-    url: "/trunkline/zinc-debugger",
-    icon: Bug,
+    title: "Payment Methods",
+    url: "/trunkline/business-payments",
+    icon: CreditCard,
   },
   {
     title: "Vendors",
@@ -109,26 +104,34 @@ const systemItems = [
   },
 ];
 
-const monitoringItems = [
+const operationsItems = [
   {
-    title: "Analytics",
+    title: "Order Operations",
+    url: "/trunkline/zinc-debugger",
+    icon: Bug,
+  },
+];
+
+const analyticsItems = [
+  {
+    title: "Sales Analytics",
     url: "/trunkline/analytics",
     icon: Activity,
   },
   {
-    title: "Monitoring",
+    title: "System Health",
     url: "/trunkline/monitoring",
     icon: Monitor,
   },
   {
-    title: "Scaling",
+    title: "Performance",
     url: "/trunkline/scaling",
     icon: TrendingUp,
   },
   {
-    title: "Production Hardening",
+    title: "System Security",
     url: "/trunkline/production-hardening", 
-    icon: TestTube,
+    icon: Settings,
   },
 ];
 
@@ -157,17 +160,7 @@ export function TrunklineSidebar() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {state === "expanded" && (
-            <div className="flex flex-col">
-              <h2 className="text-lg font-semibold text-slate-900">Trunkline</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full border border-amber-200">
-                  Internal
-                </span>
-                <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full border border-slate-200">
-                  Test Mode
-                </span>
-              </div>
-            </div>
+            <h2 className="text-lg font-semibold text-slate-900">Trunkline</h2>
           )}
         </div>
         
@@ -247,10 +240,10 @@ export function TrunklineSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {systemItems.map((item) => (
+              {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -273,10 +266,36 @@ export function TrunklineSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Scale Monitoring</SidebarGroupLabel>
+          <SidebarGroupLabel>Analytics & Reports</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {monitoringItems.map((item) => (
+              {analyticsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    className={isActive(item.url) ? "bg-slate-100 text-slate-900 font-medium" : ""}
+                  >
+                    <button
+                      onClick={() => navigate(item.url)}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{item.title}</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Operations Tools</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {operationsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -300,7 +319,7 @@ export function TrunklineSidebar() {
       <SidebarFooter className="border-t border-slate-200 p-4">
         {state === "expanded" && (
           <div className="text-xs text-slate-500">
-            <p>Enhanced Zinc API</p>
+            <p>Order Processing API</p>
             <p className="text-green-600">● Connected</p>
           </div>
         )}

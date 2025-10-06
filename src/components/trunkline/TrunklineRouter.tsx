@@ -7,7 +7,7 @@ import TrunklineCustomersTab from "@/components/trunkline/TrunklineCustomersTab"
 import TrunklineSupportTab from "@/components/trunkline/TrunklineSupportTab";
 import TrunklineAmazonTab from "@/components/trunkline/TrunklineAmazonTab";
 import TrunklineZincTab from "@/components/trunkline/TrunklineZincTab";
-import TrunklineZincDebuggerTab from "@/components/trunkline/TrunklineZincDebuggerTab";
+import OrderOperationsTools from "@/components/trunkline/OrderOperationsTools";
 import TrunklineVendorsTab from "@/components/trunkline/TrunklineVendorsTab";
 import BusinessPaymentMethodManager from "@/components/settings/BusinessPaymentMethodManager";
 import TrunklineAnalytics from "@/pages/trunkline/TrunklineAnalytics";
@@ -40,7 +40,7 @@ export const TrunklineRouter: React.FC = () => {
       case '/zinc':
         return <TrunklineZincTab />;
       case '/zinc-debugger':
-        return <TrunklineZincDebuggerTab />;
+        return <OrderOperationsTools />;
       case '/vendors':
         return <TrunklineVendorsTab />;
       case '/analytics':

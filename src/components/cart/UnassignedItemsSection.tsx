@@ -67,15 +67,24 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
               <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
                 <img 
                   src={(() => {
-                    // Prioritize images array first, then fallback to single image property
-                    const imageUrl = (item.product.images?.length > 0 ? item.product.images[0] : item.product.image) || "/placeholder.svg";
-                    console.log(`[UNASSIGNED IMAGE] Product: ${item.product.title}, Image URL: ${imageUrl}`);
+                    // Robust image selection chain with all fallbacks
+                    const imageUrl = item.product.images?.[0] || 
+                                    item.product.image || 
+                                    (item.product as any).main_image || 
+                                    (item.product as any).image_url || 
+                                    "/placeholder.svg";
+                    console.log(`[UNASSIGNED IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`, {
+                      images: item.product.images,
+                      image: item.product.image,
+                      main_image: (item.product as any).main_image,
+                      image_url: (item.product as any).image_url
+                    });
                     return imageUrl;
                   })()} 
                   alt={item.product.name || item.product.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.log(`[UNASSIGNED IMAGE] Image failed to load: ${e.currentTarget.src}`);
+                    console.log(`[UNASSIGNED IMAGE ERROR] Image failed to load: ${e.currentTarget.src}`);
                     e.currentTarget.src = "/placeholder.svg";
                   }}
                 />

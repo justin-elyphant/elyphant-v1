@@ -533,11 +533,14 @@ class UnifiedPaymentService {
         console.log(`[CART DEBUG] Zinc metadata: productSource=${product.productSource}, isZincApiProduct=${product.isZincApiProduct}`);
       } else {
         // We received a full Product object (with variations)
-        product = productOrId;
+        // CRITICAL: Standardize it to ensure images and other fields are correct
+        product = standardizeProduct(productOrId);
         productId = product.product_id;
         console.log(`[CART DEBUG] Adding product object to cart:`, {
           id: productId,
           title: product.title || product.name,
+          image: product.image,
+          images: product.images,
           variationText: (product as any).variationText,
           selectedVariations: (product as any).selectedVariations
         });

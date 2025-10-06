@@ -267,16 +267,25 @@ const Cart = () => {
                           <div className="flex-shrink-0">
                             <img 
                               src={(() => {
-                                // Prioritize images array first, then fallback to single image property
-                                const imageUrl = (item.product.images?.length > 0 ? item.product.images[0] : item.product.image) || "/placeholder.svg";
-                                console.log(`[CART IMAGE] Product: ${item.product.title}, Image URL: ${imageUrl}`);
+                                // Robust image selection chain with all fallbacks
+                                const imageUrl = item.product.images?.[0] || 
+                                                item.product.image || 
+                                                (item.product as any).main_image || 
+                                                (item.product as any).image_url || 
+                                                "/placeholder.svg";
+                                console.log(`[CART IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`, {
+                                  images: item.product.images,
+                                  image: item.product.image,
+                                  main_image: (item.product as any).main_image,
+                                  image_url: (item.product as any).image_url
+                                });
                                 return imageUrl;
                               })()} 
                               alt={item.product.name || item.product.title}
                               className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md bg-gray-100"
                               loading="lazy"
                               onError={(e) => {
-                                console.log(`[CART IMAGE] Image failed to load: ${e.currentTarget.src}`);
+                                console.log(`[CART IMAGE ERROR] Image failed to load: ${e.currentTarget.src}`);
                                 e.currentTarget.src = "/placeholder.svg";
                               }}
                             />

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 import { Product } from "@/types/product";
+import Header from "@/components/home/Header";
 
 // Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
@@ -204,13 +205,15 @@ const OrderDetail = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8 overflow-x-hidden">
-      <div className="mb-6">
-        <Button variant="outline" onClick={() => navigate("/orders")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Orders
-        </Button>
-      </div>
+    <>
+      <Header />
+      <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8 overflow-x-hidden mt-[120px]">
+        <div className="mb-6">
+          <Button variant="outline" onClick={() => navigate("/orders")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Orders
+          </Button>
+        </div>
 
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -296,7 +299,8 @@ const OrderDetail = () => {
         onTrack={handleTrackPackage}
         onReorder={() => handleReorder()}
       />
-    </div>
+      </div>
+    </>
   );
 };
 

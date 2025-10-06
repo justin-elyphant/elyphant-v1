@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DollarSign, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import ManualBalanceSync from './ManualBalanceSync';
 
 interface FundingStatus {
   currentBalance: number;
@@ -194,17 +195,20 @@ export const ZMAFundingDashboard = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>ZMA Funding Status</CardTitle>
-          <CardDescription>Loading funding information...</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>ZMA Funding Status</CardTitle>
+            <CardDescription>Loading funding information...</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+        <ManualBalanceSync />
+      </div>
     );
   }
 
@@ -372,6 +376,8 @@ export const ZMAFundingDashboard = () => {
           </CardContent>
         </Card>
       )}
+
+      <ManualBalanceSync />
     </div>
   );
 };

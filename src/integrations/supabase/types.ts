@@ -4746,6 +4746,47 @@ export type Database = {
         }
         Relationships: []
       }
+      zma_balance_audit_log: {
+        Row: {
+          account_id: string
+          admin_user_id: string
+          created_at: string | null
+          id: string
+          new_balance: number
+          notes: string | null
+          previous_balance: number | null
+          update_source: string
+        }
+        Insert: {
+          account_id: string
+          admin_user_id: string
+          created_at?: string | null
+          id?: string
+          new_balance: number
+          notes?: string | null
+          previous_balance?: number | null
+          update_source?: string
+        }
+        Update: {
+          account_id?: string
+          admin_user_id?: string
+          created_at?: string | null
+          id?: string
+          new_balance?: number
+          notes?: string | null
+          previous_balance?: number | null
+          update_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zma_balance_audit_log_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "zma_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zma_cost_tracking: {
         Row: {
           cost_amount: number
@@ -5414,6 +5455,10 @@ export type Database = {
       }
       trigger_order_recovery: {
         Args: { order_uuid: string }
+        Returns: Json
+      }
+      update_zma_balance_manual: {
+        Args: { p_new_balance: number; p_notes?: string }
         Returns: Json
       }
       validate_access_pattern: {

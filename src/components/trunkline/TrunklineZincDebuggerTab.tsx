@@ -4,6 +4,7 @@ import ZincOrderDebugger from '@/components/admin/ZincOrderDebugger';
 import OrderRetryTool from '@/components/admin/OrderRetryTool';
 import ZMAAccountManager from '@/components/admin/ZMAAccountManager';
 import SyncZincOrdersButton from '@/components/admin/SyncZincOrdersButton';
+import { ZMAFundingDashboard } from '@/components/admin/ZMAFundingDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

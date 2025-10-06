@@ -2975,8 +2975,12 @@ export type Database = {
           created_at: string
           currency: string
           delivery_groups: Json | null
+          expected_funding_date: string | null
           followup_email_sent: boolean | null
+          funding_allocated_at: string | null
+          funding_hold_reason: string | null
           funding_source: string | null
+          funding_status: string | null
           gift_message: string | null
           gift_options: Json | null
           gift_scheduling_options: Json | null
@@ -3029,8 +3033,12 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          expected_funding_date?: string | null
           followup_email_sent?: boolean | null
+          funding_allocated_at?: string | null
+          funding_hold_reason?: string | null
           funding_source?: string | null
+          funding_status?: string | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
@@ -3083,8 +3091,12 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_groups?: Json | null
+          expected_funding_date?: string | null
           followup_email_sent?: boolean | null
+          funding_allocated_at?: string | null
+          funding_hold_reason?: string | null
           funding_source?: string | null
+          funding_status?: string | null
           gift_message?: string | null
           gift_options?: Json | null
           gift_scheduling_options?: Json | null
@@ -4764,6 +4776,96 @@ export type Database = {
           monthly_total?: number | null
           order_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      zma_funding_alerts: {
+        Row: {
+          alert_sent_at: string | null
+          alert_type: string
+          created_at: string | null
+          email_sent: boolean | null
+          id: string
+          orders_count_waiting: number | null
+          pending_orders_value: number
+          recommended_transfer_amount: number
+          resolved_at: string | null
+          resolved_by: string | null
+          zma_current_balance: number
+        }
+        Insert: {
+          alert_sent_at?: string | null
+          alert_type: string
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          orders_count_waiting?: number | null
+          pending_orders_value: number
+          recommended_transfer_amount: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          zma_current_balance: number
+        }
+        Update: {
+          alert_sent_at?: string | null
+          alert_type?: string
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          orders_count_waiting?: number | null
+          pending_orders_value?: number
+          recommended_transfer_amount?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          zma_current_balance?: number
+        }
+        Relationships: []
+      }
+      zma_funding_schedule: {
+        Row: {
+          admin_confirmed_by: string | null
+          created_at: string | null
+          expected_payout_amount: number | null
+          expected_payout_date: string | null
+          id: string
+          notes: string | null
+          stripe_payout_id: string | null
+          transfer_amount: number | null
+          transfer_date: string | null
+          transferred_to_zinc: boolean | null
+          updated_at: string | null
+          zma_balance_after: number | null
+          zma_balance_before: number | null
+        }
+        Insert: {
+          admin_confirmed_by?: string | null
+          created_at?: string | null
+          expected_payout_amount?: number | null
+          expected_payout_date?: string | null
+          id?: string
+          notes?: string | null
+          stripe_payout_id?: string | null
+          transfer_amount?: number | null
+          transfer_date?: string | null
+          transferred_to_zinc?: boolean | null
+          updated_at?: string | null
+          zma_balance_after?: number | null
+          zma_balance_before?: number | null
+        }
+        Update: {
+          admin_confirmed_by?: string | null
+          created_at?: string | null
+          expected_payout_amount?: number | null
+          expected_payout_date?: string | null
+          id?: string
+          notes?: string | null
+          stripe_payout_id?: string | null
+          transfer_amount?: number | null
+          transfer_date?: string | null
+          transferred_to_zinc?: boolean | null
+          updated_at?: string | null
+          zma_balance_after?: number | null
+          zma_balance_before?: number | null
         }
         Relationships: []
       }

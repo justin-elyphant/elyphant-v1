@@ -222,6 +222,7 @@ serve(async (req) => {
     console.log(`📅 Processing orders scheduled for delivery on or before: ${cutoffDateString}`)
 
     // Enhanced query with correct columns from database schema
+    // FUNDING-AWARE: Only process orders that are funded
     const { data: ordersToProcess, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -234,10 +235,12 @@ serve(async (req) => {
         retry_count,
         gift_scheduling_options,
         delivery_groups,
-        has_multiple_recipients
+        has_multiple_recipients,
+        funding_status
       `)
       .eq('status', 'scheduled')
       .lte('scheduled_delivery_date', cutoffDateString)
+      .neq('funding_status', 'awaiting_funds') // Skip orders awaiting funding
       .order('scheduled_delivery_date', { ascending: true })
 
     if (ordersError) {

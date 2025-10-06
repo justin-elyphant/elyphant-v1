@@ -103,38 +103,55 @@ serve(async (req) => {
           throw new Error('ZMA account not found. Please add a ZMA account first.');
         }
 
-        const balanceResponse = await fetch('https://api.priceyak.com/v2/account/balance', {
-          headers: {
-            'Authorization': `Bearer ${account.api_key}`
+        try {
+          const balanceResponse = await fetch('https://api.priceyak.com/v2/account/balance', {
+            headers: {
+              'Authorization': `Bearer ${account.api_key}`
+            }
+          });
+
+          if (!balanceResponse.ok) {
+            throw new Error('Failed to check balance');
           }
-        });
 
-        if (!balanceResponse.ok) {
-          throw new Error('Failed to check balance');
+          const balance = await balanceResponse.json();
+
+          // Update account balance
+          await supabase
+            .from('zma_accounts')
+            .update({
+              account_balance: balance.balance,
+              last_balance_check: new Date().toISOString()
+            })
+            .eq('id', account.id);
+
+          console.log(`💰 Balance check for ${account.account_name}: $${balance.balance}`);
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              balance: balance.balance,
+              account_name: account.account_name,
+              message: 'Balance updated successfully',
+              source: 'live'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (e) {
+          console.warn('⚠️ Balance check unavailable, using cached value:', e?.message || e);
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              balance: account.account_balance ?? null,
+              account_name: account.account_name,
+              message: 'Balance service unavailable, showing last known balance',
+              source: 'cache',
+              last_balance_check: account.last_balance_check || null
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-
-        const balance = await balanceResponse.json();
-
-        // Update account balance
-        await supabase
-          .from('zma_accounts')
-          .update({
-            account_balance: balance.balance,
-            last_balance_check: new Date().toISOString()
-          })
-          .eq('id', account_id);
-
-        console.log(`💰 Balance check for ${account.account_name}: $${balance.balance}`);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            balance: balance.balance,
-            account_name: account.account_name,
-            message: 'Balance updated successfully'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
 
       case 'list':
         const { data: accounts, error: listError } = await supabase

@@ -134,6 +134,14 @@ export const standardizeProduct = (product: any): any => {
       }
     }
   
+  // Process images first to ensure we have them for the image field
+  const processedImages = (() => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images.filter((img: any) => img && typeof img === 'string');
+    }
+    return [product.main_image || product.image || "/placeholder.svg"];
+  })();
+
   return {
     // Spread the original product first
     ...product,
@@ -145,7 +153,8 @@ export const standardizeProduct = (product: any): any => {
     title: product.title || product.name || "Unnamed Product",
     name: product.name || product.title || "Unnamed Product",
     price: normalizedPrice, // This must come AFTER the spread to override
-    image: product.image || "/placeholder.svg",
+    image: processedImages[0] || "/placeholder.svg", // Use first image from processed images array
+    images: processedImages, // Set the images array
     
     // Optional fields
     description: product.description || "",
@@ -170,12 +179,6 @@ export const standardizeProduct = (product: any): any => {
         console.log(`Brand extracted: "${extractedBrand}" for product: ${product.title || product.name}`);
       }
       return extractedBrand;
-    })(),
-    images: (() => {
-      if (Array.isArray(product.images) && product.images.length > 0) {
-        return product.images.filter(img => img && typeof img === 'string');
-      }
-      return [product.main_image || product.image || "/placeholder.svg"];
     })(),
     
     // NEW: Preserve enhanced Zinc API variation fields

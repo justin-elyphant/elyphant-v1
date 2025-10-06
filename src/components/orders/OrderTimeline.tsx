@@ -71,21 +71,115 @@ const OrderTimeline = ({
   };
 
   const getStatusFromZincEvent = (eventType: string, orderStatus: string): "completed" | "active" | "inactive" => {
-    // If we have real Zinc events, use them to determine status
-    const completedEvents = ['request.placed', 'request.finished'];
+    // Use the order status to override event status for final states
+    if (orderStatus === "delivered") {
+      return "completed";
+    }
+    
     const activeEvents = ['shipment.shipped'];
-    const finalEvents = ['shipment.delivered', 'request.failed', 'request.cancelled'];
+    const finalEvents = ['shipment.delivered'];
     
     if (finalEvents.includes(eventType)) return "completed";
     if (activeEvents.includes(eventType) && orderStatus === "shipped") return "active";
-    if (completedEvents.includes(eventType)) return "completed";
-    return "inactive";
+    return "completed";
+  };
+
+  const synthesizeTimelineFromStatus = (): TimelineEvent[] => {
+    const baseTime = new Date(orderDate);
+    
+    // Find actual zinc events for timestamps
+    const placedEvent = zincTimelineEvents.find(e => e.type === 'request.placed');
+    const processingEvent = zincTimelineEvents.find(e => e.type === 'request.finished');
+    const shippedEvent = zincTimelineEvents.find(e => 
+      e.type === 'shipment.shipped' || e.type === 'tracking.available'
+    );
+    const deliveredEvent = zincTimelineEvents.find(e => e.type === 'shipment.delivered');
+    
+    // Get merchant tracking data for delivery date
+    const deliveryDate = merchantTrackingData?.delivery_dates?.[0];
+    
+    const timeline: TimelineEvent[] = [
+      {
+        id: "placed",
+        title: "Order Placed",
+        description: "Your order has been received and confirmed",
+        timestamp: placedEvent ? new Date(placedEvent.timestamp) : baseTime,
+        status: "completed",
+        icon: Package,
+        source: placedEvent ? 'zinc' : 'estimated'
+      },
+      {
+        id: "processing",
+        title: "Processing",
+        description: "We're preparing your items for shipment",
+        timestamp: processingEvent 
+          ? new Date(processingEvent.timestamp) 
+          : new Date(baseTime.getTime() + 2 * 60 * 60 * 1000),
+        status: "completed",
+        icon: Clock,
+        source: processingEvent ? 'zinc' : 'estimated'
+      },
+      {
+        id: "shipped",
+        title: "Shipped",
+        description: "Your package is on its way",
+        timestamp: shippedEvent 
+          ? new Date(shippedEvent.timestamp) 
+          : new Date(baseTime.getTime() + 24 * 60 * 60 * 1000),
+        status: "completed",
+        icon: Truck,
+        source: shippedEvent ? 'zinc' : 'estimated',
+        trackingUrl: shippedEvent?.data?.tracking_url || merchantTrackingData?.merchant_order_ids?.[0]?.tracking_url
+      },
+      {
+        id: "delivered",
+        title: "Delivered",
+        description: "Package delivered successfully",
+        timestamp: deliveredEvent 
+          ? new Date(deliveredEvent.timestamp)
+          : deliveryDate?.date 
+            ? new Date(deliveryDate.date)
+            : new Date(baseTime.getTime() + 3 * 24 * 60 * 60 * 1000),
+        status: "completed",
+        icon: Home,
+        source: deliveredEvent ? 'zinc' : deliveryDate ? 'merchant' : 'estimated'
+      }
+    ];
+    
+    return timeline;
   };
 
   const getTimelineEvents = (): TimelineEvent[] => {
-    // If we have real Zinc timeline events, use them instead of estimated ones
+    // PRIORITY 1: If order is delivered, synthesize complete timeline
+    if (orderStatus === "delivered") {
+      return synthesizeTimelineFromStatus();
+    }
+    
+    // PRIORITY 2: If order is shipped, synthesize up to shipped
+    if (orderStatus === "shipped") {
+      const timeline = synthesizeTimelineFromStatus();
+      // Mark delivered as inactive
+      return timeline.map(event => 
+        event.id === "delivered" 
+          ? { ...event, status: "inactive" as const } 
+          : event
+      );
+    }
+    
+    // PRIORITY 3: Use Zinc timeline events for in-progress orders
     if (zincTimelineEvents && zincTimelineEvents.length > 0) {
-      const zincEvents: TimelineEvent[] = zincTimelineEvents.map(event => ({
+      // Deduplicate events by type - keep only the latest of each type
+      const eventsByType = new Map<string, ZincTimelineEvent>();
+      zincTimelineEvents.forEach(event => {
+        const existing = eventsByType.get(event.type);
+        if (!existing || new Date(event.timestamp) > new Date(existing.timestamp)) {
+          eventsByType.set(event.type, event);
+        }
+      });
+      
+      const uniqueEvents = Array.from(eventsByType.values());
+      
+      const zincEvents: TimelineEvent[] = uniqueEvents.map(event => ({
         id: event.id,
         title: event.title,
         description: event.description,
@@ -111,7 +205,7 @@ const OrderTimeline = ({
       return zincEvents.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     }
 
-    // Fallback to estimated timeline if no Zinc events available
+    // PRIORITY 4: Fallback to estimated timeline
     const baseEvents: TimelineEvent[] = [
       {
         id: "placed",
@@ -126,7 +220,7 @@ const OrderTimeline = ({
         id: "processing",
         title: "Processing",
         description: "We're preparing your items for shipment",
-        timestamp: new Date(new Date(orderDate).getTime() + 2 * 60 * 60 * 1000), // +2 hours
+        timestamp: new Date(new Date(orderDate).getTime() + 2 * 60 * 60 * 1000),
         status: orderStatus === "pending" ? "inactive" : "completed",
         icon: Clock,
         source: 'estimated'
@@ -135,7 +229,7 @@ const OrderTimeline = ({
         id: "shipped",
         title: "Shipped",
         description: "Your package is on its way",
-        timestamp: new Date(new Date(orderDate).getTime() + 24 * 60 * 60 * 1000), // +1 day
+        timestamp: new Date(new Date(orderDate).getTime() + 24 * 60 * 60 * 1000),
         status: orderStatus === "shipped" ? "active" : orderStatus === "delivered" ? "completed" : "inactive",
         icon: Truck,
         source: 'estimated'
@@ -144,7 +238,7 @@ const OrderTimeline = ({
         id: "delivered",
         title: "Delivered",
         description: "Package delivered successfully",
-        timestamp: new Date(new Date(orderDate).getTime() + 3 * 24 * 60 * 60 * 1000), // +3 days
+        timestamp: new Date(new Date(orderDate).getTime() + 3 * 24 * 60 * 60 * 1000),
         status: orderStatus === "delivered" ? "completed" : "inactive",
         icon: Home,
         source: 'estimated'

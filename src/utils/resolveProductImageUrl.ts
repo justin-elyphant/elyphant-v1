@@ -7,7 +7,7 @@ import { getExactProductImage } from "@/components/marketplace/zinc/utils/images
 function isValidImageString(val: any): val is string {
   if (!val || typeof val !== "string") return false;
   const trimmed = val.trim();
-  if (!trimmed || trimmed === "null" || trimmed === "undefined" || trimmed === "N/A") return false;
+  if (!trimmed || trimmed === "null" || trimmed === "undefined" || trimmed.toLowerCase().includes("placeholder")) return false;
   // Accept http(s), data URIs, blob, and root-relative paths
   return (
     trimmed.startsWith("http://") ||
@@ -21,6 +21,10 @@ function isValidImageString(val: any): val is string {
 function extractFromImageObject(obj: any): string | undefined {
   if (!obj || typeof obj !== "object") return undefined;
   const keys = [
+    "hiRes",
+    "large",
+    "medium",
+    "small",
     "image",
     "image_url",
     "url",

@@ -136,10 +136,48 @@ export const standardizeProduct = (product: any): any => {
   
   // Process images first to ensure we have them for the image field
   const processedImages = (() => {
+    const results: string[] = [];
+
+    const tryPush = (val: any) => {
+      if (typeof val === 'string' && val && val !== 'null' && val !== 'undefined') {
+        results.push(val);
+      }
+    };
+
+    // If images array exists, normalize it (can contain strings or objects)
     if (Array.isArray(product.images) && product.images.length > 0) {
-      return product.images.filter((img: any) => img && typeof img === 'string');
+      for (const entry of product.images) {
+        if (typeof entry === 'string') {
+          // Skip known placeholders
+          if (entry.includes('placeholder')) continue;
+          tryPush(entry);
+        } else if (entry && typeof entry === 'object') {
+          // Common keys seen from Amazon/Zinc and other feeds
+          const objKeys = [
+            'hiRes', 'large', 'medium', 'small',
+            'image', 'image_url', 'url', 'src', 'link', 'href',
+            'main_image', 'thumbnail', 'thumb'
+          ];
+          for (const k of objKeys) {
+            const val = entry[k];
+            if (typeof val === 'string' && !val.includes('placeholder')) { tryPush(val); break; }
+          }
+        }
+      }
     }
-    return [product.main_image || product.image || "/placeholder.svg"];
+
+    // If still empty, use single-image fields (prefer real images over placeholders)
+    if (results.length === 0) {
+      const singles = [product.main_image, product.image, product.image_url, product.imageUrl];
+      for (const s of singles) {
+        if (typeof s === 'string' && s && !s.includes('placeholder')) {
+          tryPush(s);
+        }
+      }
+    }
+
+    // Final fallback
+    return results.length > 0 ? results : ["/placeholder.svg"];
   })();
 
   return {

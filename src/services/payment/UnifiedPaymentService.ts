@@ -234,10 +234,22 @@ class UnifiedPaymentService {
             return [];
           }
           
-          return parsedData.items || [];
+          const items = parsedData.items || [];
+          // CRITICAL: Standardize all products to ensure images and other fields are correct
+          return items.map((item: CartItem) => ({
+            ...item,
+            product: standardizeProduct(item.product)
+          }));
         } else {
           // Handle legacy format (array of items)
-          return Array.isArray(parsedData) ? parsedData : [];
+          if (Array.isArray(parsedData)) {
+            // Standardize legacy format as well
+            return parsedData.map((item: CartItem) => ({
+              ...item,
+              product: standardizeProduct(item.product)
+            }));
+          }
+          return [];
         }
       } else {
         return [];
@@ -1438,7 +1450,12 @@ class UnifiedPaymentService {
       
       if (data?.cart_data) {
         console.log('[CART SYNC] Successfully loaded cart from server');
-        return data.cart_data as unknown as CartItem[];
+        const cartItems = data.cart_data as unknown as CartItem[];
+        // CRITICAL: Standardize all products to ensure images and other fields are correct
+        return cartItems.map(item => ({
+          ...item,
+          product: standardizeProduct(item.product)
+        }));
       }
       
       return [];

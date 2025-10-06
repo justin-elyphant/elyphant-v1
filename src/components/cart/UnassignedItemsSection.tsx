@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Users, UserPlus, AlertTriangle, User } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
-import { resolveProductImageUrl } from '@/utils/resolveProductImageUrl';
+import CartItemImage from '@/components/cart/CartItemImage';
 
 interface UnassignedItemsSectionProps {
   unassignedItems: CartItem[];
@@ -65,21 +65,7 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
         <div className="space-y-2">
           {unassignedItems.map((item) => (
             <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border">
-              <div className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
-                <img 
-                  src={(() => {
-                    const imageUrl = resolveProductImageUrl(item.product);
-                    console.log(`[UNASSIGNED IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`);
-                    return imageUrl;
-                  })()} 
-                  alt={item.product.name || item.product.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    console.log(`[UNASSIGNED IMAGE ERROR] Image failed to load: ${e.currentTarget.src}`);
-                    e.currentTarget.src = "/placeholder.svg";
-                  }}
-                />
-              </div>
+              <CartItemImage item={item} size="md" className="flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
                   {item.product.name || item.product.title}

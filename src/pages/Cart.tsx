@@ -13,6 +13,7 @@ import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
+import CartItemImage from "@/components/cart/CartItemImage";
 import MultiDestinationSummary from "@/components/cart/MultiDestinationSummary";
 import ItemGiftMessageSection from "@/components/cart/ItemGiftMessageSection";
 import RecipientPackagePreview from "@/components/cart/RecipientPackagePreview";
@@ -20,7 +21,6 @@ import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { resolveProductImageUrl } from "@/utils/resolveProductImageUrl";
 
 const Cart = () => {
   const { user } = useAuth();
@@ -266,20 +266,7 @@ const Cart = () => {
                       <div key={item.product.product_id} className="p-4 border rounded-lg mobile-card">
                         <div className="flex gap-3 lg:gap-4">
                           <div className="flex-shrink-0">
-                            <img 
-                              src={(() => {
-                                const imageUrl = resolveProductImageUrl(item.product);
-                                console.log(`[CART IMAGE] Product: ${item.product.title}, product_id: ${item.product.product_id}, Image URL: ${imageUrl}`);
-                                return imageUrl;
-                              })()} 
-                              alt={item.product.name || item.product.title}
-                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md bg-gray-100"
-                              loading="lazy"
-                              onError={(e) => {
-                                console.log(`[CART IMAGE ERROR] Image failed to load: ${e.currentTarget.src}`);
-                                e.currentTarget.src = "/placeholder.svg";
-                              }}
-                            />
+                            <CartItemImage item={item} size="md" />
                           </div>
                           
                           <div className="flex-1 min-w-0">

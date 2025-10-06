@@ -24,6 +24,7 @@ import MobileActionBar from "@/components/orders/MobileActionBar";
 import OrderTimeline from "@/components/orders/OrderTimeline";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
+import { format } from "date-fns";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -87,7 +88,9 @@ const OrderDetail = () => {
             shipping_info: data.shipping_info || {},
             customerName: (data.shipping_info as any)?.name || user?.user_metadata?.name || "Customer",
             tracking_number: data.tracking_number || null,
-            zinc_order_id: data.zinc_order_id || null
+            zinc_order_id: data.zinc_order_id || null,
+            merchant_tracking_data: data.merchant_tracking_data,
+            zinc_timeline_events: data.zinc_timeline_events
           };
           setOrder(transformedOrder);
         }
@@ -103,6 +106,31 @@ const OrderDetail = () => {
     fetchOrder();
   }, [orderId, navigate, user]);
 
+  // Smart delivery date extraction helper
+  const getDeliveryDateText = (order: any): string | null => {
+    // Priority 1: If delivered, find actual delivery timestamp from timeline
+    if (order.status === 'delivered' && order.zinc_timeline_events) {
+      const deliveredEvent = order.zinc_timeline_events.find(
+        (e: any) => e.type === 'shipment.delivered'
+      );
+      if (deliveredEvent) {
+        return format(new Date(deliveredEvent.timestamp), "MMM d, yyyy");
+      }
+    }
+    
+    // Priority 2: Use merchant tracking data estimated delivery
+    if (order.merchant_tracking_data?.delivery_dates?.[0]) {
+      const deliveryDate = order.merchant_tracking_data.delivery_dates[0];
+      return deliveryDate.delivery_date || format(new Date(deliveryDate.date), "MMM d, yyyy");
+    }
+    
+    // Priority 3: Use scheduled delivery date from order
+    if (order.scheduled_delivery_date) {
+      return format(new Date(order.scheduled_delivery_date), "MMM d, yyyy");
+    }
+    
+    return null;
+  };
 
   const handleReorder = (item?: any) => {
     toast.success("Item added to cart", {
@@ -186,7 +214,7 @@ const OrderDetail = () => {
       <OrderProgressStepper 
         status={order.status} 
         trackingNumber={order.tracking_number}
-        estimatedDelivery="Tomorrow by 8 PM"
+        estimatedDelivery={getDeliveryDateText(order)}
         zincTimelineEvents={order.zinc_timeline_events}
       />
 

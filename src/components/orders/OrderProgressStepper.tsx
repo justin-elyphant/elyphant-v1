@@ -48,7 +48,11 @@ const OrderProgressStepper = ({
       id: "delivered",
       label: "Delivered",
       icon: Home,
-      description: estimatedDelivery ? `Est. ${estimatedDelivery}` : "Package delivered"
+      description: status === "delivered" 
+        ? (estimatedDelivery || "Package delivered successfully")
+        : estimatedDelivery 
+          ? `Est. ${estimatedDelivery}` 
+          : "Package delivered"
     }
   ];
 

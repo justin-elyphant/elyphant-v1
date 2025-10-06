@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
+import { Product } from "@/types/product";
 
 // Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
@@ -29,6 +31,7 @@ import { format } from "date-fns";
 const OrderDetail = () => {
   const { orderId } = useParams();
   const { user, isLoading: authLoading } = useAuth();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [order, setOrder] = useState(null);
@@ -132,10 +135,43 @@ const OrderDetail = () => {
     return null;
   };
 
-  const handleReorder = (item?: any) => {
-    toast.success("Item added to cart", {
-      description: "You can review your cart and checkout when ready."
-    });
+  const handleReorder = async (item?: any) => {
+    if (!item) {
+      toast.error("Unable to reorder", {
+        description: "Product information is incomplete."
+      });
+      return;
+    }
+
+    try {
+      // Convert order item to Product type
+      const product: Product = {
+        product_id: item.product_id || item.id,
+        title: item.name || item.product_name || "Product",
+        price: item.unit_price || item.price || 0,
+        image: item.image_url || item.image || "/placeholder.svg",
+        name: item.name || item.product_name,
+        id: item.product_id || item.id,
+        retailer: item.retailer || "amazon",
+        brand: item.brand,
+        category: item.category,
+      };
+
+      await addToCart(product, item.quantity || 1);
+      
+      toast.success("Item added to cart", {
+        description: "Ready to checkout",
+        action: {
+          label: "View Cart",
+          onClick: () => navigate("/cart")
+        }
+      });
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      toast.error("Failed to add item to cart", {
+        description: "Please try again or contact support."
+      });
+    }
   };
 
 

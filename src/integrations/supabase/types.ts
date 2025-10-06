@@ -4871,6 +4871,7 @@ export type Database = {
           id: string
           notes: string | null
           stripe_payout_id: string | null
+          total_markup_retained: number | null
           transfer_amount: number | null
           transfer_date: string | null
           transferred_to_zinc: boolean | null
@@ -4886,6 +4887,7 @@ export type Database = {
           id?: string
           notes?: string | null
           stripe_payout_id?: string | null
+          total_markup_retained?: number | null
           transfer_amount?: number | null
           transfer_date?: string | null
           transferred_to_zinc?: boolean | null
@@ -4901,6 +4903,7 @@ export type Database = {
           id?: string
           notes?: string | null
           stripe_payout_id?: string | null
+          total_markup_retained?: number | null
           transfer_amount?: number | null
           transfer_date?: string | null
           transferred_to_zinc?: boolean | null

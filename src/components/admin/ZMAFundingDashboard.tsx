@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { DollarSign, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ManualBalanceSync from './ManualBalanceSync';
+import { MarkupRevenueTracker } from './MarkupRevenueTracker';
 
 interface FundingStatus {
   currentBalance: number;
@@ -18,6 +19,8 @@ interface FundingStatus {
   ordersWaiting: number;
   shortfall: number;
   recommendedTransfer: number;
+  zincCostOnly: number;
+  markupRetained: number;
   nextExpectedPayout?: {
     date: string;
     amount: number;
@@ -60,14 +63,24 @@ export const ZMAFundingDashboard = () => {
       // Get orders awaiting funding
       const { data: awaitingOrders, error: ordersError } = await supabase
         .from('orders')
-        .select('total_amount')
+        .select('total_amount, gifting_fee')
         .eq('funding_status', 'awaiting_funds');
 
       if (ordersError) throw ordersError;
 
       const pendingValue = awaitingOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
+      
+      // Calculate Zinc cost (base amount excluding markup)
+      const zincCost = awaitingOrders?.reduce((sum, o) => {
+        const baseAmount = (o.total_amount || 0) - (o.gifting_fee || 0);
+        return sum + baseAmount;
+      }, 0) || 0;
+      
+      // Calculate markup retained (profit)
+      const markupRetained = awaitingOrders?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
+      
       const ordersCount = awaitingOrders?.length || 0;
-      const shortfall = Math.max(0, pendingValue - currentBalance);
+      const shortfall = Math.max(0, zincCost - currentBalance);
       const recommendedTransfer = shortfall > 0 ? Math.ceil(shortfall * 1.1) : 0; // Add 10% buffer
 
       setFundingStatus({
@@ -75,7 +88,9 @@ export const ZMAFundingDashboard = () => {
         pendingOrdersValue: pendingValue,
         ordersWaiting: ordersCount,
         shortfall,
-        recommendedTransfer
+        recommendedTransfer,
+        zincCostOnly: zincCost,
+        markupRetained
       });
 
       // Get recent funding alerts
@@ -144,6 +159,7 @@ export const ZMAFundingDashboard = () => {
           admin_confirmed_by: user.id,
           zma_balance_before: fundingStatus?.currentBalance || 0,
           transferred_to_zinc: true,
+          total_markup_retained: fundingStatus?.markupRetained || 0,
           notes: transferNotes || 'Manual transfer confirmed via dashboard'
         });
 
@@ -237,7 +253,7 @@ export const ZMAFundingDashboard = () => {
         <CardContent className="space-y-4">
           {fundingStatus && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2 p-4 border rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <DollarSign className="h-4 w-4" />
@@ -251,10 +267,26 @@ export const ZMAFundingDashboard = () => {
                 <div className="space-y-2 p-4 border rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
-                    <span>Pending Orders</span>
+                    <span>Pending Orders (Zinc Cost)</span>
                   </div>
                   <div className="text-2xl font-bold">
-                    {fundingStatus.ordersWaiting} orders · ${fundingStatus.pendingOrdersValue.toFixed(2)}
+                    {fundingStatus.ordersWaiting} orders · ${fundingStatus.zincCostOnly.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Total with markup: ${fundingStatus.pendingOrdersValue.toFixed(2)}
+                  </div>
+                </div>
+
+                <div className="space-y-2 p-4 border rounded-lg bg-primary/5">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Markup Retained (Profit)</span>
+                  </div>
+                  <div className="text-2xl font-bold text-primary">
+                    ${fundingStatus.markupRetained.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    From pending orders
                   </div>
                 </div>
               </div>
@@ -268,6 +300,10 @@ export const ZMAFundingDashboard = () => {
                     </div>
                     <div className="text-sm mb-3">
                       Transfer <strong>${fundingStatus.recommendedTransfer.toFixed(2)}</strong> to Zinc via PayPal to process {fundingStatus.ordersWaiting} pending {fundingStatus.ordersWaiting === 1 ? 'order' : 'orders'}.
+                      <br />
+                      <span className="text-xs text-muted-foreground">
+                        (Zinc cost: ${fundingStatus.zincCostOnly.toFixed(2)} + 10% buffer. Markup ${fundingStatus.markupRetained.toFixed(2)} retained as profit)
+                      </span>
                     </div>
                     <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
                       <DialogTrigger asChild>
@@ -377,6 +413,8 @@ export const ZMAFundingDashboard = () => {
         </Card>
       )}
 
+      <MarkupRevenueTracker />
+      
       <ManualBalanceSync />
     </div>
   );

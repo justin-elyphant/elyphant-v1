@@ -153,6 +153,21 @@ Deno.serve(async (req) => {
       throw new Error('No ZMA API key found for user');
     }
 
+    // Generate webhook token for this order
+    const webhookToken = btoa(JSON.stringify({
+      orderId,
+      timestamp: Date.now(),
+      nonce: crypto.randomUUID().substring(0, 12)
+    }));
+
+    // Save webhook token to database
+    await supabase
+      .from('orders')
+      .update({ webhook_token: webhookToken })
+      .eq('id', orderId);
+
+    const baseWebhookUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/zinc-webhook-handler?token=${webhookToken}&orderId=${orderId}`;
+
     // Make ZMA API call
     console.log(`📞 Calling ZMA API for order ${orderId}`);
     const zmaResponse = await fetch('https://api.zinc.io/v1/order', {
@@ -163,6 +178,13 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         idempotency_key: orderId,
+        webhooks: {
+          tracking_obtained: baseWebhookUrl,
+          tracking_updated: baseWebhookUrl,
+          status_updated: baseWebhookUrl,
+          request_succeeded: baseWebhookUrl,
+          request_failed: baseWebhookUrl
+        },
         ...zmaOrderData
       })
     });

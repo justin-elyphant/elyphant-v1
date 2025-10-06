@@ -40,13 +40,13 @@ serve(async (req) => {
 
     const syncLogId = syncLog?.id;
 
-    // Find orders stuck in submitted_to_zinc status for > 10 minutes
+    // Find orders stuck in submitted_to_zinc or processing status for > 10 minutes
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     
     const { data: pendingOrders, error: queryError } = await supabase
       .from('orders')
       .select('id, zinc_order_id, order_number, created_at, status')
-      .eq('status', 'submitted_to_zinc')
+      .in('status', ['submitted_to_zinc', 'processing'])
       .lt('created_at', tenMinutesAgo)
       .not('zinc_order_id', 'is', null)
       .order('created_at', { ascending: true })

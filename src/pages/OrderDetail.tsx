@@ -138,11 +138,6 @@ const OrderDetail = () => {
     });
   };
 
-  const handleReview = (item?: any) => {
-    toast.info("Review feature coming soon", {
-      description: "We'll notify you when this feature is available."
-    });
-  };
 
   const handleTrackPackage = () => {
     // Scroll to tracking card or open external tracking
@@ -228,13 +223,11 @@ const OrderDetail = () => {
             <MobileOrderItemsList 
               order={order} 
               onReorder={handleReorder}
-              onReview={handleReview}
             />
           ) : (
             <EnhancedOrderItemsTable 
               order={order} 
               onReorder={handleReorder}
-              onReview={handleReview}
             />
           )}
         </div>
@@ -266,7 +259,6 @@ const OrderDetail = () => {
         order={order}
         onTrack={handleTrackPackage}
         onReorder={() => handleReorder()}
-        onReview={() => handleReview()}
       />
     </div>
   );

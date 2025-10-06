@@ -23,23 +23,17 @@ import EnhancedOrderItemImage from "./EnhancedOrderItemImage";
 interface EnhancedOrderItemsTableProps {
   order: ZincOrder;
   onReorder?: (item: any) => void;
-  onReview?: (item: any) => void;
 }
 
 const EnhancedOrderItemsTable = ({ 
   order, 
-  onReorder, 
-  onReview 
+  onReorder
 }: EnhancedOrderItemsTableProps) => {
   // Get pricing breakdown for consistent display (handles legacy orders)
   const pricingBreakdown = getOrderPricingBreakdown(order);
 
   const handleReorder = (item: any) => {
     onReorder?.(item);
-  };
-
-  const handleReview = (item: any) => {
-    onReview?.(item);
   };
 
   return (
@@ -112,17 +106,6 @@ const EnhancedOrderItemsTable = ({
                       <RotateCcw className="h-3 w-3 mr-1" />
                       Reorder
                     </Button>
-                    {order.status === "delivered" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleReview(item)}
-                        className="h-9 px-3 hover:bg-accent hover:text-accent-foreground transition-colors"
-                      >
-                        <Star className="h-3 w-3 mr-1" />
-                        Review
-                      </Button>
-                    )}
                   </div>
                 </TableCell>
               </TableRow>

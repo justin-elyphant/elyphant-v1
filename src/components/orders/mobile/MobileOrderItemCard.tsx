@@ -9,14 +9,12 @@ interface MobileOrderItemCardProps {
   item: any;
   orderStatus: string;
   onReorder?: (item: any) => void;
-  onReview?: (item: any) => void;
 }
 
 const MobileOrderItemCard = ({ 
   item, 
   orderStatus, 
-  onReorder, 
-  onReview 
+  onReorder
 }: MobileOrderItemCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);

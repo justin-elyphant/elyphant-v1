@@ -7,14 +7,12 @@ interface MobileActionBarProps {
   order: ZincOrder;
   onTrack?: () => void;
   onReorder?: () => void;
-  onReview?: () => void;
 }
 
 const MobileActionBar = ({ 
   order, 
   onTrack, 
-  onReorder, 
-  onReview 
+  onReorder
 }: MobileActionBarProps) => {
   return (
     <div className="floating-action-bar md:hidden">
@@ -37,16 +35,6 @@ const MobileActionBar = ({
         >
           <RotateCcw className="h-4 w-4" />
         </Button>
-        
-        {order.status === "delivered" && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={onReview}
-          >
-            <Star className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </div>
   );

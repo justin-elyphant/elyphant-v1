@@ -7,13 +7,11 @@ import MobileOrderItemCard from "./MobileOrderItemCard";
 interface MobileOrderItemsListProps {
   order: ZincOrder;
   onReorder?: (item: any) => void;
-  onReview?: (item: any) => void;
 }
 
 const MobileOrderItemsList = ({ 
   order, 
-  onReorder, 
-  onReview 
+  onReorder
 }: MobileOrderItemsListProps) => {
   // Get pricing breakdown for consistent display (handles legacy orders)
   const pricingBreakdown = getOrderPricingBreakdown(order);
@@ -38,7 +36,6 @@ const MobileOrderItemsList = ({
                 item={mergedItem}
                 orderStatus={order.status}
                 onReorder={onReorder}
-                onReview={onReview}
               />
             );
           })}

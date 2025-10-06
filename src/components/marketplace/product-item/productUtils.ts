@@ -125,7 +125,6 @@ export const standardizeProduct = (product: any): any => {
         if (isZincProduct && Number.isInteger(rawPrice) && rawPrice >= 100) {
           // Convert from cents to dollars for Zinc API products
           normalizedPrice = rawPrice / 100;
-          console.log(`[ZINC PRICING] Converted ${rawPrice} cents to $${normalizedPrice} for Zinc product`);
         } else {
           normalizedPrice = rawPrice;
         }
@@ -206,18 +205,12 @@ export const standardizeProduct = (product: any): any => {
     num_reviews: product.num_reviews || product.reviewCount || 10,
     
     // Enhanced brand extraction - try multiple possible brand field names
-    brand: (() => {
-      const extractedBrand = product.brand || 
-                           product.brand_name || 
-                           product.manufacturer || 
-                           product.vendor_name ||
-                           extractBrandFromTitle(product.title || product.name || "") || 
-                           "";
-      if (extractedBrand) {
-        console.log(`Brand extracted: "${extractedBrand}" for product: ${product.title || product.name}`);
-      }
-      return extractedBrand;
-    })(),
+    brand: product.brand || 
+           product.brand_name || 
+           product.manufacturer || 
+           product.vendor_name ||
+           extractBrandFromTitle(product.title || product.name || "") || 
+           "",
     
     // NEW: Preserve enhanced Zinc API variation fields
     variant_specifics: product.variant_specifics || undefined,

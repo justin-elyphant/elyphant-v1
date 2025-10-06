@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.1.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface EmailNotificationRequest {
   recipientEmail: string;
@@ -21,6 +25,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const {
       recipientEmail,
       subject,
@@ -42,19 +50,53 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Sending ${notificationType} email to ${recipientEmail}`);
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
-    // Mock email sending since resend is not available
-    console.log(`Would send email to: ${recipientEmail}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Type: ${notificationType}`);
+    console.log(`📧 Sending ${notificationType} email to ${recipientEmail}`);
+
+    // Send email via Resend
+    const emailResponse = await resend.emails.send({
+      from: "Elyphant <noreply@elyphant.ai>",
+      to: [recipientEmail],
+      subject: subject,
+      html: htmlContent,
+    });
+
+    console.log("✅ Email sent successfully:", emailResponse);
+
+    // Track email in analytics
+    try {
+      await supabase
+        .from('email_analytics')
+        .insert({
+          recipient_email: recipientEmail,
+          template_type: notificationType,
+          delivery_status: 'sent',
+          resend_message_id: emailResponse.data?.id,
+          sent_at: new Date().toISOString()
+        });
+    } catch (analyticsError) {
+      console.warn('⚠️ Failed to track email analytics:', analyticsError);
+      // Don't fail the email send if analytics tracking fails
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Email notification processed (mock)",
+      message: "Email notification sent successfully",
       recipientEmail,
       subject,
-      type: notificationType
+      type: notificationType,
+      emailId: emailResponse.data?.id
     }), {
       status: 200,
       headers: {
@@ -63,16 +105,17 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-email-notification function:", error);
+    console.error("❌ Error in send-email-notification function:", error);
     
     // Handle Resend-specific errors
-    if (error.message?.includes('API key')) {
+    if (error.message?.includes('API key') || error.message?.includes('Resend')) {
       return new Response(
         JSON.stringify({ 
-          error: "Email service configuration error. Please check API key." 
+          error: "Email service temporarily unavailable",
+          details: "Please try again in a few minutes"
         }),
         {
-          status: 500,
+          status: 503,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
@@ -92,7 +135,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Failed to send email notification" 
+        error: "Failed to send email notification",
+        details: error.message 
       }),
       {
         status: 500,

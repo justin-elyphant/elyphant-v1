@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.sync-zinc-orders]
 verify_jwt = false
+
+[functions.send-email-notification]
+verify_jwt = false
+
+[functions.send-welcome-wishlist]
+verify_jwt = false
+
+[functions.process-email-queue]
+verify_jwt = false

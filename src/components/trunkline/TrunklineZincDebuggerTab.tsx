@@ -5,6 +5,7 @@ import OrderRetryTool from '@/components/admin/OrderRetryTool';
 import ZMAAccountManager from '@/components/admin/ZMAAccountManager';
 import SyncZincOrdersButton from '@/components/admin/SyncZincOrdersButton';
 import { ZMAFundingDashboard } from '@/components/admin/ZMAFundingDashboard';
+import ForceProcessOrder from '@/components/admin/ForceProcessOrder';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -27,10 +28,11 @@ const TrunklineZincDebuggerTab = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="funding" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="funding">💰 Funding</TabsTrigger>
             <TabsTrigger value="debugger">Order Debugger</TabsTrigger>
             <TabsTrigger value="retry">Order Retry Tool</TabsTrigger>
+            <TabsTrigger value="force">🚨 Force Process</TabsTrigger>
             <TabsTrigger value="zma">ZMA Accounts</TabsTrigger>
           </TabsList>
             <TabsContent value="funding" className="mt-6">
@@ -67,6 +69,17 @@ const TrunklineZincDebuggerTab = () => {
                   </p>
                 </div>
                 <OrderRetryTool />
+              </div>
+            </TabsContent>
+            <TabsContent value="force" className="mt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Force Process Order (VIP Override)</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Bypass funding checks to process VIP or urgent orders immediately. Admin only.
+                  </p>
+                </div>
+                <ForceProcessOrder />
               </div>
             </TabsContent>
             <TabsContent value="zma" className="mt-6">

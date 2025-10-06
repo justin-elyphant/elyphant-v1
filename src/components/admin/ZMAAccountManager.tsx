@@ -23,6 +23,8 @@ const ZMAAccountManager = () => {
   const [newAccountName, setNewAccountName] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [pendingOrdersValue, setPendingOrdersValue] = useState(0);
   const { toast } = useToast();
 
   const loadAccounts = async () => {
@@ -40,6 +42,65 @@ const ZMAAccountManager = () => {
       console.error('Failed to load ZMA accounts:', error);
       toast(`Failed to load accounts: ${error.message}`);
     }
+  };
+
+  const loadPendingOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('funding_status', 'awaiting_funds');
+
+      if (error) throw error;
+
+      setPendingOrdersCount(data?.length || 0);
+      setPendingOrdersValue(data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0);
+    } catch (error) {
+      console.error('Failed to load pending orders:', error);
+    }
+  };
+
+  const checkFundingStatus = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-zma-funding-status', {
+        body: { manualTrigger: true }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast('Funding status checked successfully');
+        loadAccounts();
+        loadPendingOrders();
+      }
+    } catch (error) {
+      console.error('Failed to check funding status:', error);
+      toast(`Failed to check funding status: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (balance: number) => {
+    if (pendingOrdersValue === 0) return 'default';
+    if (balance >= pendingOrdersValue) return 'success';
+    if (balance >= pendingOrdersValue * 0.5) return 'warning';
+    return 'destructive';
+  };
+
+  const getStatusIcon = (balance: number) => {
+    if (pendingOrdersValue === 0) return '🟢';
+    if (balance >= pendingOrdersValue) return '🟢';
+    if (balance >= pendingOrdersValue * 0.5) return '🟡';
+    return '🔴';
+  };
+
+  const getStatusText = (balance: number) => {
+    if (pendingOrdersValue === 0) return 'No pending orders';
+    if (balance >= pendingOrdersValue) return 'Balance sufficient for all pending orders';
+    if (balance >= pendingOrdersValue * 0.5) return 'Balance low, can process some orders';
+    return 'Balance insufficient, orders on hold';
   };
 
   const createAccount = async () => {
@@ -125,6 +186,7 @@ const ZMAAccountManager = () => {
 
   useEffect(() => {
     loadAccounts();
+    loadPendingOrders();
   }, []);
 
   return (
@@ -138,11 +200,19 @@ const ZMAAccountManager = () => {
                 Manage Zinc Managed Accounts for reliable order processing
               </CardDescription>
             </div>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button>Add Account</Button>
-              </DialogTrigger>
-              <DialogContent>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={checkFundingStatus}
+                disabled={loading}
+              >
+                Check Funding Status
+              </Button>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button>Add Account</Button>
+                </DialogTrigger>
+                <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add ZMA Account</DialogTitle>
                   <DialogDescription>
@@ -178,6 +248,7 @@ const ZMAAccountManager = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -200,9 +271,20 @@ const ZMAAccountManager = () => {
                           {account.account_status}
                         </Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Balance: ${account.account_balance}
+                      <div className="text-sm font-medium">
+                        Balance: ${account.account_balance.toFixed(2)}
+                        {pendingOrdersCount > 0 && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            ({pendingOrdersCount} orders pending, ${pendingOrdersValue.toFixed(2)})
+                          </span>
+                        )}
                       </div>
+                      {account.is_default && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span>{getStatusIcon(account.account_balance)}</span>
+                          <span className="text-muted-foreground">{getStatusText(account.account_balance)}</span>
+                        </div>
+                      )}
                       <div className="text-xs text-muted-foreground">
                         Last checked: {new Date(account.last_balance_check).toLocaleString()}
                       </div>

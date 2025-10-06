@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.send-zma-funding-alert]
 verify_jwt = false
+
+[functions.force-process-order]
+verify_jwt = false

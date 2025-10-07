@@ -93,10 +93,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   // Get order details
   const { data: order, error } = await supabase
     .from('orders')
-    .select(`
-      *,
-      profiles(name, email)
-    `)
+    .select('*')
     .eq('id', orderId)
     .single();
 

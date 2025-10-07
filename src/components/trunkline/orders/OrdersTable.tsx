@@ -129,6 +129,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                   <TableHead>Status</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead className="hidden lg:table-cell">Items</TableHead>
+                  <TableHead className="hidden lg:table-cell">Funding</TableHead>
                   <TableHead className="hidden lg:table-cell">Date</TableHead>
                   <TableHead className="hidden xl:table-cell">Method</TableHead>
                   <TableHead className="hidden xl:table-cell">External ID</TableHead>
@@ -181,6 +182,20 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                         {order.order_items?.length || 0} items
                       </span>
                     </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {(order as any).funding_status ? (
+                      <Badge 
+                        variant={(order as any).funding_status === 'funded' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {(order as any).funding_status === 'awaiting_funds' && '⏳ Awaiting'}
+                        {(order as any).funding_status === 'funds_allocated' && '🔒 Allocated'}
+                        {(order as any).funding_status === 'funded' && '✅ Funded'}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-slate-400">N/A</span>
+                    )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="text-sm">

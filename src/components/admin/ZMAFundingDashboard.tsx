@@ -21,6 +21,10 @@ interface FundingStatus {
   recommendedTransfer: number;
   zincCostOnly: number;
   markupRetained: number;
+  availableBalance: number; // Current - allocated to pending
+  allocatedBalance: number; // Allocated to pending orders
+  avgGiftingFeePercent: number; // Average markup %
+  lastSyncAt?: string; // Last balance sync timestamp
   nextExpectedPayout?: {
     date: string;
     amount: number;
@@ -79,7 +83,19 @@ export const ZMAFundingDashboard = () => {
       // Calculate markup retained (profit)
       const markupRetained = awaitingOrders?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
       
+      // Calculate average gifting fee percentage
+      const avgGiftingFeePercent = awaitingOrders && awaitingOrders.length > 0
+        ? awaitingOrders.reduce((sum, o) => {
+            if (o.total_amount && o.total_amount > 0) {
+              return sum + ((o.gifting_fee || 0) / o.total_amount) * 100;
+            }
+            return sum;
+          }, 0) / awaitingOrders.length
+        : 15; // Default to 15% if no orders
+      
       const ordersCount = awaitingOrders?.length || 0;
+      const allocatedBalance = zincCost; // Amount allocated to pending orders
+      const availableBalance = Math.max(0, currentBalance - allocatedBalance);
       const shortfall = Math.max(0, zincCost - currentBalance);
       const recommendedTransfer = shortfall > 0 ? Math.ceil(shortfall * 1.1) : 0; // Add 10% buffer
 
@@ -90,7 +106,11 @@ export const ZMAFundingDashboard = () => {
         shortfall,
         recommendedTransfer,
         zincCostOnly: zincCost,
-        markupRetained
+        markupRetained,
+        availableBalance,
+        allocatedBalance,
+        avgGiftingFeePercent,
+        lastSyncAt: new Date().toISOString()
       });
 
       // Get recent funding alerts
@@ -158,6 +178,7 @@ export const ZMAFundingDashboard = () => {
           transfer_amount: parseFloat(transferAmount),
           admin_confirmed_by: user.id,
           zma_balance_before: fundingStatus?.currentBalance || 0,
+          zma_balance_after: (fundingStatus?.currentBalance || 0) + parseFloat(transferAmount),
           transferred_to_zinc: true,
           total_markup_retained: fundingStatus?.markupRetained || 0,
           notes: transferNotes || 'Manual transfer confirmed via dashboard'
@@ -262,6 +283,25 @@ export const ZMAFundingDashboard = () => {
                   <div className="text-2xl font-bold">
                     ${fundingStatus.currentBalance.toFixed(2)}
                   </div>
+                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Available:</span>
+                      <span className="font-medium text-green-600">
+                        ${fundingStatus.availableBalance.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Allocated:</span>
+                      <span className="font-medium text-orange-600">
+                        ${fundingStatus.allocatedBalance.toFixed(2)}
+                      </span>
+                    </div>
+                    {fundingStatus.lastSyncAt && (
+                      <div className="text-[10px] text-muted-foreground pt-1 border-t">
+                        Last sync: {new Date(fundingStatus.lastSyncAt).toLocaleTimeString()}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2 p-4 border rounded-lg">
@@ -285,8 +325,14 @@ export const ZMAFundingDashboard = () => {
                   <div className="text-2xl font-bold text-primary">
                     ${fundingStatus.markupRetained.toFixed(2)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    From pending orders
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>From pending orders</div>
+                    <div className="flex items-center gap-1 pt-1 border-t">
+                      <span className="font-semibold text-primary">
+                        {fundingStatus.avgGiftingFeePercent.toFixed(1)}%
+                      </span>
+                      <span className="text-[10px]">avg gifting fee</span>
+                    </div>
                   </div>
                 </div>
               </div>

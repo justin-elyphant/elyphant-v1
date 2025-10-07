@@ -66,50 +66,55 @@ const PaymentSuccess = () => {
           return;
         }
 
-        // Use confirm-payment with exponential backoff retry logic
-        const retryPaymentConfirmation = async (attempt = 1, maxAttempts = 3) => {
-          const delays = [0, 5000, 15000]; // immediate, 5s, 15s
+        // Poll Orders table with exponential backoff
+        const pollOrderStatus = async (attempt = 1, maxAttempts = 6) => {
+          const delays = [2000, 3000, 5000, 8000, 10000, 15000]; // Progressive delays
           
-          // Don't override progressive messaging for retries
           if (attempt > 1) {
             const elapsed = Date.now() - startTime;
             if (elapsed < 120000) {
-              setProcessingStatus(`Processing your order (attempt ${attempt})...`);
+              setProcessingStatus(`Checking order status (${attempt}/${maxAttempts})...`);
             } else {
-              setProcessingStatus(`Payment verification in progress (attempt ${attempt}) - this is normal for security`);
+              setProcessingStatus(`Payment verification in progress - this is normal for security`);
             }
           }
           
           try {
-            const { data, error } = await supabase.functions.invoke('confirm-payment', {
-              body: { session_id: sessionId }
-            });
+            // Poll the Orders table - webhook updates this
+            const { data: order, error } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('stripe_session_id', sessionId)
+              .maybeSingle();
 
             if (error) throw new Error(error.message);
 
-            if (data?.success && data?.payment_status === 'succeeded') {
+            if (order?.payment_status === 'succeeded') {
               clearCart();
-              setOrderNumber(data.order?.order_number || '');
+              setOrderNumber(order.order_number || '');
               setProcessingStatus('Order confirmed!');
               toast.success('Payment confirmed! Your order is being processed.');
               return true;
-            } else if (data?.payment_status === 'pending' && attempt < maxAttempts) {
-              // Payment still processing, retry
-              await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-              return retryPaymentConfirmation(attempt + 1, maxAttempts);
+            } else if (attempt < maxAttempts) {
+              // Order still processing, retry after delay
+              await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
+              return pollOrderStatus(attempt + 1, maxAttempts);
             } else {
-              throw new Error('Payment confirmation failed');
+              // Max attempts reached - order should be in system by now
+              setProcessingStatus('Order created - processing may take a few minutes');
+              toast.success('Your order has been received and is being processed.');
+              return true;
             }
           } catch (retryError) {
             if (attempt < maxAttempts) {
-              await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-              return retryPaymentConfirmation(attempt + 1, maxAttempts);
+              await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
+              return pollOrderStatus(attempt + 1, maxAttempts);
             }
             throw retryError;
           }
         };
 
-        await retryPaymentConfirmation();
+        await pollOrderStatus();
         
       } catch (error) {
         console.error('Payment verification error:', error);

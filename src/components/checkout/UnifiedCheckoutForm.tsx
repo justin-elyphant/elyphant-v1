@@ -236,25 +236,8 @@ const UnifiedCheckoutForm: React.FC = () => {
       const order = await createOrder(orderData);
       console.log('✅ Order created successfully:', order.id);
       
-      // 📧 Send order confirmation email (best-effort)
-      try {
-        const userEmail = checkoutData.shippingInfo.email;
-        const paymentMethodUsed = paymentMethodId ? 'saved_payment_method' : 'card';
-        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-confirmation', {
-          body: {
-            order_id: order.id,
-            user_email: userEmail,
-            payment_method_used: paymentMethodUsed
-          }
-        });
-        if (emailError) {
-          console.warn('⚠️ Failed to send confirmation email:', emailError);
-        } else {
-          console.log('📧 Order confirmation email queued:', emailResult);
-        }
-      } catch (emailException) {
-        console.warn('⚠️ Exception while sending confirmation email:', emailException);
-      }
+      // Email will be sent by ecommerce-email-orchestrator via webhook/process-zma-order
+      console.log('📧 Email will be sent automatically via ecommerce-email-orchestrator');
       
       // Save address to profile if needed
       try {

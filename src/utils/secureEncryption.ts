@@ -22,7 +22,7 @@ class SecureEncryption {
     return crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: salt,
+        salt: salt as BufferSource,
         iterations: this.ITERATIONS,
         hash: 'SHA-256'
       },
@@ -81,7 +81,7 @@ class SecureEncryption {
       const encryptedBuffer = await crypto.subtle.encrypt(
         {
           name: this.ALGORITHM,
-          iv: iv
+          iv: iv as BufferSource
         },
         key,
         dataBuffer
@@ -124,7 +124,7 @@ class SecureEncryption {
       const decryptedBuffer = await crypto.subtle.decrypt(
         {
           name: this.ALGORITHM,
-          iv: iv
+          iv: iv as BufferSource
         },
         key,
         data

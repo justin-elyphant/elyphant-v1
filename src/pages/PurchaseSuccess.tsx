@@ -26,27 +26,28 @@ const PurchaseSuccess = () => {
     
     const fetchPurchaseDetails = async () => {
       try {
-        // If this is coming from a Stripe checkout session
+        // Poll Orders table directly - single source of truth
         if (sessionId) {
-          // In a production app, verify the session with Supabase function
-          const { data, error } = await supabase.functions.invoke('verify-session', {
-            body: { sessionId }
-          });
+          const { data: order, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('stripe_session_id', sessionId)
+            .maybeSingle();
           
-          if (!error && data) {
-            setPurchaseDetails(data);
+          if (!error && order) {
+            setPurchaseDetails(order);
           }
         } 
-        // If this is coming from a direct Zinc purchase
+        // If this is coming from a direct order ID
         else if (orderId) {
-          // Fetch order details from local storage or API
-          const savedOrders = localStorage.getItem('zincOrders');
-          if (savedOrders) {
-            const orders = JSON.parse(savedOrders);
-            const order = orders.find((o: any) => o.id === orderId);
-            if (order) {
-              setPurchaseDetails(order);
-            }
+          const { data: order, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', orderId)
+            .maybeSingle();
+            
+          if (!error && order) {
+            setPurchaseDetails(order);
           }
         }
       } catch (err) {

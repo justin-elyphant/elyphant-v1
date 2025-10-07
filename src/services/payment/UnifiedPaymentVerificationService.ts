@@ -1,20 +1,19 @@
 /**
  * Unified Payment Verification Service
  * 
- * Single source of truth for all payment verification operations.
- * Consolidates logic from confirm-payment, verifyPaymentStatus, and webhook handlers.
+ * Single source of truth for payment status checks.
+ * Polls the Orders table which is kept up-to-date by stripe-webhook.
  * 
  * Features:
- * - Eventual consistency handling
+ * - Eventual consistency handling via polling
  * - Exponential backoff retry logic
  * - Unified error handling
- * - Integration with existing Supabase functions
+ * - Direct database queries (no intermediate edge functions)
  * 
  * Usage:
- * - PaymentSuccess component
  * - OrderStatusBadge refresh functionality
- * - Webhook handlers
- * - Payment reconciliation processes
+ * - Payment status checks
+ * - Reconciliation processes
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -129,7 +128,7 @@ class UnifiedPaymentVerificationService {
   }
 
   /**
-   * Core verification logic - calls existing confirm-payment edge function
+   * Core verification logic - polls Orders table (updated by stripe-webhook)
    */
   private async performVerification(
     sessionId?: string,
@@ -137,29 +136,40 @@ class UnifiedPaymentVerificationService {
     source = 'manual'
   ): Promise<PaymentVerificationResult> {
     try {
-      // Use existing confirm-payment edge function for consistency
-      const { data, error } = await supabase.functions.invoke('confirm-payment', {
-        body: {
-          session_id: sessionId,
-          payment_intent_id: paymentIntentId,
-          source: source
-        }
-      });
+      // Query Orders table directly - webhook keeps it updated
+      let query = supabase.from('orders').select('*');
+      
+      if (sessionId) {
+        query = query.eq('stripe_session_id', sessionId);
+      } else if (paymentIntentId) {
+        query = query.eq('stripe_payment_intent_id', paymentIntentId);
+      }
+      
+      const { data: order, error } = await query.maybeSingle();
 
       if (error) {
         throw new Error(error.message);
       }
 
-      if (data?.success) {
+      if (order) {
+        const paymentStatus = order.payment_status === 'succeeded' || order.payment_status === 'failed' 
+          ? order.payment_status 
+          : 'pending';
+        
         return {
-          success: true,
-          payment_status: data.payment_status,
-          order_status: data.order_status,
-          order: data.order,
-          source: 'stripe_api'
+          success: order.payment_status === 'succeeded',
+          payment_status: paymentStatus as 'pending' | 'succeeded' | 'failed',
+          order_status: order.status,
+          order: order,
+          source: 'database'
         };
       } else {
-        throw new Error('Payment verification failed');
+        return {
+          success: false,
+          payment_status: 'pending',
+          order_status: 'pending',
+          source: 'database'
+        };
       }
     } catch (error) {
       console.error('❌ [UnifiedPaymentVerification] Verification failed:', error);
@@ -253,10 +263,11 @@ class UnifiedPaymentVerificationService {
    */
   async healthCheck(): Promise<{ healthy: boolean; message: string }> {
     try {
-      // Test the confirm-payment function with a dummy call
-      const { error } = await supabase.functions.invoke('confirm-payment', {
-        body: { health_check: true }
-      });
+      // Test database connection with a simple query
+      const { error } = await supabase
+        .from('orders')
+        .select('id')
+        .limit(1);
       
       return {
         healthy: !error,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,17 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
+  const [portalPos, setPortalPos] = useState<{ left: number; top: number; width: number }>({ left: 0, top: 0, width: 0 });
+
+  const updatePortalPos = useCallback(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const top = Math.round(rect.bottom + 8); // small gap under the bar
+    setPortalPos({ left: Math.round(rect.left), top, width: Math.round(rect.width) });
+  }, []);
 
   // Handle mode toggle
   const handleModeToggle = (checked: boolean) => {
@@ -222,10 +233,14 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   }, [voiceError, resetTranscript]);
 
-  // Click outside detection
+  // Click outside detection (account for portal)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (portalRef.current && portalRef.current.contains(target)) {
+        return; // clicks inside the portal shouldn't close it
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setShowSuggestions(false);
       }
     };
@@ -235,6 +250,19 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Keep portal positioned with the input bar
+  useEffect(() => {
+    if (!showSuggestions || isNicoleMode) return;
+    updatePortalPos();
+    const handler = () => updatePortalPos();
+    window.addEventListener('resize', handler);
+    window.addEventListener('scroll', handler, true);
+    return () => {
+      window.removeEventListener('resize', handler);
+      window.removeEventListener('scroll', handler, true);
+    };
+  }, [showSuggestions, isNicoleMode, updatePortalPos, query]);
 
   const placeholderText = isNicoleMode 
     ? (isMobile ? "Ask Nicole about gifts..." : "Ask Nicole anything about gifts...")
@@ -297,7 +325,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   return (
     <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       <form onSubmit={handleSearch} className="relative">
-        <div className={`relative flex items-center transition-all duration-300 ${
+        <div ref={barRef} className={`relative flex items-center transition-all duration-300 ${
           mobile 
             ? 'bg-background border border-border rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
             : 'bg-background border border-border rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
@@ -390,8 +418,12 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       )}
 
       {/* Search Suggestions */}
-      {!isNicoleMode && showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-[600]">
+      {!isNicoleMode && showSuggestions && createPortal(
+        <div
+          ref={portalRef}
+          style={{ position: 'fixed', left: portalPos.left, top: portalPos.top, width: portalPos.width, zIndex: 10000 }}
+          className="pointer-events-auto"
+        >
           {query.trim() ? (
             <UnifiedSearchSuggestions
               friends={unifiedResults.friends}
@@ -410,7 +442,8 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               onSearchSelect={handleRecentSearchSelect}
             />
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Full Modal - Lazy Loaded */}

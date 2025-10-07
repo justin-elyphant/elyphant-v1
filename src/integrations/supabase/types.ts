@@ -5473,9 +5473,7 @@ export type Database = {
         Returns: string[]
       }
       start_order_processing: {
-        Args:
-          | { order_uuid: string }
-          | { order_uuid: string; processing_user?: string }
+        Args: { order_uuid: string }
         Returns: Json
       }
       track_zma_cost: {

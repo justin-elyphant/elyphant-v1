@@ -2,7 +2,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -61,7 +61,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     <div className="min-h-screen w-full overflow-x-hidden max-w-[100vw]">
       {/* Fixed header wrapper with measured height */}
       <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-50 overflow-x-hidden max-w-[100vw]">
-        <Header />
+        <UnifiedShopperHeader mode="main" />
       </div>
       
       {/* Sidebar layout below header */}

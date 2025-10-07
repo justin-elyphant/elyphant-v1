@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 
 const Dashboard = () => {
@@ -95,7 +95,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen w-full overflow-x-hidden">
         {/* Always render Header for mobile */}
-        <Header />
+        <UnifiedShopperHeader mode="main" />
         
         {/* Mobile dashboard content */}
         <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>

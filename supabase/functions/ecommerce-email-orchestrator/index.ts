@@ -528,13 +528,19 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
     .from('orders')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!order.profiles) {
+    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
+    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   // Check if followup email already sent

@@ -390,7 +390,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
 
       {/* Search Suggestions */}
       {!isNicoleMode && showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-[100]">
+        <div className="absolute top-full left-0 right-0 mt-2 z-[300]">
           {query.trim() ? (
             <UnifiedSearchSuggestions
               friends={unifiedResults.friends}

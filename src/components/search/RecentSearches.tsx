@@ -16,7 +16,7 @@ const RecentSearches: React.FC<RecentSearchesProps> = ({
   if (searches.length === 0) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-lg shadow-lg mt-1">
+    <div className="bg-background border border-border rounded-lg shadow-lg">
       <div className="p-3">
         <div className="flex items-center gap-2 mb-2">
           <Clock className="h-4 w-4 text-muted-foreground" />

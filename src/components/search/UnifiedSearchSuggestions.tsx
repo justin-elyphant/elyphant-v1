@@ -35,7 +35,7 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
   if (!hasResults) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-[100] bg-background border border-border rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto">
+    <div className="bg-background border border-border rounded-lg shadow-lg max-h-96 overflow-y-auto">
       {/* Friends Section */}
       {friends.length > 0 && (
         <div className="border-b border-gray-100">

@@ -77,6 +77,8 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Portal refs for dropdown positioning - using createPortal to bypass any CSS clipping/overflow issues
   const barRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const [portalPos, setPortalPos] = useState<{ left: number; top: number; width: number }>({ left: 0, top: 0, width: 0 });

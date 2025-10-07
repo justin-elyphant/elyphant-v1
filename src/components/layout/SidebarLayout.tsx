@@ -60,7 +60,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <div className="min-h-screen w-full overflow-x-hidden max-w-[100vw]">
       {/* Fixed header wrapper with measured height */}
-      <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-[500] overflow-x-hidden overflow-y-visible max-w-[100vw]">
+      <div ref={headerWrapperRef} className="fixed top-0 left-0 right-0 z-40 overflow-x-hidden max-w-[100vw]">
         <UnifiedShopperHeader mode="main" />
       </div>
       

@@ -166,7 +166,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   const variables = {
     customer_name: recipientName,
     order_number: order.order_number,
-    total_amount: (order.total_amount / 100).toFixed(2),
+    total_amount: order.total_amount?.toFixed(2) || '0.00',
     order_date: new Date(order.created_at).toLocaleDateString(),
     order_tracking_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/orders/${order.id}`,
     support_email: 'hello@elyphant.ai'
@@ -256,7 +256,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
   const variables = {
     customer_name: recipientName,
     order_number: order.order_number,
-    total_amount: (order.total_amount / 100).toFixed(2),
+    total_amount: order.total_amount?.toFixed(2) || '0.00',
     payment_method: 'Card ending in ****',
     transaction_id: order.stripe_payment_intent_id || 'N/A',
     order_tracking_url: `${Deno.env.get('SITE_URL')}/orders/${order.id}`

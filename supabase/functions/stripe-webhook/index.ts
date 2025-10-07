@@ -80,8 +80,23 @@ serve(async (req) => {
 
 async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
   console.log(`💳 Payment succeeded: ${paymentIntent.id}`);
+  const startTime = Date.now();
   
   try {
+    // Log webhook delivery
+    await supabase.from('webhook_delivery_log').insert({
+      event_type: 'payment_intent.succeeded',
+      event_id: paymentIntent.id,
+      delivery_status: 'processing',
+      status_code: 200,
+      payment_intent_id: paymentIntent.id,
+      metadata: {
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        customer: paymentIntent.customer
+      }
+    });
+
     // Update order status to payment confirmed
     const { data: order, error: updateError } = await supabase
       .from('orders')
@@ -97,6 +112,18 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
 
     if (updateError) {
       console.error('❌ Failed to update order after payment success:', updateError);
+      
+      // Log failure
+      await supabase.from('webhook_delivery_log').insert({
+        event_type: 'payment_intent.succeeded',
+        event_id: paymentIntent.id,
+        delivery_status: 'failed',
+        status_code: 500,
+        error_message: updateError.message,
+        payment_intent_id: paymentIntent.id,
+        processing_duration_ms: Date.now() - startTime
+      });
+      
       return;
     }
 
@@ -116,13 +143,46 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           }
         });
         console.log(`🚀 Direct ZMA processor invoked for order ${order.id}`);
+        
+        // Log success
+        await supabase.from('webhook_delivery_log').insert({
+          event_type: 'payment_intent.succeeded',
+          event_id: paymentIntent.id,
+          delivery_status: 'completed',
+          status_code: 200,
+          payment_intent_id: paymentIntent.id,
+          order_id: order.id,
+          processing_duration_ms: Date.now() - startTime
+        });
       } catch (processError) {
         console.error('⚠️ Failed to trigger order processing:', processError);
-        // Don't fail the webhook, order processing can be retried later
+        
+        // Log processing failure
+        await supabase.from('webhook_delivery_log').insert({
+          event_type: 'payment_intent.succeeded',
+          event_id: paymentIntent.id,
+          delivery_status: 'processing_failed',
+          status_code: 500,
+          error_message: processError.message,
+          payment_intent_id: paymentIntent.id,
+          order_id: order.id,
+          processing_duration_ms: Date.now() - startTime
+        });
       }
     }
   } catch (error) {
     console.error('❌ Error handling payment success:', error);
+    
+    // Log general error
+    await supabase.from('webhook_delivery_log').insert({
+      event_type: 'payment_intent.succeeded',
+      event_id: paymentIntent.id,
+      delivery_status: 'error',
+      status_code: 500,
+      error_message: error.message,
+      payment_intent_id: paymentIntent.id,
+      processing_duration_ms: Date.now() - startTime
+    });
   }
 }
 

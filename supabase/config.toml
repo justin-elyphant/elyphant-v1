@@ -1,5 +1,8 @@
 project_id = "dmkxtkvlispxeqfzlczr"
 
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.send-order-receipt]
 verify_jwt = true
 
@@ -46,4 +49,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.force-process-order]
+verify_jwt = false
+
+[functions.recover-order]
 verify_jwt = false

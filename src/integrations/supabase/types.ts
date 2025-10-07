@@ -4604,6 +4604,54 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_delivery_log: {
+        Row: {
+          created_at: string | null
+          delivery_status: string
+          error_message: string | null
+          event_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          payment_intent_id: string | null
+          processing_duration_ms: number | null
+          status_code: number | null
+          stripe_signature: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_status?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          payment_intent_id?: string | null
+          processing_duration_ms?: number | null
+          status_code?: number | null
+          stripe_signature?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_status?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          payment_intent_id?: string | null
+          processing_duration_ms?: number | null
+          status_code?: number | null
+          stripe_signature?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       wishlist_items: {
         Row: {
           brand: string | null

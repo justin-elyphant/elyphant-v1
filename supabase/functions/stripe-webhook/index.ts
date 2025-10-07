@@ -129,6 +129,25 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     if (order) {
       console.log(`✅ Order ${order.id} updated for successful payment`);
       
+      // 📧 Trigger payment confirmation email
+      try {
+        console.log('📧 Triggering payment confirmation email...');
+        const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'payment_confirmed',
+            orderId: order.id
+          }
+        });
+        
+        if (emailError) {
+          console.error('⚠️ Failed to send payment confirmation email:', emailError);
+        } else {
+          console.log('✅ Payment confirmation email triggered');
+        }
+      } catch (emailError) {
+        console.error('⚠️ Error triggering payment confirmation email:', emailError);
+      }
+      
       // Call process-zma-order directly (consolidated, single path)
       try {
         await supabase.functions.invoke('process-zma-order', {

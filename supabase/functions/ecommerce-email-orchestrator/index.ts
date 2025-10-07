@@ -1,14 +1,18 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "https://esm.sh/resend@2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Initialize Resend client
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
 interface EmailRequest {
-  eventType: 'order_created' | 'payment_confirmed' | 'order_status_changed' | 'order_cancelled' | 'user_welcomed' | 'cart_abandoned' | 'post_purchase_followup';
+  eventType: 'order_created' | 'payment_confirmed' | 'order_status_changed' | 'order_cancelled' | 'user_welcomed' | 'cart_abandoned' | 'post_purchase_followup' | 'auto_gift_approval' | 'gift_invitation';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -54,6 +58,12 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'post_purchase_followup':
         result = await handlePostPurchaseFollowup(supabase, orderId!);
+        break;
+      case 'auto_gift_approval':
+        result = await handleAutoGiftApproval(supabase, customData!);
+        break;
+      case 'gift_invitation':
+        result = await handleGiftInvitation(supabase, customData!);
         break;
       default:
         throw new Error(`Unknown event type: ${eventType}`);
@@ -550,6 +560,169 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
         resend_message_id: emailResponse.data?.id
       })
   ]);
+
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+async function handleAutoGiftApproval(supabase: any, customData: any) {
+  const html = `
+    <h2>Auto-Gift Approval Required</h2>
+    <p>Hello! An auto-gift is ready for your approval.</p>
+    
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3>Gift Details</h3>
+      <p><strong>Occasion:</strong> ${customData.occasion}</p>
+      <p><strong>Recipient:</strong> ${customData.recipientName}</p>
+      <p><strong>Budget:</strong> $${customData.budget}</p>
+      <p><strong>Total Amount:</strong> $${customData.totalAmount.toFixed(2)}</p>
+      ${customData.deliveryDate ? `<p><strong>Delivery Date:</strong> ${customData.deliveryDate}</p>` : ''}
+    </div>
+
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+      <h4>Selected Products:</h4>
+      <pre style="white-space: pre-wrap;">${customData.productList}</pre>
+    </div>
+
+    ${customData.shippingAddress ? `
+      <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4>Shipping Address:</h4>
+        <p><strong>Source:</strong> ${customData.shippingAddress.source}</p>
+        ${customData.shippingAddress.needs_confirmation ? '<p style="color: #e67e22;"><strong>⚠️ Address requires confirmation</strong></p>' : ''}
+      </div>
+    ` : ''}
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${customData.approveUrl}" style="background: #27ae60; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
+        ✅ Approve Gift
+      </a>
+      <a href="${customData.rejectUrl}" style="background: #e74c3c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
+        ❌ Reject Gift
+      </a>
+    </div>
+
+    <p style="color: #666; font-size: 12px;">
+      This approval request expires on ${new Date(customData.expiresAt).toLocaleDateString()}.
+      If you don't respond, the gift will be automatically cancelled.
+    </p>
+  `;
+
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `Auto-Gift Approval Required - ${customData.occasion} for ${customData.recipientName}`,
+    html,
+  });
+
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+async function handleGiftInvitation(supabase: any, customData: any) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>You're Invited to Elyphant!</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+      
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 16px; text-align: center; margin-bottom: 30px;">
+        <h1 style="color: white; margin: 0 0 10px 0; font-size: 28px; font-weight: 700;">
+          🎁 You're Invited to Elyphant!
+        </h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 18px;">
+          ${customData.giftorName} wants to get you amazing gifts${customData.occasionText}${customData.dateText}
+        </p>
+      </div>
+
+      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px;">
+        <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 22px;">Hi ${customData.recipientName}! 👋</h2>
+        
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #4a5568;">
+          ${customData.giftorName} has invited you to join <strong>Elyphant</strong> - the platform that ensures you get gifts you'll actually love!
+        </p>
+        
+        ${customData.occasion ? `
+          <div style="background: #edf2f7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+            <p style="margin: 0; font-size: 16px; color: #2d3748;">
+              <strong>🎉 Special Occasion:</strong> ${customData.giftorName} wants to make your ${customData.occasion}${customData.dateText} extra special!
+            </p>
+          </div>
+        ` : ''}
+
+        <h3 style="color: #2d3748; margin: 30px 0 15px 0; font-size: 20px;">✨ What makes Elyphant special?</h3>
+        
+        <ul style="padding-left: 0; list-style: none;">
+          <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+            <span style="position: absolute; left: 0; top: 2px; font-size: 18px;">🎯</span>
+            <strong>Perfect Gift Matching:</strong> Create your wishlist and preferences so ${customData.giftorName} knows exactly what you love
+          </li>
+          <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+            <span style="position: absolute; left: 0; top: 2px; font-size: 18px;">🤖</span>
+            <strong>AI-Powered Curation:</strong> Nicole, our AI gift advisor, learns your style and suggests amazing options
+          </li>
+          <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+            <span style="position: absolute; left: 0; top: 2px; font-size: 18px;">🎉</span>
+            <strong>Surprise & Delight:</strong> Never get another gift you don't want - every surprise will be perfect
+          </li>
+          <li style="margin: 15px 0; padding-left: 30px; position: relative;">
+            <span style="position: absolute; left: 0; top: 2px; font-size: 18px;">🔒</span>
+            <strong>Privacy First:</strong> Your preferences are private - only you and your gift-givers see them
+          </li>
+        </ul>
+
+        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
+          <p style="margin: 0 0 20px 0; font-size: 16px; color: #2d3748;">
+            <strong>Ready to get gifts you'll love?</strong><br>
+            Join Elyphant and help ${customData.giftorName} pick the perfect gifts for you!
+          </p>
+          
+          <a href="${customData.invitationUrl}" 
+             style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 10px 0;">
+            🎁 Create My Profile & Wishlist
+          </a>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px;">
+        <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 18px;">🚀 Getting started is easy:</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">1</span>
+            <span>Click the link above to create your profile (takes 2 minutes)</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">2</span>
+            <span>Tell Nicole about your interests, brands you love, and sizes</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">3</span>
+            <span>Enjoy receiving perfectly curated gifts from ${customData.giftorName}!</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 20px; color: #718096; font-size: 14px;">
+        <p style="margin: 0 0 10px 0;">
+          This invitation was sent by ${customData.giftorName} through Elyphant.
+        </p>
+        <p style="margin: 0;">
+          Questions? Reply to this email or visit our help center.
+        </p>
+      </div>
+
+    </body>
+    </html>
+  `;
+
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `${customData.giftorName} wants to make sure you get the perfect gifts!`,
+    html,
+  });
 
   return { emailSent: true, messageId: emailResponse.data?.id };
 }

@@ -17,7 +17,9 @@ const TestEmailSystem = () => {
     { value: 'order_status_updated', label: 'Order Status Update' },
     { value: 'order_cancelled', label: 'Order Cancellation' },
     { value: 'cart_abandoned', label: 'Abandoned Cart Recovery' },
-    { value: 'post_purchase_followup', label: 'Post-Purchase Followup' }
+    { value: 'post_purchase_followup', label: 'Post-Purchase Followup' },
+    { value: 'auto_gift_approval', label: 'Auto-Gift Approval' },
+    { value: 'gift_invitation', label: 'Gift Invitation' }
   ];
 
   const testEmailSystem = async () => {

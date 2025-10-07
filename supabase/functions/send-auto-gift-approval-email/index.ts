@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+/**
+ * Simplified auto-gift approval email sender
+ * Routes through ecommerce-email-orchestrator for consistency
+ */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -80,59 +84,32 @@ serve(async (req) => {
 
     const totalAmount = giftDetails.selectedProducts?.reduce((sum: number, p: any) => sum + p.price, 0) || 0
 
-    // Send approval email using email notification service
-    const emailHtml = `
-      <h2>Auto-Gift Approval Required</h2>
-      <p>Hello! An auto-gift is ready for your approval.</p>
-      
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Gift Details</h3>
-        <p><strong>Occasion:</strong> ${giftDetails.occasion}</p>
-        <p><strong>Recipient:</strong> ${recipientName}</p>
-        <p><strong>Budget:</strong> $${giftDetails.budget}</p>
-        <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-        ${deliveryDate ? `<p><strong>Delivery Date:</strong> ${deliveryDate}</p>` : ''}
-      </div>
-
-      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <h4>Selected Products:</h4>
-        <pre style="white-space: pre-wrap;">${productList}</pre>
-      </div>
-
-      ${shippingAddress ? `
-        <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <h4>Shipping Address:</h4>
-          <p><strong>Source:</strong> ${shippingAddress.source}</p>
-          ${shippingAddress.needs_confirmation ? '<p style="color: #e67e22;"><strong>⚠️ Address requires confirmation</strong></p>' : ''}
-        </div>
-      ` : ''}
-
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${approveUrl}" style="background: #27ae60; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
-          ✅ Approve Gift
-        </a>
-        <a href="${rejectUrl}" style="background: #e74c3c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
-          ❌ Reject Gift
-        </a>
-      </div>
-
-      <p style="color: #666; font-size: 12px;">
-        This approval request expires on ${expiresAt.toLocaleDateString()}.
-        If you don't respond, the gift will be automatically cancelled.
-      </p>
-    `;
-
-    // Send email using send-email-notification function
-    await supabaseClient.functions.invoke('send-email-notification', {
+    // Route through ecommerce-email-orchestrator for consistency
+    const orchestratorResponse = await supabaseClient.functions.invoke('ecommerce-email-orchestrator', {
       body: {
-        recipientEmail: recipientEmail,
-        subject: `Auto-Gift Approval Required - ${giftDetails.occasion} for ${recipientName}`,
-        htmlContent: emailHtml,
-        notificationType: 'auto_gift_approval'
+        eventType: 'auto_gift_approval',
+        userId: execution.auto_gifting_rules.user_id,
+        customData: {
+          recipientEmail,
+          recipientName,
+          occasion: giftDetails.occasion,
+          budget: giftDetails.budget,
+          totalAmount,
+          productList,
+          deliveryDate,
+          shippingAddress,
+          approveUrl,
+          rejectUrl,
+          expiresAt: expiresAt.toISOString()
+        }
       }
     });
 
-    console.log(`✅ Approval email sent to ${recipientEmail}`);
+    if (orchestratorResponse.error) {
+      throw new Error(`Orchestrator error: ${orchestratorResponse.error.message}`)
+    }
+
+    console.log(`✅ Approval email sent to ${recipientEmail} via orchestrator`);
 
     // Log the email delivery
     await supabaseClient

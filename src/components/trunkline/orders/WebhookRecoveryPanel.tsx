@@ -77,9 +77,9 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
     setProcessing(prev => new Set(prev).add(orderId));
     
     try {
-      console.log(`🚀 Triggering order orchestrator for ${orderId} from ${source}`);
+      console.log(`🚀 Triggering order processing for ${orderId} from ${source}`);
       
-      const { data, error } = await supabase.functions.invoke('order-orchestrator', {
+      const { data, error } = await supabase.functions.invoke('process-zma-order', {
         body: {
           orderId,
           triggerSource: source,

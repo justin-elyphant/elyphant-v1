@@ -104,11 +104,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     throw new Error(`Order not found: ${orderId}`);
   }
 
-  // Add fallback for missing profile
-  if (!order.profiles) {
-    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
-    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
-  }
+// Profile will be fetched separately using order.user_id
 
   // Check if confirmation email already sent
   if (order.confirmation_email_sent) {
@@ -153,9 +149,25 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     throw new Error('Order confirmation template not found');
   }
 
+  // Fetch recipient profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('name, email')
+    .eq('id', order.user_id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.warn('Profile lookup error:', profileError.message);
+  }
+  const recipientName = profile?.name || 'Valued Customer';
+  const recipientEmail = profile?.email;
+  if (!recipientEmail) {
+    throw new Error(`Recipient email not found for user ${order.user_id}`);
+  }
+
   // Prepare template variables
   const variables = {
-    customer_name: order.profiles?.name || 'Valued Customer',
+    customer_name: recipientName,
     order_number: order.order_number,
     total_amount: (order.total_amount / 100).toFixed(2),
     order_date: new Date(order.created_at).toLocaleDateString(),
@@ -166,7 +178,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   // Send email
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
-    to: [order.profiles.email],
+    to: [recipientEmail],
     subject: replaceVariables(template.subject_template, variables),
     html: replaceVariables(template.html_template, variables),
   });
@@ -183,7 +195,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
       .insert({
         order_id: orderId,
         email_type: 'order_confirmation',
-        recipient_email: order.profiles.email,
+        recipient_email: recipientEmail,
         template_id: template.id,
         template_variables: variables,
         resend_message_id: emailResponse.data?.id
@@ -196,10 +208,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
 async function handlePaymentConfirmation(supabase: any, orderId: string) {
   const { data: order, error } = await supabase
     .from('orders')
-    .select(`
-      *,
-      profiles(name, email)
-    `)
+    .select('*')
     .eq('id', orderId)
     .single();
 
@@ -207,11 +216,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
     throw new Error(`Order not found: ${orderId}`);
   }
 
-  // Add fallback for missing profile
-  if (!order.profiles) {
-    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
-    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
-  }
+// Profile will be fetched separately using order.user_id
 
   // Check if payment confirmation email already sent
   if (order.payment_confirmation_sent) {
@@ -235,8 +240,24 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
     throw new Error('Payment confirmation template not found');
   }
 
+  // Fetch recipient profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('name, email')
+    .eq('id', order.user_id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.warn('Profile lookup error:', profileError.message);
+  }
+  const recipientName = profile?.name || 'Valued Customer';
+  const recipientEmail = profile?.email;
+  if (!recipientEmail) {
+    throw new Error(`Recipient email not found for user ${order.user_id}`);
+  }
+
   const variables = {
-    customer_name: order.profiles?.name || 'Valued Customer',
+    customer_name: recipientName,
     order_number: order.order_number,
     total_amount: (order.total_amount / 100).toFixed(2),
     payment_method: 'Card ending in ****',
@@ -246,7 +267,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
-    to: [order.profiles.email],
+    to: [recipientEmail],
     subject: replaceVariables(template.subject_template, variables),
     html: replaceVariables(template.html_template, variables),
   });
@@ -262,7 +283,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
       .insert({
         order_id: orderId,
         email_type: 'payment_confirmation',
-        recipient_email: order.profiles.email,
+        recipient_email: recipientEmail,
         template_id: template.id,
         template_variables: variables,
         resend_message_id: emailResponse.data?.id

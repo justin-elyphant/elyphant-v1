@@ -35,7 +35,7 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
   if (!hasResults) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 z-[100] bg-background border border-border rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto">
       {/* Friends Section */}
       {friends.length > 0 && (
         <div className="border-b border-gray-100">
@@ -66,9 +66,9 @@ const UnifiedSearchSuggestions: React.FC<UnifiedSearchSuggestionsProps> = ({
             <span className="text-xs text-muted-foreground">({products.length})</span>
           </div>
           <div className="py-1">
-            {products.slice(0, 5).map((product) => (
+            {products.slice(0, 5).map((product, idx) => (
               <div
-                key={product.product_id}
+                key={`${product.product_id}-${idx}`}
                 className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => onProductSelect(product)}
               >

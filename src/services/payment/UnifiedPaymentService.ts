@@ -195,19 +195,29 @@ class UnifiedPaymentService {
             // Merge with local cart if exists
             const localCart = this.loadLocalCartDataSync();
             this.cartItems = this.mergeCartData(serverCart, localCart);
+            console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from server + local merge`);
             this.notifyCartChange();
             this.saveCartToStorage(); // Sync back to local storage
             return;
           } else {
             // No server cart, load from local storage
-            this.loadLocalCartDataSync();
+            const localCart = this.loadLocalCartDataSync();
+            this.cartItems = localCart;
+            console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from localStorage (user cart, no server data)`);
+            this.notifyCartChange();
           }
         }).catch((error) => {
           console.error('Error loading cart from server, falling back to local:', error);
-        this.loadLocalCartDataSync();
+          const localCart = this.loadLocalCartDataSync();
+          this.cartItems = localCart;
+          console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from localStorage (server error fallback)`);
+          this.notifyCartChange();
         });
       } else {
-        this.loadLocalCartDataSync();
+        const localCart = this.loadLocalCartDataSync();
+        this.cartItems = localCart;
+        console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from localStorage (guest cart)`);
+        this.notifyCartChange();
       }
     } catch (error) {
       console.error('Error loading cart from storage:', error);

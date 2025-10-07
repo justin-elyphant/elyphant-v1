@@ -40,13 +40,13 @@ const EmailSystemTester = () => {
       id: 'order_confirmation', 
       name: 'Order Confirmation', 
       description: 'E-commerce order confirmation',
-      function: 'send-order-confirmation'
+      function: 'ecommerce-email-orchestrator'
     },
     { 
       id: 'payment_confirmation', 
       name: 'Payment Confirmation', 
       description: 'Payment successful notification',
-      function: 'send-order-confirmation'
+      function: 'ecommerce-email-orchestrator'
     },
     { 
       id: 'order_status', 

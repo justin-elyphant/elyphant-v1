@@ -19,7 +19,38 @@ const OrderConfirmation = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('checking');
+  const [isRecovering, setIsRecovering] = useState(false);
   const { verifyPayment } = usePaymentVerification();
+
+  const handleRecoverOrder = async () => {
+    if (!orderId) return;
+    
+    setIsRecovering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('recover-order', {
+        body: { orderId }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success('Order recovered successfully! Refreshing...');
+        // Refresh the order data
+        const refreshedOrder = await getOrderById(orderId);
+        if (refreshedOrder) {
+          setOrder(refreshedOrder);
+          setProcessingStatus('processing');
+        }
+      } else {
+        toast.error(data.error || 'Failed to recover order');
+      }
+    } catch (error: any) {
+      console.error('Recovery error:', error);
+      toast.error(error.message || 'Failed to recover order');
+    } finally {
+      setIsRecovering(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -343,6 +374,30 @@ const OrderConfirmation = () => {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* Show recovery button if payment succeeded but order is stuck */}
+            {order.payment_status === 'succeeded' && 
+             order.status === 'pending' && 
+             !order.zinc_order_id && (
+              <Button 
+                onClick={handleRecoverOrder}
+                disabled={isRecovering}
+                variant="default"
+                className="flex-1 max-w-xs bg-orange-500 hover:bg-orange-600"
+              >
+                {isRecovering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Recovering Order...
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Recover Stuck Order
+                  </>
+                )}
+              </Button>
+            )}
+            
             <Button 
               onClick={() => navigate('/orders')} 
               className="flex-1 max-w-xs"

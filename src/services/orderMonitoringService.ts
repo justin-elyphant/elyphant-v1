@@ -117,26 +117,23 @@ export const getDuplicatePreventionMetrics = async (days: number = 7): Promise<D
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get fingerprint statistics
-    const { data: fingerprintData } = await supabase
-      .from('order_request_fingerprints')
-      .select('*')
-      .gte('created_at', startDate.toISOString());
-
     // Get order processing statistics using existing columns
     const { data: ordersData } = await supabase
       .from('orders')
-      .select('status, zinc_order_id, created_at, updated_at')
+      .select('status, zinc_order_id, created_at, processing_attempts')
       .gte('created_at', startDate.toISOString());
 
-    const total_requests = fingerprintData?.length || 0;
+    const total_requests = ordersData?.reduce((sum, order) => 
+      sum + (order.processing_attempts || 1), 0
+    ) || 0;
+    
     const successful_orders = ordersData?.filter(o => 
       o.zinc_order_id && ['processing', 'shipped', 'delivered', 'completed'].includes(o.status)
     ).length || 0;
     
-    // Estimate duplicates and race conditions based on processing patterns
-    const duplicate_requests_blocked = Math.max(0, total_requests - successful_orders);
-    const race_conditions_prevented = successful_orders; // Orders that successfully acquired processing
+    // Calculate duplicate prevention metrics based on processing attempts
+    const duplicate_requests_blocked = Math.max(0, total_requests - (ordersData?.length || 0));
+    const race_conditions_prevented = successful_orders;
 
     console.log(`📊 [Duplicate Prevention] Last ${days} days metrics:`, {
       total_requests,

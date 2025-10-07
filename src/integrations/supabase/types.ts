@@ -2894,36 +2894,6 @@ export type Database = {
         }
         Relationships: []
       }
-      order_request_fingerprints: {
-        Row: {
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          order_id: string | null
-          request_fingerprint: string
-          request_metadata: Json | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          order_id?: string | null
-          request_fingerprint: string
-          request_metadata?: Json | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          order_id?: string | null
-          request_fingerprint?: string
-          request_metadata?: Json | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       order_status_monitoring: {
         Row: {
           alert_sent: boolean | null
@@ -5202,14 +5172,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      check_request_fingerprint: {
-        Args: {
-          fingerprint_param: string
-          order_uuid?: string
-          user_uuid: string
-        }
-        Returns: Json
-      }
       check_zma_order_rate_limit: {
         Args: { user_uuid: string }
         Returns: boolean
@@ -5235,20 +5197,13 @@ export type Database = {
         Returns: number
       }
       complete_order_processing: {
-        Args:
-          | {
-              error_message?: string
-              final_status?: string
-              order_uuid: string
-              zinc_order_id_param?: string
-            }
-          | {
-              error_message_param?: string
-              final_status_param?: string
-              order_uuid: string
-              zinc_request_id_param: string
-              zinc_status_param?: string
-            }
+        Args: {
+          error_message_param?: string
+          final_status_param?: string
+          order_uuid: string
+          zinc_request_id_param: string
+          zinc_status_param?: string
+        }
         Returns: Json
       }
       delete_user_account: {

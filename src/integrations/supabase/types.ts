@@ -2971,7 +2971,6 @@ export type Database = {
           payment_confirmation_sent: boolean | null
           payment_status: string | null
           processing_attempts: number | null
-          processing_status: string | null
           retry_count: number | null
           retry_reason: string | null
           scheduled_delivery_date: string | null
@@ -3029,7 +3028,6 @@ export type Database = {
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           processing_attempts?: number | null
-          processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
@@ -3087,7 +3085,6 @@ export type Database = {
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           processing_attempts?: number | null
-          processing_status?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
@@ -5476,7 +5473,9 @@ export type Database = {
         Returns: string[]
       }
       start_order_processing: {
-        Args: { order_uuid: string; processing_user?: string }
+        Args:
+          | { order_uuid: string }
+          | { order_uuid: string; processing_user?: string }
         Returns: Json
       }
       track_zma_cost: {

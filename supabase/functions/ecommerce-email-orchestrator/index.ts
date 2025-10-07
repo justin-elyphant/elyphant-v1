@@ -128,7 +128,7 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
         html_template: `
           <h1>Thank you for your order!</h1>
           <p>Dear {{customer_name}},</p>
-          <p>We've received your order #{{order_number}} for ${{total_amount}}.</p>
+          <p>We've received your order #{{order_number}} for \${{total_amount}}.</p>
           <p>Order Date: {{order_date}}</p>
           <p>Track your order: <a href="{{order_tracking_url}}">View Order</a></p>
           <p>Questions? Contact us at {{support_email}}</p>

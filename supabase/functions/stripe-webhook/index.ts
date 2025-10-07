@@ -103,7 +103,6 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       .update({
         payment_status: 'succeeded',
         status: 'payment_confirmed',
-        payment_verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('stripe_payment_intent_id', paymentIntent.id)

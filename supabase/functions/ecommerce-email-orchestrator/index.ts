@@ -95,13 +95,19 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     .from('orders')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!order.profiles) {
+    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
+    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   // Check if confirmation email already sent
@@ -192,13 +198,19 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
     .from('orders')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!order.profiles) {
+    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
+    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   // Check if payment confirmation email already sent
@@ -265,13 +277,19 @@ async function handleOrderStatusUpdate(supabase: any, orderId: string, newStatus
     .from('orders')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!order.profiles) {
+    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
+    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   // Check if status update email already sent for this status
@@ -345,13 +363,19 @@ async function handleOrderCancellation(supabase: any, orderId: string) {
     .from('orders')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', orderId)
     .single();
 
   if (error || !order) {
     throw new Error(`Order not found: ${orderId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!order.profiles) {
+    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
+    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   const { data: template } = await supabase
@@ -438,13 +462,19 @@ async function handleAbandonedCart(supabase: any, cartSessionId: string) {
     .from('cart_sessions')
     .select(`
       *,
-      profiles!inner(name, email)
+      profiles(name, email)
     `)
     .eq('id', cartSessionId)
     .single();
 
   if (error || !cartSession) {
     throw new Error(`Cart session not found: ${cartSessionId}`);
+  }
+
+  // Add fallback for missing profile
+  if (!cartSession.profiles) {
+    console.warn(`⚠️ Profile not found for cart session ${cartSessionId}, using fallback`);
+    cartSession.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
   }
 
   // Don't send if cart was recovered or completed

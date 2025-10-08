@@ -101,9 +101,25 @@ const EmailTemplatesManager = () => {
     setIsEditing(true);
   };
 
-  const handlePreviewTemplate = (template: EmailTemplate) => {
+  const handlePreviewTemplate = async (template: EmailTemplate) => {
     setSelectedTemplate(template);
     setShowPreview(true);
+    
+    // Fetch the rendered HTML from the template renderer
+    try {
+      const { data, error } = await supabase.functions.invoke('render-email-template', {
+        body: { template_type: template.template_type }
+      });
+
+      if (error) throw error;
+      
+      if (data?.html) {
+        setSelectedTemplate({ ...template, html_template: data.html });
+      }
+    } catch (error: any) {
+      console.error('Error rendering template preview:', error);
+      // Fall back to stored HTML if rendering fails
+    }
   };
 
   const handleTestTemplate = (template: EmailTemplate) => {

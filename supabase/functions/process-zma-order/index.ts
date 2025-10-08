@@ -1052,10 +1052,12 @@ Object.keys(zincOrderData).forEach((key) => {
     
     console.log('✅ Order successfully submitted to Zinc and updated');
     
-    // 📧 Trigger order confirmation email
+    // 📧 Immediate email sending with queue backup
     try {
-      console.log('📧 Triggering order confirmation email...');
-      const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      console.log('📧 Sending order confirmation email immediately...');
+      
+      // Attempt immediate send via orchestrator
+      const { data: emailResult, error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'order_created',
           orderId: orderId
@@ -1063,12 +1065,47 @@ Object.keys(zincOrderData).forEach((key) => {
       });
       
       if (emailError) {
-        console.error('⚠️ Failed to send order confirmation email:', emailError);
+        console.error('⚠️ Immediate email send failed:', emailError);
+        
+        // Fallback: Queue email for retry via process-email-queue cron
+        console.log('📥 Queueing email for retry...');
+        await supabase.from('email_queue').insert({
+          template_id: null, // Will be resolved by orchestrator
+          recipient_email: orderData.user_id, // Temporary - orchestrator will fetch actual email
+          recipient_name: 'Customer',
+          template_variables: {
+            eventType: 'order_created',
+            orderId: orderId
+          },
+          scheduled_for: new Date().toISOString(),
+          status: 'pending'
+        });
+        
+        console.log('✅ Email queued for retry');
       } else {
-        console.log('✅ Order confirmation email triggered');
+        console.log('✅ Order confirmation email sent successfully:', emailResult);
       }
     } catch (emailError) {
-      console.error('⚠️ Error triggering order confirmation email:', emailError);
+      console.error('❌ Critical email error:', emailError);
+      
+      // Final fallback: ensure it gets in the queue
+      try {
+        await supabase.from('email_queue').insert({
+          template_id: null,
+          recipient_email: orderData.user_id,
+          recipient_name: 'Customer',
+          template_variables: {
+            eventType: 'order_created',
+            orderId: orderId,
+            error: String(emailError)
+          },
+          scheduled_for: new Date().toISOString(),
+          status: 'pending'
+        });
+        console.log('✅ Email queued after critical error');
+      } catch (queueError) {
+        console.error('❌ Failed to queue email:', queueError);
+      }
     }
     
     // Build response payload explicitly to avoid any parser ambiguity

@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { Check } from "lucide-react";
 import { usePricingSettings } from "@/hooks/usePricingSettings";
 import ContextualHelp from "@/components/help/ContextualHelp";
 
@@ -25,12 +26,17 @@ const TransparentPriceBreakdown = ({
         <span>${breakdown.basePrice.toFixed(2)}</span>
       </div>
       
-      {breakdown.shippingCost > 0 && (
-        <div className="flex justify-between text-sm">
-          <span>Shipping</span>
+      <div className="flex justify-between text-sm">
+        <span>Shipping</span>
+        {breakdown.shippingCost === 0 ? (
+          <span className="flex items-center gap-1 text-primary font-medium">
+            <Check className="h-4 w-4" />
+            Free Delivery
+          </span>
+        ) : (
           <span>${breakdown.shippingCost.toFixed(2)}</span>
-        </div>
-      )}
+        )}
+      </div>
       
       <div className="flex justify-between text-sm">
         <span className="flex items-center gap-1">

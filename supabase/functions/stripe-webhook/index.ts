@@ -93,21 +93,70 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       metadata: {
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,
-        customer: paymentIntent.customer
+        customer: paymentIntent.customer,
+        order_id: paymentIntent.metadata?.order_id
       }
     });
 
-    // Update order status to payment confirmed
-    const { data: order, error: updateError } = await supabase
-      .from('orders')
-      .update({
-        payment_status: 'succeeded',
-        status: 'payment_confirmed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('stripe_payment_intent_id', paymentIntent.id)
-      .select()
-      .single();
+    // RACE CONDITION FIX: Try metadata first, then payment_intent_id with retry logic
+    let order = null;
+    let updateError = null;
+    
+    // Try 1: Look up by order_id from metadata (primary method)
+    if (paymentIntent.metadata?.order_id) {
+      console.log(`🔍 Looking up order by metadata order_id: ${paymentIntent.metadata.order_id}`);
+      const result = await supabase
+        .from('orders')
+        .update({
+          payment_status: 'succeeded',
+          status: 'payment_confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', paymentIntent.metadata.order_id)
+        .select()
+        .maybeSingle();
+      
+      order = result.data;
+      updateError = result.error;
+    }
+    
+    // Try 2: Fallback to payment_intent_id (backward compatibility + retry)
+    if (!order && !updateError) {
+      console.log(`🔍 Looking up order by payment_intent_id: ${paymentIntent.id}`);
+      const result = await supabase
+        .from('orders')
+        .update({
+          payment_status: 'succeeded',
+          status: 'payment_confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('stripe_payment_intent_id', paymentIntent.id)
+        .select()
+        .maybeSingle();
+      
+      order = result.data;
+      updateError = result.error;
+      
+      // Try 3: Retry after 2 seconds if order not found (race condition mitigation)
+      if (!order && !updateError) {
+        console.log('⏳ Order not found, retrying in 2 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const retryResult = await supabase
+          .from('orders')
+          .update({
+            payment_status: 'succeeded',
+            status: 'payment_confirmed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_payment_intent_id', paymentIntent.id)
+          .select()
+          .maybeSingle();
+        
+        order = retryResult.data;
+        updateError = retryResult.error;
+      }
+    }
 
     if (updateError) {
       console.error('❌ Failed to update order after payment success:', updateError);

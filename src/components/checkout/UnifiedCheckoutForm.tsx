@@ -155,8 +155,8 @@ const UnifiedCheckoutForm: React.FC = () => {
   /*
    * 🔗 CRITICAL: Payment Intent Creation
    * 
-   * This function creates a Stripe payment intent via UnifiedPaymentService.
-   * Week 2 Migration: Now uses UnifiedPaymentService for consistent orchestration.
+   * RACE CONDITION FIX: Create order BEFORE payment intent to ensure
+   * webhook can find order when payment succeeds.
    */
   const createPaymentIntent = async () => {
     if (!user) {
@@ -167,58 +167,10 @@ const UnifiedCheckoutForm: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // Week 2: Use UnifiedPaymentService for payment intent creation
-      // This maintains the same functionality but routes through unified service
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(totalAmount * 100), // Convert to cents
-          currency: 'usd',
-          metadata: {
-            user_id: user.id,
-            order_type: 'marketplace_purchase',
-            item_count: cartItems.length,
-            // CRITICAL: Pass scheduled delivery information for proper payment handling
-            scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
-            isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
-            deliveryDate: giftOptions.scheduledDeliveryDate
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Error creating payment intent:', error);
-        toast.error('Failed to initialize payment. Please try again.');
-        return;
-      }
-
-      setClientSecret(data.client_secret);
-      setPaymentIntentId(data.payment_intent_id);
-      console.log('Payment intent created successfully');
+      // STEP 1: Create order with pending_payment status
+      console.log('📝 Creating order before payment...');
       
-    } catch (error) {
-      console.error('Error in createPaymentIntent:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  /*
-   * 🔗 CRITICAL: Payment Success Handler
-   * 
-   * Enhanced to handle order creation errors gracefully and provide
-   * better error recovery and user feedback. Now includes automatic
-   * Zinc/ZMA processing for Amazon products.
-   */
-  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
-    try {
-      setIsProcessing(true);
-      console.log('🎉 Payment successful, creating order...', { paymentIntentId, paymentMethodId });
-      
-      // CRITICAL: Order creation with all necessary data including gifting fee details
-      // Convert address format to ZMA-compatible format for proper processing
       const zmaCompatibleShippingInfo = {
-        // Standard ShippingInfo interface fields (required)
         name: checkoutData.shippingInfo.name,
         email: checkoutData.shippingInfo.email,
         address: checkoutData.shippingInfo.address,
@@ -227,7 +179,6 @@ const UnifiedCheckoutForm: React.FC = () => {
         state: checkoutData.shippingInfo.state,
         zipCode: checkoutData.shippingInfo.zipCode,
         country: checkoutData.shippingInfo.country,
-        // ZMA-compatible fields (for proper processing)
         address_line1: checkoutData.shippingInfo.address,
         address_line2: checkoutData.shippingInfo.addressLine2 || '',
         zip_code: checkoutData.shippingInfo.zipCode
@@ -244,20 +195,78 @@ const UnifiedCheckoutForm: React.FC = () => {
         totalAmount,
         shippingInfo: zmaCompatibleShippingInfo,
         giftOptions,
-        paymentIntentId,
         deliveryGroups: []
       };
 
-      console.log('📋 Creating order with data:', {
-        paymentIntentId,
-        totalAmount,
-        itemCount: cartItems.length,
-        shippingInfo: checkoutData.shippingInfo
+      const order = await createOrder(orderData);
+      console.log('✅ Order created with pending_payment status:', order.id);
+      
+      // STEP 2: Create payment intent with order ID in metadata
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount: Math.round(totalAmount * 100),
+          currency: 'usd',
+          metadata: {
+            user_id: user.id,
+            order_id: order.id, // CRITICAL: Pass order ID for webhook lookup
+            order_type: 'marketplace_purchase',
+            item_count: cartItems.length,
+            scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
+            isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
+            deliveryDate: giftOptions.scheduledDeliveryDate
+          }
+        }
       });
 
-      // Create order via service layer with enhanced error handling
-      const order = await createOrder(orderData);
-      console.log('✅ Order created successfully:', order.id);
+      if (error) {
+        console.error('Error creating payment intent:', error);
+        toast.error('Failed to initialize payment. Please try again.');
+        return;
+      }
+
+      // STEP 3: Update order with payment intent ID
+      await supabase
+        .from('orders')
+        .update({ stripe_payment_intent_id: data.payment_intent_id })
+        .eq('id', order.id);
+
+      setClientSecret(data.client_secret);
+      setPaymentIntentId(data.payment_intent_id);
+      console.log('✅ Payment intent created and linked to order');
+      
+    } catch (error) {
+      console.error('Error in createPaymentIntent:', error);
+      toast.error('Failed to initialize payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  /*
+   * 🔗 CRITICAL: Payment Success Handler
+   * 
+   * Order already exists from createPaymentIntent, just update status
+   * and handle post-payment operations. Webhook will trigger ZMA processing.
+   */
+  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
+    try {
+      setIsProcessing(true);
+      console.log('🎉 Payment successful, order already exists');
+      
+      // Fetch the order that was created before payment
+      const { data: order, error: fetchError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('stripe_payment_intent_id', paymentIntentId)
+        .single();
+
+      if (fetchError || !order) {
+        console.error('❌ Failed to fetch order:', fetchError);
+        toast.error('Payment succeeded but could not find order. Please contact support.');
+        return;
+      }
+
+      console.log('✅ Found order:', order.id);
       
       // Email will be sent by ecommerce-email-orchestrator via webhook/process-zma-order
       console.log('📧 Email will be sent automatically via ecommerce-email-orchestrator');
@@ -271,59 +280,9 @@ const UnifiedCheckoutForm: React.FC = () => {
         // Don't fail the order for address saving issues
       }
 
-      // 🚀 ENHANCED: Check for Amazon products and process through ZMA
-      console.log('🔍 Checking for Amazon products in cart...', cartItems.map(item => ({
-        product_id: item.product.product_id,
-        retailer: item.product.retailer,
-        vendor: item.product.vendor,
-        productSource: item.product.productSource,
-        isZincApiProduct: item.product.isZincApiProduct
-      })));
-
-      const amazonProducts = cartItems.filter(item => {
-        const product = item.product;
-        // ENHANCED: Comprehensive Zinc product detection with multiple fallback paths
-        const isZinc = 
-          // Primary indicators
-          product.productSource === 'zinc_api' ||
-          product.isZincApiProduct === true ||
-          // Secondary indicators
-          product.retailer === 'Amazon' ||
-          product.vendor === 'Amazon' ||
-          product.vendor === 'Amazon via Zinc' ||
-          // Fallback case-insensitive checks
-          (product.retailer && product.retailer.toLowerCase().includes('amazon')) ||
-          (product.vendor && (product.vendor.toLowerCase().includes('amazon') || product.vendor.toLowerCase().includes('zinc')));
-        
-        console.log(`📦 Product ${product.product_id}: Zinc=${isZinc}`, {
-          retailer: product.retailer,
-          vendor: product.vendor,
-          productSource: product.productSource,
-          isZincApiProduct: product.isZincApiProduct,
-          detectionPaths: {
-            productSource: product.productSource === 'zinc_api',
-            isZincFlag: product.isZincApiProduct === true,
-            retailerExact: product.retailer === 'Amazon',
-            vendorExact: product.vendor === 'Amazon' || product.vendor === 'Amazon via Zinc',
-            retailerIncludes: product.retailer && product.retailer.toLowerCase().includes('amazon'),
-            vendorIncludes: product.vendor && (product.vendor.toLowerCase().includes('amazon') || product.vendor.toLowerCase().includes('zinc'))
-          }
-        });
-        
-        return isZinc;
-      });
-
-      const hasAmazonProducts = amazonProducts.length > 0;
-
-      // Order processing now happens via Stripe webhook ONLY
-      // Removed direct process-zma-order call to eliminate dual-path duplicate submissions
-      if (hasAmazonProducts) {
-        console.log(`🛒 ${amazonProducts.length} Amazon products detected - will be processed by webhook`);
-        toast.success('Order placed! Processing Amazon fulfillment...');
-      } else {
-        console.log('ℹ️ No Amazon products detected');
-        toast.success('Order placed successfully!');
-      }
+      // Webhook will handle ZMA processing automatically
+      console.log('✅ Payment succeeded - webhook will process order');
+      toast.success('Payment successful! Processing your order...');
       
       // CRITICAL: Always clear cart and navigate - regardless of ZMA processing status
       console.log('🧹 Clearing cart and navigating to confirmation...');

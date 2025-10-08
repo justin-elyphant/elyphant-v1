@@ -190,10 +190,10 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   console.log('Creating order with data:', orderData);
 
   // CRITICAL: Create the order with proper schema alignment including gifting fee
-  // Determine order status: scheduled orders start as "scheduled", immediate orders as "pending"
+  // NEW FLOW: All orders start as pending_payment (race condition fix)
   const isScheduledDelivery = orderData.giftOptions.scheduledDeliveryDate && orderData.giftOptions.scheduledDeliveryDate !== '';
-  const orderStatus = isScheduledDelivery ? 'scheduled' : 'pending';
-  const paymentStatus = isScheduledDelivery ? 'payment_intent_created' : 'pending';
+  const orderStatus = 'pending_payment'; // Always start here
+  const paymentStatus = 'pending'; // Will be updated by webhook
   
   console.log(`[ORDER SERVICE] Creating order with status: ${orderStatus}, payment_status: ${paymentStatus}, scheduled: ${isScheduledDelivery}`);
 

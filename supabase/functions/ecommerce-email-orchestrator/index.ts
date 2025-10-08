@@ -362,8 +362,6 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
     throw new Error(`Order not found: ${orderId}`);
   }
 
-// Profile will be fetched separately using order.user_id
-
   // Check if payment confirmation email already sent
   if (order.payment_confirmation_sent) {
     console.log(`Payment confirmation already sent for ${orderId}`);
@@ -373,17 +371,6 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
   // Only send if payment succeeded
   if (order.payment_status !== 'succeeded') {
     return { skipped: true, reason: 'payment_not_succeeded' };
-  }
-
-  const { data: template } = await supabase
-    .from('email_templates')
-    .select('*')
-    .eq('template_type', 'payment_confirmation')
-    .eq('is_active', true)
-    .single();
-
-  if (!template) {
-    throw new Error('Payment confirmation template not found');
   }
 
   // Fetch recipient profile
@@ -396,26 +383,69 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
   if (profileError) {
     console.warn('Profile lookup error:', profileError.message);
   }
-  const recipientName = profile?.name || 'Valued Customer';
   const recipientEmail = profile?.email;
   if (!recipientEmail) {
     throw new Error(`Recipient email not found for user ${order.user_id}`);
   }
 
-  const variables = {
-    customer_name: recipientName,
-    order_number: order.order_number,
-    total_amount: order.total_amount?.toFixed(2) || '0.00',
-    payment_method: 'Card ending in ****',
-    transaction_id: order.stripe_payment_intent_id || 'N/A',
-    order_tracking_url: `${Deno.env.get('SITE_URL')}/orders/${order.id}`
-  };
+  // Styled payment confirmation email with Elyphant branding
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Payment Received ✅</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${profile?.first_name || profile?.name || 'Friend'}, your payment has been successfully processed.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border: 1px solid #86efac;">
+                <tr>
+                  <td align="center">
+                    <div style="width: 48px; height: 48px; background-color: #22c55e; border-radius: 50%; margin-bottom: 16px; display: inline-block; text-align: center; line-height: 48px; font-size: 24px;">✓</div>
+                    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #166534; font-weight: 600;">Payment Successful</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Amount Paid</p>
+                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #166534; font-weight: 700;">$${(order.total_amount / 100).toFixed(2)}</p>
+                    <p style="margin: 15px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Order Number</p>
+                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">${order.order_number}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
+                A receipt has been sent to your email. If you have any questions, please contact our support team.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [recipientEmail],
-    subject: replaceVariables(template.subject_template, variables),
-    html: replaceVariables(template.html_template, variables),
+    subject: `Payment Received - Order ${order.order_number}`,
+    html: styledHtml,
   });
 
   await Promise.all([
@@ -430,8 +460,6 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
         order_id: orderId,
         email_type: 'payment_confirmation',
         recipient_email: recipientEmail,
-        template_id: template.id,
-        template_variables: variables,
         resend_message_id: emailResponse.data?.id
       })
   ]);
@@ -668,7 +696,7 @@ async function handleAbandonedCart(supabase: any, cartSessionId: string) {
     .from('cart_sessions')
     .select(`
       *,
-      profiles(name, email)
+      profiles(name, first_name, email)
     `)
     .eq('id', cartSessionId)
     .single();
@@ -677,10 +705,9 @@ async function handleAbandonedCart(supabase: any, cartSessionId: string) {
     throw new Error(`Cart session not found: ${cartSessionId}`);
   }
 
-  // Add fallback for missing profile
   if (!cartSession.profiles) {
-    console.warn(`⚠️ Profile not found for cart session ${cartSessionId}, using fallback`);
-    cartSession.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
+    console.warn(`⚠️ Profile not found for cart session ${cartSessionId}`);
+    return { skipped: true, reason: 'no_profile' };
   }
 
   // Don't send if cart was recovered or completed
@@ -688,36 +715,75 @@ async function handleAbandonedCart(supabase: any, cartSessionId: string) {
     return { skipped: true, reason: 'cart_recovered_or_completed' };
   }
 
-  const { data: template } = await supabase
-    .from('email_templates')
-    .select('*')
-    .eq('template_type', 'abandoned_cart')
-    .eq('is_active', true)
-    .single();
-
-  if (!template) {
-    throw new Error('Abandoned cart template not found');
-  }
-
   const cartItems = cartSession.cart_data?.items || [];
-  const variables = {
-    customer_name: cartSession.profiles?.name || 'Valued Customer',
-    cart_items: cartItems,
-    cart_total: (cartSession.total_amount / 100).toFixed(2),
-    checkout_url: `${Deno.env.get('SITE_URL')}/checkout?session=${cartSession.session_id}`,
-    expiry_hours: '24',
-    discount_code: 'SAVE10',
-    discount_percentage: '10'
-  };
+  const itemsHtml = cartItems.slice(0, 3).map((item: any) => `
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1a1a1a; font-weight: 600;">${item.title}</p>
+        <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #9333ea; font-weight: 700;">$${item.price}</p>
+      </td>
+    </tr>
+  `).join('');
+
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Your cart is waiting! 🛒</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${cartSession.profiles.first_name || cartSession.profiles.name || 'Friend'}, you left some great items in your cart.
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #fafafa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                ${itemsHtml}
+                <tr>
+                  <td style="padding: 20px 0 0 0; text-align: right;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1a1a1a; font-weight: 700;">Total: $${(cartSession.total_amount / 100).toFixed(2)}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${Deno.env.get('SITE_URL')}/checkout?session=${cartSession.session_id}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">Complete Your Purchase</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [cartSession.profiles.email],
-    subject: replaceVariables(template.subject_template, variables),
-    html: replaceVariables(template.html_template, variables),
+    subject: `Your cart is waiting - ${cartItems.length} items inside! 🛒`,
+    html: styledHtml,
   });
 
-  // Update cart session
   await supabase
     .from('cart_sessions')
     .update({ 
@@ -734,7 +800,7 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
     .from('orders')
     .select(`
       *,
-      profiles(name, email)
+      profiles(name, first_name, email)
     `)
     .eq('id', orderId)
     .single();
@@ -743,10 +809,9 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
     throw new Error(`Order not found: ${orderId}`);
   }
 
-  // Add fallback for missing profile
   if (!order.profiles) {
-    console.warn(`⚠️ Profile not found for order ${orderId}, using fallback`);
-    order.profiles = { name: 'Customer', email: 'no-reply@elyphant.ai' };
+    console.warn(`⚠️ Profile not found for order ${orderId}`);
+    return { skipped: true, reason: 'no_profile' };
   }
 
   // Check if followup email already sent
@@ -759,30 +824,62 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
     return { skipped: true, reason: 'order_not_delivered' };
   }
 
-  const { data: template } = await supabase
-    .from('email_templates')
-    .select('*')
-    .eq('template_type', 'post_purchase_followup')
-    .eq('is_active', true)
-    .single();
-
-  if (!template) {
-    throw new Error('Post-purchase followup template not found');
-  }
-
-  const variables = {
-    customer_name: order.profiles?.name || 'Valued Customer',
-    order_number: order.order_number,
-    review_url: `${Deno.env.get('SITE_URL')}/orders/${order.id}/review`,
-    shop_url: `${Deno.env.get('SITE_URL')}/shop`,
-    recommended_products: [] // Could fetch from recommendation engine
-  };
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">How's everything going? 💝</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${order.profiles.first_name || order.profiles.name || 'Friend'}, we hope you're enjoying your recent purchase!
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border: 1px solid #bae6fd;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #0369a1; text-transform: uppercase;">Order #${order.order_number}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 10px 0;">
+                    <a href="${Deno.env.get('SITE_URL')}/orders/${order.id}/review" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600;">Leave a Review</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [order.profiles.email],
-    subject: replaceVariables(template.subject_template, variables),
-    html: replaceVariables(template.html_template, variables),
+    subject: `How's your recent order? We'd love your feedback!`,
+    html: styledHtml,
   });
 
   await Promise.all([
@@ -797,8 +894,6 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
         order_id: orderId,
         email_type: 'post_purchase_followup',
         recipient_email: order.profiles.email,
-        template_id: template.id,
-        template_variables: variables,
         resend_message_id: emailResponse.data?.id
       })
   ]);
@@ -807,97 +902,110 @@ async function handlePostPurchaseFollowup(supabase: any, orderId: string) {
 }
 
 async function handleAutoGiftApproval(supabase: any, customData: any) {
-  const html = `
-    <h2>Auto-Gift Approval Required</h2>
-    <p>Hello! An auto-gift is ready for your approval.</p>
-    
-    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h3>Gift Details</h3>
-      <p><strong>Occasion:</strong> ${customData.occasion}</p>
-      <p><strong>Recipient:</strong> ${customData.recipientName}</p>
-      <p><strong>Budget:</strong> $${customData.budget}</p>
-      <p><strong>Total Amount:</strong> $${customData.totalAmount.toFixed(2)}</p>
-      ${customData.deliveryDate ? `<p><strong>Delivery Date:</strong> ${customData.deliveryDate}</p>` : ''}
-    </div>
-
-    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-      <h4>Selected Products:</h4>
-      <pre style="white-space: pre-wrap;">${customData.productList}</pre>
-    </div>
-
-    ${customData.shippingAddress ? `
-      <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <h4>Shipping Address:</h4>
-        <p><strong>Source:</strong> ${customData.shippingAddress.source}</p>
-        ${customData.shippingAddress.needs_confirmation ? '<p style="color: #e67e22;"><strong>⚠️ Address requires confirmation</strong></p>' : ''}
-      </div>
-    ` : ''}
-
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${customData.approveUrl}" style="background: #27ae60; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
-        ✅ Approve Gift
-      </a>
-      <a href="${customData.rejectUrl}" style="background: #e74c3c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 0 10px;">
-        ❌ Reject Gift
-      </a>
-    </div>
-
-    <p style="color: #666; font-size: 12px;">
-      This approval request expires on ${new Date(customData.expiresAt).toLocaleDateString()}.
-      If you don't respond, the gift will be automatically cancelled.
-    </p>
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Auto-Gift Approval Required 🎁</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Your auto-gift for ${customData.recipientName}'s ${customData.occasion} is ready!
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 20px; border-left: 4px solid #9333ea;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1a1a1a;">
+                      <strong>Budget:</strong> $${customData.budget}<br/>
+                      <strong>Total Amount:</strong> $${customData.totalAmount.toFixed(2)}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 10px;">
+                    <a href="${customData.approveUrl}" style="display: inline-block; padding: 14px 32px; background: #22c55e; color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; margin: 5px;">✅ Approve Gift</a>
+                    <a href="${customData.rejectUrl}" style="display: inline-block; padding: 14px 32px; background: #ef4444; color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; margin: 5px;">❌ Reject</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [customData.recipientEmail],
-    subject: `Auto-Gift Approval Required - ${customData.occasion} for ${customData.recipientName}`,
-    html,
+    subject: `Auto-Gift Approval: ${customData.occasion} for ${customData.recipientName}`,
+    html: styledHtml,
   });
 
   return { emailSent: true, messageId: emailResponse.data?.id };
 }
 
 async function handleGiftInvitation(supabase: any, customData: any) {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>You're Invited to Elyphant!</title>
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
-      
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 16px; text-align: center; margin-bottom: 30px;">
-        <h1 style="color: white; margin: 0 0 10px 0; font-size: 28px; font-weight: 700;">
-          🎁 You're Invited to Elyphant!
-        </h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 18px;">
-          ${customData.giftorName} wants to get you amazing gifts${customData.occasionText}${customData.dateText}
-        </p>
-      </div>
-
-      <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px;">
-        <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 22px;">Hi ${customData.recipientName}! 👋</h2>
-        
-        <p style="margin: 0 0 20px 0; font-size: 16px; color: #4a5568;">
-          ${customData.giftorName} has invited you to join <strong>Elyphant</strong> - the platform that ensures you get gifts you'll actually love!
-        </p>
-        
-        ${customData.occasion ? `
-          <div style="background: #edf2f7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-            <p style="margin: 0; font-size: 16px; color: #2d3748;">
-              <strong>🎉 Special Occasion:</strong> ${customData.giftorName} wants to make your ${customData.occasion}${customData.dateText} extra special!
-            </p>
-          </div>
-        ` : ''}
-
-        <h3 style="color: #2d3748; margin: 30px 0 15px 0; font-size: 20px;">✨ What makes Elyphant special?</h3>
-        
-        <ul style="padding-left: 0; list-style: none;">
-          <li style="margin: 15px 0; padding-left: 30px; position: relative;">
-            <span style="position: absolute; left: 0; top: 2px; font-size: 18px;">🎯</span>
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">You've been invited! 🎉</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                ${customData.senderName} wants to connect with you on Elyphant!
+              </p>
+              
+              ${customData.customMessage ? `
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic;">"${customData.customMessage}"</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${customData.invitationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">Accept Invitation</a>
+                  </td>
+                </tr>
+              </table>
             <strong>Perfect Gift Matching:</strong> Create your wishlist and preferences so ${customData.giftorName} knows exactly what you love
           </li>
           <li style="margin: 15px 0; padding-left: 30px; position: relative;">
@@ -973,28 +1081,64 @@ async function handleGiftInvitation(supabase: any, customData: any) {
 // ============= NEW EVENT HANDLERS =============
 
 async function handleConnectionInvitation(supabase: any, customData: any) {
-  console.log("📧 Sending connection invitation email");
-  
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2563eb;">${customData.senderName} wants to connect!</h1>
-      <p>Hi ${customData.recipientName},</p>
-      <p>${customData.senderName} has invited you to connect on Elyphant.</p>
-      ${customData.customMessage ? `<p style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-style: italic;">"${customData.customMessage}"</p>` : ''}
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${customData.invitationUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-      </div>
-    </body>
-    </html>
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">${customData.senderName} wants to connect! 🎉</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${customData.recipientName || 'there'}!
+              </p>
+              
+              ${customData.customMessage ? `
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic; line-height: 22px;">"${customData.customMessage}"</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${customData.invitationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">Accept Invitation</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
 
   await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [customData.recipientEmail],
     subject: `${customData.senderName} invited you to connect on Elyphant`,
-    html: htmlContent,
+    html: styledHtml,
   });
 
   return { success: true };

@@ -361,9 +361,9 @@ const EmailAnalyticsDashboard = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Templates</SelectItem>
-                    {uniqueTemplateTypes.map(type => (
+                  {uniqueTemplateTypes.map(type => (
                       <SelectItem key={type} value={type}>
-                        {type.replace('_', ' ').toUpperCase()}
+                        {type.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </SelectItem>
                     ))}
                   </SelectContent>

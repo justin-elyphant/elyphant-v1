@@ -201,7 +201,11 @@ const EmailTemplatesManager = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Email Templates</h1>
-          <p className="text-slate-600">Manage your email communication templates for consistent Elyphant branding</p>
+          <p className="text-slate-600">Manage email templates with professional Elyphant branding</p>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="h-3 w-24 rounded" style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}></div>
+            <span className="text-xs text-slate-500">Gradient branding applied to all emails</span>
+          </div>
         </div>
         <Button onClick={handleCreateTemplate} className="gap-2">
           <Plus className="h-4 w-4" />

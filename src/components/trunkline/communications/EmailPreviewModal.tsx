@@ -229,10 +229,14 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
                     className={`h-full overflow-auto border rounded ${
                       deviceView === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
                     }`}
+                    style={{ background: '#f5f5f5' }}
                   >
                     <div
-                      className="bg-white p-4 h-full"
+                      className="h-full"
                       dangerouslySetInnerHTML={{ __html: renderedHtml }}
+                      style={{
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}
                     />
                   </div>
                 ) : (

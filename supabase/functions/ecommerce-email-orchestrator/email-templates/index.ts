@@ -23,3 +23,12 @@ export type { AutoGiftApprovalProps } from './auto-gift-approval.ts';
 
 export { orderStatusUpdateTemplate } from './order-status-update.ts';
 export type { OrderStatusUpdateProps } from './order-status-update.ts';
+
+export { cartAbandonedTemplate } from './cart-abandoned.ts';
+export type { CartAbandonedProps } from './cart-abandoned.ts';
+
+export { postPurchaseFollowupTemplate } from './post-purchase-followup.ts';
+export type { PostPurchaseFollowupProps } from './post-purchase-followup.ts';
+
+export { connectionInvitationTemplate } from './connection-invitation.ts';
+export type { ConnectionInvitationProps } from './connection-invitation.ts';

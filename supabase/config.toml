@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.recover-order]
 verify_jwt = false
+
+[functions.setup-email-templates]
+verify_jwt = true

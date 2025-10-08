@@ -74,12 +74,14 @@ export const baseEmailTemplate = ({ content, preheader }: BaseTemplateProps): st
         <!-- Main content container -->
         <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           
-          <!-- Header with gradient -->
+          <!-- Header with gradient and logo -->
           <tr>
             <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">
-                Elyphant
-              </h1>
+              <img 
+                src="https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/email-assets/elyphant-logo.png" 
+                alt="Elyphant" 
+                style="height: 50px; width: auto; display: block; margin: 0 auto;"
+              />
             </td>
           </tr>
           

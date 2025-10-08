@@ -1,5 +1,5 @@
 
-import { ZINC_API_BASE_URL, getZincHeaders } from '../zincCore';
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface ShippingOption {
@@ -60,31 +60,36 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
       return cached.data;
     }
 
-    // Call Zinc Product Offers API to get real shipping costs
+    // Call Zinc Product Offers API to get real shipping costs via Edge Function
     if (request.retailer === "amazon" && request.products.length > 0) {
-      const productId = request.products[0].product_id; // Use first product for quote
+      const productId = request.products[0].product_id;
       
-      console.log(`Calling Zinc Product Offers API for product: ${productId}`);
+      console.log(`Fetching shipping quote via edge function for product: ${productId}`);
       
-      const response = await fetch(`https://api.zinc.io/v1/products/${productId}/offers?retailer=amazon`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${btoa(ZINC_API_BASE_URL + ':')}`
+      // Call edge function to get product offers (which include shipping)
+      const { data, error } = await supabase.functions.invoke('get-products', {
+        body: {
+          query: productId,
+          page: 1,
+          limit: 1,
+          retailer: 'amazon',
+          get_offers: true // Request shipping offers
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Zinc API returned ${response.status}`);
+      if (error || !data?.results?.[0]?.offers) {
+        console.warn("Failed to get Zinc offers, falling back to default shipping");
+        throw new Error("No offers available");
       }
 
-      const data = await response.json();
+      const offers = data.results[0].offers;
       
-      if (data.offers && data.offers.length > 0 && data.offers[0].shipping_options) {
-        const shippingOptions = data.offers[0].shipping_options.map((option: any, index: number) => ({
+      if (offers && offers.length > 0 && offers[0].shipping_options) {
+        const shippingOptions = offers[0].shipping_options.map((option: any, index: number) => ({
           id: `zinc_option_${index}`,
           name: option.method || (option.price === 0 ? "Free Shipping" : "Standard Shipping"),
-          price: option.price / 100, // Convert cents to dollars
-          delivery_time: `${option.delivery_days || 3-5} business days`,
+          price: (option.price || 0) / 100, // Convert cents to dollars
+          delivery_time: `${option.delivery_days || '3-5'} business days`,
           description: option.method || "Amazon shipping"
         }));
 

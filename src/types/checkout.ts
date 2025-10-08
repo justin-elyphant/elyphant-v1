@@ -6,6 +6,7 @@ export interface CheckoutItem {
   product_id: string;
   quantity: number;
   vendor?: string;
+  retailer?: string;
   variationText?: string;
   selectedVariations?: string;
 }

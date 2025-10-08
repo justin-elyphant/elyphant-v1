@@ -60,59 +60,45 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
       return cached.data;
     }
 
-    // Call Zinc Product Offers API to get real shipping costs via Edge Function
     if (request.retailer === "amazon" && request.products.length > 0) {
       const productId = request.products[0].product_id;
       
-      console.log(`Fetching shipping quote via edge function for product: ${productId}`);
+      console.log(`Fetching shipping quote for product: ${productId}`);
       
-      // Call edge function to get product offers (which include shipping)
-      const { data, error } = await supabase.functions.invoke('get-products', {
+      // Call dedicated shipping quote edge function
+      const { data, error } = await supabase.functions.invoke('get-shipping-quote', {
         body: {
-          query: productId,
-          page: 1,
-          limit: 1,
-          retailer: 'amazon',
-          get_offers: true // Request shipping offers
+          product_id: productId,
+          zip_code: request.shipping_address.zip_code
         }
       });
 
-      if (error || !data?.results?.[0]?.offers) {
-        console.error("Zinc offers fetch failed:", {
-          error,
-          data,
-          productId,
-          hasResults: !!data?.results,
-          hasOffers: !!data?.results?.[0]?.offers
-        });
-        throw new Error(error?.message || "No offers available");
+      if (error || !data?.shipping_options) {
+        console.error("Shipping quote failed:", error);
+        throw new Error(error?.message || "No shipping options available");
       }
 
-      const offers = data.results[0].offers;
-      
-      if (offers && offers.length > 0 && offers[0].shipping_options) {
-        const shippingOptions = offers[0].shipping_options.map((option: any, index: number) => ({
-          id: `zinc_option_${index}`,
-          name: option.method || (option.price === 0 ? "Free Shipping" : "Standard Shipping"),
-          price: (option.price || 0) / 100, // Convert cents to dollars
-          delivery_time: `${option.delivery_days || '3-5'} business days`,
-          description: option.method || "Amazon shipping"
-        }));
+      const shippingOptions = data.shipping_options.map((option: any, index: number) => ({
+        id: `shipping_${index}`,
+        name: option.method || (option.price === 0 ? "Free Shipping" : "Standard Shipping"),
+        price: (option.price || 0) / 100, // Convert cents to dollars
+        delivery_time: option.delivery_days ? `${option.delivery_days} business days` : "3-5 business days",
+        description: option.method || "Amazon shipping"
+      }));
 
-        const zincResponse: ShippingQuoteResponse = {
-          retailer: "amazon",
-          shipping_options: shippingOptions
-        };
+      const response: ShippingQuoteResponse = {
+        retailer: "amazon",
+        shipping_options: shippingOptions
+      };
 
-        // Cache the response
-        shippingQuoteCache.set(cacheKey, {
-          data: zincResponse,
-          timestamp: Date.now()
-        });
+      // Cache the response
+      shippingQuoteCache.set(cacheKey, {
+        data: response,
+        timestamp: Date.now()
+      });
 
-        console.log("Real Zinc shipping quote fetched:", zincResponse);
-        return zincResponse;
-      }
+      console.log("Shipping quote fetched:", response);
+      return response;
     }
 
     return null;
@@ -120,7 +106,6 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
     console.error("Error fetching shipping quote:", error);
     toast.error("Unable to fetch shipping options. Using default rates.");
     
-    // Return fallback shipping options with fixed $6.99 rate
     return {
       retailer: request.retailer,
       shipping_options: [
@@ -129,12 +114,6 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
           name: "Standard Shipping",
           price: 6.99,
           delivery_time: "3-5 business days"
-        },
-        {
-          id: "fallback_express",
-          name: "Express Shipping", 
-          price: 12.99,
-          delivery_time: "1-2 business days"
         }
       ]
     };

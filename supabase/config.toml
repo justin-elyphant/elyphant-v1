@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.setup-email-templates]
 verify_jwt = false
+
+[functions.get-shipping-quote]
+verify_jwt = false

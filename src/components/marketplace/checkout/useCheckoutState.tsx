@@ -237,12 +237,21 @@ export const useCheckoutState = () => {
    * This protects cash flow during the 3-day Stripe→Bank→PayPal→ZMA funding cycle
    */
   const getShippingCost = async (): Promise<number> => {
+    // Calculate subtotal
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    // 📦 FREE SHIPPING RULE: Orders $25+ qualify for free shipping
+    if (subtotal >= 25) {
+      console.log('✓ Order qualifies for FREE Shipping ($25+ threshold)');
+      return 0;
+    }
+    
     // Get ZMA products from cart (check both vendor field and product.vendor)
     const zmaProducts = cartItems.filter(item => 
       item.product.vendor?.toLowerCase() === 'amazon' || item.product.retailer?.toLowerCase() === 'amazon'
     );
     
-    console.log(`ZMA products found: ${zmaProducts.length}`);
+    console.log(`🔍 Shipping Cost Calculation: ${zmaProducts.length} Amazon products, subtotal: $${subtotal}`);
     
     if (zmaProducts.length === 0) {
       return 6.99; // Fallback for non-Amazon products
@@ -273,19 +282,28 @@ export const useCheckoutState = () => {
             });
 
             if (quote && quote.shipping_options && quote.shipping_options.length > 0) {
+              console.log(`📦 Zinc API response for ${item.product.product_id}:`, {
+                optionsCount: quote.shipping_options.length,
+                options: quote.shipping_options.map(o => ({ name: o.name, price: o.price }))
+              });
+              
               // Get cheapest shipping option for this product
               const cheapest = quote.shipping_options.reduce((min, option) => 
                 option.price < min.price ? option : min
               );
+              
+              console.log(`✅ Selected cheapest option for ${item.product.product_id}:`, cheapest);
+              
               return {
                 productId: item.product.product_id || item.product.id,
                 price: cheapest.price,
                 isPrime: cheapest.price === 0
               };
             }
+            console.warn(`⚠️ No shipping options returned for ${item.product.product_id}`);
             return { productId: item.product.product_id || item.product.id, price: 6.99, isPrime: false };
           } catch (error) {
-            console.error(`Failed to get shipping for product ${item.product.product_id}:`, error);
+            console.error(`❌ Failed to get shipping for product ${item.product.product_id}:`, error);
             return { productId: item.product.product_id || item.product.id, price: 6.99, isPrime: false };
           }
         })

@@ -101,8 +101,8 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [shippingCost, setShippingCost] = useState<number>(6.99);
-  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -110,7 +110,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   // 🚨 CRITICAL: Dynamic gifting fee calculation using pricing settings
   // ⚠️  NEVER hardcode giftingFee = 0 - this breaks the business model
   // 🔗 This integrates with Trunkline pricing controls for real-time updates
-  const priceBreakdown = calculatePriceBreakdown(subtotal, shippingCost);
+  const priceBreakdown = calculatePriceBreakdown(subtotal, shippingCost ?? 0);
   const giftingFee = priceBreakdown.giftingFee;
   const giftingFeeName = priceBreakdown.giftingFeeName;
   const giftingFeeDescription = priceBreakdown.giftingFeeDescription;
@@ -128,18 +128,20 @@ const UnifiedCheckoutForm: React.FC = () => {
   
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
-  const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
+  const totalAmount = subtotal + (shippingCost ?? 0) + giftingFee + taxAmount;
 
   // Fetch real shipping costs when checkout data changes
   useEffect(() => {
     const fetchShippingCost = async () => {
       if (checkoutData.shippingInfo.zipCode && cartItems.length > 0) {
+        console.log('🚢 Fetching shipping cost for zip:', checkoutData.shippingInfo.zipCode);
         setIsLoadingShipping(true);
         try {
           const cost = await getShippingCost();
+          console.log('✅ Shipping cost fetched:', cost);
           setShippingCost(cost);
         } catch (error) {
-          console.error('Failed to fetch shipping cost:', error);
+          console.error('❌ Failed to fetch shipping cost:', error);
           setShippingCost(6.99); // Fallback
         } finally {
           setIsLoadingShipping(false);
@@ -234,7 +236,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       const orderData = {
         cartItems,
         subtotal,
-        shippingCost,
+        shippingCost: shippingCost ?? 0,
         giftingFee,
         giftingFeeName,
         giftingFeeDescription,
@@ -458,6 +460,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                 giftingFeeName={giftingFeeName}
                 giftingFeeDescription={giftingFeeDescription}
                 taxAmount={taxAmount}
+                isLoadingShipping={isLoadingShipping}
                 totalAmount={totalAmount}
               />
             </div>

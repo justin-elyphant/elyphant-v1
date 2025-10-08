@@ -10,12 +10,13 @@ import CartItemImage from '@/components/cart/CartItemImage';
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
   subtotal: number;
-  shippingCost: number;
+  shippingCost: number | null;
   giftingFee: number;
   giftingFeeName?: string;
   giftingFeeDescription?: string;
   taxAmount: number;
   totalAmount: number;
+  isLoadingShipping?: boolean;
 }
 
 const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
@@ -26,8 +27,12 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   giftingFeeName = 'Gifting Fee',
   giftingFeeDescription = '',
   taxAmount,
-  totalAmount
+  totalAmount,
+  isLoadingShipping = false
 }) => {
+  const qualifiesForFreeShipping = subtotal >= 25;
+  const isFreeShipping = shippingCost === 0;
+  
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
   if (process.env.NODE_ENV === 'development') {
     if (giftingFee > 0 && giftingFeeName === 'Gifting Fee') {
@@ -73,12 +78,14 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-sm items-center">
             <span>Shipping</span>
-            {shippingCost === 0 ? (
+            {isLoadingShipping || shippingCost === null ? (
+              <span className="text-muted-foreground">Calculating...</span>
+            ) : isFreeShipping ? (
               <span className="flex items-center gap-1 text-primary font-medium">
                 <Check className="h-4 w-4" />
-                Free Delivery
+                {qualifiesForFreeShipping ? 'FREE ($25+ order)' : 'Free Delivery'}
               </span>
             ) : (
               <span>${shippingCost.toFixed(2)}</span>

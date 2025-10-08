@@ -8,6 +8,9 @@ const corsHeaders = {
 
 interface ZincWebhookPayload {
   request_id: string;
+  code?: string; // Error code if present
+  message?: string; // Error message if present
+  data?: any; // Error details if present
   status_updates: Array<{
     _created_at: string;
     type: string;
@@ -119,9 +122,10 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
   const latestUpdate = payload.status_updates[payload.status_updates.length - 1];
   const newStatus = mapZincStatusToOrderStatus(latestUpdate.type);
   
-  // Check if this is an error response (request.failed or internal_error)
+  // Check if this is an error response (request.failed, internal_error, or has error code)
   const isErrorResponse = latestUpdate.type === 'request.failed' || 
-                          (payload as any).code === 'internal_error';
+                          payload.code === 'internal_error' ||
+                          !!payload.code; // Any error code present
   
   // Create timeline events from status updates
   const timelineEvents = createTimelineEvents(
@@ -147,14 +151,16 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
 
   // If error response, check if it's retryable
   if (isErrorResponse) {
-    const errorCode = (payload as any).code || 'unknown_error';
-    const errorMessage = (payload as any).message || latestUpdate.message;
+    const errorCode = payload.code || 'unknown_error';
+    const errorMessage = payload.message || latestUpdate.message;
+    
+    console.log(`🚨 Error response received - Code: ${errorCode}, Message: ${errorMessage}`);
     
     // Store full error data
     updateData.zinc_error_data = {
       code: errorCode,
       message: errorMessage,
-      data: (payload as any).data,
+      data: payload.data,
       timestamp: new Date().toISOString()
     };
 

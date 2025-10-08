@@ -19,12 +19,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Find orders stuck in processing for more than 2 hours
+    // Find orders stuck in processing for more than 1 hour (specifically those waiting for Zinc webhook)
     const { data: stuckOrders, error: fetchError } = await supabase
       .from('orders')
-      .select('id, order_number, status, created_at, updated_at, retry_count')
+      .select('id, order_number, status, created_at, updated_at, retry_count, zinc_status')
       .eq('status', 'processing')
-      .lt('updated_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+      .eq('zinc_status', 'submitted')
+      .lt('updated_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString())
       .order('updated_at', { ascending: true });
 
     if (fetchError) {

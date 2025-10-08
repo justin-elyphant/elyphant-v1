@@ -101,10 +101,11 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [shippingCost, setShippingCost] = useState<number>(6.99);
+  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shippingCost = getShippingCost();
   
   // 🚨 CRITICAL: Dynamic gifting fee calculation using pricing settings
   // ⚠️  NEVER hardcode giftingFee = 0 - this breaks the business model
@@ -128,6 +129,26 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + shippingCost + giftingFee + taxAmount;
+
+  // Fetch real shipping costs when checkout data changes
+  useEffect(() => {
+    const fetchShippingCost = async () => {
+      if (checkoutData.shippingInfo.zipCode && cartItems.length > 0) {
+        setIsLoadingShipping(true);
+        try {
+          const cost = await getShippingCost();
+          setShippingCost(cost);
+        } catch (error) {
+          console.error('Failed to fetch shipping cost:', error);
+          setShippingCost(6.99); // Fallback
+        } finally {
+          setIsLoadingShipping(false);
+        }
+      }
+    };
+    
+    fetchShippingCost();
+  }, [checkoutData.shippingInfo.zipCode, cartItems.length]);
 
   /*
    * 🔗 CRITICAL: Payment Intent Creation

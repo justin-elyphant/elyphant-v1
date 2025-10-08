@@ -406,7 +406,7 @@ return await (async () => {
       throw new Error(`Invalid JSON: ${(parseError instanceof Error ? parseError.message : String(parseError))}`);
     }
 
-    const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate, packageSchedulingData, hasMultiplePackages, customIdempotencyKey, retryCount } = body;
+    const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate, packageSchedulingData, hasMultiplePackages, customIdempotencyKey, retryCount, shippingCost } = body;
     
     if (!orderId) {
       console.log('❌ No order ID provided');
@@ -891,6 +891,11 @@ Object.keys(zincOrderData).forEach((key) => {
     }
     
     console.log(`🔐 Using API key: ${zmaAccount.api_key.substring(0, 8)}... for Zinc API call`);
+
+    // Log shipping cost if provided (for validation)
+    if (shippingCost !== undefined) {
+      console.log(`💰 Customer charged shipping: $${shippingCost} (will be validated against Zinc's actual charge)`);
+    }
 
     // Use custom idempotency key for retries, otherwise use orderId
     const idempotencyKey = customIdempotencyKey || orderId;

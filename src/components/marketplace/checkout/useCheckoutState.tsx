@@ -229,11 +229,51 @@ export const useCheckoutState = () => {
   /*
    * 🔗 CRITICAL: Shipping cost calculation
    * 
-   * This function calculates shipping costs based on various factors.
-   * Can be extended to include weight, distance, etc.
+   * Now fetches real shipping costs from Zinc API for Amazon products
    */
-  const getShippingCost = () => {
-    return 6.99; // Fixed shipping rate
+  const getShippingCost = async (): Promise<number> => {
+    // Get ZMA products from cart (check both vendor field and product.vendor)
+    const zmaProducts = cartItems.filter(item => 
+      item.product.vendor === 'Amazon' || item.product.retailer === 'Amazon'
+    );
+    
+    if (zmaProducts.length === 0) {
+      return 6.99; // Fallback for non-Amazon products
+    }
+
+    try {
+      const { getShippingQuote } = await import("@/components/marketplace/zinc/services/shippingQuoteService");
+      
+      const quote = await getShippingQuote({
+        retailer: "amazon",
+        products: zmaProducts.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity
+        })),
+        shipping_address: {
+          first_name: checkoutData.shippingInfo.name.split(' ')[0] || '',
+          last_name: checkoutData.shippingInfo.name.split(' ').slice(1).join(' ') || '',
+          address_line1: checkoutData.shippingInfo.address,
+          zip_code: checkoutData.shippingInfo.zipCode,
+          city: checkoutData.shippingInfo.city,
+          state: checkoutData.shippingInfo.state,
+          country: checkoutData.shippingInfo.country
+        }
+      });
+
+      if (quote && quote.shipping_options && quote.shipping_options.length > 0) {
+        // Return cheapest option (often $0 for Prime)
+        const cheapest = quote.shipping_options.reduce((min, option) => 
+          option.price < min.price ? option : min
+        );
+        console.log(`Real shipping cost from Zinc: $${cheapest.price}`);
+        return cheapest.price;
+      }
+    } catch (error) {
+      console.error("Failed to get shipping quote from Zinc:", error);
+    }
+
+    return 6.99; // Fallback on error
   };
 
   /*

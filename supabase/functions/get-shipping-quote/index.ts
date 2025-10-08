@@ -39,14 +39,23 @@ Deno.serve(async (req) => {
     
     if (zincData.offers && zincData.offers.length > 0) {
       for (const offer of zincData.offers) {
-        if (offer.shipping) {
-          for (const shippingOption of offer.shipping) {
+        // Check for shipping_options array (Zinc's actual response structure)
+        if (offer.shipping_options && Array.isArray(offer.shipping_options)) {
+          for (const shippingOption of offer.shipping_options) {
             shippingOptions.push({
-              method: shippingOption.method || (shippingOption.price === 0 ? 'Free Shipping' : 'Standard Shipping'),
-              price: shippingOption.price || 0, // Already in cents
-              delivery_days: shippingOption.delivery_days || null,
+              method: shippingOption.name || (shippingOption.price === 0 ? 'Free Shipping' : 'Standard Shipping'),
+              price: shippingOption.price, // Already in cents per Zinc docs
+              delivery_days: shippingOption.delivery_days?.min || shippingOption.delivery_days?.max || null,
             });
           }
+        }
+        // Fallback: If no shipping options but marketplace_fulfilled, it's Prime (free shipping)
+        else if (offer.marketplace_fulfilled) {
+          shippingOptions.push({
+            method: 'Prime Free Shipping',
+            price: 0,
+            delivery_days: 2,
+          });
         }
       }
     }

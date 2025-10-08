@@ -13,7 +13,7 @@ import AddressVerificationBadge from '@/components/ui/AddressVerificationBadge';
 import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
 
 interface CheckoutShippingReviewProps {
-  shippingCost: number;
+  shippingCost: number | null;
 }
 
 const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
@@ -298,7 +298,9 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               <span className="text-muted-foreground">
                 Shipping ({totalDestinations} destination{totalDestinations > 1 ? 's' : ''})
               </span>
-              <span className="font-medium">${shippingCost.toFixed(2)}</span>
+              <span className="font-medium">
+                {shippingCost === null ? 'Calculating...' : `$${shippingCost.toFixed(2)}`}
+              </span>
             </div>
           </div>
         )}

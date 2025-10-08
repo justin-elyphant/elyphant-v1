@@ -43,14 +43,15 @@ serve(async (req) => {
       throw new Error(`Order ${orderId} cannot be retried. Current status: ${order.status}`)
     }
 
-    // Reset order to processing status
+    // Reset order to processing status (keep zinc_order_id to prevent duplicate orders)
+    const newRetryCount = (order.retry_count || 0) + 1;
+    
     const { error: updateError } = await supabase
       .from('orders')
       .update({
         status: 'processing',
         zinc_status: null,
-        zinc_order_id: null,
-        retry_count: (order.retry_count || 0) + 1,
+        retry_count: newRetryCount,
         retry_reason: 'Manual retry requested',
         updated_at: new Date().toISOString()
       })
@@ -60,8 +61,8 @@ serve(async (req) => {
       throw new Error(`Failed to update order status: ${updateError.message}`)
     }
 
-    // Retry processing with ZMA
-    console.log(`🚀 Invoking process-zma-order for retry: ${orderId}`)
+    // Retry processing with ZMA using unique idempotency key
+    console.log(`🚀 Invoking process-zma-order for retry: ${orderId} (attempt ${newRetryCount})`)
     
     const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
       body: {
@@ -69,7 +70,9 @@ serve(async (req) => {
         isTestMode: false,
         debugMode: true,
         isRetryAttempt: true,
-        retryReason: 'Manual retry'
+        retryReason: 'Manual retry',
+        retryCount: newRetryCount,
+        customIdempotencyKey: `${orderId}-retry-${newRetryCount}` // Unique key per retry
       }
     })
 

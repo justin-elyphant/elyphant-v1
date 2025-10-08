@@ -406,14 +406,14 @@ return await (async () => {
       throw new Error(`Invalid JSON: ${(parseError instanceof Error ? parseError.message : String(parseError))}`);
     }
 
-    const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate, packageSchedulingData, hasMultiplePackages } = body;
+    const { orderId, isTestMode, debugMode, retryAttempt, scheduledProcessing, scheduledDeliveryDate, packageSchedulingData, hasMultiplePackages, customIdempotencyKey, retryCount } = body;
     
     if (!orderId) {
       console.log('❌ No order ID provided');
       throw new Error('Order ID is required');
     }
 
-    console.log(`🔍 Processing order: ${orderId}, test mode: ${isTestMode}, debug: ${debugMode}, retry: ${retryAttempt}, scheduled: ${scheduledProcessing}, packages: ${hasMultiplePackages ? 'multiple' : 'single'}`);
+    console.log(`🔍 Processing order: ${orderId}, test mode: ${isTestMode}, debug: ${debugMode}, retry: ${retryAttempt}, retry count: ${retryCount || 0}, scheduled: ${scheduledProcessing}, packages: ${hasMultiplePackages ? 'multiple' : 'single'}`);
 
     // Step 2: Create Supabase client
     console.log('📥 Step 2: Creating Supabase client...');
@@ -892,11 +892,16 @@ Object.keys(zincOrderData).forEach((key) => {
     
     console.log(`🔐 Using API key: ${zmaAccount.api_key.substring(0, 8)}... for Zinc API call`);
 
+    // Use custom idempotency key for retries, otherwise use orderId
+    const idempotencyKey = customIdempotencyKey || orderId;
+    console.log(`🔑 Using idempotency key: ${idempotencyKey} ${customIdempotencyKey ? '(custom retry key)' : '(original order ID)'}`);
+    
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(zmaAccount.api_key + ':')}`
+        'Authorization': `Basic ${btoa(zmaAccount.api_key + ':')}`,
+        'Idempotency-Key': idempotencyKey
       },
       body: JSON.stringify(zincOrderData)
     });

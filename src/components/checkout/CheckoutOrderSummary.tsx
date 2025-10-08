@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Check } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
 import CartItemImage from '@/components/cart/CartItemImage';
@@ -75,7 +75,14 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
           </div>
           <div className="flex justify-between text-sm">
             <span>Shipping</span>
-            <span>${shippingCost.toFixed(2)}</span>
+            {shippingCost === 0 ? (
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <Check className="h-4 w-4" />
+                Free Delivery
+              </span>
+            ) : (
+              <span>${shippingCost.toFixed(2)}</span>
+            )}
           </div>
           {giftingFee > 0 && (
             <div className="flex justify-between text-sm">

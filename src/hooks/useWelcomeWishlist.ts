@@ -26,8 +26,11 @@ export const useWelcomeWishlist = () => {
     try {
       console.log('🎁 Triggering welcome wishlist for user:', data.userId);
 
-      const { data: result, error } = await supabase.functions.invoke('send-welcome-wishlist', {
-        body: data
+      const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'wishlist_welcome',
+          customData: data
+        }
       });
 
       if (error) {

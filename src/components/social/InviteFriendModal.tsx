@@ -88,17 +88,18 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
         relationshipContext
       );
 
-      // Send invitation email via edge function
-      const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+      // Send invitation email via orchestrator
+      const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipientEmail: formData.email,
-          recipientName: fullName,
-          giftorName: 'You', // You could get this from user profile
-          relationship: formData.relationshipType,
-          occasion: 'friendship',
-          personalMessage: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`,
-          invitationType: 'manual_connection',
-          sourceContext: 'manual_invite'
+          eventType: 'connection_invitation',
+          customData: {
+            recipientEmail: formData.email,
+            recipientName: fullName,
+            senderName: 'You',
+            relationship: formData.relationshipType,
+            customMessage: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`,
+            invitationType: 'manual_connection'
+          }
         }
       });
 

@@ -70,14 +70,17 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         }
       });
 
-      // Send invitation email
-      const { error } = await supabase.functions.invoke('send-invitation-email', {
+      // Send invitation email via orchestrator
+      const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipientEmail: inviteForm.email,
-          recipientName: inviteForm.name,
-          inviterName: user.user_metadata?.name || user.email || 'Someone',
-          relationship: inviteForm.relationship,
-          invitationType: 'connection'
+          eventType: 'connection_invitation',
+          customData: {
+            recipientEmail: inviteForm.email,
+            recipientName: inviteForm.name,
+            senderName: user.user_metadata?.name || user.email || 'Someone',
+            relationship: inviteForm.relationship,
+            invitationType: 'connection'
+          }
         }
       });
 

@@ -29,8 +29,11 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
     setIsSendingEmail(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('send-order-receipt', {
-        body: { orderId: order.id }
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: { 
+          eventType: 'order_receipt',
+          orderId: order.id
+        }
       });
 
       if (error) {

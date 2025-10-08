@@ -436,13 +436,16 @@ export const pendingGiftsService = {
     invitationToken: string,
     giftEvents: any[] = []
   ) {
-    const { data, error } = await supabase.functions.invoke('send-gift-invitation', {
+    const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
-        recipientEmail,
-        recipientName,
-        giftorName,
-        invitationToken,
-        giftEvents
+        eventType: 'gift_invitation',
+        customData: {
+          recipientEmail,
+          recipientName,
+          giftorName,
+          invitationToken,
+          giftEvents
+        }
       }
     });
 

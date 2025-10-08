@@ -121,9 +121,12 @@ const InviteNewFriendStep = ({
     relationship?: string;
     invitationId?: string;
   }) => {
-    // Call Supabase edge function to send personalized invitation email
-    const { data, error } = await supabase.functions.invoke('send-gift-invitation', {
-      body: invitationData
+    // Call orchestrator to send personalized invitation email
+    const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      body: {
+        eventType: 'gift_invitation',
+        customData: invitationData
+      }
     });
 
     if (error) {

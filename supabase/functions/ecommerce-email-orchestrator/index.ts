@@ -12,7 +12,24 @@ const corsHeaders = {
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface EmailRequest {
-  eventType: 'order_created' | 'payment_confirmed' | 'order_status_changed' | 'order_cancelled' | 'user_welcomed' | 'cart_abandoned' | 'post_purchase_followup' | 'auto_gift_approval' | 'gift_invitation';
+  eventType: 
+    | 'order_created' 
+    | 'payment_confirmed' 
+    | 'order_status_changed' 
+    | 'order_cancelled' 
+    | 'user_welcomed' 
+    | 'cart_abandoned' 
+    | 'post_purchase_followup' 
+    | 'auto_gift_approval' 
+    | 'gift_invitation'
+    | 'connection_invitation'
+    | 'password_reset'
+    | 'password_changed'
+    | 'account_deletion'
+    | 'wishlist_welcome'
+    | 'address_request'
+    | 'nudge_reminder'
+    | 'order_receipt';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -64,6 +81,30 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'gift_invitation':
         result = await handleGiftInvitation(supabase, customData!);
+        break;
+      case 'connection_invitation':
+        result = await handleConnectionInvitation(supabase, customData!);
+        break;
+      case 'password_reset':
+        result = await handlePasswordReset(supabase, customData!);
+        break;
+      case 'password_changed':
+        result = await handlePasswordChanged(supabase, customData!);
+        break;
+      case 'account_deletion':
+        result = await handleAccountDeletion(supabase, customData!);
+        break;
+      case 'wishlist_welcome':
+        result = await handleWishlistWelcome(supabase, customData!);
+        break;
+      case 'address_request':
+        result = await handleAddressRequest(supabase, customData!);
+        break;
+      case 'nudge_reminder':
+        result = await handleNudgeReminder(supabase, customData!);
+        break;
+      case 'order_receipt':
+        result = await handleOrderReceipt(supabase, orderId!);
         break;
       default:
         throw new Error(`Unknown event type: ${eventType}`);
@@ -773,6 +814,214 @@ async function handleGiftInvitation(supabase: any, customData: any) {
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `${customData.giftorName} invited you to join Elyphant!`,
+    html: htmlContent,
+  });
+
+  console.log("✅ Gift invitation email sent successfully");
+  return { success: true, emailId: emailResponse.data?.id };
+}
+
+// ============= NEW EVENT HANDLERS =============
+
+async function handleConnectionInvitation(supabase: any, customData: any) {
+  console.log("📧 Sending connection invitation email");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2563eb;">${customData.senderName} wants to connect!</h1>
+      <p>Hi ${customData.recipientName},</p>
+      <p>${customData.senderName} has invited you to connect on Elyphant.</p>
+      ${customData.customMessage ? `<p style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-style: italic;">"${customData.customMessage}"</p>` : ''}
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${customData.invitationUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `${customData.senderName} invited you to connect on Elyphant`,
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handlePasswordReset(supabase: any, customData: any) {
+  console.log("🔐 Sending password reset email");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2563eb;">Reset Your Password</h1>
+      <p>We received a request to reset your password.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${customData.resetLink}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
+      </div>
+      <p style="color: #718096; font-size: 14px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant Security <security@elyphant.ai>",
+    to: [customData.email],
+    subject: "Reset Your Password - Elyphant",
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handlePasswordChanged(supabase: any, customData: any) {
+  console.log("✅ Sending password changed notification");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #10b981;">Password Changed Successfully</h1>
+      <p>Your password was recently changed.</p>
+      <p>If you made this change, no further action is needed.</p>
+      <p style="color: #ef4444; margin-top: 20px;"><strong>If you did not change your password, please contact support immediately.</strong></p>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant Security <security@elyphant.ai>",
+    to: [customData.email],
+    subject: "Your Password Was Changed - Elyphant",
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handleAccountDeletion(supabase: any, customData: any) {
+  console.log("🗑️ Sending account deletion confirmation");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #ef4444;">Account Deletion Confirmed</h1>
+      <p>Hi ${customData.name},</p>
+      <p>Your account has been successfully deleted. We're sorry to see you go!</p>
+      <p>All your data has been removed from our systems.</p>
+      <p style="color: #718096; margin-top: 20px;">If you change your mind, you can always create a new account.</p>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.email],
+    subject: "Account Deleted - Elyphant",
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handleWishlistWelcome(supabase: any, customData: any) {
+  console.log("🎁 Sending wishlist welcome email");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2563eb;">Welcome to Your Wishlist!</h1>
+      <p>Hi ${customData.userName},</p>
+      <p>Your wishlist has been created! Start adding items you love.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${customData.wishlistUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">View Your Wishlist</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.email],
+    subject: "Your Wishlist is Ready! - Elyphant",
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handleAddressRequest(supabase: any, customData: any) {
+  console.log("📍 Sending address request email");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2563eb;">${customData.requesterName} needs your address</h1>
+      <p>Hi ${customData.recipientName},</p>
+      <p>${customData.requesterName} is requesting your shipping address${customData.occasion ? ` for ${customData.occasion}` : ''}.</p>
+      ${customData.message ? `<p style="background: #f3f4f6; padding: 15px; border-radius: 8px;">${customData.message}</p>` : ''}
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${customData.requestUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Share Your Address</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `${customData.requesterName} requested your address`,
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handleNudgeReminder(supabase: any, customData: any) {
+  console.log("👋 Sending nudge reminder");
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #2563eb;">Friendly Reminder from ${customData.senderName}</h1>
+      <p>Hi ${customData.recipientName},</p>
+      <p>${customData.senderName} sent you a friendly reminder about joining Elyphant.</p>
+      ${customData.customMessage ? `<p style="background: #f3f4f6; padding: 15px; border-radius: 8px;">"${customData.customMessage}"</p>` : ''}
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${customData.invitationUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Join Now</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [customData.recipientEmail],
+    subject: `Reminder from ${customData.senderName}`,
+    html: htmlContent,
+  });
+
+  return { success: true };
+}
+
+async function handleOrderReceipt(supabase: any, orderId: string) {
+  console.log("📧 Sending order receipt");
+  
+  // Reuse order confirmation logic
+  return await handleOrderConfirmation(supabase, orderId);
+}
+
+serve(handler);
     to: [customData.recipientEmail],
     subject: `${customData.giftorName} wants to make sure you get the perfect gifts!`,
     html,

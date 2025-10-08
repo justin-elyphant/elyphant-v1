@@ -221,8 +221,11 @@ class UnifiedAuthService {
         const lastResetEmail = localStorage.getItem('lastResetEmail');
         if (lastResetEmail) {
           try {
-            await supabase.functions.invoke('send-password-change-notification', {
-              body: { email: lastResetEmail }
+            await supabase.functions.invoke('ecommerce-email-orchestrator', {
+              body: { 
+                eventType: 'password_changed',
+                customData: { email: lastResetEmail }
+              }
             });
           } catch (notificationError) {
             console.warn('Could not send security notification:', notificationError);

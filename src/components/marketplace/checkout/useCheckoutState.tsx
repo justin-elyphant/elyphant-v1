@@ -234,8 +234,10 @@ export const useCheckoutState = () => {
   const getShippingCost = async (): Promise<number> => {
     // Get ZMA products from cart (check both vendor field and product.vendor)
     const zmaProducts = cartItems.filter(item => 
-      item.product.vendor === 'Amazon' || item.product.retailer === 'Amazon'
+      item.product.vendor?.toLowerCase() === 'amazon' || item.product.retailer?.toLowerCase() === 'amazon'
     );
+    
+    console.log(`ZMA products found: ${zmaProducts.length}`);
     
     if (zmaProducts.length === 0) {
       return 6.99; // Fallback for non-Amazon products
@@ -247,7 +249,7 @@ export const useCheckoutState = () => {
       const quote = await getShippingQuote({
         retailer: "amazon",
         products: zmaProducts.map(item => ({
-          product_id: item.product.id,
+          product_id: item.product.product_id || item.product.id || item.product.asin,
           quantity: item.quantity
         })),
         shipping_address: {

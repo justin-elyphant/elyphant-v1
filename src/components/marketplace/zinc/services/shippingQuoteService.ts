@@ -78,8 +78,14 @@ export const getShippingQuote = async (request: ShippingQuoteRequest): Promise<S
       });
 
       if (error || !data?.results?.[0]?.offers) {
-        console.warn("Failed to get Zinc offers, falling back to default shipping");
-        throw new Error("No offers available");
+        console.error("Zinc offers fetch failed:", {
+          error,
+          data,
+          productId,
+          hasResults: !!data?.results,
+          hasOffers: !!data?.results?.[0]?.offers
+        });
+        throw new Error(error?.message || "No offers available");
       }
 
       const offers = data.results[0].offers;

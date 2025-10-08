@@ -2,14 +2,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.1.0";
-import { 
-  orderConfirmationTemplate,
-  paymentConfirmationTemplate,
-  welcomeEmailTemplate,
-  giftInvitationTemplate,
-  autoGiftApprovalTemplate,
-  orderStatusUpdateTemplate
-} from './email-templates/index.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -219,24 +211,115 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     price: `$${(item.price || 0).toFixed(2)}`
   }));
 
-  // Use professional styled template
-  const styledHtml = orderConfirmationTemplate({
-    first_name: recipientFirstName,
-    order_number: order.order_number,
-    total_amount: `$${order.total_amount?.toFixed(2) || '0.00'}`,
-    order_date: new Date(order.created_at).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    items: formattedItems.length > 0 ? formattedItems : [
-      { name: 'Order Items', quantity: 1, price: `$${order.total_amount?.toFixed(2) || '0.00'}` }
-    ],
-    shipping_address: order.shipping_address?.address_line1 
-      ? `${order.shipping_address.address_line1}\n${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zip_code}`
-      : 'Address on file',
-    tracking_url: `https://elyphant.ai/orders/${order.id}`
-  });
+  // Create styled HTML email with Elyphant gradient branding
+  const itemsHtml = formattedItems.map((item: any) => `
+    <tr>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333333; font-weight: 500;">
+          ${item.name}
+        </p>
+        <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #666666;">
+          Quantity: ${item.quantity}
+        </p>
+      </td>
+      <td align="right" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333333; font-weight: 600;">
+          ${item.price}
+        </p>
+      </td>
+    </tr>
+  `).join('');
+
+  const shippingAddr = order.shipping_address?.address_line1 
+    ? `${order.shipping_address.address_line1}<br>${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zip_code}`
+    : 'Address on file';
+
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">
+                Elyphant
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+                Order Confirmed! 🎉
+              </h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${recipientFirstName}, thanks for your order! We're getting it ready and will notify you when it ships.
+              </p>
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
+                      Order Number
+                    </p>
+                    <p style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1a1a1a; font-weight: 600;">
+                      ${order.order_number}
+                    </p>
+                    <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
+                      Order Date
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
+                      ${new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <h3 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+                Order Items
+              </h3>
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                ${itemsHtml}
+                <tr>
+                  <td align="right" style="padding: 20px 0 0 0;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
+                      Total
+                    </p>
+                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #1a1a1a; font-weight: 700;">
+                      $${order.total_amount?.toFixed(2) || '0.00'}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <h3 style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+                Shipping Address
+              </h3>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
+                ${shippingAddr}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
+                Questions? Contact us at <a href="mailto:hello@elyphant.ai" style="color: #9333ea;">hello@elyphant.ai</a>
+              </p>
+              <p style="margin: 10px 0 0 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
+                © ${new Date().getFullYear()} Elyphant. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 
   // Send email with styled template
   const emailResponse = await resend.emails.send({
@@ -525,12 +608,50 @@ async function handleWelcomeEmail(supabase: any, userId: string) {
     throw new Error('Welcome email template not found');
   }
 
-  // Use professional welcome template
-  const styledHtml = welcomeEmailTemplate({
-    first_name: profile.first_name || profile.name || 'Friend',
-    dashboard_url: `${Deno.env.get('SITE_URL')}/dashboard`,
-    profile_url: `${Deno.env.get('SITE_URL')}/profile`
-  });
+  // Create styled welcome email with Elyphant branding
+  const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Welcome to Elyphant! 🎁</h2>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${profile.first_name || profile.name || 'Friend'}, we're thrilled to have you here!
+              </p>
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${Deno.env.get('SITE_URL')}/dashboard" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
+                      Go to Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",

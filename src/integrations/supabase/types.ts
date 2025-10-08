@@ -3360,6 +3360,7 @@ export type Database = {
           markup_percentage: number
           setting_name: string
           updated_at: string
+          zinc_per_order_fee: number
         }
         Insert: {
           applies_to?: string
@@ -3371,6 +3372,7 @@ export type Database = {
           markup_percentage?: number
           setting_name: string
           updated_at?: string
+          zinc_per_order_fee?: number
         }
         Update: {
           applies_to?: string
@@ -3382,6 +3384,7 @@ export type Database = {
           markup_percentage?: number
           setting_name?: string
           updated_at?: string
+          zinc_per_order_fee?: number
         }
         Relationships: []
       }

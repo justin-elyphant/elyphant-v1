@@ -7,6 +7,7 @@ export interface PricingSetting {
   id: string;
   setting_name: string;
   markup_percentage: number;
+  zinc_per_order_fee?: number;
   fee_display_name: string;
   fee_description: string | null;
   is_active: boolean;
@@ -61,14 +62,17 @@ export const usePricingSettings = () => {
 
   const calculatePriceBreakdown = (basePrice: number, shippingCost: number = 0) => {
     const defaultFee = getDefaultGiftingFee();
-    const markupPercentage = defaultFee?.markup_percentage || 15;
-    const giftingFee = (basePrice * markupPercentage) / 100;
+    const markupPercentage = defaultFee?.markup_percentage || 10;
+    const zincFee = defaultFee?.zinc_per_order_fee || 1.00;
+    
+    // Combined fee: percentage markup + Zinc fulfillment fee
+    const giftingFee = (basePrice * markupPercentage) / 100 + zincFee;
     
     return {
       basePrice,
       shippingCost,
       giftingFee,
-      giftingFeeName: defaultFee?.fee_display_name || 'Gifting Fee',
+      giftingFeeName: defaultFee?.fee_display_name || 'Elyphant Gifting Fee',
       giftingFeeDescription: defaultFee?.fee_description || '',
       total: basePrice + shippingCost + giftingFee
     };

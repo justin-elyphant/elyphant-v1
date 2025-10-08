@@ -19,28 +19,31 @@ export const getTransparentPricing = async (basePrice: number): Promise<PriceBre
       .eq('is_active', true)
       .single();
 
-    const markupPercentage = settings?.markup_percentage || 15;
-    const giftingFee = (basePrice * markupPercentage) / 100;
+    const markupPercentage = settings?.markup_percentage || 10;
+    const zincFee = settings?.zinc_per_order_fee || 1.00;
+    
+    // Combined fee: percentage markup + Zinc fulfillment fee
+    const giftingFee = (basePrice * markupPercentage) / 100 + zincFee;
 
     return {
       basePrice,
       displayPrice: basePrice, // Show base price on marketplace, fees at checkout
       giftingFee,
-      giftingFeeName: settings?.fee_display_name || 'Gifting Fee',
-      giftingFeeDescription: settings?.fee_description || 'Platform service fee',
+      giftingFeeName: settings?.fee_display_name || 'Elyphant Gifting Fee',
+      giftingFeeDescription: settings?.fee_description || 'Our Gifting Fee covers platform technology, fulfillment services, customer support, gift tracking, and curated shopping experience',
       total: basePrice + giftingFee
     };
   } catch (error) {
     console.error('Error fetching pricing settings:', error);
     
-    // Fallback to default 15% markup
-    const giftingFee = (basePrice * 15) / 100;
+    // Fallback: 10% markup + $1.00 Zinc fee
+    const giftingFee = (basePrice * 10) / 100 + 1.00;
     return {
       basePrice,
       displayPrice: basePrice,
       giftingFee,
-      giftingFeeName: 'Gifting Fee',
-      giftingFeeDescription: 'Platform service fee',
+      giftingFeeName: 'Elyphant Gifting Fee',
+      giftingFeeDescription: 'Our Gifting Fee covers platform technology, fulfillment services, customer support, gift tracking, and curated shopping experience',
       total: basePrice + giftingFee
     };
   }

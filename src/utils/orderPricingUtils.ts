@@ -65,9 +65,10 @@ export const calculateDynamicPricingBreakdown = (
   basePrice: number, 
   shippingCost: number = 0
 ) => {
-  // This would ideally use the pricing settings hook
-  // For now, using the default calculation
-  const giftingFee = basePrice * 0.15; // 15% default
+  // Combined fee: 10% markup + $1.00 Zinc fulfillment fee
+  const markupPercentage = 0.10; // 10% default
+  const zincFee = 1.00; // $1.00 Zinc per-order fulfillment fee
+  const giftingFee = (basePrice * markupPercentage) + zincFee;
   const taxAmount = 0; // Currently no tax in checkout
   
   return {
@@ -75,7 +76,7 @@ export const calculateDynamicPricingBreakdown = (
     shippingCost,
     giftingFee,
     giftingFeeName: 'Elyphant Gifting Fee',
-    giftingFeeDescription: 'Platform service fee for streamlined delivery and customer support',
+    giftingFeeDescription: 'Our Gifting Fee covers platform technology, fulfillment services, customer support, gift tracking, and curated shopping experience',
     grandTotal: basePrice + shippingCost + giftingFee + taxAmount
   };
 };

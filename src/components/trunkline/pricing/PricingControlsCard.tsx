@@ -11,8 +11,9 @@ import { usePricingSettings } from "@/hooks/usePricingSettings";
 
 const PricingControlsCard = () => {
   const { settings, loading, updateSetting, getDefaultGiftingFee } = usePricingSettings();
-  const [markupPercentage, setMarkupPercentage] = useState(15);
-  const [feeDisplayName, setFeeDisplayName] = useState("Gifting Fee");
+  const [markupPercentage, setMarkupPercentage] = useState(10);
+  const [zincFee, setZincFee] = useState(1.00);
+  const [feeDisplayName, setFeeDisplayName] = useState("Elyphant Gifting Fee");
   const [feeDescription, setFeeDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -21,6 +22,7 @@ const PricingControlsCard = () => {
     const defaultFee = getDefaultGiftingFee();
     if (defaultFee) {
       setMarkupPercentage(defaultFee.markup_percentage);
+      setZincFee(defaultFee.zinc_per_order_fee || 1.00);
       setFeeDisplayName(defaultFee.fee_display_name);
       setFeeDescription(defaultFee.fee_description || "");
       setIsActive(defaultFee.is_active);
@@ -39,6 +41,7 @@ const PricingControlsCard = () => {
     try {
       const success = await updateSetting(defaultFee.id, {
         markup_percentage: markupPercentage,
+        zinc_per_order_fee: zincFee,
         fee_display_name: feeDisplayName,
         fee_description: feeDescription,
         is_active: isActive
@@ -134,7 +137,27 @@ const PricingControlsCard = () => {
             className="max-w-[180px]"
           />
           <p className="text-xs text-muted-foreground">
-            This percentage will be added to the base cost and shown as "{feeDisplayName}"
+            Percentage markup on product cost
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="zinc-fee">Zinc Fulfillment Fee (per order)</Label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">$</span>
+            <Input
+              id="zinc-fee"
+              type="number"
+              min="0"
+              step="0.01"
+              value={zincFee}
+              onChange={(e) => setZincFee(Number(e.target.value))}
+              disabled={!isActive}
+              className="max-w-[180px]"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Zinc's per-order fulfillment cost (adjust when rates change)
           </p>
         </div>
 
@@ -154,12 +177,17 @@ const PricingControlsCard = () => {
                 {feeDisplayName}
                 <span className="text-xs text-muted-foreground">ℹ️</span>
               </span>
-              <span>${((10 * markupPercentage) / 100).toFixed(2)}</span>
+              <div className="text-right">
+                <div>${((10 * markupPercentage) / 100 + zincFee).toFixed(2)}</div>
+                <div className="text-xs text-muted-foreground">
+                  ({markupPercentage}% + ${zincFee.toFixed(2)} fulfillment)
+                </div>
+              </div>
             </div>
             <hr className="my-2" />
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>${(10 + 6.99 + (10 * markupPercentage) / 100).toFixed(2)}</span>
+              <span>${(10 + 6.99 + (10 * markupPercentage) / 100 + zincFee).toFixed(2)}</span>
             </div>
           </div>
         </div>

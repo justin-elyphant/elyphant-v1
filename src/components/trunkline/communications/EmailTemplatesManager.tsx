@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit, Eye, Copy, Trash2, Send } from "lucide-react";
+import { Plus, Search, Edit, Eye, Copy, Trash2, Send, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ const EmailTemplatesManager = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -181,6 +182,27 @@ const EmailTemplatesManager = () => {
     }
   };
 
+  const handleInitializeTemplates = async () => {
+    setIsInitializing(true);
+    try {
+      const { error } = await supabase.functions.invoke('setup-email-templates', {
+        headers: {
+          'x-setup-token': 'elyphant-email-setup-2025'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Email templates initialized successfully! 🎉');
+      fetchTemplates();
+    } catch (error: any) {
+      console.error('Error initializing templates:', error);
+      toast.error(error.message || 'Failed to initialize templates');
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -209,6 +231,17 @@ const EmailTemplatesManager = () => {
           </div>
         </div>
         <div className="flex gap-2">
+          {templates.length === 0 && (
+            <Button 
+              onClick={handleInitializeTemplates} 
+              disabled={isInitializing}
+              variant="outline"
+              className="gap-2 border-purple-500 text-purple-600 hover:bg-purple-50"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isInitializing ? 'Initializing...' : 'Initialize Email Templates'}
+            </Button>
+          )}
           <Button onClick={handleCreateTemplate} className="gap-2">
             <Plus className="h-4 w-4" />
             Create Template

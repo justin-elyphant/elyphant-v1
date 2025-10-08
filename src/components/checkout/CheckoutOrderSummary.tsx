@@ -104,7 +104,6 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                           <li>AI-powered gift recommendations</li>
                           <li>Automated gifting workflows</li>
                           <li>Enhanced tracking and notifications</li>
-                          <li>Premium customer support</li>
                         </ul>
                       </div>
                     </div>

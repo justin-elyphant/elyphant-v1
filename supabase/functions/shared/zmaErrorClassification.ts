@@ -37,6 +37,20 @@ export function classifyZmaError(zincResult: any): ZmaErrorClassification {
     };
   }
 
+  // Internal Zinc/Amazon errors - retry after delay
+  if (errorCode === 'internal_error') {
+    return {
+      type: 'retryable_system',
+      shouldRetry: true,
+      useZincNativeRetry: false,
+      retryDelay: 7200, // 2 hours for internal errors
+      maxRetries: 2,
+      alertLevel: 'warning',
+      userFriendlyMessage: 'Amazon or Zinc is experiencing technical issues. We\'ll automatically retry your order.',
+      adminMessage: `Internal Zinc/Amazon error: ${errorMessage} - auto-retry scheduled`
+    };
+  }
+
   // System overload - use Zinc native retry
   if (errorCode === 'zma_temporarily_overloaded') {
     return {

@@ -5,6 +5,7 @@ import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
 import RetryNotificationService from "@/components/admin/RetryNotificationService";
+import OrderRecoveryTool from "@/components/admin/OrderRecoveryTool";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
@@ -48,6 +49,9 @@ const TrunklineOrdersTab = () => {
         onOrderClick={handleOrderClick}
         onOrderUpdated={refetch}
       />
+
+      {/* Order Recovery Tool - Find stuck orders */}
+      <OrderRecoveryTool />
 
       {/* Retry Processing Queue */}
       <RetryNotificationService 

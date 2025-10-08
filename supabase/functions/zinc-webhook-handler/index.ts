@@ -119,6 +119,10 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
   const latestUpdate = payload.status_updates[payload.status_updates.length - 1];
   const newStatus = mapZincStatusToOrderStatus(latestUpdate.type);
   
+  // Check if this is an error response (request.failed or internal_error)
+  const isErrorResponse = latestUpdate.type === 'request.failed' || 
+                          (payload as any).code === 'internal_error';
+  
   // Create timeline events from status updates
   const timelineEvents = createTimelineEvents(
     payload.status_updates, 
@@ -132,17 +136,47 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
     last_update: new Date().toISOString()
   };
 
+  // Prepare update object - handle error responses differently
+  const updateData: any = {
+    zinc_status: latestUpdate.type,
+    zinc_timeline_events: timelineEvents,
+    merchant_tracking_data: merchantTracking,
+    last_zinc_update: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  // If error response, check if it's retryable
+  if (isErrorResponse) {
+    const errorCode = (payload as any).code || 'unknown_error';
+    const errorMessage = (payload as any).message || latestUpdate.message;
+    
+    // Store full error data
+    updateData.zinc_error_data = {
+      code: errorCode,
+      message: errorMessage,
+      data: (payload as any).data,
+      timestamp: new Date().toISOString()
+    };
+
+    // Check if internal_error (retryable system error)
+    if (errorCode === 'internal_error') {
+      console.log('⚠️ Internal error detected - marking for retry');
+      updateData.status = 'retry_pending';
+      updateData.next_retry_at = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours
+      updateData.retry_count = (order.retry_count || 0);
+    } else {
+      // Other errors - mark as failed
+      updateData.status = 'failed';
+    }
+  } else {
+    // Normal status update
+    updateData.status = newStatus;
+  }
+
   // Update the order with new data
   const { data: updatedOrder, error: updateError } = await supabase
     .from('orders')
-    .update({
-      status: newStatus,
-      zinc_status: latestUpdate.type,
-      zinc_timeline_events: timelineEvents,
-      merchant_tracking_data: merchantTracking,
-      last_zinc_update: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', order.id)
     .select()
     .single();

@@ -4,17 +4,15 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-import {
-  orderConfirmationTemplate,
-  paymentConfirmationTemplate,
-  welcomeEmailTemplate,
-  giftInvitationTemplate,
-  autoGiftApprovalTemplate,
-  orderStatusUpdateTemplate,
-  cartAbandonedTemplate,
-  postPurchaseFollowupTemplate,
-  connectionInvitationTemplate,
-} from "../ecommerce-email-orchestrator/email-templates/index.ts";
+import { orderConfirmationTemplate } from "./email-templates/order-confirmation.ts";
+import { paymentConfirmationTemplate } from "./email-templates/payment-confirmation.ts";
+import { welcomeEmailTemplate } from "./email-templates/welcome-email.ts";
+import { giftInvitationTemplate } from "./email-templates/gift-invitation.ts";
+import { autoGiftApprovalTemplate } from "./email-templates/auto-gift-approval.ts";
+import { orderStatusUpdateTemplate } from "./email-templates/order-status-update.ts";
+import { cartAbandonedTemplate } from "./email-templates/cart-abandoned.ts";
+import { postPurchaseFollowupTemplate } from "./email-templates/post-purchase-followup.ts";
+import { connectionInvitationTemplate } from "./email-templates/connection-invitation.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

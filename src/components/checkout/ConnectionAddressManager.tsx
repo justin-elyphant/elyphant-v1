@@ -107,15 +107,18 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
     setAddressRequest(prev => ({ ...prev, sending: true }));
     
     try {
-      // Call the address request edge function
-      const { data, error } = await supabase.functions.invoke('send-address-request', {
+      // Call the orchestrator for address request
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipient_id: selectedConnection.connected_user_id,
-          recipient_email: addressRequest.email,
-          message: addressRequest.message || 'Could you please share your address for gift delivery?',
-          include_notifications: true,
-          reminder_schedule: '3_days',
-          expires_in_days: 7
+          eventType: 'address_request',
+          customData: {
+            recipientId: selectedConnection.connected_user_id,
+            recipientEmail: addressRequest.email,
+            recipientName: selectedConnection.name,
+            requesterName: 'You',
+            message: addressRequest.message || 'Could you please share your address for gift delivery?',
+            requestUrl: window.location.origin + '/address-request'
+          }
         }
       });
 

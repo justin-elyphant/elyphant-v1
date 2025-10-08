@@ -239,14 +239,18 @@ class RecipientAddressResolver {
 
       if (error) throw error;
 
-      // Send the actual email request via edge function
-      const { error: emailError } = await supabase.functions.invoke('send-address-request', {
+      // Send the actual email request via orchestrator
+      const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipientEmail,
-          recipientName,
-          requesterUserId: userId,
-          requestId: data.id,
-          message: message || `Hi ${recipientName}, I'd like to send you a gift! Could you please share your shipping address?`
+          eventType: 'address_request',
+          customData: {
+            recipientEmail,
+            recipientName,
+            requesterName: 'User',
+            requestId: data.id,
+            message: message || `Hi ${recipientName}, I'd like to send you a gift! Could you please share your shipping address?`,
+            requestUrl: window.location.origin + '/address-request'
+          }
         }
       });
 

@@ -63,17 +63,17 @@ const NudgeModal: React.FC<NudgeModalProps> = ({
 
     setLoading(true);
     try {
-      // Send nudge via edge function
-      const { error } = await supabase.functions.invoke('send-nudge-reminder', {
+      // Send nudge via orchestrator
+      const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipientEmail: connection.recipientEmail,
-          recipientName: connection.name,
-          senderName: userProfile?.name || userProfile?.first_name || 'Your friend',
-          senderUserId: user.id,
-          nudgeMethod,
-          customMessage: messageTemplate === 'custom' ? customMessage : messageTemplates[messageTemplate],
-          connectionId: connection.id,
-          relationship: connection.relationship
+          eventType: 'nudge_reminder',
+          customData: {
+            recipientEmail: connection.recipientEmail,
+            recipientName: connection.name,
+            senderName: userProfile?.name || userProfile?.first_name || 'Your friend',
+            customMessage: messageTemplate === 'custom' ? customMessage : messageTemplates[messageTemplate],
+            invitationUrl: window.location.origin + '/signup'
+          }
         }
       });
 

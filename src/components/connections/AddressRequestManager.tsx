@@ -175,14 +175,17 @@ const AddressRequestManager: React.FC = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-address-request', {
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipient_id: selectedConnection.connected_user_id,
-          recipient_email: selectedConnection.email || '',
-          message: requestMessage || 'Could you please share your address for gift delivery?',
-          include_notifications: true,
-          reminder_schedule: '3_days',
-          expires_in_days: 7
+          eventType: 'address_request',
+          customData: {
+            recipientId: selectedConnection.connected_user_id,
+            recipientEmail: selectedConnection.email || '',
+            recipientName: selectedConnection.name,
+            requesterName: 'You',
+            message: requestMessage || 'Could you please share your address for gift delivery?',
+            requestUrl: window.location.origin + '/address-request'
+          }
         }
       });
 
@@ -203,14 +206,18 @@ const AddressRequestManager: React.FC = () => {
   };
 
   const sendEmailNotification = async (request: AddressRequest) => {
-    // This would call an edge function to send email
+    // This would call orchestrator to send email
     try {
-      await supabase.functions.invoke('send-address-request-email', {
+      await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          to: request.recipient_email,
-          requester_name: request.requester_name,
-          message: request.message,
-          request_id: request.id
+          eventType: 'address_request',
+          customData: {
+            recipientEmail: request.recipient_email,
+            recipientName: request.recipient_name || 'User',
+            requesterName: request.requester_name,
+            message: request.message,
+            requestUrl: window.location.origin + '/address-request'
+          }
         }
       });
     } catch (error) {

@@ -70,9 +70,12 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
         expires_in_days: 7
       };
 
-      // Call edge function to send address request
-      const { data, error } = await supabase.functions.invoke('send-address-request', {
-        body: requestData
+      // Call orchestrator to send address request
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'address_request',
+          customData: requestData
+        }
       });
 
       if (error) {

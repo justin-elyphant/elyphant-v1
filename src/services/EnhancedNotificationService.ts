@@ -126,12 +126,15 @@ export class EnhancedNotificationService {
         return; // Already processed or no token
       }
 
-      // Send reminder email via edge function
-      await supabase.functions.invoke('send-reminder-email', {
+      // Send reminder email via orchestrator
+      await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          executionId,
-          hoursRemaining,
-          tokenId: tokenData.id
+          eventType: 'auto_gift_approval',
+          customData: {
+            executionId,
+            hoursRemaining,
+            tokenId: tokenData.id
+          }
         }
       });
 

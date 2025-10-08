@@ -155,14 +155,16 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                             size="sm"
                             onClick={async () => {
                               try {
-                                const { error } = await supabase.functions.invoke('send-invitation-email', {
+                                const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                                   body: {
-                                    recipientEmail: connection.recipientEmail,
-                                    recipientName: connection.name,
-                                    senderName: 'You',
-                                    occasion: 'friendship',
-                                    personalMessage: `Hi ${connection.name.split(' ')[0]}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
-                                    relationshipType: connection.relationship || 'friend'
+                                    eventType: 'connection_invitation',
+                                    customData: {
+                                      recipientEmail: connection.recipientEmail,
+                                      recipientName: connection.name,
+                                      senderName: 'You',
+                                      customMessage: `Hi ${connection.name.split(' ')[0]}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
+                                      invitationUrl: window.location.origin + '/signup'
+                                    }
                                   }
                                 });
                                 

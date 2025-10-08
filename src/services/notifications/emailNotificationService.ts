@@ -46,8 +46,11 @@ export const emailNotificationService = {
         notificationType: 'auto_gift_approval'
       };
 
-      const { data: result, error } = await supabase.functions.invoke('send-email-notification', {
-        body: emailData
+      const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'auto_gift_approval',
+          customData: emailData
+        }
       });
 
       if (error) {
@@ -130,8 +133,11 @@ export const emailNotificationService = {
         notificationType: 'welcome_wishlist'
       };
 
-      const { data: result, error } = await supabase.functions.invoke('send-email-notification', {
-        body: emailData
+      const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'wishlist_welcome',
+          customData: emailData
+        }
       });
 
       if (error) {

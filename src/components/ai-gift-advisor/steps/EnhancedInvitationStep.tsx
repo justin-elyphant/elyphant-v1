@@ -47,13 +47,16 @@ const EnhancedInvitationStep = ({
 
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke('send-invitation-email', {
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          recipientName: formData.name,
-          recipientEmail: formData.email,
-          relationship: formData.relationship,
-          occasion: formData.occasion,
-          personalMessage: formData.personalMessage,
+          eventType: 'connection_invitation',
+          customData: {
+            recipientName: formData.name,
+            recipientEmail: formData.email,
+            senderName: 'Friend',
+            relationship: formData.relationship,
+            customMessage: formData.personalMessage
+          }
         }
       });
 

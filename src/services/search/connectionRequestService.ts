@@ -173,13 +173,17 @@ export const sendConnectionNudge = async (connectionId: string, customMessage?: 
       throw nudgeError;
     }
 
-    // Call the send-nudge-reminder edge function
-    const { error: sendError } = await supabase.functions.invoke('send-nudge-reminder', {
+    // Call the orchestrator for nudge reminder
+    const { error: sendError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
-        connectionId,
-        customMessage,
-        recipientEmail: connection.recipient_profile?.email || `${connection.recipient_profile?.username}@example.com`,
-        recipientName: connection.recipient_profile?.name || 'User'
+        eventType: 'nudge_reminder',
+        customData: {
+          recipientEmail: connection.recipient_profile?.email || `${connection.recipient_profile?.username}@example.com`,
+          recipientName: connection.recipient_profile?.name || 'User',
+          senderName: 'Friend',
+          customMessage,
+          invitationUrl: window.location.origin + '/signup'
+        }
       }
     });
 

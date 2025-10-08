@@ -120,14 +120,17 @@ export const useAutoGiftExecution = () => {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke('send-auto-gift-approval-email', {
+      const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          executionId,
-          recipientEmail,
-          recipientName,
-          giftDetails,
-          deliveryDate,
-          shippingAddress
+          eventType: 'auto_gift_approval',
+          customData: {
+            executionId,
+            recipientEmail,
+            recipientName,
+            giftDetails,
+            deliveryDate,
+            shippingAddress
+          }
         }
       });
 

@@ -2,6 +2,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.1.0";
+import { 
+  orderConfirmationTemplate,
+  paymentConfirmationTemplate,
+  welcomeEmailTemplate,
+  giftInvitationTemplate,
+  autoGiftApprovalTemplate,
+  orderStatusUpdateTemplate
+} from './email-templates/index.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -190,35 +198,52 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   // Fetch recipient profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('name, email')
+    .select('name, first_name, email')
     .eq('id', order.user_id)
     .maybeSingle();
 
   if (profileError) {
     console.warn('Profile lookup error:', profileError.message);
   }
-  const recipientName = profile?.name || 'Valued Customer';
+  const recipientFirstName = profile?.first_name || profile?.name || 'Friend';
   const recipientEmail = profile?.email;
   if (!recipientEmail) {
     throw new Error(`Recipient email not found for user ${order.user_id}`);
   }
 
-  // Prepare template variables
-  const variables = {
-    customer_name: recipientName,
-    order_number: order.order_number,
-    total_amount: order.total_amount?.toFixed(2) || '0.00',
-    order_date: new Date(order.created_at).toLocaleDateString(),
-    order_tracking_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/orders/${order.id}`,
-    support_email: 'hello@elyphant.ai'
-  };
+  // Parse order items from metadata
+  const orderItems = order.order_metadata?.items || [];
+  const formattedItems = orderItems.map((item: any) => ({
+    name: item.name || 'Product',
+    quantity: item.quantity || 1,
+    price: `$${(item.price || 0).toFixed(2)}`
+  }));
 
-  // Send email
+  // Use professional styled template
+  const styledHtml = orderConfirmationTemplate({
+    first_name: recipientFirstName,
+    order_number: order.order_number,
+    total_amount: `$${order.total_amount?.toFixed(2) || '0.00'}`,
+    order_date: new Date(order.created_at).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }),
+    items: formattedItems.length > 0 ? formattedItems : [
+      { name: 'Order Items', quantity: 1, price: `$${order.total_amount?.toFixed(2) || '0.00'}` }
+    ],
+    shipping_address: order.shipping_address?.address_line1 
+      ? `${order.shipping_address.address_line1}\n${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zip_code}`
+      : 'Address on file',
+    tracking_url: `https://elyphant.ai/orders/${order.id}`
+  });
+
+  // Send email with styled template
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [recipientEmail],
-    subject: replaceVariables(template.subject_template, variables),
-    html: replaceVariables(template.html_template, variables),
+    subject: `Order Confirmed! 🎉 - ${order.order_number}`,
+    html: styledHtml,
   });
 
   // Update order status and log event
@@ -234,8 +259,8 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
         order_id: orderId,
         email_type: 'order_confirmation',
         recipient_email: recipientEmail,
-        template_id: template.id,
-        template_variables: variables,
+        template_id: template?.id,
+        template_variables: { first_name: recipientFirstName, order_number: order.order_number },
         resend_message_id: emailResponse.data?.id
       })
   ]);
@@ -281,7 +306,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
   // Fetch recipient profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('name, email')
+    .select('name, first_name, email')
     .eq('id', order.user_id)
     .maybeSingle();
 
@@ -500,17 +525,18 @@ async function handleWelcomeEmail(supabase: any, userId: string) {
     throw new Error('Welcome email template not found');
   }
 
-  const variables = {
-    user_name: profile.name || profile.first_name || 'Friend',
+  // Use professional welcome template
+  const styledHtml = welcomeEmailTemplate({
+    first_name: profile.first_name || profile.name || 'Friend',
     dashboard_url: `${Deno.env.get('SITE_URL')}/dashboard`,
     profile_url: `${Deno.env.get('SITE_URL')}/profile`
-  };
+  });
 
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [profile.email],
-    subject: replaceVariables(template.subject_template, variables),
-    html: replaceVariables(template.html_template, variables),
+    subject: 'Welcome to Elyphant! 🎁',
+    html: styledHtml,
   });
 
   return { emailSent: true, messageId: emailResponse.data?.id };

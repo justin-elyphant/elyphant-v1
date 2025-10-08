@@ -81,8 +81,6 @@ const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 
 const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
 const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
-// TestEmailSystem removed - using orchestrator now
-const EmailSystemTester = lazy(() => import("./pages/EmailSystemTester"));
 const WishlistAdd = lazy(() => import("./pages/WishlistAdd"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
@@ -271,11 +269,8 @@ function AppContent() {
           
           
           {/* ZMA Testing Routes */}
-          
           <Route path="/test-zma-order" element={<TestZMAOrder />} />
           <Route path="/test-retry-function" element={<TestRetryFunction />} />
-        {/* Email system now uses orchestrator - test page removed */}
-          <Route path="/email-system-tester" element={<EmailSystemTester />} />
           <Route path="/wishlist/add" element={<WishlistAdd />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           

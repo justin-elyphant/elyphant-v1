@@ -64,6 +64,7 @@ const TestEmailModal: React.FC<TestEmailModalProps> = ({
         return 'https://example.com';
       case 'string':
       default:
+        if (variableName.includes('first_name')) return 'Alex';
         if (variableName.includes('name')) return 'Test User';
         if (variableName.includes('email')) return 'test@example.com';
         if (variableName.includes('code')) return 'TEST123';

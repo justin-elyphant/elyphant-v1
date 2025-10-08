@@ -17,27 +17,48 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check if user is business admin
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabase.auth.getUser(token);
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Check for setup token or admin auth
+    const setupToken = Deno.env.get("EMAIL_SETUP_TOKEN") || "elyphant-email-setup-2025";
+    const providedToken = req.headers.get("x-setup-token");
+    
+    // Allow if either valid setup token OR authenticated business admin
+    let isAuthorized = false;
+    
+    if (providedToken && providedToken === setupToken) {
+      console.log("✅ Setup authorized via token");
+      isAuthorized = true;
+    } else {
+      // Try admin auth
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabase.auth.getUser(token);
+        
+        if (user) {
+          const { data: isAdmin } = await supabase.rpc("is_business_admin", {
+            check_user_id: user.id,
+          });
+          
+          if (isAdmin) {
+            console.log("✅ Setup authorized via admin user");
+            isAuthorized = true;
+          }
+        }
+      }
     }
-
-    const { data: isAdmin } = await supabase.rpc("is_business_admin", {
-      check_user_id: user.id,
-    });
-
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    
+    if (!isAuthorized) {
+      console.error("❌ Unauthorized: No valid setup token or admin auth");
+      return new Response(
+        JSON.stringify({ 
+          error: "Unauthorized", 
+          hint: "Add header: x-setup-token: elyphant-email-setup-2025" 
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Copy Elyphant logo from lovable-uploads to email-assets storage bucket

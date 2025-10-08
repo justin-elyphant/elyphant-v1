@@ -81,6 +81,7 @@ export const baseEmailTemplate = ({ content, preheader }: BaseTemplateProps): st
                 src="https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/email-assets/elyphant-logo.png" 
                 alt="Elyphant" 
                 style="height: 50px; width: auto; display: block; margin: 0 auto;"
+                onerror="this.src='https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png'"
               />
             </td>
           </tr>

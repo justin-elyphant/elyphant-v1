@@ -40,6 +40,47 @@ serve(async (req) => {
       });
     }
 
+    // Copy Elyphant logo from lovable-uploads to email-assets storage bucket
+    try {
+      console.log("Copying Elyphant logo to email-assets bucket...");
+      
+      // Check if logo already exists
+      const { data: existingFile } = await supabase.storage
+        .from('email-assets')
+        .list('', { search: 'elyphant-logo.png' });
+
+      if (!existingFile || existingFile.length === 0) {
+        // Fetch the logo from lovable-uploads
+        const logoResponse = await fetch('https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png');
+        
+        if (!logoResponse.ok) {
+          console.error("Failed to fetch logo:", logoResponse.status);
+        } else {
+          const logoBlob = await logoResponse.blob();
+          
+          // Upload to email-assets bucket
+          const { error: uploadError } = await supabase.storage
+            .from('email-assets')
+            .upload('elyphant-logo.png', logoBlob, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: 'image/png'
+            });
+
+          if (uploadError) {
+            console.error("Error uploading logo:", uploadError);
+          } else {
+            console.log("Logo successfully copied to email-assets bucket");
+          }
+        }
+      } else {
+        console.log("Logo already exists in email-assets bucket");
+      }
+    } catch (logoError) {
+      console.error("Error processing logo:", logoError);
+      // Continue with template setup even if logo fails
+    }
+
     // Define templates with inline HTML (no imports allowed in Edge Functions)
     const templates = [
       {

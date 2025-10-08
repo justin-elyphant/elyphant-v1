@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Search, Edit, Eye, Copy, Trash2, Send } from "lucide-react";
-import { UploadLogoButton } from "./UploadLogoButton";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -209,7 +209,6 @@ const EmailTemplatesManager = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <UploadLogoButton />
           <Button onClick={handleCreateTemplate} className="gap-2">
             <Plus className="h-4 w-4" />
             Create Template

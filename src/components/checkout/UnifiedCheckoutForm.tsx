@@ -44,6 +44,8 @@ import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+// @ts-ignore - One-time reconciliation utility
+import '@/utils/adminReconcilePayment';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -151,6 +153,17 @@ const UnifiedCheckoutForm: React.FC = () => {
     
     fetchShippingCost();
   }, [checkoutData.shippingInfo.zipCode, cartItems.length]);
+
+  // 🔒 PAYMENT INTENT STALENESS FIX: Clear payment intent when cart changes
+  // This prevents users from paying with outdated payment intents from previous cart states
+  useEffect(() => {
+    const cartSignature = cartItems.map(i => `${i.product.product_id}:${i.quantity}`).join(',');
+    if (clientSecret && cartSignature) {
+      console.log('🔄 Cart changed - clearing stale payment intent');
+      setClientSecret('');
+      setPaymentIntentId('');
+    }
+  }, [cartItems.map(i => `${i.product.product_id}:${i.quantity}`).join(',')]);
 
   /*
    * 🔗 CRITICAL: Payment Intent Creation

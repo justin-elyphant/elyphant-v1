@@ -302,21 +302,33 @@ async function handleCheckoutCompleted(session: any, supabase: any) {
       if (order) {
         console.log(`✅ Order ${order.id} updated for completed checkout`);
         
-        // Call simplified order processor directly
-        try {
-          await supabase.functions.invoke('simple-order-processor', {
-            body: { 
-              orderId: order.id,
-              triggerSource: 'stripe-webhook',
-              isScheduled: order.scheduled_delivery_date ? true : false,
-              scheduledDeliveryDate: order.scheduled_delivery_date,
-              isAutoGift: order.is_auto_gift || false,
-              autoGiftContext: order.auto_gift_context
-            }
-          });
-          console.log(`🚀 Simplified processor invoked for checkout order ${order.id}`);
-        } catch (processError) {
-          console.error('⚠️ Failed to trigger order processing:', processError);
+        // Check if confirmation email already sent (prevent duplicates)
+        const { data: existingEmail } = await supabase
+          .from('order_email_events')
+          .select('id')
+          .eq('order_id', order.id)
+          .eq('email_type', 'order_confirmation')
+          .maybeSingle();
+
+        if (existingEmail) {
+          console.log(`📧 Order confirmation email already sent for ${order.id}, skipping email orchestrator`);
+        } else {
+          // Call simplified order processor directly
+          try {
+            await supabase.functions.invoke('simple-order-processor', {
+              body: { 
+                orderId: order.id,
+                triggerSource: 'stripe-webhook',
+                isScheduled: order.scheduled_delivery_date ? true : false,
+                scheduledDeliveryDate: order.scheduled_delivery_date,
+                isAutoGift: order.is_auto_gift || false,
+                autoGiftContext: order.auto_gift_context
+              }
+            });
+            console.log(`🚀 Simplified processor invoked for checkout order ${order.id}`);
+          } catch (processError) {
+            console.error('⚠️ Failed to trigger order processing:', processError);
+          }
         }
       }
     }

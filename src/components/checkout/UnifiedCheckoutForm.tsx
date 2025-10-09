@@ -44,8 +44,6 @@ import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// @ts-ignore - One-time reconciliation utility
-import '@/utils/adminReconcilePayment';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';

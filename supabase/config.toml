@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.admin-reconcile-payment]
 verify_jwt = false
+
+[functions.unified-order-monitor]
+verify_jwt = false

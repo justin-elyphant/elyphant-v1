@@ -1062,24 +1062,7 @@ Object.keys(zincOrderData).forEach((key) => {
     
     console.log('✅ Order successfully submitted to Zinc and updated');
     
-    // 📧 Trigger order confirmation email immediately
-    try {
-      console.log('📧 Sending order confirmation email...');
-      const { data: emailResult, error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
-        body: {
-          eventType: 'order_created',
-          orderId: orderId
-        }
-      });
-      
-      if (emailError) {
-        console.error('⚠️ Email send failed:', emailError);
-      } else {
-        console.log('✅ Order confirmation email sent');
-      }
-    } catch (emailError) {
-      console.error('❌ Email error:', emailError);
-    }
+    // Note: Order confirmation email will be sent by Stripe webhook after payment verification
     
     // Build response payload explicitly to avoid any parser ambiguity
     const successPayload = {

@@ -5100,6 +5100,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_delete_user_account: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       are_users_connected: {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean

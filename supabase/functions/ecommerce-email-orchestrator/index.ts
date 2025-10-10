@@ -29,7 +29,10 @@ interface EmailRequest {
     | 'wishlist_welcome'
     | 'address_request'
     | 'nudge_reminder'
-    | 'order_receipt';
+    | 'order_receipt'
+    | 'birthday_reminder_curated'
+    | 'birthday_connection_no_autogift'
+    | 'birthday_connection_with_autogift';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -105,6 +108,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'order_receipt':
         result = await handleOrderReceipt(supabase, orderId!);
+        break;
+      case 'birthday_reminder_curated':
+        result = await handleBirthdayReminderCurated(supabase, customData!);
+        break;
+      case 'birthday_connection_no_autogift':
+        result = await handleBirthdayConnectionNoAutogift(supabase, customData!);
+        break;
+      case 'birthday_connection_with_autogift':
+        result = await handleBirthdayConnectionWithAutogift(supabase, customData!);
         break;
       default:
         throw new Error(`Unknown event type: ${eventType}`);
@@ -1310,6 +1322,459 @@ async function handleOrderReceipt(supabase: any, orderId: string) {
   
   // Reuse order confirmation logic
   return await handleOrderConfirmation(supabase, orderId);
+}
+
+// ============================================
+// BIRTHDAY EMAIL HANDLERS
+// ============================================
+
+async function handleBirthdayReminderCurated(supabase: any, customData: any) {
+  const { userId, birthdayDate, daysUntil } = customData;
+  
+  console.log(`🎂 Processing birthday reminder for user ${userId}`);
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, email, first_name, name, interests, dob')
+    .eq('id', userId)
+    .single();
+  
+  if (!profile?.email) {
+    throw new Error(`Profile not found or missing email for user ${userId}`);
+  }
+  
+  const curatedProducts = await curateProductsForBirthday(profile);
+  const wishlistUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/wishlists/${userId}`;
+  const shareUrl = `${wishlistUrl}/share`;
+  
+  const emailHtml = buildBirthdayReminderEmail({
+    firstName: profile.first_name || profile.name || 'Friend',
+    birthdayDate,
+    daysUntil,
+    curatedProducts,
+    wishlistUrl,
+    shareUrl
+  });
+  
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [profile.email],
+    subject: `${profile.first_name || 'Hey'}, Your Birthday is Coming Up! 🎂`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Birthday reminder sent to ${profile.email}`);
+  
+  return { 
+    emailSent: true, 
+    messageId: emailResponse.data?.id,
+    productsIncluded: curatedProducts.length 
+  };
+}
+
+async function curateProductsForBirthday(profile: any) {
+  try {
+    const interests = profile.interests || [];
+    const searchQuery = interests.length > 0 
+      ? interests.join(' birthday gifts') 
+      : 'trending birthday gifts';
+    
+    console.log(`🔍 Searching products for: "${searchQuery}"`);
+    
+    const products = await searchProductsViaZincAPI(searchQuery, {
+      maxResults: 6,
+      minPrice: 20,
+      maxPrice: 150
+    });
+    
+    if (!products || products.length === 0) {
+      console.warn('⚠️ No products found, using fallback');
+      return await searchProductsViaZincAPI('birthday bestsellers', { maxResults: 6 });
+    }
+    
+    return applyBrandDiversityFilter(products, 6);
+    
+  } catch (error) {
+    console.error('❌ Product curation failed:', error);
+    return [];
+  }
+}
+
+async function searchProductsViaZincAPI(query: string, options: any) {
+  const zincApiKey = Deno.env.get('ZINC_API_KEY');
+  if (!zincApiKey) {
+    throw new Error('ZINC_API_KEY not configured');
+  }
+  
+  const response = await fetch('https://api.zinc.io/v1/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${btoa(zincApiKey + ':')}`
+    },
+    body: JSON.stringify({
+      query: query,
+      max_results: options.maxResults || 6,
+      retailer: 'amazon',
+      page: 1
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Zinc API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  
+  return (data.results || []).map((item: any) => ({
+    product_id: item.product_id,
+    title: item.title,
+    price: item.price,
+    image: item.image,
+    retailer: 'amazon',
+    fresh: item.fresh || false
+  })).filter((p: any) => {
+    const price = parseFloat(p.price);
+    return price >= (options.minPrice || 0) && price <= (options.maxPrice || 999);
+  });
+}
+
+function applyBrandDiversityFilter(products: any[], limit: number) {
+  const brandCounts = new Map<string, number>();
+  const diverseProducts = [];
+  
+  for (const product of products) {
+    const brand = extractBrand(product.title);
+    const count = brandCounts.get(brand) || 0;
+    
+    if (count < 2) {
+      diverseProducts.push(product);
+      brandCounts.set(brand, count + 1);
+    }
+    
+    if (diverseProducts.length >= limit) break;
+  }
+  
+  return diverseProducts;
+}
+
+function extractBrand(title: string): string {
+  const match = title.match(/^([A-Z][a-zA-Z0-9]+)/);
+  return match ? match[1] : 'Generic';
+}
+
+function buildBirthdayReminderEmail(props: {
+  firstName: string;
+  birthdayDate: string;
+  daysUntil: number;
+  curatedProducts: any[];
+  wishlistUrl: string;
+  shareUrl: string;
+}) {
+  const productGrid = props.curatedProducts.length > 0 ? `
+    <h3 style="margin: 30px 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a1a;">
+      Gift Ideas Just For You
+    </h3>
+    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
+      Based on your interests, here are some gift ideas you might love:
+    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+      <tr>
+        ${props.curatedProducts.slice(0, 3).map(product => `
+          <td width="33%" align="center" style="padding: 10px;">
+            <img src="${product.image}" alt="${product.title}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />
+            <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #333; font-weight: 500;">
+              ${product.title.substring(0, 40)}...
+            </p>
+            <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #9333ea; font-weight: 600;">
+              $${product.price}
+            </p>
+            <a href="${props.wishlistUrl}?add=${product.product_id}&utm_source=birthday_email&utm_campaign=birthday_reminder" style="display: inline-block; padding: 8px 16px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600;">
+              Add to Wishlist
+            </a>
+          </td>
+        `).join('')}
+      </tr>
+    </table>
+  ` : '';
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+                Your Birthday is Coming Up! 🎂
+              </h2>
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${props.firstName}, your birthday is on <strong>${props.birthdayDate}</strong> (${props.daysUntil} days away)!
+              </p>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Make sure your wishlist is up to date so friends and family know exactly what you'd love to receive.
+              </p>
+              
+              ${productGrid}
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${props.wishlistUrl}?utm_source=birthday_email&utm_campaign=update_wishlist" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
+                      Update My Wishlist
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding: 10px 0;">
+                    <a href="${props.shareUrl}?utm_source=birthday_email&utm_campaign=share_wishlist" style="color: #9333ea; text-decoration: underline; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
+                      Share Your Wishlist
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
+                © ${new Date().getFullYear()} Elyphant. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+async function handleBirthdayConnectionNoAutogift(supabase: any, customData: any) {
+  const { connectionUserId, birthdayUserName, birthdayDate, daysUntil, birthdayUserId } = customData;
+  
+  const { data: connectionProfile } = await supabase
+    .from('profiles')
+    .select('email, first_name, name')
+    .eq('id', connectionUserId)
+    .single();
+  
+  if (!connectionProfile?.email) {
+    throw new Error(`Connection email not found for user ${connectionUserId}`);
+  }
+  
+  const { data: wishlistItems } = await supabase
+    .from('wishlist_items')
+    .select('title, price, image_url')
+    .eq('wishlist_id', birthdayUserId)
+    .limit(3);
+  
+  const setupUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifting/setup?recipient=${birthdayUserId}&utm_source=birthday_email`;
+  const wishlistUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/wishlists/${birthdayUserId}?utm_source=birthday_email`;
+  
+  const emailHtml = buildConnectionNoAutogiftEmail({
+    recipientName: connectionProfile.first_name || connectionProfile.name || 'Friend',
+    birthdayUserName,
+    birthdayDate,
+    daysUntil,
+    wishlistItems: wishlistItems || [],
+    setupUrl,
+    wishlistUrl
+  });
+  
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [connectionProfile.email],
+    subject: `${birthdayUserName}'s Birthday is Coming Up!`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Connection reminder sent to ${connectionProfile.email}`);
+  
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+function buildConnectionNoAutogiftEmail(props: any) {
+  const wishlistPreview = props.wishlistItems.length > 0 ? `
+    <h3 style="margin: 30px 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+      From ${props.birthdayUserName}'s Wishlist
+    </h3>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      ${props.wishlistItems.map((item: any) => `
+        <tr>
+          <td style="padding: 10px 0;">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333;">
+              ${item.title}
+            </p>
+            <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #9333ea; font-weight: 600;">
+              $${item.price}
+            </p>
+          </td>
+        </tr>
+      `).join('')}
+    </table>
+  ` : '';
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+                ${props.birthdayUserName}'s Birthday is Coming Up!
+              </h2>
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${props.recipientName}, ${props.birthdayUserName}'s birthday is on <strong>${props.birthdayDate}</strong> (${props.daysUntil} days away)!
+              </p>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Set up auto-gifting now and never miss their special day. We'll handle everything automatically!
+              </p>
+              
+              ${wishlistPreview}
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 30px 0 10px 0;">
+                    <a href="${props.setupUrl}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
+                      Set Up Auto-Gifting
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding: 10px 0;">
+                    <a href="${props.wishlistUrl}" style="color: #9333ea; text-decoration: underline; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
+                      View ${props.birthdayUserName}'s Wishlist
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
+                © ${new Date().getFullYear()} Elyphant. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+async function handleBirthdayConnectionWithAutogift(supabase: any, customData: any) {
+  const { connectionUserId, birthdayUserName, birthdayDate, daysUntil, selectedGift } = customData;
+  
+  const { data: connectionProfile } = await supabase
+    .from('profiles')
+    .select('email, first_name, name')
+    .eq('id', connectionUserId)
+    .single();
+  
+  if (!connectionProfile?.email) {
+    throw new Error(`Connection email not found for user ${connectionUserId}`);
+  }
+  
+  const reviewUrl = `https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifting/review?utm_source=birthday_email`;
+  
+  const emailHtml = buildConnectionWithAutogiftEmail({
+    recipientName: connectionProfile.first_name || connectionProfile.name || 'Friend',
+    birthdayUserName,
+    birthdayDate,
+    daysUntil,
+    selectedGift,
+    reviewUrl
+  });
+  
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [connectionProfile.email],
+    subject: `Good news! Your gift for ${birthdayUserName} is all set 🎁`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Auto-gift confirmation sent to ${connectionProfile.email}`);
+  
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+function buildConnectionWithAutogiftEmail(props: any) {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding: 40px 10px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+                Your Gift is All Set! 🎁
+              </h2>
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Hi ${props.recipientName}, ${props.birthdayUserName}'s birthday is on <strong>${props.birthdayDate}</strong> (${props.daysUntil} days away)!
+              </p>
+              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
+                Good news! Your auto-gift is ready and will be sent automatically. You're all set!
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${props.reviewUrl}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
+                      Review Gift Selection
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
+                © ${new Date().getFullYear()} Elyphant. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 }
 
 serve(handler);

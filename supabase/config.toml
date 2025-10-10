@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.detect-abandoned-carts]
 verify_jwt = false
+
+[functions.schedule-birthday-emails]
+verify_jwt = false

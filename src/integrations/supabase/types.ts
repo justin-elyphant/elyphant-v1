@@ -820,6 +820,54 @@ export type Database = {
           },
         ]
       }
+      birthday_email_tracking: {
+        Row: {
+          birthday_year: number
+          created_at: string | null
+          email_queue_id: string | null
+          email_type: string
+          id: string
+          metadata: Json | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          birthday_year: number
+          created_at?: string | null
+          email_queue_id?: string | null
+          email_type: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          birthday_year?: number
+          created_at?: string | null
+          email_queue_id?: string | null
+          email_type?: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birthday_email_tracking_email_queue_id_fkey"
+            columns: ["email_queue_id"]
+            isOneToOne: false
+            referencedRelation: "email_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "birthday_email_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_users: {
         Row: {
           blocked_id: string

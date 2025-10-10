@@ -405,12 +405,12 @@ const UnifiedCheckoutForm: React.FC = () => {
     toast.error(`Payment failed: ${error}`);
   };
 
-  // Initialize payment intent when component mounts
+  // Initialize payment intent only after addresses are loaded
   useEffect(() => {
-    if (user && cartItems.length > 0 && !clientSecret) {
+    if (user && cartItems.length > 0 && !clientSecret && addressesLoaded) {
       createPaymentIntent();
     }
-  }, [user, cartItems.length, clientSecret]);
+  }, [user, cartItems.length, clientSecret, addressesLoaded]);
 
   // Redirect if no items in cart
   if (cartItems.length === 0) {

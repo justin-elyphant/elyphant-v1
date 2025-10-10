@@ -106,13 +106,28 @@ Deno.serve(async (req) => {
           image_url: 'https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/product-images/placeholder.jpg' // Default image
         }));
 
+        // Get the cart_abandoned template ID
+        const { data: template } = await supabase
+          .from('email_templates')
+          .select('id')
+          .eq('template_type', 'cart_abandoned')
+          .eq('is_active', true)
+          .single();
+
+        if (!template) {
+          console.error(`❌ No active cart_abandoned template found`);
+          failed++;
+          continue;
+        }
+
         // Queue abandoned cart email
         const { error: emailError } = await supabase
           .from('email_queue')
           .insert({
-            to_email: userEmail,
-            email_type: 'cart_abandoned',
-            template_data: {
+            template_id: template.id,
+            recipient_email: userEmail,
+            recipient_name: firstName,
+            template_variables: {
               first_name: firstName,
               cart_items: cartItems,
               cart_total: `$${cart.total_amount.toFixed(2)}`,

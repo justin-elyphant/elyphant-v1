@@ -72,6 +72,37 @@ const PaymentSection = ({
         localStorage.setItem('cart_session_id', cartSessionId);
       }
 
+      // Update cart session with shipping info before payment
+      if (shippingInfo) {
+        console.log('📦 Updating cart session with shipping info:', cartSessionId);
+        
+        const cartData = {
+          items: cartItems.map(item => ({
+            product_id: item.product.product_id,
+            product_name: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+            recipient_id: item.recipientAssignment?.connectionId
+          })),
+          shippingInfo: shippingInfo,
+          giftOptions: giftOptions || {}
+        };
+
+        await supabase.from('cart_sessions').upsert({
+          session_id: cartSessionId,
+          user_id: currentUser.id,
+          cart_data: cartData,
+          total_amount: totalAmount,
+          last_updated: new Date().toISOString()
+        }, {
+          onConflict: 'session_id'
+        });
+        
+        console.log('✅ Cart session updated with shipping info');
+      } else {
+        console.warn('⚠️ No shipping info available to update cart session');
+      }
+
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents

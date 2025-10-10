@@ -163,6 +163,15 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       } else {
         const cartData = cartSession.cart_data;
         
+        // Validate shipping info exists (prevent empty orders)
+        if (!cartData.shippingInfo?.address && !cartData.shippingInfo?.address_line1) {
+          console.error('❌ Missing shipping address in cart data');
+          updateError = new Error('Missing shipping address');
+          return;
+        }
+
+        console.log('📦 Cart data:', JSON.stringify(cartData, null, 2));
+        
         const { data: newOrder, error: createError } = await supabase
           .from('orders')
           .insert({

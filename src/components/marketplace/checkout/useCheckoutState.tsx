@@ -220,10 +220,20 @@ export const useCheckoutState = () => {
    * 
    * This function validates that all required information is present
    * before allowing order placement.
+   * 
+   * FIXED: Check for non-empty strings (trim to prevent whitespace-only values)
    */
   const canPlaceOrder = () => {
     const { name, email, address, city, state, zipCode } = checkoutData.shippingInfo;
-    return activeTab === "payment" && name && email && address && city && state && zipCode;
+    return (
+      activeTab === "payment" && 
+      name?.trim() && 
+      email?.trim() && 
+      address?.trim() && 
+      city?.trim() && 
+      state?.trim() && 
+      zipCode?.trim()
+    );
   };
 
   /*

@@ -129,15 +129,26 @@ export const useCheckoutState = () => {
             email: prev.shippingInfo.email || profile?.email || user.email || ""
           };
 
-          // Pre-fill address if available and fields are empty
+          // Priority 1: Use address from user_addresses table
           if (defaultAddress) {
-            console.log("Pre-filling with default address:", defaultAddress);
+            console.log("✅ Pre-filling from user_addresses table:", defaultAddress);
             updatedShippingInfo.address = prev.shippingInfo.address || defaultAddress.street;
             updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || defaultAddress.addressLine2 || "";
             updatedShippingInfo.city = prev.shippingInfo.city || defaultAddress.city;
             updatedShippingInfo.state = prev.shippingInfo.state || defaultAddress.state;
             updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || defaultAddress.zipCode;
             updatedShippingInfo.country = prev.shippingInfo.country || defaultAddress.country;
+          } 
+          // Priority 2: Fallback to profile.shipping_address from signup
+          else if (profile?.shipping_address) {
+            console.log("✅ Pre-filling from profile.shipping_address:", profile.shipping_address);
+            const profileAddr = profile.shipping_address as any;
+            updatedShippingInfo.address = prev.shippingInfo.address || profileAddr.address_line1 || profileAddr.street || "";
+            updatedShippingInfo.addressLine2 = prev.shippingInfo.addressLine2 || profileAddr.address_line2 || profileAddr.line2 || "";
+            updatedShippingInfo.city = prev.shippingInfo.city || profileAddr.city || "";
+            updatedShippingInfo.state = prev.shippingInfo.state || profileAddr.state || "";
+            updatedShippingInfo.zipCode = prev.shippingInfo.zipCode || profileAddr.zip_code || profileAddr.zipCode || "";
+            updatedShippingInfo.country = prev.shippingInfo.country || profileAddr.country || "United States";
           }
 
           return {

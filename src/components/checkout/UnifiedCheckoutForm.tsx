@@ -199,7 +199,60 @@ const UnifiedCheckoutForm: React.FC = () => {
         zip_code: checkoutData.shippingInfo.zipCode
       };
 
-      // Create payment intent with cart snapshot in metadata
+      // Get or create cart session
+      const sessionId = localStorage.getItem('cart_session_id') || crypto.randomUUID();
+      localStorage.setItem('cart_session_id', sessionId);
+
+      // Save cart data to cart_sessions table
+      const { error: sessionError } = await supabase
+        .from('cart_sessions')
+        .upsert([{
+          session_id: sessionId,
+          user_id: user.id,
+          cart_data: {
+            cartItems: cartItems.map(item => ({
+              product_id: item.product.product_id,
+              title: item.product.title,
+              price: item.product.price,
+              quantity: item.quantity,
+              image: item.product.image
+            })),
+            subtotal,
+            shippingCost: shippingCost ?? 0,
+            giftingFee,
+            giftingFeeName,
+            giftingFeeDescription,
+            taxAmount,
+            totalAmount,
+            shippingInfo: zmaCompatibleShippingInfo,
+            giftOptions: {
+              isGift: giftOptions.isGift,
+              recipientName: giftOptions.recipientName,
+              giftMessage: giftOptions.giftMessage,
+              giftWrapping: giftOptions.giftWrapping,
+              isSurpriseGift: giftOptions.isSurpriseGift,
+              scheduleDelivery: giftOptions.scheduleDelivery,
+              sendGiftMessage: giftOptions.sendGiftMessage,
+              scheduledDeliveryDate: giftOptions.scheduledDeliveryDate
+            },
+            deliveryGroups: []
+          } as any,
+          total_amount: totalAmount,
+          checkout_initiated_at: new Date().toISOString(),
+          last_updated: new Date().toISOString()
+        }], {
+          onConflict: 'session_id'
+        });
+
+      if (sessionError) {
+        console.error('❌ Failed to save cart session:', sessionError);
+        toast.error('Failed to save cart data. Please try again.');
+        return;
+      }
+
+      console.log('✅ Cart session saved:', sessionId);
+
+      // Create payment intent with session ID (short!)
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100),
@@ -208,26 +261,7 @@ const UnifiedCheckoutForm: React.FC = () => {
             user_id: user.id,
             order_type: 'marketplace_purchase',
             item_count: cartItems.length,
-            // Store cart snapshot for order creation after payment
-            cart_snapshot: JSON.stringify({
-              cartItems: cartItems.map(item => ({
-                product_id: item.product.product_id,
-                title: item.product.title,
-                price: item.product.price,
-                quantity: item.quantity,
-                image: item.product.image
-              })),
-              subtotal,
-              shippingCost: shippingCost ?? 0,
-              giftingFee,
-              giftingFeeName,
-              giftingFeeDescription,
-              taxAmount,
-              totalAmount,
-              shippingInfo: zmaCompatibleShippingInfo,
-              giftOptions,
-              deliveryGroups: []
-            }),
+            cart_session_id: sessionId,
             scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
             isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
             deliveryDate: giftOptions.scheduledDeliveryDate

@@ -94,11 +94,11 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,
         customer: paymentIntent.customer,
-        has_cart_snapshot: Boolean(paymentIntent.metadata?.cart_snapshot)
+        has_cart_session: Boolean(paymentIntent.metadata?.cart_session_id)
       }
     });
 
-    // HYBRID FIX: Check if order exists, if not create it from cart snapshot
+    // Fetch cart data from cart_sessions table
     let order = null;
     let updateError = null;
     
@@ -131,7 +131,6 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         .maybeSingle();
       
       if (result.data) {
-        // Update existing order
         const updateResult = await supabase
           .from('orders')
           .update({
@@ -148,14 +147,22 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       }
     }
     
-    // NEW FLOW: Create order from cart snapshot if it doesn't exist
-    if (!order && !updateError && paymentIntent.metadata?.cart_snapshot) {
-      console.log('📦 Creating order from cart snapshot (hybrid flow)...');
+    // NEW FLOW: Create order from cart_sessions table
+    if (!order && !updateError && paymentIntent.metadata?.cart_session_id) {
+      console.log('📦 Fetching cart data from cart_sessions...');
       
-      try {
-        const cartSnapshot = JSON.parse(paymentIntent.metadata.cart_snapshot);
+      const { data: cartSession, error: sessionError } = await supabase
+        .from('cart_sessions')
+        .select('cart_data')
+        .eq('session_id', paymentIntent.metadata.cart_session_id)
+        .maybeSingle();
+      
+      if (sessionError || !cartSession) {
+        console.error('❌ Failed to fetch cart session:', sessionError);
+        updateError = sessionError || new Error('Cart session not found');
+      } else {
+        const cartData = cartSession.cart_data;
         
-        // Create order from snapshot
         const { data: newOrder, error: createError } = await supabase
           .from('orders')
           .insert({
@@ -165,18 +172,18 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             status: 'payment_confirmed',
             payment_status: 'succeeded',
             payment_verified_at: new Date().toISOString(),
-            subtotal: cartSnapshot.subtotal,
-            shipping_cost: cartSnapshot.shippingCost,
-            gifting_fee: cartSnapshot.giftingFee,
-            gifting_fee_name: cartSnapshot.giftingFeeName,
-            gifting_fee_description: cartSnapshot.giftingFeeDescription,
-            tax_amount: cartSnapshot.taxAmount,
-            total_amount: cartSnapshot.totalAmount,
-            shipping_address: cartSnapshot.shippingInfo,
-            order_items: cartSnapshot.cartItems,
-            gift_message: cartSnapshot.giftOptions?.giftMessage,
-            scheduled_delivery_date: cartSnapshot.giftOptions?.scheduledDeliveryDate,
-            delivery_groups: cartSnapshot.deliveryGroups || [],
+            subtotal: cartData.subtotal,
+            shipping_cost: cartData.shippingCost,
+            gifting_fee: cartData.giftingFee,
+            gifting_fee_name: cartData.giftingFeeName,
+            gifting_fee_description: cartData.giftingFeeDescription,
+            tax_amount: cartData.taxAmount,
+            total_amount: cartData.totalAmount,
+            shipping_address: cartData.shippingInfo,
+            order_items: cartData.cartItems,
+            gift_message: cartData.giftOptions?.giftMessage,
+            scheduled_delivery_date: cartData.giftOptions?.scheduledDeliveryDate,
+            delivery_groups: cartData.deliveryGroups || [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -184,28 +191,30 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           .single();
         
         if (createError) {
-          console.error('❌ Failed to create order from snapshot:', createError);
+          console.error('❌ Failed to create order:', createError);
           updateError = createError;
         } else {
           order = newOrder;
-          console.log('✅ Order created from cart snapshot:', order.id);
+          console.log('✅ Order created from cart_sessions:', order.id);
+          
+          // Mark cart session as completed
+          await supabase
+            .from('cart_sessions')
+            .update({ completed_at: new Date().toISOString() })
+            .eq('session_id', paymentIntent.metadata.cart_session_id);
         }
-      } catch (parseError) {
-        console.error('❌ Failed to parse cart snapshot:', parseError);
-        updateError = parseError;
       }
     }
 
     if (updateError || !order) {
       console.error('❌ Failed to find or create order after payment success:', updateError);
       
-      // Log failure
       await supabase.from('webhook_delivery_log').insert({
         event_type: 'payment_intent.succeeded',
         event_id: paymentIntent.id,
         delivery_status: 'failed',
         status_code: 500,
-        error_message: updateError?.message || 'Order not found and no cart snapshot',
+        error_message: updateError?.message || 'Order not found and no cart session',
         payment_intent_id: paymentIntent.id,
         processing_duration_ms: Date.now() - startTime
       });

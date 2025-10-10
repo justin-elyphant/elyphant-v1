@@ -179,11 +179,15 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             gifting_fee_description: cartData.giftingFeeDescription,
             tax_amount: cartData.taxAmount,
             total_amount: cartData.totalAmount,
-            shipping_address: cartData.shippingInfo,
-            order_items: cartData.cartItems,
-            gift_message: cartData.giftOptions?.giftMessage,
+            currency: 'USD',
+            shipping_info: cartData.shippingInfo,
+            gift_options: cartData.giftOptions,
+            delivery_groups: [{
+              items: cartData.cartItems,
+              shipping_info: cartData.shippingInfo,
+              gift_options: cartData.giftOptions
+            }],
             scheduled_delivery_date: cartData.giftOptions?.scheduledDeliveryDate,
-            delivery_groups: cartData.deliveryGroups || [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

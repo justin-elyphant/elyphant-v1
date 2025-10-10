@@ -85,7 +85,6 @@ serve(async (req) => {
       .update({
         payment_status: 'succeeded',
         status: 'payment_confirmed',
-        payment_verified_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId)

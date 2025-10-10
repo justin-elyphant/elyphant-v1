@@ -318,7 +318,6 @@ async function verifyPaymentStatus(orderId: any, supabase: any) {
             payment_status: 'succeeded',
             status: 'payment_confirmed',
             stripe_payment_method_id: paymentIntent.payment_method,
-            payment_verified_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId);

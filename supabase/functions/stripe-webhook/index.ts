@@ -180,7 +180,6 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             order_number: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             status: 'payment_confirmed',
             payment_status: 'succeeded',
-            payment_verified_at: new Date().toISOString(),
             subtotal: cartData.subtotal,
             shipping_cost: cartData.shippingCost,
             gifting_fee: cartData.giftingFee,
@@ -380,7 +379,6 @@ async function handleCheckoutCompleted(session: any, supabase: any) {
           payment_status: 'succeeded',
           status: 'payment_confirmed',
           stripe_payment_intent_id: session.payment_intent,
-          payment_verified_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('stripe_session_id', session.id)

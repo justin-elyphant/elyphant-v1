@@ -26,6 +26,15 @@ interface PaymentSectionProps {
   cartItems: CartItem[];
   shippingInfo?: any;
   giftOptions?: any;
+  // CRITICAL: Pricing breakdown for webhook order creation
+  pricingBreakdown: {
+    subtotal: number;
+    shippingCost: number;
+    giftingFee: number;
+    giftingFeeName: string;
+    giftingFeeDescription: string;
+    taxAmount: number;
+  };
 }
 
 const PaymentSection = ({
@@ -38,7 +47,8 @@ const PaymentSection = ({
   totalAmount,
   cartItems,
   shippingInfo,
-  giftOptions
+  giftOptions,
+  pricingBreakdown
 }: PaymentSectionProps) => {
   const { user } = useAuth();
   const [clientSecret, setClientSecret] = useState<string>('');
@@ -72,18 +82,27 @@ const PaymentSection = ({
         localStorage.setItem('cart_session_id', cartSessionId);
       }
 
-      // Update cart session with shipping info before payment
+      // Update cart session with COMPLETE cart data (matches webhook expectations)
       if (shippingInfo) {
-        console.log('📦 Updating cart session with shipping info:', cartSessionId);
+        console.log('📦 Updating cart session with complete cart data:', cartSessionId);
         
+        // CRITICAL: This structure MUST match what stripe-webhook expects for order creation
         const cartData = {
-          items: cartItems.map(item => ({
+          cartItems: cartItems.map(item => ({
             product_id: item.product.product_id,
-            product_name: item.product.name,
+            title: item.product.name,
             quantity: item.quantity,
             price: item.product.price,
+            image: item.product.image || '',
             recipient_id: item.recipientAssignment?.connectionId
           })),
+          subtotal: pricingBreakdown.subtotal,
+          shippingCost: pricingBreakdown.shippingCost,
+          giftingFee: pricingBreakdown.giftingFee,
+          giftingFeeName: pricingBreakdown.giftingFeeName,
+          giftingFeeDescription: pricingBreakdown.giftingFeeDescription,
+          taxAmount: pricingBreakdown.taxAmount,
+          totalAmount: totalAmount,
           shippingInfo: shippingInfo,
           giftOptions: giftOptions || {}
         };
@@ -98,7 +117,7 @@ const PaymentSection = ({
           onConflict: 'session_id'
         });
         
-        console.log('✅ Cart session updated with shipping info');
+        console.log('✅ Cart session updated with complete pricing data for webhook');
       } else {
         console.warn('⚠️ No shipping info available to update cart session');
       }
@@ -144,7 +163,7 @@ const PaymentSection = ({
       actualMethod = 'saved_payment_method';
       console.log('💳 Using saved payment method - updating cart session before proceeding');
       
-      // Update cart session with shipping info for saved payment method flow
+      // Update cart session with COMPLETE cart data for saved payment method flow
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser && shippingInfo) {
@@ -154,14 +173,23 @@ const PaymentSection = ({
             localStorage.setItem('cart_session_id', cartSessionId);
           }
 
+          // CRITICAL: Match webhook-expected structure with all pricing fields
           const cartData = {
-            items: cartItems.map(item => ({
+            cartItems: cartItems.map(item => ({
               product_id: item.product.product_id,
-              product_name: item.product.name,
+              title: item.product.name,
               quantity: item.quantity,
               price: item.product.price,
+              image: item.product.image || '',
               recipient_id: item.recipientAssignment?.connectionId
             })),
+            subtotal: pricingBreakdown.subtotal,
+            shippingCost: pricingBreakdown.shippingCost,
+            giftingFee: pricingBreakdown.giftingFee,
+            giftingFeeName: pricingBreakdown.giftingFeeName,
+            giftingFeeDescription: pricingBreakdown.giftingFeeDescription,
+            taxAmount: pricingBreakdown.taxAmount,
+            totalAmount: totalAmount,
             shippingInfo: shippingInfo,
             giftOptions: giftOptions || {}
           };
@@ -176,7 +204,7 @@ const PaymentSection = ({
             onConflict: 'session_id'
           });
 
-          console.log('✅ Cart session updated with shipping info for saved payment method');
+          console.log('✅ Cart session updated with complete pricing data for saved payment method');
         }
       } catch (error) {
         console.error('❌ Failed to update cart session:', error);

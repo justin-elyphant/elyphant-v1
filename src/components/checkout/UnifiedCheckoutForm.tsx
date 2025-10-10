@@ -57,7 +57,6 @@ import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutS
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import CheckoutShippingReview from './CheckoutShippingReview';
-import { createOrder } from '@/services/orderService';
 import { supabase } from '@/integrations/supabase/client';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 

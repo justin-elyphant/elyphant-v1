@@ -182,6 +182,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       setIsProcessing(true);
       
       console.log('💳 Creating payment intent (order will be created after payment)...');
+      console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
       
       // Prepare cart snapshot and metadata (no order creation yet)
       const zmaCompatibleShippingInfo = {
@@ -198,9 +199,17 @@ const UnifiedCheckoutForm: React.FC = () => {
         zip_code: checkoutData.shippingInfo.zipCode
       };
 
+      console.log('🔍 DEBUG - zmaCompatibleShippingInfo built:', JSON.stringify(zmaCompatibleShippingInfo, null, 2));
+
       // Get or create cart session
       const sessionId = localStorage.getItem('cart_session_id') || crypto.randomUUID();
       localStorage.setItem('cart_session_id', sessionId);
+      
+      console.log('💾 About to save cart session:', {
+        sessionId,
+        userId: user.id,
+        hasAddress: !!zmaCompatibleShippingInfo.address
+      });
 
       // Save cart data to cart_sessions table
       const { error: sessionError } = await supabase

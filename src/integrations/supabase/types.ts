@@ -5228,6 +5228,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      cleanup_abandoned_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_fingerprints: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -5241,6 +5245,10 @@ export type Database = {
         Returns: undefined
       }
       cleanup_failed_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_payment_intent_cache: {
         Args: Record<PropertyKey, never>
         Returns: number
       }

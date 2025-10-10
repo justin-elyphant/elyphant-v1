@@ -94,15 +94,15 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,
         customer: paymentIntent.customer,
-        order_id: paymentIntent.metadata?.order_id
+        has_cart_snapshot: Boolean(paymentIntent.metadata?.cart_snapshot)
       }
     });
 
-    // RACE CONDITION FIX: Try metadata first, then payment_intent_id with retry logic
+    // HYBRID FIX: Check if order exists, if not create it from cart snapshot
     let order = null;
     let updateError = null;
     
-    // Try 1: Look up by order_id from metadata (primary method)
+    // Try 1: Look up by order_id from metadata (old flow - backward compatibility)
     if (paymentIntent.metadata?.order_id) {
       console.log(`🔍 Looking up order by metadata order_id: ${paymentIntent.metadata.order_id}`);
       const result = await supabase
@@ -110,6 +110,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         .update({
           payment_status: 'succeeded',
           status: 'payment_confirmed',
+          stripe_payment_intent_id: paymentIntent.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentIntent.metadata.order_id)
@@ -120,46 +121,83 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       updateError = result.error;
     }
     
-    // Try 2: Fallback to payment_intent_id (backward compatibility + retry)
+    // Try 2: Look up by payment_intent_id (old flow - backward compatibility)
     if (!order && !updateError) {
       console.log(`🔍 Looking up order by payment_intent_id: ${paymentIntent.id}`);
       const result = await supabase
         .from('orders')
-        .update({
-          payment_status: 'succeeded',
-          status: 'payment_confirmed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('stripe_payment_intent_id', paymentIntent.id)
         .select()
+        .eq('stripe_payment_intent_id', paymentIntent.id)
         .maybeSingle();
       
-      order = result.data;
-      updateError = result.error;
-      
-      // Try 3: Retry after 2 seconds if order not found (race condition mitigation)
-      if (!order && !updateError) {
-        console.log('⏳ Order not found, retrying in 2 seconds...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const retryResult = await supabase
+      if (result.data) {
+        // Update existing order
+        const updateResult = await supabase
           .from('orders')
           .update({
             payment_status: 'succeeded',
             status: 'payment_confirmed',
             updated_at: new Date().toISOString()
           })
-          .eq('stripe_payment_intent_id', paymentIntent.id)
+          .eq('id', result.data.id)
           .select()
-          .maybeSingle();
+          .single();
         
-        order = retryResult.data;
-        updateError = retryResult.error;
+        order = updateResult.data;
+        updateError = updateResult.error;
+      }
+    }
+    
+    // NEW FLOW: Create order from cart snapshot if it doesn't exist
+    if (!order && !updateError && paymentIntent.metadata?.cart_snapshot) {
+      console.log('📦 Creating order from cart snapshot (hybrid flow)...');
+      
+      try {
+        const cartSnapshot = JSON.parse(paymentIntent.metadata.cart_snapshot);
+        
+        // Create order from snapshot
+        const { data: newOrder, error: createError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: paymentIntent.metadata.user_id,
+            stripe_payment_intent_id: paymentIntent.id,
+            order_number: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+            status: 'payment_confirmed',
+            payment_status: 'succeeded',
+            payment_verified_at: new Date().toISOString(),
+            subtotal: cartSnapshot.subtotal,
+            shipping_cost: cartSnapshot.shippingCost,
+            gifting_fee: cartSnapshot.giftingFee,
+            gifting_fee_name: cartSnapshot.giftingFeeName,
+            gifting_fee_description: cartSnapshot.giftingFeeDescription,
+            tax_amount: cartSnapshot.taxAmount,
+            total_amount: cartSnapshot.totalAmount,
+            shipping_address: cartSnapshot.shippingInfo,
+            order_items: cartSnapshot.cartItems,
+            gift_message: cartSnapshot.giftOptions?.giftMessage,
+            scheduled_delivery_date: cartSnapshot.giftOptions?.scheduledDeliveryDate,
+            delivery_groups: cartSnapshot.deliveryGroups || [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('❌ Failed to create order from snapshot:', createError);
+          updateError = createError;
+        } else {
+          order = newOrder;
+          console.log('✅ Order created from cart snapshot:', order.id);
+        }
+      } catch (parseError) {
+        console.error('❌ Failed to parse cart snapshot:', parseError);
+        updateError = parseError;
       }
     }
 
-    if (updateError) {
-      console.error('❌ Failed to update order after payment success:', updateError);
+    if (updateError || !order) {
+      console.error('❌ Failed to find or create order after payment success:', updateError);
       
       // Log failure
       await supabase.from('webhook_delivery_log').insert({
@@ -167,7 +205,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         event_id: paymentIntent.id,
         delivery_status: 'failed',
         status_code: 500,
-        error_message: updateError.message,
+        error_message: updateError?.message || 'Order not found and no cart snapshot',
         payment_intent_id: paymentIntent.id,
         processing_duration_ms: Date.now() - startTime
       });

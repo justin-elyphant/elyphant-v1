@@ -170,8 +170,8 @@ const UnifiedCheckoutForm: React.FC = () => {
   /*
    * 🔗 CRITICAL: Payment Intent Creation
    * 
-   * RACE CONDITION FIX: Create order BEFORE payment intent to ensure
-   * webhook can find order when payment succeeds.
+   * HYBRID FIX: Don't create order on page load - only create payment intent
+   * with cart snapshot in metadata. Order will be created after payment succeeds.
    */
   const createPaymentIntent = async () => {
     if (!user) {
@@ -182,9 +182,9 @@ const UnifiedCheckoutForm: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // STEP 1: Create order with pending_payment status
-      console.log('📝 Creating order before payment...');
+      console.log('💳 Creating payment intent (order will be created after payment)...');
       
+      // Prepare cart snapshot and metadata (no order creation yet)
       const zmaCompatibleShippingInfo = {
         name: checkoutData.shippingInfo.name,
         email: checkoutData.shippingInfo.email,
@@ -199,33 +199,35 @@ const UnifiedCheckoutForm: React.FC = () => {
         zip_code: checkoutData.shippingInfo.zipCode
       };
 
-      const orderData = {
-        cartItems,
-        subtotal,
-        shippingCost: shippingCost ?? 0,
-        giftingFee,
-        giftingFeeName,
-        giftingFeeDescription,
-        taxAmount,
-        totalAmount,
-        shippingInfo: zmaCompatibleShippingInfo,
-        giftOptions,
-        deliveryGroups: []
-      };
-
-      const order = await createOrder(orderData);
-      console.log('✅ Order created with pending_payment status:', order.id);
-      
-      // STEP 2: Create payment intent with order ID in metadata
+      // Create payment intent with cart snapshot in metadata
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100),
           currency: 'usd',
           metadata: {
             user_id: user.id,
-            order_id: order.id, // CRITICAL: Pass order ID for webhook lookup
             order_type: 'marketplace_purchase',
             item_count: cartItems.length,
+            // Store cart snapshot for order creation after payment
+            cart_snapshot: JSON.stringify({
+              cartItems: cartItems.map(item => ({
+                product_id: item.product.product_id,
+                title: item.product.title,
+                price: item.product.price,
+                quantity: item.quantity,
+                image: item.product.image
+              })),
+              subtotal,
+              shippingCost: shippingCost ?? 0,
+              giftingFee,
+              giftingFeeName,
+              giftingFeeDescription,
+              taxAmount,
+              totalAmount,
+              shippingInfo: zmaCompatibleShippingInfo,
+              giftOptions,
+              deliveryGroups: []
+            }),
             scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
             isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
             deliveryDate: giftOptions.scheduledDeliveryDate
@@ -239,15 +241,9 @@ const UnifiedCheckoutForm: React.FC = () => {
         return;
       }
 
-      // STEP 3: Update order with payment intent ID
-      await supabase
-        .from('orders')
-        .update({ stripe_payment_intent_id: data.payment_intent_id })
-        .eq('id', order.id);
-
       setClientSecret(data.client_secret);
       setPaymentIntentId(data.payment_intent_id);
-      console.log('✅ Payment intent created and linked to order');
+      console.log('✅ Payment intent created (order will be created by webhook after payment)');
       
     } catch (error) {
       console.error('Error in createPaymentIntent:', error);
@@ -260,28 +256,48 @@ const UnifiedCheckoutForm: React.FC = () => {
   /*
    * 🔗 CRITICAL: Payment Success Handler
    * 
-   * Order already exists from createPaymentIntent, just update status
-   * and handle post-payment operations. Webhook will trigger ZMA processing.
+   * HYBRID FIX: Order will be created by webhook, just wait for it and navigate
    */
   const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
       setIsProcessing(true);
-      console.log('🎉 Payment successful, order already exists');
+      console.log('🎉 Payment successful, waiting for order creation...');
       
-      // Fetch the order that was created before payment
-      const { data: order, error: fetchError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('stripe_payment_intent_id', paymentIntentId)
-        .single();
+      // Polling: Wait for webhook to create order (with timeout)
+      let order = null;
+      let attempts = 0;
+      const maxAttempts = 10; // 10 attempts = 5 seconds max wait
+      
+      while (!order && attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔍 Checking for order (attempt ${attempts}/${maxAttempts})...`);
+        
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('stripe_payment_intent_id', paymentIntentId)
+          .maybeSingle();
 
-      if (fetchError || !order) {
-        console.error('❌ Failed to fetch order:', fetchError);
-        toast.error('Payment succeeded but could not find order. Please contact support.');
-        return;
+        if (data) {
+          order = data;
+          console.log('✅ Order found:', order.id);
+          break;
+        }
+        
+        // Wait 500ms before next attempt
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      console.log('✅ Found order:', order.id);
+      if (!order) {
+        console.warn('⚠️ Order not created yet by webhook, but payment succeeded');
+        toast.success('Payment successful! Your order is being processed...');
+        
+        // Navigate to orders page since we don't have order ID yet
+        clearCart();
+        await markCartCompleted();
+        navigate('/orders');
+        return;
+      }
       
       // Email will be sent by ecommerce-email-orchestrator via webhook/process-zma-order
       console.log('📧 Email will be sent automatically via ecommerce-email-orchestrator');
@@ -311,28 +327,20 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log(`🧭 Navigating to order confirmation: /order-confirmation/${order.id}`);
       navigate(`/order-confirmation/${order.id}`);
       
-      // Don't show additional success toast if we already showed specific messages above
-      
     } catch (error: any) {
-      console.error('💥 Order creation error:', error);
+      console.error('💥 Post-payment error:', error);
       
-      // Provide specific error messages based on the error type
-      let errorMessage = 'Failed to process order. Please contact support.';
+      // Payment succeeded but something went wrong after
+      toast.error('Payment successful but there was an issue. Please check your orders page.');
       
-      if (error.message?.includes('order_items')) {
-        errorMessage = 'There was an issue with your cart items. Please refresh the page and try again.';
-      } else if (error.message?.includes('payment')) {
-        errorMessage = 'Payment was successful but order creation failed. Please contact support with your payment confirmation.';
-      } else if (error.message?.includes('address') || error.message?.includes('shipping')) {
-        errorMessage = 'There was an issue with your shipping information. Please verify and try again.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+      // Try to clear cart and navigate to orders
+      try {
+        await markCartCompleted();
+        clearCart();
+        navigate('/orders');
+      } catch (navError) {
+        console.error('Failed to navigate:', navError);
       }
-      
-      toast.error(errorMessage);
-      
-      // Provide recovery options in the UI
-      setClientSecret(''); // Reset to allow retry
     } finally {
       setIsProcessing(false);
     }

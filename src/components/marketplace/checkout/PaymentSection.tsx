@@ -142,7 +142,45 @@ const PaymentSection = ({
     let actualMethod = '';
     if (paymentIntentId === 'saved_payment_method') {
       actualMethod = 'saved_payment_method';
-      console.log('💳 Using saved payment method - cancelling unused payment intent');
+      console.log('💳 Using saved payment method - updating cart session before proceeding');
+      
+      // Update cart session with shipping info for saved payment method flow
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser && shippingInfo) {
+          let cartSessionId = localStorage.getItem('cart_session_id');
+          if (!cartSessionId) {
+            cartSessionId = crypto.randomUUID();
+            localStorage.setItem('cart_session_id', cartSessionId);
+          }
+
+          const cartData = {
+            items: cartItems.map(item => ({
+              product_id: item.product.product_id,
+              product_name: item.product.name,
+              quantity: item.quantity,
+              price: item.product.price,
+              recipient_id: item.recipientAssignment?.connectionId
+            })),
+            shippingInfo: shippingInfo,
+            giftOptions: giftOptions || {}
+          };
+
+          await supabase.from('cart_sessions').upsert({
+            session_id: cartSessionId,
+            user_id: currentUser.id,
+            cart_data: cartData,
+            total_amount: totalAmount,
+            last_updated: new Date().toISOString()
+          }, {
+            onConflict: 'session_id'
+          });
+
+          console.log('✅ Cart session updated with shipping info for saved payment method');
+        }
+      } catch (error) {
+        console.error('❌ Failed to update cart session:', error);
+      }
       
       // Cancel the unused payment intent if it exists
       if (pendingPaymentIntentId) {

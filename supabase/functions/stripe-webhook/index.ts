@@ -191,11 +191,44 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             currency: 'USD',
             shipping_info: cartData.shippingInfo,
             gift_options: cartData.giftOptions,
-            delivery_groups: [{
-              items: cartData.cartItems,
-              shipping_info: cartData.shippingInfo,
-              gift_options: cartData.giftOptions
-            }],
+            delivery_groups: (() => {
+              // Group items by recipient assignment
+              const groupedByRecipient = new Map();
+              
+              cartData.cartItems.forEach((item: any) => {
+                if (item.recipientAssignment) {
+                  const groupId = item.recipientAssignment.deliveryGroupId;
+                  if (!groupedByRecipient.has(groupId)) {
+                    groupedByRecipient.set(groupId, {
+                      id: groupId,
+                      connectionId: item.recipientAssignment.connectionId,
+                      connectionName: item.recipientAssignment.connectionName,
+                      items: [],
+                      giftMessage: item.recipientAssignment.giftMessage,
+                      scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
+                      shippingAddress: item.recipientAssignment.shippingAddress,
+                      address_verified: item.recipientAssignment.address_verified,
+                      address_verification_method: item.recipientAssignment.address_verification_method,
+                      address_verified_at: item.recipientAssignment.address_verified_at,
+                      address_last_updated: item.recipientAssignment.address_last_updated
+                    });
+                  }
+                  groupedByRecipient.get(groupId).items.push(item);
+                }
+              });
+              
+              // If items have recipient assignments, use grouped delivery
+              if (groupedByRecipient.size > 0) {
+                return Array.from(groupedByRecipient.values());
+              }
+              
+              // Otherwise, single delivery group (current behavior)
+              return [{
+                items: cartData.cartItems,
+                shipping_info: cartData.shippingInfo,
+                gift_options: cartData.giftOptions
+              }];
+            })(),
             scheduled_delivery_date: cartData.giftOptions?.scheduledDeliveryDate,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

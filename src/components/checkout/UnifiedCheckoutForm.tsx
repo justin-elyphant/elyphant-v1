@@ -214,7 +214,19 @@ const UnifiedCheckoutForm: React.FC = () => {
               title: item.product.title,
               price: item.product.price,
               quantity: item.quantity,
-              image: item.product.image
+              image: item.product.image,
+              recipientAssignment: item.recipientAssignment ? {
+                connectionId: item.recipientAssignment.connectionId,
+                connectionName: item.recipientAssignment.connectionName,
+                deliveryGroupId: item.recipientAssignment.deliveryGroupId,
+                giftMessage: item.recipientAssignment.giftMessage,
+                scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
+                shippingAddress: item.recipientAssignment.shippingAddress,
+                address_verified: item.recipientAssignment.address_verified,
+                address_verification_method: item.recipientAssignment.address_verification_method,
+                address_verified_at: item.recipientAssignment.address_verified_at,
+                address_last_updated: item.recipientAssignment.address_last_updated
+              } : undefined
             })),
             subtotal,
             shippingCost: shippingCost ?? 0,

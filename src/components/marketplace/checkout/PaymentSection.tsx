@@ -82,45 +82,8 @@ const PaymentSection = ({
         localStorage.setItem('cart_session_id', cartSessionId);
       }
 
-      // Update cart session with COMPLETE cart data (matches webhook expectations)
-      if (shippingInfo) {
-        console.log('📦 Updating cart session with complete cart data:', cartSessionId);
-        
-        // CRITICAL: This structure MUST match what stripe-webhook expects for order creation
-        const cartData = {
-          cartItems: cartItems.map(item => ({
-            product_id: item.product.product_id,
-            title: item.product.name,
-            quantity: item.quantity,
-            price: item.product.price,
-            image: item.product.image || '',
-            recipient_id: item.recipientAssignment?.connectionId
-          })),
-          subtotal: pricingBreakdown.subtotal,
-          shippingCost: pricingBreakdown.shippingCost,
-          giftingFee: pricingBreakdown.giftingFee,
-          giftingFeeName: pricingBreakdown.giftingFeeName,
-          giftingFeeDescription: pricingBreakdown.giftingFeeDescription,
-          taxAmount: pricingBreakdown.taxAmount,
-          totalAmount: totalAmount,
-          shippingInfo: shippingInfo,
-          giftOptions: giftOptions || {}
-        };
-
-        await supabase.from('cart_sessions').upsert({
-          session_id: cartSessionId,
-          user_id: currentUser.id,
-          cart_data: cartData,
-          total_amount: totalAmount,
-          last_updated: new Date().toISOString()
-        }, {
-          onConflict: 'session_id'
-        });
-        
-        console.log('✅ Cart session updated with complete pricing data for webhook');
-      } else {
-        console.warn('⚠️ No shipping info available to update cart session');
-      }
+      // Cart data is already saved by UnifiedCheckoutForm before this point
+      console.log('📦 Using existing cart session data:', cartSessionId);
 
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
@@ -161,54 +124,7 @@ const PaymentSection = ({
     let actualMethod = '';
     if (paymentIntentId === 'saved_payment_method') {
       actualMethod = 'saved_payment_method';
-      console.log('💳 Using saved payment method - updating cart session before proceeding');
-      
-      // Update cart session with COMPLETE cart data for saved payment method flow
-      try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser && shippingInfo) {
-          let cartSessionId = localStorage.getItem('cart_session_id');
-          if (!cartSessionId) {
-            cartSessionId = crypto.randomUUID();
-            localStorage.setItem('cart_session_id', cartSessionId);
-          }
-
-          // CRITICAL: Match webhook-expected structure with all pricing fields
-          const cartData = {
-            cartItems: cartItems.map(item => ({
-              product_id: item.product.product_id,
-              title: item.product.name,
-              quantity: item.quantity,
-              price: item.product.price,
-              image: item.product.image || '',
-              recipient_id: item.recipientAssignment?.connectionId
-            })),
-            subtotal: pricingBreakdown.subtotal,
-            shippingCost: pricingBreakdown.shippingCost,
-            giftingFee: pricingBreakdown.giftingFee,
-            giftingFeeName: pricingBreakdown.giftingFeeName,
-            giftingFeeDescription: pricingBreakdown.giftingFeeDescription,
-            taxAmount: pricingBreakdown.taxAmount,
-            totalAmount: totalAmount,
-            shippingInfo: shippingInfo,
-            giftOptions: giftOptions || {}
-          };
-
-          await supabase.from('cart_sessions').upsert({
-            session_id: cartSessionId,
-            user_id: currentUser.id,
-            cart_data: cartData,
-            total_amount: totalAmount,
-            last_updated: new Date().toISOString()
-          }, {
-            onConflict: 'session_id'
-          });
-
-          console.log('✅ Cart session updated with complete pricing data for saved payment method');
-        }
-      } catch (error) {
-        console.error('❌ Failed to update cart session:', error);
-      }
+      console.log('💳 Using saved payment method - cart session already saved by UnifiedCheckoutForm');
       
       // Cancel the unused payment intent if it exists
       if (pendingPaymentIntentId) {

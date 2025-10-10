@@ -7,7 +7,6 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
 import UnifiedPaymentForm from '@/components/payments/UnifiedPaymentForm';
-import ApplePayButton from '@/components/payments/ApplePayButton';
 
 // CRITICAL: Payment method interface
 interface PaymentMethod {
@@ -77,21 +75,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const payCardRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
 
-  // Portal management for mobile CTA
-  useEffect(() => {
-    const shouldShowPortalCTA = isMobile && selectedSavedMethod;
-    
-    if (shouldShowPortalCTA) {
-      document.body.classList.add('bottom-sheet-open');
-    } else {
-      document.body.classList.remove('bottom-sheet-open');
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.body.classList.remove('bottom-sheet-open');
-    };
-  }, [isMobile, selectedSavedMethod]);
 
   /*
    * 🔗 CRITICAL: Payment method selection handler
@@ -162,6 +145,13 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       
       console.log('🔄 Processing payment with saved method:', selectedSavedMethod.stripe_payment_method_id);
       
+      // Get or create cart session ID
+      let cartSessionId = localStorage.getItem('cart_session_id');
+      if (!cartSessionId) {
+        cartSessionId = crypto.randomUUID();
+        localStorage.setItem('cart_session_id', cartSessionId);
+      }
+      
       // CRITICAL: Create payment intent with existing payment method
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
@@ -170,7 +160,9 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           metadata: {
             useExistingPaymentMethod: true,
             paymentMethodId: selectedSavedMethod.stripe_payment_method_id,
-            order_type: 'marketplace_purchase'
+            order_type: 'marketplace_purchase',
+            user_id: user.id,
+            cart_session_id: cartSessionId
           }
         }
       });
@@ -334,53 +326,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </div>
       )}
 
-      {/* Portal-based mobile CTA for saved card - renders to document.body */}
-      {isMobile && selectedSavedMethod && createPortal(
-        <Elements stripe={stripeClientManager.getStripePromise()}>
-          <div className="portal-pay-cta space-y-3">
-            {(() => {
-              // Device-specific payment method display
-              const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-              
-              if (isIOSSafari) {
-                // iOS Safari: Show only Apple Pay
-                return (
-                  <div className="apple-pay-container">
-                    <ApplePayButton
-                      items={[{ 
-                        id: 'checkout-total', 
-                        name: 'Total Order', 
-                        price: totalAmount, 
-                        image: '', 
-                        product_id: 'total', 
-                        quantity: 1 
-                      }]}
-                      totalAmount={totalAmount}
-                      onPaymentSuccess={onPaymentSuccess}
-                      onPaymentError={onPaymentError}
-                      disabled={isProcessingPayment}
-                    />
-                  </div>
-                );
-              } else {
-                // Other mobile: Show blue primary payment button
-                return (
-                  <Button
-                    onClick={handleUseExistingCard}
-                    disabled={isProcessingPayment}
-                    size="lg"
-                    className="w-full mobile-button-optimize"
-                    variant="default"
-                  >
-                    {isProcessingPayment ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-                  </Button>
-                );
-              }
-            })()}
-          </div>
-        </Elements>,
-        document.body
-      )}
 
       {/* CRITICAL: New payment method form */}
       {showNewCardForm && (

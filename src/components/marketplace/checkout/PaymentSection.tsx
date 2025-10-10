@@ -58,12 +58,28 @@ const PaymentSection = ({
   const createPaymentIntent = async () => {
     setIsCreatingPaymentIntent(true);
     try {
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get cart session ID (required for webhook to find cart data)
+      let cartSessionId = localStorage.getItem('cart_session_id');
+      if (!cartSessionId) {
+        console.warn('⚠️ No cart_session_id found - generating new one');
+        cartSessionId = crypto.randomUUID();
+        localStorage.setItem('cart_session_id', cartSessionId);
+      }
+
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents
           currency: 'usd',
           metadata: {
-            order_type: 'marketplace'
+            order_type: 'marketplace',
+            cart_session_id: cartSessionId, // CRITICAL: Webhook needs this to fetch cart data
+            user_id: currentUser.id // CRITICAL: Webhook needs this to create order
           }
         }
       });
@@ -78,6 +94,8 @@ const PaymentSection = ({
       console.log('🔵 Payment intent created for card form:', {
         payment_intent_id: data.payment_intent_id,
         amount: totalAmount,
+        cart_session_id: cartSessionId,
+        user_id: currentUser.id,
         timestamp: new Date().toISOString()
       });
     } catch (error) {

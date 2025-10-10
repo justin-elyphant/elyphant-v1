@@ -44,6 +44,7 @@ import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useCartSessionTracking } from '@/hooks/useCartSessionTracking';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -106,6 +107,9 @@ const UnifiedCheckoutForm: React.FC = () => {
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  
+  // Track cart session for abandoned cart detection
+  const { markCartCompleted } = useCartSessionTracking(cartItems, subtotal, true);
   
   // 🚨 CRITICAL: Dynamic gifting fee calculation using pricing settings
   // ⚠️  NEVER hardcode giftingFee = 0 - this breaks the business model
@@ -297,6 +301,10 @@ const UnifiedCheckoutForm: React.FC = () => {
       
       // CRITICAL: Always clear cart and navigate - regardless of ZMA processing status
       console.log('🧹 Clearing cart and navigating to confirmation...');
+      
+      // Mark cart session as completed before clearing
+      await markCartCompleted();
+      
       clearCart();
       console.log('🛒 Cart cleared successfully');
       

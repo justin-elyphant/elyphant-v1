@@ -55,24 +55,38 @@ const handler = async (req: Request): Promise<Response> => {
     // Process each email
     for (const email of pendingEmails) {
       try {
-        console.log(`📧 Processing email for ${email.recipient_email}`);
+        const eventType = email.template_variables?.eventType;
+        console.log(`📧 Processing ${eventType || 'unknown'} email for ${email.recipient_email}`);
 
-        // Check if this is a welcome wishlist email
-        const welcomeWishlistData = email.template_variables?.welcomeWishlistData;
-        
-        if (welcomeWishlistData) {
-          // Process welcome wishlist email
-          const { error: welcomeError } = await supabase.functions.invoke('send-welcome-wishlist', {
-            body: welcomeWishlistData
-          });
-
-          if (welcomeError) {
-            throw welcomeError;
+        // Route to appropriate handler based on event type
+        if (!eventType) {
+          // Legacy: Check for welcome wishlist data (backward compatibility)
+          const welcomeWishlistData = email.template_variables?.welcomeWishlistData;
+          
+          if (welcomeWishlistData) {
+            const { error: welcomeError } = await supabase.functions.invoke('send-welcome-wishlist', {
+              body: welcomeWishlistData
+            });
+            if (welcomeError) throw welcomeError;
+          } else {
+            console.log('⚠️ No eventType specified, skipping:', email.id);
+            continue;
           }
         } else {
-          // Handle other email types here in the future
-          console.log('⚠️ Unknown email type, skipping:', email.id);
-          continue;
+          // Route all modern emails to ecommerce orchestrator
+          const { error: orchestratorError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: eventType,
+              orderId: email.template_variables?.orderId,
+              userId: email.template_variables?.userId,
+              cartSessionId: email.template_variables?.cartSessionId,
+              customData: email.template_variables?.customData
+            }
+          });
+
+          if (orchestratorError) {
+            throw orchestratorError;
+          }
         }
 
         // Mark email as sent

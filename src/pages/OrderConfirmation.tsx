@@ -52,6 +52,28 @@ const OrderConfirmation = () => {
     }
   };
 
+  /*
+   * ✅ NEW WEBHOOK-DRIVEN FLOW (Post-Migration):
+   * 
+   * Order Processing Lifecycle:
+   * 1. User completes payment → Stripe emits payment_intent.succeeded webhook
+   * 2. stripe-webhook edge function creates order + order_items in database
+   * 3. stripe-webhook automatically invokes process-zma-order
+   * 4. Unified Order Monitor provides automatic retry/recovery for failures
+   * 
+   * This page ONLY displays order status - it does NOT trigger processing
+   * 
+   * Status Flow:
+   * - payment_status: 'succeeded' → Payment confirmed by Stripe webhook
+   * - status: 'processing' → ZMA order submitted, awaiting fulfillment
+   * - zinc_order_id: present → Successfully submitted to Zinc
+   * - status: 'shipped' → Fulfillment partner shipped the order
+   * 
+   * 🗑️ REMOVED (Old Manual Trigger):
+   * - attemptOrderProcessing() function - no longer needed
+   * - Manual "Process Order" button - creates duplicate attempts
+   * - Frontend-initiated ZMA calls - webhook handles this now
+   */
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) {
@@ -92,7 +114,7 @@ const OrderConfirmation = () => {
           }
         }
         
-        // Enhanced order processing status determination
+        // Determine display status based on order data (NO manual processing triggers)
         if (orderData.payment_status === 'succeeded') {
           // Check for existing ZMA processing
           if (orderData.zinc_order_id || orderData.status === 'shipped' || orderData.status === 'delivered') {
@@ -118,8 +140,9 @@ const OrderConfirmation = () => {
           } else if (orderData.status === 'failed') {
             setProcessingStatus('failed');
           } else {
-            setProcessingStatus('needs_processing');
-            await attemptOrderProcessing(orderId);
+            // Order just created, webhook is processing it
+            setProcessingStatus('processing');
+            console.log('📋 Order created - webhook will handle ZMA processing automatically');
           }
         } else {
           setProcessingStatus('pending');
@@ -132,66 +155,6 @@ const OrderConfirmation = () => {
         setIsLoading(false);
       }
     };
-
-  /*
-   * 🗑️ DEPRECATED: Manual ZMA Processing Trigger
-   * 
-   * ✅ NEW APPROACH:
-   * - Stripe webhook automatically triggers ZMA processing after order creation
-   * - Unified Order Monitor provides automatic retry/recovery for failed orders
-   * - This manual trigger is NO LONGER NEEDED for normal order flow
-   * 
-   * ⚠️ KEPT FOR EMERGENCY RECOVERY ONLY:
-   * - Admin tools (WebhookRecoveryPanel, ZincOrderDebugger) can still manually trigger
-   * - This function remains as a fallback for edge cases
-   */
-  const attemptOrderProcessing = async (orderIdToProcess: string) => {
-    try {
-      console.log('⚠️ DEPRECATED: Manual order processing triggered (should be automatic via webhook)');
-      console.log('🔄 Attempting to process order:', orderIdToProcess);
-      setProcessingStatus('processing');
-      
-      const { data, error } = await supabase.functions.invoke('process-zma-order', {
-        body: {
-          orderId: orderIdToProcess,
-          isTestMode: false, // Use production mode for live orders
-          debugMode: true   // Enable detailed logging
-        }
-      });
-
-      if (error) {
-        console.error('❌ Order processing error:', error);
-        setProcessingStatus('failed');
-        toast.error('Order processing encountered an issue. Our team has been notified.');
-      } else if (data?.success) {
-        console.log('✅ Order processed successfully:', data.zincOrderId);
-        setProcessingStatus('processed');
-        toast.success('Order processed successfully!');
-        
-        // Refresh order data
-        const updatedOrder = await getOrderById(orderIdToProcess);
-        if (updatedOrder) {
-          setOrder(updatedOrder);
-        }
-      } else {
-        console.warn('⚠️ Order processing returned unexpected result:', data);
-        
-        // Check if it's a "request_processing" status from Zinc
-        if (data?.status === 'request_processing' || data?.message?.includes('processing')) {
-          console.log('📋 Order submitted to Zinc successfully, now processing...');
-          setProcessingStatus('processing');
-          toast.success('Order submitted to fulfillment partner. Processing in progress...');
-        } else {
-          setProcessingStatus('failed');
-          toast.error('Order processing failed. Please contact support.');
-        }
-      }
-    } catch (error) {
-      console.error('💥 Error processing order:', error);
-      setProcessingStatus('failed');
-      toast.error('Order processing failed. Please contact support.');
-    }
-  };
 
     fetchOrder();
   }, [orderId, navigate]);

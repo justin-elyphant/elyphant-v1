@@ -345,18 +345,11 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         return;
       }
 
-      // Get masked location for privacy
+      // Get masked location for privacy (avoid fetching full address due to RLS)
       const { data: maskedLocation } = await supabase
         .rpc('get_masked_location', { target_user_id: searchResult.id });
       
-      // Get full address for the connection (will be stored securely)
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('shipping_address, email')
-        .eq('id', searchResult.id)
-        .single();
-      
-      // Create pending invitation connection
+      // Create pending invitation connection without fetching private address
       const { data: connectionData, error: connError } = await supabase
         .from('user_connections')
         .insert({
@@ -366,7 +359,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           relationship_type: 'friend',
           pending_recipient_email: searchResult.email,
           pending_recipient_name: searchResult.name,
-          pending_shipping_address: profileData.shipping_address
+          pending_shipping_address: maskedLocation || null
         })
         .select()
         .single();
@@ -401,7 +394,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         id: connectionData.id,
         name: searchResult.name,
         email: searchResult.email,
-        address: maskedLocation || profileData.shipping_address,
+        address: maskedLocation || null,
         source: 'pending',
         relationship_type: 'friend',
         status: 'pending_invitation'

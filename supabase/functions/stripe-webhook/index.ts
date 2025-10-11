@@ -6,6 +6,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
+/**
+ * Normalize date input to valid YYYY-MM-DD format or null
+ * Prevents PostgreSQL "invalid input syntax for type date" errors
+ */
+function normalizeDate(input: unknown): string | null {
+  if (!input || input === '' || input === 'null' || input === 'undefined') {
+    return null;
+  }
+  
+  const dateStr = String(input).trim();
+  if (!dateStr) {
+    return null;
+  }
+  
+  try {
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return dateStr;
+      }
+    }
+    
+    // Try parsing as ISO date
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    console.warn('⚠️ Failed to normalize date:', dateStr, e);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -172,6 +207,19 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
 
         console.log('📦 Cart data:', JSON.stringify(cartData, null, 2));
         
+        // Normalize scheduled delivery date (prevent empty string errors)
+        const normalizedDeliveryDate = normalizeDate(
+          cartData.giftOptions?.scheduleDelivery 
+            ? cartData.giftOptions?.scheduledDeliveryDate 
+            : null
+        );
+        
+        console.log('📅 Date normalization:', {
+          original: cartData.giftOptions?.scheduledDeliveryDate,
+          scheduleDelivery: cartData.giftOptions?.scheduleDelivery,
+          normalized: normalizedDeliveryDate
+        });
+        
         const { data: newOrder, error: createError } = await supabase
           .from('orders')
           .insert({
@@ -228,7 +276,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
                 gift_options: cartData.giftOptions
               }];
             })(),
-            scheduled_delivery_date: cartData.giftOptions?.scheduledDeliveryDate,
+            scheduled_delivery_date: normalizedDeliveryDate,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

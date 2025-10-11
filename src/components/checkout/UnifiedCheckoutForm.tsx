@@ -103,12 +103,10 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
+  const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  
-  // Track cart session for abandoned cart detection
-  const { markCartCompleted } = useCartSessionTracking(cartItems, subtotal, true);
   
   // 🚨 CRITICAL: Dynamic gifting fee calculation using pricing settings
   // ⚠️  NEVER hardcode giftingFee = 0 - this breaks the business model
@@ -133,19 +131,25 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + (shippingCost ?? 0) + giftingFee + taxAmount;
 
+  // Track cart session for abandoned cart detection
+  const { markCartCompleted } = useCartSessionTracking(cartItems, totalAmount, shippingCost ?? 0, true);
+
   // Fetch real shipping costs when checkout data changes
   useEffect(() => {
     const fetchShippingCost = async () => {
       if (checkoutData.shippingInfo.zipCode && cartItems.length > 0) {
         console.log('🚢 Fetching shipping cost for zip:', checkoutData.shippingInfo.zipCode);
         setIsLoadingShipping(true);
+        setShippingCostLoaded(false);
         try {
           const cost = await getShippingCost();
           console.log('✅ Shipping cost fetched:', cost);
           setShippingCost(cost);
+          setShippingCostLoaded(true);
         } catch (error) {
           console.error('❌ Failed to fetch shipping cost:', error);
           setShippingCost(6.99); // Fallback
+          setShippingCostLoaded(true);
         } finally {
           setIsLoadingShipping(false);
         }
@@ -175,6 +179,35 @@ const UnifiedCheckoutForm: React.FC = () => {
   const createPaymentIntent = async () => {
     if (!user) {
       toast.error('Please log in to continue');
+      return;
+    }
+
+    // 🚨 CRITICAL: Wait for shipping cost to load before creating payment intent
+    if (isLoadingShipping || shippingCost === null || !shippingCostLoaded) {
+      console.warn('⚠️ Waiting for shipping cost to load...');
+      toast.error('Loading shipping cost, please wait...');
+      return;
+    }
+
+    // 🛡️ CRITICAL VALIDATION: Ensure shipping cost is correct
+    console.log('💰 Shipping cost validation:', {
+      shippingCost,
+      isLoadingShipping,
+      shippingCostLoaded,
+      subtotal,
+      willChargeShipping: subtotal < 25,
+      expectedCost: subtotal >= 25 ? 0 : 6.99
+    });
+
+    if (shippingCost === null) {
+      console.error('🚨 CRITICAL: Shipping cost not loaded - cannot create payment intent');
+      toast.error('Shipping calculation error. Please refresh and try again.');
+      return;
+    }
+
+    if (subtotal < 25 && shippingCost === 0) {
+      console.error('🚨 CRITICAL: Order under $25 but shipping is $0!');
+      toast.error('Shipping calculation error. Please refresh and try again.');
       return;
     }
 
@@ -238,7 +271,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               } : undefined
             })),
             subtotal,
-            shippingCost: shippingCost ?? 0,
+            shippingCost, // Not null - validated above
             giftingFee,
             giftingFeeName,
             giftingFeeDescription,

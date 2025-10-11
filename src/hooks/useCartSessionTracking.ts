@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 export const useCartSessionTracking = (
   cartItems: CartItem[], 
   totalAmount: number,
+  shippingCost: number = 0,
   isCheckoutPage: boolean = false
 ) => {
   const { user } = useAuth();
@@ -46,7 +47,8 @@ export const useCartSessionTracking = (
             quantity: item.quantity,
             price: item.product.price,
             recipient_id: item.recipientAssignment?.connectionId
-          }))
+          })),
+          shippingCost
         };
 
         await supabase.from('cart_sessions').upsert({
@@ -67,7 +69,7 @@ export const useCartSessionTracking = (
     };
 
     trackCartSession();
-  }, [cartItems, totalAmount, user?.id, isCheckoutPage]);
+  }, [cartItems, totalAmount, shippingCost, user?.id, isCheckoutPage]);
 
   // Mark cart as completed
   const markCartCompleted = async () => {

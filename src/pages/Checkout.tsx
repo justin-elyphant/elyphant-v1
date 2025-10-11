@@ -16,7 +16,7 @@ const Checkout = () => {
 
   // Track cart session for abandoned cart detection
   const totalAmount = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  useCartSessionTracking(cartItems, totalAmount, true);
+  useCartSessionTracking(cartItems, totalAmount, 0, false);
 
   // Check cart completeness and redirect accordingly
   if (cartItems.length === 0) {

@@ -134,7 +134,7 @@ const WishlistCreationCTA = () => {
     console.log('WishlistCreationCTA - Add to cart:', product);
     try {
       await addToCart(product, 1);
-      toast.success(`${product.title || product.name} has been added to your cart.`);
+      // Toast is handled by UnifiedPaymentService
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error("Failed to add item to cart. Please try again.");

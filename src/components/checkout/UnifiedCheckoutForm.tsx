@@ -404,12 +404,15 @@ const UnifiedCheckoutForm: React.FC = () => {
     toast.error(`Payment failed: ${error}`);
   };
 
-  // Initialize payment intent only after addresses are loaded
+  // Initialize payment intent only after addresses AND shipping cost are loaded
   useEffect(() => {
-    if (user && cartItems.length > 0 && !clientSecret && addressesLoaded) {
+    if (user && cartItems.length > 0 && !clientSecret && addressesLoaded && shippingCostLoaded && shippingCost !== null) {
+      console.log('🎯 All data loaded - creating payment intent now');
       createPaymentIntent();
+    } else if (user && cartItems.length > 0 && !clientSecret && addressesLoaded && !shippingCostLoaded) {
+      console.log('⏳ Waiting for shipping cost to load before creating payment intent');
     }
-  }, [user, cartItems.length, clientSecret, addressesLoaded]);
+  }, [user, cartItems.length, clientSecret, addressesLoaded, shippingCostLoaded, shippingCost]);
 
   // Redirect if no items in cart
   if (cartItems.length === 0) {

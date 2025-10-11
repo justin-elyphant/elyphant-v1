@@ -290,6 +290,27 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           order = newOrder;
           console.log('✅ Order created from cart_sessions:', order.id);
           
+          // Insert order items into order_items table
+          const orderItems = cartData.cartItems.map((item: any) => ({
+            order_id: order.id,
+            product_id: item.product_id,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            image_url: item.image,
+            total_price: item.price * item.quantity
+          }));
+
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems);
+
+          if (itemsError) {
+            console.error('❌ Failed to create order items:', itemsError);
+          } else {
+            console.log('✅ Created', orderItems.length, 'order items');
+          }
+          
           // Mark cart session as completed
           await supabase
             .from('cart_sessions')

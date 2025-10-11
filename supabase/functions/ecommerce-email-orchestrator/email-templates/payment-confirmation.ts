@@ -37,7 +37,7 @@ export const paymentConfirmationTemplate = (props: PaymentConfirmationProps): st
                   Amount Paid
                 </p>
                 <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; color: #166534; font-weight: 700;">
-                  ${props.amount}
+                  $${typeof props.amount === 'number' ? props.amount.toFixed(2) : props.amount}
                 </p>
               </td>
             </tr>

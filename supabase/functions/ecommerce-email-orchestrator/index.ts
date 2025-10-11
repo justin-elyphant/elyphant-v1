@@ -428,7 +428,7 @@ async function handlePaymentConfirmation(supabase: any, orderId: string) {
                     <div style="width: 48px; height: 48px; background-color: #22c55e; border-radius: 50%; margin-bottom: 16px; display: inline-block; text-align: center; line-height: 48px; font-size: 24px;">✓</div>
                     <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #166534; font-weight: 600;">Payment Successful</p>
                     <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Amount Paid</p>
-                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #166534; font-weight: 700;">$${(order.total_amount / 100).toFixed(2)}</p>
+                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #166534; font-weight: 700;">$${Number(order.total_amount).toFixed(2)}</p>
                     <p style="margin: 15px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Order Number</p>
                     <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">${order.order_number}</p>
                   </td>

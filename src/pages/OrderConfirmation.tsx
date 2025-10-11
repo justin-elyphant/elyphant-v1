@@ -20,20 +20,14 @@ interface Order {
   split_order_index: number | null;
   total_split_orders: number | null;
   cart_data?: any;
-  order_items: Array<{
-    product_name: string;
-    quantity: number;
-    unit_price: number;
-    product_image: string | null;
-    gift_message?: string | null;
-  }>;
+  order_items?: any[];
 }
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [childOrders, setChildOrders] = useState<Order[]>([]);
+  const [order, setOrder] = useState<any>(null);
+  const [childOrders, setChildOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,40 +39,37 @@ const OrderConfirmation = () => {
 
     fetchOrderDetails();
     
-    // Poll for status updates every 5 seconds
-    const interval = setInterval(fetchOrderDetails, 5000);
-    return () => clearInterval(interval);
+    // Poll for status updates every 3 seconds for up to 30 seconds
+    const interval = setInterval(fetchOrderDetails, 3000);
+    const timeout = setTimeout(() => clearInterval(interval), 30000);
+    
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
     try {
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('id', orderId)
-        .single();
+      const result = await (supabase as any).from('orders').select('*').eq('id', orderId).maybeSingle();
+      let orderData = result.data;
 
-      if (orderError) throw orderError;
-
-      setOrder(orderData);
-
-      // If this is a split order parent, fetch child orders
-      if (orderData.is_split_order && !orderData.parent_order_id) {
-        const { data: children, error: childError } = await supabase
-          .from('orders')
-          .select('*, order_items(*)')
-          .eq('parent_order_id', orderId)
-          .order('split_order_index');
-
-        if (!childError && children) {
-          setChildOrders(children);
-        }
+      if (!orderData) {
+        const sessionResult = await (supabase as any).from('orders').select('*').eq('cart_session_id', orderId).order('created_at', { ascending: false }).limit(1);
+        if (sessionResult.data?.[0]) orderData = sessionResult.data[0];
       }
 
-      setLoading(false);
+      if (orderData) {
+        setOrder(orderData);
+        if (orderData.is_split_order && !orderData.parent_order_id) {
+          const childResult = await (supabase as any).from('orders').select('*').eq('parent_order_id', orderData.id).order('split_order_index');
+          if (childResult.data) setChildOrders(childResult.data);
+        }
+        setLoading(false);
+      }
     } catch (err: any) {
       console.error('Error fetching order:', err);
-      setError(err.message);
+      setError(err?.message || 'Failed to load order');
       setLoading(false);
     }
   };

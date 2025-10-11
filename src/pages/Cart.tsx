@@ -51,18 +51,20 @@ const Cart = () => {
       return;
     }
     
-    // Check for complete shipping address
-    const shippingAddress = profile?.shipping_address;
-    const hasCompleteAddress = shippingAddress && 
-      profile?.name &&
-      (shippingAddress.address_line1 || shippingAddress.street) &&
-      shippingAddress.city &&
-      shippingAddress.state &&
-      (shippingAddress.zip_code || shippingAddress.zipCode);
+    // Check for unassigned items first
+    if (unassignedItems.length > 0) {
+      toast.error(`Please assign all ${unassignedItems.length} item${unassignedItems.length === 1 ? '' : 's'} to recipients before checkout`);
+      return;
+    }
     
-    if (!hasCompleteAddress) {
-      toast.error("Please add your shipping address before checkout");
-      navigate('/settings', { state: { tab: 'profile' } });
+    // Check that all delivery groups have complete addresses
+    const incompleteGroups = deliveryGroups.filter(group => {
+      const addr = group.shippingAddress;
+      return !addr || !addr.address || !addr.city || !addr.state || !addr.zipCode;
+    });
+    
+    if (incompleteGroups.length > 0) {
+      toast.error(`${incompleteGroups.length} recipient${incompleteGroups.length === 1 ? ' has' : 's have'} incomplete address${incompleteGroups.length === 1 ? '' : 'es'}. Please complete all addresses.`);
       return;
     }
     

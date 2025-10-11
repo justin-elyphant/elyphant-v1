@@ -16,6 +16,13 @@ interface Order {
   user_id: string;
   zinc_order_id?: string;
   zinc_status?: string;
+  order_number?: string;
+  is_split_order?: boolean;
+  parent_order_id?: string;
+  split_order_index?: number;
+  total_split_orders?: number;
+  delivery_group_id?: string;
+  cart_data?: any;
 }
 
 const Orders = () => {
@@ -32,6 +39,7 @@ const Orders = () => {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .is('parent_order_id', null) // Only fetch parent orders (not child splits)
         .order('created_at', { ascending: false });
 
       if (error) {

@@ -359,6 +359,9 @@ const UnifiedCheckoutForm: React.FC = () => {
       setIsProcessing(true);
       console.log('🎉 Payment successful! Stripe webhook will create order...');
       
+      // Get cart session ID to track order creation
+      const cartSessionId = localStorage.getItem('cart_session_id');
+      
       // Save address to profile if needed
       try {
         await saveCurrentAddressToProfile('Checkout Address', false);
@@ -371,16 +374,16 @@ const UnifiedCheckoutForm: React.FC = () => {
       // Show success message
       toast.success('Payment successful! Your order is being processed...');
       
-      // Clear cart and navigate to orders page
-      // Note: Webhook creates order asynchronously, so we navigate to orders list
-      // where user can see their order being processed
-      console.log('🧹 Clearing cart and navigating to orders...');
+      // Clear cart and navigate to order confirmation
+      // Note: Webhook creates order asynchronously, pass session ID to track creation
+      console.log('🧹 Clearing cart and navigating to confirmation...', { sessionId: cartSessionId });
       clearCart();
       console.log('🛒 Cart cleared successfully');
       
-      // Navigate to orders page where they can track their order
-      console.log('🧭 Navigating to orders page');
-      navigate('/orders');
+      // Navigate to order confirmation page with session ID (or payment intent ID as fallback)
+      const trackingId = cartSessionId || paymentIntentId;
+      console.log('🧭 Navigating to order confirmation page');
+      navigate(`/order-confirmation/${trackingId}`);
       
     } catch (error: any) {
       console.error('💥 Post-payment error:', error);
@@ -391,7 +394,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       // Try to clear cart and navigate to orders (fallback on error)
       try {
         clearCart();
-        navigate('/orders');
+        navigate('/orders'); // Fallback to orders page on error
       } catch (navError) {
         console.error('Failed to navigate:', navError);
       }

@@ -2992,6 +2992,7 @@ export type Database = {
           confirmation_email_sent: boolean | null
           created_at: string
           currency: string
+          delivery_group_id: string | null
           delivery_groups: Json | null
           expected_funding_date: string | null
           followup_email_sent: boolean | null
@@ -3009,6 +3010,7 @@ export type Database = {
           has_multiple_recipients: boolean | null
           id: string
           is_gift: boolean | null
+          is_split_order: boolean | null
           is_surprise_gift: boolean | null
           last_processing_attempt: string | null
           last_zinc_update: string | null
@@ -3016,6 +3018,7 @@ export type Database = {
           next_retry_at: string | null
           order_method: string | null
           order_number: string
+          parent_order_id: string | null
           payment_confirmation_sent: boolean | null
           payment_status: string | null
           processing_attempts: number | null
@@ -3024,6 +3027,7 @@ export type Database = {
           scheduled_delivery_date: string | null
           shipping_cost: number
           shipping_info: Json
+          split_order_index: number | null
           status: string
           status_update_emails_sent: Json | null
           stripe_payment_intent_id: string | null
@@ -3031,6 +3035,7 @@ export type Database = {
           subtotal: number
           tax_amount: number
           total_amount: number
+          total_split_orders: number | null
           tracking_number: string | null
           updated_at: string
           user_id: string | null
@@ -3049,6 +3054,7 @@ export type Database = {
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
+          delivery_group_id?: string | null
           delivery_groups?: Json | null
           expected_funding_date?: string | null
           followup_email_sent?: boolean | null
@@ -3066,6 +3072,7 @@ export type Database = {
           has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
+          is_split_order?: boolean | null
           is_surprise_gift?: boolean | null
           last_processing_attempt?: string | null
           last_zinc_update?: string | null
@@ -3073,6 +3080,7 @@ export type Database = {
           next_retry_at?: string | null
           order_method?: string | null
           order_number: string
+          parent_order_id?: string | null
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           processing_attempts?: number | null
@@ -3081,6 +3089,7 @@ export type Database = {
           scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info: Json
+          split_order_index?: number | null
           status?: string
           status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
@@ -3088,6 +3097,7 @@ export type Database = {
           subtotal: number
           tax_amount?: number
           total_amount: number
+          total_split_orders?: number | null
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
@@ -3106,6 +3116,7 @@ export type Database = {
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
+          delivery_group_id?: string | null
           delivery_groups?: Json | null
           expected_funding_date?: string | null
           followup_email_sent?: boolean | null
@@ -3123,6 +3134,7 @@ export type Database = {
           has_multiple_recipients?: boolean | null
           id?: string
           is_gift?: boolean | null
+          is_split_order?: boolean | null
           is_surprise_gift?: boolean | null
           last_processing_attempt?: string | null
           last_zinc_update?: string | null
@@ -3130,6 +3142,7 @@ export type Database = {
           next_retry_at?: string | null
           order_method?: string | null
           order_number?: string
+          parent_order_id?: string | null
           payment_confirmation_sent?: boolean | null
           payment_status?: string | null
           processing_attempts?: number | null
@@ -3138,6 +3151,7 @@ export type Database = {
           scheduled_delivery_date?: string | null
           shipping_cost?: number
           shipping_info?: Json
+          split_order_index?: number | null
           status?: string
           status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
@@ -3145,6 +3159,7 @@ export type Database = {
           subtotal?: number
           tax_amount?: number
           total_amount?: number
+          total_split_orders?: number | null
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
@@ -3162,6 +3177,20 @@ export type Database = {
             columns: ["group_gift_project_id"]
             isOneToOne: false
             referencedRelation: "group_gift_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]

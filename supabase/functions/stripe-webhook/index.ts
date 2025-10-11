@@ -383,19 +383,35 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         console.error('⚠️ Error triggering payment confirmation email:', emailError);
       }
       
-      // Call process-zma-order directly (consolidated, single path)
+      // Check if this is a multi-recipient order and route accordingly
       try {
-        await supabase.functions.invoke('process-zma-order', {
-          body: { 
-            orderId: order.id,
-            triggerSource: 'stripe-webhook',
-            isScheduled: order.scheduled_delivery_date ? true : false,
-            scheduledDeliveryDate: order.scheduled_delivery_date,
-            isAutoGift: order.is_auto_gift || false,
-            autoGiftContext: order.auto_gift_context
-          }
-        });
-        console.log(`🚀 Direct ZMA processor invoked for order ${order.id}`);
+        const hasMultipleRecipients = order.has_multiple_recipients === true;
+        const cartData = order.cart_data || {};
+        const deliveryGroups = cartData.deliveryGroups || [];
+        
+        if (hasMultipleRecipients && deliveryGroups.length > 0) {
+          console.log(`📦 Multi-recipient order detected with ${deliveryGroups.length} delivery groups`);
+          console.log(`🔀 Invoking split-order-processor for order ${order.id}`);
+          
+          await supabase.functions.invoke('split-order-processor', {
+            body: { orderId: order.id }
+          });
+          console.log(`✅ Split order processor invoked for order ${order.id}`);
+        } else {
+          console.log(`📦 Single-recipient order, processing directly`);
+          
+          await supabase.functions.invoke('process-zma-order', {
+            body: { 
+              orderId: order.id,
+              triggerSource: 'stripe-webhook',
+              isScheduled: order.scheduled_delivery_date ? true : false,
+              scheduledDeliveryDate: order.scheduled_delivery_date,
+              isAutoGift: order.is_auto_gift || false,
+              autoGiftContext: order.auto_gift_context
+            }
+          });
+          console.log(`🚀 Direct ZMA processor invoked for order ${order.id}`);
+        }
         
         // Log success
         await supabase.from('webhook_delivery_log').insert({

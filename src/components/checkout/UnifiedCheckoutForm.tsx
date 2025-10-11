@@ -372,12 +372,13 @@ const UnifiedCheckoutForm: React.FC = () => {
       toast.success('Payment successful! Your order is being processed...');
       
       // Clear cart and navigate to orders page
-      // Note: Webhook will mark cart as completed, so we don't call markCartCompleted() here
+      // Note: Webhook creates order asynchronously, so we navigate to orders list
+      // where user can see their order being processed
       console.log('🧹 Clearing cart and navigating to orders...');
       clearCart();
       console.log('🛒 Cart cleared successfully');
       
-      // Navigate to orders page (webhook creates order asynchronously)
+      // Navigate to orders page where they can track their order
       console.log('🧭 Navigating to orders page');
       navigate('/orders');
       
@@ -387,7 +388,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       // Payment succeeded but something went wrong after
       toast.error('Payment successful but there was an issue. Please check your orders page.');
       
-      // Try to clear cart and navigate to orders
+      // Try to clear cart and navigate to orders (fallback on error)
       try {
         clearCart();
         navigate('/orders');

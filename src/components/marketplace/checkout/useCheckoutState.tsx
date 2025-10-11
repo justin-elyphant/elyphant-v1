@@ -248,118 +248,27 @@ export const useCheckoutState = () => {
   };
 
   /*
-   * 🔗 CRITICAL: Shipping cost calculation - Option C Logic
+   * 🔗 CRITICAL: Shipping cost calculation - Flat $6.99 for MVP
    * 
-   * Implements hybrid shipping calculation:
-   * - All Prime items: $0.00 shipping
-   * - Mixed Prime + Non-Prime: Charge highest individual non-Prime shipping cost
-   * - All Non-Prime: Sum all shipping costs
+   * Simple flat-rate shipping:
+   * - Orders $25+: FREE shipping
+   * - Orders under $25: $6.99 flat rate
    * 
-   * This protects cash flow during the 3-day Stripe→Bank→PayPal→ZMA funding cycle
+   * This eliminates Zinc API shipping quote delays and provides predictable pricing.
+   * Elyphant absorbs any shipping variance (actual cost may be $0-$10 from Zinc).
    */
   const getShippingCost = async (): Promise<number> => {
-    // Calculate subtotal
     const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     
-    // 📦 FREE SHIPPING RULE: Orders $25+ qualify for free shipping
+    // Keep the $25+ free shipping promotion
     if (subtotal >= 25) {
       console.log('✓ Order qualifies for FREE Shipping ($25+ threshold)');
       return 0;
     }
     
-    // Get ZMA products from cart (check both vendor field and product.vendor)
-    const zmaProducts = cartItems.filter(item => 
-      item.product.vendor?.toLowerCase() === 'amazon' || item.product.retailer?.toLowerCase() === 'amazon'
-    );
-    
-    console.log(`🔍 Shipping Cost Calculation: ${zmaProducts.length} Amazon products, subtotal: $${subtotal}`);
-    
-    if (zmaProducts.length === 0) {
-      return 6.99; // Fallback for non-Amazon products
-    }
-
-    try {
-      const { getShippingQuote } = await import("@/components/marketplace/zinc/services/shippingQuoteService");
-      
-      // Fetch shipping quotes for each product individually
-      const shippingResults = await Promise.all(
-        zmaProducts.map(async (item) => {
-          try {
-            const quote = await getShippingQuote({
-              retailer: "amazon",
-              products: [{
-                product_id: item.product.product_id || item.product.id || item.product.asin,
-                quantity: item.quantity
-              }],
-              shipping_address: {
-                first_name: checkoutData.shippingInfo.name.split(' ')[0] || '',
-                last_name: checkoutData.shippingInfo.name.split(' ').slice(1).join(' ') || '',
-                address_line1: checkoutData.shippingInfo.address,
-                zip_code: checkoutData.shippingInfo.zipCode,
-                city: checkoutData.shippingInfo.city,
-                state: checkoutData.shippingInfo.state,
-                country: checkoutData.shippingInfo.country
-              }
-            });
-
-            if (quote && quote.shipping_options && quote.shipping_options.length > 0) {
-              console.log(`📦 Zinc API response for ${item.product.product_id}:`, {
-                optionsCount: quote.shipping_options.length,
-                options: quote.shipping_options.map(o => ({ name: o.name, price: o.price }))
-              });
-              
-              // Get cheapest shipping option for this product
-              const cheapest = quote.shipping_options.reduce((min, option) => 
-                option.price < min.price ? option : min
-              );
-              
-              console.log(`✅ Selected cheapest option for ${item.product.product_id}:`, cheapest);
-              
-              return {
-                productId: item.product.product_id || item.product.id,
-                price: cheapest.price,
-                isPrime: cheapest.price === 0
-              };
-            }
-            console.warn(`⚠️ No shipping options returned for ${item.product.product_id}`);
-            return { productId: item.product.product_id || item.product.id, price: 6.99, isPrime: false };
-          } catch (error) {
-            console.error(`❌ Failed to get shipping for product ${item.product.product_id}:`, error);
-            return { productId: item.product.product_id || item.product.id, price: 6.99, isPrime: false };
-          }
-        })
-      );
-
-      // Option C Logic: Hybrid shipping calculation
-      const allPrime = shippingResults.every(result => result.isPrime);
-      const somePrime = shippingResults.some(result => result.isPrime);
-      const nonPrimeItems = shippingResults.filter(result => !result.isPrime);
-
-      let totalShipping = 0;
-
-      if (allPrime) {
-        // All Prime items: Free shipping
-        totalShipping = 0;
-        console.log('Option C: All items are Prime - Free shipping');
-      } else if (somePrime && nonPrimeItems.length > 0) {
-        // Mixed cart: Charge highest individual non-Prime shipping cost
-        totalShipping = Math.max(...nonPrimeItems.map(item => item.price));
-        console.log(`Option C: Mixed cart - Charging highest non-Prime shipping: $${totalShipping}`);
-      } else {
-        // All Non-Prime: Sum all shipping costs
-        totalShipping = shippingResults.reduce((sum, result) => sum + result.price, 0);
-        console.log(`Option C: All non-Prime - Sum of all shipping: $${totalShipping}`);
-      }
-
-      console.log(`Shipping breakdown:`, shippingResults);
-      console.log(`Final shipping cost: $${totalShipping}`);
-      
-      return totalShipping;
-    } catch (error) {
-      console.error("Failed to get shipping quote from Zinc:", error);
-    }
-
-    return 6.99; // Fallback on error
+    // Flat $6.99 shipping for all orders under $25
+    console.log('💰 Applying flat $6.99 shipping (MVP approach - covers typical Amazon shipping costs)');
+    return 6.99;
   };
 
   /*

@@ -777,7 +777,16 @@ for (const field of requiredBillingFields) {
           variants: variants // Include parsed variants or empty array
         };
       }),
-      max_price: Math.round((orderData.total_amount + 10) * 100), // Add buffer and convert to cents
+      // Customer total: product + $6.99 shipping + elyphant fee (10% + $1)
+      // Zinc will charge: product + actual shipping ($0-$10) + tax ($1-$2)
+      // Buffer: 15% safety margin for tax and shipping variance
+      max_price: (() => {
+        const customerTotal = orderData.total_amount; // What we charged customer
+        const estimatedTax = orderData.subtotal * 0.10; // 10% conservative tax estimate
+        const maxPrice = Math.round((customerTotal + estimatedTax) * 1.15 * 100); // 15% safety buffer, convert to cents
+        console.log(`💰 Max price calculation: customerTotal=$${customerTotal}, estimatedTax=$${estimatedTax.toFixed(2)}, maxPrice=$${(maxPrice/100).toFixed(2)}`);
+        return maxPrice;
+      })()
       shipping_address: shippingAddress,
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
@@ -891,9 +900,15 @@ Object.keys(zincOrderData).forEach((key) => {
     
     console.log(`🔐 Using API key: ${zmaAccount.api_key.substring(0, 8)}... for Zinc API call`);
 
-    // Log shipping cost if provided (for validation)
+    // Log shipping reconciliation for future analysis
     if (shippingCost !== undefined) {
-      console.log(`💰 Customer charged shipping: $${shippingCost} (will be validated against Zinc's actual charge)`);
+      console.log(`💰 Shipping Reconciliation:`, {
+        charged_to_customer: `$${shippingCost}`,
+        flat_rate_applied: '$6.99 (or $0 for orders $25+)',
+        zinc_will_charge: 'variable ($0-$10)',
+        max_price_buffer: `${(((zincOrderData.max_price / 100 - orderData.total_amount) / orderData.total_amount) * 100).toFixed(1)}%`,
+        note: 'Elyphant absorbs shipping variance in current 10% + $1 fee'
+      });
     }
 
     // Use custom idempotency key for retries, otherwise use orderId

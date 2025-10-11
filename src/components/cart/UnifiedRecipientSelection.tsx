@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { searchFriends, FriendSearchResult } from '@/services/search/friendSearchService';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
+import AddressRequestDialog from './AddressRequestDialog';
 
 interface UnifiedRecipientSelectionProps {
   onRecipientSelect: (recipient: UnifiedRecipient) => void;
@@ -80,6 +81,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const { user } = useAuth();
   const [userSearchResults, setUserSearchResults] = useState<FriendSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [addressRequestRecipient, setAddressRequestRecipient] = useState<UnifiedRecipient | null>(null);
 
   useEffect(() => {
     fetchRecipients();
@@ -815,6 +817,19 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           </CardContent>
         </div>
       </Card>
+
+      {/* Address Request Dialog */}
+      {addressRequestRecipient && (
+        <AddressRequestDialog
+          open={!!addressRequestRecipient}
+          onOpenChange={(open) => !open && setAddressRequestRecipient(null)}
+          recipient={{
+            id: addressRequestRecipient.id,
+            name: addressRequestRecipient.name,
+            email: addressRequestRecipient.email
+          }}
+        />
+      )}
     </div>
   );
 };

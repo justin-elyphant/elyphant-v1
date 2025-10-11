@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -17,6 +16,8 @@ import { useOrderActions } from "@/hooks/useOrderActions";
 import { useOrderEligibility } from "@/hooks/useOrderEligibility";
 import OrderCancelDialog from "./OrderCancelDialog";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
+import SplitOrderDisplay from "./SplitOrderDisplay";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Order {
   id: string;
@@ -28,6 +29,8 @@ interface Order {
   stripe_payment_intent_id?: string;
   stripe_session_id?: string;
   zinc_status?: string;
+  is_split_order?: boolean;
+  total_split_orders?: number;
 }
 
 interface OrderTableProps {
@@ -40,8 +43,33 @@ interface OrderTableProps {
 const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProps) => {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [orderEligibility, setOrderEligibility] = useState<any>(null);
+  const [childOrdersMap, setChildOrdersMap] = useState<Record<string, any[]>>({});
   const { abortOrder, cancelOrder, isProcessing } = useOrderActions();
   const { checkOrderEligibility, getOrderActionButton } = useOrderEligibility();
+
+  // Fetch child orders for split orders
+  useEffect(() => {
+    const fetchChildOrders = async () => {
+      const splitOrders = orders.filter(o => o.is_split_order);
+      if (splitOrders.length === 0) return;
+
+      const childMap: Record<string, any[]> = {};
+      
+      for (const order of splitOrders) {
+        const { data } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('parent_order_id', order.id)
+          .order('split_order_index');
+        
+        if (data) childMap[order.id] = data;
+      }
+      
+      setChildOrdersMap(childMap);
+    };
+
+    fetchChildOrders();
+  }, [orders]);
 
   // Check eligibility when selected order changes
   useEffect(() => {
@@ -123,63 +151,83 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">
-                {new Date(order.created_at).toLocaleDateString()}
-              </TableCell>
-              <TableCell>{formatOrderNumberWithHash(order.id)}</TableCell>
-              <TableCell>
-                <OrderStatusBadge 
-                  status={order.status}
-                  orderId={order.id}
-                  stripePaymentIntentId={order.stripe_payment_intent_id}
-                  stripeSessionId={order.stripe_session_id}
-                  createdAt={order.created_at}
-                  onStatusUpdate={() => {
-                    // Refresh the orders list when status updates
-                    window.location.reload();
-                  }}
-                />
-              </TableCell>
-              <TableCell>${order.total_amount.toFixed(2)}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2 items-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/orders/${order.id}`}>
-                      View Details
-                    </Link>
-                  </Button>
-                  {canShowActionButton(order) && (() => {
-                    const actionButton = getOrderActionButton(order.status, order.zinc_status, 
-                      order.status === 'processing');
+          {orders.map((order) => {
+            const isSplitOrder = order.is_split_order;
+            const childOrders = childOrdersMap[order.id] || [];
 
-                    return (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCancellingOrderId(order.id)}
-                        disabled={isProcessing}
-                        className="text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
-                      >
-                        {actionButton.type === 'abort' ? (
-                          <>
-                            <StopCircle className="h-3 w-3 mr-1" />
-                            Abort
-                          </>
-                        ) : (
-                          <>
-                            <X className="h-3 w-3 mr-1" />
-                            Cancel
-                          </>
-                        )}
-                      </Button>
-                    );
-                  })()}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+            if (isSplitOrder && childOrders.length > 0) {
+              // Render split order with SplitOrderDisplay
+              return (
+                <TableRow key={order.id} className="border-0">
+                  <TableCell colSpan={5} className="p-4">
+                    <SplitOrderDisplay
+                      parentOrder={order}
+                      childOrders={childOrders}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            }
+
+            // Regular single order
+            return (
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">
+                  {new Date(order.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>{formatOrderNumberWithHash(order.id)}</TableCell>
+                <TableCell>
+                  <OrderStatusBadge 
+                    status={order.status}
+                    orderId={order.id}
+                    stripePaymentIntentId={order.stripe_payment_intent_id}
+                    stripeSessionId={order.stripe_session_id}
+                    createdAt={order.created_at}
+                    onStatusUpdate={() => {
+                      // Refresh the orders list when status updates
+                      window.location.reload();
+                    }}
+                  />
+                </TableCell>
+                <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2 items-center">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/orders/${order.id}`}>
+                        View Details
+                      </Link>
+                    </Button>
+                    {canShowActionButton(order) && (() => {
+                      const actionButton = getOrderActionButton(order.status, order.zinc_status, 
+                        order.status === 'processing');
+
+                      return (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCancellingOrderId(order.id)}
+                          disabled={isProcessing}
+                          className="text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
+                        >
+                          {actionButton.type === 'abort' ? (
+                            <>
+                              <StopCircle className="h-3 w-3 mr-1" />
+                              Abort
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3 w-3 mr-1" />
+                              Cancel
+                            </>
+                          )}
+                        </Button>
+                      );
+                    })()}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       

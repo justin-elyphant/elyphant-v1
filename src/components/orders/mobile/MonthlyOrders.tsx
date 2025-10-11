@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Calendar } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import MobileOrderCard from "./MobileOrderCard";
+import SplitOrderDisplay from "../SplitOrderDisplay";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Order {
   id: string;
@@ -14,6 +16,8 @@ interface Order {
   order_number?: string;
   stripe_payment_intent_id?: string;
   stripe_session_id?: string;
+  is_split_order?: boolean;
+  total_split_orders?: number;
 }
 
 interface MonthlyOrdersProps {
@@ -27,6 +31,31 @@ interface GroupedOrders {
 
 const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [childOrdersMap, setChildOrdersMap] = useState<Record<string, any[]>>({});
+
+  // Fetch child orders for split orders
+  useEffect(() => {
+    const fetchChildOrders = async () => {
+      const splitOrders = orders.filter(o => o.is_split_order);
+      if (splitOrders.length === 0) return;
+
+      const childMap: Record<string, any[]> = {};
+      
+      for (const order of splitOrders) {
+        const { data } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('parent_order_id', order.id)
+          .order('split_order_index');
+        
+        if (data) childMap[order.id] = data;
+      }
+      
+      setChildOrdersMap(childMap);
+    };
+
+    fetchChildOrders();
+  }, [orders]);
 
   // Group orders by month and year
   const groupOrdersByMonth = (orders: Order[]): GroupedOrders => {
@@ -150,13 +179,28 @@ const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
               
               <CollapsibleContent>
                 <CardContent className="pt-0 space-y-4">
-                  {monthOrders.map((order) => (
-                    <MobileOrderCard 
-                      key={order.id} 
-                      order={order} 
-                      onOrderUpdated={onOrderUpdated}
-                    />
-                  ))}
+                  {monthOrders.map((order) => {
+                    const isSplitOrder = order.is_split_order;
+                    const childOrders = childOrdersMap[order.id] || [];
+
+                    if (isSplitOrder && childOrders.length > 0) {
+                      return (
+                        <SplitOrderDisplay
+                          key={order.id}
+                          parentOrder={order}
+                          childOrders={childOrders}
+                        />
+                      );
+                    }
+
+                    return (
+                      <MobileOrderCard 
+                        key={order.id} 
+                        order={order} 
+                        onOrderUpdated={onOrderUpdated}
+                      />
+                    );
+                  })}
                 </CardContent>
               </CollapsibleContent>
             </Card>

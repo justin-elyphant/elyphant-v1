@@ -58,9 +58,19 @@ const Cart = () => {
     }
     
     // Check that all delivery groups have complete addresses
+    console.log('Delivery Groups for validation:', deliveryGroups.map(g => ({
+      connectionName: g.connectionName,
+      address: g.shippingAddress
+    })));
+    
     const incompleteGroups = deliveryGroups.filter(group => {
       const addr = group.shippingAddress;
-      return !addr || !(addr.address || (addr as any).address_line1 || (addr as any).street) || !addr.city || !addr.state || !(addr.zipCode || (addr as any).zip_code);
+      // Only check normalized fields after mapping
+      return !addr || 
+        !addr.address?.trim() || 
+        !addr.city?.trim() || 
+        !addr.state?.trim() || 
+        !addr.zipCode?.trim();
     });
     
     if (incompleteGroups.length > 0) {

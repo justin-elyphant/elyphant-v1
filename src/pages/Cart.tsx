@@ -64,13 +64,21 @@ const Cart = () => {
     })));
     
     const incompleteGroups = deliveryGroups.filter(group => {
-      const addr = group.shippingAddress;
-      // Only check normalized fields after mapping
-      return !addr || 
-        !addr.address?.trim() || 
-        !addr.city?.trim() || 
-        !addr.state?.trim() || 
-        !addr.zipCode?.trim();
+      const addr = group.shippingAddress as any;
+      if (!addr) return true;
+      const address = String(addr.address ?? '').trim();
+      const city = String(addr.city ?? '').trim();
+      const state = String(addr.state ?? '').trim();
+      const zip = String((addr.zipCode ?? '')).trim();
+      const incomplete = !address || !city || !state || !zip;
+      if (incomplete) {
+        console.warn('[Cart] Incomplete address for group:', {
+          connectionName: group.connectionName,
+          address, city, state, zip,
+          raw: addr
+        });
+      }
+      return incomplete;
     });
     
     if (incompleteGroups.length > 0) {

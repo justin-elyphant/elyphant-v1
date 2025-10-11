@@ -363,13 +363,12 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       // Send connection invitation email via orchestrator
       const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          template_type: 'connection_invitation',
-          recipient_email: searchResult.email,
-          recipient_name: searchResult.name,
-          template_variables: {
+          eventType: 'connection_invitation',
+          customData: {
             sender_name: user?.user_metadata?.name || user?.email || 'Someone',
             sender_email: user?.email,
             recipient_name: searchResult.name,
+            recipient_email: searchResult.email,
             message: 'I\'d like to send you a gift and connect on Elyphant!',
             connection_id: connectionData.id
           }

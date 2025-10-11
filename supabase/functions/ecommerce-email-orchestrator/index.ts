@@ -1093,6 +1093,21 @@ async function handleGiftInvitation(supabase: any, customData: any) {
 // ============= NEW EVENT HANDLERS =============
 
 async function handleConnectionInvitation(supabase: any, customData: any) {
+  console.log('📧 Sending connection invitation email:', customData);
+  
+  // Extract data from customData (supports both legacy and new format)
+  const senderName = customData.sender_name || customData.senderName || 'Someone';
+  const recipientEmail = customData.recipient_email || customData.recipientEmail;
+  const recipientName = customData.recipient_name || customData.recipientName || 'there';
+  const message = customData.message || customData.customMessage || "I'd like to send you a gift and connect on Elyphant!";
+  const connectionId = customData.connection_id || customData.connectionId;
+  
+  // Build invitation URL
+  const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
+  const invitationUrl = connectionId 
+    ? `${baseUrl}/connections?accept=${connectionId}`
+    : `${baseUrl}/auth?signup=true`;
+  
   const styledHtml = `
 <!DOCTYPE html>
 <html>
@@ -1109,16 +1124,21 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
           </tr>
           <tr>
             <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">${customData.senderName} wants to connect! 🎉</h2>
+              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">${senderName} is sending you a gift! 🎁</h2>
               <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${customData.recipientName || 'there'}!
+                Hi ${recipientName}!
               </p>
               
-              ${customData.customMessage ? `
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #333333; line-height: 24px;">
+                <strong>${senderName}</strong> wants to send you a thoughtful gift and connect with you on Elyphant. Accept the connection to receive your gift and start sharing wishlists!
+              </p>
+              
+              ${message ? `
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
                 <tr>
                   <td>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic; line-height: 22px;">"${customData.customMessage}"</p>
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #9333ea; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Personal Message</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic; line-height: 22px;">"${message}"</p>
                   </td>
                 </tr>
               </table>
@@ -1127,10 +1147,14 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center" style="padding: 20px 0;">
-                    <a href="${customData.invitationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">Accept Invitation</a>
+                    <a href="${invitationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">Accept Gift & Connect</a>
                   </td>
                 </tr>
               </table>
+              
+              <p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #999999; line-height: 20px;">
+                New to Elyphant? Join our community to share wishlists, never miss special occasions, and make gift-giving effortless!
+              </p>
             </td>
           </tr>
           <tr>
@@ -1148,11 +1172,12 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
 
   await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
-    to: [customData.recipientEmail],
-    subject: `${customData.senderName} invited you to connect on Elyphant`,
+    to: [recipientEmail],
+    subject: `${senderName} is sending you a gift on Elyphant! 🎁`,
     html: styledHtml,
   });
 
+  console.log('✅ Connection invitation email sent successfully');
   return { success: true };
 }
 

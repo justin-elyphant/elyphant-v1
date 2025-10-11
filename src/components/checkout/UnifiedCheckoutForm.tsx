@@ -341,53 +341,23 @@ const UnifiedCheckoutForm: React.FC = () => {
   };
 
   /*
-   * 🔗 CRITICAL: Payment Success Handler
+   * 🔗 SIMPLIFIED: Payment Success Handler
    * 
-   * HYBRID FIX: Order will be created by webhook, just wait for it and navigate
+   * ✅ NEW APPROACH (Post-Webhook Migration):
+   * - Stripe webhook is the SINGLE SOURCE OF TRUTH for order creation
+   * - Frontend simply clears cart and navigates after payment success
+   * - No polling, no redundant order creation, no race conditions
+   * - Webhook handles: order creation, order items, cart completion, email, ZMA processing
+   * 
+   * 🗑️ DEPRECATED (Old system - removed):
+   * - Database polling for order creation (lines 354-376)
+   * - Redundant markCartCompleted() calls (webhook already does this)
+   * - Manual ZMA processing triggers (webhook auto-triggers)
    */
   const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
     try {
       setIsProcessing(true);
-      console.log('🎉 Payment successful, waiting for order creation...');
-      
-      // Polling: Wait for webhook to create order (with timeout)
-      let order = null;
-      let attempts = 0;
-      const maxAttempts = 10; // 10 attempts = 5 seconds max wait
-      
-      while (!order && attempts < maxAttempts) {
-        attempts++;
-        console.log(`🔍 Checking for order (attempt ${attempts}/${maxAttempts})...`);
-        
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('stripe_payment_intent_id', paymentIntentId)
-          .maybeSingle();
-
-        if (data) {
-          order = data;
-          console.log('✅ Order found:', order.id);
-          break;
-        }
-        
-        // Wait 500ms before next attempt
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      if (!order) {
-        console.warn('⚠️ Order not created yet by webhook, but payment succeeded');
-        toast.success('Payment successful! Your order is being processed...');
-        
-        // Navigate to orders page since we don't have order ID yet
-        clearCart();
-        await markCartCompleted();
-        navigate('/orders');
-        return;
-      }
-      
-      // Email will be sent by ecommerce-email-orchestrator via webhook/process-zma-order
-      console.log('📧 Email will be sent automatically via ecommerce-email-orchestrator');
+      console.log('🎉 Payment successful! Stripe webhook will create order...');
       
       // Save address to profile if needed
       try {
@@ -395,24 +365,21 @@ const UnifiedCheckoutForm: React.FC = () => {
         console.log('📍 Address saved to profile');
       } catch (addressError) {
         console.warn('⚠️ Failed to save address to profile:', addressError);
-        // Don't fail the order for address saving issues
+        // Don't fail checkout for address saving issues
       }
 
-      // Webhook will handle ZMA processing automatically
-      console.log('✅ Payment succeeded - webhook will process order');
-      toast.success('Payment successful! Processing your order...');
+      // Show success message
+      toast.success('Payment successful! Your order is being processed...');
       
-      // CRITICAL: Always clear cart and navigate - regardless of ZMA processing status
-      console.log('🧹 Clearing cart and navigating to confirmation...');
-      
-      // Mark cart session as completed before clearing
-      await markCartCompleted();
-      
+      // Clear cart and navigate to orders page
+      // Note: Webhook will mark cart as completed, so we don't call markCartCompleted() here
+      console.log('🧹 Clearing cart and navigating to orders...');
       clearCart();
       console.log('🛒 Cart cleared successfully');
       
-      console.log(`🧭 Navigating to order confirmation: /order-confirmation/${order.id}`);
-      navigate(`/order-confirmation/${order.id}`);
+      // Navigate to orders page (webhook creates order asynchronously)
+      console.log('🧭 Navigating to orders page');
+      navigate('/orders');
       
     } catch (error: any) {
       console.error('💥 Post-payment error:', error);
@@ -422,7 +389,6 @@ const UnifiedCheckoutForm: React.FC = () => {
       
       // Try to clear cart and navigate to orders
       try {
-        await markCartCompleted();
         clearCart();
         navigate('/orders');
       } catch (navError) {

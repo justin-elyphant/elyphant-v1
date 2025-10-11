@@ -133,9 +133,22 @@ const OrderConfirmation = () => {
       }
     };
 
+  /*
+   * 🗑️ DEPRECATED: Manual ZMA Processing Trigger
+   * 
+   * ✅ NEW APPROACH:
+   * - Stripe webhook automatically triggers ZMA processing after order creation
+   * - Unified Order Monitor provides automatic retry/recovery for failed orders
+   * - This manual trigger is NO LONGER NEEDED for normal order flow
+   * 
+   * ⚠️ KEPT FOR EMERGENCY RECOVERY ONLY:
+   * - Admin tools (WebhookRecoveryPanel, ZincOrderDebugger) can still manually trigger
+   * - This function remains as a fallback for edge cases
+   */
   const attemptOrderProcessing = async (orderIdToProcess: string) => {
     try {
-      console.log('🔄 Attempting to process order with enhanced address format:', orderIdToProcess);
+      console.log('⚠️ DEPRECATED: Manual order processing triggered (should be automatic via webhook)');
+      console.log('🔄 Attempting to process order:', orderIdToProcess);
       setProcessingStatus('processing');
       
       const { data, error } = await supabase.functions.invoke('process-zma-order', {

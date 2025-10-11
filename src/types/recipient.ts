@@ -8,6 +8,7 @@ export interface RecipientAssignment {
   shippingAddress?: {
     name: string;
     address: string;
+    addressLine2?: string;
     city: string;
     state: string;
     zipCode: string;

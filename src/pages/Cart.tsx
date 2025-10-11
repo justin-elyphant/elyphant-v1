@@ -60,7 +60,7 @@ const Cart = () => {
     // Check that all delivery groups have complete addresses
     const incompleteGroups = deliveryGroups.filter(group => {
       const addr = group.shippingAddress;
-      return !addr || !addr.address || !addr.city || !addr.state || !addr.zipCode;
+      return !addr || !(addr.address || (addr as any).address_line1 || (addr as any).street) || !addr.city || !addr.state || !(addr.zipCode || (addr as any).zip_code);
     });
     
     if (incompleteGroups.length > 0) {
@@ -90,7 +90,15 @@ const Cart = () => {
         connectionId: recipient.id,
         connectionName: recipient.name,
         deliveryGroupId: crypto.randomUUID(),
-        shippingAddress: recipient.address,
+        shippingAddress: recipient.address ? {
+          name: recipient.name,
+          address: (recipient.address as any).address_line1 || (recipient.address as any).street || recipient.address.address || '',
+          addressLine2: (recipient.address as any).address_line2 || (recipient.address as any).addressLine2 || '',
+          city: recipient.address.city || '',
+          state: recipient.address.state || '',
+          zipCode: (recipient.address as any).zip_code || recipient.address.zipCode || '',
+          country: recipient.address.country || 'US'
+        } : undefined,
         // Include verification data if using user's verified address
         ...(isUsingUserAddress && {
           address_verified: unifiedProfile?.address_verified,
@@ -143,6 +151,7 @@ const Cart = () => {
         shippingAddress: {
           name: profile?.name || '',
           address: (profile?.shipping_address?.address_line1 || profile?.shipping_address?.street || ''),
+          addressLine2: profile?.shipping_address?.address_line2 || '',
           city: profile?.shipping_address?.city || '',
           state: profile?.shipping_address?.state || '',
           zipCode: (profile?.shipping_address?.zip_code || profile?.shipping_address?.zipCode || ''),

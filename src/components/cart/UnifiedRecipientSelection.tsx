@@ -24,6 +24,9 @@ import { UnifiedRecipient, unifiedRecipientService } from '@/services/unifiedRec
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
 import { StandardizedAddress } from '@/services/googlePlacesService';
 import { toast } from 'sonner';
+import { searchFriends, FriendSearchResult } from '@/services/search/friendSearchService';
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UnifiedRecipientSelectionProps {
   onRecipientSelect: (recipient: UnifiedRecipient) => void;
@@ -74,6 +77,9 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const [addressValue, setAddressValue] = useState('');
   const [isCreatingRecipient, setIsCreatingRecipient] = useState(false);
   const [creationProgress, setCreationProgress] = useState('');
+  const { user } = useAuth();
+  const [userSearchResults, setUserSearchResults] = useState<FriendSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchRecipients();
@@ -312,6 +318,123 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     }));
   };
 
+  const handleNonConnectedUserSelect = async (searchResult: FriendSearchResult) => {
+    try {
+      console.log('📧 Selecting non-connected user:', searchResult.name);
+      
+      toast.loading('Preparing recipient...');
+      
+      // Check if user has an address in their profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('shipping_address, email')
+        .eq('id', searchResult.id)
+        .single();
+      
+      if (!profileData?.shipping_address) {
+        toast.dismiss();
+        toast.error('This user hasn\'t added a shipping address yet. Please add them manually.');
+        setShowNewRecipientForm(true);
+        setNewRecipientForm(prev => ({
+          ...prev,
+          name: searchResult.name,
+          email: searchResult.email
+        }));
+        return;
+      }
+      
+      // Create pending invitation connection
+      const { data: connectionData, error: connError } = await supabase
+        .from('user_connections')
+        .insert({
+          user_id: user?.id,
+          connected_user_id: searchResult.id,
+          status: 'pending_invitation',
+          relationship_type: 'friend',
+          pending_recipient_email: searchResult.email,
+          pending_recipient_name: searchResult.name,
+          pending_shipping_address: profileData.shipping_address
+        })
+        .select()
+        .single();
+      
+      if (connError) throw connError;
+      
+      // Send connection invitation email via orchestrator
+      const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          template_type: 'connection_invitation',
+          recipient_email: searchResult.email,
+          recipient_name: searchResult.name,
+          template_variables: {
+            sender_name: user?.user_metadata?.name || user?.email || 'Someone',
+            sender_email: user?.email,
+            recipient_name: searchResult.name,
+            message: 'I\'d like to send you a gift and connect on Elyphant!',
+            connection_id: connectionData.id
+          }
+        }
+      });
+      
+      if (emailError) {
+        console.warn('Email failed to send:', emailError);
+        toast.dismiss();
+        toast.warning('Gift prepared, but invitation email failed to send');
+      } else {
+        console.log('✅ Connection invitation email sent');
+      }
+      
+      // Create unified recipient object
+      const unifiedRecipient: UnifiedRecipient = {
+        id: connectionData.id,
+        name: searchResult.name,
+        email: searchResult.email,
+        address: profileData.shipping_address,
+        source: 'pending',
+        relationship_type: 'friend',
+        status: 'pending_invitation'
+      };
+      
+      toast.dismiss();
+      toast.success(`Gift prepared for ${searchResult.name}. They'll receive an invitation to connect.`);
+      onRecipientSelect(unifiedRecipient);
+      
+    } catch (error: any) {
+      console.error('Error selecting non-connected user:', error);
+      toast.dismiss();
+      toast.error('Failed to prepare recipient. Please try again.');
+    }
+  };
+
+  // Universal user search effect
+  useEffect(() => {
+    const performUniversalSearch = async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        setUserSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // Search all users (not just existing recipients)
+        const results = await searchFriends(searchTerm, user?.id);
+        
+        // Filter out users who are already recipients
+        const recipientIds = new Set(recipients.map(r => r.id));
+        const newUsers = results.filter(r => !recipientIds.has(r.id) && r.connectionStatus !== 'connected');
+        
+        setUserSearchResults(newUsers);
+      } catch (error) {
+        console.error('Error searching users:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(performUniversalSearch, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, user?.id, recipients]);
+
   const filteredRecipients = recipients.filter(recipient =>
     recipient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     recipient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -396,6 +519,55 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     className="pl-9"
                   />
                 </div>
+
+                {/* User Search Results - Show non-connected users */}
+                {userSearchResults.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserPlus className="h-4 w-4 text-blue-600" />
+                      <h3 className="font-medium text-sm">Users on Elyphant</h3>
+                      <Badge variant="secondary">{userSearchResults.length}</Badge>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {userSearchResults.map((searchResult) => (
+                        <div
+                          key={searchResult.id}
+                          className="p-3 border rounded-lg cursor-pointer transition-colors hover:bg-accent"
+                          onClick={() => handleNonConnectedUserSelect(searchResult)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <UserPlus className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <p className="font-medium">{searchResult.name}</p>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Mail className="h-3 w-3" />
+                                  <span>{searchResult.email}</span>
+                                  {searchResult.connectionStatus === 'pending' && (
+                                    <>
+                                      <span>•</span>
+                                      <Badge variant="outline" className="text-xs">Pending</Badge>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-blue-600 border-blue-200">
+                                Send Gift & Connect
+                              </Badge>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Separator className="my-4" />
+                  </div>
+                )}
 
                 {/* Recipients List */}
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">

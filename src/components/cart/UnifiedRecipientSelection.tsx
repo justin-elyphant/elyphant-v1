@@ -331,7 +331,15 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         .eq('id', searchResult.id)
         .single();
       
-      if (!profileData?.shipping_address) {
+      // Validate that shipping address has required fields
+      const shippingAddr = profileData?.shipping_address as any;
+      const hasValidAddress = shippingAddr && 
+        (shippingAddr.address_line1 || shippingAddr.street) &&
+        shippingAddr.city &&
+        shippingAddr.state &&
+        (shippingAddr.zip_code || shippingAddr.zipCode);
+
+      if (!hasValidAddress) {
         toast.dismiss();
         toast.error('This user hasn\'t added a shipping address yet. Please add them manually.');
         setShowNewRecipientForm(true);

@@ -427,13 +427,13 @@ const Cart = () => {
                       </div>
                     )}
                     
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-baseline">
                       <span>Shipping</span>
-                      <span>Calculated at checkout</span>
+                      <span className="text-right">Calculated at checkout</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-baseline">
                       <span>Tax</span>
-                      <span>Calculated at checkout</span>
+                      <span className="text-right">Calculated at checkout</span>
                     </div>
                   </div>
                   

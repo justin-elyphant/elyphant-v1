@@ -324,38 +324,16 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       
       toast.loading('Preparing recipient...');
       
-      // Check if user has an address in their profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('shipping_address, email')
-        .eq('id', searchResult.id)
-        .single();
+      // Check if user has a valid shipping address using database function
+      const { data: hasAddress, error: checkError } = await supabase
+        .rpc('has_valid_shipping_address', { target_user_id: searchResult.id });
       
-      // Validate that shipping address has required fields (supports stringified JSON and legacy keys)
-      let rawAddr: any = profileData?.shipping_address as any;
-      if (typeof rawAddr === 'string') {
-        try { rawAddr = JSON.parse(rawAddr); } catch { /* ignore parse error */ }
+      if (checkError) {
+        console.error('Error checking address:', checkError);
+        throw checkError;
       }
 
-      const normalizedAddress = rawAddr && typeof rawAddr === 'object' ? {
-        address_line1: rawAddr.address_line1 || rawAddr.street || rawAddr.address1 || rawAddr.address,
-        address_line2: rawAddr.address_line2 || rawAddr.line2 || rawAddr.address2 || rawAddr.apt || rawAddr.suite || '',
-        city: rawAddr.city || '',
-        state: rawAddr.state || rawAddr.region || rawAddr.province || '',
-        zip_code: rawAddr.zip_code || rawAddr.zipCode || rawAddr.postal_code || rawAddr.postcode || '',
-        country: rawAddr.country || rawAddr.country_code || 'US',
-        // Legacy compatibility
-        street: rawAddr.street || rawAddr.address_line1 || rawAddr.address1 || rawAddr.address,
-        zipCode: rawAddr.zipCode || rawAddr.zip_code || rawAddr.postal_code || rawAddr.postcode || ''
-      } : null;
-
-      const hasValidAddress = !!(normalizedAddress &&
-        normalizedAddress.address_line1 &&
-        normalizedAddress.city &&
-        normalizedAddress.state &&
-        (normalizedAddress.zip_code || normalizedAddress.zipCode));
-
-      if (!hasValidAddress) {
+      if (!hasAddress) {
         toast.dismiss();
         toast.error('This user hasn\'t added a shipping address yet. Please add them manually.');
         setShowNewRecipientForm(true);
@@ -366,6 +344,17 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         }));
         return;
       }
+
+      // Get masked location for privacy
+      const { data: maskedLocation } = await supabase
+        .rpc('get_masked_location', { target_user_id: searchResult.id });
+      
+      // Get full address for the connection (will be stored securely)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('shipping_address, email')
+        .eq('id', searchResult.id)
+        .single();
       
       // Create pending invitation connection
       const { data: connectionData, error: connError } = await supabase
@@ -377,7 +366,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           relationship_type: 'friend',
           pending_recipient_email: searchResult.email,
           pending_recipient_name: searchResult.name,
-          pending_shipping_address: normalizedAddress
+          pending_shipping_address: profileData.shipping_address
         })
         .select()
         .single();
@@ -412,7 +401,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         id: connectionData.id,
         name: searchResult.name,
         email: searchResult.email,
-        address: normalizedAddress,
+        address: maskedLocation || profileData.shipping_address,
         source: 'pending',
         relationship_type: 'friend',
         status: 'pending_invitation'

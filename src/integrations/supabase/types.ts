@@ -5305,6 +5305,10 @@ export type Database = {
           wishlist_title: string
         }[]
       }
+      get_masked_location: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       get_nudge_summary: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: {
@@ -5399,6 +5403,10 @@ export type Database = {
       gtrgm_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      has_valid_shipping_address: {
+        Args: { target_user_id: string }
+        Returns: boolean
       }
       increment_processing_attempts: {
         Args: { order_uuid: string }

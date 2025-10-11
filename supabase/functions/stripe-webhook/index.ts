@@ -290,25 +290,50 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           order = newOrder;
           console.log('✅ Order created from cart_sessions:', order.id);
           
-          // Insert order items into order_items table
-          const orderItems = cartData.cartItems.map((item: any) => ({
-            order_id: order.id,
-            product_id: item.product_id,
-            title: item.title,
-            price: item.price,
-            quantity: item.quantity,
-            image_url: item.image,
-            total_price: item.price * item.quantity
-          }));
-
-          const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderItems);
-
-          if (itemsError) {
-            console.error('❌ Failed to create order items:', itemsError);
+          // Insert order items into order_items table with correct column mapping
+          const items = Array.isArray(cartData?.cartItems) ? cartData.cartItems : [];
+          
+          if (items.length === 0) {
+            console.warn('⚠️ No cart items found in cart session; skipping order_items insert');
           } else {
-            console.log('✅ Created', orderItems.length, 'order items');
+            const orderItems = items.map((item: any) => {
+              const ra = item?.recipientAssignment || {};
+              const qty = Number(item?.quantity ?? 1);
+              const unitPrice = Number(item?.price ?? 0);
+
+              return {
+                order_id: order.id,
+                product_id: String(item?.product_id ?? ''),
+                product_name: item?.title ?? item?.name ?? 'Product',
+                product_image: item?.image ?? null,
+                vendor: 'zma',
+                quantity: qty,
+                unit_price: unitPrice,
+                total_price: unitPrice * qty,
+                recipient_connection_id: ra?.connectionId ?? null,
+                delivery_group_id: ra?.deliveryGroupId ?? null,
+                recipient_gift_message: ra?.giftMessage ?? null,
+                scheduled_delivery_date: normalizeDate(ra?.scheduledDeliveryDate),
+                variation_text: item?.variation_text ?? null,
+                selected_variations: item?.selected_variations ?? null
+              };
+            });
+
+            console.log(`📦 Inserting ${orderItems.length} order items. First item:`, {
+              product_name: orderItems[0]?.product_name,
+              quantity: orderItems[0]?.quantity,
+              unit_price: orderItems[0]?.unit_price
+            });
+
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItems);
+
+            if (itemsError) {
+              console.error('❌ Failed to create order items:', itemsError);
+            } else {
+              console.log('✅ Created', orderItems.length, 'order items');
+            }
           }
           
           // Mark cart session as completed

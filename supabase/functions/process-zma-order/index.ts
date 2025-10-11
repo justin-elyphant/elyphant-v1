@@ -786,7 +786,7 @@ for (const field of requiredBillingFields) {
         const maxPrice = Math.round((customerTotal + estimatedTax) * 1.15 * 100); // 15% safety buffer, convert to cents
         console.log(`💰 Max price calculation: customerTotal=$${customerTotal}, estimatedTax=$${estimatedTax.toFixed(2)}, maxPrice=$${(maxPrice/100).toFixed(2)}`);
         return maxPrice;
-      })()
+      })(),
       shipping_address: shippingAddress,
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,

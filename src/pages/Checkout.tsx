@@ -7,16 +7,14 @@ import { Button } from '@/components/ui/button';
 import { ShoppingBag, AlertCircle } from 'lucide-react';
 import UnifiedCheckoutForm from '@/components/checkout/UnifiedCheckoutForm';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { useCartSessionTracking } from '@/hooks/useCartSessionTracking';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
   const { profile } = useProfile();
 
-  // Track cart session for abandoned cart detection
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  useCartSessionTracking(cartItems, totalAmount, 0, true);
+  // Note: Cart session tracking is handled by UnifiedCheckoutForm to avoid race conditions
+  // Cart abandonment tracking occurs in Cart page via useCartSessionTracking hook
 
   // Check cart completeness and redirect accordingly
   if (cartItems.length === 0) {

@@ -331,13 +331,29 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         .eq('id', searchResult.id)
         .single();
       
-      // Validate that shipping address has required fields
-      const shippingAddr = profileData?.shipping_address as any;
-      const hasValidAddress = shippingAddr && 
-        (shippingAddr.address_line1 || shippingAddr.street) &&
-        shippingAddr.city &&
-        shippingAddr.state &&
-        (shippingAddr.zip_code || shippingAddr.zipCode);
+      // Validate that shipping address has required fields (supports stringified JSON and legacy keys)
+      let rawAddr: any = profileData?.shipping_address as any;
+      if (typeof rawAddr === 'string') {
+        try { rawAddr = JSON.parse(rawAddr); } catch { /* ignore parse error */ }
+      }
+
+      const normalizedAddress = rawAddr && typeof rawAddr === 'object' ? {
+        address_line1: rawAddr.address_line1 || rawAddr.street || rawAddr.address1 || rawAddr.address,
+        address_line2: rawAddr.address_line2 || rawAddr.line2 || rawAddr.address2 || rawAddr.apt || rawAddr.suite || '',
+        city: rawAddr.city || '',
+        state: rawAddr.state || rawAddr.region || rawAddr.province || '',
+        zip_code: rawAddr.zip_code || rawAddr.zipCode || rawAddr.postal_code || rawAddr.postcode || '',
+        country: rawAddr.country || rawAddr.country_code || 'US',
+        // Legacy compatibility
+        street: rawAddr.street || rawAddr.address_line1 || rawAddr.address1 || rawAddr.address,
+        zipCode: rawAddr.zipCode || rawAddr.zip_code || rawAddr.postal_code || rawAddr.postcode || ''
+      } : null;
+
+      const hasValidAddress = !!(normalizedAddress &&
+        normalizedAddress.address_line1 &&
+        normalizedAddress.city &&
+        normalizedAddress.state &&
+        (normalizedAddress.zip_code || normalizedAddress.zipCode));
 
       if (!hasValidAddress) {
         toast.dismiss();
@@ -361,7 +377,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           relationship_type: 'friend',
           pending_recipient_email: searchResult.email,
           pending_recipient_name: searchResult.name,
-          pending_shipping_address: profileData.shipping_address
+          pending_shipping_address: normalizedAddress
         })
         .select()
         .single();
@@ -396,7 +412,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         id: connectionData.id,
         name: searchResult.name,
         email: searchResult.email,
-        address: profileData.shipping_address,
+        address: normalizedAddress,
         source: 'pending',
         relationship_type: 'friend',
         status: 'pending_invitation'

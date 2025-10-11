@@ -93,7 +93,7 @@ const Cart = () => {
         shippingAddress: recipient.address ? {
           name: recipient.name,
           address: (recipient.address as any).address_line1 || (recipient.address as any).street || recipient.address.address || '',
-          addressLine2: (recipient.address as any).address_line2 || (recipient.address as any).addressLine2 || '',
+          addressLine2: (recipient.address as any).address_line2 || (recipient.address as any).line2 || (recipient.address as any).addressLine2 || '',
           city: recipient.address.city || '',
           state: recipient.address.state || '',
           zipCode: (recipient.address as any).zip_code || recipient.address.zipCode || '',
@@ -151,7 +151,7 @@ const Cart = () => {
         shippingAddress: {
           name: profile?.name || '',
           address: (profile?.shipping_address?.address_line1 || profile?.shipping_address?.street || ''),
-          addressLine2: profile?.shipping_address?.address_line2 || '',
+          addressLine2: profile?.shipping_address?.address_line2 || profile?.shipping_address?.line2 || '',
           city: profile?.shipping_address?.city || '',
           state: profile?.shipping_address?.state || '',
           zipCode: (profile?.shipping_address?.zip_code || profile?.shipping_address?.zipCode || ''),

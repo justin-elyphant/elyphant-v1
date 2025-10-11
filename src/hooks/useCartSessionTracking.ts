@@ -38,6 +38,12 @@ export const useCartSessionTracking = (
   useEffect(() => {
     const trackCartSession = async () => {
       if (!sessionIdRef.current || cartItems.length === 0) return;
+      
+      // Skip tracking on checkout page - UnifiedCheckoutForm handles complete cart session saving
+      if (isCheckoutPage) {
+        console.log('⏭️ Skipping cart session tracking on checkout page');
+        return;
+      }
 
       try {
         const cartData = {

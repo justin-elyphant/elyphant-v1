@@ -52,30 +52,39 @@ export const unifiedRecipientService = {
           status,
           created_at,
           profiles!user_connections_connected_user_id_fkey(
+            id,
             name,
             email,
             profile_image,
             shipping_address
-          ),
-          user_addresses!user_addresses_user_id_fkey(
-            address,
-            is_default
           )
         `)
         .eq('user_id', user.id)
         .eq('status', 'accepted');
 
       if (connections) {
-        connections.forEach(conn => {
+        // Fetch user_addresses for each connected user
+        for (const conn of connections) {
           const profile = conn.profiles as any;
+          
+          // Fetch user_addresses for this connected user
+          const { data: userAddresses } = await supabase
+            .from('user_addresses')
+            .select('address, is_default')
+            .eq('user_id', profile?.id)
+            .order('is_default', { ascending: false });
+          
+          // Prioritize user_addresses over profile.shipping_address
+          const defaultAddress = userAddresses?.find(a => a.is_default)?.address || userAddresses?.[0]?.address;
+          const addressSource = defaultAddress || profile?.shipping_address;
           
           // Normalize address from database format to form format
           let normalizedAddress = null;
-          if (profile?.shipping_address) {
-            const formAddress = databaseToForm(profile.shipping_address);
+          if (addressSource) {
+            const formAddress = databaseToForm(addressSource);
             // Convert form format to the display format expected by cart/checkout
             normalizedAddress = {
-              name: profile.name || 'Unknown',
+              name: profile?.name || 'Unknown',
               address: formAddress.street,
               addressLine2: formAddress.addressLine2,
               city: formAddress.city,
@@ -96,7 +105,7 @@ export const unifiedRecipientService = {
             avatar_url: profile?.profile_image,
             created_at: conn.created_at
           });
-        });
+        }
       }
     } catch (error) {
       console.error('Error fetching connections:', error);

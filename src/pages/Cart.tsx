@@ -86,8 +86,9 @@ const Cart = () => {
     });
     
     if (incompleteGroups.length > 0) {
-      toast.error(`${incompleteGroups.length} recipient${incompleteGroups.length === 1 ? ' has' : 's have'} incomplete address${incompleteGroups.length === 1 ? '' : 'es'}. Please complete all addresses.`);
-      return;
+      const names = incompleteGroups.map(g => g.connectionName).join(', ');
+      toast.warning(`${incompleteGroups.length} recipient${incompleteGroups.length === 1 ? '' : 's'} need address details: ${names}. You can complete addresses on the next step.`);
+      // Continue to checkout where addresses can be edited inline
     }
     
     navigate("/checkout");

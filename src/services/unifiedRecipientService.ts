@@ -56,6 +56,10 @@ export const unifiedRecipientService = {
             email,
             profile_image,
             shipping_address
+          ),
+          user_addresses!user_addresses_user_id_fkey(
+            address,
+            is_default
           )
         `)
         .eq('user_id', user.id)

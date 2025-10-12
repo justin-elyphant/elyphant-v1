@@ -76,12 +76,24 @@ export const unifiedRecipientService = {
           
           // Prioritize user_addresses over profile.shipping_address
           const defaultAddress = userAddresses?.find(a => a.is_default)?.address || userAddresses?.[0]?.address;
-          const addressSource = defaultAddress || profile?.shipping_address;
+          const addressSource: any = defaultAddress || profile?.shipping_address;
           
-          // Normalize address from database format to form format
+          // Normalize address to FormAddress regardless of source shape
           let normalizedAddress = null;
           if (addressSource) {
-            const formAddress = databaseToForm(addressSource);
+            const formAddress = (
+              'street' in addressSource || 'zipCode' in addressSource || 'addressLine2' in addressSource
+            )
+              ? {
+                  street: addressSource.street || addressSource.address || '',
+                  addressLine2: addressSource.addressLine2 || addressSource.line2 || addressSource.address_line_2 || '',
+                  city: addressSource.city || '',
+                  state: addressSource.state || '',
+                  zipCode: addressSource.zipCode || addressSource.zip_code || '',
+                  country: addressSource.country || 'US'
+                }
+              : databaseToForm(addressSource);
+
             // Convert form format to the display format expected by cart/checkout
             normalizedAddress = {
               name: profile?.name || 'Unknown',

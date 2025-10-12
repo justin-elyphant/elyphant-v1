@@ -66,13 +66,17 @@ const Cart = () => {
     const incompleteGroups = deliveryGroups.filter(group => {
       const addr = group.shippingAddress as any;
       if (!addr) return true;
-      const address = String(addr.address ?? '').trim();
-      const city = String(addr.city ?? '').trim();
-      const state = String(addr.state ?? '').trim();
-      const zip = String((addr.zipCode ?? '')).trim();
+
+      // Accept legacy keys from older carts
+      const address = String((addr.address ?? addr.address_line1 ?? addr.street ?? '')).trim();
+      const city = String((addr.city ?? '')).trim();
+      const state = String((addr.state ?? '')).trim();
+      const zip = String((addr.zipCode ?? addr.zip_code ?? '')).trim();
+
       const incomplete = !address || !city || !state || !zip;
       if (incomplete) {
         console.warn('[Cart] Incomplete address for group:', {
+          groupId: group.id,
           connectionName: group.connectionName,
           address, city, state, zip,
           raw: addr

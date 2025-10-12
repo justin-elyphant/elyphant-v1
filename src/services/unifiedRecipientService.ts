@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { unifiedGiftManagementService } from "./UnifiedGiftManagementService";
 import { authDebugService } from "./authDebugService";
+import { databaseToForm } from "@/utils/addressStandardization";
 
 export interface UnifiedRecipient {
   id: string;
@@ -63,11 +64,28 @@ export const unifiedRecipientService = {
       if (connections) {
         connections.forEach(conn => {
           const profile = conn.profiles as any;
+          
+          // Normalize address from database format to form format
+          let normalizedAddress = null;
+          if (profile?.shipping_address) {
+            const formAddress = databaseToForm(profile.shipping_address);
+            // Convert form format to the display format expected by cart/checkout
+            normalizedAddress = {
+              name: profile.name || 'Unknown',
+              address: formAddress.street,
+              addressLine2: formAddress.addressLine2,
+              city: formAddress.city,
+              state: formAddress.state,
+              zipCode: formAddress.zipCode,
+              country: formAddress.country
+            };
+          }
+          
           recipients.push({
             id: conn.id,
             name: profile?.name || 'Unknown',
             email: profile?.email,
-            address: profile?.shipping_address,
+            address: normalizedAddress,
             source: 'connection',
             relationship_type: conn.relationship_type,
             status: conn.status,

@@ -58,31 +58,31 @@ const Cart = () => {
     }
     
     // Check that all delivery groups have complete addresses
-    console.log('Delivery Groups for validation:', deliveryGroups.map(g => ({
-      connectionName: g.connectionName,
-      address: g.shippingAddress
-    })));
-    
     const incompleteGroups = deliveryGroups.filter(group => {
-      const addr = group.shippingAddress as any;
+      const addr = group.shippingAddress;
       if (!addr) return true;
-
-      // Accept legacy keys from older carts
-      const address = String((addr.address ?? addr.address_line1 ?? addr.street ?? '')).trim();
-      const city = String((addr.city ?? '')).trim();
-      const state = String((addr.state ?? '')).trim();
-      const zip = String((addr.zipCode ?? addr.zip_code ?? '')).trim();
-
-      const incomplete = !address || !city || !state || !zip;
-      if (incomplete) {
-        console.warn('[Cart] Incomplete address for group:', {
-          groupId: group.id,
-          connectionName: group.connectionName,
-          address, city, state, zip,
-          raw: addr
+      
+      // Check normalized format (addresses are now pre-normalized from unifiedRecipientService)
+      const hasName = addr.name?.trim();
+      const hasStreet = addr.address?.trim();
+      const hasCity = addr.city?.trim();
+      const hasState = addr.state?.trim();
+      const hasZip = addr.zipCode?.trim();
+      
+      const isComplete = !!(hasName && hasStreet && hasCity && hasState && hasZip);
+      
+      if (!isComplete) {
+        console.log('🔍 [Cart] Incomplete address for', group.connectionName, {
+          hasName,
+          hasStreet,
+          hasCity,
+          hasState,
+          hasZip,
+          addr
         });
       }
-      return incomplete;
+      
+      return !isComplete;
     });
     
     if (incompleteGroups.length > 0) {

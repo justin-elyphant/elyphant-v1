@@ -87,8 +87,8 @@ const Cart = () => {
     
     if (incompleteGroups.length > 0) {
       const names = incompleteGroups.map(g => g.connectionName).join(', ');
-      toast.warning(`${incompleteGroups.length} recipient${incompleteGroups.length === 1 ? '' : 's'} need address details: ${names}. You can complete addresses on the next step.`);
-      // Continue to checkout where addresses can be edited inline
+      console.info(`[Cart] Proceeding to checkout with incomplete addresses for: ${names}`);
+      // Addresses can be completed inline on the checkout page; suppressing toast to avoid persistence across navigation
     }
     
     navigate("/checkout");

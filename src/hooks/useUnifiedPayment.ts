@@ -37,7 +37,7 @@ export interface UseUnifiedCartReturn {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  assignItemToRecipient: (productId: string, recipient: RecipientAssignment) => void;
+  assignItemToRecipient: (productId: string, recipient: RecipientAssignment, silent?: boolean) => void;
   refreshCart: () => void;
 }
 
@@ -97,8 +97,8 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
     unifiedPaymentService.clearCart();
   }, []);
 
-  const assignItemToRecipient = useCallback((productId: string, recipient: RecipientAssignment) => {
-    unifiedPaymentService.assignItemToRecipient(productId, recipient);
+  const assignItemToRecipient = useCallback((productId: string, recipient: RecipientAssignment, silent: boolean = false) => {
+    unifiedPaymentService.assignItemToRecipient(productId, recipient, silent);
   }, []);
 
   return {

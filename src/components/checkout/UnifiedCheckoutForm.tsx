@@ -155,11 +155,11 @@ const UnifiedCheckoutForm: React.FC = () => {
           try {
             const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
             if (recipient?.address) {
-              // Update all items in this delivery group with complete address
+              // Update all items in this delivery group with complete address (silently)
               for (const productId of group.items) {
                 updateRecipientAssignment(productId, {
                   shippingAddress: recipient.address
-                });
+                }, true); // silent = true to suppress toast
               }
               
               console.log(`🔧 Reconciled address for ${recipient.name}`);

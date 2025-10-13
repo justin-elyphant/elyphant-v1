@@ -43,7 +43,7 @@ interface UnifiedCartContextType {
   transferGuestCart: () => void;
   assignItemToRecipient: (productId: string, recipientAssignment: RecipientAssignment) => void;
   unassignItemFromRecipient: (productId: string) => void;
-  updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>) => void;
+  updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>, silent?: boolean) => void;
   getItemsByRecipient: () => Map<string, CartItem[]>;
   getUnassignedItems: () => CartItem[];
   assignItemsToNewRecipient: (productIds: string[], recipientData: any) => void;
@@ -113,11 +113,11 @@ export const UnifiedCartProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   }, [cartItems, serviceAssignToRecipient]);
 
-  const updateRecipientAssignment = useCallback((productId: string, updates: Partial<RecipientAssignment>) => {
+  const updateRecipientAssignment = useCallback((productId: string, updates: Partial<RecipientAssignment>, silent: boolean = false) => {
     const item = cartItems.find(item => item.product.product_id === productId);
     if (item && item.recipientAssignment) {
       const updatedAssignment = { ...item.recipientAssignment, ...updates };
-      serviceAssignToRecipient(productId, updatedAssignment);
+      serviceAssignToRecipient(productId, updatedAssignment, silent);
     }
   }, [cartItems, serviceAssignToRecipient]);
 

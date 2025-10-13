@@ -48,7 +48,7 @@ interface CartContextType {
   transferGuestCart: () => void;
   assignItemToRecipient: (productId: string, recipientAssignment: RecipientAssignment) => void;
   unassignItemFromRecipient: (productId: string) => void;
-  updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>) => void;
+  updateRecipientAssignment: (productId: string, updates: Partial<RecipientAssignment>, silent?: boolean) => void;
   updateDeliveryGroupScheduling: (groupId: string, scheduledDate: string | null) => void;
   getItemsByRecipient: () => Map<string, CartItem[]>;
   getUnassignedItems: () => CartItem[];
@@ -163,11 +163,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateRecipientAssignment = (productId: string, updates: Partial<RecipientAssignment>) => {
+  const updateRecipientAssignment = (productId: string, updates: Partial<RecipientAssignment>, silent: boolean = false) => {
     const item = cartItems.find(item => item.product.product_id === productId);
     if (item && item.recipientAssignment) {
       const updatedAssignment = { ...item.recipientAssignment, ...updates };
-      serviceAssignToRecipient(productId, updatedAssignment);
+      serviceAssignToRecipient(productId, updatedAssignment, silent);
     }
   };
 

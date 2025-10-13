@@ -330,7 +330,20 @@ const UnifiedCheckoutForm: React.FC = () => {
               sendGiftMessage: giftOptions.sendGiftMessage,
               scheduledDeliveryDate: giftOptions.scheduledDeliveryDate
             },
-            deliveryGroups: []
+            deliveryGroups: deliveryGroups.map(group => ({
+              id: group.id,
+              connectionId: group.connectionId,
+              connectionName: group.connectionName,
+              items: group.items,
+              giftMessage: group.giftMessage,
+              scheduledDeliveryDate: group.scheduledDeliveryDate,
+              shippingAddress: group.shippingAddress,
+              address_verified: group.address_verified,
+              address_verification_method: group.address_verification_method,
+              address_verified_at: group.address_verified_at,
+              address_last_updated: group.address_last_updated
+            })),
+            has_multiple_recipients: deliveryGroups.length > 1
           } as any,
           total_amount: totalAmount,
           checkout_initiated_at: new Date().toISOString(),

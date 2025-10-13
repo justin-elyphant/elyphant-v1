@@ -133,13 +133,36 @@ export const unifiedRecipientService = {
 
       if (pendingConnections) {
         pendingConnections.forEach(conn => {
+          // Normalize pending_shipping_address to match connected recipient format
+          let normalizedAddress = undefined;
+          if (conn.pending_shipping_address) {
+            const addr: any = conn.pending_shipping_address;
+            const zipCode = addr.zip_code || addr.zipCode || addr.postal_code || addr.zip || '';
+            
+            normalizedAddress = {
+              name: conn.pending_recipient_name || 'Unknown',
+              address: addr.address_line1 || addr.street || addr.address || '',
+              addressLine2: addr.address_line2 || addr.line2 || addr.addressLine2 || '',
+              city: addr.city || '',
+              state: addr.state || '',
+              zipCode: String(zipCode).trim(),
+              country: addr.country || 'US'
+            };
+            
+            console.log('🔍 [unifiedRecipientService] Normalized pending address:', {
+              name: conn.pending_recipient_name,
+              hasZip: !!zipCode,
+              source: 'pending_shipping_address'
+            });
+          }
+          
           recipients.push({
             id: conn.id,
             name: conn.pending_recipient_name || 'Unknown',
             email: conn.pending_recipient_email,
             phone: conn.pending_recipient_phone,
             birthday: conn.pending_recipient_dob,
-            address: conn.pending_shipping_address,
+            address: normalizedAddress,
             source: 'pending',
             relationship_type: conn.relationship_type,
             relationship_context: (conn.relationship_context && typeof conn.relationship_context === 'object') 

@@ -67,7 +67,7 @@ const Cart = () => {
       const hasStreet = addr.address?.trim();
       const hasCity = addr.city?.trim();
       const hasState = addr.state?.trim();
-      const hasZip = addr.zipCode?.trim();
+      const hasZip = Boolean(String(addr.zipCode || '').trim());
       
       const isComplete = !!(hasName && hasStreet && hasCity && hasState && hasZip);
       
@@ -109,17 +109,33 @@ const Cart = () => {
         recipient.address.city === userShippingAddress.city &&
         recipient.address.zipCode === (userShippingAddress.zip_code || userShippingAddress.zipCode);
 
+      // Extract ZIP using robust fallback chain
+      const zipCodeRaw = recipient.address 
+        ? ((recipient.address as any).zip_code || 
+           (recipient.address as any).zipCode || 
+           (recipient.address as any).postal_code || 
+           (recipient.address as any).zip || '')
+        : '';
+      const zipCode = String(zipCodeRaw).trim();
+      
+      console.log('🔍 [Cart] Building recipient assignment:', {
+        name: recipient.name,
+        hasAddress: !!recipient.address,
+        zipFound: !!zipCode,
+        source: recipient.source
+      });
+      
       const recipientAssignment = {
         connectionId: recipient.id,
         connectionName: recipient.name,
         deliveryGroupId: crypto.randomUUID(),
         shippingAddress: recipient.address ? {
           name: recipient.name,
-          address: (recipient.address as any).address_line1 || (recipient.address as any).street || recipient.address.address || '',
-          addressLine2: (recipient.address as any).address_line2 || (recipient.address as any).line2 || (recipient.address as any).addressLine2 || '',
+          address: recipient.address.address || '',
+          addressLine2: (recipient.address as any).addressLine2 || '',
           city: recipient.address.city || '',
           state: recipient.address.state || '',
-          zipCode: (recipient.address as any).zip_code || recipient.address.zipCode || '',
+          zipCode: zipCode,
           country: recipient.address.country || 'US'
         } : undefined,
         // Include verification data if using user's verified address

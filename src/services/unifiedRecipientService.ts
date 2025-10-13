@@ -137,7 +137,7 @@ export const unifiedRecipientService = {
           let normalizedAddress = undefined;
           if (conn.pending_shipping_address) {
             const addr: any = conn.pending_shipping_address;
-            const zipCode = addr.zip_code || addr.zipCode || addr.postal_code || addr.zip || '';
+            const zipCode = addr.zip_code || addr.zipCode || addr.postal_code || addr.zip || addr.zipcode || '';
             
             normalizedAddress = {
               name: conn.pending_recipient_name || 'Unknown',

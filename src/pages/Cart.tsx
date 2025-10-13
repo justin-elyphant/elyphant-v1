@@ -114,7 +114,8 @@ const Cart = () => {
         ? ((recipient.address as any).zip_code || 
            (recipient.address as any).zipCode || 
            (recipient.address as any).postal_code || 
-           (recipient.address as any).zip || '')
+           (recipient.address as any).zip ||
+           (recipient.address as any).zipcode || '')
         : '';
       const zipCode = String(zipCodeRaw).trim();
       

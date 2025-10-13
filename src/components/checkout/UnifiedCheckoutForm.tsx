@@ -43,6 +43,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
+import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
 import { useCartSessionTracking } from '@/hooks/useCartSessionTracking';
 
@@ -75,7 +77,7 @@ import { usePricingSettings } from '@/hooks/usePricingSettings';
 const UnifiedCheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, deliveryGroups, getItemsByRecipient, updateRecipientAssignment } = useCart();
   
   // CRITICAL: This hook manages all checkout state and validation
   const {
@@ -133,6 +135,48 @@ const UnifiedCheckoutForm: React.FC = () => {
 
   // Track cart session for abandoned cart detection
   const { markCartCompleted } = useCartSessionTracking(cartItems, totalAmount, shippingCost ?? 0, true);
+
+  // Auto-reconcile addresses on checkout load
+  useEffect(() => {
+    const reconcileAddresses = async () => {
+      for (const group of deliveryGroups) {
+        const addr = group.shippingAddress;
+        if (!addr) continue;
+        
+        const isComplete = !!(
+          addr.name?.trim() &&
+          (addr.address || (addr as any).street)?.trim() &&
+          addr.city?.trim() &&
+          addr.state?.trim() &&
+          (addr.zipCode || (addr as any).zip_code || (addr as any).zipcode)
+        );
+        
+        if (!isComplete && group.connectionId) {
+          try {
+            const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+            if (recipient?.address) {
+              const itemsMap = getItemsByRecipient();
+              const items = itemsMap.get(group.connectionId) || [];
+              
+              items.forEach(item => {
+                updateRecipientAssignment(item.product.product_id, {
+                  shippingAddress: recipient.address
+                });
+              });
+              
+              console.log(`🔧 Reconciled address for ${recipient.name}`);
+            }
+          } catch (error) {
+            console.warn(`⚠️ Could not reconcile address for group ${group.connectionId}:`, error);
+          }
+        }
+      }
+    };
+    
+    if (deliveryGroups.length > 0) {
+      reconcileAddresses();
+    }
+  }, []);
 
   // Fetch real shipping costs when checkout data changes
   useEffect(() => {
@@ -306,7 +350,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('✅ Cart session saved:', sessionId);
 
       // Create payment intent with session ID (short!)
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      const { data, error } = await invokeWithAuthRetry('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100),
           currency: 'usd',

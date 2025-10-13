@@ -14,6 +14,7 @@ import ExpressCheckoutButton from "./ExpressCheckoutButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { invokeWithAuthRetry } from "@/utils/supabaseWithAuthRetry";
 
 interface PaymentSectionProps {
   paymentMethod: string;
@@ -85,7 +86,7 @@ const PaymentSection = ({
       // Cart data is already saved by UnifiedCheckoutForm before this point
       console.log('📦 Using existing cart session data:', cartSessionId);
 
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      const { data, error } = await invokeWithAuthRetry('create-payment-intent', {
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents
           currency: 'usd',
@@ -129,7 +130,7 @@ const PaymentSection = ({
       // Cancel the unused payment intent if it exists
       if (pendingPaymentIntentId) {
         try {
-          await supabase.functions.invoke('cancel-payment-intent', {
+          await invokeWithAuthRetry('cancel-payment-intent', {
             body: {
               payment_intent_id: pendingPaymentIntentId,
               reason: 'user_selected_saved_payment_method'

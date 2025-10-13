@@ -155,14 +155,12 @@ const UnifiedCheckoutForm: React.FC = () => {
           try {
             const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
             if (recipient?.address) {
-              const itemsMap = getItemsByRecipient();
-              const items = itemsMap.get(group.connectionId) || [];
-              
-              items.forEach(item => {
-                updateRecipientAssignment(item.product.product_id, {
+              // Update all items in this delivery group with complete address
+              for (const productId of group.items) {
+                updateRecipientAssignment(productId, {
                   shippingAddress: recipient.address
                 });
-              });
+              }
               
               console.log(`🔧 Reconciled address for ${recipient.name}`);
             }
@@ -176,7 +174,7 @@ const UnifiedCheckoutForm: React.FC = () => {
     if (deliveryGroups.length > 0) {
       reconcileAddresses();
     }
-  }, []);
+  }, [deliveryGroups, updateRecipientAssignment]);
 
   // Fetch real shipping costs when checkout data changes
   useEffect(() => {

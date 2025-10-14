@@ -224,6 +224,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           .from('orders')
           .insert({
             user_id: paymentIntent.metadata.user_id,
+            cart_session_id: paymentIntent.metadata.cart_session_id,
             stripe_payment_intent_id: paymentIntent.id,
             order_number: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             status: 'payment_confirmed',
@@ -238,6 +239,8 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             currency: 'USD',
             shipping_info: cartData.shippingInfo,
             gift_options: cartData.giftOptions,
+            cart_data: cartData,
+            has_multiple_recipients: Boolean(cartData?.has_multiple_recipients) || (Array.isArray(cartData?.deliveryGroups) && cartData.deliveryGroups.length > 1),
             delivery_groups: (() => {
               // Group items by recipient assignment
               const groupedByRecipient = new Map();
@@ -385,9 +388,12 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       
       // Check if this is a multi-recipient order and route accordingly
       try {
-        const hasMultipleRecipients = order.has_multiple_recipients === true;
         const cartData = order.cart_data || {};
-        const deliveryGroups = cartData.deliveryGroups || [];
+        const deliveryGroups = (cartData.deliveryGroups && Array.isArray(cartData.deliveryGroups) 
+          ? cartData.deliveryGroups 
+          : (order.delivery_groups || []));
+        const hasMultipleRecipients = (order.has_multiple_recipients === true) || 
+          (Array.isArray(deliveryGroups) && deliveryGroups.length > 1);
         
         if (hasMultipleRecipients && deliveryGroups.length > 0) {
           console.log(`📦 Multi-recipient order detected with ${deliveryGroups.length} delivery groups`);

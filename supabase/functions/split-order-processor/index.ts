@@ -40,9 +40,11 @@ serve(async (req) => {
       throw new Error(`Failed to fetch parent order: ${orderError?.message}`);
     }
 
-    // Parse cart data to get delivery groups
+    // Parse cart data to get delivery groups - prioritize cart_data.deliveryGroups
     const cartData = parentOrder.cart_data || {};
-    const deliveryGroups: DeliveryGroup[] = cartData.deliveryGroups || [];
+    const deliveryGroups: DeliveryGroup[] = (cartData.deliveryGroups && Array.isArray(cartData.deliveryGroups))
+      ? cartData.deliveryGroups
+      : (parentOrder.delivery_groups || []);
 
     console.log(`📦 Found ${deliveryGroups.length} delivery groups`);
 
@@ -79,15 +81,25 @@ serve(async (req) => {
       
       console.log(`📨 Processing delivery group ${i + 1}/${totalSplits}: ${group.connectionName}`);
 
-      // Filter items for this delivery group
+      // Normalize group item IDs to strings and filter order_items
+      const groupProductIds = (group.items || []).map((i: any) => 
+        typeof i === 'string' ? i : (i?.product_id ?? i)
+      );
+      
       const groupItems = parentOrder.order_items.filter((item: any) => 
-        group.items.includes(item.product_id)
+        groupProductIds.includes(item.product_id)
       );
 
       if (groupItems.length === 0) {
         console.log(`⚠️ No items found for group ${group.id}, skipping`);
         continue;
       }
+
+      // Validate shipping address
+      const isValidAddress = Boolean(
+        group.shippingAddress?.address && 
+        group.shippingAddress?.zipCode
+      );
 
       // Calculate subtotal for this group
       const groupSubtotal = groupItems.reduce((sum: number, item: any) => 
@@ -114,7 +126,7 @@ serve(async (req) => {
           split_order_index: i + 1,
           total_split_orders: totalSplits,
           order_number: `${parentOrder.order_number}-${i + 1}`,
-          status: 'pending',
+          status: isValidAddress ? 'pending' : 'awaiting_address',
           payment_status: 'succeeded', // Parent already paid
           stripe_payment_intent_id: parentOrder.stripe_payment_intent_id,
           total_amount: groupTotal,
@@ -122,7 +134,7 @@ serve(async (req) => {
           shipping_cost: groupShipping,
           tax_amount: groupTax,
           gifting_fee: groupGiftingFee,
-          shipping_info: group.shippingAddress || parentOrder.shipping_info,
+          shipping_info: isValidAddress ? group.shippingAddress : null,
           has_multiple_recipients: false, // Child orders are single-recipient
           cart_data: {
             ...cartData,
@@ -171,7 +183,28 @@ serve(async (req) => {
 
       console.log(`📦 Created ${childOrderItems.length} order items for child order`);
 
-      // Process this child order through ZMA
+      // Handle invalid address - create note and skip ZMA processing
+      if (!isValidAddress) {
+        console.log(`⚠️ Invalid shipping address for group ${group.id}, marking as awaiting_address`);
+        
+        await supabase.from('order_notes').insert({
+          order_id: childOrder.id,
+          note_content: `Recipient address required; shipment on hold. Missing: ${!group.shippingAddress?.address ? 'street address' : ''} ${!group.shippingAddress?.zipCode ? 'zip code' : ''}`.trim(),
+          note_type: 'address_required',
+          is_internal: false
+        });
+
+        childOrders.push({
+          orderId: childOrder.id,
+          orderNumber: childOrder.order_number,
+          success: false,
+          error: 'Invalid shipping address - awaiting recipient details'
+        });
+        
+        continue;
+      }
+
+      // Process this child order through ZMA (only if valid address)
       console.log(`🚀 Invoking process-zma-order for child ${childOrder.id}`);
       
       const { data: processResult, error: processError } = await supabase.functions.invoke('process-zma-order', {

@@ -66,6 +66,10 @@ const OrderConfirmation = () => {
           if (childResult.data) setChildOrders(childResult.data);
         }
         setLoading(false);
+      } else {
+        // No order found after both lookups - show helpful message instead of hanging
+        setLoading(false);
+        setError('Order not found yet, please refresh in a few seconds');
       }
     } catch (err: any) {
       console.error('Error fetching order:', err);

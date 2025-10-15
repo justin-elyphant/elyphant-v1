@@ -188,7 +188,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       
       const { data: cartSession, error: sessionError } = await supabase
         .from('cart_sessions')
-        .select('cart_data')
+        .select('id, cart_data')
         .eq('session_id', paymentIntent.metadata.cart_session_id)
         .maybeSingle();
       
@@ -224,7 +224,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           .from('orders')
           .insert({
             user_id: paymentIntent.metadata.user_id,
-            cart_session_id: paymentIntent.metadata.cart_session_id,
+            cart_session_id: cartSession.id,
             stripe_payment_intent_id: paymentIntent.id,
             order_number: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
             status: 'payment_confirmed',
@@ -288,6 +288,11 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         
         if (createError) {
           console.error('❌ Failed to create order:', createError);
+          console.error('❌ Foreign key violation details:', {
+            cart_session_id: cartSession.id,
+            session_id: paymentIntent.metadata.cart_session_id,
+            user_id: paymentIntent.metadata.user_id
+          });
           updateError = createError;
         } else {
           order = newOrder;

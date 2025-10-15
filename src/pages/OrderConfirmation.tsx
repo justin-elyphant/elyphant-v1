@@ -55,8 +55,13 @@ const OrderConfirmation = () => {
       let orderData = result.data;
 
       if (!orderData) {
-        const sessionResult = await (supabase as any).from('orders').select('*').eq('cart_session_id', orderId).order('created_at', { ascending: false }).limit(1);
-        if (sessionResult.data?.[0]) orderData = sessionResult.data[0];
+        // Try to resolve session_id to cart_sessions.id
+        const sessionLookup = await (supabase as any).from('cart_sessions').select('id').eq('session_id', orderId).maybeSingle();
+        
+        if (sessionLookup.data?.id) {
+          const sessionResult = await (supabase as any).from('orders').select('*').eq('cart_session_id', sessionLookup.data.id).order('created_at', { ascending: false }).limit(1);
+          if (sessionResult.data?.[0]) orderData = sessionResult.data[0];
+        }
       }
 
       if (orderData) {
@@ -67,7 +72,7 @@ const OrderConfirmation = () => {
         }
         setLoading(false);
       } else {
-        // No order found after both lookups - show helpful message instead of hanging
+        // No order found after all lookups - show helpful message instead of hanging
         setLoading(false);
         setError('Order not found yet, please refresh in a few seconds');
       }

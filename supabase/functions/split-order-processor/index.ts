@@ -121,6 +121,28 @@ serve(async (req) => {
       const groupGiftingFee = (parentOrder.gifting_fee || 0) * proportion;
       const groupTotal = groupSubtotal + groupShipping + groupTax + groupGiftingFee;
 
+      // Normalize shipping_info to snake_case for process-zma-order compatibility
+      const sa = group.shippingAddress || {};
+      const normalizedShipping = {
+        name: sa.name || group.connectionName || 'Customer',
+        first_name: sa.first_name || sa.name?.split(' ')[0] || 'Customer',
+        last_name: sa.last_name || sa.name?.split(' ').slice(1).join(' ') || 'Name',
+        address_line1: sa.address || sa.address_line1 || '',
+        address_line2: sa.addressLine2 || sa.address_line2 || '',
+        city: sa.city || '',
+        state: sa.state || '',
+        zip_code: sa.zipCode || sa.zip_code || '',
+        country: sa.country === 'United States' ? 'US' : (sa.country || 'US'),
+        phone_number: sa.phone_number || parentOrder.shipping_info?.phone_number || '5551234567',
+        email: parentOrder.shipping_info?.email || ''
+      };
+
+      console.log(`📋 Normalized shipping_info for ${group.connectionName}:`, {
+        has_address_line1: !!normalizedShipping.address_line1,
+        has_zip_code: !!normalizedShipping.zip_code,
+        country: normalizedShipping.country
+      });
+
       // Create child order
       const { data: childOrder, error: childError } = await supabase
         .from('orders')
@@ -141,16 +163,7 @@ serve(async (req) => {
           shipping_cost: groupShipping,
           tax_amount: groupTax,
           gifting_fee: groupGiftingFee,
-          shipping_info: isValidAddress ? group.shippingAddress : {
-            name: group.connectionName || 'Address Pending',
-            address_line1: group.shippingAddress?.address || '',
-            address_line2: group.shippingAddress?.addressLine2 || '',
-            city: group.shippingAddress?.city || '',
-            state: group.shippingAddress?.state || '',
-            zip_code: group.shippingAddress?.zipCode || '',
-            country: group.shippingAddress?.country || 'US',
-            email: parentOrder.shipping_info?.email || ''
-          },
+          shipping_info: normalizedShipping,
           scheduled_delivery_date: group.scheduledDeliveryDate || parentOrder.scheduled_delivery_date || null,
           has_multiple_recipients: false, // Child orders are single-recipient
           cart_data: {

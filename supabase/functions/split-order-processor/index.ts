@@ -12,6 +12,7 @@ interface DeliveryGroup {
   connectionName: string;
   items: string[];
   giftMessage?: string;
+  scheduledDeliveryDate?: string;
   shippingAddress?: any;
 }
 
@@ -135,6 +136,7 @@ serve(async (req) => {
           tax_amount: groupTax,
           gifting_fee: groupGiftingFee,
           shipping_info: isValidAddress ? group.shippingAddress : null,
+          scheduled_delivery_date: group.scheduledDeliveryDate || parentOrder.scheduled_delivery_date || null,
           has_multiple_recipients: false, // Child orders are single-recipient
           cart_data: {
             ...cartData,
@@ -170,7 +172,8 @@ serve(async (req) => {
         unit_price: item.unit_price,
         product_image: item.product_image,
         selected_variations: item.selected_variations,
-        gift_message: group.giftMessage
+        recipient_gift_message: group.giftMessage,
+        scheduled_delivery_date: group.scheduledDeliveryDate || item.scheduled_delivery_date || null
       }));
 
       const { error: itemsError } = await supabase

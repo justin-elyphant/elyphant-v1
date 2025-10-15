@@ -102,6 +102,11 @@ serve(async (req) => {
         group.shippingAddress?.zipCode
       );
 
+      console.log(`📍 Address validation for ${group.connectionName}: ${isValidAddress ? 'VALID ✅' : 'INVALID ❌'}`);
+      if (!isValidAddress) {
+        console.log(`   Missing: ${!group.shippingAddress?.address ? 'address ' : ''}${!group.shippingAddress?.zipCode ? 'zipCode' : ''}`);
+      }
+
       // Calculate subtotal for this group
       const groupSubtotal = groupItems.reduce((sum: number, item: any) => 
         sum + (item.unit_price * item.quantity), 0
@@ -130,12 +135,22 @@ serve(async (req) => {
           status: isValidAddress ? 'pending' : 'awaiting_address',
           payment_status: 'succeeded', // Parent already paid
           stripe_payment_intent_id: parentOrder.stripe_payment_intent_id,
+          currency: parentOrder.currency || 'USD',
           total_amount: groupTotal,
           subtotal: groupSubtotal,
           shipping_cost: groupShipping,
           tax_amount: groupTax,
           gifting_fee: groupGiftingFee,
-          shipping_info: isValidAddress ? group.shippingAddress : null,
+          shipping_info: isValidAddress ? group.shippingAddress : {
+            name: group.connectionName || 'Address Pending',
+            address_line1: group.shippingAddress?.address || '',
+            address_line2: group.shippingAddress?.addressLine2 || '',
+            city: group.shippingAddress?.city || '',
+            state: group.shippingAddress?.state || '',
+            zip_code: group.shippingAddress?.zipCode || '',
+            country: group.shippingAddress?.country || 'US',
+            email: parentOrder.shipping_info?.email || ''
+          },
           scheduled_delivery_date: group.scheduledDeliveryDate || parentOrder.scheduled_delivery_date || null,
           has_multiple_recipients: false, // Child orders are single-recipient
           cart_data: {

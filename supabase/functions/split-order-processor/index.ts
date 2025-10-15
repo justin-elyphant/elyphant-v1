@@ -178,18 +178,37 @@ serve(async (req) => {
       console.log(`✅ Created child order ${childOrder.order_number} (${childOrder.id})`);
 
       // Create order items for child order
-      const childOrderItems = groupItems.map((item: any) => ({
-        order_id: childOrder.id,
-        delivery_group_id: group.id,
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        product_image: item.product_image,
-        selected_variations: item.selected_variations,
-        recipient_gift_message: group.giftMessage,
-        scheduled_delivery_date: group.scheduledDeliveryDate || item.scheduled_delivery_date || null
-      }));
+      const childOrderItems = groupItems.map((item: any) => {
+        const qty = Number(item.quantity ?? 1);
+        const unitPrice = Number(item.unit_price ?? 0);
+        
+        return {
+          order_id: childOrder.id,
+          delivery_group_id: group.id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          product_image: item.product_image,
+          vendor: 'zma',
+          quantity: qty,
+          unit_price: unitPrice,
+          total_price: qty * unitPrice, // CRITICAL: Satisfy NOT NULL constraint
+          recipient_connection_id: group.connectionId || null,
+          selected_variations: item.selected_variations,
+          variation_text: item.variation_text || null,
+          recipient_gift_message: group.giftMessage,
+          scheduled_delivery_date: group.scheduledDeliveryDate || item.scheduled_delivery_date || null
+        };
+      });
+
+      console.log(`📦 Creating ${childOrderItems.length} order items for child ${i + 1}`);
+      console.log(`🧪 First child order item preview:`, {
+        product_id: childOrderItems[0]?.product_id,
+        product_name: childOrderItems[0]?.product_name,
+        quantity: childOrderItems[0]?.quantity,
+        unit_price: childOrderItems[0]?.unit_price,
+        total_price: childOrderItems[0]?.total_price,
+        vendor: childOrderItems[0]?.vendor
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')

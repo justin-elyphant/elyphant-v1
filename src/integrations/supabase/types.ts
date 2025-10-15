@@ -2989,6 +2989,8 @@ export type Database = {
           billing_info: Json | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          cart_data: Json | null
+          cart_session_id: string | null
           confirmation_email_sent: boolean | null
           created_at: string
           currency: string
@@ -3051,6 +3053,8 @@ export type Database = {
           billing_info?: Json | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cart_data?: Json | null
+          cart_session_id?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -3113,6 +3117,8 @@ export type Database = {
           billing_info?: Json | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cart_data?: Json | null
+          cart_session_id?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -3172,6 +3178,13 @@ export type Database = {
           zma_order_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_cart_session_id_fkey"
+            columns: ["cart_session_id"]
+            isOneToOne: false
+            referencedRelation: "cart_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_group_gift_project_id_fkey"
             columns: ["group_gift_project_id"]

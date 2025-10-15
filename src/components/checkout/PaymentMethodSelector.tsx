@@ -143,109 +143,47 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     try {
       onProcessingChange(true);
       
-      console.log('🔄 Processing payment with saved method:', selectedSavedMethod.stripe_payment_method_id);
+      console.log('💳 Using saved payment method with existing payment intent:', selectedSavedMethod.stripe_payment_method_id);
       
-      // Get or create cart session ID
-      let cartSessionId = localStorage.getItem('cart_session_id');
-      if (!cartSessionId) {
-        cartSessionId = crypto.randomUUID();
-        localStorage.setItem('cart_session_id', cartSessionId);
+      // CRITICAL FIX: Use the existing clientSecret from parent, don't create a new payment intent
+      const stripe = await stripeClientManager.getStripeInstance();
+      
+      if (!stripe) {
+        throw new Error('Payment system is not available. Please refresh the page and try again.');
       }
       
-      // CRITICAL: Create payment intent with existing payment method
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(totalAmount * 100),
-          currency: 'usd',
-          metadata: {
-            useExistingPaymentMethod: true,
-            paymentMethodId: selectedSavedMethod.stripe_payment_method_id,
-            order_type: 'marketplace_purchase',
-            user_id: user.id,
-            cart_session_id: cartSessionId
-          }
-        }
+      // Confirm the existing payment intent with the saved payment method
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: selectedSavedMethod.stripe_payment_method_id
       });
-
+      
       if (error) {
-        console.error('🚨 Edge function error:', error);
+        console.error('🚨 Payment confirmation error:', error);
         
-        // Handle specific attachment errors with user-friendly messages
-        if (error.message?.includes('cannot be attached') || error.message?.includes('PaymentMethod')) {
+        // Handle specific error cases with user-friendly messages
+        if (error.code === 'card_declined') {
+          throw new Error('Your card was declined. Please try a different payment method.');
+        } else if (error.code === 'expired_card') {
+          throw new Error('This card has expired. Please use a different payment method.');
+        } else if (error.code === 'insufficient_funds') {
+          throw new Error('Insufficient funds. Please try a different payment method.');
+        } else if (error.message?.includes('cannot be attached') || error.message?.includes('PaymentMethod')) {
           throw new Error('This payment method cannot be used. Please select a different card or add a new one.');
         }
         
-        throw new Error(error.message || 'Failed to process payment');
+        throw new Error(error.message || 'Payment failed');
       }
-
-      console.log('✅ Payment intent response:', { status: data.status, id: data.payment_intent_id });
-
-      // Handle different payment intent statuses
-      if (data.status === 'succeeded') {
-        console.log('🎉 Payment succeeded immediately');
-        onPaymentSuccess(data.payment_intent_id, selectedSavedMethod.stripe_payment_method_id);
-      } else if (data.status === 'requires_action' || data.status === 'requires_source_action') {
+      
+      if (paymentIntent?.status === 'succeeded') {
+        console.log('✅ Payment succeeded with saved card:', paymentIntent.id);
+        onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
+      } else if (paymentIntent?.status === 'requires_action') {
         console.log('🔐 Payment requires additional authentication');
-        // Payment requires additional authentication
-        const stripe = await stripeClientManager.getStripeInstance();
-        if (stripe && data.client_secret) {
-          const { error, paymentIntent } = await stripe.confirmCardPayment(data.client_secret);
-          
-          if (error) {
-            console.error('🚨 Authentication error:', error);
-            throw new Error(error.message || 'Payment authentication failed');
-          }
-          
-          if (paymentIntent?.status === 'succeeded') {
-            console.log('🎉 Payment succeeded after authentication');
-            onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
-          } else {
-            throw new Error('Payment was not completed successfully');
-          }
-        } else {
-          throw new Error('Unable to complete payment authentication');
-        }
-      } else if (data.status === 'requires_payment_method') {
-        console.log('🔄 Payment requires confirmation with payment method');
-        // For requires_payment_method status, we need to confirm with the specific payment method
-        if (data.client_secret) {
-          const stripe = await stripeClientManager.getStripeInstance();
-          if (stripe) {
-            const { error, paymentIntent } = await stripe.confirmCardPayment(data.client_secret, {
-              payment_method: selectedSavedMethod.stripe_payment_method_id
-            });
-            
-            if (error) {
-              console.error('🚨 Payment confirmation error:', error);
-              
-              // Handle specific error cases
-              if (error.code === 'card_declined') {
-                throw new Error('Your card was declined. Please try a different payment method.');
-              } else if (error.code === 'expired_card') {
-                throw new Error('This card has expired. Please use a different payment method.');
-              } else if (error.code === 'insufficient_funds') {
-                throw new Error('Insufficient funds. Please try a different payment method.');
-              }
-              
-              throw new Error(error.message || 'Payment failed');
-            }
-            
-            if (paymentIntent?.status === 'succeeded') {
-              console.log('🎉 Payment succeeded after confirmation');
-              onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
-            } else {
-              throw new Error('Payment confirmation was not successful');
-            }
-          } else {
-            throw new Error('Payment system unavailable');
-          }
-        } else {
-          throw new Error('Payment confirmation failed - no client secret');
-        }
+        // Handle 3D Secure or other required actions
+        throw new Error('Additional authentication required. Please try again.');
       } else {
-        // Handle any other statuses
-        console.log('❓ Unexpected payment status:', data.status);
-        throw new Error(`Payment status: ${data.status}. Please try again or contact support.`);
+        console.log('❓ Unexpected payment status:', paymentIntent?.status);
+        throw new Error(`Payment status: ${paymentIntent?.status}. Please try again or contact support.`);
       }
     } catch (error: any) {
       console.error('💥 Payment processing error:', error);

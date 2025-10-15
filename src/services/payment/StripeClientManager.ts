@@ -42,11 +42,11 @@ class StripeClientManager {
       'pk_live_51PxcV7JPK0Zkd1vcAlsGEoYr82Lr7eGxIiYeOG0Gne4lAfwIWOcw3MMJCyL4jk41NDxx5HlYwO8xkhUm3svy8imt00IWkGpE0Z';
 
     if (!this.stripePublishableKey) {
-      console.warn('Stripe publishable key not found. Payment functionality will be limited.');
+      console.error('❌ STRIPE CONFIGURATION ERROR: Publishable key not found. Payment functionality will not work.');
       return;
     }
 
-    console.log('Initializing Stripe with key:', this.stripePublishableKey.substring(0, 20) + '...');
+    console.log('✅ Initializing Stripe with key:', this.stripePublishableKey.substring(0, 20) + '...');
 
     // Create single Stripe instance
     this.stripePromise = loadStripe(this.stripePublishableKey);
@@ -70,18 +70,20 @@ class StripeClientManager {
    */
   async getStripeInstance(): Promise<Stripe | null> {
     if (!this.stripePromise) {
-      console.error('Stripe not initialized. Check publishable key configuration.');
+      console.error('❌ STRIPE ERROR: Stripe not initialized. Check publishable key configuration.');
+      console.error('Current config:', this.getConfigurationStatus());
       return null;
     }
 
     try {
       const stripe = await this.stripePromise;
       if (!stripe) {
-        console.error('Failed to load Stripe. Check network connection and key validity.');
+        console.error('❌ STRIPE ERROR: Failed to load Stripe. Check network connection and key validity.');
+        console.error('Publishable key:', this.stripePublishableKey?.substring(0, 20) + '...');
       }
       return stripe;
     } catch (error) {
-      console.error('Error loading Stripe:', error);
+      console.error('❌ STRIPE ERROR: Exception while loading Stripe:', error);
       return null;
     }
   }

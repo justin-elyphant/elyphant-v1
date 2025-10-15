@@ -51,7 +51,7 @@ const OrderConfirmation = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      const result = await (supabase as any).from('orders').select('*').eq('id', orderId).maybeSingle();
+      const result = await (supabase as any).from('orders').select('*, order_items(*)').eq('id', orderId).maybeSingle();
       let orderData = result.data;
 
       if (!orderData) {
@@ -59,7 +59,7 @@ const OrderConfirmation = () => {
         const sessionLookup = await (supabase as any).from('cart_sessions').select('id').eq('session_id', orderId).maybeSingle();
         
         if (sessionLookup.data?.id) {
-          const sessionResult = await (supabase as any).from('orders').select('*').eq('cart_session_id', sessionLookup.data.id).order('created_at', { ascending: false }).limit(1);
+          const sessionResult = await (supabase as any).from('orders').select('*, order_items(*)').eq('cart_session_id', sessionLookup.data.id).order('created_at', { ascending: false }).limit(1);
           if (sessionResult.data?.[0]) orderData = sessionResult.data[0];
         }
       }
@@ -67,7 +67,7 @@ const OrderConfirmation = () => {
       if (orderData) {
         setOrder(orderData);
         if (orderData.is_split_order && !orderData.parent_order_id) {
-          const childResult = await (supabase as any).from('orders').select('*').eq('parent_order_id', orderData.id).order('split_order_index');
+          const childResult = await (supabase as any).from('orders').select('*, order_items(*)').eq('parent_order_id', orderData.id).order('split_order_index');
           if (childResult.data) setChildOrders(childResult.data);
         }
         setLoading(false);
@@ -220,7 +220,7 @@ const OrderConfirmation = () => {
                   </div>
 
                   <div className="space-y-2">
-                    {child.order_items.map((item, idx) => (
+                    {child.order_items?.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3 py-2 border-t">
                         {item.product_image && (
                           <img 
@@ -264,7 +264,7 @@ const OrderConfirmation = () => {
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.order_items.map((item, idx) => (
+              {order.order_items?.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-4 pb-4 border-b last:border-0">
                   {item.product_image && (
                     <img 

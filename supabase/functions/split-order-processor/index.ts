@@ -107,8 +107,8 @@ serve(async (req) => {
       );
 
       // Proportional split of fees (shipping, tax, gifting fee)
-      const totalSubtotal = parentOrder.subtotal_amount || parentOrder.total_amount;
-      const proportion = groupSubtotal / totalSubtotal;
+      const totalSubtotal = parentOrder.subtotal || parentOrder.total_amount || groupSubtotal;
+      const proportion = totalSubtotal > 0 ? groupSubtotal / totalSubtotal : 1;
       
       const groupShipping = (parentOrder.shipping_cost || 0) * proportion;
       const groupTax = (parentOrder.tax_amount || 0) * proportion;
@@ -130,7 +130,7 @@ serve(async (req) => {
           payment_status: 'succeeded', // Parent already paid
           stripe_payment_intent_id: parentOrder.stripe_payment_intent_id,
           total_amount: groupTotal,
-          subtotal_amount: groupSubtotal,
+          subtotal: groupSubtotal,
           shipping_cost: groupShipping,
           tax_amount: groupTax,
           gifting_fee: groupGiftingFee,
@@ -154,6 +154,7 @@ serve(async (req) => {
 
       if (childError) {
         console.error(`❌ Failed to create child order ${i + 1}:`, childError);
+        console.error(`❌ Insert payload keys: ${Object.keys(childOrder || {}).join(', ')}`);
         throw childError;
       }
 

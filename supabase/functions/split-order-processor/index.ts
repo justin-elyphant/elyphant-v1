@@ -27,7 +27,63 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { orderId } = await req.json();
+    const { orderId, action, childOrderId } = await req.json();
+
+    // Handle recheck action for stuck child orders
+    if (action === 'recheck_address' && childOrderId) {
+      console.log(`🔄 Rechecking address for child order: ${childOrderId}`);
+      
+      // Get child order
+      const { data: childOrder, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('id', childOrderId)
+        .single();
+        
+      if (error || !childOrder) {
+        throw new Error(`Failed to fetch child order: ${error?.message}`);
+      }
+      
+      // Re-validate shipping_info using same normalized logic
+      const si = childOrder.shipping_info || {};
+      const line1 = si.address || si.address_line1 || si.street || '';
+      const zip = si.zipCode || si.zip_code || si.postal_code || '';
+      const isNowValid = Boolean(line1.trim() && zip.trim());
+      
+      console.log(`📍 Recheck result: ${isNowValid ? 'VALID ✅' : 'STILL INVALID ❌'}`);
+      console.log(`   Fields present: ${Object.keys(si).join(', ')}`);
+      console.log(`   Resolved values: address_line1="${line1}", zip_code="${zip}"`);
+      
+      if (isNowValid && childOrder.status === 'awaiting_address') {
+        // Update to pending
+        await supabase.from('orders').update({ status: 'pending' }).eq('id', childOrderId);
+        
+        // Trigger ZMA processing
+        const { data: processResult, error: processError } = await supabase.functions.invoke('process-zma-order', {
+          body: { 
+            orderId: childOrderId,
+            triggerSource: 'recheck-address',
+            isScheduled: false
+          }
+        });
+        
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Address validated and order processing triggered',
+          childOrderId,
+          processResult
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Address still invalid or order not in awaiting_address status',
+        childOrderId,
+        currentStatus: childOrder.status,
+        missingFields: { line1: !line1, zip: !zip }
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    
     console.log(`🔀 Split Order Processor started for order: ${orderId}`);
 
     // Get parent order details
@@ -96,15 +152,17 @@ serve(async (req) => {
         continue;
       }
 
-      // Validate shipping address
-      const isValidAddress = Boolean(
-        group.shippingAddress?.address && 
-        group.shippingAddress?.zipCode
-      );
+      // Validate shipping address - accept multiple field name formats
+      const sa = group.shippingAddress || {};
+      const line1 = sa.address || sa.address_line1 || sa.street || '';
+      const zip = sa.zipCode || sa.zip_code || sa.postal_code || '';
+      const isValidAddress = Boolean(line1.trim() && zip.trim());
 
       console.log(`📍 Address validation for ${group.connectionName}: ${isValidAddress ? 'VALID ✅' : 'INVALID ❌'}`);
+      console.log(`   Fields present: ${Object.keys(sa).join(', ')}`);
+      console.log(`   Resolved values: address_line1="${line1}", zip_code="${zip}"`);
       if (!isValidAddress) {
-        console.log(`   Missing: ${!group.shippingAddress?.address ? 'address ' : ''}${!group.shippingAddress?.zipCode ? 'zipCode' : ''}`);
+        console.log(`   ❌ Missing required fields: ${!line1 ? 'address_line1/address ' : ''}${!zip ? 'zip_code/zipCode' : ''}`);
       }
 
       // Calculate subtotal for this group
@@ -122,7 +180,7 @@ serve(async (req) => {
       const groupTotal = groupSubtotal + groupShipping + groupTax + groupGiftingFee;
 
       // Normalize shipping_info to snake_case for process-zma-order compatibility
-      const sa = group.shippingAddress || {};
+      // Note: 'sa' already defined above for validation
       const normalizedShipping = {
         name: sa.name || group.connectionName || 'Customer',
         first_name: sa.first_name || sa.name?.split(' ')[0] || 'Customer',

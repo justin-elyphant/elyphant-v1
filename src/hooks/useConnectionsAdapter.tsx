@@ -16,6 +16,7 @@ export const useConnectionsAdapter = () => {
   const { 
     connections,
     pendingRequests,
+    pendingInvitations,
     followers,
     following,
     loading,
@@ -321,15 +322,13 @@ export const useConnectionsAdapter = () => {
         }
       }) || [];
 
-      // Also get gift-based pending connections
-      // NOTE: This functionality has been migrated to the unified service
-      // For now, we'll skip gift-based pending connections until fully migrated
-      const giftPendingData: any[] = []; // TODO: Implement in unified service
+      // Also get gift-based pending connections from useEnhancedConnections
+      const giftPendingData = pendingInvitations || [];
       const giftPending = giftPendingData.map(conn => ({
         id: conn.id,
-        name: conn.pending_recipient_name || 'Unknown User',
-        username: `@${conn.pending_recipient_email?.split('@')[0] || 'unknown'}`,
-        imageUrl: '/placeholder.svg',
+        name: conn.profile_name || conn.pending_recipient_name || 'Unknown User',
+        username: conn.profile_username || `@${conn.pending_recipient_email?.split('@')[0] || 'unknown'}`,
+        imageUrl: conn.profile_image || '/placeholder.svg',
         mutualFriends: 0,
         type: 'suggestion' as const,
         lastActive: 'Invitation Sent',
@@ -340,10 +339,12 @@ export const useConnectionsAdapter = () => {
           email: 'verified' as const
         },
         interests: [],
-        bio: `Pending invitation sent to ${conn.pending_recipient_email}`,
+        bio: `Pending invitation sent to ${conn.pending_recipient_email || conn.profile_email}`,
         connectionDate: conn.created_at,
         isPending: true,
-        recipientEmail: conn.pending_recipient_email
+        recipientEmail: conn.pending_recipient_email || conn.profile_email,
+        status: conn.status,
+        connectionId: conn.id
       }));
 
       const allPending = [...pendingFromDB, ...giftPending];

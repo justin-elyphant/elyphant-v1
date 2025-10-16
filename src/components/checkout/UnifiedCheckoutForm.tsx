@@ -260,6 +260,48 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('💳 Creating payment intent (order will be created after payment)...');
       console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
       
+      // 🎯 PREFLIGHT ADDRESS RECONCILIATION - Ensure all delivery groups have complete addresses
+      console.log('🔍 Preflight: Reconciling addresses for all delivery groups...');
+      for (const group of deliveryGroups) {
+        const sa: any = group.shippingAddress || {};
+        const line1 = sa.address || sa.address_line1 || sa.street || '';
+        const zip = sa.zipCode || sa.zip_code || sa.postal_code || '';
+        
+        if (!line1.trim() || !zip.trim()) {
+          console.log(`⚠️ Missing address for ${group.connectionName}, fetching...`);
+          
+          try {
+            const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+            
+            if (recipient?.address) {
+              // Update all items in this group with complete address
+              for (const productId of group.items) {
+                updateRecipientAssignment(productId, {
+                  shippingAddress: {
+                    name: recipient.address.name || recipient.name,
+                    address: recipient.address.address || recipient.address.street || '',
+                    addressLine2: recipient.address.addressLine2 || recipient.address.address_line2 || '',
+                    city: recipient.address.city || '',
+                    state: recipient.address.state || '',
+                    zipCode: recipient.address.zipCode || recipient.address.zip_code || recipient.address.zipcode || '',
+                    country: recipient.address.country || 'US'
+                  }
+                }, true); // silent = true
+              }
+              console.log(`✅ Reconciled address for ${recipient.name}`);
+            } else {
+              throw new Error(`Complete address required for ${group.connectionName}`);
+            }
+          } catch (error) {
+            console.error(`❌ Failed to reconcile address for ${group.connectionName}:`, error);
+            toast.error(`Complete address required for ${group.connectionName}`);
+            setIsProcessing(false);
+            return;
+          }
+        }
+      }
+      console.log('✅ All delivery groups validated with complete addresses');
+      
       // Prepare cart snapshot and metadata (no order creation yet)
       const zmaCompatibleShippingInfo = {
         name: checkoutData.shippingInfo.name,

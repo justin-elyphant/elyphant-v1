@@ -152,14 +152,71 @@ serve(async (req) => {
         continue;
       }
 
-      // Validate shipping address - accept multiple field name formats
+      // 🔍 ADDRESS ENRICHMENT - Try to fetch complete address from database if missing
       const sa = group.shippingAddress || {};
-      const line1 = sa.address || sa.address_line1 || sa.street || '';
-      const zip = sa.zipCode || sa.zip_code || sa.postal_code || '';
+      let line1 = sa.address || sa.address_line1 || sa.street || '';
+      let zip = sa.zipCode || sa.zip_code || sa.postal_code || '';
+      let enrichedAddress: any = null;
+      
+      if (!line1.trim() || !zip.trim()) {
+        console.log(`🔍 Enriching incomplete address for ${group.connectionName}`);
+        
+        // Try to fetch from user_connections.pending_shipping_address first
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('pending_shipping_address, connected_user_id')
+          .eq('id', group.connectionId)
+          .single();
+        
+        if (connection?.pending_shipping_address) {
+          enrichedAddress = connection.pending_shipping_address;
+          console.log(`   📦 Source: pending_shipping_address`);
+        } else if (connection?.connected_user_id) {
+          // Try user's default address from user_addresses
+          const { data: userAddr } = await supabase
+            .from('user_addresses')
+            .select('*')
+            .eq('user_id', connection.connected_user_id)
+            .eq('is_default', true)
+            .single();
+          
+          if (userAddr) {
+            enrichedAddress = userAddr.address;
+            console.log(`   📦 Source: user_addresses (default)`);
+          }
+        }
+        
+        // Apply enriched address if found
+        if (enrichedAddress) {
+          line1 = enrichedAddress.address_line1 || enrichedAddress.address || enrichedAddress.street || '';
+          zip = enrichedAddress.zip_code || enrichedAddress.zipCode || enrichedAddress.postal_code || '';
+          
+          // Merge enriched data into group.shippingAddress for later use
+          group.shippingAddress = {
+            ...sa,
+            address: line1,
+            address_line1: line1,
+            addressLine2: enrichedAddress.address_line2 || sa.addressLine2,
+            address_line2: enrichedAddress.address_line2,
+            zipCode: zip,
+            zip_code: zip,
+            city: enrichedAddress.city || sa.city,
+            state: enrichedAddress.state || sa.state,
+            country: enrichedAddress.country || sa.country || 'US',
+            name: enrichedAddress.name || sa.name || group.connectionName
+          };
+          
+          console.log(`   ✅ Enriched: address_line1="${line1}", zip_code="${zip}"`);
+        } else {
+          console.log(`   ⚠️ Could not enrich address - no source found`);
+        }
+      }
+      
+      // Validate final address after enrichment
       const isValidAddress = Boolean(line1.trim() && zip.trim());
 
       console.log(`📍 Address validation for ${group.connectionName}: ${isValidAddress ? 'VALID ✅' : 'INVALID ❌'}`);
-      console.log(`   Fields present: ${Object.keys(sa).join(', ')}`);
+      console.log(`   Fields present: ${Object.keys(group.shippingAddress || {}).join(', ')}`);
       console.log(`   Resolved values: address_line1="${line1}", zip_code="${zip}"`);
       if (!isValidAddress) {
         console.log(`   ❌ Missing required fields: ${!line1 ? 'address_line1/address ' : ''}${!zip ? 'zip_code/zipCode' : ''}`);

@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/auth';
 import { RecipientAssignment } from '@/types/recipient';
 import { toast } from 'sonner';
 import { useFriendSearch } from '@/hooks/useFriendSearch';
+import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 
 interface Connection {
   id: string;
@@ -128,20 +129,59 @@ const RecipientAssignmentSection: React.FC = () => {
     }
   };
 
-  const handleAssignToRecipient = (connectionId: string, connectionName: string) => {
-    selectedItems.forEach(productId => {
-      const recipientAssignment: RecipientAssignment = {
-        connectionId,
-        connectionName,
-        deliveryGroupId: crypto.randomUUID(),
-      };
-      assignItemToRecipient(productId, recipientAssignment);
-    });
-    
-    setSelectedItems([]);
-    setShowAssignmentModal(false);
-    setShowFindMoreRecipients(false);
-    setSearchQuery('');
+  const handleAssignToRecipient = async (connectionId: string, connectionName: string) => {
+    try {
+      // Fetch recipient details to get complete address
+      const recipient = await unifiedRecipientService.getRecipientById(connectionId);
+      
+      if (!recipient) {
+        toast.error('Recipient not found');
+        return;
+      }
+      
+      // Check if address is complete
+      const addr = recipient.address;
+      const isComplete = !!(
+        addr?.name?.trim() &&
+        (addr?.address || addr?.street)?.trim() &&
+        addr?.city?.trim() &&
+        addr?.state?.trim() &&
+        (addr?.zipCode || addr?.zip_code || addr?.zipcode)?.trim()
+      );
+      
+      if (!isComplete) {
+        toast.error(`Complete address required for ${connectionName}. Please add their address first.`);
+        return;
+      }
+      
+      // Assign with complete address
+      selectedItems.forEach(productId => {
+        const recipientAssignment: RecipientAssignment = {
+          connectionId,
+          connectionName,
+          deliveryGroupId: crypto.randomUUID(),
+          shippingAddress: {
+            name: addr.name || connectionName,
+            address: addr.address || addr.street || '',
+            addressLine2: addr.addressLine2 || addr.address_line2 || '',
+            city: addr.city || '',
+            state: addr.state || '',
+            zipCode: addr.zipCode || addr.zip_code || addr.zipcode || '',
+            country: addr.country || 'US'
+          }
+        };
+        assignItemToRecipient(productId, recipientAssignment);
+      });
+      
+      toast.success(`Items assigned to ${connectionName}`);
+      setSelectedItems([]);
+      setShowAssignmentModal(false);
+      setShowFindMoreRecipients(false);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('Error assigning recipient:', error);
+      toast.error('Failed to assign recipient. Please try again.');
+    }
   };
 
   const handleAssignToSearchResult = async (friendId: string, friendName: string, canGift: boolean) => {
@@ -150,20 +190,58 @@ const RecipientAssignmentSection: React.FC = () => {
       return;
     }
 
-    selectedItems.forEach(productId => {
-      const recipientAssignment: RecipientAssignment = {
-        connectionId: friendId,
-        connectionName: friendName,
-        deliveryGroupId: crypto.randomUUID(),
-      };
-      assignItemToRecipient(productId, recipientAssignment);
-    });
-    
-    toast.success(`Items assigned to ${friendName}`);
-    setSelectedItems([]);
-    setShowAssignmentModal(false);
-    setShowFindMoreRecipients(false);
-    setSearchQuery('');
+    try {
+      // Fetch recipient details to get complete address
+      const recipient = await unifiedRecipientService.getRecipientById(friendId);
+      
+      if (!recipient) {
+        toast.error('Recipient not found');
+        return;
+      }
+      
+      // Check if address is complete
+      const addr = recipient.address;
+      const isComplete = !!(
+        addr?.name?.trim() &&
+        (addr?.address || addr?.street)?.trim() &&
+        addr?.city?.trim() &&
+        addr?.state?.trim() &&
+        (addr?.zipCode || addr?.zip_code || addr?.zipcode)?.trim()
+      );
+      
+      if (!isComplete) {
+        toast.error(`Complete address required for ${friendName}. Please add their address first.`);
+        return;
+      }
+      
+      // Assign with complete address
+      selectedItems.forEach(productId => {
+        const recipientAssignment: RecipientAssignment = {
+          connectionId: friendId,
+          connectionName: friendName,
+          deliveryGroupId: crypto.randomUUID(),
+          shippingAddress: {
+            name: addr.name || friendName,
+            address: addr.address || addr.street || '',
+            addressLine2: addr.addressLine2 || addr.address_line2 || '',
+            city: addr.city || '',
+            state: addr.state || '',
+            zipCode: addr.zipCode || addr.zip_code || addr.zipcode || '',
+            country: addr.country || 'US'
+          }
+        };
+        assignItemToRecipient(productId, recipientAssignment);
+      });
+      
+      toast.success(`Items assigned to ${friendName}`);
+      setSelectedItems([]);
+      setShowAssignmentModal(false);
+      setShowFindMoreRecipients(false);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('Error assigning search result:', error);
+      toast.error('Failed to assign recipient. Please try again.');
+    }
   };
 
   const handleSearchForRecipients = async (query: string) => {

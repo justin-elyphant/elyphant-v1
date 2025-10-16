@@ -5,7 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, Send, Inbox, Gift } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Clock, Send, Inbox, Gift, XCircle } from "lucide-react";
 import { Connection } from "@/types/connections";
 import IncomingConnectionRequests from "./IncomingConnectionRequests";
 import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
@@ -23,7 +33,9 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
   searchTerm, 
   onRefresh 
 }) => {
-  const [activeTab, setActiveTab] = useState("gifts"); // Start with gifts tab to see Heather
+  const [activeTab, setActiveTab] = useState("gifts");
+  const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
+  const [confirmDeleteConnectionId, setConfirmDeleteConnectionId] = useState<string | null>(null);
 
   console.log('🔍 [PendingTabContent] Received pendingConnections:', pendingConnections);
   console.log('🔍 [PendingTabContent] pendingConnections length:', pendingConnections.length);
@@ -50,6 +62,28 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
 
   console.log('🔍 [PendingTabContent] Filtered giftBasedPending:', giftBasedPending);
   console.log('🔍 [PendingTabContent] giftBasedPending length:', giftBasedPending.length);
+
+  const handleCancelInvitation = async (connectionId: string, recipientName: string) => {
+    setDeletingConnectionId(connectionId);
+    
+    try {
+      const { error } = await supabase
+        .from('user_connections')
+        .delete()
+        .eq('id', connectionId);
+      
+      if (error) throw error;
+      
+      toast.success(`Invitation to ${recipientName} cancelled`);
+      onRefresh();
+    } catch (error) {
+      console.error('Error cancelling invitation:', error);
+      toast.error("Couldn't cancel this invitation. Please try again.");
+    } finally {
+      setDeletingConnectionId(null);
+      setConfirmDeleteConnectionId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -183,6 +217,16 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                             <Send className="h-3 w-3 mr-1" />
                             Resend
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setConfirmDeleteConnectionId(connection.connectionId || connection.id)}
+                            disabled={deletingConnectionId === (connection.connectionId || connection.id)}
+                            className="text-xs h-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Cancel
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -193,6 +237,33 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!confirmDeleteConnectionId} onOpenChange={(open) => !open && setConfirmDeleteConnectionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this invitation to{' '}
+              {giftBasedPending.find(c => (c.connectionId || c.id) === confirmDeleteConnectionId)?.name}? 
+              They won't be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const connection = giftBasedPending.find(c => (c.connectionId || c.id) === confirmDeleteConnectionId);
+                if (connection) {
+                  handleCancelInvitation(connection.connectionId || connection.id, connection.name);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Invitation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

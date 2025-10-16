@@ -263,9 +263,9 @@ const UnifiedCheckoutForm: React.FC = () => {
       // 🎯 PREFLIGHT ADDRESS RECONCILIATION - Ensure all delivery groups have complete addresses
       console.log('🔍 Preflight: Reconciling addresses for all delivery groups...');
       for (const group of deliveryGroups) {
-        const sa: any = group.shippingAddress || {};
-        const line1 = sa.address || sa.address_line1 || sa.street || '';
-        const zip = sa.zipCode || sa.zip_code || sa.postal_code || '';
+        const sa = group.shippingAddress;
+        const line1 = sa?.address || '';
+        const zip = sa?.zipCode || '';
         
         if (!line1.trim() || !zip.trim()) {
           console.log(`⚠️ Missing address for ${group.connectionName}, fetching...`);

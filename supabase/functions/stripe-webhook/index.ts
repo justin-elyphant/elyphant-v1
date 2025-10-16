@@ -238,6 +238,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             total_amount: cartData.totalAmount,
             currency: 'USD',
             shipping_info: cartData.shippingInfo,
+            billing_info: cartData.billingInfo || null,
             gift_options: cartData.giftOptions,
             cart_data: cartData,
             has_multiple_recipients: Boolean(cartData?.has_multiple_recipients) || (Array.isArray(cartData?.deliveryGroups) && cartData.deliveryGroups.length > 1),

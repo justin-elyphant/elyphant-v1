@@ -8,7 +8,10 @@ export interface FriendSearchResult {
   username: string;
   email: string;
   profile_image?: string;
+  avatar_url?: string;
   bio?: string;
+  city?: string;
+  state?: string;
   connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
   mutualConnections?: number;
   lastActive?: string;
@@ -33,7 +36,10 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
       username: profile.username,
       email: profile.email || '', // Default to empty string for backward compatibility
       profile_image: profile.profile_image,
+      avatar_url: profile.profile_image,
       bio: profile.bio,
+      city: profile.city,
+      state: profile.state,
       connectionStatus: profile.connectionStatus,
       mutualConnections: profile.mutualConnections,
       lastActive: profile.lastActive,

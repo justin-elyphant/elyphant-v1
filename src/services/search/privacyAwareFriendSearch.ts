@@ -11,6 +11,8 @@ export interface FilteredProfile {
   email: string;
   profile_image?: string;
   bio?: string;
+  city?: string;
+  state?: string;
   connectionStatus: 'connected' | 'pending' | 'none' | 'blocked';
   mutualConnections?: number;
   lastActive?: string;
@@ -90,7 +92,8 @@ export const searchFriendsWithPrivacy = async (
           last_name,
           email,
           profile_image,
-          bio
+          bio,
+          shipping_address
         `)
         .eq('email', cleanedSearchTerm)
         .limit(limit);
@@ -108,7 +111,8 @@ export const searchFriendsWithPrivacy = async (
           last_name,
           email,
           profile_image,
-          bio
+          bio,
+          shipping_address
         `)
         .eq('username', cleanedSearchTerm)
         .limit(limit);
@@ -138,7 +142,8 @@ export const searchFriendsWithPrivacy = async (
             last_name,
             email,
             profile_image,
-            bio
+            bio,
+            shipping_address
           `)
           .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`)
           .limit(limit);
@@ -296,6 +301,8 @@ export const searchFriendsWithPrivacy = async (
           email: '', // Email not included for privacy
           profile_image: profile.profile_image || undefined,
           bio: profile.bio || undefined,
+          city: (profile as any).shipping_address?.city || undefined,
+          state: (profile as any).shipping_address?.state || undefined,
           connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
           mutualConnections: 0, // TODO: Implement mutual connections count
           privacyLevel: privacyLevel as 'public' | 'limited' | 'private',

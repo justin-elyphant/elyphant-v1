@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Users, 
   Mail, 
@@ -545,12 +546,15 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <UserPlus className="h-4 w-4 text-blue-600" />
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={searchResult.avatar_url} alt={searchResult.name} />
+                                <AvatarFallback>{searchResult.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                              </Avatar>
                               <div>
                                 <p className="font-medium">{searchResult.name}</p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Mail className="h-3 w-3" />
-                                  <span>{searchResult.email}</span>
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{searchResult.city && searchResult.state ? `${searchResult.city}, ${searchResult.state}` : 'Location not set'}</span>
                                   {searchResult.connectionStatus === 'pending' && (
                                     <>
                                       <span>•</span>
@@ -597,21 +601,32 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                  {getSourceIcon(recipient.source)}
-                                  <div>
-                                    <p className="font-medium">{recipient.name}</p>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Heart className="h-3 w-3" />
-                                      <span className="capitalize">{recipient.relationship_type}</span>
-                                      {recipient.email && (
-                                        <>
-                                          <span>•</span>
-                                          <Mail className="h-3 w-3" />
-                                          <span>{recipient.email}</span>
-                                        </>
-                                      )}
-                                    </div>
+                                {recipient.source === 'connection' ? (
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={recipient.avatar_url} alt={recipient.name} />
+                                    <AvatarFallback>{recipient.name.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+                                  </Avatar>
+                                ) : (
+                                  getSourceIcon(recipient.source)
+                                )}
+                                <div>
+                                  <p className="font-medium">{recipient.name}</p>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Heart className="h-3 w-3" />
+                                    <span className="capitalize">{recipient.relationship_type}</span>
+                                    {recipient.source === 'connection' && recipient.address?.city && recipient.address?.state ? (
+                                      <>
+                                        <span>•</span>
+                                        <MapPin className="h-3 w-3" />
+                                        <span>{recipient.address.city}, {recipient.address.state}</span>
+                                      </>
+                                    ) : recipient.source !== 'connection' && recipient.email ? (
+                                      <>
+                                        <span>•</span>
+                                        <Mail className="h-3 w-3" />
+                                        <span>{recipient.email}</span>
+                                      </>
+                                    ) : null}
                                   </div>
                                 </div>
                               </div>

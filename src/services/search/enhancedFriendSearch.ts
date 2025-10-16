@@ -323,6 +323,9 @@ function rankSearchResults(
         email: profile.email || '', // Keep email for debugging
         profile_image: profile.profile_image,
         bio: profile.bio,
+        // Map city/state from shipping_address when available
+        city: (profile as any)?.shipping_address?.city,
+        state: (profile as any)?.shipping_address?.state,
         connectionStatus: 'none' as const,
         mutualConnections: 0,
         privacyLevel: 'public' as const,

@@ -24,18 +24,12 @@ export function useProfileFetch() {
 
       console.log("useProfileFetch: Fetching profile for user:", user.id);
       
-      // Add cache-busting parameter to ensure fresh data
-      const timestamp = Date.now();
+      // Fetch profile with simple query to avoid 400 errors
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          wishlist_count:wishlists(count),
-          connection_count:user_connections!user_connections_user_id_fkey(count)
-        `)
+        .select('*')
         .eq('id', user.id)
-        .eq('user_connections.status', 'accepted')
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching profile:", error);
@@ -69,22 +63,9 @@ export function useProfileFetch() {
         },
       } as Profile;
       
-      // Add computed fields separately to avoid type errors
-      (enhancedProfile as any).wishlist_count = (() => {
-        const countData = (profile as any).wishlist_count;
-        if (Array.isArray(countData) && countData.length > 0 && typeof countData[0].count === 'number') {
-          return countData[0].count;
-        }
-        return 0;
-      })();
-      
-      (enhancedProfile as any).connection_count = (() => {
-        const connectionData = (profile as any).connection_count;
-        if (Array.isArray(connectionData) && connectionData.length > 0 && typeof connectionData[0].count === 'number') {
-          return connectionData[0].count;
-        }
-        return 0;
-      })();
+      // Set counts to 0 (fetch separately if needed)
+      (enhancedProfile as any).wishlist_count = 0;
+      (enhancedProfile as any).connection_count = 0;
 
       return enhancedProfile;
     } catch (error) {

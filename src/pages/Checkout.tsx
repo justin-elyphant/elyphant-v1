@@ -36,34 +36,107 @@ const Checkout = () => {
     );
   }
 
-  // Enhanced cart-to-checkout validation
-  const unassignedItems = getUnassignedItems();
-  const hasUnassignedItems = unassignedItems.length > 0;
-  
-  // Check if user has complete shipping address for unassigned items
-  const shippingAddress = profile?.shipping_address;
-  const hasCompleteAddress = shippingAddress && 
-    profile?.name &&
-    (shippingAddress.address_line1 || shippingAddress.street) &&
-    shippingAddress.city &&
-    shippingAddress.state &&
-    (shippingAddress.zip_code || shippingAddress.zipCode);
+  // Helper to check if address is complete (supports both legacy and DB key formats)
+  const isCompleteAddress = (addr: any, name?: string): boolean => {
+    if (!addr) return false;
+    
+    const line1 = addr.address_line1 || addr.address || addr.line1;
+    const zip = addr.zip_code || addr.zipCode || addr.postal_code;
+    const city = addr.city;
+    const state = addr.state || addr.region;
+    const addressName = addr.name || name;
+    
+    return !!(line1 && zip && city && state && addressName);
+  };
 
-  // If there are unassigned items but no complete shipping address, redirect to cart
-  if (hasUnassignedItems && !hasCompleteAddress) {
+  // Helper to get missing fields
+  const getMissingFields = (addr: any, name?: string) => {
+    const missing = [];
+    if (!addr) return ['All address fields'];
+    
+    if (!(addr.name || name)) missing.push('Name');
+    if (!(addr.address_line1 || addr.address || addr.line1)) missing.push('Street Address');
+    if (!addr.city) missing.push('City');
+    if (!(addr.state || addr.region)) missing.push('State');
+    if (!(addr.zip_code || addr.zipCode || addr.postal_code)) missing.push('ZIP Code');
+    return missing;
+  };
+
+  // Comprehensive validation for all order types
+  const validateCheckoutReadiness = () => {
+    const issues = [];
+    const unassignedItems = getUnassignedItems();
+    const hasUnassignedItems = unassignedItems.length > 0;
+    
+    // Check unassigned items (self-delivery)
+    if (hasUnassignedItems) {
+      const shippingAddress = profile?.shipping_address;
+      const userName = profile?.name;
+      
+      if (!isCompleteAddress(shippingAddress, userName)) {
+        issues.push({
+          type: 'self',
+          message: 'Your shipping address is incomplete',
+          count: unassignedItems.length,
+          missingFields: getMissingFields(shippingAddress, userName)
+        });
+      }
+    }
+    
+    // Check ALL delivery groups (recipients)
+    const incompleteRecipients = deliveryGroups.filter(group => {
+      const addr = group.shippingAddress;
+      return !isCompleteAddress(addr, group.connectionName);
+    });
+    
+    if (incompleteRecipients.length > 0) {
+      incompleteRecipients.forEach(group => {
+        issues.push({
+          type: 'recipient',
+          recipientName: group.connectionName,
+          message: `${group.connectionName}'s shipping address is incomplete`,
+          missingFields: getMissingFields(group.shippingAddress, group.connectionName)
+        });
+      });
+    }
+    
+    return issues;
+  };
+
+  const validationIssues = validateCheckoutReadiness();
+
+  // Block checkout if any addresses are incomplete
+  if (validationIssues.length > 0) {
     return (
       <SidebarLayout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Shipping Setup Required</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Complete Shipping Information Required
+            </h2>
             <p className="text-muted-foreground mb-6">
-              You have {unassignedItems.length} item{unassignedItems.length > 1 ? 's' : ''} that need{unassignedItems.length === 1 ? 's' : ''} a shipping address. 
-              Please complete your shipping setup in the cart.
+              {validationIssues.length} address{validationIssues.length > 1 ? 'es' : ''} 
+              {validationIssues.length > 1 ? ' need' : ' needs'} to be completed before checkout
             </p>
+            
+            {/* List all issues */}
+            <div className="text-left max-w-md mx-auto mb-6 space-y-2">
+              {validationIssues.map((issue, idx) => (
+                <div key={idx} className="p-3 bg-muted rounded-md">
+                  <p className="font-medium text-sm">{issue.message}</p>
+                  {issue.missingFields && issue.missingFields.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Missing: {issue.missingFields.join(', ')}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+            
             <div className="space-y-3">
               <Button onClick={() => navigate("/cart")} className="w-full sm:w-auto">
-                Complete Shipping Setup
+                Complete Addresses in Cart
               </Button>
               <Button 
                 variant="outline" 

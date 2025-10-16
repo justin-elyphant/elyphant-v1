@@ -107,6 +107,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -295,6 +296,7 @@ const UnifiedCheckoutForm: React.FC = () => {
 
     try {
       setIsProcessing(true);
+      setInitError(null); // Clear any previous errors
       
       console.log('💳 Creating payment intent (order will be created after payment)...');
       console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
@@ -333,7 +335,9 @@ const UnifiedCheckoutForm: React.FC = () => {
           }
           
           // Still incomplete - BLOCK payment
-          throw new Error(`Complete shipping address required for ${group.connectionName}. Please update their address before continuing.`);
+          const errorMsg = `Complete shipping address required for ${group.connectionName}. Please update their address in cart.`;
+          console.error('🚨 ADDRESS VALIDATION FAILED:', errorMsg);
+          throw new Error(errorMsg);
         })
       );
 
@@ -464,7 +468,10 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       if (sessionError) {
         console.error('❌ Failed to save cart session:', sessionError);
-        toast.error('Failed to save cart data. Please try again.');
+        const errorMsg = 'Failed to save cart data. Please try again.';
+        setInitError(errorMsg);
+        toast.error(errorMsg);
+        setIsProcessing(false);
         return;
       }
 
@@ -489,7 +496,10 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       if (error) {
         console.error('Error creating payment intent:', error);
-        toast.error('Failed to initialize payment. Please try again.');
+        const errorMsg = 'Failed to initialize payment. Please try again.';
+        setInitError(errorMsg);
+        toast.error(errorMsg);
+        setIsProcessing(false);
         return;
       }
 
@@ -497,10 +507,11 @@ const UnifiedCheckoutForm: React.FC = () => {
       setPaymentIntentId(data.payment_intent_id);
       console.log('✅ Payment intent created (order will be created by webhook after payment)');
       
-    } catch (error) {
-      console.error('Error in createPaymentIntent:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    } finally {
+    } catch (error: any) {
+      console.error('💥 Error in createPaymentIntent:', error);
+      const errorMsg = error?.message || 'Failed to initialize payment. Please check addresses and try again.';
+      setInitError(errorMsg);
+      toast.error(errorMsg);
       setIsProcessing(false);
     }
   };
@@ -671,7 +682,32 @@ const UnifiedCheckoutForm: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {clientSecret ? (
+              {initError ? (
+                <div className="text-center py-8 space-y-4">
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{initError}</AlertDescription>
+                  </Alert>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => {
+                        setInitError(null);
+                        createPaymentIntent();
+                      }}
+                      className="w-full"
+                    >
+                      Try Again
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate('/cart')}
+                      className="w-full"
+                    >
+                      Fix Addresses in Cart
+                    </Button>
+                  </div>
+                </div>
+              ) : clientSecret ? (
                 /* CRITICAL: Payment method selector component */
                 <PaymentMethodSelector
                   clientSecret={clientSecret}

@@ -304,40 +304,56 @@ const UnifiedCheckoutForm: React.FC = () => {
       // 🎯 PREFLIGHT ADDRESS ENRICHMENT - Ensure all delivery groups have complete addresses
       console.log('🔍 Starting preflight address enrichment...');
       
-      const enrichedDeliveryGroups = await Promise.all(
-        deliveryGroups.map(async (group) => {
-          let currentAddress = group.shippingAddress;
-          
-          // Check if address is already complete
-          if (isCompleteAddress(currentAddress)) {
-            console.log(`✅ Group ${group.connectionName} already has complete address`);
-            return {
-              ...group,
-              shippingAddress: normalizeAddress(currentAddress, group.connectionName)
-            };
-          }
-          
-          // Address incomplete - try to enrich from recipient profile
-          console.log(`🔄 Enriching address for ${group.connectionName}...`);
-          
-          try {
-            const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+      let enrichedDeliveryGroups;
+      try {
+        enrichedDeliveryGroups = await Promise.all(
+          deliveryGroups.map(async (group) => {
+            let currentAddress = group.shippingAddress;
             
-            if (recipient?.address && isCompleteAddress(recipient.address)) {
-              console.log(`✅ Enriched ${group.connectionName} from profile`);
+            console.log(`📋 Checking address for ${group.connectionName}:`, {
+              hasAddress: !!currentAddress,
+              isComplete: currentAddress ? isCompleteAddress(currentAddress) : false,
+              address: currentAddress
+            });
+            
+            // Check if address is already complete
+            if (isCompleteAddress(currentAddress)) {
+              console.log(`✅ Group ${group.connectionName} already has complete address`);
               return {
                 ...group,
-                shippingAddress: normalizeAddress(recipient.address, group.connectionName)
+                shippingAddress: normalizeAddress(currentAddress, group.connectionName)
               };
             }
-          } catch (error) {
-            console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
-          }
-          
-          // Still incomplete - BLOCK payment
-          throw new Error(`Complete shipping address required for ${group.connectionName}. Please update their address before continuing.`);
-        })
-      );
+            
+            // Address incomplete - try to enrich from recipient profile
+            console.log(`🔄 Enriching address for ${group.connectionName}...`);
+            
+            try {
+              const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+              
+              if (recipient?.address && isCompleteAddress(recipient.address)) {
+                console.log(`✅ Enriched ${group.connectionName} from profile`);
+                return {
+                  ...group,
+                  shippingAddress: normalizeAddress(recipient.address, group.connectionName)
+                };
+              }
+            } catch (error) {
+              console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
+            }
+            
+            // Still incomplete - BLOCK payment
+            const errorMsg = `Complete shipping address required for ${group.connectionName}. Please update their address in the cart before continuing.`;
+            console.error('🚨 Address validation failed:', errorMsg);
+            throw new Error(errorMsg);
+          })
+        );
+      } catch (enrichmentError: any) {
+        console.error('🚨 Preflight enrichment failed:', enrichmentError);
+        toast.error(enrichmentError.message || 'Address validation failed');
+        setInitError(enrichmentError.message || 'Address validation failed. Please ensure all recipients have complete shipping addresses.');
+        return;
+      }
 
       console.log('✅ Preflight enrichment complete:', 
         enrichedDeliveryGroups.map(g => ({
@@ -393,9 +409,9 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('📦 Enriched cart items:', enrichedCartItems.map(item => ({
         product: item.product.title,
         recipient: item.recipientAssignment?.connectionName,
-        has_address_line1: !!item.recipientAssignment?.shippingAddress?.address_line1,
-        has_address_line2: !!item.recipientAssignment?.shippingAddress?.address_line2,
-        has_zip_code: !!item.recipientAssignment?.shippingAddress?.zip_code
+        has_address_line1: !!(item.recipientAssignment?.shippingAddress as any)?.address_line1,
+        has_address_line2: !!(item.recipientAssignment?.shippingAddress as any)?.address_line2,
+        has_zip_code: !!(item.recipientAssignment?.shippingAddress as any)?.zip_code
       })));
 
       // Save cart data to cart_sessions table with ENRICHED addresses

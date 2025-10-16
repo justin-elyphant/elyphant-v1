@@ -32,3 +32,6 @@ export type { PostPurchaseFollowupProps } from './post-purchase-followup.ts';
 
 export { connectionInvitationTemplate } from './connection-invitation.ts';
 export type { ConnectionInvitationProps } from './connection-invitation.ts';
+
+export { giftPurchasedNotificationTemplate } from './gift-purchased-notification.ts';
+export type { GiftPurchasedNotificationProps } from './gift-purchased-notification.ts';

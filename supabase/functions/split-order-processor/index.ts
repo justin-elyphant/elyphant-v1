@@ -190,6 +190,31 @@ serve(async (req) => {
 
       console.log(`✅ Created child order ${childOrder.order_number} (${childOrder.id})`);
 
+      // Notify recipient that a gift is on the way (only for platform users)
+      if (group.connectionId) {
+        console.log(`📧 Sending gift notification to recipient ${group.connectionId}`);
+        
+        try {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'gift_purchased_for_you',
+              customData: {
+                recipient_id: group.connectionId,
+                giftor_name: parentOrder.profiles?.name || parentOrder.profiles?.first_name || 'A friend',
+                occasion: group.occasion || childOrder.occasion || 'special occasion',
+                expected_delivery_date: group.scheduledDeliveryDate || childOrder.scheduled_delivery_date,
+                gift_message: group.giftMessage,
+                order_number: childOrder.order_number
+              }
+            }
+          });
+          console.log(`✅ Gift notification sent for child order ${childOrder.order_number}`);
+        } catch (emailError) {
+          console.error(`⚠️ Failed to send gift notification:`, emailError);
+          // Don't fail the order if email fails
+        }
+      }
+
       // Create order items for child order
       const childOrderItems = groupItems.map((item: any) => {
         const qty = Number(item.quantity ?? 1);

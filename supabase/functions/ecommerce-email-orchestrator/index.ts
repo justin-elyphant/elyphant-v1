@@ -32,7 +32,8 @@ interface EmailRequest {
     | 'order_receipt'
     | 'birthday_reminder_curated'
     | 'birthday_connection_no_autogift'
-    | 'birthday_connection_with_autogift';
+    | 'birthday_connection_with_autogift'
+    | 'gift_purchased_for_you';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -117,6 +118,9 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'birthday_connection_with_autogift':
         result = await handleBirthdayConnectionWithAutogift(supabase, customData!);
+        break;
+      case 'gift_purchased_for_you':
+        result = await handleGiftPurchasedNotification(supabase, customData!);
         break;
       default:
         throw new Error(`Unknown event type: ${eventType}`);
@@ -1754,52 +1758,89 @@ function buildConnectionWithAutogiftEmail(props: any) {
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
-          <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-                Your Gift is All Set! 🎁
-              </h2>
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${props.recipientName}, ${props.birthdayUserName}'s birthday is on <strong>${props.birthdayDate}</strong> (${props.daysUntil} days away)!
-              </p>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Good news! Your auto-gift is ready and will be sent automatically. You're all set!
-              </p>
-              
-              <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center" style="padding: 20px 0;">
-                    <a href="${props.reviewUrl}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
-                      Review Gift Selection
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
-                © ${new Date().getFullYear()} Elyphant. All rights reserved.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+...
 </body>
 </html>
   `;
+}
+
+async function handleGiftPurchasedNotification(supabase: any, customData: any) {
+  const {
+    recipient_id,
+    giftor_name,
+    occasion,
+    expected_delivery_date,
+    gift_message,
+    order_number
+  } = customData;
+
+  console.log(`🎁 Processing gift notification for recipient ${recipient_id}`);
+
+  // Fetch recipient profile
+  const { data: recipientProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('email, first_name, name')
+    .eq('id', recipient_id)
+    .maybeSingle();
+
+  if (profileError || !recipientProfile) {
+    console.error('Recipient profile not found:', profileError?.message);
+    throw new Error(`Recipient profile not found for ${recipient_id}`);
+  }
+
+  if (!recipientProfile.email) {
+    console.error('Recipient email not found');
+    throw new Error(`Recipient email not found for user ${recipient_id}`);
+  }
+
+  // Check email preferences - respect opt-outs
+  const { data: emailPrefs } = await supabase
+    .from('email_preferences')
+    .select('is_enabled')
+    .eq('user_id', recipient_id)
+    .eq('email_type', 'gift_notifications')
+    .maybeSingle();
+
+  if (emailPrefs && !emailPrefs.is_enabled) {
+    console.log(`📧 Gift notification disabled for user ${recipient_id}`);
+    return { skipped: true, reason: 'user_opted_out' };
+  }
+
+  // Import template
+  const { giftPurchasedNotificationTemplate } = await import('./email-templates/gift-purchased-notification.ts');
+
+  const recipientFirstName = recipientProfile.first_name || recipientProfile.name || 'Friend';
+
+  // Generate email HTML
+  const emailHtml = giftPurchasedNotificationTemplate({
+    recipient_first_name: recipientFirstName,
+    giftor_name: giftor_name || 'A friend',
+    occasion: occasion || 'special occasion',
+    expected_delivery_date,
+    gift_message,
+    order_number
+  });
+
+  // Send email via Resend
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [recipientProfile.email],
+    subject: `🎁 ${giftor_name} just sent you a gift for your ${occasion}!`,
+    html: emailHtml
+  });
+
+  console.log(`✅ Gift notification sent to ${recipientProfile.email}`);
+
+  // Log email analytics
+  await supabase.from('email_analytics').insert({
+    template_type: 'gift_purchased_notification',
+    recipient_email: recipientProfile.email,
+    resend_message_id: emailResponse.data?.id,
+    delivery_status: 'sent',
+    sent_at: new Date().toISOString()
+  });
+
+  return { emailSent: true, messageId: emailResponse.data?.id };
 }
 
 serve(handler);

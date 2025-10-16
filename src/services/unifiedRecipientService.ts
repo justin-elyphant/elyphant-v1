@@ -244,6 +244,7 @@ export const unifiedRecipientService = {
     email: string;
     address?: any;
     relationship_type?: string;
+    shippingAddress?: any; // Optional parameter to pass existing address
   }): Promise<any> {
     console.log('🔄 [UNIFIED_RECIPIENT] Creating pending recipient with comprehensive diagnostics:', recipientData);
     
@@ -320,11 +321,14 @@ export const unifiedRecipientService = {
         throw new Error('Invalid email format');
       }
       
+      // Use shippingAddress if provided, otherwise fall back to address
+      const addressToUse = recipientData.shippingAddress || recipientData.address;
+      
       const result = await unifiedGiftManagementService.createPendingConnection(
         recipientData.email,
         recipientData.name,
         recipientData.relationship_type || 'friend',
-        recipientData.address
+        addressToUse
       );
       
       console.log('✅ [UNIFIED_RECIPIENT] Successfully created pending recipient:', result);

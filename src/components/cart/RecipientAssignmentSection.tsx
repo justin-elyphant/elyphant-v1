@@ -191,49 +191,79 @@ const RecipientAssignmentSection: React.FC = () => {
     }
 
     try {
-      // Fetch recipient details to get complete address
-      const recipient = await unifiedRecipientService.getRecipientById(friendId);
+      console.log('🎯 [RecipientAssignment] Fetching profile for:', friendName);
       
-      if (!recipient) {
-        toast.error('Recipient not found');
+      // Fetch friend's profile to get their shipping_address
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name, email, shipping_address')
+        .eq('id', friendId)
+        .single();
+      
+      if (profileError || !profileData) {
+        console.error('Error fetching profile:', profileError);
+        toast.error(`Could not find profile for ${friendName}`);
         return;
       }
       
-      // Check if address is complete
-      const addr = recipient.address;
-      const isComplete = !!(
-        addr?.name?.trim() &&
-        (addr?.address || addr?.street)?.trim() &&
-        addr?.city?.trim() &&
-        addr?.state?.trim() &&
-        (addr?.zipCode || addr?.zip_code || addr?.zipcode)?.trim()
-      );
+      // Check if profile has complete shipping address
+      const addr: any = profileData.shipping_address || {};
+      const line1 = addr.address_line1 || addr.street || addr.address || '';
+      const city = addr.city || '';
+      const state = addr.state || '';
+      const zipCode = addr.zip_code || addr.zipCode || addr.postal_code || '';
+      
+      const isComplete = !!(line1.trim() && city.trim() && state.trim() && zipCode.trim());
+      
+      console.log('📍 [RecipientAssignment] Address check:', {
+        friendName,
+        hasAddress: !!profileData.shipping_address,
+        isComplete,
+        address: { line1, city, state, zipCode }
+      });
       
       if (!isComplete) {
-        toast.error(`Complete address required for ${friendName}. Please add their address first.`);
+        toast.error(`${friendName} hasn't shared a complete shipping address yet. Please request their address first.`);
         return;
       }
       
-      // Assign with complete address
+      // Create pending connection with complete address
+      const pendingRecipient = await unifiedRecipientService.createPendingRecipient({
+        name: profileData.name,
+        email: profileData.email || '',
+        address: {
+          address_line1: line1,
+          address_line2: addr.address_line2 || addr.addressLine2 || '',
+          city: city,
+          state: state,
+          zip_code: zipCode,
+          country: addr.country || 'US'
+        },
+        relationship_type: 'friend'
+      });
+      
+      console.log('✅ [RecipientAssignment] Created pending recipient:', pendingRecipient);
+      
+      // Assign items with complete address
       selectedItems.forEach(productId => {
         const recipientAssignment: RecipientAssignment = {
-          connectionId: friendId,
-          connectionName: friendName,
+          connectionId: pendingRecipient.id,
+          connectionName: profileData.name,
           deliveryGroupId: crypto.randomUUID(),
           shippingAddress: {
-            name: addr.name || friendName,
-            address: addr.address || addr.street || '',
-            addressLine2: addr.addressLine2 || addr.address_line2 || '',
-            city: addr.city || '',
-            state: addr.state || '',
-            zipCode: addr.zipCode || addr.zip_code || addr.zipcode || '',
+            name: profileData.name,
+            address: line1,
+            addressLine2: addr.address_line2 || addr.addressLine2 || '',
+            city: city,
+            state: state,
+            zipCode: zipCode,
             country: addr.country || 'US'
           }
         };
         assignItemToRecipient(productId, recipientAssignment);
       });
       
-      toast.success(`Items assigned to ${friendName}`);
+      toast.success(`Items assigned to ${friendName} with complete address`);
       setSelectedItems([]);
       setShowAssignmentModal(false);
       setShowFindMoreRecipients(false);

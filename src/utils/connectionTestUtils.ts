@@ -114,3 +114,59 @@ export const cleanupTestData = async (userId: string) => {
     return { success: false, error };
   }
 };
+
+export const deletePendingConnection = async (userId: string, connectionName: string) => {
+  console.log(`Deleting pending connection with ${connectionName} for user:`, userId);
+  
+  try {
+    // Get the connection user ID by name
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('name', `%${connectionName}%`)
+      .limit(1);
+
+    if (!profiles || profiles.length === 0) {
+      console.warn(`No profile found matching name: ${connectionName}`);
+      return { success: false, error: 'Profile not found' };
+    }
+
+    const connectionUserId = profiles[0].id;
+
+    // Delete the pending connection
+    const { error } = await supabase
+      .from('user_connections')
+      .delete()
+      .or(`user_id.eq.${userId},connected_user_id.eq.${userId}`)
+      .or(`user_id.eq.${connectionUserId},connected_user_id.eq.${connectionUserId}`)
+      .eq('status', 'pending');
+
+    if (error) throw error;
+
+    console.log(`✅ Pending connection with ${connectionName} deleted successfully`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting pending connection:", error);
+    return { success: false, error };
+  }
+};
+
+export const deleteAllPendingConnections = async (userId: string) => {
+  console.log("Deleting all pending connections for user:", userId);
+  
+  try {
+    const { error } = await supabase
+      .from('user_connections')
+      .delete()
+      .or(`user_id.eq.${userId},connected_user_id.eq.${userId}`)
+      .eq('status', 'pending');
+
+    if (error) throw error;
+
+    console.log("✅ All pending connections deleted successfully");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting pending connections:", error);
+    return { success: false, error };
+  }
+};

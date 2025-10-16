@@ -60,6 +60,9 @@ verify_jwt = false
 [functions.order-cleanup]
 verify_jwt = false
 
+[functions.get-payment-method-details]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"

@@ -47,6 +47,7 @@ import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
 import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
 import { useCartSessionTracking } from '@/hooks/useCartSessionTracking';
+import { extractBillingInfoFromPaymentMethod } from '@/services/billingService';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -416,6 +417,47 @@ const UnifiedCheckoutForm: React.FC = () => {
       
       // Get cart session ID to track order creation
       const cartSessionId = localStorage.getItem('cart_session_id');
+      
+      // 💳 EXTRACT BILLING INFO from Stripe PaymentMethod
+      let billingInfo = null;
+      if (paymentMethodId) {
+        try {
+          console.log('💳 Extracting billing info from payment method:', paymentMethodId);
+          const { data: paymentMethodData, error: pmError } = await supabase.functions.invoke(
+            'get-payment-method-details',
+            { body: { paymentMethodId } }
+          );
+          
+          if (pmError) {
+            console.error('⚠️ Failed to retrieve payment method:', pmError);
+          } else if (paymentMethodData?.data) {
+            billingInfo = extractBillingInfoFromPaymentMethod(paymentMethodData.data);
+            console.log('✅ Billing info extracted:', billingInfo);
+            
+            // Save billing info to cart session for webhook to use
+            const { data: existingSession } = await supabase
+              .from('cart_sessions')
+              .select('cart_data')
+              .eq('session_id', cartSessionId)
+              .single();
+            
+            const updatedCartData = {
+              ...(existingSession?.cart_data as any || {}),
+              billingInfo
+            };
+            
+            await supabase
+              .from('cart_sessions')
+              .update({ cart_data: updatedCartData })
+              .eq('session_id', cartSessionId);
+            
+            console.log('✅ Billing info saved to cart session');
+          }
+        } catch (billingError) {
+          console.error('⚠️ Failed to extract billing info:', billingError);
+          // Continue with null billing info (fallback to shipping address)
+        }
+      }
       
       // Save address to profile if needed
       try {

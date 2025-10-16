@@ -362,12 +362,25 @@ export const useConnectionsAdapter = () => {
           const otherUserId = isIncoming ? conn.user_id : conn.connected_user_id;
           const otherProfile = profileMap.get(otherUserId);
           
+          // FIX: Handle gift invitations where connected_user_id is a placeholder UUID
+          // Prefer pending_recipient_* fields when status is pending_invitation and profile is missing
+          const displayName = (conn.status === 'pending_invitation' && !otherProfile)
+            ? (conn.pending_recipient_name || 'Unknown')
+            : (otherProfile?.name || 'Unknown');
+
+          const displayUsername = (conn.status === 'pending_invitation' && !otherProfile)
+            ? (conn.pending_recipient_email ? `@${conn.pending_recipient_email.split('@')[0]}` : '')
+            : (otherProfile?.username || '');
+
+          const displayImage = otherProfile?.profile_image || '/placeholder.svg';
+          const displayBio = otherProfile?.bio;
+          
           const transformedConnection = {
             id: otherUserId,
             connectionId: conn.id,
-            name: otherProfile?.name || 'Unknown',
-            username: otherProfile?.username || '',
-            imageUrl: otherProfile?.profile_image || '/placeholder.svg',
+            name: displayName,
+            username: displayUsername,
+            imageUrl: displayImage,
             mutualFriends: 0,
             type: 'friend' as const,
             lastActive: 'recently',
@@ -377,7 +390,7 @@ export const useConnectionsAdapter = () => {
               birthday: 'missing' as const,
               email: 'missing' as const
             },
-            bio: otherProfile?.bio,
+            bio: displayBio,
             isPending: true,
             isIncoming,
             connectionDate: conn.created_at,
@@ -385,7 +398,7 @@ export const useConnectionsAdapter = () => {
             status: conn.status
           };
           
-          console.log(`✅ [useConnectionsAdapter] Transformed connection request:`, transformedConnection);
+          console.log(`✅ [useConnectionsAdapter] Transformed connection request (with gift-invite fallback handled):`, transformedConnection);
           return transformedConnection;
         }
       });

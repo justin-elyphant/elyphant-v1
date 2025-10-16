@@ -614,17 +614,11 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Heart className="h-3 w-3" />
                                     <span className="capitalize">{recipient.relationship_type}</span>
-                                    {recipient.source === 'connection' && recipient.address?.city && recipient.address?.state ? (
+                                    {recipient.address?.city && recipient.address?.state ? (
                                       <>
                                         <span>•</span>
                                         <MapPin className="h-3 w-3" />
                                         <span>{recipient.address.city}, {recipient.address.state}</span>
-                                      </>
-                                    ) : recipient.source !== 'connection' && recipient.email ? (
-                                      <>
-                                        <span>•</span>
-                                        <Mail className="h-3 w-3" />
-                                        <span>{recipient.email}</span>
                                       </>
                                     ) : null}
                                   </div>

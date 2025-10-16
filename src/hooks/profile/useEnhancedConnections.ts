@@ -95,13 +95,16 @@ export const useEnhancedConnections = () => {
         let profileUsername = profile?.username;
         
         // For pending invitations, use the pending recipient data
-        if (conn.status === 'pending_invitation' && conn.pending_recipient_name) {
-          profileName = conn.pending_recipient_name;
-          profileEmail = conn.pending_recipient_email;
-          profileUsername = `@${conn.pending_recipient_name?.toLowerCase().replace(/\s+/g, '')}`;
+        if (conn.status === 'pending_invitation') {
+          profileName = conn.pending_recipient_name || profileName;
+          profileEmail = conn.pending_recipient_email || profileEmail;
+          profileUsername = conn.pending_recipient_name 
+            ? `@${conn.pending_recipient_name.toLowerCase().replace(/\s+/g, '')}`
+            : profileUsername;
         }
         
         // Improved fallback handling - show actual names when available
+        // Only use fallback if we don't already have a name from pending invitation or profile
         const fallbackId = targetUserId || conn.id;
         const fallbackName = profileName || (profile ? 'Private User' : `User ${fallbackId?.substring(0, 8) || 'Unknown'}`);
         const fallbackUsername = profileUsername || (profile ? '@private' : `@user${fallbackId?.substring(0, 6) || 'unknown'}`);

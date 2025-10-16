@@ -107,6 +107,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -295,6 +296,7 @@ const UnifiedCheckoutForm: React.FC = () => {
 
     try {
       setIsProcessing(true);
+      setInitError(null);
       
       console.log('💳 Creating payment intent (order will be created after payment)...');
       console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
@@ -490,6 +492,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       if (error) {
         console.error('Error creating payment intent:', error);
         toast.error('Failed to initialize payment. Please try again.');
+        setInitError(error?.message || 'Failed to initialize payment. Please try again.');
         return;
       }
 
@@ -693,8 +696,29 @@ const UnifiedCheckoutForm: React.FC = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Initializing payment...</p>
+                  {initError ? (
+                    <div>
+                      <p className="text-destructive text-sm mb-2">Failed to initialize payment</p>
+                      <p className="text-muted-foreground text-xs mb-4 break-words">{initError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setClientSecret('');
+                          setPaymentIntentId('');
+                          setInitError(null);
+                          createPaymentIntent();
+                        }}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Initializing payment...</p>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

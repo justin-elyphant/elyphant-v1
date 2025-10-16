@@ -388,6 +388,13 @@ const UnifiedCheckoutForm: React.FC = () => {
       });
       
       console.log('💾 Saving cart session with enriched addresses...');
+      console.log('📦 Enriched cart items:', enrichedCartItems.map(item => ({
+        product: item.product.title,
+        recipient: item.recipientAssignment?.connectionName,
+        has_address_line1: !!item.recipientAssignment?.shippingAddress?.address_line1,
+        has_address_line2: !!item.recipientAssignment?.shippingAddress?.address_line2,
+        has_zip_code: !!item.recipientAssignment?.shippingAddress?.zip_code
+      })));
 
       // Save cart data to cart_sessions table with ENRICHED addresses
       const { error: sessionError } = await supabase

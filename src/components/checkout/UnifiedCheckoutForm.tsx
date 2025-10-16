@@ -137,6 +137,53 @@ const UnifiedCheckoutForm: React.FC = () => {
   // Track cart session for abandoned cart detection
   const { markCartCompleted } = useCartSessionTracking(cartItems, totalAmount, shippingCost ?? 0, true);
 
+  // 🔍 Address completeness validation helper
+  const isCompleteAddress = (addr: any): boolean => {
+    if (!addr) return false;
+    
+    // Check both legacy and DB key formats
+    const line1 = addr.address_line1 || addr.address || addr.line1;
+    const zip = addr.zip_code || addr.zipCode || addr.postal_code;
+    const city = addr.city;
+    const state = addr.state || addr.region;
+    const name = addr.name || addr.first_name;
+    
+    return !!(line1 && zip && city && state && name);
+  };
+
+  // 🔧 Address normalization helper - ensures both legacy and DB keys
+  const normalizeAddress = (addr: any, recipientName: string): any => {
+    // Extract values supporting all key formats
+    const line1 = addr.address_line1 || addr.address || addr.line1 || '';
+    const line2 = addr.address_line2 || addr.addressLine2 || addr.line2 || '';
+    const zip = addr.zip_code || addr.zipCode || addr.postal_code || '';
+    const city = addr.city || '';
+    const state = addr.state || addr.region || '';
+    const country = addr.country || 'US';
+    const name = addr.name || addr.first_name || recipientName;
+    
+    // Return object with BOTH legacy and DB keys for compatibility
+    return {
+      // Legacy keys (for frontend compatibility)
+      name,
+      address: line1,
+      addressLine2: line2,
+      city,
+      state,
+      zipCode: zip,
+      country,
+      
+      // DB keys (for backend processing)
+      address_line1: line1,
+      address_line2: line2,
+      zip_code: zip,
+      
+      // Additional fields
+      first_name: name.split(' ')[0] || name,
+      last_name: name.split(' ').slice(1).join(' ') || ''
+    };
+  };
+
   // Auto-reconcile addresses on checkout load
   useEffect(() => {
     const reconcileAddresses = async () => {
@@ -144,22 +191,14 @@ const UnifiedCheckoutForm: React.FC = () => {
         const addr = group.shippingAddress;
         if (!addr) continue;
         
-        const isComplete = !!(
-          addr.name?.trim() &&
-          (addr.address || (addr as any).street)?.trim() &&
-          addr.city?.trim() &&
-          addr.state?.trim() &&
-          (addr.zipCode || (addr as any).zip_code || (addr as any).zipcode)
-        );
-        
-        if (!isComplete && group.connectionId) {
+        if (!isCompleteAddress(addr) && group.connectionId) {
           try {
             const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
-            if (recipient?.address) {
-              // Update all items in this delivery group with complete address (silently)
+            if (recipient?.address && isCompleteAddress(recipient.address)) {
+              // Update all items in this delivery group with normalized complete address (silently)
               for (const productId of group.items) {
                 updateRecipientAssignment(productId, {
-                  shippingAddress: recipient.address
+                  shippingAddress: normalizeAddress(recipient.address, recipient.name)
                 }, true); // silent = true to suppress toast
               }
               
@@ -260,47 +299,52 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('💳 Creating payment intent (order will be created after payment)...');
       console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
       
-      // 🎯 PREFLIGHT ADDRESS RECONCILIATION - Ensure all delivery groups have complete addresses
-      console.log('🔍 Preflight: Reconciling addresses for all delivery groups...');
-      for (const group of deliveryGroups) {
-        const sa = group.shippingAddress;
-        const line1 = sa?.address || '';
-        const zip = sa?.zipCode || '';
-        
-        if (!line1.trim() || !zip.trim()) {
-          console.log(`⚠️ Missing address for ${group.connectionName}, fetching...`);
+      // 🎯 PREFLIGHT ADDRESS ENRICHMENT - Ensure all delivery groups have complete addresses
+      console.log('🔍 Starting preflight address enrichment...');
+      
+      const enrichedDeliveryGroups = await Promise.all(
+        deliveryGroups.map(async (group) => {
+          let currentAddress = group.shippingAddress;
+          
+          // Check if address is already complete
+          if (isCompleteAddress(currentAddress)) {
+            console.log(`✅ Group ${group.connectionName} already has complete address`);
+            return {
+              ...group,
+              shippingAddress: normalizeAddress(currentAddress, group.connectionName)
+            };
+          }
+          
+          // Address incomplete - try to enrich from recipient profile
+          console.log(`🔄 Enriching address for ${group.connectionName}...`);
           
           try {
             const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
             
-            if (recipient?.address) {
-              // Update all items in this group with complete address
-              for (const productId of group.items) {
-                updateRecipientAssignment(productId, {
-                  shippingAddress: {
-                    name: recipient.address.name || recipient.name,
-                    address: recipient.address.address || recipient.address.street || '',
-                    addressLine2: recipient.address.addressLine2 || recipient.address.address_line2 || '',
-                    city: recipient.address.city || '',
-                    state: recipient.address.state || '',
-                    zipCode: recipient.address.zipCode || recipient.address.zip_code || recipient.address.zipcode || '',
-                    country: recipient.address.country || 'US'
-                  }
-                }, true); // silent = true
-              }
-              console.log(`✅ Reconciled address for ${recipient.name}`);
-            } else {
-              throw new Error(`Complete address required for ${group.connectionName}`);
+            if (recipient?.address && isCompleteAddress(recipient.address)) {
+              console.log(`✅ Enriched ${group.connectionName} from profile`);
+              return {
+                ...group,
+                shippingAddress: normalizeAddress(recipient.address, group.connectionName)
+              };
             }
           } catch (error) {
-            console.error(`❌ Failed to reconcile address for ${group.connectionName}:`, error);
-            toast.error(`Complete address required for ${group.connectionName}`);
-            setIsProcessing(false);
-            return;
+            console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
           }
-        }
-      }
-      console.log('✅ All delivery groups validated with complete addresses');
+          
+          // Still incomplete - BLOCK payment
+          throw new Error(`Complete shipping address required for ${group.connectionName}. Please update their address before continuing.`);
+        })
+      );
+
+      console.log('✅ Preflight enrichment complete:', 
+        enrichedDeliveryGroups.map(g => ({
+          name: g.connectionName,
+          has_line1: !!g.shippingAddress.address_line1,
+          has_line2: !!g.shippingAddress.address_line2,
+          has_zip: !!g.shippingAddress.zip_code
+        }))
+      );
       
       // Prepare cart snapshot and metadata (no order creation yet)
       const zmaCompatibleShippingInfo = {
@@ -323,20 +367,36 @@ const UnifiedCheckoutForm: React.FC = () => {
       const sessionId = localStorage.getItem('cart_session_id') || crypto.randomUUID();
       localStorage.setItem('cart_session_id', sessionId);
       
-      console.log('💾 About to save cart session:', {
-        sessionId,
-        userId: user.id,
-        hasAddress: !!zmaCompatibleShippingInfo.address
-      });
+      // Create address map for quick lookup
+      const addressMap = new Map(
+        enrichedDeliveryGroups.map(g => [g.id, g.shippingAddress])
+      );
 
-      // Save cart data to cart_sessions table
+      // Enrich each cart item's recipient assignment with complete address
+      const enrichedCartItems = cartItems.map(item => {
+        if (item.recipientAssignment) {
+          const enrichedAddress = addressMap.get(item.recipientAssignment.deliveryGroupId);
+          return {
+            ...item,
+            recipientAssignment: {
+              ...item.recipientAssignment,
+              shippingAddress: enrichedAddress || item.recipientAssignment.shippingAddress
+            }
+          };
+        }
+        return item;
+      });
+      
+      console.log('💾 Saving cart session with enriched addresses...');
+
+      // Save cart data to cart_sessions table with ENRICHED addresses
       const { error: sessionError } = await supabase
         .from('cart_sessions')
         .upsert([{
           session_id: sessionId,
           user_id: user.id,
           cart_data: {
-            cartItems: cartItems.map(item => ({
+            cartItems: enrichedCartItems.map(item => ({
               product_id: item.product.product_id,
               title: item.product.title,
               price: item.product.price,
@@ -348,7 +408,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                 deliveryGroupId: item.recipientAssignment.deliveryGroupId,
                 giftMessage: item.recipientAssignment.giftMessage,
                 scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
-                shippingAddress: item.recipientAssignment.shippingAddress,
+                shippingAddress: item.recipientAssignment.shippingAddress, // Now enriched!
                 address_verified: item.recipientAssignment.address_verified,
                 address_verification_method: item.recipientAssignment.address_verification_method,
                 address_verified_at: item.recipientAssignment.address_verified_at,
@@ -373,20 +433,20 @@ const UnifiedCheckoutForm: React.FC = () => {
               sendGiftMessage: giftOptions.sendGiftMessage,
               scheduledDeliveryDate: giftOptions.scheduledDeliveryDate
             },
-            deliveryGroups: deliveryGroups.map(group => ({
+            deliveryGroups: enrichedDeliveryGroups.map(group => ({
               id: group.id,
               connectionId: group.connectionId,
               connectionName: group.connectionName,
               items: group.items,
               giftMessage: group.giftMessage,
               scheduledDeliveryDate: group.scheduledDeliveryDate,
-              shippingAddress: group.shippingAddress,
+              shippingAddress: group.shippingAddress, // Now enriched with both legacy and DB keys!
               address_verified: group.address_verified,
               address_verification_method: group.address_verification_method,
               address_verified_at: group.address_verified_at,
               address_last_updated: group.address_last_updated
             })),
-            has_multiple_recipients: deliveryGroups.length > 1
+            has_multiple_recipients: enrichedDeliveryGroups.length > 1
           } as any,
           total_amount: totalAmount,
           checkout_initiated_at: new Date().toISOString(),

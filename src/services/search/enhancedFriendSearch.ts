@@ -336,6 +336,9 @@ function rankSearchResults(
         id: formattedResult.id,
         name: formattedResult.name,
         username: formattedResult.username,
+        city: formattedResult.city,
+        state: formattedResult.state,
+        shipping_address: (profile as any)?.shipping_address,
         matchType: formattedResult.matchType,
         searchScore: formattedResult.searchScore
       });

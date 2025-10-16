@@ -5552,6 +5552,7 @@ export type Database = {
           last_name: string
           name: string
           profile_image: string
+          shipping_address: Json
           username: string
         }[]
       }

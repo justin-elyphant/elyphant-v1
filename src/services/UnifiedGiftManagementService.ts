@@ -1680,9 +1680,36 @@ class UnifiedGiftManagementService {
       throw new Error(`Invalid relationship type: ${relationshipType}`);
     }
 
-    const recipientPhone = shippingAddress?.phone || null;
     const sanitizedEmail = recipientEmail.trim().toLowerCase();
     const sanitizedName = recipientName.trim();
+
+    // Auto-fetch shipping address from existing user profile if not provided
+    if (!shippingAddress) {
+      console.log('🔍 [ADDRESS_FETCH] No shipping address provided, checking if recipient is existing user...');
+      
+      const { data: existingUser, error: userError } = await supabase
+        .from('profiles')
+        .select('id, name, shipping_address')
+        .eq('email', sanitizedEmail)
+        .maybeSingle();
+
+      if (userError) {
+        console.warn('⚠️ [ADDRESS_FETCH] Error checking for existing user:', userError);
+      } else if (existingUser?.shipping_address) {
+        console.log('✅ [ADDRESS_FETCH] Auto-fetched shipping address from existing user profile:', {
+          userId: existingUser.id,
+          userName: existingUser.name,
+          hasAddress: true
+        });
+        shippingAddress = existingUser.shipping_address;
+      } else {
+        console.log('ℹ️ [ADDRESS_FETCH] No existing user or no shipping address in profile');
+      }
+    } else {
+      console.log('✅ [ADDRESS_PROVIDED] Shipping address explicitly provided');
+    }
+
+    const recipientPhone = shippingAddress?.phone || null;
 
     console.log('🧹 [DATA_SANITIZATION] Sanitized inputs:', {
       sanitizedEmail,

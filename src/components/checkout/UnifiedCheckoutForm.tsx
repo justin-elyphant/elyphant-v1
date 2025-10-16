@@ -466,7 +466,9 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       if (sessionError) {
         console.error('❌ Failed to save cart session:', sessionError);
-        toast.error('Failed to save cart data. Please try again.');
+        const message = (sessionError as any)?.message || 'Failed to save cart data. Please try again.';
+        toast.error(message);
+        setInitError(message);
         return;
       }
 

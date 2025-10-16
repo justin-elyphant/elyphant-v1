@@ -107,7 +107,6 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -296,7 +295,6 @@ const UnifiedCheckoutForm: React.FC = () => {
 
     try {
       setIsProcessing(true);
-      setInitError(null);
       
       console.log('💳 Creating payment intent (order will be created after payment)...');
       console.log('🔍 DEBUG - checkoutData.shippingInfo:', JSON.stringify(checkoutData.shippingInfo, null, 2));
@@ -304,56 +302,40 @@ const UnifiedCheckoutForm: React.FC = () => {
       // 🎯 PREFLIGHT ADDRESS ENRICHMENT - Ensure all delivery groups have complete addresses
       console.log('🔍 Starting preflight address enrichment...');
       
-      let enrichedDeliveryGroups;
-      try {
-        enrichedDeliveryGroups = await Promise.all(
-          deliveryGroups.map(async (group) => {
-            let currentAddress = group.shippingAddress;
+      const enrichedDeliveryGroups = await Promise.all(
+        deliveryGroups.map(async (group) => {
+          let currentAddress = group.shippingAddress;
+          
+          // Check if address is already complete
+          if (isCompleteAddress(currentAddress)) {
+            console.log(`✅ Group ${group.connectionName} already has complete address`);
+            return {
+              ...group,
+              shippingAddress: normalizeAddress(currentAddress, group.connectionName)
+            };
+          }
+          
+          // Address incomplete - try to enrich from recipient profile
+          console.log(`🔄 Enriching address for ${group.connectionName}...`);
+          
+          try {
+            const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
             
-            console.log(`📋 Checking address for ${group.connectionName}:`, {
-              hasAddress: !!currentAddress,
-              isComplete: currentAddress ? isCompleteAddress(currentAddress) : false,
-              address: currentAddress
-            });
-            
-            // Check if address is already complete
-            if (isCompleteAddress(currentAddress)) {
-              console.log(`✅ Group ${group.connectionName} already has complete address`);
+            if (recipient?.address && isCompleteAddress(recipient.address)) {
+              console.log(`✅ Enriched ${group.connectionName} from profile`);
               return {
                 ...group,
-                shippingAddress: normalizeAddress(currentAddress, group.connectionName)
+                shippingAddress: normalizeAddress(recipient.address, group.connectionName)
               };
             }
-            
-            // Address incomplete - try to enrich from recipient profile
-            console.log(`🔄 Enriching address for ${group.connectionName}...`);
-            
-            try {
-              const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
-              
-              if (recipient?.address && isCompleteAddress(recipient.address)) {
-                console.log(`✅ Enriched ${group.connectionName} from profile`);
-                return {
-                  ...group,
-                  shippingAddress: normalizeAddress(recipient.address, group.connectionName)
-                };
-              }
-            } catch (error) {
-              console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
-            }
-            
-            // Still incomplete - BLOCK payment
-            const errorMsg = `Complete shipping address required for ${group.connectionName}. Please update their address in the cart before continuing.`;
-            console.error('🚨 Address validation failed:', errorMsg);
-            throw new Error(errorMsg);
-          })
-        );
-      } catch (enrichmentError: any) {
-        console.error('🚨 Preflight enrichment failed:', enrichmentError);
-        toast.error(enrichmentError.message || 'Address validation failed');
-        setInitError(enrichmentError.message || 'Address validation failed. Please ensure all recipients have complete shipping addresses.');
-        return;
-      }
+          } catch (error) {
+            console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
+          }
+          
+          // Still incomplete - BLOCK payment
+          throw new Error(`Complete shipping address required for ${group.connectionName}. Please update their address before continuing.`);
+        })
+      );
 
       console.log('✅ Preflight enrichment complete:', 
         enrichedDeliveryGroups.map(g => ({
@@ -409,9 +391,9 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('📦 Enriched cart items:', enrichedCartItems.map(item => ({
         product: item.product.title,
         recipient: item.recipientAssignment?.connectionName,
-        has_address_line1: !!(item.recipientAssignment?.shippingAddress as any)?.address_line1,
-        has_address_line2: !!(item.recipientAssignment?.shippingAddress as any)?.address_line2,
-        has_zip_code: !!(item.recipientAssignment?.shippingAddress as any)?.zip_code
+        has_address_line1: !!item.recipientAssignment?.shippingAddress?.address_line1,
+        has_address_line2: !!item.recipientAssignment?.shippingAddress?.address_line2,
+        has_zip_code: !!item.recipientAssignment?.shippingAddress?.zip_code
       })));
 
       // Save cart data to cart_sessions table with ENRICHED addresses
@@ -482,9 +464,7 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       if (sessionError) {
         console.error('❌ Failed to save cart session:', sessionError);
-        const message = (sessionError as any)?.message || 'Failed to save cart data. Please try again.';
-        toast.error(message);
-        setInitError(message);
+        toast.error('Failed to save cart data. Please try again.');
         return;
       }
 
@@ -510,7 +490,6 @@ const UnifiedCheckoutForm: React.FC = () => {
       if (error) {
         console.error('Error creating payment intent:', error);
         toast.error('Failed to initialize payment. Please try again.');
-        setInitError(error?.message || 'Failed to initialize payment. Please try again.');
         return;
       }
 
@@ -714,29 +693,8 @@ const UnifiedCheckoutForm: React.FC = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  {initError ? (
-                    <div>
-                      <p className="text-destructive text-sm mb-2">Failed to initialize payment</p>
-                      <p className="text-muted-foreground text-xs mb-4 break-words">{initError}</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setClientSecret('');
-                          setPaymentIntentId('');
-                          setInitError(null);
-                          createPaymentIntent();
-                        }}
-                      >
-                        Try Again
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Initializing payment...</p>
-                    </>
-                  )}
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Initializing payment...</p>
                 </div>
               )}
             </CardContent>

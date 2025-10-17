@@ -5347,6 +5347,10 @@ export type Database = {
           wishlist_title: string
         }[]
       }
+      get_full_shipping_address_for_gifting: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       get_masked_location: {
         Args: { target_user_id: string }
         Returns: Json

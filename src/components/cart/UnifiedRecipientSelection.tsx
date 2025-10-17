@@ -348,11 +348,26 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         return;
       }
 
-      // Get masked location for privacy (avoid fetching full address due to RLS)
-      const { data: maskedLocation } = await supabase
-        .rpc('get_masked_location', { target_user_id: searchResult.id });
-      
-      // Create pending invitation connection without fetching private address
+      // Fetch FULL address for gifting (RLS-protected)
+      const { data: fullAddress, error: addressError } = await supabase
+        .rpc('get_full_shipping_address_for_gifting', { target_user_id: searchResult.id });
+
+      if (addressError) {
+        console.error('Error fetching address:', addressError);
+        throw addressError;
+      }
+
+      // Normalize address format
+      const addressData = fullAddress as any;
+      const normalizedAddress = addressData ? {
+        street: addressData.address_line1 || addressData.street || addressData.address || '',
+        city: addressData.city || '',
+        state: addressData.state || addressData.region || '',
+        zipCode: addressData.zip_code || addressData.zipCode || addressData.postal_code || '',
+        country: addressData.country || 'US'
+      } : null;
+
+      // Create pending invitation with COMPLETE address
       const { data: connectionData, error: connError } = await supabase
         .from('user_connections')
         .insert({
@@ -362,7 +377,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
           relationship_type: 'friend',
           pending_recipient_email: searchResult.email,
           pending_recipient_name: searchResult.name,
-          pending_shipping_address: maskedLocation || null
+          pending_shipping_address: normalizedAddress  // ✅ COMPLETE ADDRESS!
         })
         .select()
         .single();
@@ -392,12 +407,19 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         console.log('✅ Connection invitation email sent');
       }
       
-      // Create unified recipient object
+      // Create unified recipient object with FULL address
       const unifiedRecipient: UnifiedRecipient = {
         id: connectionData.id,
         name: searchResult.name,
         email: searchResult.email,
-        address: maskedLocation || null,
+        address: normalizedAddress ? {
+          name: searchResult.name,
+          address: normalizedAddress.street,
+          city: normalizedAddress.city,
+          state: normalizedAddress.state,
+          zipCode: normalizedAddress.zipCode,
+          country: normalizedAddress.country
+        } : null,
         source: 'pending',
         relationship_type: 'friend',
         status: 'pending_invitation'

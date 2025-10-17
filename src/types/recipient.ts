@@ -19,6 +19,9 @@ export interface RecipientAssignment {
   address_verification_method?: string;
   address_verified_at?: string;
   address_last_updated?: string;
+  // Privacy control fields
+  isPrivateAddress?: boolean;  // Hide full address if true
+  connectionStatus?: string;    // 'pending_invitation', 'accepted', etc.
 }
 
 export interface CartItemWithRecipient {
@@ -36,6 +39,7 @@ export interface DeliveryGroup {
   scheduledDeliveryDate?: string;
   shippingAddress?: RecipientAssignment['shippingAddress'];
   isPrivateAddress?: boolean;
+  connectionStatus?: string;
   address_verified?: boolean;
   address_verification_method?: string;
   address_verified_at?: string;

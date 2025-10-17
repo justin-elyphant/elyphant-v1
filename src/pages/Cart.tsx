@@ -150,6 +150,9 @@ const Cart = () => {
           zipCode: zipCode,
           country: recipient.address.country || 'US'
         } : undefined,
+        // Privacy control: hide full address for pending connections
+        isPrivateAddress: recipient.status === 'pending_invitation' || recipient.source === 'pending',
+        connectionStatus: recipient.status,
         // Include verification data if using user's verified address
         ...(isUsingUserAddress && {
           address_verified: unifiedProfile?.address_verified,

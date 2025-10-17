@@ -248,6 +248,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           giftMessage: assignment.giftMessage,
           scheduledDeliveryDate: assignment.scheduledDeliveryDate,
           shippingAddress: assignment.shippingAddress,
+          // Privacy control
+          isPrivateAddress: assignment.isPrivateAddress,
+          connectionStatus: assignment.connectionStatus,
           // Include verification data from assignment
           address_verified: assignment.address_verified,
           address_verification_method: assignment.address_verification_method,

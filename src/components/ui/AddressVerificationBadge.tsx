@@ -68,13 +68,16 @@ export const AddressVerificationBadge: React.FC<AddressVerificationBadgeProps> =
           {badge}
         </TooltipTrigger>
         <TooltipContent>
-          <div className="text-sm">
+          <div className="text-sm space-y-1">
             <p>{status.tooltip}</p>
             {lastUpdated && (
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground">
                 Last updated {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
               </p>
             )}
+            <p className="text-xs text-muted-foreground border-t pt-1 mt-1">
+              Full address details are securely stored and will be shared with our delivery partner when you place your order.
+            </p>
           </div>
         </TooltipContent>
       </Tooltip>

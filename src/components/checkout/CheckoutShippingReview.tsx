@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MapPin, Users, Package, User, AlertCircle, Edit, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MapPin, Users, Package, User, AlertCircle, Edit, ChevronDown, ChevronUp, MessageSquare, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
@@ -156,7 +157,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                           <div className="flex items-center gap-2">
                             <div className="min-w-0 flex-1">
                               <p className="font-medium flex items-center gap-2">
-                                <span className="truncate">Hidden Address</span>
+                                <span className="truncate">{group.connectionName}</span>
                                 <AddressVerificationBadge
                                   verified={group.address_verified ?? unifiedProfile?.address_verified}
                                   verificationMethod={group.address_verification_method ?? unifiedProfile?.address_verification_method}
@@ -165,6 +166,19 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                                   size="sm"
                                   showText={false}
                                 />
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="h-4 w-4 text-blue-500 cursor-help flex-shrink-0" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>
+                                        {group.connectionName} has independently verified their address. 
+                                        Full details will be shared with our delivery partner when you complete your order.
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </p>
                               <p className="text-muted-foreground truncate">
                                 {group.shippingAddress.city}, {group.shippingAddress.state}

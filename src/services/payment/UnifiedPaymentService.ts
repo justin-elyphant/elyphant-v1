@@ -648,22 +648,31 @@ class UnifiedPaymentService {
   }
 
   /**
-   * Clear entire cart
+   * Clear entire cart (awaits both server deletions)
    */
-  clearCart(): void {
+  async clearCart(): Promise<void> {
     console.log(`[CART DEBUG] Clearing cart - current key: ${this.cartKey}`);
+    
+    // Clear any pending sync timers
+    if (this.serverSyncTimer) {
+      clearTimeout(this.serverSyncTimer);
+      this.serverSyncTimer = null;
+    }
+    
+    // Clear local state immediately
     this.cartItems = [];
     localStorage.removeItem(this.cartKey);
-    localStorage.removeItem(`${this.cartKey}_version`); // Also clear version
+    localStorage.removeItem(`${this.cartKey}_version`);
     
-    // CRITICAL: Also clear from server if user is logged in
+    // Wait for both server deletions to complete
     if (this.currentUser) {
-      this.clearCartFromServer().catch(error => {
-        console.error('[CART CLEAR] Failed to clear server cart:', error);
-      });
-      this.clearUserCartOnServer().catch(error => {
-        console.error('[CART CLEAR] Failed to clear user_carts:', error);
-      });
+      await Promise.allSettled([
+        this.clearCartFromServer(),
+        this.clearUserCartOnServer()
+      ]);
+      console.log('[CART CLEAR] Completed (local + both server tables)');
+    } else {
+      console.log('[CART CLEAR] Completed (local only, guest cart)');
     }
     
     toast.success('Cart cleared');
@@ -887,7 +896,7 @@ class UnifiedPaymentService {
       }
 
       // Clear cart after successful order
-      this.clearCart();
+      await this.clearCart();
 
       return order;
     } catch (error) {
@@ -1508,30 +1517,51 @@ class UnifiedPaymentService {
   }
 
   /**
-   * Sync cart data to server
+   * Sync cart data to server (single-row upsert)
    */
   private async syncCartToServer(): Promise<void> {
     if (!this.currentUser) return;
 
     try {
       console.log(`[CART SYNC] Upserting user_carts with ${this.cartItems.length} items`);
+      
+      const cartData = {
+        user_id: this.currentUser.id,
+        cart_data: this.cartItems as any,
+        expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Try upsert with conflict resolution on user_id
       const { error } = await supabase
         .from('user_carts')
-        .upsert({
-          user_id: this.currentUser.id,
-          cart_data: this.cartItems as any, // Cast to Json type for Supabase
-          expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString() // 30 days
-        });
+        .upsert(cartData, { onConflict: 'user_id' });
 
-      if (error) throw error;
-      console.log('[CART SYNC] Successfully synced cart to server');
+      if (error) {
+        // If upsert fails (missing unique constraint), fallback to delete+insert
+        console.log('[CART SYNC] Upsert failed, using delete+insert fallback:', error.message);
+        
+        await supabase
+          .from('user_carts')
+          .delete()
+          .eq('user_id', this.currentUser.id);
+        
+        const { error: insertError } = await supabase
+          .from('user_carts')
+          .insert(cartData);
+        
+        if (insertError) throw insertError;
+        console.log('[CART SYNC] Fallback delete+insert completed');
+      } else {
+        console.log('[CART SYNC] Successfully synced via upsert');
+      }
     } catch (error) {
       console.error('Error syncing cart to server:', error);
     }
   }
 
   /**
-   * Load cart data from server
+   * Load cart data from server (reads only the latest row)
    */
   private async loadCartFromServer(): Promise<CartItem[]> {
     if (!this.currentUser) return [];
@@ -1539,15 +1569,17 @@ class UnifiedPaymentService {
     try {
       const { data, error } = await supabase
         .from('user_carts')
-        .select('cart_data')
+        .select('cart_data, updated_at')
         .eq('user_id', this.currentUser.id)
         .gt('expires_at', new Date().toISOString())
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
       
       if (data?.cart_data) {
-        console.log('[CART SYNC] Successfully loaded cart from server');
+        console.log(`[CART LOAD] Loaded from server (updated_at: ${data.updated_at})`);
         const cartItems = data.cart_data as unknown as CartItem[];
         // CRITICAL: Standardize all products to ensure images and other fields are correct
         return cartItems.map(item => ({

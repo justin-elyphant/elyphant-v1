@@ -93,8 +93,8 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
     unifiedPaymentService.updateQuantity(productId, quantity);
   }, []);
 
-  const clearCart = useCallback(() => {
-    unifiedPaymentService.clearCart();
+  const clearCart = useCallback(async () => {
+    await unifiedPaymentService.clearCart();
   }, []);
 
   const assignItemToRecipient = useCallback((productId: string, recipient: RecipientAssignment, silent: boolean = false) => {

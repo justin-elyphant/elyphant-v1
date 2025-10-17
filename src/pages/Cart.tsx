@@ -542,13 +542,23 @@ const Cart = () => {
                           onClick={async () => {
                             if (window.confirm('⚠️ EMERGENCY FULL RESET\n\nThis will:\n• Delete ALL server cart data (user_carts + cart_sessions)\n• Clear all local cart data\n• Reload the page\n\nUse this if cart issues persist.\n\nContinue?')) {
                               try {
+                                if (!user?.id) {
+                                  toast.error('Must be logged in');
+                                  return;
+                                }
+                                
                                 toast.loading('Clearing server data...');
-                                await unifiedPaymentService.clearAllServerCarts();
-                                toast.success('Running local cleanup...');
+                                const { clearUserCartData } = await import('@/services/clearCartSessions');
+                                const result = await clearUserCartData(user.id);
+                                
+                                console.log(`🧹 Server cleanup: ${result.sessionsDeleted} sessions + ${result.cartsDeleted} carts deleted`);
+                                toast.success(`Cleared ${result.sessionsDeleted + result.cartsDeleted} server records`);
+                                
+                                toast.loading('Running local cleanup...');
                                 // emergencyCartCleanup() will reload the page
                                 emergencyCartCleanup();
                               } catch (error) {
-                                console.error('Emergency reset failed:', error);
+                                console.error('❌ Emergency reset failed:', error);
                                 toast.error('Emergency reset failed - check console');
                               }
                             }

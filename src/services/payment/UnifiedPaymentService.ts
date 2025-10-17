@@ -1630,11 +1630,22 @@ class UnifiedPaymentService {
   /**
    * Load cart from server (prioritize user_carts, fallback to cart_sessions)
    * CRITICAL: Strict prioritization to prevent loading from wrong source
+   * WITH STARTUP GUARDRAILS: Validates cart security before loading
    */
   private async loadCartFromServer(): Promise<CartItem[]> {
     if (!this.currentUser) return [];
 
     try {
+      // 🛡️ STARTUP GUARDRAIL: Run security validation before loading
+      const { validateCartSecurity } = await import('@/utils/cartSecurityUtils');
+      const isSecure = await validateCartSecurity();
+      
+      if (!isSecure) {
+        console.warn('[CART LOAD] 🚨 Security validation failed - suspicious cart keys detected');
+        // Don't load - the validation already cleaned up suspicious keys
+        return [];
+      }
+
       // PRIORITY 1: Try user_carts first (persistent cart - source of truth)
       const { data: userData, error: userError } = await supabase
         .from('user_carts')
@@ -1658,31 +1669,12 @@ class UnifiedPaymentService {
         }));
       }
 
-      console.log('[CART LOAD] user_carts is empty, checking cart_sessions as fallback');
-
-      // PRIORITY 2: Only if user_carts is empty, check cart_sessions
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('cart_sessions')
-        .select('cart_data, last_updated')
-        .eq('user_id', this.currentUser.id)
-        .order('last_updated', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (sessionError) {
-        console.error('[CART LOAD] Error loading cart_sessions:', sessionError);
-      }
-
-      if (sessionData?.cart_data) {
-        console.log(`[CART LOAD] ⚠️ Loaded from cart_sessions (fallback, last_updated: ${sessionData.last_updated})`);
-        const cartItems = sessionData.cart_data as unknown as CartItem[];
-        return cartItems.map(item => ({
-          ...item,
-          product: standardizeProduct(item.product)
-        }));
-      }
+      console.log('[CART LOAD] user_carts is empty - NOT loading cart_sessions to prevent stale data');
       
-      console.log('[CART LOAD] No server cart found in either table');
+      // 🛡️ GUARDRAIL: DO NOT LOAD cart_sessions unless explicitly needed
+      // Old sessions caused the "48 items persist" bug
+      // If user_carts is empty, cart should be empty
+      
       return [];
     } catch (error) {
       console.error('Error loading cart from server:', error);

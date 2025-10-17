@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     const { userId } = await req.json();
 
-    console.log(`🗑️ Deleting all cart_sessions for user: ${userId}`);
+    console.log(`🗑️ Deleting ALL cart data (cart_sessions + user_carts) for user: ${userId}`);
 
     // Delete all cart_sessions for this user
     const { data: deletedSessions, error: sessionError } = await supabaseClient
@@ -31,13 +31,25 @@ Deno.serve(async (req) => {
       throw sessionError;
     }
 
-    console.log(`✅ Deleted ${deletedSessions?.length || 0} cart sessions`);
+    // Delete all user_carts for this user
+    const { data: deletedCarts, error: cartError } = await supabaseClient
+      .from('user_carts')
+      .delete()
+      .eq('user_id', userId)
+      .select();
+
+    if (cartError) {
+      throw cartError;
+    }
+
+    console.log(`✅ Deleted ${deletedSessions?.length || 0} cart_sessions and ${deletedCarts?.length || 0} user_carts`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        deletedCount: deletedSessions?.length || 0,
-        message: `Cleared ${deletedSessions?.length || 0} cart sessions`
+        sessionsDeleted: deletedSessions?.length || 0,
+        cartsDeleted: deletedCarts?.length || 0,
+        message: `Cleared ${deletedSessions?.length || 0} cart_sessions and ${deletedCarts?.length || 0} user_carts`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

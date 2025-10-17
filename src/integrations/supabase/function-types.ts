@@ -10,5 +10,6 @@ export enum SUPABASE_FUNCTIONS {
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
   SIMPLE_ORDER_PROCESSOR = "simple-order-processor",
   CLEANUP_DUPLICATE_ORDERS = "cleanup-duplicate-orders",
-  ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator"
+  ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator",
+  CLEAR_USER_CART_SESSIONS = "clear-user-cart-sessions"
 }

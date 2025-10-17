@@ -117,6 +117,8 @@ class UnifiedPaymentService {
   private serverSyncTimer: NodeJS.Timeout | null = null;
   private readonly CART_VERSION = 2; // Increment when cart structure changes
   private readonly GUEST_CART_EXPIRATION_DAYS = 30; // Modern e-commerce standard
+  private lastMergeTimestamp: number = 0;
+  private lastMergedServerHash: string = '';
 
   constructor() {
     // Initialize cart on service creation
@@ -1596,25 +1598,70 @@ class UnifiedPaymentService {
   }
 
   /**
+   * Calculate a simple hash for cart data to detect duplicates
+   */
+  private calculateCartHash(cart: CartItem[]): string {
+    const sortedItems = cart
+      .map(item => `${item.product.product_id}:${item.quantity}`)
+      .sort()
+      .join('|');
+    return sortedItems;
+  }
+
+  /**
    * Merge cart data from different sources (server + local)
+   * CRITICAL: Prevents quantity multiplication during rapid refreshes
    */
   private mergeCartData(serverCart: CartItem[], localCart: CartItem[]): CartItem[] {
+    const currentTime = Date.now();
+    const serverHash = this.calculateCartHash(serverCart);
+    
+    // If we just merged this exact server data recently (< 5 seconds ago), skip merge
+    if (
+      serverHash === this.lastMergedServerHash && 
+      currentTime - this.lastMergeTimestamp < 5000 &&
+      serverCart.length > 0
+    ) {
+      console.log('[CART MERGE] Skipping duplicate merge - using cached server cart');
+      return serverCart;
+    }
+    
+    // If local cart is empty, just use server cart
+    if (localCart.length === 0) {
+      this.lastMergeTimestamp = currentTime;
+      this.lastMergedServerHash = serverHash;
+      return serverCart;
+    }
+    
+    // If server cart is empty, use local cart
+    if (serverCart.length === 0) {
+      return localCart;
+    }
+    
     const mergedMap = new Map<string, CartItem>();
 
-    // Start with server cart (priority)
+    // Start with server cart as source of truth
     serverCart.forEach(item => {
       mergedMap.set(item.product.product_id, item);
     });
 
-    // Add local cart items, combining quantities for same products
+    // Only add items from local cart that don't exist in server cart
+    // DO NOT add quantities - server is source of truth
     localCart.forEach(item => {
       const existing = mergedMap.get(item.product.product_id);
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
+      if (!existing) {
+        // Only add if it's a new item not in server
         mergedMap.set(item.product.product_id, item);
+        console.log(`[CART MERGE] Adding new local item: ${item.product.name}`);
+      } else {
+        // Item exists in both - use server quantity as source of truth
+        console.log(`[CART MERGE] Item exists in both carts, using server quantity for: ${item.product.name}`);
       }
     });
+
+    // Update merge tracking
+    this.lastMergeTimestamp = currentTime;
+    this.lastMergedServerHash = serverHash;
 
     return Array.from(mergedMap.values());
   }

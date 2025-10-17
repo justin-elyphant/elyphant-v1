@@ -626,34 +626,70 @@ return await (async () => {
       console.log('⚠️ No billing info found in order data');
     }
     
-    // Prepare shipping address
-    if (!orderData.shipping_info) {
-      throw new Error('Missing shipping information in order');
+    // CRITICAL FIX: Detect single-recipient orders (immediate OR scheduled)
+    const isSingleRecipientOrder = orderData.has_multiple_recipients === false 
+      && orderData.delivery_groups 
+      && orderData.delivery_groups.length === 1;
+
+    let shippingSourceInfo;
+    let addressSource: string;
+
+    if (isSingleRecipientOrder) {
+      addressSource = 'delivery_groups[0]';
+      shippingSourceInfo = orderData.delivery_groups[0].shippingAddress;
+      console.log('📦 Single-recipient gift order detected');
+      console.log(`   Order type: ${orderData.scheduled_delivery_date ? 'Scheduled' : 'Immediate'}`);
+      console.log(`   Using recipient address from: ${addressSource}`);
+      console.log(`   Recipient: ${orderData.delivery_groups[0].connectionName}`);
+      if (orderData.scheduled_delivery_date) {
+        console.log(`   Scheduled for: ${orderData.scheduled_delivery_date}`);
+      }
+      console.log('🎁 Recipient shipping address:', JSON.stringify(shippingSourceInfo, null, 2));
+    } else {
+      addressSource = 'shipping_info';
+      shippingSourceInfo = orderData.shipping_info;
+      console.log('🛒 Self-purchase order detected');
+      console.log(`   Using buyer address from: ${addressSource}`);
     }
+
+    if (!shippingSourceInfo) {
+      throw new Error(`Missing shipping information in order (source: ${addressSource})`);
+    }
+
+    console.log(`📍 Address source confirmed: ${addressSource}`);
     
     // Handle name field splitting - check for first_name/last_name or split name field
-    let firstName = orderData.shipping_info.first_name;
-    let lastName = orderData.shipping_info.last_name;
+    let firstName = shippingSourceInfo.first_name;
+    let lastName = shippingSourceInfo.last_name;
     
     if (!firstName || !lastName) {
       // Try to split the name field if first_name/last_name are not provided
-      const fullName = orderData.shipping_info.name || '';
+      const fullName = shippingSourceInfo.name || '';
       const nameParts = fullName.trim().split(' ');
       firstName = firstName || nameParts[0] || 'Customer';
       lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Name');
+      
+      if (shippingSourceInfo.name) {
+        console.log(`📝 Split name "${shippingSourceInfo.name}" into: ${firstName} ${lastName}`);
+      }
     }
     
     const shippingAddress = {
       first_name: firstName,
       last_name: lastName,
-      address_line1: orderData.shipping_info.address_line1 || '',
-      address_line2: orderData.shipping_info.address_line2 || '',
-      zip_code: orderData.shipping_info.zip_code || '',
-      city: orderData.shipping_info.city || '',
-      state: orderData.shipping_info.state || '',
-      country: orderData.shipping_info.country === 'United States' ? 'US' : (orderData.shipping_info.country || 'US'),
-      phone_number: orderData.shipping_info.phone_number || '5551234567'
+      address_line1: shippingSourceInfo.address_line1 || shippingSourceInfo.address || '',
+      address_line2: shippingSourceInfo.address_line2 || shippingSourceInfo.addressLine2 || '',
+      zip_code: shippingSourceInfo.zip_code || shippingSourceInfo.zipCode || '',
+      city: shippingSourceInfo.city || '',
+      state: shippingSourceInfo.state || '',
+      country: shippingSourceInfo.country === 'United States' ? 'US' : (shippingSourceInfo.country || 'US'),
+      phone_number: shippingSourceInfo.phone_number || '5551234567'
     };
+
+    console.log('📄 Final shipping address for Zinc API:', JSON.stringify(shippingAddress, null, 2));
+    console.log(`   Source: ${addressSource}`);
+    console.log(`   Recipient: ${shippingAddress.first_name} ${shippingAddress.last_name}`);
+    console.log(`   Location: ${shippingAddress.city}, ${shippingAddress.state}`);
     
     // Prepare billing address - use billing info if available, otherwise fallback to shipping
     let billingAddress;
@@ -790,7 +826,15 @@ for (const field of requiredBillingFields) {
       shipping_address: shippingAddress,
       shipping_method: "cheapest", // Required field
       is_gift: orderData.is_gift || false,
-      gift_message: collectGiftMessage(orderItems, orderData),
+      gift_message: (() => {
+        const giftMsg = collectGiftMessage(orderItems, orderData);
+        if (isSingleRecipientOrder && giftMsg) {
+          console.log(`📝 Using gift message from order items: ${giftMsg}`);
+          console.log(`   From: ${orderData.shipping_info?.name || 'Unknown'}`);
+          console.log(`   To: ${orderData.delivery_groups[0].connectionName}`);
+        }
+        return giftMsg;
+      })(),
       // addax enabled above
       client_notes: {
         our_internal_order_id: orderData.order_number,

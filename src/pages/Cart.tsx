@@ -12,7 +12,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { useCartSessionTracking } from "@/hooks/useCartSessionTracking";
 import { emergencyCartCleanup } from "@/utils/cartSecurityUtils";
-import { unifiedPaymentService } from "@/services/payment/UnifiedPaymentService";
+import { clearUserCartData } from "@/services/clearCartSessions";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";

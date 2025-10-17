@@ -157,15 +157,15 @@ class UnifiedPaymentService {
         console.log(`[CART SECURITY] Auth state change: ${event}, Previous user: ${previousUser?.id}, Current user: ${this.currentUser?.id}`);
 
         if (event === 'SIGNED_IN' && previousUser === null) {
-          // User just logged in - check for preserved cart and transfer guest cart
-          console.log('[CART SECURITY] User signed in - checking for preserved cart and transferring guest cart');
-          this.restorePreservedCartAndTransferGuest();
+          // User just logged in - simple cart transfer
+          console.log('[CART SECURITY] User signed in - transferring guest cart');
+          this.transferGuestCart();
         } else if (event === 'SIGNED_OUT') {
-          // User logged out - PRESERVE cart for better UX (modern e-commerce standard)
-          console.log('[CART SECURITY] User signed out - preserving cart with user-specific storage');
-          this.preserveUserCartOnLogout(previousUser);
+          // User logged out - clear cart
+          console.log('[CART SECURITY] User signed out - clearing cart');
+          this.cartItems = [];
           this.updateCartKey();
-          this.loadCartFromStorage(); // Load guest cart if exists
+          this.loadCartFromStorage();
         } else if (this.currentUser?.id !== previousUser?.id && this.currentUser && previousUser) {
           // Different user logged in - CRITICAL SECURITY: Clear old cart data immediately
           console.log(`[CART SECURITY] User switched from ${previousUser?.id} to ${this.currentUser?.id} - clearing previous cart`);
@@ -196,20 +196,9 @@ class UnifiedPaymentService {
         this.loadCartFromServer().then((serverCart) => {
           const localCart = this.loadLocalCartDataSync();
           
-          // If local cart has items, prefer it and immediately sync to server
-          if (localCart.length > 0) {
-            this.cartItems = this.mergeCartData(localCart, serverCart);
-            console.log(`[CART LOAD] Preferring local over server (local ${localCart.length} items, server ${serverCart.length} items)`);
-            this.notifyCartChange();
-            this.saveCartToStorage();
-            // Immediately sync to server to overwrite stale data
-            this.syncCartToServer().catch(console.error);
-            return;
-          }
-          
+          // Server is source of truth - always prefer server
           if (serverCart && serverCart.length > 0) {
-            // Merge with local cart if exists
-            this.cartItems = this.mergeCartData(serverCart, localCart);
+            this.cartItems = serverCart;
             console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from server + local merge`);
             this.notifyCartChange();
             this.saveCartToStorage(); // Sync back to local storage
@@ -356,104 +345,49 @@ class UnifiedPaymentService {
   }
 
   /**
-   * Restore preserved cart and transfer guest cart for better UX
+   * Simple cart transfer on login - NO complex merging
    */
-  private async restorePreservedCartAndTransferGuest(): Promise<void> {
+  private async transferGuestCart(): Promise<void> {
     if (!this.currentUser) return;
 
     try {
-      // First, check for preserved cart from previous session
-      const preservedCartKey = `cart_${this.currentUser.id}_preserved`;
-      const preservedCartData = localStorage.getItem(preservedCartKey);
-      let preservedItems: CartItem[] = [];
-
-      if (preservedCartData) {
-        const preservedCart = JSON.parse(preservedCartData);
-        if (preservedCart.expiresAt && Date.now() < preservedCart.expiresAt) {
-          preservedItems = preservedCart.items || [];
-          console.log(`[CART RESTORATION] Found preserved cart with ${preservedItems.length} items`);
-          localStorage.removeItem(preservedCartKey); // Clean up
-        }
-      }
-
-      // Then check for guest cart
       const guestCartKey = 'guest_cart';
       const guestCartData = localStorage.getItem(guestCartKey);
       let guestItems: CartItem[] = [];
 
       if (guestCartData) {
         const guestCart = JSON.parse(guestCartData);
-        if (guestCart.items) {
-          // Handle new format with expiration
-          if (!guestCart.expiresAt || Date.now() < guestCart.expiresAt) {
-            guestItems = guestCart.items || [];
-          }
-        } else {
-          // Handle legacy format
-          guestItems = Array.isArray(guestCart) ? guestCart : [];
-        }
+        guestItems = guestCart.items || (Array.isArray(guestCart) ? guestCart : []);
       }
 
-      // Load any existing server cart
+      // Load server cart (single source of truth)
       const serverItems = await this.loadCartFromServer();
 
-      // Merge all cart sources
-      let allCarts = [serverItems, preservedItems, guestItems];
-      let mergedCart: CartItem[] = [];
-      
-      if (allCarts.some(cart => cart.length > 0)) {
-        mergedCart = allCarts.reduce((acc, cart) => this.mergeCartData(acc, cart), []);
-        
-        this.cartItems = mergedCart;
+      // Simple combination: server items + guest items
+      const combined = [...serverItems];
+      guestItems.forEach(guestItem => {
+        const exists = combined.find(i => i.product.product_id === guestItem.product.product_id);
+        if (!exists) {
+          combined.push(guestItem);
+        }
+      });
+
+      if (combined.length > 0) {
+        this.cartItems = combined;
         this.updateCartKey();
         this.saveCartToStorage();
-        this.clearGuestCartData();
-
-        const totalItems = mergedCart.reduce((sum, item) => sum + item.quantity, 0);
-        if (totalItems > 0) {
-          toast.success(`Welcome back! ${totalItems} item${totalItems > 1 ? 's' : ''} restored to your cart.`);
+        
+        const totalItems = combined.reduce((sum, item) => sum + item.quantity, 0);
+        if (guestItems.length > 0) {
+          toast.success(`Welcome back! ${totalItems} item${totalItems > 1 ? 's' : ''} in your cart.`);
         }
         this.notifyCartChange();
       }
+
+      // Clean up guest cart
+      this.clearGuestCartData();
     } catch (error) {
-      console.error('Error restoring cart:', error);
-      // Fallback to basic guest cart transfer
-      this.transferGuestCartBasic();
-    }
-  }
-
-  /**
-   * Basic guest cart transfer (fallback)
-   */
-  private transferGuestCartBasic(): void {
-    if (!this.currentUser) return;
-
-    const guestCartKey = 'guest_cart';
-    const guestCart = localStorage.getItem(guestCartKey);
-
-    if (guestCart) {
-      try {
-        const parsedCart = JSON.parse(guestCart);
-        let guestItems: CartItem[] = [];
-        
-        if (parsedCart.items) {
-          guestItems = parsedCart.items || [];
-        } else {
-          guestItems = Array.isArray(parsedCart) ? parsedCart : [];
-        }
-
-        if (guestItems.length > 0) {
-          this.cartItems = guestItems;
-          this.updateCartKey();
-          this.saveCartToStorage();
-          this.clearGuestCartData();
-
-          toast.success('Guest cart transferred successfully!');
-          this.notifyCartChange();
-        }
-      } catch (error) {
-        console.error('Error transferring guest cart:', error);
-      }
+      console.error('Error transferring cart:', error);
     }
   }
 
@@ -1636,92 +1570,7 @@ class UnifiedPaymentService {
     return sortedItems;
   }
 
-  /**
-   * Merge cart data from different sources (server + local)
-   * CRITICAL: Prevents quantity multiplication during rapid refreshes
-   */
-  private mergeCartData(serverCart: CartItem[], localCart: CartItem[]): CartItem[] {
-    const currentTime = Date.now();
-    const serverHash = this.calculateCartHash(serverCart);
-    
-    // If we just merged this exact server data recently (< 5 seconds ago), skip merge
-    if (
-      serverHash === this.lastMergedServerHash && 
-      currentTime - this.lastMergeTimestamp < 5000 &&
-      serverCart.length > 0
-    ) {
-      console.log('[CART MERGE] Skipping duplicate merge - using cached server cart');
-      return serverCart;
-    }
-    
-    // If local cart is empty, just use server cart
-    if (localCart.length === 0) {
-      this.lastMergeTimestamp = currentTime;
-      this.lastMergedServerHash = serverHash;
-      return serverCart;
-    }
-    
-    // If server cart is empty, use local cart
-    if (serverCart.length === 0) {
-      return localCart;
-    }
-    
-    const mergedMap = new Map<string, CartItem>();
 
-    // Start with server cart as source of truth
-    serverCart.forEach(item => {
-      mergedMap.set(item.product.product_id, item);
-    });
-
-    // Only add items from local cart that don't exist in server cart
-    // DO NOT add quantities - server is source of truth
-    localCart.forEach(item => {
-      const existing = mergedMap.get(item.product.product_id);
-      if (!existing) {
-        // Only add if it's a new item not in server
-        mergedMap.set(item.product.product_id, item);
-        console.log(`[CART MERGE] Adding new local item: ${item.product.name}`);
-      } else {
-        // Item exists in both - use server quantity as source of truth
-        console.log(`[CART MERGE] Item exists in both carts, using server quantity for: ${item.product.name}`);
-      }
-    });
-
-    // Update merge tracking
-    this.lastMergeTimestamp = currentTime;
-    this.lastMergedServerHash = serverHash;
-
-    return Array.from(mergedMap.values());
-  }
-
-  /**
-   * Preserve user cart on logout for better UX
-   */
-  private preserveUserCartOnLogout(previousUser: any): void {
-    if (!previousUser || this.cartItems.length === 0) return;
-
-    try {
-      // Save current cart to user-specific localStorage key
-      const userCartKey = `cart_${previousUser.id}_preserved`;
-      const preservedCart = {
-        items: this.cartItems,
-        preservedAt: Date.now(),
-        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
-      };
-      
-      localStorage.setItem(userCartKey, JSON.stringify(preservedCart));
-      console.log(`[CART PRESERVATION] Preserved cart for user ${previousUser.id}`);
-      
-      // Also sync to server if possible
-      if (this.cartItems.length > 0) {
-        this.syncCartToServer().catch(error => {
-          console.error('Error syncing cart to server during logout:', error);
-        });
-      }
-    } catch (error) {
-      console.error('Error preserving cart on logout:', error);
-    }
-  }
 }
 
 // ============================================================================

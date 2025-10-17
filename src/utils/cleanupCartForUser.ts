@@ -78,7 +78,13 @@ export async function cleanupCartForUser() {
 
   } catch (error) {
     console.error('❌ Cleanup failed:', error);
-    toast.error('Failed to clean up cart data');
+    toast.dismiss();
+    toast.error('Failed to clean up cart data: ' + (error as Error).message);
     throw error;
   }
+}
+
+// Export for manual testing
+if (typeof window !== 'undefined') {
+  (window as any).cleanupCartForUser = cleanupCartForUser;
 }

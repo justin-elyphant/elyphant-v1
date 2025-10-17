@@ -36,14 +36,14 @@ export const useCartSessionTracking = (
 
   // Track cart updates
   useEffect(() => {
+    // ONLY write to cart_sessions on checkout page
+    // Do NOT track on every cart change - user_carts is the source of truth
+    if (!isCheckoutPage) {
+      return;
+    }
+    
     const trackCartSession = async () => {
       if (!sessionIdRef.current || cartItems.length === 0) return;
-      
-      // Skip tracking on checkout page - UnifiedCheckoutForm handles complete cart session saving
-      if (isCheckoutPage) {
-        console.log('⏭️ Skipping cart session tracking on checkout page');
-        return;
-      }
 
       try {
         const cartData = {

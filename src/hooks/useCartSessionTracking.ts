@@ -52,7 +52,18 @@ export const useCartSessionTracking = (
             product_name: item.product.name,
             quantity: item.quantity,
             price: item.product.price,
-            recipient_id: item.recipientAssignment?.connectionId
+            recipient_assignment: item.recipientAssignment ? {
+              connectionId: item.recipientAssignment.connectionId,
+              connectionName: item.recipientAssignment.connectionName,
+              deliveryGroupId: item.recipientAssignment.deliveryGroupId,
+              giftMessage: item.recipientAssignment.giftMessage,
+              scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
+              shippingAddress: item.recipientAssignment.shippingAddress,
+              address_verified: item.recipientAssignment.address_verified,
+              address_verification_method: item.recipientAssignment.address_verification_method,
+              address_verified_at: item.recipientAssignment.address_verified_at,
+              address_last_updated: item.recipientAssignment.address_last_updated
+            } : null
           })),
           shippingCost
         };

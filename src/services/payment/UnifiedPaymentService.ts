@@ -191,9 +191,21 @@ class UnifiedPaymentService {
       // Try to load from server first if user is logged in
       if (this.currentUser) {
         this.loadCartFromServer().then((serverCart) => {
-        if (serverCart && serverCart.length > 0) {
+          const localCart = this.loadLocalCartDataSync();
+          
+          // If local cart has items, prefer it and immediately sync to server
+          if (localCart.length > 0) {
+            this.cartItems = this.mergeCartData(localCart, serverCart);
+            console.log(`[CART LOAD] Preferring local over server (local ${localCart.length} items, server ${serverCart.length} items)`);
+            this.notifyCartChange();
+            this.saveCartToStorage();
+            // Immediately sync to server to overwrite stale data
+            this.syncCartToServer().catch(console.error);
+            return;
+          }
+          
+          if (serverCart && serverCart.length > 0) {
             // Merge with local cart if exists
-            const localCart = this.loadLocalCartDataSync();
             this.cartItems = this.mergeCartData(serverCart, localCart);
             console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from server + local merge`);
             this.notifyCartChange();
@@ -201,7 +213,6 @@ class UnifiedPaymentService {
             return;
           } else {
             // No server cart, load from local storage
-            const localCart = this.loadLocalCartDataSync();
             this.cartItems = localCart;
             console.log(`[CART LOAD] Loaded ${this.cartItems.length} items from localStorage (user cart, no server data)`);
             this.notifyCartChange();
@@ -582,6 +593,11 @@ class UnifiedPaymentService {
 
       this.notifyCartChange();
       this.saveCartToStorage();
+      
+      // Immediate server sync for critical cart changes
+      if (this.currentUser) {
+        this.syncCartToServer().catch(console.error);
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
@@ -606,6 +622,11 @@ class UnifiedPaymentService {
 
     this.notifyCartChange();
     this.saveCartToStorage();
+    
+    // Immediate server sync for critical cart changes
+    if (this.currentUser) {
+      this.syncCartToServer().catch(console.error);
+    }
   }
 
   /**
@@ -619,6 +640,11 @@ class UnifiedPaymentService {
     toast.success('Removed from cart');
     this.notifyCartChange();
     this.saveCartToStorage();
+    
+    // Immediate server sync for critical cart changes
+    if (this.currentUser) {
+      this.syncCartToServer().catch(console.error);
+    }
   }
 
   /**
@@ -634,6 +660,9 @@ class UnifiedPaymentService {
     if (this.currentUser) {
       this.clearCartFromServer().catch(error => {
         console.error('[CART CLEAR] Failed to clear server cart:', error);
+      });
+      this.clearUserCartOnServer().catch(error => {
+        console.error('[CART CLEAR] Failed to clear user_carts:', error);
       });
     }
     
@@ -654,9 +683,29 @@ class UnifiedPaymentService {
         .eq('user_id', this.currentUser.id);
         
       if (error) throw error;
-      console.log('[CART CLEAR] Server cart cleared successfully');
+      console.log('[CART CLEAR] cart_sessions cleared successfully');
     } catch (error) {
       console.error('[CART CLEAR] Error clearing server cart:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear user cart from server (user_carts table)
+   */
+  private async clearUserCartOnServer(): Promise<void> {
+    if (!this.currentUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_carts')
+        .delete()
+        .eq('user_id', this.currentUser.id);
+        
+      if (error) throw error;
+      console.log('[CART CLEAR] user_carts cleared successfully');
+    } catch (error) {
+      console.error('[CART CLEAR] Error clearing user_carts:', error);
       throw error;
     }
   }
@@ -698,6 +747,11 @@ class UnifiedPaymentService {
     }
     this.notifyCartChange();
     this.saveCartToStorage();
+    
+    // Immediate server sync for critical cart changes
+    if (this.currentUser) {
+      this.syncCartToServer().catch(console.error);
+    }
   }
 
   /**
@@ -1460,6 +1514,7 @@ class UnifiedPaymentService {
     if (!this.currentUser) return;
 
     try {
+      console.log(`[CART SYNC] Upserting user_carts with ${this.cartItems.length} items`);
       const { error } = await supabase
         .from('user_carts')
         .upsert({

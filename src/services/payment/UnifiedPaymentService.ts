@@ -629,8 +629,36 @@ class UnifiedPaymentService {
     this.cartItems = [];
     localStorage.removeItem(this.cartKey);
     localStorage.removeItem(`${this.cartKey}_version`); // Also clear version
+    
+    // CRITICAL: Also clear from server if user is logged in
+    if (this.currentUser) {
+      this.clearCartFromServer().catch(error => {
+        console.error('[CART CLEAR] Failed to clear server cart:', error);
+      });
+    }
+    
     toast.success('Cart cleared');
     this.notifyCartChange();
+  }
+
+  /**
+   * Clear cart from server (cart_sessions table)
+   */
+  private async clearCartFromServer(): Promise<void> {
+    if (!this.currentUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('cart_sessions')
+        .delete()
+        .eq('user_id', this.currentUser.id);
+        
+      if (error) throw error;
+      console.log('[CART CLEAR] Server cart cleared successfully');
+    } catch (error) {
+      console.error('[CART CLEAR] Error clearing server cart:', error);
+      throw error;
+    }
   }
 
   /**

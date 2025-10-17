@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
+import { useCartSessionTracking } from "@/hooks/useCartSessionTracking";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
@@ -43,6 +44,14 @@ const Cart = () => {
   const isMobile = useIsMobile();
   const [showRecipientModal, setShowRecipientModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  // Track cart session for abandoned cart detection and persistence
+  useCartSessionTracking(
+    cartItems,
+    cartTotal,
+    0, // shipping cost (calculated at checkout)
+    false // not checkout page
+  );
 
   const handleCheckout = () => {
     if (!user) {

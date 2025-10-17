@@ -11,6 +11,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { useCartSessionTracking } from "@/hooks/useCartSessionTracking";
+import { emergencyCartCleanup } from "@/utils/cartSecurityUtils";
+import { unifiedPaymentService } from "@/services/payment/UnifiedPaymentService";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
@@ -524,14 +526,38 @@ const Cart = () => {
                     </Button>
                     
                     {cartItems.length > 0 && (
-                      <Button 
-                        variant="ghost"
-                        onClick={clearCart}
-                        className="w-full text-red-500 hover:text-red-700"
-                        size="sm"
-                      >
-                        Clear Cart
-                      </Button>
+                      <>
+                        <Button 
+                          variant="ghost"
+                          onClick={clearCart}
+                          className="w-full text-red-500 hover:text-red-700"
+                          size="sm"
+                        >
+                          Clear Cart
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (window.confirm('⚠️ EMERGENCY FULL RESET\n\nThis will:\n• Delete ALL server cart data (user_carts + cart_sessions)\n• Clear all local cart data\n• Reload the page\n\nUse this if cart issues persist.\n\nContinue?')) {
+                              try {
+                                toast.loading('Clearing server data...');
+                                await unifiedPaymentService.clearAllServerCarts();
+                                toast.success('Running local cleanup...');
+                                // emergencyCartCleanup() will reload the page
+                                emergencyCartCleanup();
+                              } catch (error) {
+                                console.error('Emergency reset failed:', error);
+                                toast.error('Emergency reset failed - check console');
+                              }
+                            }
+                          }}
+                          className="w-full text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          Emergency Full Reset
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

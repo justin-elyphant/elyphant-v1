@@ -683,18 +683,20 @@ class UnifiedPaymentService {
 
   /**
    * Clear cart from server (cart_sessions table)
+   * CRITICAL: Deletes ALL sessions for the current user to prevent orphaned sessions
    */
   private async clearCartFromServer(): Promise<void> {
     if (!this.currentUser) return;
     
     try {
+      console.log('[CART CLEAR] Deleting ALL cart_sessions for user');
       const { error } = await supabase
         .from('cart_sessions')
         .delete()
         .eq('user_id', this.currentUser.id);
         
       if (error) throw error;
-      console.log('[CART CLEAR] cart_sessions cleared successfully');
+      console.log('[CART CLEAR] ✅ All cart_sessions cleared successfully');
     } catch (error) {
       console.error('[CART CLEAR] Error clearing server cart:', error);
       throw error;
@@ -703,20 +705,80 @@ class UnifiedPaymentService {
 
   /**
    * Clear user cart from server (user_carts table)
+   * CRITICAL: Also clears ALL cart_sessions to ensure complete cleanup
    */
   private async clearUserCartOnServer(): Promise<void> {
     if (!this.currentUser) return;
     
     try {
-      const { error } = await supabase
+      console.log('[CART CLEAR] Deleting user_carts');
+      const { error: userCartError } = await supabase
         .from('user_carts')
         .delete()
         .eq('user_id', this.currentUser.id);
         
-      if (error) throw error;
-      console.log('[CART CLEAR] user_carts cleared successfully');
+      if (userCartError) throw userCartError;
+      console.log('[CART CLEAR] ✅ user_carts cleared successfully');
+
+      // Also delete ALL cart_sessions for complete cleanup
+      console.log('[CART CLEAR] Deleting ALL cart_sessions');
+      const { error: sessionsError } = await supabase
+        .from('cart_sessions')
+        .delete()
+        .eq('user_id', this.currentUser.id);
+
+      if (sessionsError) throw sessionsError;
+      console.log('[CART CLEAR] ✅ All cart_sessions cleared successfully');
     } catch (error) {
       console.error('[CART CLEAR] Error clearing user_carts:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear ALL server carts for the current user (both user_carts and cart_sessions)
+   * Used by Emergency Full Reset to guarantee clean slate
+   */
+  async clearAllServerCarts(): Promise<void> {
+    try {
+      if (!this.currentUser) {
+        console.log('[EMERGENCY RESET] No user logged in');
+        return;
+      }
+
+      console.log('[EMERGENCY RESET] Starting complete server cart cleanup');
+
+      // Delete ALL from user_carts
+      const { error: userCartError } = await supabase
+        .from('user_carts')
+        .delete()
+        .eq('user_id', this.currentUser.id);
+
+      if (userCartError) {
+        console.error('[EMERGENCY RESET] Error clearing user_carts:', userCartError);
+        toast.error(`Failed to clear user cart: ${userCartError.message}`);
+      } else {
+        console.log('[EMERGENCY RESET] ✅ Cleared user_carts');
+      }
+
+      // Delete ALL from cart_sessions
+      const { error: sessionsError } = await supabase
+        .from('cart_sessions')
+        .delete()
+        .eq('user_id', this.currentUser.id);
+
+      if (sessionsError) {
+        console.error('[EMERGENCY RESET] Error clearing cart_sessions:', sessionsError);
+        toast.error(`Failed to clear cart sessions: ${sessionsError.message}`);
+      } else {
+        console.log('[EMERGENCY RESET] ✅ Cleared all cart_sessions');
+      }
+
+      console.log('[EMERGENCY RESET] Server cleanup complete');
+      toast.success('Server cart data cleared');
+    } catch (error) {
+      console.error('[EMERGENCY RESET] Failed to clear server carts:', error);
+      toast.error('Failed to clear server cart data');
       throw error;
     }
   }
@@ -1565,11 +1627,16 @@ class UnifiedPaymentService {
   /**
    * Load cart data from server (reads only the latest row)
    */
+  /**
+   * Load cart from server (prioritize user_carts, fallback to cart_sessions)
+   * CRITICAL: Strict prioritization to prevent loading from wrong source
+   */
   private async loadCartFromServer(): Promise<CartItem[]> {
     if (!this.currentUser) return [];
 
     try {
-      const { data, error } = await supabase
+      // PRIORITY 1: Try user_carts first (persistent cart - source of truth)
+      const { data: userData, error: userError } = await supabase
         .from('user_carts')
         .select('cart_data, updated_at')
         .eq('user_id', this.currentUser.id)
@@ -1578,18 +1645,44 @@ class UnifiedPaymentService {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (userError) {
+        console.error('[CART LOAD] Error loading user_carts:', userError);
+      }
       
-      if (data?.cart_data) {
-        console.log(`[CART LOAD] Loaded from server (updated_at: ${data.updated_at})`);
-        const cartItems = data.cart_data as unknown as CartItem[];
-        // CRITICAL: Standardize all products to ensure images and other fields are correct
+      if (userData?.cart_data) {
+        console.log(`[CART LOAD] ✅ Loaded from user_carts (source of truth, updated: ${userData.updated_at})`);
+        const cartItems = userData.cart_data as unknown as CartItem[];
+        return cartItems.map(item => ({
+          ...item,
+          product: standardizeProduct(item.product)
+        }));
+      }
+
+      console.log('[CART LOAD] user_carts is empty, checking cart_sessions as fallback');
+
+      // PRIORITY 2: Only if user_carts is empty, check cart_sessions
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('cart_sessions')
+        .select('cart_data, last_updated')
+        .eq('user_id', this.currentUser.id)
+        .order('last_updated', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (sessionError) {
+        console.error('[CART LOAD] Error loading cart_sessions:', sessionError);
+      }
+
+      if (sessionData?.cart_data) {
+        console.log(`[CART LOAD] ⚠️ Loaded from cart_sessions (fallback, last_updated: ${sessionData.last_updated})`);
+        const cartItems = sessionData.cart_data as unknown as CartItem[];
         return cartItems.map(item => ({
           ...item,
           product: standardizeProduct(item.product)
         }));
       }
       
+      console.log('[CART LOAD] No server cart found in either table');
       return [];
     } catch (error) {
       console.error('Error loading cart from server:', error);

@@ -26,10 +26,12 @@ interface Order {
 const OrderConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<any>(null);
-  const [childOrders, setChildOrders] = useState<any[]>([]);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [childOrders, setChildOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [pollingCount, setPollingCount] = useState(0);
+  const [pollingStartTime] = useState<number>(Date.now());
+  const [showProgressiveError, setShowProgressiveError] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -40,12 +42,23 @@ const OrderConfirmation = () => {
     fetchOrderDetails();
     
     // Poll for status updates every 3 seconds for up to 30 seconds
-    const interval = setInterval(fetchOrderDetails, 3000);
-    const timeout = setTimeout(() => clearInterval(interval), 30000);
+    const interval = setInterval(() => {
+      setPollingCount(prev => prev + 1);
+      fetchOrderDetails();
+    }, 3000);
+    
+    // Show progressive error after 15 seconds
+    const progressiveTimeout = setTimeout(() => {
+      if (!order) setShowProgressiveError(true);
+    }, 15000);
+    
+    // Stop polling after 30 seconds
+    const stopPollingTimeout = setTimeout(() => clearInterval(interval), 30000);
     
     return () => {
       clearInterval(interval);
-      clearTimeout(timeout);
+      clearTimeout(progressiveTimeout);
+      clearTimeout(stopPollingTimeout);
     };
   }, [orderId]);
 
@@ -71,14 +84,9 @@ const OrderConfirmation = () => {
           if (childResult.data) setChildOrders(childResult.data);
         }
         setLoading(false);
-      } else {
-        // No order found after all lookups - show helpful message instead of hanging
-        setLoading(false);
-        setError('Order not found yet, please refresh in a few seconds');
       }
     } catch (err: any) {
       console.error('Error fetching order:', err);
-      setError(err?.message || 'Failed to load order');
       setLoading(false);
     }
   };
@@ -119,11 +127,24 @@ const OrderConfirmation = () => {
     );
   };
 
-  if (loading) {
+  // Progressive loading state
+  if (loading || (!order && pollingCount < 4)) {
+    const timeElapsed = Math.floor((Date.now() - pollingStartTime) / 1000);
+    
     return (
       <SidebarLayout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <Skeleton className="h-12 w-64 mb-8" />
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+              <CheckCircle className="w-10 h-10 text-primary animate-pulse" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
+            <p className="text-muted-foreground">
+              {timeElapsed < 10 
+                ? "Creating your order..." 
+                : "Still processing... This may take a moment"}
+            </p>
+          </div>
           <Card className="p-6 space-y-4">
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />
@@ -134,17 +155,32 @@ const OrderConfirmation = () => {
     );
   }
 
-  if (error || !order) {
+  // Progressive error state
+  if (!order && showProgressiveError) {
+    const timeElapsed = Math.floor((Date.now() - pollingStartTime) / 1000);
+    
     return (
       <SidebarLayout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <Card className="p-8 text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Order Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              {error || "We couldn't find this order. It may not exist or you don't have permission to view it."}
+            <Clock className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">
+              {timeElapsed < 25 ? "Still Processing Your Order" : "Taking Longer Than Usual"}
+            </h2>
+            <p className="text-muted-foreground mb-2">
+              Your payment was successful! We're just finishing up your order.
             </p>
-            <Button onClick={() => navigate('/orders')}>View All Orders</Button>
+            <p className="text-sm text-muted-foreground mb-6">
+              This sometimes takes up to a minute. Your order will appear shortly.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => window.location.reload()} variant="default">
+                Refresh Page
+              </Button>
+              <Button onClick={() => navigate('/orders')} variant="outline">
+                View All Orders
+              </Button>
+            </div>
           </Card>
         </div>
       </SidebarLayout>

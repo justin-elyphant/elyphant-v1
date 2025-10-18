@@ -47,9 +47,9 @@ const OrderConfirmation = () => {
       fetchOrderDetails();
     }, 3000);
     
-    // Show progressive error after 15 seconds
+    // Show progressive error after 15 seconds if order still not loaded
     const progressiveTimeout = setTimeout(() => {
-      if (!order) setShowProgressiveError(true);
+      setShowProgressiveError(true);
     }, 15000);
     
     // Stop polling after 30 seconds

@@ -76,7 +76,8 @@ const OrderDetail = () => {
           
           // Smart address resolution for gift orders
           let displayShippingInfo = data.shipping_info || {};
-          let displayCustomerName = user?.user_metadata?.name || "Customer";
+          const shopperName = user?.user_metadata?.name || (data.shipping_info as any)?.name || "Customer";
+          let recipientName = shopperName;
 
           // For single-recipient gift orders, use recipient's address from delivery_groups
           if (data.has_multiple_recipients === false && 
@@ -95,7 +96,7 @@ const OrderDetail = () => {
               zip_code: recipientAddress.zip_code || recipientAddress.zipCode,
               country: recipientAddress.country || 'US'
             };
-            displayCustomerName = recipientAddress.name || 
+            recipientName = recipientAddress.name || 
               `${recipientAddress.first_name || ''} ${recipientAddress.last_name || ''}`.trim();
           }
           
@@ -115,7 +116,8 @@ const OrderDetail = () => {
             gifting_fee_description: pricingBreakdown.gifting_fee_description,
             items: data.order_items || [],
             shipping_info: displayShippingInfo,
-            customerName: displayCustomerName,
+            customerName: shopperName, // Always the person who placed the order
+            recipientName: recipientName, // The person receiving the items
             tracking_number: data.tracking_number || null,
             zinc_order_id: data.zinc_order_id || null,
             merchant_tracking_data: data.merchant_tracking_data,

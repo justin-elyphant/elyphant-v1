@@ -52,8 +52,8 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
       id: conn.id
     });
     
-    // Updated logic: Check for pending_invitation status OR has recipientEmail (gift invitations)
-    const isGiftInvitation = conn.status === 'pending_invitation' || (conn.recipientEmail && conn.recipientEmail.trim() !== '');
+    // Only include active gift invitations
+    const isGiftInvitation = conn.status === 'pending_invitation';
     const matches = isGiftInvitation;
     
     console.log(`🎯 [PendingTabContent] ${conn.name} - isGiftInvitation: ${isGiftInvitation}, matches: ${matches}`);
@@ -69,7 +69,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
     try {
       const { error } = await supabase
         .from('user_connections')
-        .delete()
+        .update({ status: 'rejected', updated_at: new Date().toISOString() })
         .eq('id', connectionId);
       
       if (error) throw error;

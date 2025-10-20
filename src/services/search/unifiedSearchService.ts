@@ -63,6 +63,8 @@ export const unifiedSearch = async (
         email: profile.email,
         profile_image: profile.profile_image,
         bio: profile.bio,
+        city: profile.city,
+        state: profile.state,
         connectionStatus: profile.connectionStatus,
         mutualConnections: profile.mutualConnections || 0,
         lastActive: profile.lastActive,
@@ -71,6 +73,8 @@ export const unifiedSearch = async (
         first_name: profile.name.split(' ')[0] || '',
         last_name: profile.name.split(' ').slice(1).join(' ') || ''
       }));
+      
+      console.log('🔍 [unifiedSearch] Mapped friends with location:', results.friends.map(f => ({ name: f.name, city: f.city, state: f.state })));
       
       console.log(`🔍 [unifiedSearch] Friend search completed: ${results.friends.length} results`);
       console.log('🔍 [unifiedSearch] Friend results formatted for UI:', results.friends);

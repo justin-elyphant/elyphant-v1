@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { useProfileData } from "./useProfileData";
 import { mapSettingsFormToDatabase } from "@/utils/profileDataMapper";
+import { isUsernameTaken } from "@/utils/usernameValidation";
 
 export const useGeneralSettingsForm = () => {
   const { user } = useAuth();
@@ -123,6 +124,38 @@ export const useGeneralSettingsForm = () => {
       setIsSaving(true);
       console.log("🔄 Submitting form data:", data);
       console.log("🔍 Form first_name:", data.first_name, "last_name:", data.last_name);
+      
+      // Check if username has changed and if it's already taken
+      const currentUsername = profileData?.username;
+      const newUsername = data.username?.trim();
+      
+      if (newUsername && newUsername !== currentUsername) {
+        console.log("🔍 Checking username availability:", newUsername);
+        
+        try {
+          const usernameTaken = await isUsernameTaken(newUsername, user.id);
+          
+          if (usernameTaken) {
+            toast.error("Username already taken", {
+              description: `The username "${newUsername}" is already in use. Please choose a different one.`
+            });
+            
+            // Set form error on the username field
+            form.setError("username", {
+              type: "manual",
+              message: "This username is already taken"
+            });
+            
+            return { success: false };
+          }
+        } catch (error) {
+          console.error("❌ Error checking username:", error);
+          toast.error("Unable to verify username availability", {
+            description: "Please try again in a moment."
+          });
+          return { success: false };
+        }
+      }
       
       // Use the enhanced mapper to convert form data to database format
       const databaseData = mapSettingsFormToDatabase(data);

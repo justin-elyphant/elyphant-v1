@@ -9,66 +9,40 @@ export interface EmployeeDetectionResult {
 
 export class EmployeeDetectionService {
   /**
-   * Determines if a user is an Elyphant employee based on email domain and/or profile type
+   * Determines if a user is an Elyphant employee using secure role-based check
    */
   static async detectEmployee(user: User | null): Promise<EmployeeDetectionResult> {
     if (!user?.email) {
       return { isEmployee: false, reason: 'none' };
     }
 
-    const isElyphantEmail = user.email.endsWith('@elyphant.com');
-    
-    // Quick check - if email domain matches, likely an employee
-    if (isElyphantEmail) {
-      // Also check database profile type for confirmation
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('profile_type')
-          .eq('id', user.id)
-          .single();
-
-        const isEmployeeProfile = profile?.profile_type === 'employee';
-        
-        if (isEmployeeProfile) {
-          return { 
-            isEmployee: true, 
-            reason: 'both',
-            profileType: profile.profile_type 
-          };
-        } else {
-          return { 
-            isEmployee: true, 
-            reason: 'email-domain',
-            profileType: profile?.profile_type 
-          };
-        }
-      } catch (error) {
-        console.warn('Employee detection: Could not fetch profile, using email domain only');
-        return { isEmployee: true, reason: 'email-domain' };
-      }
-    }
-
-    // Check if profile type indicates employee (fallback)
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('profile_type')
-        .eq('id', user.id)
-        .single();
+      // Check employee role using secure has_role function
+      const { data: hasEmployeeRole, error } = await supabase
+        .rpc('has_role', { 
+          _user_id: user.id, 
+          _role: 'employee' 
+        });
 
-      if (profile?.profile_type === 'employee') {
+      if (error) {
+        console.error('Employee detection error:', error);
+        return { isEmployee: false, reason: 'none' };
+      }
+
+      if (hasEmployeeRole) {
+        const isElyphantEmail = user.email.endsWith('@elyphant.com');
         return { 
           isEmployee: true, 
-          reason: 'profile-type',
-          profileType: profile.profile_type 
+          reason: isElyphantEmail ? 'both' : 'profile-type',
+          profileType: 'employee' 
         };
       }
-    } catch (error) {
-      console.warn('Employee detection: Could not fetch profile for non-elyphant email');
-    }
 
-    return { isEmployee: false, reason: 'none' };
+      return { isEmployee: false, reason: 'none' };
+    } catch (error) {
+      console.error('Employee detection: Unexpected error', error);
+      return { isEmployee: false, reason: 'none' };
+    }
   }
 
   /**

@@ -53,11 +53,14 @@ const VendorPortalAuth = () => {
       }
 
       if (data.user) {
-        // Check if user has vendor access
-        const { data: canAccess } = await supabase
-          .rpc('can_access_vendor_portal', { user_uuid: data.user.id });
+        // Check vendor role using secure has_role function
+        const { data: hasVendorRole } = await supabase
+          .rpc('has_role', { 
+            _user_id: data.user.id, 
+            _role: 'vendor' 
+          });
 
-        if (canAccess) {
+        if (hasVendorRole) {
           toast.success("Welcome back!");
           navigate("/vendor-management");
         } else {

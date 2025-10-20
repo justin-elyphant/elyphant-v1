@@ -34,21 +34,24 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
       try {
         console.log('VendorGuard: Checking vendor access for user:', user.email);
         
-        // Check if user can access vendor portal
-        const { data: canAccess, error } = await supabase
-          .rpc('can_access_vendor_portal', { user_uuid: user.id });
+        // Check vendor role using secure has_role function
+        const { data: hasVendorRole, error } = await supabase
+          .rpc('has_role', { 
+            _user_id: user.id, 
+            _role: 'vendor' 
+          });
 
         if (error) {
-          console.error('VendorGuard: Error checking vendor access:', error);
+          console.error('VendorGuard: Error checking vendor role:', error);
           setAccessStatus('denied');
           return;
         }
 
-        if (canAccess) {
+        if (hasVendorRole) {
           console.log('VendorGuard: Access approved for vendor');
           setAccessStatus('allowed');
         } else {
-          // Check if user has a vendor account but not approved
+          // Check if user has a vendor account but not approved yet
           const { data: vendorAccount, error: vendorError } = await supabase
             .from('vendor_accounts')
             .select('approval_status')

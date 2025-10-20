@@ -328,9 +328,11 @@ class UnifiedProfileService {
   }
 
   /**
-   * Get user's profile type (giftor/giftee)
+   * @deprecated Use user_roles table and has_role() function instead
+   * Get user's profile type (legacy - being phased out)
    */
   async getProfileType(): Promise<string | null> {
+    console.warn('getProfileType() is deprecated. Use user_roles table instead.');
     try {
       const profile = await this.getCurrentProfile();
       return profile?.profile_type ?? null;
@@ -341,9 +343,11 @@ class UnifiedProfileService {
   }
 
   /**
-   * Update user's profile type
+   * @deprecated Use user_roles table and has_role() function instead
+   * Update user's profile type (legacy - being phased out)
    */
   async setProfileType(profileType: 'giftor' | 'giftee'): Promise<{ success: boolean; error?: string }> {
+    console.warn('setProfileType() is deprecated. Use user_roles table instead.');
     return this.updateProfile({ profile_type: profileType });
   }
 

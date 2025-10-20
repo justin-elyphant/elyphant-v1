@@ -307,8 +307,8 @@ export const searchFriendsWithPrivacy = async (
           email: '', // Email not included for privacy
           profile_image: profile.profile_image || undefined,
           bio: profile.bio || undefined,
-          city: (profile as any).shipping_address?.city || undefined,
-          state: (profile as any).shipping_address?.state || undefined,
+          city: (profile as any).city || (profile as any).shipping_address?.city || undefined,
+          state: (profile as any).state || (profile as any).shipping_address?.state || undefined,
           connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
           mutualConnections: 0, // TODO: Implement mutual connections count
           privacyLevel: privacyLevel as 'public' | 'limited' | 'private',

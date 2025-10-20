@@ -178,7 +178,7 @@ const GeneralSettings = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-[calc(var(--bottom-nav-height,0px)+6rem)] md:pb-6">
       <div>
         <h2 className="text-2xl font-bold">Account Settings</h2>
         <p className="text-gray-600">Manage your profile information and preferences</p>
@@ -201,6 +201,16 @@ const GeneralSettings = () => {
           console.log("❌ Form validation errors:", errors);
           console.log("❌ Detailed validation errors:", JSON.stringify(errors, null, 2));
           console.log("❌ Form state:", form.formState);
+          
+          // Show toast with validation errors
+          const errorFields = Object.keys(errors);
+          const firstError = errors[errorFields[0] as keyof typeof errors];
+          
+          toast.error("Please fix the following errors:", {
+            description: errorFields.length > 0 
+              ? `${errorFields.join(", ")} - Check all required fields are filled correctly.`
+              : "Please check all fields and try again."
+          });
         })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-6">
@@ -251,9 +261,26 @@ const GeneralSettings = () => {
             </TabsContent>
           </Tabs>
           
+          {/* Show validation errors if any */}
+          {Object.keys(form.formState.errors).length > 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-semibold mb-2">Please fix the following errors:</div>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {Object.entries(form.formState.errors).map(([field, error]) => (
+                    <li key={field}>
+                      <strong>{field.replace(/_/g, ' ')}:</strong> {error?.message?.toString() || 'Invalid value'}
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {/* Hide save button for auto-saving tabs */}
           {activeTab !== "interests" && activeTab !== "dates" && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-4 sticky bottom-0 bg-background pb-4 border-t mt-6">
               {hasUnsavedChanges && (
                 <div className="flex items-center gap-2 text-sm text-amber-600">
                   <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
@@ -264,6 +291,8 @@ const GeneralSettings = () => {
               <Button 
                 type="submit" 
                 disabled={isSaving}
+                size="lg"
+                className="min-w-[200px]"
                 onClick={async (e) => {
                   console.log("🔘 Save button clicked!");
                   console.log("🔍 Active tab:", activeTab);

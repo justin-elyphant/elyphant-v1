@@ -5556,6 +5556,7 @@ export type Database = {
         }
         Returns: {
           bio: string
+          city: string
           email: string
           first_name: string
           id: string
@@ -5563,6 +5564,7 @@ export type Database = {
           name: string
           profile_image: string
           shipping_address: Json
+          state: string
           username: string
         }[]
       }

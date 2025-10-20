@@ -255,7 +255,7 @@ export function mapSettingsFormToDatabase(formData: any) {
     last_name: formData.last_name || "",
     name: `${formData.first_name || ""} ${formData.last_name || ""}`.trim() || formData.name || "",
     email: formData.email || "",
-    username: formData.username || "",
+    username: formData.username?.trim().toLowerCase() || "",
     bio: formData.bio || "",
     profile_image: formData.profile_image || null,
     dob: formData.date_of_birth ? 

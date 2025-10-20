@@ -35,11 +35,11 @@ export const formSchema = z.object({
   // Optional fields
   bio: z.string().optional(),
   address: z.object({
-    street: z.string().optional().default(""),
-    line2: z.string().optional(),
-    city: z.string().optional().default(""),
-    state: z.string().optional().default(""),
-    zipCode: z.string().optional().default(""),
+    street: z.string().nullable().optional(),
+    line2: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    state: z.string().nullable().optional(),
+    zipCode: z.string().nullable().optional(),
     country: z.string().optional().default("US"),
   }),
   interests: z.array(z.string()),

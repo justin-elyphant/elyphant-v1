@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 import { useProfileData } from "./useProfileData";
 import { mapSettingsFormToDatabase } from "@/utils/profileDataMapper";
-import { isUsernameTaken } from "@/utils/usernameValidation";
+import { isUsernameTaken, validateUsernameFormat } from "@/utils/usernameValidation";
 
 export const useGeneralSettingsForm = () => {
   const { user } = useAuth();
@@ -132,6 +132,21 @@ export const useGeneralSettingsForm = () => {
       if (newUsername && newUsername !== currentUsername) {
         console.log("🔍 Checking username availability:", newUsername);
         
+        // First validate format
+        const formatValidation = validateUsernameFormat(newUsername);
+        if (!formatValidation.isValid) {
+          toast.error("Invalid username format", {
+            description: formatValidation.error
+          });
+          form.setError("username", {
+            type: "manual",
+            message: formatValidation.error || "Invalid format"
+          });
+          setIsSaving(false);
+          return { success: false };
+        }
+        
+        // Then check availability
         try {
           const usernameTaken = await isUsernameTaken(newUsername, user.id);
           
@@ -140,12 +155,12 @@ export const useGeneralSettingsForm = () => {
               description: `The username "${newUsername}" is already in use. Please choose a different one.`
             });
             
-            // Set form error on the username field
             form.setError("username", {
               type: "manual",
               message: "This username is already taken"
             });
             
+            setIsSaving(false);
             return { success: false };
           }
         } catch (error) {
@@ -153,6 +168,7 @@ export const useGeneralSettingsForm = () => {
           toast.error("Unable to verify username availability", {
             description: "Please try again in a moment."
           });
+          setIsSaving(false);
           return { success: false };
         }
       }

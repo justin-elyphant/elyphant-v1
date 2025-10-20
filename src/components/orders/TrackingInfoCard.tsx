@@ -80,20 +80,7 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {carrierInfo && (
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{carrierInfo.logo}</span>
-              <div>
-                <p className="font-medium">{carrierInfo.name}</p>
-                <p className="text-sm text-muted-foreground">Shipping carrier</p>
-              </div>
-            </div>
-            <Badge variant="secondary">In Transit</Badge>
-          </div>
-        )}
-
-          <div className="space-y-3">
+        <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Tracking Number
@@ -113,48 +100,20 @@ const TrackingInfoCard = ({ order }: TrackingInfoCardProps) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                className="flex-1 min-w-0"
-                onClick={() => {
-                  if (carrierInfo?.url) {
-                    window.open(carrierInfo.url, '_blank');
-                  } else {
-                    toast.info("Tracking link not available for this carrier");
-                  }
-                }}
-              >
-                <ExternalLink className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Track Package</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="sm:w-auto flex-shrink-0"
-                onClick={() => {
-                  // Simulate opening map with delivery location
-                  toast.info("Opening delivery map...");
-                }}
-              >
-                <MapPin className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {/* Show fallback tracking option for Zinc orders */}
-            {carrierInfo?.fallbackUrl && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-muted-foreground"
-                onClick={() => {
-                  window.open(carrierInfo.fallbackUrl!, '_blank');
-                }}
-              >
-                Try Alternative Tracker
-              </Button>
-            )}
-          </div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              if (carrierInfo?.url) {
+                window.open(carrierInfo.url, '_blank');
+              } else {
+                toast.info("Tracking link not available for this carrier");
+              }
+            }}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Track Package
+          </Button>
         </div>
 
         {order.status === "shipped" && (

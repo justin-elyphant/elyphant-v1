@@ -373,23 +373,23 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     if (order) {
       console.log(`✅ Order ${order.id} updated for successful payment`);
       
-      // 📧 Trigger payment confirmation email
+      // 📧 Trigger order confirmation email (includes payment details)
       try {
-        console.log('📧 Triggering payment confirmation email...');
+        console.log('📧 Triggering order confirmation email...');
         const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
           body: {
-            eventType: 'payment_confirmed',
+            eventType: 'order_created',
             orderId: order.id
           }
         });
         
         if (emailError) {
-          console.error('⚠️ Failed to send payment confirmation email:', emailError);
+          console.error('⚠️ Failed to send order confirmation email:', emailError);
         } else {
-          console.log('✅ Payment confirmation email triggered');
+          console.log('✅ Order confirmation email triggered');
         }
       } catch (emailError) {
-        console.error('⚠️ Error triggering payment confirmation email:', emailError);
+        console.error('⚠️ Error triggering order confirmation email:', emailError);
       }
       
       // Check if this is a multi-recipient order and route accordingly

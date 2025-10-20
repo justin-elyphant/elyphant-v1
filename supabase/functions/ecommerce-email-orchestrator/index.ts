@@ -14,7 +14,6 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 interface EmailRequest {
   eventType: 
     | 'order_created' 
-    | 'payment_confirmed' 
     | 'order_status_changed' 
     | 'order_cancelled' 
     | 'user_welcomed' 
@@ -29,7 +28,6 @@ interface EmailRequest {
     | 'wishlist_welcome'
     | 'address_request'
     | 'nudge_reminder'
-    | 'order_receipt'
     | 'birthday_reminder_curated'
     | 'birthday_connection_no_autogift'
     | 'birthday_connection_with_autogift'
@@ -61,9 +59,6 @@ const handler = async (req: Request): Promise<Response> => {
     switch (eventType) {
       case 'order_created':
         result = await handleOrderConfirmation(supabase, orderId!);
-        break;
-      case 'payment_confirmed':
-        result = await handlePaymentConfirmation(supabase, orderId!);
         break;
       case 'order_status_changed':
         result = await handleOrderStatusUpdate(supabase, orderId!, customData?.status);
@@ -107,9 +102,6 @@ const handler = async (req: Request): Promise<Response> => {
       case 'nudge_reminder':
         result = await handleNudgeReminder(supabase, customData!);
         break;
-      case 'order_receipt':
-        result = await handleOrderReceipt(supabase, orderId!);
-        break;
       case 'birthday_reminder_curated':
         result = await handleBirthdayReminderCurated(supabase, customData!);
         break;
@@ -147,7 +139,9 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 async function handleOrderConfirmation(supabase: any, orderId: string) {
-  // Get order details
+  console.log(`📧 Starting order confirmation for order: ${orderId}`);
+  
+  // Get order details with payment information
   const { data: order, error } = await supabase
     .from('orders')
     .select('*')
@@ -158,49 +152,10 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
     throw new Error(`Order not found: ${orderId}`);
   }
 
-// Profile will be fetched separately using order.user_id
-
   // Check if confirmation email already sent
   if (order.confirmation_email_sent) {
     console.log(`Order confirmation already sent for ${orderId}`);
     return { skipped: true, reason: 'already_sent' };
-  }
-
-  // Get order confirmation template - check if we have one or create a basic fallback
-  let { data: template } = await supabase
-    .from('email_templates')
-    .select('*')
-    .eq('template_type', 'order_confirmation')
-    .eq('is_active', true)
-    .single();
-
-  // If no order_confirmation template exists, create a basic one
-  if (!template) {
-    const { data: newTemplate } = await supabase
-      .from('email_templates')
-      .insert({
-        template_type: 'order_confirmation',
-        name: 'Order Confirmation',
-        subject_template: 'Order Confirmation - {{order_number}}',
-        html_template: `
-          <h1>Thank you for your order!</h1>
-          <p>Dear {{customer_name}},</p>
-          <p>We've received your order #{{order_number}} for \${{total_amount}}.</p>
-          <p>Order Date: {{order_date}}</p>
-          <p>Track your order: <a href="{{order_tracking_url}}">View Order</a></p>
-          <p>Questions? Contact us at {{support_email}}</p>
-        `,
-        is_active: true,
-        created_by: '0478a7d7-9d59-40bf-954e-657fa28fe251'
-      })
-      .select()
-      .single();
-    
-    template = newTemplate;
-  }
-
-  if (!template) {
-    throw new Error('Order confirmation template not found');
   }
 
   // Fetch recipient profile
@@ -213,137 +168,223 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   if (profileError) {
     console.warn('Profile lookup error:', profileError.message);
   }
+  
   const recipientFirstName = profile?.first_name || profile?.name || 'Friend';
   const recipientEmail = profile?.email;
+  
   if (!recipientEmail) {
     throw new Error(`Recipient email not found for user ${order.user_id}`);
   }
 
-  // Parse order items from metadata
-  const orderItems = order.order_metadata?.items || [];
-  const formattedItems = orderItems.map((item: any) => ({
-    name: item.name || 'Product',
-    quantity: item.quantity || 1,
-    price: `$${(item.price || 0).toFixed(2)}`
-  }));
+  // Import the enhanced order confirmation template
+  const { orderConfirmationTemplate } = await import('./email-templates/order-confirmation.ts');
 
-  // Create styled HTML email with Elyphant gradient branding
-  const itemsHtml = formattedItems.map((item: any) => `
-    <tr>
-      <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333333; font-weight: 500;">
-          ${item.name}
-        </p>
-        <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #666666;">
-          Quantity: ${item.quantity}
-        </p>
-      </td>
-      <td align="right" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333333; font-weight: 600;">
-          ${item.price}
-        </p>
-      </td>
-    </tr>
-  `).join('');
+  // Fetch Stripe payment details
+  let paymentMethod = 'Card';
+  let paymentBrand = '';
+  let paymentLast4 = '';
+  let transactionId = '';
+  
+  if (order.stripe_payment_intent_id) {
+    try {
+      const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
+        Deno.env.get('STRIPE_SECRET_KEY') || '',
+        { apiVersion: '2023-10-16' }
+      );
+      
+      const paymentIntent = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
+      transactionId = paymentIntent.id;
+      
+      if (paymentIntent.charges?.data?.[0]?.payment_method_details) {
+        const pmDetails = paymentIntent.charges.data[0].payment_method_details;
+        if (pmDetails.card) {
+          paymentBrand = pmDetails.card.brand || 'Card';
+          paymentLast4 = pmDetails.card.last4 || '';
+          paymentMethod = `${paymentBrand.charAt(0).toUpperCase() + paymentBrand.slice(1)} •••• ${paymentLast4}`;
+        }
+      }
+    } catch (stripeError) {
+      console.warn('Failed to fetch Stripe payment details:', stripeError);
+    }
+  }
 
-  const shippingAddr = order.shipping_address?.address_line1 
-    ? `${order.shipping_address.address_line1}<br>${order.shipping_address.city}, ${order.shipping_address.state} ${order.shipping_address.zip_code}`
-    : 'Address on file';
+  // Calculate estimated delivery date (5-7 business days)
+  const estimatedDeliveryDate = new Date(order.created_at);
+  estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 7);
+  const estimatedDelivery = estimatedDeliveryDate.toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
 
-  const styledHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
-    <tr>
-      <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">
-                Elyphant
-              </h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-                Order Confirmed! 🎉
-              </h2>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${recipientFirstName}, thanks for your order! We're getting it ready and will notify you when it ships.
-              </p>
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
-                      Order Number
-                    </p>
-                    <p style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1a1a1a; font-weight: 600;">
-                      ${order.order_number}
-                    </p>
-                    <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
-                      Order Date
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
-                      ${new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              <h3 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-                Order Items
-              </h3>
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
-                ${itemsHtml}
-                <tr>
-                  <td align="right" style="padding: 20px 0 0 0;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999; text-transform: uppercase;">
-                      Total
-                    </p>
-                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #1a1a1a; font-weight: 700;">
-                      $${order.total_amount?.toFixed(2) || '0.00'}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              <h3 style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-                Shipping Address
-              </h3>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-                ${shippingAddr}
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
-                Questions? Contact us at <a href="mailto:hello@elyphant.ai" style="color: #9333ea;">hello@elyphant.ai</a>
-              </p>
-              <p style="margin: 10px 0 0 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">
-                © ${new Date().getFullYear()} Elyphant. All rights reserved.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+  // Check if multi-recipient order
+  const isMultiRecipient = order.has_multiple_recipients === true;
+  
+  let templateProps: any;
+  
+  if (isMultiRecipient) {
+    console.log(`🎁 Multi-recipient order detected, fetching child orders...`);
+    
+    // Fetch child orders
+    const { data: childOrders, error: childError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('parent_order_id', orderId)
+      .order('created_at', { ascending: true });
+    
+    if (childError) {
+      console.error('Failed to fetch child orders:', childError);
+    }
+    
+    const childOrdersData = childOrders || [];
+    const recipientCount = childOrdersData.length;
+    
+    // Build child orders array for template
+    const childOrdersFormatted = await Promise.all(childOrdersData.map(async (childOrder: any) => {
+      // Fetch order items for this child order
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', childOrder.id);
+      
+      const items = (orderItems || []).map((item: any) => ({
+        name: item.product_name || 'Product',
+        quantity: item.quantity || 1,
+        price: `$${(item.unit_price || 0).toFixed(2)}`,
+        image: item.product_image || null
+      }));
+      
+      // Extract recipient location (city, state, zip only for privacy)
+      const shippingInfo = childOrder.shipping_info || {};
+      const recipientLocation = `${shippingInfo.city || ''}, ${shippingInfo.state || ''} ${shippingInfo.zip_code || ''}`.trim();
+      
+      const childEstimatedDelivery = new Date(childOrder.created_at);
+      childEstimatedDelivery.setDate(childEstimatedDelivery.getDate() + 7);
+      
+      return {
+        recipient_name: shippingInfo.name || 'Recipient',
+        recipient_location: recipientLocation || 'Address on file',
+        items,
+        gift_message: childOrder.gift_options?.giftMessage || null,
+        estimated_delivery: childEstimatedDelivery.toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        order_details_url: `https://${Deno.env.get('SUPABASE_URL')?.replace('https://', '')}/orders/${childOrder.id}`
+      };
+    }));
+    
+    // Get all items across all child orders for the summary
+    const { data: allItems } = await supabase
+      .from('order_items')
+      .select('*')
+      .in('order_id', childOrdersData.map((co: any) => co.id));
+    
+    const formattedItems = (allItems || []).map((item: any) => ({
+      name: item.product_name || 'Product',
+      quantity: item.quantity || 1,
+      price: `$${(item.unit_price || 0).toFixed(2)}`,
+      image: item.product_image || null
+    }));
+    
+    templateProps = {
+      first_name: recipientFirstName,
+      order_number: order.order_number,
+      total_amount: `$${(order.total_amount || 0).toFixed(2)}`,
+      order_date: new Date(order.created_at).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      items: formattedItems,
+      shipping_address: '', // Not used for multi-recipient
+      payment_method: paymentMethod,
+      payment_brand: paymentBrand,
+      payment_last4: paymentLast4,
+      transaction_date: new Date(order.created_at).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }),
+      transaction_id: transactionId,
+      order_details_url: `https://${Deno.env.get('SUPABASE_URL')?.replace('https://', '')?.replace('.supabase.co', '')}/orders/${order.id}`,
+      subtotal: `$${(order.subtotal || 0).toFixed(2)}`,
+      shipping_cost: `$${(order.shipping_cost || 0).toFixed(2)}`,
+      tax_amount: order.tax_amount ? `$${order.tax_amount.toFixed(2)}` : null,
+      is_multi_recipient: true,
+      recipient_count: recipientCount,
+      child_orders: childOrdersFormatted
+    };
+  } else {
+    // Single-recipient order
+    console.log(`📦 Single-recipient order`);
+    
+    // Fetch order items
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+    
+    const formattedItems = (orderItems || []).map((item: any) => ({
+      name: item.product_name || 'Product',
+      quantity: item.quantity || 1,
+      price: `$${(item.unit_price || 0).toFixed(2)}`,
+      image: item.product_image || null
+    }));
+    
+    const shippingAddr = order.shipping_info?.address_line1 
+      ? `${order.shipping_info.name || ''}\n${order.shipping_info.address_line1}\n${order.shipping_info.city}, ${order.shipping_info.state} ${order.shipping_info.zip_code}\n${order.shipping_info.country || 'United States'}`
+      : 'Address on file';
+    
+    templateProps = {
+      first_name: recipientFirstName,
+      order_number: order.order_number,
+      total_amount: `$${(order.total_amount || 0).toFixed(2)}`,
+      order_date: new Date(order.created_at).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      items: formattedItems,
+      shipping_address: shippingAddr,
+      payment_method: paymentMethod,
+      payment_brand: paymentBrand,
+      payment_last4: paymentLast4,
+      transaction_date: new Date(order.created_at).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }),
+      transaction_id: transactionId,
+      order_details_url: `https://${Deno.env.get('SUPABASE_URL')?.replace('https://', '')?.replace('.supabase.co', '')}/orders/${order.id}`,
+      estimated_delivery: estimatedDelivery,
+      subtotal: `$${(order.subtotal || 0).toFixed(2)}`,
+      shipping_cost: `$${(order.shipping_cost || 0).toFixed(2)}`,
+      tax_amount: order.tax_amount ? `$${order.tax_amount.toFixed(2)}` : null,
+      is_multi_recipient: false
+    };
+  }
 
-  // Send email with styled template
+  // Generate HTML using the enhanced template
+  const htmlContent = orderConfirmationTemplate(templateProps);
+  
+  // Send email
   const emailResponse = await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [recipientEmail],
-    subject: `Order Confirmed! 🎉 - ${order.order_number}`,
-    html: styledHtml,
+    subject: isMultiRecipient 
+      ? `Order Confirmed! 🎉 ${templateProps.recipient_count} Gifts - Payment Received - Order #${order.order_number}`
+      : `Order Confirmed! 🎉 Payment Received - Order #${order.order_number}`,
+    html: htmlContent,
   });
+
+  console.log(`✅ Order confirmation email sent to ${recipientEmail}`);
 
   // Update order status and log event
   await Promise.all([
@@ -358,13 +399,16 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
         order_id: orderId,
         email_type: 'order_confirmation',
         recipient_email: recipientEmail,
-        template_id: template?.id,
-        template_variables: { first_name: recipientFirstName, order_number: order.order_number },
+        template_variables: { 
+          first_name: recipientFirstName, 
+          order_number: order.order_number,
+          is_multi_recipient: isMultiRecipient
+        },
         resend_message_id: emailResponse.data?.id
       })
   ]);
 
-  return { emailSent: true, messageId: emailResponse.data?.id };
+  return { emailSent: true, messageId: emailResponse.data?.id, isMultiRecipient };
 }
 
 async function handlePaymentConfirmation(supabase: any, orderId: string) {

@@ -9,9 +9,6 @@ export type { BaseTemplateProps } from './base-template.ts';
 export { orderConfirmationTemplate } from './order-confirmation.ts';
 export type { OrderConfirmationProps } from './order-confirmation.ts';
 
-export { paymentConfirmationTemplate } from './payment-confirmation.ts';
-export type { PaymentConfirmationProps } from './payment-confirmation.ts';
-
 export { welcomeEmailTemplate } from './welcome-email.ts';
 export type { WelcomeEmailProps } from './welcome-email.ts';
 

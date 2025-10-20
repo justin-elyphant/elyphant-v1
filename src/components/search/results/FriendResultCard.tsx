@@ -147,7 +147,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     }
   };
 
-  const shouldShowLocation = user && (friend.city || friend.state) && !friend.isPrivacyRestricted;
+  const shouldShowLocation = (friend.city || friend.state) ? true : false;
   const shouldShowBio = friend.bio && (friend.privacyLevel === 'public' || connectionStatus === 'connected');
 
   return (

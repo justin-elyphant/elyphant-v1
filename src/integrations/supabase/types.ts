@@ -3601,6 +3601,7 @@ export type Database = {
           ai_interaction_data: Json | null
           bio: string | null
           birth_year: number
+          city: string | null
           created_at: string | null
           data_sharing_settings: Json | null
           dob: string | null
@@ -3624,6 +3625,7 @@ export type Database = {
           signup_metadata: Json | null
           signup_source: Database["public"]["Enums"]["signup_source"] | null
           source_attribution: Json | null
+          state: string | null
           updated_at: string | null
           user_type: Database["public"]["Enums"]["user_type"] | null
           username: string
@@ -3637,6 +3639,7 @@ export type Database = {
           ai_interaction_data?: Json | null
           bio?: string | null
           birth_year: number
+          city?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
@@ -3660,6 +3663,7 @@ export type Database = {
           signup_metadata?: Json | null
           signup_source?: Database["public"]["Enums"]["signup_source"] | null
           source_attribution?: Json | null
+          state?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["user_type"] | null
           username: string
@@ -3673,6 +3677,7 @@ export type Database = {
           ai_interaction_data?: Json | null
           bio?: string | null
           birth_year?: number
+          city?: string | null
           created_at?: string | null
           data_sharing_settings?: Json | null
           dob?: string | null
@@ -3696,6 +3701,7 @@ export type Database = {
           signup_metadata?: Json | null
           signup_source?: Database["public"]["Enums"]["signup_source"] | null
           source_attribution?: Json | null
+          state?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["user_type"] | null
           username?: string

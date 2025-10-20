@@ -147,7 +147,7 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
     }
   };
 
-  const shouldShowEmail = user && friend.email && !friend.isPrivacyRestricted;
+  const shouldShowLocation = user && (friend.city || friend.state) && !friend.isPrivacyRestricted;
   const shouldShowBio = friend.bio && (friend.privacyLevel === 'public' || connectionStatus === 'connected');
 
   return (
@@ -172,8 +172,10 @@ const FriendResultCard: React.FC<FriendResultCardProps> = ({
           )}
         </div>
         
-        {shouldShowEmail && (
-          <p className="text-xs text-gray-500 truncate">{friend.email}</p>
+        {shouldShowLocation && (
+          <p className="text-xs text-gray-500 truncate">
+            {[friend.city, friend.state].filter(Boolean).join(', ')}
+          </p>
         )}
         
         {shouldShowBio && (

@@ -123,6 +123,31 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
             <dt>Total:</dt>
             <dd>${order.total?.toFixed(2)}</dd>
           </div>
+          
+          {/* Tracking Info if available */}
+          {(() => {
+            const trackingData = (order as any).merchant_tracking_data?.tracking?.[0];
+            const trackingNumber = order.tracking_number || trackingData?.tracking_number;
+            const carrier = trackingData?.carrier;
+            
+            if (!trackingNumber) return null;
+            
+            return (
+              <div className="pt-4 border-t space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tracking:</span>
+                  <span className="font-medium">{trackingNumber}</span>
+                </div>
+                {carrier && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Carrier:</span>
+                    <span className="font-medium">{carrier}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          
           <div className="pt-4 border-t">
             <Button 
               variant="outline" 

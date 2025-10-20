@@ -32,6 +32,20 @@ interface ZincWebhookPayload {
       quantity: number;
     }>;
   }>;
+  tracking?: Array<{
+    obtained_at: string;
+    product_id: string;
+    retailer_tracking_number?: string;
+    tracking_number?: string;
+    zinc_tracking_number?: string;
+    carrier: string;
+    delivery_status?: string;
+    tracking_url?: string;
+    retailer_tracking_url?: string;
+    product_ids?: string[];
+    merchant_order_id?: string;
+    delivery_proof_image?: string;
+  }>;
 }
 
 const supabase = createClient(
@@ -52,7 +66,7 @@ function mapZincStatusToOrderStatus(zincStatusType: string): string {
   return statusMap[zincStatusType] || 'processing';
 }
 
-function createTimelineEvents(statusUpdates: any[], merchantOrderIds: any[] = []): any[] {
+function createTimelineEvents(statusUpdates: any[], merchantOrderIds: any[] = [], trackingData: any[] = []): any[] {
   const events = statusUpdates.map(update => ({
     id: `zinc_${update.type}_${update._created_at}`,
     type: update.type,
@@ -83,6 +97,29 @@ function createTimelineEvents(statusUpdates: any[], merchantOrderIds: any[] = []
           source: 'merchant'
         });
       }
+    });
+  }
+
+  // Add tracking events from the tracking array
+  if (trackingData.length > 0) {
+    trackingData.forEach(track => {
+      events.push({
+        id: `tracking_${track.tracking_number}_${track.obtained_at}`,
+        type: 'tracking.obtained',
+        title: 'Tracking Number Obtained',
+        description: `Tracking available: ${track.tracking_number} via ${track.carrier}`,
+        timestamp: track.obtained_at,
+        status: track.delivery_status === 'Delivered' ? 'completed' : 'in_progress',
+        data: {
+          tracking_number: track.tracking_number,
+          carrier: track.carrier,
+          tracking_url: track.tracking_url,
+          retailer_tracking_url: track.retailer_tracking_url,
+          delivery_status: track.delivery_status,
+          product_id: track.product_id
+        },
+        source: 'zinc'
+      });
     });
   }
 
@@ -122,6 +159,10 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
   const latestUpdate = payload.status_updates[payload.status_updates.length - 1];
   const newStatus = mapZincStatusToOrderStatus(latestUpdate.type);
   
+  // Extract tracking information if available
+  const trackingData = payload.tracking || [];
+  const primaryTracking = trackingData[0]; // Get first tracking entry
+  
   // Check if this is an error response (request.failed, internal_error, or has error code)
   const isErrorResponse = latestUpdate.type === 'request.failed' || 
                           payload.code === 'internal_error' ||
@@ -130,13 +171,15 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
   // Create timeline events from status updates
   const timelineEvents = createTimelineEvents(
     payload.status_updates, 
-    payload.merchant_order_ids
+    payload.merchant_order_ids,
+    trackingData
   );
 
   // Prepare merchant tracking data
   const merchantTracking = {
     merchant_order_ids: payload.merchant_order_ids || [],
     delivery_dates: payload.delivery_dates || [],
+    tracking: trackingData,
     last_update: new Date().toISOString()
   };
 
@@ -148,6 +191,11 @@ async function updateOrderWithZincData(payload: ZincWebhookPayload) {
     last_zinc_update: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
+
+  // If we have tracking data, add it to the order
+  if (primaryTracking) {
+    updateData.tracking_number = primaryTracking.tracking_number || primaryTracking.zinc_tracking_number;
+  }
 
   // If error response, check if it's retryable
   if (isErrorResponse) {

@@ -17,12 +17,11 @@ export const formSchema = z.object({
   // Profile image is optional and can be null
   profile_image: z.string().nullable().optional(),
   
-  // Complete date of birth (mandatory in settings for consistency)
+  // Date of birth is now optional - only required during onboarding
   date_of_birth: z.date({
-    required_error: "Date of birth is required",
     invalid_type_error: "Please select a valid date"
-  }).refine((date) => {
-    if (!date) return false;
+  }).optional().refine((date) => {
+    if (!date) return true; // Allow empty
     const now = new Date();
     const age = now.getFullYear() - date.getFullYear();
     return age >= 13 && age <= 120;
@@ -36,12 +35,12 @@ export const formSchema = z.object({
   // Optional fields
   bio: z.string().optional(),
   address: z.object({
-    street: z.string().min(1, "Street address is required"),
+    street: z.string().optional().default(""),
     line2: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    zipCode: z.string().min(4, "Valid postal/zip code is required"),
-    country: z.string().min(1, "Country is required"),
+    city: z.string().optional().default(""),
+    state: z.string().optional().default(""),
+    zipCode: z.string().optional().default(""),
+    country: z.string().optional().default("US"),
   }),
   interests: z.array(z.string()),
   importantDates: z.array(z.object({

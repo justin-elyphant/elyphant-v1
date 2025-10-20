@@ -93,6 +93,8 @@ export const searchFriendsWithPrivacy = async (
           email,
           profile_image,
           bio,
+          city,
+          state,
           shipping_address
         `)
         .eq('email', cleanedSearchTerm)
@@ -112,6 +114,8 @@ export const searchFriendsWithPrivacy = async (
           email,
           profile_image,
           bio,
+          city,
+          state,
           shipping_address
         `)
         .eq('username', cleanedSearchTerm)
@@ -143,6 +147,8 @@ export const searchFriendsWithPrivacy = async (
             email,
             profile_image,
             bio,
+            city,
+            state,
             shipping_address
           `)
           .or(`name.ilike.%${cleanedSearchTerm}%,username.ilike.%${cleanedSearchTerm}%,first_name.ilike.%${cleanedSearchTerm}%,last_name.ilike.%${cleanedSearchTerm}%`)

@@ -3613,6 +3613,9 @@ export type Database = {
           gift_giving_preferences: Json | null
           gift_preferences: Json | null
           gifting_history: Json | null
+          has_given_gifts: boolean | null
+          has_purchased: boolean | null
+          has_wishlist: boolean | null
           id: string
           important_dates: Json | null
           interests: Json | null
@@ -3651,6 +3654,9 @@ export type Database = {
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null
+          has_given_gifts?: boolean | null
+          has_purchased?: boolean | null
+          has_wishlist?: boolean | null
           id: string
           important_dates?: Json | null
           interests?: Json | null
@@ -3689,6 +3695,9 @@ export type Database = {
           gift_giving_preferences?: Json | null
           gift_preferences?: Json | null
           gifting_history?: Json | null
+          has_given_gifts?: boolean | null
+          has_purchased?: boolean | null
+          has_wishlist?: boolean | null
           id?: string
           important_dates?: Json | null
           interests?: Json | null

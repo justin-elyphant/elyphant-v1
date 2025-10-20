@@ -11,6 +11,7 @@ export interface ZincSearchResponse {
   results: any[];
   error?: string;
   cached?: boolean;
+  needsConfiguration?: boolean;
 }
 
 export interface ZincProductDetail {
@@ -298,6 +299,17 @@ class EnhancedZincApiService {
 
       if (error) {
         console.error('Error calling get-products function:', error);
+        
+        // Check if it's a configuration issue (503)
+        if (error.message?.includes('503') || error.message?.includes('not configured')) {
+          console.warn('⚠️  Product search not configured - API key missing');
+          return {
+            results: [],
+            error: 'Product search temporarily unavailable. Please configure ZINC_API_KEY.',
+            needsConfiguration: true
+          };
+        }
+        
         return {
           results: [],
           error: `Product search failed: ${error.message}`

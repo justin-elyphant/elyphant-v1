@@ -8,29 +8,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const fetchApiKey = async () => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') 
+/**
+ * Get Zinc API key from environment variables (unified approach)
+ */
+const getZincApiKey = () => {
+  const apiKey = Deno.env.get('ZINC_API_KEY');
   
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing environment variables for Supabase connection')
-  }
-  
-  // Use service role key for system access to API keys
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data, error } = await supabase
-  .from('api_keys')
-  .select('key')
-  .limit(1)
-  .single();
-  
-  if(error) {
-    console.error('Error fetching API key: ', error);
+  if (!apiKey) {
+    console.error('❌ ZINC_API_KEY not found in environment variables');
     return null;
   }
-  return data.key;
-}
+  
+  console.log('✅ Zinc API key loaded from environment');
+  return apiKey;
+};
 
 // Process best seller indicators from Zinc response
 const processBestSellerData = (product: any) => {
@@ -516,17 +507,27 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
   if (method === 'POST') {
-    const api_key = await fetchApiKey();
-    console.log('api_key', api_key);
-    if(!api_key) {
-      console.error('No API key found in database');
-      return new Response(JSON.stringify({ 
-        error: 'API configuration missing - Zinc API key not found' 
-      }), { 
-        status: 500, 
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      });
+    // Get API key from environment (unified approach)
+    const api_key = getZincApiKey();
+    
+    if (!api_key) {
+      console.error('⚠️  No Zinc API key configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Product search is not configured. Please add ZINC_API_KEY to Supabase secrets.',
+          products: [],
+          results: [],
+          total: 0,
+          needsConfiguration: true
+        }),
+        { 
+          status: 503, // Service Unavailable (not 500 Internal Server Error)
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        }
+      );
     }
+    
+    console.log('✅ Using Zinc API key from environment');
     
     const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, electronics = false, brandCategories = false, filters = {}} = await req.json();
     

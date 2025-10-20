@@ -28,6 +28,29 @@ const mockBrands = [
   "Starbucks", "McDonald's", "Coca-Cola", "Pepsi", "Netflix", "Spotify"
 ];
 
+/**
+ * Detect if a query looks like a person's name
+ * Simple heuristics: multiple words with capital letters, common name patterns
+ */
+const isLikelyPersonName = (query: string): boolean => {
+  const trimmed = query.trim();
+  
+  // Check if it contains multiple words with capital letters (e.g., "Justin Me", "John Smith")
+  const words = trimmed.split(/\s+/);
+  if (words.length >= 2) {
+    const hasCapitalizedWords = words.filter(word => /^[A-Z]/.test(word)).length >= 2;
+    if (hasCapitalizedWords) return true;
+  }
+  
+  // Single capitalized word that's not a common product term
+  const productTerms = ['nike', 'apple', 'samsung', 'laptop', 'phone', 'watch', 'bag', 'shoes'];
+  if (words.length === 1 && /^[A-Z]/.test(trimmed) && !productTerms.includes(trimmed.toLowerCase())) {
+    return true;
+  }
+  
+  return false;
+};
+
 export const unifiedSearch = async (
   query: string,
   options: SearchOptions = {}
@@ -84,7 +107,8 @@ export const unifiedSearch = async (
   }
 
   // Search products using protected marketplace service
-  if (includeProducts && query.length >= 1) {
+  // Skip product search if query looks like a person name
+  if (includeProducts && query.length >= 1 && !isLikelyPersonName(query)) {
     try {
       console.log('🔍 [unifiedSearch] Searching products via UnifiedMarketplaceService...');
       const productResults = await unifiedMarketplaceService.searchProducts(query, {
@@ -98,6 +122,8 @@ export const unifiedSearch = async (
     } catch (error) {
       console.error('🔍 [unifiedSearch] Error searching products:', error);
     }
+  } else if (isLikelyPersonName(query)) {
+    console.log('🔍 [unifiedSearch] Skipping product search - query appears to be a person name');
   }
 
   // Search brands (mock for now)

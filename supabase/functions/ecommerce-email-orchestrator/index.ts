@@ -1194,8 +1194,8 @@ async function handleWishlistWelcome(supabase: any, customData: any) {
   // Generate email HTML using the enhanced template
   const htmlContent = welcomeWithSuggestionsTemplate({
     first_name: userFirstName,
-    dashboard_url: `${FRONTEND_URL}/dashboard`,
-    profile_url: `${FRONTEND_URL}/settings`,
+    dashboard_url: `${FRONTEND_URL}/dashboard?mode=signin`,
+    profile_url: `${FRONTEND_URL}/settings?mode=signin`,
     suggested_products: suggestedProducts
   });
 

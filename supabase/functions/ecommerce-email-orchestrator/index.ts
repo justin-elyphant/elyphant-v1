@@ -1192,30 +1192,106 @@ async function handleAccountDeletion(supabase: any, customData: any) {
 }
 
 async function handleWishlistWelcome(supabase: any, customData: any) {
-  console.log("🎁 Sending wishlist welcome email");
+  console.log("🎁 Sending personalized welcome email with product suggestions");
   
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #2563eb;">Welcome to Your Wishlist!</h1>
-      <p>Hi ${customData.userName},</p>
-      <p>Your wishlist has been created! Start adding items you love.</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${customData.wishlistUrl}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">View Your Wishlist</a>
-      </div>
-    </body>
-    </html>
-  `;
+  const { 
+    userEmail, 
+    userFirstName, 
+    interests = [] 
+  } = customData;
+
+  // Import the new template
+  const { welcomeWithSuggestionsTemplate } = await import('./email-templates/index.ts');
+
+  const FRONTEND_URL = Deno.env.get('FRONTEND_URL') || 'https://elyphant.ai';
+  
+  let suggestedProducts: Array<{
+    title: string;
+    price: number;
+    image: string;
+    product_url: string;
+  }> = [];
+
+  // Fetch personalized products from Zinc API based on interests
+  try {
+    // Build search query from user interests
+    const searchQuery = interests.length > 0 
+      ? `${interests.slice(0, 2).join(' ')} best selling`
+      : 'popular gifts trending';
+
+    console.log(`🔍 Fetching products for query: "${searchQuery}"`);
+
+    // Call get-products edge function (with 5-second timeout)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const productsResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/get-products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+      },
+      body: JSON.stringify({
+        query: searchQuery,
+        page: 1,
+        limit: 6,
+        filters: {
+          minPrice: 10,
+          maxPrice: 100
+        }
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (productsResponse.ok) {
+      const data = await productsResponse.json();
+      
+      // Transform products for email template
+      if (data.results && data.results.length > 0) {
+        suggestedProducts = data.results.slice(0, 4).map((p: any) => ({
+          title: p.title || 'Product',
+          price: p.price || 0,
+          image: p.image || 'https://via.placeholder.com/150',
+          product_url: `${FRONTEND_URL}/marketplace?product=${p.product_id || ''}`
+        }));
+        
+        console.log(`✅ Successfully fetched ${suggestedProducts.length} products`);
+      } else {
+        console.log('⚠️ No products returned from Zinc API');
+      }
+    } else {
+      console.log(`⚠️ Zinc API returned status ${productsResponse.status}`);
+    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.log('⏱️ Product fetch timeout - sending email without products');
+    } else {
+      console.log('⚠️ Product fetch error - sending email without products:', error.message);
+    }
+  }
+
+  // Generate email HTML using the enhanced template
+  const htmlContent = welcomeWithSuggestionsTemplate({
+    first_name: userFirstName,
+    dashboard_url: `${FRONTEND_URL}/dashboard`,
+    profile_url: `${FRONTEND_URL}/settings`,
+    suggested_products: suggestedProducts
+  });
 
   await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
-    to: [customData.email],
-    subject: "Your Wishlist is Ready! - Elyphant",
+    to: [userEmail],
+    subject: suggestedProducts.length > 0 
+      ? "Welcome to Elyphant! Here are some gift ideas to get you started 🎁" 
+      : "Welcome to Elyphant! 🎁",
     html: htmlContent,
   });
 
-  return { success: true };
+  console.log(`✅ Welcome email sent to ${userEmail} with ${suggestedProducts.length} product suggestions`);
+
+  return { success: true, productsSent: suggestedProducts.length };
 }
 
 async function handleAddressRequest(supabase: any, customData: any) {

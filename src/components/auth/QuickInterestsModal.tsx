@@ -7,11 +7,19 @@ import { Check, ArrowRight, Plus } from "lucide-react";
 import { useProfileUpdate } from "@/contexts/profile/useProfileUpdate";
 import { toast } from "sonner";
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
+import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
 interface QuickInterestsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
+  userData?: {
+    userId: string;
+    userEmail: string;
+    userFirstName: string;
+    userLastName?: string;
+    birthYear?: number;
+  };
 }
 
 const QUICK_INTERESTS = [
@@ -28,12 +36,14 @@ const QUICK_INTERESTS = [
 const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   isOpen,
   onClose,
-  onComplete
+  onComplete,
+  userData
 }) => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateProfile } = useProfileUpdate();
+  const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev => 
@@ -72,15 +82,43 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   };
 
   const handleContinue = async () => {
-    if (selectedInterests.length === 0) {
-      handleSkip();
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      await updateProfile({ interests: selectedInterests });
-      toast.success(`Added ${selectedInterests.length} interests to your profile!`);
+      // Save interests to profile (empty array if none selected)
+      const interestsToSave = selectedInterests.length > 0 ? selectedInterests : [];
+      await updateProfile({ interests: interestsToSave });
+      
+      if (selectedInterests.length > 0) {
+        toast.success(`Added ${selectedInterests.length} interests to your profile!`);
+      }
+
+      // Trigger welcome email with user data and interests
+      if (userData) {
+        try {
+          const emailInterests = selectedInterests.length > 0 ? selectedInterests : ['popular gifts', 'trending'];
+          
+          console.log('🎁 Triggering welcome email with interests:', emailInterests);
+          
+          await scheduleDelayedWelcomeEmail({
+            userId: userData.userId,
+            userEmail: userData.userEmail,
+            userFirstName: userData.userFirstName,
+            userLastName: userData.userLastName,
+            birthYear: userData.birthYear,
+            interests: emailInterests,
+            inviterName: undefined,
+            profileData: {
+              gender: undefined,
+              lifestyle: undefined,
+              favoriteCategories: undefined
+            }
+          });
+        } catch (emailError) {
+          console.error('Non-blocking: Welcome email scheduling failed:', emailError);
+          // Don't block the completion flow for email issues
+        }
+      }
+      
       onClose();
       onComplete();
     } catch (error) {

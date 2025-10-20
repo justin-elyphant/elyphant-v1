@@ -82,24 +82,7 @@ const SignUpForm = () => {
             
             toast.success("Account created! Complete your profile to get started.");
             
-            // Schedule delayed welcome email (non-blocking)
-            try {
-              await scheduleDelayedWelcomeEmail({
-                userId: data.user.id,
-                userEmail: values.email,
-                userFirstName: values.name.split(' ')[0] || values.name,
-                userLastName: values.name.split(' ').slice(1).join(' ') || undefined,
-                inviterName: undefined,
-                profileData: {
-                  gender: undefined,
-                  lifestyle: undefined,
-                  favoriteCategories: undefined
-                }
-              });
-            } catch (emailError) {
-              console.error('Non-blocking: Welcome email scheduling failed:', emailError);
-              // Don't block signup flow for email issues
-            }
+            // Welcome email will be triggered AFTER interests are collected in QuickInterestsModal
             
             // Set flag for new signup and profile completion needed
             localStorage.setItem("newSignUp", "true");

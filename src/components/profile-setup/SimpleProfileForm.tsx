@@ -225,26 +225,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       
       await updateProfile(profileData);
       
-      // Trigger welcome wishlist email now that profile is complete
-      try {
-        await triggerWelcomeWishlist({
-          userId: user.id,
-          userEmail: user.email || '',
-          userFirstName: firstName,
-          userLastName: lastName || undefined,
-          birthYear: birthYear,
-          interests: [],
-          inviterName: undefined,
-          profileData: {
-            gender: undefined,
-            lifestyle: undefined,
-            favoriteCategories: undefined
-          }
-        });
-      } catch (emailError) {
-        console.error('Non-blocking: Welcome wishlist email failed:', emailError);
-        // Don't block the profile completion flow
-      }
+      // Welcome email will be triggered AFTER interests are collected in QuickInterestsModal
       
       toast.success("Profile completed successfully!", {
         description: isAddressVerified ? "Your address has been verified for delivery" : "You can verify your address later in settings"

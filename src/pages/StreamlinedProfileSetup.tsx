@@ -83,6 +83,13 @@ const StreamlinedProfileSetup = () => {
         isOpen={showInterestsModal}
         onClose={handleInterestsClose}
         onComplete={handleInterestsComplete}
+        userData={user ? {
+          userId: user.id,
+          userEmail: user.email || '',
+          userFirstName: user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || '',
+          userLastName: user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || undefined,
+          birthYear: undefined // Will be available after profile completion
+        } : undefined}
       />
     </MainLayout>
   );

@@ -32,3 +32,6 @@ export type { ConnectionInvitationProps } from './connection-invitation.ts';
 
 export { giftPurchasedNotificationTemplate } from './gift-purchased-notification.ts';
 export type { GiftPurchasedNotificationProps } from './gift-purchased-notification.ts';
+
+export { welcomeWithSuggestionsTemplate } from './welcome-with-suggestions.ts';
+export type { WelcomeWithSuggestionsProps } from './welcome-with-suggestions.ts';

@@ -16,8 +16,7 @@ interface EmailRequest {
     | 'order_created' 
     | 'order_status_changed' 
     | 'order_cancelled' 
-    | 'user_welcomed' 
-    | 'cart_abandoned' 
+    | 'cart_abandoned'
     | 'post_purchase_followup' 
     | 'auto_gift_approval' 
     | 'gift_invitation'
@@ -65,9 +64,6 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'order_cancelled':
         result = await handleOrderCancellation(supabase, orderId!);
-        break;
-      case 'user_welcomed':
-        result = await handleWelcomeEmail(supabase, userId!);
         break;
       case 'cart_abandoned':
         result = await handleAbandonedCart(supabase, cartSessionId!);
@@ -554,83 +550,6 @@ async function handleOrderCancellation(supabase: any, orderId: string) {
       template_variables: variables,
       resend_message_id: emailResponse.data?.id
     });
-
-  return { emailSent: true, messageId: emailResponse.data?.id };
-}
-
-async function handleWelcomeEmail(supabase: any, userId: string) {
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error || !profile) {
-    throw new Error(`Profile not found: ${userId}`);
-  }
-
-  const { data: template } = await supabase
-    .from('email_templates')
-    .select('*')
-    .eq('template_type', 'enhanced_welcome')
-    .eq('is_active', true)
-    .single();
-
-  if (!template) {
-    throw new Error('Welcome email template not found');
-  }
-
-  // Create styled welcome email with Elyphant branding
-  const styledHtml = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
-          <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Welcome to Elyphant! 🎁</h2>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${profile.first_name || profile.name || 'Friend'}, we're thrilled to have you here!
-              </p>
-              <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center" style="padding: 20px 0;">
-                    <a href="${Deno.env.get('SITE_URL')}/dashboard" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600;">
-                      Go to Dashboard
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-
-  const emailResponse = await resend.emails.send({
-    from: "Elyphant <hello@elyphant.ai>",
-    to: [profile.email],
-    subject: 'Welcome to Elyphant! 🎁',
-    html: styledHtml,
-  });
 
   return { emailSent: true, messageId: emailResponse.data?.id };
 }

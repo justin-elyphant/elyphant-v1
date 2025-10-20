@@ -71,12 +71,6 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   };
   const handleMessageClick = () => {
     if (isAnonymousUser) {
-      // Redirect to signup with intent
-      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-        type: 'message',
-        targetUserId: userData.id,
-        targetName: userData.name
-      }));
       navigateInIframe('/signup');
       return;
     }
@@ -87,12 +81,6 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
 
   const handleConnectClick = () => {
     if (isAnonymousUser) {
-      // Redirect to signup with intent to connect
-      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-        type: 'connect',
-        targetUserId: userData.id,
-        targetName: userData.name
-      }));
       navigateInIframe('/signup');
       return;
     }
@@ -292,13 +280,6 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
                   <Link 
                     to="/signup" 
                     className="text-sm underline hover:no-underline"
-                    onClick={() => {
-                      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                        type: 'view_profile',
-                        targetUserId: userData.id,
-                        targetName: userData.name
-                      }));
-                    }}
                   >
                     Sign up to connect and message
                   </Link>

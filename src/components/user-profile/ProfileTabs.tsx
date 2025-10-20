@@ -196,13 +196,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   <a 
                     href="/signup"
                     className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700"
-                    onClick={() => {
-                      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                        type: 'view_wishlists',
-                        targetUserId: profile?.id,
-                        targetName: profile?.name
-                      }));
-                    }}
                   >
                     View Wishlists
                   </a>

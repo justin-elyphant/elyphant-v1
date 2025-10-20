@@ -6,7 +6,6 @@ import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { publicProfileService } from "@/services/publicProfileService";
 import { connectionService } from "@/services/connectionService";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
-import { usePostSignupAction } from "@/hooks/usePostSignupAction";
 import UnifiedProfileLayout from "@/components/layout/UnifiedProfileLayout";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import ProfileShell from "@/components/user-profile/ProfileShell";
@@ -147,9 +146,6 @@ const Profile: React.FC = () => {
     profileName: publicProfile?.name || "this user",
     isSharedProfile: !isAuthenticated && !!publicProfile
   });
-
-  // Post-signup action handling
-  usePostSignupAction();
 
   // Loading states
   if (authLoading) {

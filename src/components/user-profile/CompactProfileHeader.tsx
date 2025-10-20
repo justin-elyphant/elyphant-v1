@@ -60,11 +60,6 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
 
   const handleMessageClick = () => {
     if (isAnonymousUser) {
-      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-        type: 'message',
-        targetUserId: userData.id,
-        targetName: userData.name
-      }));
       navigateInIframe('/signup');
       return;
     }
@@ -73,11 +68,6 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
 
   const handleConnectClick = () => {
     if (isAnonymousUser) {
-      sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-        type: 'connect',
-        targetUserId: userData.id,
-        targetName: userData.name
-      }));
       navigateInIframe('/signup');
       return;
     }
@@ -307,13 +297,6 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           <Link 
             to="/signup" 
             className="text-sm text-white underline hover:no-underline"
-            onClick={() => {
-              sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-                type: 'view_profile',
-                targetUserId: userData.id,
-                targetName: userData.name
-              }));
-            }}
           >
             Sign up to connect and message
           </Link>

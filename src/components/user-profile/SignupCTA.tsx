@@ -13,12 +13,6 @@ const SignupCTA: React.FC<SignupCTAProps> = ({ profileName, onDismiss }) => {
   const navigate = useNavigate();
 
   const handleSignup = () => {
-    // Store intent in sessionStorage to match other components
-    sessionStorage.setItem('elyphant-post-signup-action', JSON.stringify({
-      type: 'follow',
-      targetProfile: profileName,
-      redirectUrl: window.location.href
-    }));
     navigate('/signup');
   };
 

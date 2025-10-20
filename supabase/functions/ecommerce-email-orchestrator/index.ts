@@ -411,122 +411,6 @@ async function handleOrderConfirmation(supabase: any, orderId: string) {
   return { emailSent: true, messageId: emailResponse.data?.id, isMultiRecipient };
 }
 
-async function handlePaymentConfirmation(supabase: any, orderId: string) {
-  const { data: order, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('id', orderId)
-    .single();
-
-  if (error || !order) {
-    throw new Error(`Order not found: ${orderId}`);
-  }
-
-  // Check if payment confirmation email already sent
-  if (order.payment_confirmation_sent) {
-    console.log(`Payment confirmation already sent for ${orderId}`);
-    return { skipped: true, reason: 'already_sent' };
-  }
-
-  // Only send if payment succeeded
-  if (order.payment_status !== 'succeeded') {
-    return { skipped: true, reason: 'payment_not_succeeded' };
-  }
-
-  // Fetch recipient profile
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('name, first_name, email')
-    .eq('id', order.user_id)
-    .maybeSingle();
-
-  if (profileError) {
-    console.warn('Profile lookup error:', profileError.message);
-  }
-  const recipientEmail = profile?.email;
-  if (!recipientEmail) {
-    throw new Error(`Recipient email not found for user ${order.user_id}`);
-  }
-
-  // Styled payment confirmation email with Elyphant branding
-  const styledHtml = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
-          <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">Payment Received ✅</h2>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${profile?.first_name || profile?.name || 'Friend'}, your payment has been successfully processed.
-              </p>
-              
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border: 1px solid #86efac;">
-                <tr>
-                  <td align="center">
-                    <div style="width: 48px; height: 48px; background-color: #22c55e; border-radius: 50%; margin-bottom: 16px; display: inline-block; text-align: center; line-height: 48px; font-size: 24px;">✓</div>
-                    <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #166534; font-weight: 600;">Payment Successful</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Amount Paid</p>
-                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; color: #166534; font-weight: 700;">$${Number(order.total_amount).toFixed(2)}</p>
-                    <p style="margin: 15px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #16a34a; text-transform: uppercase;">Order Number</p>
-                    <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">${order.order_number}</p>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #666666;">
-                A receipt has been sent to your email. If you have any questions, please contact our support team.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
-
-  const emailResponse = await resend.emails.send({
-    from: "Elyphant <hello@elyphant.ai>",
-    to: [recipientEmail],
-    subject: `Payment Received - Order ${order.order_number}`,
-    html: styledHtml,
-  });
-
-  await Promise.all([
-    supabase
-      .from('orders')
-      .update({ payment_confirmation_sent: true })
-      .eq('id', orderId),
-    
-    supabase
-      .from('order_email_events')
-      .insert({
-        order_id: orderId,
-        email_type: 'payment_confirmation',
-        recipient_email: recipientEmail,
-        resend_message_id: emailResponse.data?.id
-      })
-  ]);
-
-  return { emailSent: true, messageId: emailResponse.data?.id };
-}
-
 async function handleOrderStatusUpdate(supabase: any, orderId: string, newStatus: string) {
   const { data: order, error } = await supabase
     .from('orders')
@@ -1388,13 +1272,6 @@ async function handleNudgeReminder(supabase: any, customData: any) {
   });
 
   return { success: true };
-}
-
-async function handleOrderReceipt(supabase: any, orderId: string) {
-  console.log("📧 Sending order receipt");
-  
-  // Reuse order confirmation logic
-  return await handleOrderConfirmation(supabase, orderId);
 }
 
 // ============================================

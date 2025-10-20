@@ -363,6 +363,47 @@ const OrderConfirmation = () => {
           </div>
         </Card>
 
+        {/* Shipping Address - Single Recipient Only */}
+        {!isMultiRecipient && (
+          <Card className="p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+            <div className="text-sm">
+              {(() => {
+                // Check if single-recipient gift order
+                if (order.cart_data?.has_multiple_recipients === false && 
+                    order.cart_data?.deliveryGroups?.length > 0) {
+                  const recipient = order.cart_data.deliveryGroups[0];
+                  const addr = recipient.shippingAddress;
+                  
+                  return (
+                    <>
+                      <p className="font-medium">
+                        {addr.name || `${addr.first_name || ''} ${addr.last_name || ''}`.trim() || recipient.connectionName}
+                      </p>
+                      <p>{addr.address_line1 || addr.address}</p>
+                      {addr.address_line2 && <p>{addr.address_line2}</p>}
+                      <p>{addr.city}, {addr.state} {addr.zip_code || addr.zipCode}</p>
+                      <p>{addr.country || 'United States'}</p>
+                    </>
+                  );
+                }
+                
+                // Otherwise use shipping_info
+                const shippingInfo = order.cart_data?.shippingInfo || {};
+                return (
+                  <>
+                    <p className="font-medium">{shippingInfo.name || 'Customer'}</p>
+                    <p>{shippingInfo.address_line1 || shippingInfo.address}</p>
+                    {shippingInfo.address_line2 && <p>{shippingInfo.address_line2}</p>}
+                    <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip_code || shippingInfo.zipCode}</p>
+                    <p>{shippingInfo.country || 'United States'}</p>
+                  </>
+                );
+              })()}
+            </div>
+          </Card>
+        )}
+
         {/* Actions */}
         <div className="flex gap-4">
           <Button onClick={() => navigate('/orders')} variant="default" className="flex-1">

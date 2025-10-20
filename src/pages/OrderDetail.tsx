@@ -74,6 +74,31 @@ const OrderDetail = () => {
           // Get complete pricing breakdown with backward compatibility
           const pricingBreakdown = getOrderPricingBreakdown(data);
           
+          // Smart address resolution for gift orders
+          let displayShippingInfo = data.shipping_info || {};
+          let displayCustomerName = user?.user_metadata?.name || "Customer";
+
+          // For single-recipient gift orders, use recipient's address from delivery_groups
+          if (data.has_multiple_recipients === false && 
+              data.delivery_groups && 
+              Array.isArray(data.delivery_groups) &&
+              data.delivery_groups.length > 0 && 
+              (data.delivery_groups[0] as any)?.shippingAddress) {
+            
+            const recipientAddress = (data.delivery_groups[0] as any).shippingAddress;
+            displayShippingInfo = {
+              name: recipientAddress.name || `${recipientAddress.first_name || ''} ${recipientAddress.last_name || ''}`.trim(),
+              address_line1: recipientAddress.address_line1 || recipientAddress.address,
+              address_line2: recipientAddress.address_line2 || recipientAddress.addressLine2,
+              city: recipientAddress.city,
+              state: recipientAddress.state,
+              zip_code: recipientAddress.zip_code || recipientAddress.zipCode,
+              country: recipientAddress.country || 'US'
+            };
+            displayCustomerName = recipientAddress.name || 
+              `${recipientAddress.first_name || ''} ${recipientAddress.last_name || ''}`.trim();
+          }
+          
           // Transform the data to match the expected format with complete pricing breakdown
           const transformedOrder = {
             id: data.id,
@@ -89,12 +114,15 @@ const OrderDetail = () => {
             gifting_fee_name: pricingBreakdown.gifting_fee_name,
             gifting_fee_description: pricingBreakdown.gifting_fee_description,
             items: data.order_items || [],
-            shipping_info: data.shipping_info || {},
-            customerName: (data.shipping_info as any)?.name || user?.user_metadata?.name || "Customer",
+            shipping_info: displayShippingInfo,
+            customerName: displayCustomerName,
             tracking_number: data.tracking_number || null,
             zinc_order_id: data.zinc_order_id || null,
             merchant_tracking_data: data.merchant_tracking_data,
-            zinc_timeline_events: data.zinc_timeline_events
+            zinc_timeline_events: data.zinc_timeline_events,
+            // Pass through for ShippingInfoCard to use
+            has_multiple_recipients: data.has_multiple_recipients,
+            delivery_groups: data.delivery_groups
           };
           setOrder(transformedOrder);
         }

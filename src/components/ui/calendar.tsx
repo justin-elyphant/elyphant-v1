@@ -48,7 +48,7 @@ function Calendar({
         <SelectTrigger className="w-[120px] h-8 text-sm font-medium border-none bg-transparent hover:bg-muted/50">
           <SelectValue placeholder={months[month.getMonth()]} />
         </SelectTrigger>
-        <SelectContent className="z-50 bg-background border border-border shadow-lg">
+        <SelectContent className="z-50 bg-background border border-border shadow-lg max-h-[200px] overflow-y-auto">
           {months.map((monthName, index) => (
             <SelectItem key={index} value={index.toString()}>
               {monthName}

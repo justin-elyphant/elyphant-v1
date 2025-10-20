@@ -80,6 +80,6 @@ export const useUnifiedProfile = (): UseUnifiedProfileReturn => {
     refetch,
     updateProfile,
     hasCompletedOnboarding: profile?.onboarding_completed ?? false,
-    profileType: profile?.profile_type ?? null,
+    profileType: profile?.user_type ?? null, // Updated to use user_type instead of deprecated profile_type
   };
 };

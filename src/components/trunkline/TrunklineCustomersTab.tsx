@@ -132,7 +132,7 @@ const TrunklineCustomersTab = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {customer.profile_type || 'Standard'}
+                          {customer.user_type || 'shopper'}
                         </Badge>
                       </TableCell>
                       <TableCell>

@@ -203,7 +203,14 @@ const ProfileImageUpload = ({
             <AvatarImage src={preview} alt={name} />
           ) : (
             <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-              {name?.substring(0, 2).toUpperCase() || "?"}
+              {(() => {
+                if (!name) return "?";
+                const parts = name.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                  return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+                }
+                return name.substring(0, 2).toUpperCase();
+              })()}
             </AvatarFallback>
           )}
         </Avatar>

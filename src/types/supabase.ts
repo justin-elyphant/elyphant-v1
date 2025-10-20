@@ -17,6 +17,8 @@ export type Profile = {
   id: string;
   user_id?: string;
   name?: string;
+  first_name?: string;
+  last_name?: string;
   username?: string;
   email: string;
   profile_image?: string | null;

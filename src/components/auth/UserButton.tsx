@@ -53,7 +53,23 @@ const UserButton = () => {
     }
   }, [user?.id, profile?.id, checkDataIntegrity]); // Add checkDataIntegrity dependency
   
-  const userInitials = user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
+  // Get user initials from first and last name, fallback to email
+  const getUserInitials = () => {
+    const firstName = profile?.first_name || user?.user_metadata?.first_name;
+    const lastName = profile?.last_name || user?.user_metadata?.last_name;
+    
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    
+    if (firstName) {
+      return firstName.substring(0, 2).toUpperCase();
+    }
+    
+    return user?.email ? user.email.substring(0, 2).toUpperCase() : "GG";
+  };
+  
+  const userInitials = getUserInitials();
   
   // Extract user's first name with fallback logic
   const getUserFirstName = () => {

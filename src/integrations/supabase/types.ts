@@ -4456,6 +4456,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_search_history: {
         Row: {
           created_at: string
@@ -5456,6 +5483,13 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_valid_shipping_address: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -5653,6 +5687,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "vendor" | "employee" | "customer"
       signup_source:
         | "header_cta"
         | "vendor_portal"
@@ -5788,6 +5823,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "vendor", "employee", "customer"],
       signup_source: [
         "header_cta",
         "vendor_portal",

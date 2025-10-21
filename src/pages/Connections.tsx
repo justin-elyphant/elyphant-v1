@@ -88,6 +88,34 @@ const Connections = () => {
   const urlTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(urlTab === 'pending' ? 'pending' : "friends");
   
+  // Handle auto-accept from email link
+  useEffect(() => {
+    const acceptConnectionId = searchParams.get('accept');
+    
+    if (acceptConnectionId && user) {
+      console.log('🔗 [Connections] Auto-accepting connection from email link:', acceptConnectionId);
+      
+      import('@/services/connections/connectionService')
+        .then(({ acceptConnectionRequest }) => {
+          return acceptConnectionRequest(acceptConnectionId);
+        })
+        .then(result => {
+          if (result.success) {
+            toast.success("Connection request accepted! Welcome to your network! 🎉");
+            setActiveTab('friends');
+            window.history.replaceState({}, '', '/connections');
+            if (refreshPendingConnections) refreshPendingConnections();
+          } else {
+            toast.error("Unable to accept connection request. Please try manually.");
+          }
+        })
+        .catch(err => {
+          console.error('Error auto-accepting connection:', err);
+          toast.error("Failed to accept connection. Please try from the Pending tab.");
+        });
+    }
+  }, [user, searchParams, refreshPendingConnections]);
+  
   const [filters, setFilters] = useState({
     relationship: 'all',
     verificationStatus: 'all'

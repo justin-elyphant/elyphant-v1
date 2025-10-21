@@ -17,6 +17,8 @@ import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { AddConnectionFAB } from "@/components/connections/AddConnectionFAB";
 import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
 import { RelationshipType } from "@/types/connections";
+import { useAuth } from "@/contexts/auth";
+import { toast } from "sonner";
 import "@/styles/connections-mobile.css";
 
 export const MobileConnectionsPage = () => {
@@ -25,6 +27,7 @@ export const MobileConnectionsPage = () => {
   // Add error boundary try-catch
   try {
     const isMobile = useIsMobile();
+    const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("friends");
     const [isVoiceListening, setIsVoiceListening] = useState(false);
@@ -35,6 +38,35 @@ export const MobileConnectionsPage = () => {
     const searchInputRef = useRef<HTMLInputElement>(null);
     
     console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
+    
+    // Handle auto-accept from email link
+    React.useEffect(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const acceptConnectionId = searchParams.get('accept');
+      
+      if (acceptConnectionId && user) {
+        console.log('🔗 [MobileConnectionsPage] Auto-accepting connection from email link:', acceptConnectionId);
+        
+        import('@/services/connections/connectionService')
+          .then(({ acceptConnectionRequest }) => {
+            return acceptConnectionRequest(acceptConnectionId);
+          })
+          .then(result => {
+            if (result.success) {
+              toast.success("Connection accepted! 🎉");
+              setActiveTab('friends');
+              window.history.replaceState({}, '', '/connections');
+              if (refreshPendingConnections) refreshPendingConnections();
+            } else {
+              toast.error("Unable to accept connection. Please try manually.");
+            }
+          })
+          .catch(err => {
+            console.error('Error auto-accepting connection:', err);
+            toast.error("Failed to accept connection.");
+          });
+      }
+    }, [user]);
   
   const {
     friends,

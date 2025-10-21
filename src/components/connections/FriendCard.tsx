@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Connection, RelationshipType } from "@/types/connections";
 import { getRelationshipIcon, getRelationshipLabel } from "./RelationshipUtils";
 import { AutoGiftToggle } from "./AutoGiftToggle";
+import { Sparkles } from "lucide-react";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
 import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
@@ -106,6 +107,13 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
                   {/* Auto-Gift Status Badge - Next to name like a verified badge */}
                   {permissionResult && !permissionLoading && (
                     <AutoGiftStatusBadge status={permissionResult.status} className="text-[10px] px-1.5 py-0.5 h-4" />
+                  )}
+                  {/* Gift Badge - Shows if connection has pending gift */}
+                  {(friend as any).hasPendingGift && (
+                    <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0.5 h-4">
+                      <Sparkles className="h-2.5 w-2.5" />
+                      Gift
+                    </Badge>
                   )}
                 </div>
                 <CardDescription>{friend.username}</CardDescription>

@@ -28,6 +28,9 @@ export interface Connection {
   recipientEmail?: string; // Email for pending connections
   isIncoming?: boolean; // For incoming connection requests
   status?: string; // Connection status (pending, pending_invitation, accepted, etc.)
+  hasPendingGift?: boolean; // Gift context from database
+  giftOccasion?: string; // Gift occasion (birthday, christmas, etc.)
+  giftMessage?: string; // Optional message with the gift
 }
 
 export type ConnectionRequest = {

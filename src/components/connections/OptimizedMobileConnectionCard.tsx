@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Gift, UserPlus, Check, X, MoreHorizontal } from "lucide-react";
+import { MessageCircle, Gift, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
 import { Connection } from "@/types/connections";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
@@ -179,6 +179,13 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
                 {connection.name}
               </h3>
               {getStatusBadge()}
+              {/* Gift Badge for mobile cards */}
+              {(connection as any).hasPendingGift && (
+                <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0.5 h-4">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Gift
+                </Badge>
+              )}
             </div>
             
             <p className="text-sm text-muted-foreground truncate mb-1">

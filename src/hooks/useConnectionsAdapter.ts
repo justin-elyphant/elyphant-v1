@@ -22,7 +22,7 @@ export const useConnectionsAdapter = () => {
       // First get the accepted connections - use simple query without problematic joins
       const { data: connections, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, has_pending_gift, gift_occasion, gift_message')
         .or(`user_id.eq.${currentUser.user.id},connected_user_id.eq.${currentUser.user.id}`)
         .eq('status', 'accepted');
 
@@ -222,7 +222,7 @@ export const useConnectionsAdapter = () => {
 
           console.log(`🔍 [useConnectionsAdapter] Privacy status for ${displayName}:`, dataStatus);
 
-          return {
+           return {
             id: otherUserId,
             connectionId: conn.id, // Add connectionId for deletion
             name: displayName,
@@ -234,7 +234,10 @@ export const useConnectionsAdapter = () => {
             relationship: conn.relationship_type as RelationshipType,
             dataStatus,
             bio: otherProfile?.bio || '',
-            connectionDate: conn.created_at
+            connectionDate: conn.created_at,
+            hasPendingGift: conn.has_pending_gift || false,
+            giftOccasion: conn.gift_occasion,
+            giftMessage: conn.gift_message
           };
         })
         .filter((friend): friend is NonNullable<typeof friend> => friend !== null); // Remove null entries from duplicates
@@ -258,7 +261,7 @@ export const useConnectionsAdapter = () => {
       // Query 1: Get outgoing pending invitations (where user_id matches current user)
       const { data: outgoingInvitations, error: outgoingError } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name, has_pending_gift, gift_occasion, gift_message')
         .eq('user_id', currentUser.user.id)
         .in('status', ['pending', 'pending_invitation']);
 
@@ -270,7 +273,7 @@ export const useConnectionsAdapter = () => {
       // Query 2: Get incoming connection requests (where connected_user_id matches current user)
       const { data: incomingRequests, error: incomingError } = await supabase
         .from('user_connections')
-        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name')
+        .select('id, user_id, connected_user_id, status, relationship_type, created_at, pending_recipient_email, pending_recipient_name, has_pending_gift, gift_occasion, gift_message')
         .eq('connected_user_id', currentUser.user.id)
         .eq('status', 'pending');
 

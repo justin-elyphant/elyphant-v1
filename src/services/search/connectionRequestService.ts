@@ -192,10 +192,7 @@ export const cancelConnectionRequest = async (requestId: string): Promise<{ succ
     
     const { error } = await supabase
       .from('user_connections')
-      .update({ 
-        status: 'rejected',
-        updated_at: new Date().toISOString() 
-      })
+      .update({ status: 'rejected' })
       .eq('id', requestId);
 
     if (error) {

@@ -21,6 +21,8 @@ interface EmailRequest {
     | 'auto_gift_approval' 
     | 'gift_invitation'
     | 'connection_invitation'
+    | 'connection_accepted'
+    | 'connection_welcome'
     | 'password_reset'
     | 'password_changed'
     | 'account_deletion'
@@ -79,6 +81,12 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'connection_invitation':
         result = await handleConnectionInvitation(supabase, customData!);
+        break;
+      case 'connection_accepted':
+        result = await handleConnectionAccepted(supabase, customData!);
+        break;
+      case 'connection_welcome':
+        result = await handleConnectionWelcome(supabase, customData!);
         break;
       case 'password_reset':
         result = await handlePasswordReset(supabase, customData!);
@@ -946,11 +954,14 @@ async function handleGiftInvitation(supabase: any, customData: any) {
 async function handleConnectionInvitation(supabase: any, customData: any) {
   console.log('📧 Sending connection invitation email:', customData);
   
-  // Extract data from customData (supports both legacy and new format)
+  // Import template
+  const { connectionInvitationTemplate } = await import('./email-templates/index.ts');
+  
+  // Extract data from customData (supports both queue metadata and direct customData)
   const senderName = customData.sender_name || customData.senderName || 'Someone';
   const recipientEmail = customData.recipient_email || customData.recipientEmail;
   const recipientName = customData.recipient_name || customData.recipientName || 'there';
-  const message = customData.message || customData.customMessage || "I'd like to send you a gift and connect on Elyphant!";
+  const message = customData.message || customData.customMessage;
   const connectionId = customData.connection_id || customData.connectionId;
   
   // Build invitation URL
@@ -959,76 +970,106 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
     ? `${baseUrl}/connections?accept=${connectionId}`
     : `${baseUrl}/auth?signup=true`;
   
-  const styledHtml = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px;">
-          <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">Elyphant</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">${senderName} is sending you a gift! 🎁</h2>
-              <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #666666;">
-                Hi ${recipientName}!
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #333333; line-height: 24px;">
-                <strong>${senderName}</strong> wants to send you a thoughtful gift and connect with you on Elyphant. Accept the connection to receive your gift and start sharing wishlists!
-              </p>
-              
-              ${message ? `
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #9333ea; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Personal Message</p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic; line-height: 22px;">"${message}"</p>
-                  </td>
-                </tr>
-              </table>
-              ` : ''}
-              
-              <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td align="center" style="padding: 20px 0;">
-                    <a href="${invitationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">Accept Gift & Connect</a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #999999; line-height: 20px;">
-                New to Elyphant? Join our community to share wishlists, never miss special occasions, and make gift-giving effortless!
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #999999;">© ${new Date().getFullYear()} Elyphant. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+  // Use extracted template
+  const htmlContent = connectionInvitationTemplate({
+    sender_name: senderName,
+    recipient_name: recipientName,
+    invitation_url: invitationUrl,
+    custom_message: message
+  });
 
   await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [recipientEmail],
-    subject: `${senderName} is sending you a gift on Elyphant! 🎁`,
-    html: styledHtml,
+    subject: `${senderName} invited you to connect on Elyphant! 🎉`,
+    html: htmlContent,
   });
 
   console.log('✅ Connection invitation email sent successfully');
+  return { success: true };
+}
+
+async function handleConnectionAccepted(supabase: any, customData: any) {
+  console.log('📧 Sending connection accepted email:', customData);
+  
+  // Import template
+  const { connectionAcceptedTemplate } = await import('./email-templates/index.ts');
+  
+  // Extract data (from database trigger metadata)
+  const senderName = customData.sender_name || 'there';
+  const acceptorName = customData.acceptor_name || 'Your connection';
+  const senderEmail = customData.sender_email || customData.recipientEmail;
+  
+  const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
+  const profileUrl = `${baseUrl}/connections`;
+  
+  const htmlContent = connectionAcceptedTemplate({
+    sender_name: senderName,
+    acceptor_name: acceptorName,
+    profile_url: profileUrl
+  });
+
+  // Query sender email if not provided in metadata
+  let recipientEmail = senderEmail;
+  if (!recipientEmail && customData.connection_id) {
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('user_id, profiles!user_connections_user_id_fkey(email)')
+      .eq('id', customData.connection_id)
+      .single();
+    
+    recipientEmail = connection?.profiles?.email;
+  }
+
+  if (!recipientEmail) {
+    console.error('❌ No recipient email found for connection accepted notification');
+    return { success: false, error: 'No recipient email' };
+  }
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [recipientEmail],
+    subject: `${acceptorName} accepted your connection! 🎉`,
+    html: htmlContent,
+  });
+
+  console.log('✅ Connection accepted email sent successfully');
+  return { success: true };
+}
+
+async function handleConnectionWelcome(supabase: any, customData: any) {
+  console.log('📧 Sending connection welcome email:', customData);
+  
+  // Import template
+  const { connectionWelcomeTemplate } = await import('./email-templates/index.ts');
+  
+  // Extract data (from database trigger metadata)
+  const recipientName = customData.recipient_name || 'there';
+  const newConnectionName = customData.new_connection_name || 'Your new connection';
+  const recipientEmail = customData.recipient_email || customData.recipientEmail;
+  
+  const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
+  const connectionsUrl = `${baseUrl}/connections`;
+  
+  const htmlContent = connectionWelcomeTemplate({
+    recipient_name: recipientName,
+    new_connection_name: newConnectionName,
+    connections_url: connectionsUrl
+  });
+
+  if (!recipientEmail) {
+    console.error('❌ No recipient email found for connection welcome');
+    return { success: false, error: 'No recipient email' };
+  }
+
+  await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [recipientEmail],
+    subject: `Welcome to Elyphant, ${recipientName}! 🎊`,
+    html: htmlContent,
+  });
+
+  console.log('✅ Connection welcome email sent successfully');
   return { success: true };
 }
 

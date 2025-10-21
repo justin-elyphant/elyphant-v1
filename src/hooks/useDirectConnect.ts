@@ -73,64 +73,20 @@ export const useDirectConnect = (targetUserId?: string) => {
       return;
     }
     
-    console.log('🔗 [useDirectConnect] Starting connection request for:', targetUserId);
+    console.log('🔗 [useDirectConnect] Using unified connection service');
     setConnectState(prev => ({ ...prev, loading: true }));
     
     try {
-      const { data: currentUser, error: authError } = await supabase.auth.getUser();
+      // Use unified connection service
+      const { sendConnectionRequest: unifiedSendRequest } = await import('@/services/connections/connectionService');
+      const result = await unifiedSendRequest(targetUserId, 'friend');
       
-      if (authError) {
-        console.error('🔗 [useDirectConnect] Auth error:', authError);
-        toast.error(`Authentication failed: ${authError.message}`);
-        setConnectState(prev => ({ ...prev, loading: false }));
-        return;
-      }
-      
-      if (!currentUser.user) {
-        console.error('🔗 [useDirectConnect] No authenticated user found');
-        toast.error('Please log in to send connection requests');
+      if (!result.success) {
+        toast.error(result.error?.message || 'Failed to send connection request');
         setConnectState(prev => ({ ...prev, loading: false }));
         return;
       }
 
-      console.log('🔗 [useDirectConnect] Authenticated user:', currentUser.user.id);
-
-      // Check for existing connection
-      const { data: existingConnection } = await supabase
-        .from('user_connections')
-        .select('status')
-        .or(`and(user_id.eq.${currentUser.user.id},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${currentUser.user.id})`)
-        .maybeSingle();
-
-      if (existingConnection) {
-        console.log('🔗 [useDirectConnect] Connection already exists:', existingConnection.status);
-        toast.error(`Connection already exists with status: ${existingConnection.status}`);
-        setConnectState(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      console.log('🔗 [useDirectConnect] Inserting connection request...');
-
-      const { data, error } = await supabase
-        .from('user_connections')
-        .insert({
-          user_id: currentUser.user.id,
-          connected_user_id: targetUserId,
-          relationship_type: 'friend',
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('🔗 [useDirectConnect] Database error:', error);
-        toast.error(`Failed to send connection request: ${error.message}`);
-        setConnectState(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      console.log('🔗 [useDirectConnect] Connection request successful:', data);
-      
       setConnectState(prev => ({ 
         ...prev, 
         isPending: true,

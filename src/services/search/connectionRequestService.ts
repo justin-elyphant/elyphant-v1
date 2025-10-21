@@ -131,6 +131,11 @@ export const rejectConnectionRequest = async (requestId: string): Promise<{ succ
   }
 };
 
+/**
+ * Send a connection nudge/reminder
+ * Note: Regular connection invitations are now handled automatically via database triggers.
+ * This function is only for manual nudges/reminders to existing pending connections.
+ */
 export const sendConnectionNudge = async (connectionId: string, customMessage?: string): Promise<{ success: boolean; error?: string }> => {
   try {
     console.log('📡 [connectionRequestService] Sending connection nudge for:', connectionId);
@@ -173,7 +178,7 @@ export const sendConnectionNudge = async (connectionId: string, customMessage?: 
       throw nudgeError;
     }
 
-    // Call the orchestrator for nudge reminder
+    // Manual nudge reminder (separate from automated connection invitations)
     const { error: sendError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
         eventType: 'nudge_reminder',

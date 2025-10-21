@@ -57,71 +57,17 @@ export const searchFriends = async (query: string, currentUserId?: string): Prom
   }
 };
 
+/**
+ * Send a connection request to another user
+ * Email notifications are now handled automatically via database triggers
+ * @deprecated Use the unified connectionService instead
+ */
 export const sendConnectionRequest = async (targetUserId: string, relationshipType: string = 'friend') => {
-  console.log('🔗 [friendSearchService] Starting connection request:', { targetUserId, relationshipType });
+  console.log('🔗 [friendSearchService - DEPRECATED] Use connectionService.sendConnectionRequest instead');
   
-  try {
-    // Enhanced authentication validation
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError) {
-      console.error('🔗 [friendSearchService] Auth error:', authError);
-      return { success: false, error: new Error(`Authentication failed: ${authError.message}`) };
-    }
-    
-    if (!user) {
-      console.error('🔗 [friendSearchService] No user found in auth');
-      return { success: false, error: new Error('User not authenticated') };
-    }
-
-    console.log('🔗 [friendSearchService] Authenticated user:', user.id);
-
-    // Check for existing connection to prevent duplicates
-    const { data: existingConnection } = await supabase
-      .from('user_connections')
-      .select('status')
-      .or(`and(user_id.eq.${user.id},connected_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},connected_user_id.eq.${user.id})`)
-      .maybeSingle();
-
-    if (existingConnection) {
-      console.log('🔗 [friendSearchService] Connection already exists:', existingConnection.status);
-      return { 
-        success: false, 
-        error: new Error(`Connection already exists with status: ${existingConnection.status}`) 
-      };
-    }
-
-    console.log('🔗 [friendSearchService] Inserting connection request...');
-    
-    const { data, error } = await supabase
-      .from('user_connections')
-      .insert({
-        user_id: user.id,
-        connected_user_id: targetUserId,
-        relationship_type: relationshipType,
-        status: 'pending'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('🔗 [friendSearchService] Database error:', error);
-      return { 
-        success: false, 
-        error: new Error(`Database error: ${error.message} (Code: ${error.code})`) 
-      };
-    }
-
-    console.log('🔗 [friendSearchService] Connection request successful:', data);
-    return { success: true, data };
-    
-  } catch (error: any) {
-    console.error('🔗 [friendSearchService] Unexpected error:', error);
-    return { 
-      success: false, 
-      error: new Error(`Unexpected error: ${error.message || error}`) 
-    };
-  }
+  // Import and use unified service
+  const { sendConnectionRequest: unifiedSendRequest } = await import('@/services/connections/connectionService');
+  return unifiedSendRequest(targetUserId, relationshipType as any);
 };
 
 export const checkConnectionStatus = async (currentUserId: string, targetUserId: string): Promise<FriendSearchResult['connectionStatus']> => {

@@ -35,3 +35,9 @@ export type { GiftPurchasedNotificationProps } from './gift-purchased-notificati
 
 export { welcomeWithSuggestionsTemplate } from './welcome-with-suggestions.ts';
 export type { WelcomeWithSuggestionsProps } from './welcome-with-suggestions.ts';
+
+export { connectionAcceptedTemplate } from './connection-accepted.ts';
+export type { ConnectionAcceptedProps } from './connection-accepted.ts';
+
+export { connectionWelcomeTemplate } from './connection-welcome.ts';
+export type { ConnectionWelcomeProps } from './connection-welcome.ts';

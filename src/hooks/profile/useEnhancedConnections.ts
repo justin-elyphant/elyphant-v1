@@ -224,6 +224,10 @@ export const useEnhancedConnections = () => {
     fetchEnhancedConnections();
   }, [fetchEnhancedConnections]);
 
+  /**
+   * Send a connection request using the unified connection service
+   * Email notifications are handled automatically via database triggers
+   */
   const sendConnectionRequest = async (connectedUserId: string, relationshipType: string) => {
     if (!user) {
       toast.error("You must be logged in to send a connection request");
@@ -231,35 +235,24 @@ export const useEnhancedConnections = () => {
     }
     
     try {
-      const { data: canFollow } = await supabase
+      const { data: canConnect } = await supabase
         .rpc('can_user_connect', {
           requester_id: user.id,
           target_id: connectedUserId
         });
         
-      if (!canFollow) {
+      if (!canConnect) {
         toast.error("Unable to connect with this user");
         return null;
       }
       
-      const { data, error } = await supabase
-        .from('user_connections')
-        .insert({
-          user_id: user.id,
-          connected_user_id: connectedUserId,
-          relationship_type: relationshipType,
-          status: relationshipType === 'follow' ? 'accepted' : 'pending',
-          data_access_permissions: {
-            shipping_address: true,
-            dob: true,
-            email: true,
-            gift_preferences: false
-          }
-        })
-        .select()
-        .single();
+      // Use unified connection service (handles email automatically via triggers)
+      const { sendConnectionRequest: unifiedSendRequest } = await import('@/services/connections/connectionService');
+      const result = await unifiedSendRequest(connectedUserId, relationshipType as any);
       
-      if (error) throw error;
+      if (!result.success) {
+        throw result.error || new Error('Failed to send connection request');
+      }
       
       toast.success(
         relationshipType === 'follow' 
@@ -267,7 +260,7 @@ export const useEnhancedConnections = () => {
           : "Connection request sent"
       );
       
-      return data;
+      return result.data;
     } catch (err) {
       console.error("Error sending connection request:", err);
       toast.error("Failed to send connection request");
@@ -275,6 +268,10 @@ export const useEnhancedConnections = () => {
     }
   };
 
+  /**
+   * Accept a connection request using the unified connection service
+   * Acceptance emails are handled automatically via database triggers
+   */
   const acceptConnectionRequest = async (connectionId: string) => {
     if (!user) {
       toast.error("You must be logged in to accept a connection request");
@@ -282,19 +279,15 @@ export const useEnhancedConnections = () => {
     }
     
     try {
-      const { data, error } = await supabase
-        .from('user_connections')
-        .update({ status: 'accepted' })
-        .eq('id', connectionId)
-        .eq('connected_user_id', user.id)
-        .eq('status', 'pending')
-        .select()
-        .single();
+      // Use unified connection service (handles emails automatically via triggers)
+      const { acceptConnectionRequest: unifiedAccept } = await import('@/services/connections/connectionService');
+      const result = await unifiedAccept(connectionId);
       
-      if (error) throw error;
+      if (!result.success) {
+        throw result.error || new Error('Failed to accept connection request');
+      }
       
-      toast.success("Connection request accepted");
-      return data;
+      return result.data;
     } catch (err) {
       console.error("Error accepting connection request:", err);
       toast.error("Failed to accept connection request");
@@ -302,6 +295,9 @@ export const useEnhancedConnections = () => {
     }
   };
 
+  /**
+   * Reject a connection request using the unified connection service
+   */
   const rejectConnectionRequest = async (connectionId: string) => {
     if (!user) {
       toast.error("You must be logged in to reject a connection request");
@@ -309,19 +305,15 @@ export const useEnhancedConnections = () => {
     }
     
     try {
-      const { data, error } = await supabase
-        .from('user_connections')
-        .update({ status: 'rejected' })
-        .eq('id', connectionId)
-        .eq('connected_user_id', user.id)
-        .eq('status', 'pending')
-        .select()
-        .single();
+      // Use unified connection service
+      const { rejectConnectionRequest: unifiedReject } = await import('@/services/connections/connectionService');
+      const result = await unifiedReject(connectionId);
       
-      if (error) throw error;
+      if (!result.success) {
+        throw result.error || new Error('Failed to reject connection request');
+      }
       
-      toast.success("Connection request rejected");
-      return data;
+      return result.data;
     } catch (err) {
       console.error("Error rejecting connection request:", err);
       toast.error("Failed to reject connection request");

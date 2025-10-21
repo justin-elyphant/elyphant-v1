@@ -4329,6 +4329,9 @@ export type Database = {
           created_at: string | null
           data_access_permissions: Json
           follow_type: string | null
+          gift_message: string | null
+          gift_occasion: string | null
+          has_pending_gift: boolean | null
           id: string
           invitation_sent_at: string | null
           invitation_token: string | null
@@ -4350,6 +4353,9 @@ export type Database = {
           created_at?: string | null
           data_access_permissions?: Json
           follow_type?: string | null
+          gift_message?: string | null
+          gift_occasion?: string | null
+          has_pending_gift?: boolean | null
           id?: string
           invitation_sent_at?: string | null
           invitation_token?: string | null
@@ -4371,6 +4377,9 @@ export type Database = {
           created_at?: string | null
           data_access_permissions?: Json
           follow_type?: string | null
+          gift_message?: string | null
+          gift_occasion?: string | null
+          has_pending_gift?: boolean | null
           id?: string
           invitation_sent_at?: string | null
           invitation_token?: string | null

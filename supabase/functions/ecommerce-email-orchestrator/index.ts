@@ -20,6 +20,7 @@ interface EmailRequest {
     | 'post_purchase_followup' 
     | 'auto_gift_approval' 
     | 'gift_invitation'
+    | 'gift_invitation_with_connection_request'
     | 'connection_invitation'
     | 'connection_accepted'
     | 'connection_welcome'
@@ -76,10 +77,13 @@ const handler = async (req: Request): Promise<Response> => {
       case 'auto_gift_approval':
         result = await handleAutoGiftApproval(supabase, customData!);
         break;
-      case 'gift_invitation':
-        result = await handleGiftInvitation(supabase, customData!);
-        break;
-      case 'connection_invitation':
+    case 'gift_invitation':
+      result = await handleGiftInvitation(supabase, customData!);
+      break;
+    case 'gift_invitation_with_connection_request':
+      result = await handleGiftInvitationWithConnection(supabase, customData!);
+      break;
+    case 'connection_invitation':
         result = await handleConnectionInvitation(supabase, customData!);
         break;
       case 'connection_accepted':
@@ -946,6 +950,47 @@ async function handleGiftInvitation(supabase: any, customData: any) {
   });
 
   console.log("✅ Gift invitation email sent successfully");
+  return { success: true, emailId: emailResponse.data?.id };
+}
+
+async function handleGiftInvitationWithConnection(supabase: any, customData: any) {
+  console.log('📧 🎁 Sending hybrid gift + connection invitation email:', customData);
+  
+  // Import the new hybrid template
+  const { giftInvitationWithConnectionTemplate } = await import('./email-templates/index.ts');
+  
+  // Extract data (supports both queue metadata and direct customData)
+  const senderName = customData.sender_name || customData.senderName || 'Someone';
+  const recipientEmail = customData.recipient_email || customData.recipientEmail;
+  const recipientName = customData.recipient_name || customData.recipientName || 'there';
+  const giftOccasion = customData.gift_occasion || customData.giftOccasion;
+  const giftMessage = customData.gift_message || customData.giftMessage;
+  const connectionId = customData.connection_id || customData.connectionId;
+  
+  // Build signup URL with invitation token
+  const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
+  const signupUrl = connectionId 
+    ? `${baseUrl}/auth?invite=${connectionId}`
+    : `${baseUrl}/auth?signup=true`;
+  
+  // Use the hybrid template
+  const htmlContent = giftInvitationWithConnectionTemplate({
+    senderName,
+    recipientName,
+    recipientEmail,
+    giftOccasion,
+    giftMessage,
+    signupUrl
+  });
+
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [recipientEmail],
+    subject: `🎁 ${senderName} sent you a gift through Elyphant!`,
+    html: htmlContent,
+  });
+
+  console.log('✅ Gift + connection invitation email sent successfully');
   return { success: true, emailId: emailResponse.data?.id };
 }
 

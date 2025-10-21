@@ -41,3 +41,6 @@ export type { ConnectionAcceptedProps } from './connection-accepted.ts';
 
 export { connectionWelcomeTemplate } from './connection-welcome.ts';
 export type { ConnectionWelcomeProps } from './connection-welcome.ts';
+
+export { giftInvitationWithConnectionTemplate } from './gift-invitation-with-connection.ts';
+export type { GiftInvitationWithConnectionProps } from './gift-invitation-with-connection.ts';

@@ -186,6 +186,38 @@ export const rejectConnectionRequest = async (requestId: string): Promise<{ succ
  * Note: Regular connection invitations are now handled automatically via database triggers.
  * This function is only for manual nudges/reminders to existing pending connections.
  */
+export const cancelConnectionRequest = async (requestId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    console.log('📡 [connectionRequestService] Canceling connection request:', requestId);
+    
+    const { error } = await supabase
+      .from('user_connections')
+      .update({ 
+        status: 'rejected',
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', requestId);
+
+    if (error) {
+      console.error('❌ [connectionRequestService] Error canceling request:', error);
+      throw error;
+    }
+    
+    console.log('✅ [connectionRequestService] Connection request canceled');
+    toast.success("Connection request canceled");
+    return { success: true };
+  } catch (error) {
+    console.error('❌ [connectionRequestService] Error canceling connection request:', error);
+    toast.error("Failed to cancel connection request");
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Send a connection nudge/reminder
+ * Note: Regular connection invitations are now handled automatically via database triggers.
+ * This function is only for manual nudges/reminders to existing pending connections.
+ */
 export const sendConnectionNudge = async (connectionId: string, customMessage?: string): Promise<{ success: boolean; error?: string }> => {
   try {
     console.log('📡 [connectionRequestService] Sending connection nudge for:', connectionId);

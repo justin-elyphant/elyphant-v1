@@ -4,9 +4,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Send, MessageSquare, RefreshCw } from "lucide-react";
+import { Clock, Send, MessageSquare, RefreshCw, XCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth";
-import { getOutgoingConnectionRequests, ConnectionRequest } from "@/services/search/connectionRequestService";
+import { getOutgoingConnectionRequests, ConnectionRequest, cancelConnectionRequest } from "@/services/search/connectionRequestService";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 import { toast } from "sonner";
 import NudgeModal from "@/components/gifting/NudgeModal";
@@ -22,6 +32,8 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ConnectionRequest | null>(null);
   const [showNudgeModal, setShowNudgeModal] = useState(false);
+  const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
+  const [confirmDeleteConnectionId, setConfirmDeleteConnectionId] = useState<string | null>(null);
 
   const fetchOutgoingRequests = async () => {
     console.log('🔍 [OutgoingConnectionRequests] Starting fetch for user:', user?.id);
@@ -64,6 +76,21 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
     setShowNudgeModal(false);
     setSelectedRequest(null);
     toast.success('Reminder sent successfully!');
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!confirmDeleteConnectionId) return;
+
+    setDeletingConnectionId(confirmDeleteConnectionId);
+    const result = await cancelConnectionRequest(confirmDeleteConnectionId);
+    
+    if (result.success) {
+      // Refresh the list
+      await fetchOutgoingRequests();
+    }
+    
+    setDeletingConnectionId(null);
+    setConfirmDeleteConnectionId(null);
   };
 
   useEffect(() => {
@@ -176,6 +203,16 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
                     <MessageSquare className="h-4 w-4 mr-1" />
                     Send Reminder
                   </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setConfirmDeleteConnectionId(request.id)}
+                    disabled={deletingConnectionId === request.id}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
                   <Badge variant="outline" className="text-muted-foreground border-muted">
                     <Clock className="h-3 w-3 mr-1" />
                     Pending
@@ -202,6 +239,29 @@ const OutgoingConnectionRequests: React.FC<OutgoingConnectionRequestsProps> = ({
           connectionId={selectedRequest.id}
         />
       )}
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={!!confirmDeleteConnectionId} onOpenChange={(open) => !open && setConfirmDeleteConnectionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Connection Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this connection request to{' '}
+              {filteredRequests.find(r => r.id === confirmDeleteConnectionId)?.recipient_profile?.name}? 
+              They won't be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Request</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

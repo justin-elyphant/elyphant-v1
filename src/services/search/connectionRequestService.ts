@@ -27,12 +27,10 @@ export const getIncomingConnectionRequests = async (userId: string): Promise<Con
   try {
     console.log('📡 [connectionRequestService] Fetching incoming requests for userId:', userId);
     
-    const { data, error } = await supabase
+    // First get the connection records
+    const { data: connections, error } = await supabase
       .from('user_connections')
-      .select(`
-        *,
-        requester_profile:profiles!user_connections_user_id_fkey(name, username, profile_image, bio)
-      `)
+      .select('*')
       .eq('connected_user_id', userId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
@@ -42,11 +40,38 @@ export const getIncomingConnectionRequests = async (userId: string): Promise<Con
       throw error;
     }
     
-    console.log('✅ [connectionRequestService] Incoming requests fetched:', data?.length || 0);
-    return (data || []).map(req => ({
-      ...req,
-      status: req.status as "pending" | "accepted" | "rejected"
+    if (!connections || connections.length === 0) {
+      console.log('✅ [connectionRequestService] No incoming requests found');
+      return [];
+    }
+
+    // Get all unique user_ids (requesters)
+    const requesterIds = connections
+      .map(c => c.user_id)
+      .filter((id): id is string => id !== null);
+
+    // Fetch profiles for all requesters
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, username, profile_image, bio')
+      .in('id', requesterIds);
+
+    if (profilesError) {
+      console.error('❌ [connectionRequestService] Error fetching profiles:', profilesError);
+    }
+
+    // Create a map of profiles by id
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    // Merge connections with profiles
+    const enrichedConnections = connections.map(conn => ({
+      ...conn,
+      requester_profile: profileMap.get(conn.user_id) || undefined,
+      status: conn.status as "pending" | "accepted" | "rejected"
     }));
+    
+    console.log('✅ [connectionRequestService] Incoming requests fetched:', enrichedConnections.length);
+    return enrichedConnections;
   } catch (error) {
     console.error('❌ [connectionRequestService] Error in getIncomingConnectionRequests:', error);
     return [];
@@ -57,12 +82,10 @@ export const getOutgoingConnectionRequests = async (userId: string): Promise<Con
   try {
     console.log('📡 [connectionRequestService] Fetching outgoing requests for userId:', userId);
     
-    const { data, error } = await supabase
+    // First get the connection records
+    const { data: connections, error } = await supabase
       .from('user_connections')
-      .select(`
-        *,
-        recipient_profile:profiles!user_connections_connected_user_id_fkey(name, username, profile_image, bio)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
@@ -72,11 +95,38 @@ export const getOutgoingConnectionRequests = async (userId: string): Promise<Con
       throw error;
     }
     
-    console.log('✅ [connectionRequestService] Outgoing requests fetched:', data?.length || 0, 'Raw data:', data);
-    return (data || []).map(req => ({
-      ...req,
-      status: req.status as "pending" | "accepted" | "rejected"
+    if (!connections || connections.length === 0) {
+      console.log('✅ [connectionRequestService] No outgoing requests found');
+      return [];
+    }
+
+    // Get all unique connected_user_ids
+    const connectedUserIds = connections
+      .map(c => c.connected_user_id)
+      .filter((id): id is string => id !== null);
+
+    // Fetch profiles for all connected users
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, username, profile_image, bio')
+      .in('id', connectedUserIds);
+
+    if (profilesError) {
+      console.error('❌ [connectionRequestService] Error fetching profiles:', profilesError);
+    }
+
+    // Create a map of profiles by id
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    // Merge connections with profiles
+    const enrichedConnections = connections.map(conn => ({
+      ...conn,
+      recipient_profile: profileMap.get(conn.connected_user_id) || undefined,
+      status: conn.status as "pending" | "accepted" | "rejected"
     }));
+    
+    console.log('✅ [connectionRequestService] Outgoing requests fetched:', enrichedConnections.length, 'Raw data:', enrichedConnections);
+    return enrichedConnections;
   } catch (error) {
     console.error('❌ [connectionRequestService] Error in getOutgoingConnectionRequests:', error);
     return [];

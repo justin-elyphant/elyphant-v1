@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Check, ChevronsUpDown, Search, Loader2, UserPlus, Mail, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,8 +46,19 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   
   const selectedName = selectedConnection?.profile_name || "Select a recipient";
 
-  // Filter accepted connections
-  const acceptedConnections = connections.filter(c => c.status === 'accepted');
+  // Filter accepted connections - memoized to prevent infinite loops
+  const acceptedConnections = useMemo(
+    () => connections.filter(c => c.status === 'accepted'),
+    [connections]
+  );
+  
+  // Memoize existing user IDs to prevent array recreation
+  const existingUserIds = useMemo(() => {
+    return new Set([
+      ...acceptedConnections.map(c => c.display_user_id || c.connected_user_id),
+      ...pendingInvitations.map(c => c.display_user_id || c.connected_user_id)
+    ].filter(Boolean));
+  }, [acceptedConnections, pendingInvitations]);
 
   // Debounced search
   useEffect(() => {
@@ -66,12 +77,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       try {
         const results = await searchFriends(searchQuery, user?.id);
         
-        // Filter out users who are already in connections or pending invitations
-        const existingUserIds = new Set([
-          ...acceptedConnections.map(c => c.display_user_id || c.connected_user_id),
-          ...pendingInvitations.map(c => c.display_user_id || c.connected_user_id)
-        ].filter(Boolean));
-        
+        // Use memoized existingUserIds
         const filteredResults = results.filter(r => !existingUserIds.has(r.id));
         setSearchResults(filteredResults);
       } catch (error) {
@@ -87,7 +93,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, user?.id, acceptedConnections, pendingInvitations]);
+  }, [searchQuery, user?.id, existingUserIds]);
 
   const handleSendConnectionRequest = async (targetUserId: string, targetName: string) => {
     if (!user) return;

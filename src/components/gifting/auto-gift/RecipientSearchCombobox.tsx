@@ -66,9 +66,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       clearTimeout(searchTimeoutRef.current);
     }
 
+    // Clear results when query is short, but avoid redundant state updates
     if (searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setIsSearching(false);
+      if (isSearching) setIsSearching(false);
+      if (searchResults.length !== 0) setSearchResults([]);
       return;
     }
 
@@ -93,7 +94,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, user?.id, existingUserIds]);
+  }, [searchQuery, user?.id, existingUserIds, isSearching, searchResults.length]);
 
   const handleSendConnectionRequest = async (targetUserId: string, targetName: string) => {
     if (!user) return;
@@ -150,7 +151,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[400px] p-0 z-[10000] pointer-events-auto" 
+          className="w-[400px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
           align="start"
           onPointerDown={(e)=> e.stopPropagation()}
           onOpenAutoFocus={(e)=>{

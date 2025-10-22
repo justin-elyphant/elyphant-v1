@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Check, ChevronsUpDown, Search, Loader2, UserPlus, Mail, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -144,7 +145,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[400px] p-0 z-[100]" 
+          className="w-[400px] p-0 z-[10000] pointer-events-auto" 
           align="start"
         >
           <div className="flex items-center border-b px-3 py-2">

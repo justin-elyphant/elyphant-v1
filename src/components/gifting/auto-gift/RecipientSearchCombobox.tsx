@@ -94,7 +94,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, user?.id, existingUserIds, isSearching, searchResults.length]);
+  }, [searchQuery, user?.id, existingUserIds]);
 
   const handleSendConnectionRequest = async (targetUserId: string, targetName: string) => {
     if (!user) return;

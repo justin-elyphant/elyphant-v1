@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
-import NewRecipientForm from "@/components/shared/NewRecipientForm";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
+import { RecipientSearchCombobox } from "./RecipientSearchCombobox";
 import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
 import SmartHolidayInfo from "./SmartHolidayInfo";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -57,7 +57,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const { connections, pendingInvitations } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
   
   // Ref for the scrollable container
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -446,58 +445,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       </Badge>
                     )}
                   </Label>
-                  <Select 
-                    value={formData.recipientId} 
-                    onValueChange={(value) => {
-                      if (value === "__add_new__") {
-                        setShowNewRecipientForm(true);
-                      } else {
-                        setFormData(prev => ({ ...prev, recipientId: value }));
-                      }
+                  <RecipientSearchCombobox
+                    value={formData.recipientId}
+                    onChange={(recipientId) => setFormData(prev => ({ ...prev, recipientId }))}
+                    connections={connections}
+                    pendingInvitations={pendingInvitations}
+                    onNewRecipientCreate={(recipient) => {
+                      setFormData(prev => ({ ...prev, recipientId: recipient.id }));
+                      toast.success(`Added ${recipient.name} as recipient`);
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a connection" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {/* Accepted Connections */}
-                      {connections
-                        .filter(conn => conn.status === 'accepted')
-                        .map((connection) => (
-                        <SelectItem key={connection.id} value={connection.display_user_id || connection.connected_user_id}>
-                          <div className="flex items-center gap-2">
-                            <span>{connection.profile_name || 'Unknown'}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {connection.relationship_type}
-                            </Badge>
-                          </div>
-                        </SelectItem>
-                      ))}
-                      
-                      {/* Pending Invitations */}
-                      {pendingInvitations
-                        .map((connection) => (
-                        <SelectItem key={connection.id} value={connection.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{connection.profile_name || connection.pending_recipient_name || 'Unknown'}</span>
-                            <Badge variant="outline" className="text-xs text-orange-600">
-                              Pending
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {connection.relationship_type}
-                            </Badge>
-                          </div>
-                        </SelectItem>
-                      ))}
-                      
-                      <SelectItem value="__add_new__">
-                        <div className="flex items-center gap-2 text-primary">
-                          <Users className="h-4 w-4" />
-                          <span>Add New Recipient</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
 
                 <MultiEventSelector
@@ -730,25 +687,6 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </div>
         </div>
         </div>
-
-        {/* New Recipient Form Modal */}
-        {showNewRecipientForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <NewRecipientForm
-              onRecipientCreate={(recipient) => {
-                // Add to form data as pending recipient
-                setFormData(prev => ({ 
-                  ...prev, 
-                  recipientId: recipient.id 
-                }));
-                setShowNewRecipientForm(false);
-                toast.success(`Added ${recipient.name} as recipient`);
-              }}
-              onCancel={() => setShowNewRecipientForm(false)}
-              title="Add New Auto-Gift Recipient"
-            />
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

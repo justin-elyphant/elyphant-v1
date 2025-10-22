@@ -21,19 +21,26 @@ export type SignUpFormValues = z.infer<typeof signUpSchema>;
 interface SignUpFormProps {
   onSubmit: (values: SignUpFormValues) => Promise<void>;
   isSubmitting?: boolean;
+  invitationData?: {
+    connectionId: string;
+    recipientEmail: string;
+    recipientName: string;
+    senderName: string;
+  } | null;
 }
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ 
   onSubmit, 
-  isSubmitting = false 
+  isSubmitting = false,
+  invitationData 
 }) => {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: invitationData?.recipientName || "",
+      email: invitationData?.recipientEmail || "",
       password: "",
     },
   });
@@ -50,6 +57,22 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   return (
     <Form {...form}>
+      {invitationData && (
+        <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+          <div className="flex items-center gap-2 text-purple-900 dark:text-purple-100">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            <p className="font-medium">
+              {invitationData.senderName} invited you to connect!
+            </p>
+          </div>
+          <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+            Complete your signup to accept the invitation and start exchanging perfect gifts.
+          </p>
+        </div>
+      )}
+      
       {errorMessage && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{errorMessage}</AlertDescription>

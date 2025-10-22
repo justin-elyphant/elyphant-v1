@@ -8,11 +8,18 @@ import SignUpForm from "./SignUpForm";
 interface UnifiedAuthViewProps {
   initialMode?: "signin" | "signup";
   preFilledEmail?: string;
+  invitationData?: {
+    connectionId: string;
+    recipientEmail: string;
+    recipientName: string;
+    senderName: string;
+  } | null;
 }
 
 const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ 
   initialMode = "signup", 
-  preFilledEmail 
+  preFilledEmail,
+  invitationData 
 }) => {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">(initialMode);
 
@@ -46,10 +53,10 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
               <div className="text-center mb-space-loose">
                 <h2 className="text-heading-2 text-foreground">Create Account</h2>
                 <p className="text-body-sm text-muted-foreground mt-space-minimal">
-                  Join thousands of thoughtful gift-givers
+                  {invitationData ? `${invitationData.senderName} invited you to connect!` : 'Join thousands of thoughtful gift-givers'}
                 </p>
               </div>
-              <SignUpForm />
+              <SignUpForm invitationData={invitationData} />
             </div>
           </TabsContent>
         </Tabs>

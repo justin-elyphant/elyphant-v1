@@ -1768,6 +1768,41 @@ class UnifiedGiftManagementService {
         }
 
         console.log('✅ [UPDATE_SUCCESS] Updated existing connection:', data);
+        
+        // NEW: Trigger invitation email on update
+        try {
+          console.log('📧 [EMAIL] Triggering invitation email for updated connection...');
+          
+          const { data: senderProfile } = await supabase
+            .from('profiles')
+            .select('name, first_name')
+            .eq('id', user.user.id)
+            .single();
+          
+          const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
+          
+          const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'connection_invitation',
+              customData: {
+                sender_name: senderName,
+                recipient_email: sanitizedEmail,
+                recipient_name: sanitizedName,
+                connection_id: data.id,
+                custom_message: relationshipContext?.custom_message
+              }
+            }
+          });
+          
+          if (emailError) {
+            console.error('⚠️ [EMAIL] Failed to send invitation email:', emailError);
+          } else {
+            console.log('✅ [EMAIL] Invitation email queued successfully');
+          }
+        } catch (emailError) {
+          console.error('⚠️ [EMAIL] Error invoking email orchestrator:', emailError);
+        }
+        
         return data;
       }
 
@@ -1820,6 +1855,45 @@ class UnifiedGiftManagementService {
       }
 
       console.log('✅ [CREATE_SUCCESS] Created new pending connection:', data);
+      
+      // NEW: Trigger invitation email
+      try {
+        console.log('📧 [EMAIL] Triggering invitation email...');
+        
+        // Get sender's profile for email personalization
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('name, first_name')
+          .eq('id', user.user.id)
+          .single();
+        
+        const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
+        
+        // Invoke email orchestrator
+        const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'connection_invitation',
+            customData: {
+              sender_name: senderName,
+              recipient_email: sanitizedEmail,
+              recipient_name: sanitizedName,
+              connection_id: data.id,
+              custom_message: relationshipContext?.custom_message
+            }
+          }
+        });
+        
+        if (emailError) {
+          console.error('⚠️ [EMAIL] Failed to send invitation email:', emailError);
+          // Don't throw - connection was created successfully, email failure is non-critical
+        } else {
+          console.log('✅ [EMAIL] Invitation email queued successfully');
+        }
+      } catch (emailError) {
+        console.error('⚠️ [EMAIL] Error invoking email orchestrator:', emailError);
+        // Non-blocking error - connection still created
+      }
+      
       return data;
 
     } catch (error: any) {

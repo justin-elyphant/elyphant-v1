@@ -7,7 +7,16 @@ import SignUpFormComponent from "../signup/SignUpForm";
 import { SignUpFormValues } from "../signup/SignUpForm";
 import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
-const SignUpForm = () => {
+interface SignUpFormProps {
+  invitationData?: {
+    connectionId: string;
+    recipientEmail: string;
+    recipientName: string;
+    senderName: string;
+  } | null;
+}
+
+const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
@@ -63,21 +72,54 @@ const SignUpForm = () => {
               await supabase.rpc('set_user_identification', {
                 target_user_id: data.user.id,
                 user_type_param: 'shopper',
-                signup_source_param: 'header_cta',
+                signup_source_param: invitationData ? 'invite' : 'header_cta',
                 metadata_param: {
                   name: values.name,
                   signup_timestamp: new Date().toISOString(),
-                  signup_flow: 'unified_auth'
+                  signup_flow: 'unified_auth',
+                  invited_by: invitationData?.senderName
                 },
                 attribution_param: {
-                  source: 'header_cta',
-                  campaign: 'main_signup',
+                  source: invitationData ? 'invite' : 'header_cta',
+                  campaign: invitationData ? 'connection_invitation' : 'main_signup',
                   referrer: document.referrer || 'direct'
                 }
               });
             } catch (identificationError) {
               console.error('Error setting user identification:', identificationError);
               // Don't block signup for this
+            }
+            
+            // NEW: Auto-accept invitation if present
+            if (invitationData?.connectionId) {
+              try {
+                const { error: acceptError } = await supabase
+                  .from('user_connections')
+                  .update({
+                    connected_user_id: data.user.id,
+                    status: 'accepted',
+                    accepted_at: new Date().toISOString()
+                  })
+                  .eq('id', invitationData.connectionId);
+                
+                if (!acceptError) {
+                  toast.success(`You're now connected with ${invitationData.senderName}! 🎉`);
+                  
+                  // Trigger connection accepted email to sender
+                  await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                    body: {
+                      eventType: 'connection_accepted',
+                      customData: {
+                        sender_name: invitationData.senderName,
+                        acceptor_name: values.name,
+                        connection_id: invitationData.connectionId
+                      }
+                    }
+                  });
+                }
+              } catch (error) {
+                console.error('Failed to auto-accept invitation:', error);
+              }
             }
             
             toast.success("Account created! Complete your profile to get started.");
@@ -127,12 +169,13 @@ const SignUpForm = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [navigate]);
+  }, [navigate, invitationData]);
 
   return (
     <SignUpFormComponent 
       onSubmit={handleSignUp}
       isSubmitting={isSubmitting}
+      invitationData={invitationData}
     />
   );
 };

@@ -1012,7 +1012,7 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
   // Build invitation URL
   const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
   const invitationUrl = connectionId 
-    ? `${baseUrl}/connections?accept=${connectionId}`
+    ? `${baseUrl}/auth?invite=${connectionId}`
     : `${baseUrl}/auth?signup=true`;
   
   // Use extracted template

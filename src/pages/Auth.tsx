@@ -22,6 +22,57 @@ const Auth = () => {
 
   // Get pre-filled email from password reset navigation state
   const preFilledEmail = location.state?.email;
+  
+  // Handle invitation links
+  const inviteToken = searchParams.get('invite');
+  const [invitationData, setInvitationData] = useState<{
+    connectionId: string;
+    recipientEmail: string;
+    recipientName: string;
+    senderName: string;
+  } | null>(null);
+
+  // Validate invitation token on mount
+  useEffect(() => {
+    const validateInvitation = async () => {
+      if (!inviteToken) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_connections')
+          .select(`
+            id,
+            pending_recipient_email,
+            pending_recipient_name,
+            user_id,
+            profiles!user_connections_user_id_fkey(name, first_name)
+          `)
+          .eq('id', inviteToken)
+          .eq('status', 'pending_invitation')
+          .single();
+        
+        if (error || !data) {
+          toast.error('Invalid or expired invitation link');
+          return;
+        }
+        
+        const senderName = data.profiles?.first_name || data.profiles?.name || 'Someone';
+        
+        setInvitationData({
+          connectionId: data.id,
+          recipientEmail: data.pending_recipient_email || '',
+          recipientName: data.pending_recipient_name || '',
+          senderName
+        });
+        
+        toast.success(`${senderName} invited you to connect on Elyphant!`);
+      } catch (error) {
+        console.error('Failed to validate invitation:', error);
+      }
+    };
+    
+    validateInvitation();
+  }, [inviteToken]);
 
   // Handle post-signup interests modal and redirect
   useEffect(() => {
@@ -101,7 +152,11 @@ const Auth = () => {
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <UnifiedAuthView initialMode={preFilledEmail ? 'signin' : initialMode} preFilledEmail={preFilledEmail} />
+        <UnifiedAuthView 
+          initialMode={preFilledEmail ? 'signin' : initialMode} 
+          preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
+          invitationData={invitationData}
+        />
       </div>
       
       {/* Quick Interests Modal */}

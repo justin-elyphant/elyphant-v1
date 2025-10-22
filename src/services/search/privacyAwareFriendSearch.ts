@@ -133,8 +133,8 @@ export const searchFriendsWithPrivacy = async (
         search_limit: limit
       });
       
-      if (searchError) {
-        console.log(`🔍 [SEARCH FALLBACK] RPC failed, trying direct query:`, searchError);
+      if (searchError || !searchResults || searchResults.length === 0) {
+        console.log(`🔍 [SEARCH FALLBACK] RPC ${searchError ? 'failed' : 'returned 0 results'}, trying direct query:`, searchError);
         // Fallback to direct query for users that are publicly visible
         const result = await supabase
           .from('profiles')

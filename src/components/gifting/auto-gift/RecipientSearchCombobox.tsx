@@ -66,6 +66,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       clearTimeout(searchTimeoutRef.current);
     }
 
+    console.log('[RecipientSearchCombobox] effect', { query: searchQuery, len: searchQuery.trim().length });
+
     // Clear results when query is short, but avoid redundant state updates
     if (searchQuery.trim().length < 2) {
       if (isSearching) setIsSearching(false);
@@ -76,10 +78,12 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log('[RecipientSearchCombobox] performing search for:', searchQuery);
         const results = await searchFriends(searchQuery, user?.id);
         
         // Use memoized existingUserIds
         const filteredResults = results.filter(r => !existingUserIds.has(r.id));
+        console.log('[RecipientSearchCombobox] raw results:', results.length, 'filtered:', filteredResults.length);
         setSearchResults(filteredResults);
       } catch (error) {
         console.error('Search error:', error);
@@ -267,6 +271,13 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                   })}
                 </div>
               </>
+            )}
+
+            {/* Helper hint when nothing to show yet */}
+            {searchQuery.length < 2 && acceptedConnections.length === 0 && pendingInvitations.length === 0 && (
+              <div className="p-3 text-xs text-muted-foreground">
+                Type 2+ characters to search all Elyphant users
+              </div>
             )}
 
             {/* Search Results Section */}

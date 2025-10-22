@@ -53,6 +53,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   initialData,
   ruleId
 }) => {
+  // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
   const { connections, pendingInvitations } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);

@@ -38,6 +38,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
   const [sendingRequestTo, setSendingRequestTo] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Get selected connection name for display
   const selectedConnection = 
@@ -157,19 +158,18 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         <PopoverContent 
           className="w-[400px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
           align="start"
-          onPointerDown={(e)=> e.stopPropagation()}
           onOpenAutoFocus={(e)=>{
             e.preventDefault();
             setTimeout(()=>{
-              const el = document.getElementById('recipient-search-input') as HTMLInputElement | null;
-              el?.focus();
+              inputRef.current?.focus();
             },0)
           }}
         >
-          <div className="flex items-center border-b px-3 py-2" onClick={(e)=>e.stopPropagation()}>
+          <div className="flex items-center border-b px-3 py-2" onClick={() => inputRef.current?.focus()}>
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               id="recipient-search-input"
+              ref={inputRef}
               type="text"
               placeholder="Search connections or find people..."
               value={searchQuery}
@@ -177,11 +177,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                 console.log('[RecipientSearchCombobox] input change:', e.target.value);
                 setSearchQuery(e.target.value);
               }}
-              onMouseDown={(e)=>e.stopPropagation()}
-              onKeyDown={(e)=>e.stopPropagation()}
               className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
               autoComplete="off"
               autoFocus
+              onFocus={() => console.log('[RecipientSearchCombobox] input focused')}
             />
             {isSearching && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin opacity-50" />

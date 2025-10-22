@@ -169,7 +169,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
               type="text"
               placeholder="Search connections or find people..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                console.log('[RecipientSearchCombobox] input change:', e.target.value);
+                setSearchQuery(e.target.value);
+              }}
               onMouseDown={(e)=>e.stopPropagation()}
               onKeyDown={(e)=>e.stopPropagation()}
               className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"

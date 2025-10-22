@@ -146,14 +146,24 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         <PopoverContent 
           className="w-[400px] p-0 z-[10000] pointer-events-auto" 
           align="start"
+          onPointerDown={(e)=> e.stopPropagation()}
+          onOpenAutoFocus={(e)=>{
+            e.preventDefault();
+            setTimeout(()=>{
+              const el = document.getElementById('recipient-search-input') as HTMLInputElement | null;
+              el?.focus();
+            },0)
+          }}
         >
           <div className="flex items-center border-b px-3 py-2" onClick={(e)=>e.stopPropagation()}>
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
+              id="recipient-search-input"
               type="text"
               placeholder="Search connections or find people..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onMouseDown={(e)=>e.stopPropagation()}
               onKeyDown={(e)=>e.stopPropagation()}
               className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
               autoComplete="off"

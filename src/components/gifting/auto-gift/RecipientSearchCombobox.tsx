@@ -131,7 +131,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -144,23 +144,19 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[400px] p-0 pointer-events-auto" 
+          className="w-[400px] p-0 z-[100]" 
           align="start"
-          onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            const container = e.currentTarget as HTMLElement;
-            const input = container.querySelector('input');
-            input?.focus();
-          }}
         >
-          <div className="flex items-center border-b px-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center border-b px-3 py-2">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <Input
+            <input
+              type="text"
               placeholder="Search connections or find people..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
               autoComplete="off"
+              autoFocus
             />
             {isSearching && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin opacity-50" />

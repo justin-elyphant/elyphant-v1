@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Check, ChevronsUpDown, Search, Loader2, UserPlus, Mail, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -148,13 +147,14 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           className="w-[400px] p-0 z-[10000] pointer-events-auto" 
           align="start"
         >
-          <div className="flex items-center border-b px-3 py-2">
+          <div className="flex items-center border-b px-3 py-2" onClick={(e)=>e.stopPropagation()}>
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               type="text"
               placeholder="Search connections or find people..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e)=>e.stopPropagation()}
               className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
               autoComplete="off"
               autoFocus

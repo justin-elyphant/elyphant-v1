@@ -119,6 +119,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             ? { ...r, connectionStatus: 'pending' }
             : r
         ));
+        
+        // Close the popover after successful request
+        setOpen(false);
+        setSearchQuery("");
       } else {
         toast.error("Failed to send connection request");
       }

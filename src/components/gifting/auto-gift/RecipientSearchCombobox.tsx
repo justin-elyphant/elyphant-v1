@@ -334,7 +334,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           ) : (
                             <>
                               <UserPlus className="h-3 w-3 mr-1" />
-                              Send Request
+                              Schedule + Request
                             </>
                           )}
                         </Button>

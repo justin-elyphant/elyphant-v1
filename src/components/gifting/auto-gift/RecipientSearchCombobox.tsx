@@ -39,6 +39,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const [sendingRequestTo, setSendingRequestTo] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const inputRef = useRef<HTMLInputElement>(null);
+  const popoverContainerRef = useRef<HTMLDivElement>(null);
 
   // Get selected connection name for display
   const selectedConnection = 
@@ -155,9 +156,11 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
+        <div ref={popoverContainerRef} />
         <PopoverContent 
           className="w-[400px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
           align="start"
+          container={popoverContainerRef.current ?? undefined}
           onOpenAutoFocus={(e)=>{
             e.preventDefault();
             setTimeout(()=>{
@@ -165,7 +168,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             },0)
           }}
         >
-          <div className="flex items-center border-b px-3 py-2" onClick={() => inputRef.current?.focus()}>
+          <div className="flex items-center border-b px-3 py-2 cursor-text" onClick={() => inputRef.current?.focus()}>
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               id="recipient-search-input"

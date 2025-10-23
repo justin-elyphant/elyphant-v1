@@ -162,6 +162,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           align="start"
           side="bottom"
           sideOffset={8}
+          avoidCollisions={false}
           container={popoverContainerRef.current ?? undefined}
           onOpenAutoFocus={(e)=>{
             e.preventDefault();
@@ -192,7 +193,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             )}
           </div>
 
-          <div className="max-h-[240px] overflow-y-auto">
+          <div className="max-h-[200px] overflow-y-auto">
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
               <div className="p-2">

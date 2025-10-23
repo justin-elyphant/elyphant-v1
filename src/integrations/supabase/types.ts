@@ -4074,7 +4074,7 @@ export type Database = {
           details: Json
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           risk_level: string | null
           session_id: string | null
           user_agent: string | null
@@ -4085,7 +4085,7 @@ export type Database = {
           details?: Json
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           risk_level?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -4096,7 +4096,7 @@ export type Database = {
           details?: Json
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           risk_level?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -5249,18 +5249,12 @@ export type Database = {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
       }
-      can_abort_order: {
-        Args: { order_id: string }
-        Returns: Json
-      }
+      can_abort_order: { Args: { order_id: string }; Returns: Json }
       can_access_order_notes: {
         Args: { note_order_id: string }
         Returns: boolean
       }
-      can_access_trunkline: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
+      can_access_trunkline: { Args: { user_uuid: string }; Returns: boolean }
       can_access_vendor_portal: {
         Args: { user_uuid: string }
         Returns: boolean
@@ -5281,10 +5275,7 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
-      can_cancel_order: {
-        Args: { order_id: string }
-        Returns: boolean
-      }
+      can_cancel_order: { Args: { order_id: string }; Returns: boolean }
       can_send_nudge: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: boolean
@@ -5293,10 +5284,7 @@ export type Database = {
         Args: { requester_id: string; target_id: string }
         Returns: boolean
       }
-      can_view_profile: {
-        Args: { profile_user_id: string }
-        Returns: boolean
-      }
+      can_view_profile: { Args: { profile_user_id: string }; Returns: boolean }
       cancel_order: {
         Args: { cancellation_reason?: string; order_id: string }
         Returns: Json
@@ -5313,42 +5301,18 @@ export type Database = {
         Args: { sender_uuid: string }
         Returns: boolean
       }
-      check_missed_scheduled_orders: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      check_missed_scheduled_orders: { Args: never; Returns: undefined }
       check_zma_order_rate_limit: {
         Args: { user_uuid: string }
         Returns: boolean
       }
-      cleanup_abandoned_orders: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_expired_fingerprints: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_expired_invitation_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_expired_reset_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_failed_orders: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_payment_intent_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_zma_validation_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      cleanup_abandoned_orders: { Args: never; Returns: number }
+      cleanup_expired_fingerprints: { Args: never; Returns: number }
+      cleanup_expired_invitation_cache: { Args: never; Returns: number }
+      cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_failed_orders: { Args: never; Returns: number }
+      cleanup_payment_intent_cache: { Args: never; Returns: number }
+      cleanup_zma_validation_cache: { Args: never; Returns: number }
       complete_order_processing: {
         Args: {
           error_message_param?: string
@@ -5359,30 +5323,12 @@ export type Database = {
         }
         Returns: Json
       }
-      delete_user_account: {
-        Args: { target_user_id: string }
-        Returns: Json
-      }
-      detect_abandoned_carts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      emergency_security_verification: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_function_security_warnings: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_invitation_token: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      delete_user_account: { Args: { target_user_id: string }; Returns: Json }
+      detect_abandoned_carts: { Args: never; Returns: undefined }
+      emergency_security_verification: { Args: never; Returns: Json }
+      fix_function_security_warnings: { Args: never; Returns: string }
+      generate_invitation_token: { Args: never; Returns: string }
+      generate_order_number: { Args: never; Returns: string }
       get_accessible_wishlist_items: {
         Args: { p_recipient_id: string }
         Returns: {
@@ -5402,10 +5348,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
-      get_masked_location: {
-        Args: { target_user_id: string }
-        Returns: Json
-      }
+      get_masked_location: { Args: { target_user_id: string }; Returns: Json }
       get_nudge_summary: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: {
@@ -5423,10 +5366,7 @@ export type Database = {
         Args: { profile_user_id: string }
         Returns: boolean
       }
-      get_security_recommendations: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_security_recommendations: { Args: never; Returns: Json }
       get_upcoming_auto_gift_events: {
         Args: { days_ahead?: number }
         Returns: {
@@ -5440,10 +5380,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_user_context: {
-        Args: { check_user_id: string }
-        Returns: Json
-      }
+      get_user_context: { Args: { check_user_id: string }; Returns: Json }
       get_user_privacy_settings: {
         Args: { target_user_id: string }
         Returns: {
@@ -5457,6 +5394,12 @@ export type Database = {
           show_following_count: boolean | null
           updated_at: string | null
           user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "privacy_settings"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       get_zma_account_safe: {
@@ -5481,26 +5424,6 @@ export type Database = {
         }
         Returns: Json
       }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5524,14 +5447,8 @@ export type Database = {
         Args: { action_type: string }
         Returns: boolean
       }
-      is_business_admin: {
-        Args: { check_user_id: string }
-        Returns: boolean
-      }
-      is_elyphant_domain: {
-        Args: { email_address: string }
-        Returns: boolean
-      }
+      is_business_admin: { Args: { check_user_id: string }; Returns: boolean }
+      is_elyphant_domain: { Args: { email_address: string }; Returns: boolean }
       is_group_admin: {
         Args: { group_id: string; user_id: string }
         Returns: boolean
@@ -5620,14 +5537,7 @@ export type Database = {
           username: string
         }[]
       }
-      security_monitoring_dashboard: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
+      security_monitoring_dashboard: { Args: never; Returns: Json }
       set_user_identification: {
         Args: {
           attribution_param?: Json
@@ -5642,18 +5552,9 @@ export type Database = {
         Args: { order_uuid: string; zinc_id: string }
         Returns: boolean
       }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      start_order_processing: {
-        Args: { order_uuid: string }
-        Returns: Json
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      start_order_processing: { Args: { order_uuid: string }; Returns: Json }
       track_zma_cost: {
         Args: {
           cost: number
@@ -5663,14 +5564,8 @@ export type Database = {
         }
         Returns: undefined
       }
-      trigger_followup_emails: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      trigger_order_recovery: {
-        Args: { order_uuid: string }
-        Returns: Json
-      }
+      trigger_followup_emails: { Args: never; Returns: undefined }
+      trigger_order_recovery: { Args: { order_uuid: string }; Returns: Json }
       update_zma_balance_manual: {
         Args: { p_new_balance: number; p_notes?: string }
         Returns: Json
@@ -5699,10 +5594,7 @@ export type Database = {
         }
         Returns: Json
       }
-      verify_critical_security_fixed: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      verify_critical_security_fixed: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "vendor" | "employee" | "customer" | "shopper"

@@ -932,6 +932,8 @@ class UnifiedGiftAutomationService {
             if (pendingConnection?.pending_shipping_address) {
               console.log(`✅ Found address from pending_connections for ${recipientEmail}`);
               
+              const fullAddress = pendingConnection.pending_shipping_address as any;
+              
               addressResult = {
                 hasAddress: true,
                 status: 'pending' as const,
@@ -940,7 +942,25 @@ class UnifiedGiftAutomationService {
                   id: null,
                   name: pendingConnection.pending_recipient_name,
                   email: pendingConnection.pending_recipient_email,
-                  address: pendingConnection.pending_shipping_address
+                  address: fullAddress
+                },
+                // Include full address in metadata for order creation
+                addressMeta: {
+                  source: 'giver_provided',
+                  is_verified: false,
+                  needs_confirmation: true,
+                  connection_id: undefined,
+                  // Include all shipping fields
+                  name: pendingConnection.pending_recipient_name,
+                  email: pendingConnection.pending_recipient_email,
+                  address_line1: fullAddress.address || fullAddress.street || fullAddress.address_line1 || '',
+                  address_line2: fullAddress.address2 || fullAddress.address_line2 || '',
+                  city: fullAddress.city || '',
+                  state: fullAddress.state || '',
+                  postal_code: fullAddress.zipCode || fullAddress.zip_code || fullAddress.postal_code || '',
+                  zip_code: fullAddress.zipCode || fullAddress.zip_code || fullAddress.postal_code || '',
+                  country: fullAddress.country || 'US',
+                  phone: fullAddress.phone || ''
                 }
               };
               
@@ -1070,6 +1090,17 @@ class UnifiedGiftAutomationService {
             .eq('id', execution.id);
             
           console.log(`✅ Updated execution ${execution.id} with ${giftSelection.products.length} products from ${giftSelection.tier} tier`);
+          
+          // Log the complete address metadata for debugging
+          console.log(`📦 [Address Storage] Execution ${execution.id}:`);
+          console.log(`  - Name: ${addressResult.addressMeta?.name || 'MISSING'}`);
+          console.log(`  - Email: ${addressResult.addressMeta?.email || 'MISSING'}`);
+          console.log(`  - Address: ${addressResult.addressMeta?.address_line1 || 'MISSING'}`);
+          console.log(`  - City: ${addressResult.addressMeta?.city || 'MISSING'}`);
+          console.log(`  - State: ${addressResult.addressMeta?.state || 'MISSING'}`);
+          console.log(`  - Zip: ${addressResult.addressMeta?.postal_code || 'MISSING'}`);
+          console.log(`  - Country: ${addressResult.addressMeta?.country || 'MISSING'}`);
+          console.log(`  - Source: ${addressResult.addressMeta?.source}`);
           
           // Step 4: Send notification
           await this.sendGiftNotification(userId, {
@@ -1352,18 +1383,41 @@ class UnifiedGiftAutomationService {
     message?: string;
     addressMeta?: any;
     needsAddressRequest?: boolean;
-    recipientInfo?: { email: string; name: string };
+    recipientInfo?: { id?: string | null; email: string; name: string; address?: any };
   }> {
     const addressResult = await recipientAddressResolver.resolveRecipientAddress(userId, recipientId);
     
     if (addressResult.success && addressResult.address) {
+      const fullAddress = addressResult.address.address as any;
+      
+      // Get recipient contact info for name and email
+      const recipientContactInfo = await this.getRecipientContactInfo(userId, recipientId);
+      
       return {
         hasAddress: true,
         status: 'pending',
+        recipientInfo: {
+          id: recipientId,
+          name: recipientContactInfo?.name || 'Recipient',
+          email: recipientContactInfo?.email || '',
+          address: fullAddress
+        },
         addressMeta: {
           source: addressResult.address.source,
           is_verified: addressResult.address.is_verified,
-          needs_confirmation: addressResult.address.needs_confirmation || false
+          needs_confirmation: addressResult.address.needs_confirmation || false,
+          connection_id: addressResult.address.connection_id,
+          // Include all shipping fields
+          name: recipientContactInfo?.name || 'Recipient',
+          email: recipientContactInfo?.email || '',
+          address_line1: fullAddress.address || fullAddress.street || fullAddress.address_line1 || '',
+          address_line2: fullAddress.address2 || fullAddress.address_line2 || '',
+          city: fullAddress.city || '',
+          state: fullAddress.state || '',
+          postal_code: fullAddress.zipCode || fullAddress.zip_code || fullAddress.postal_code || '',
+          zip_code: fullAddress.zipCode || fullAddress.zip_code || fullAddress.postal_code || '',
+          country: fullAddress.country || 'US',
+          phone: fullAddress.phone || ''
         }
       };
     }

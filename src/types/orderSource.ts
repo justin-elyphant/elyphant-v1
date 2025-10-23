@@ -27,6 +27,26 @@ export interface OrderSourceAnalysis {
   executionId?: string;
 }
 
+export interface AddressMetadata {
+  // Metadata fields
+  source: 'user_verified' | 'giver_provided' | 'missing';
+  is_verified: boolean;
+  needs_confirmation: boolean;
+  connection_id?: string;
+  
+  // Shipping address fields (required for order creation)
+  name: string;
+  email: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  zip_code: string;  // Duplicate for compatibility
+  country: string;
+  phone?: string;
+}
+
 export interface AutoGiftExecution {
   id: string;
   user_id: string;
@@ -35,6 +55,7 @@ export interface AutoGiftExecution {
   execution_date: string;
   status: string;
   selected_products?: any;
+  address_metadata?: AddressMetadata | any;
   ai_agent_source?: {
     agent: string;
     confidence_score: number;

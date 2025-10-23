@@ -226,6 +226,16 @@ class UnifiedOrderProcessingService {
       phone: addressData.phone || ''
     };
 
+    // Log order creation shipping info
+    console.log(`📦 [Order Creation] Shipping info for execution ${execution.id}:`);
+    console.log(`  - Name: ${shippingInfo.name}`);
+    console.log(`  - Email: ${shippingInfo.email}`);
+    console.log(`  - Address: ${shippingInfo.address}`);
+    console.log(`  - City: ${shippingInfo.city}`);
+    console.log(`  - State: ${shippingInfo.state}`);
+    console.log(`  - Zip: ${shippingInfo.zipCode}`);
+    console.log(`  - Country: ${shippingInfo.country}`);
+
     // Create order data
     const orderData: CreateOrderData = {
       cartItems,

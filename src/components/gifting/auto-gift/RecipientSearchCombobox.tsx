@@ -158,7 +158,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </PopoverTrigger>
         <div ref={popoverContainerRef} />
         <PopoverContent 
-          className="w-[360px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
+          className="w-[440px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border"
           align="start"
           side="bottom"
           sideOffset={8}
@@ -193,7 +193,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             )}
           </div>
 
-          <div className="max-h-[200px] overflow-y-auto">
+          <div className="max-h-[280px] overflow-y-auto">
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
               <div className="p-2">
@@ -209,7 +209,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                       key={connection.id}
                       onClick={() => handleSelect(connectionId!)}
                       className={cn(
-                        "w-full flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent cursor-pointer",
+                        "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
                         isSelected && "bg-accent"
                       )}
                     >
@@ -252,7 +252,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                         key={invitation.id}
                         onClick={() => handleSelect(invitation.id)}
                         className={cn(
-                          "w-full flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent cursor-pointer",
+                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
                           isSelected && "bg-accent"
                         )}
                       >
@@ -296,7 +296,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                   {searchResults.map((result) => (
                     <div
                       key={result.id}
-                      className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                      className="flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent"
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={result.profile_image} />

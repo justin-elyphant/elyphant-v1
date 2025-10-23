@@ -124,7 +124,19 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         setOpen(false);
         setSearchQuery("");
       } else {
-        toast.error("Failed to send connection request");
+        const msg = result.error?.message || '';
+        if (msg.toLowerCase().includes('already') && msg.toLowerCase().includes('pending')) {
+          toast.info(`Connection request to ${targetName} is already pending`);
+          setOpen(false);
+          setSearchQuery("");
+          setSearchResults(prev => prev.map(r => r.id === targetUserId ? { ...r, connectionStatus: 'pending' } : r));
+        } else if (msg.toLowerCase().includes('exists')) {
+          toast.info(`You're already connected or have a request pending with ${targetName}`);
+          setOpen(false);
+          setSearchQuery("");
+        } else {
+          toast.error("Failed to send connection request");
+        }
       }
     } catch (error) {
       console.error('Error sending connection request:', error);

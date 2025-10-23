@@ -380,7 +380,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden">
         <div 
           ref={scrollContainerRef}
           className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom"

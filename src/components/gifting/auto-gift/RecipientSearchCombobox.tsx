@@ -158,8 +158,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </PopoverTrigger>
         <div ref={popoverContainerRef} />
         <PopoverContent 
-          className="w-[400px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
+          className="w-[360px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border" 
           align="start"
+          side="bottom"
+          sideOffset={8}
           container={popoverContainerRef.current ?? undefined}
           onOpenAutoFocus={(e)=>{
             e.preventDefault();
@@ -190,7 +192,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             )}
           </div>
 
-          <div className="max-h-[280px] overflow-y-auto">
+          <div className="max-h-[240px] overflow-y-auto">
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
               <div className="p-2">

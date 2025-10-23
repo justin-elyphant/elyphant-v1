@@ -1409,8 +1409,11 @@ export type Database = {
           attempts: number
           created_at: string
           error_message: string | null
+          event_type: string | null
           id: string
           max_attempts: number
+          metadata: Json | null
+          priority: string | null
           recipient_email: string
           recipient_name: string | null
           scheduled_for: string
@@ -1424,8 +1427,11 @@ export type Database = {
           attempts?: number
           created_at?: string
           error_message?: string | null
+          event_type?: string | null
           id?: string
           max_attempts?: number
+          metadata?: Json | null
+          priority?: string | null
           recipient_email: string
           recipient_name?: string | null
           scheduled_for?: string
@@ -1439,8 +1445,11 @@ export type Database = {
           attempts?: number
           created_at?: string
           error_message?: string | null
+          event_type?: string | null
           id?: string
           max_attempts?: number
+          metadata?: Json | null
+          priority?: string | null
           recipient_email?: string
           recipient_name?: string | null
           scheduled_for?: string

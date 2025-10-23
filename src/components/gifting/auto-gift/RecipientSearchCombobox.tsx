@@ -305,6 +305,11 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                         <div className="font-medium">{result.name}</div>
                         <div className="text-xs text-muted-foreground">
                           {result.username}
+                          {(result.city || result.state) && (
+                            <span className="ml-1.5">
+                              • {[result.city, result.state].filter(Boolean).join(', ')}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {result.connectionStatus === 'connected' && (

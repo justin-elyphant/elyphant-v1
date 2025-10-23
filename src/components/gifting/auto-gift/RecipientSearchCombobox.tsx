@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import NewRecipientForm from "@/components/shared/NewRecipientForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecipientSearchComboboxProps {
   value: string;
@@ -84,8 +85,35 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         const results = await searchFriends(searchQuery, user?.id);
         
         // Use memoized existingUserIds
-        const filteredResults = results.filter(r => !existingUserIds.has(r.id));
+        let filteredResults = results.filter(r => !existingUserIds.has(r.id));
         console.log('[RecipientSearchCombobox] raw results:', results.length, 'filtered:', filteredResults.length);
+
+        // Safety check: verify connection status directly from DB to avoid stale status in search service
+        if (user?.id && filteredResults.length > 0) {
+          try {
+            const ids = filteredResults.map(r => r.id).join(',');
+            const { data: connRows, error: connErr } = await supabase
+              .from('user_connections')
+              .select('user_id, connected_user_id, status')
+              .or(`and(user_id.eq.${user.id},connected_user_id.in.(${ids})),and(user_id.in.(${ids}),connected_user_id.eq.${user.id}))`);
+            
+            if (!connErr && connRows) {
+              filteredResults = filteredResults.map(r => {
+                const rows = connRows.filter(row => row.user_id === user.id ? row.connected_user_id === r.id : row.user_id === r.id);
+                const hasAccepted = rows.some(row => row.status === 'accepted');
+                const hasPending = rows.some(row => row.status === 'pending');
+                return hasAccepted
+                  ? { ...r, connectionStatus: 'connected' }
+                  : hasPending
+                  ? { ...r, connectionStatus: 'pending' }
+                  : r;
+              });
+            }
+          } catch (statusErr) {
+            console.warn('[RecipientSearchCombobox] status verification error:', statusErr);
+          }
+        }
+
         setSearchResults(filteredResults);
       } catch (error) {
         console.error('Search error:', error);

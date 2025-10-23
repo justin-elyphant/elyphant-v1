@@ -141,6 +141,9 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       if (result.success) {
         toast.success(`Connection request sent to ${targetName}`);
         
+        // Select the user as the recipient so they can proceed with auto-gift setup
+        onChange(targetUserId);
+        
         // Update search results to show pending status
         setSearchResults(prev => prev.map(r => 
           r.id === targetUserId 

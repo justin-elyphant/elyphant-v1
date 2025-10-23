@@ -445,6 +445,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                         Pre-filled
                       </Badge>
                     )}
+                    {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                        Pending Invitation
+                      </Badge>
+                    )}
                   </Label>
                   <RecipientSearchCombobox
                     value={formData.recipientId}
@@ -456,6 +461,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       toast.success(`Added ${recipient.name} as recipient`);
                     }}
                   />
+                  {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      This gift will be sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts the invitation and provides their address.
+                    </p>
+                  )}
                 </div>
 
                 <MultiEventSelector
@@ -496,6 +506,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
           {/* Step 2: Budget & Payment */}
           <TabsContent value="1" className="space-y-4 pb-32">
+            {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  <Bell className="h-4 w-4" />
+                  <span className="font-medium">Pending Invitation</span>
+                </div>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                  Auto-gifting will activate once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your connection and provides their shipping address.
+                </p>
+              </div>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -561,6 +582,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
           {/* Step 3: Notifications & Approval */}
           <TabsContent value="2" className="space-y-4 pb-32">
+            {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  <Bell className="h-4 w-4" />
+                  <span className="font-medium">Pending Invitation</span>
+                </div>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                  The gift will be automatically sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your invitation and provides their shipping address.
+                </p>
+              </div>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

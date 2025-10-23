@@ -863,24 +863,107 @@ class UnifiedGiftAutomationService {
             continue;
           }
           
-          if (!execution.auto_gifting_rules.recipient_id) {
-            console.error(`❌ Missing recipient for execution ${execution.id}`);
+          // Handle pending recipients - try to resolve recipient_id from pending_recipient_email
+          let recipientUserId = execution.auto_gifting_rules.recipient_id;
+          let recipientEmail = execution.auto_gifting_rules.pending_recipient_email;
+
+          if (!recipientUserId && recipientEmail) {
+            console.log(`🔍 Attempting to resolve pending recipient: ${recipientEmail}`);
+            
+            // Check if the pending recipient has now joined Elyphant
+            const { data: resolvedProfile } = await supabase
+              .from('profiles')
+              .select('id, email')
+              .eq('email', recipientEmail)
+              .single();
+            
+            if (resolvedProfile) {
+              console.log(`✅ Pending recipient has joined Elyphant: ${resolvedProfile.id}`);
+              
+              // Update the auto-gifting rule with resolved recipient_id
+              await supabase
+                .from('auto_gifting_rules')
+                .update({ 
+                  recipient_id: resolvedProfile.id,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', execution.rule_id);
+              
+              recipientUserId = resolvedProfile.id;
+            } else {
+              console.log(`📧 Recipient still pending (not on Elyphant): ${recipientEmail}`);
+              // This is OK - we'll try to get address from pending_connections
+            }
+          }
+
+          // If still no recipient_id or email, fail execution
+          if (!recipientUserId && !recipientEmail) {
+            console.error(`❌ No recipient information for execution ${execution.id}`);
             await supabase
               .from('automated_gift_executions')
               .update({
                 status: 'failed', 
-                error_message: 'Recipient information is missing or invalid',
+                error_message: 'Recipient information is missing',
                 updated_at: new Date().toISOString()
               })
               .eq('id', execution.id);
             continue;
           }
           
-          // Step 1: Validate recipient address availability
-          const addressResult = await this.validateRecipientAddress(
-            userId, 
-            execution.auto_gifting_rules.recipient_id
-          );
+          // Step 1: Resolve recipient address - handle both connected and pending recipients
+          let addressResult;
+          let recipientInfo;
+
+          if (recipientUserId) {
+            // Connected or joined user - use existing logic
+            addressResult = await this.validateRecipientAddress(userId, recipientUserId);
+          } else if (recipientEmail) {
+            // Pending recipient - try to get address from pending_connections
+            console.log(`📍 Resolving address for pending recipient: ${recipientEmail}`);
+            
+            const { data: pendingConnection } = await supabase
+              .from('user_connections')
+              .select('pending_shipping_address, pending_recipient_name, pending_recipient_email')
+              .eq('user_id', userId)
+              .eq('pending_recipient_email', recipientEmail)
+              .eq('status', 'pending_invitation')
+              .single();
+            
+            if (pendingConnection?.pending_shipping_address) {
+              console.log(`✅ Found address from pending_connections for ${recipientEmail}`);
+              
+              addressResult = {
+                hasAddress: true,
+                status: 'pending' as const,
+                message: 'Address available from pending connection',
+                recipientInfo: {
+                  id: null,
+                  name: pendingConnection.pending_recipient_name,
+                  email: pendingConnection.pending_recipient_email,
+                  address: pendingConnection.pending_shipping_address
+                }
+              };
+              
+              recipientInfo = addressResult.recipientInfo;
+            } else {
+              console.log(`❌ No address found for pending recipient ${recipientEmail}`);
+              
+              addressResult = {
+                hasAddress: false,
+                status: 'address_required' as const,
+                message: 'Address needed from pending recipient',
+                needsAddressRequest: true,
+                recipientInfo: {
+                  id: null,
+                  name: pendingConnection?.pending_recipient_name || 'Recipient',
+                  email: recipientEmail,
+                  address: null
+                }
+              };
+              
+              recipientInfo = addressResult.recipientInfo;
+            }
+          }
           
           if (!addressResult.hasAddress) {
             console.log(`📍 No address available for execution ${execution.id}, status: ${addressResult.status}`);
@@ -896,8 +979,8 @@ class UnifiedGiftAutomationService {
               .eq('id', execution.id);
               
             // Send address request if needed
-            if (addressResult.needsAddressRequest && addressResult.recipientInfo) {
-              await this.sendAddressRequest(userId, addressResult.recipientInfo);
+            if (addressResult.needsAddressRequest && recipientInfo) {
+              await this.sendAddressRequest(userId, recipientInfo);
             }
             
             continue;
@@ -925,8 +1008,10 @@ class UnifiedGiftAutomationService {
           // Handle both calendar-based events and "just_because" rules without events
           const occasionType = execution.user_special_dates?.date_type || execution.auto_gifting_rules.date_type || 'birthday';
           
+          // Use recipientUserId if available (connected/joined user), otherwise use a placeholder for pending
+          // Note: For pending recipients, AI selection will use general occasion-based logic
           const giftSelection = await this.selectGiftForRecipient(
-            execution.auto_gifting_rules.recipient_id,
+            recipientUserId || 'pending-recipient',
             budgetLimit,
             occasionType,
             (execution.auto_gifting_rules.gift_selection_criteria as any)?.categories || [],
@@ -1345,20 +1430,26 @@ class UnifiedGiftAutomationService {
   }
 
   /**
-   * Send address request to recipient
+   * Send address request to recipient (handles both connected and pending recipients)
    */
-  private async sendAddressRequest(userId: string, recipientInfo: { email: string; name: string }): Promise<void> {
-    const result = await recipientAddressResolver.requestAddressFromRecipient(
-      userId,
-      recipientInfo.email,
-      recipientInfo.name,
-      `Hi ${recipientInfo.name}, I'd like to send you an auto-gift! Could you please share your shipping address?`
-    );
+  private async sendAddressRequest(userId: string, recipientInfo: { id?: string | null; email: string; name: string }): Promise<void> {
+    console.log(`📤 Sending address request for auto-gift execution`);
+    
+    try {
+      const result = await recipientAddressResolver.requestAddressFromRecipient(
+        userId,
+        recipientInfo.email,
+        recipientInfo.name,
+        `Hi ${recipientInfo.name}, I'd like to send you an auto-gift! Could you please share your shipping address?`
+      );
 
-    if (result.success) {
-      console.log(`📤 Address request sent to ${recipientInfo.email}`);
-    } else {
-      console.error(`❌ Failed to send address request: ${result.error}`);
+      if (result.success) {
+        console.log(`✅ Address request sent to ${recipientInfo.email}`);
+      } else {
+        console.error(`❌ Failed to send address request: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to send address request:', error);
     }
   }
 

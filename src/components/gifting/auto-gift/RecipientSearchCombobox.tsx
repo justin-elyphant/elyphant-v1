@@ -38,16 +38,17 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const [isSearching, setIsSearching] = useState(false);
   const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
   const [sendingRequestTo, setSendingRequestTo] = useState<string | null>(null);
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverContainerRef = useRef<HTMLDivElement>(null);
 
   // Get selected connection name for display
   const selectedConnection = 
-    connections.find(c => (c.display_user_id || c.connected_user_id) === value) ||
-    pendingInvitations.find(c => c.id === value);
+    connections.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value) ||
+    pendingInvitations.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value);
   
-  const selectedName = selectedConnection?.profile_name || "Select a recipient";
+  const selectedName = selectedConnection?.profile_name || (selectedConnection as any)?.pending_recipient_name || selectedLabel || "Select a recipient";
 
   // Filter accepted connections - memoized to prevent infinite loops
   const acceptedConnections = useMemo(
@@ -142,6 +143,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         toast.success(`Connection request sent to ${targetName}`);
         
         // Select the user as the recipient so they can proceed with auto-gift setup
+        setSelectedLabel(targetName);
         onChange(targetUserId);
         
         // Update search results to show pending status
@@ -349,6 +351,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                         className={`flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent ${isClickable ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (isClickable) {
+                            setSelectedLabel(result.name || null);
                             onChange(result.id);
                             setOpen(false);
                             setSearchQuery("");

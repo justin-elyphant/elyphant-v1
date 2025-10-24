@@ -340,54 +340,68 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                     Search Results
                   </div>
-                  {searchResults.map((result) => (
-                    <div
-                      key={result.id}
-                      className="flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent"
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={result.profile_image} />
-                        <AvatarFallback>
-                          {result.name?.substring(0, 2).toUpperCase() || 'UN'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="font-medium">{result.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {result.username}
-                          {(result.city || result.state) && (
-                            <span className="ml-1.5">
-                              • {[result.city, result.state].filter(Boolean).join(', ')}
-                            </span>
-                          )}
+                  {searchResults.map((result) => {
+                    const isClickable = result.connectionStatus === 'connected' || result.connectionStatus === 'pending';
+                    
+                    return (
+                      <div
+                        key={result.id}
+                        className={`flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent ${isClickable ? 'cursor-pointer' : ''}`}
+                        onClick={() => {
+                          if (isClickable) {
+                            onChange(result.id);
+                            setOpen(false);
+                            setSearchQuery("");
+                          }
+                        }}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={result.profile_image} />
+                          <AvatarFallback>
+                            {result.name?.substring(0, 2).toUpperCase() || 'UN'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{result.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {result.username}
+                            {(result.city || result.state) && (
+                              <span className="ml-1.5">
+                                • {[result.city, result.state].filter(Boolean).join(', ')}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {result.connectionStatus === 'connected' && (
+                          <Badge variant="secondary" className="text-xs">Connected</Badge>
+                        )}
+                        {result.connectionStatus === 'pending' && (
+                          <Badge variant="outline" className="text-xs">Request Sent</Badge>
+                        )}
+                        {result.connectionStatus === 'none' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSendConnectionRequest(result.id, result.name);
+                            }}
+                            disabled={sendingRequestTo === result.id}
+                            className="h-7 text-xs"
+                          >
+                            {sendingRequestTo === result.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <UserPlus className="h-3 w-3 mr-1" />
+                                Schedule + Request
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
-                      {result.connectionStatus === 'connected' && (
-                        <Badge variant="secondary" className="text-xs">Connected</Badge>
-                      )}
-                      {result.connectionStatus === 'pending' && (
-                        <Badge variant="outline" className="text-xs">Request Sent</Badge>
-                      )}
-                      {result.connectionStatus === 'none' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSendConnectionRequest(result.id, result.name)}
-                          disabled={sendingRequestTo === result.id}
-                          className="h-7 text-xs"
-                        >
-                          {sendingRequestTo === result.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <>
-                              <UserPlus className="h-3 w-3 mr-1" />
-                              Schedule + Request
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

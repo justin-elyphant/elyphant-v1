@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { unifiedGiftManagementService } from "./UnifiedGiftManagementService";
 import { authDebugService } from "./authDebugService";
 import { databaseToForm } from "@/utils/addressStandardization";
+import { isValidRelationshipType } from "@/config/relationshipTypes";
 
 export interface UnifiedRecipient {
   id: string;
@@ -319,6 +320,12 @@ export const unifiedRecipientService = {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(recipientData.email.trim())) {
         throw new Error('Invalid email format');
+      }
+      
+      // Relationship type validation
+      if (recipientData.relationship_type && !isValidRelationshipType(recipientData.relationship_type)) {
+        console.warn(`Invalid relationship type: ${recipientData.relationship_type}. Defaulting to 'friend'.`);
+        recipientData.relationship_type = 'friend';
       }
       
       // Use shippingAddress if provided, otherwise fall back to address

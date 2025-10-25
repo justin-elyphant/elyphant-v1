@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
+import { getRelationshipCategory } from "@/config/relationshipTypes";
 
 export interface InvitationAnalytics {
   id?: string;
@@ -212,7 +213,7 @@ export const invitationAnalyticsService = {
 
       const { data, error } = await supabase
         .from('gift_invitation_analytics')
-        .select('conversion_status')
+        .select('conversion_status, relationship_type')
         .eq('user_id', targetUserId);
 
       if (error) throw error;
@@ -226,6 +227,27 @@ export const invitationAnalyticsService = {
       const profileCompleted = data.filter(d => d.conversion_status === 'profile_completed').length;
       const autoGiftActive = data.filter(d => d.conversion_status === 'auto_gift_active').length;
 
+      // Calculate conversion rates by relationship category
+      const byRelationship = data.reduce((acc: any, record) => {
+        const category = getRelationshipCategory(record.relationship_type as any) || 'other';
+        if (!acc[category]) {
+          acc[category] = { total: 0, converted: 0 };
+        }
+        acc[category].total++;
+        if (['signed_up', 'profile_completed', 'auto_gift_active'].includes(record.conversion_status)) {
+          acc[category].converted++;
+        }
+        return acc;
+      }, {});
+
+      // Calculate conversion rate percentage for each category
+      const relationshipStats = Object.entries(byRelationship).map(([category, stats]: [string, any]) => ({
+        category,
+        total: stats.total,
+        converted: stats.converted,
+        conversionRate: stats.total > 0 ? (stats.converted / stats.total) * 100 : 0
+      }));
+
       return {
         total,
         funnel: {
@@ -235,7 +257,8 @@ export const invitationAnalyticsService = {
           signed_up: { count: signedUp, rate: clicked > 0 ? (signedUp / clicked) * 100 : 0 },
           profile_completed: { count: profileCompleted, rate: signedUp > 0 ? (profileCompleted / signedUp) * 100 : 0 },
           auto_gift_active: { count: autoGiftActive, rate: profileCompleted > 0 ? (autoGiftActive / profileCompleted) * 100 : 0 }
-        }
+        },
+        byRelationship: relationshipStats
       };
     } catch (error) {
       console.error('Error getting conversion funnel:', error);

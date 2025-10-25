@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -25,10 +25,12 @@ import {
   Gift, 
   TrendingUp,
   Award,
-  Target
+  Target,
+  Heart
 } from "lucide-react";
 import { useInvitationAnalytics } from "@/services/analytics/invitationAnalyticsService";
 import { useAuth } from "@/contexts/auth";
+import { RELATIONSHIP_CATEGORIES } from "@/config/relationshipTypes";
 
 const InvitationAnalyticsDashboard = () => {
   const { user } = useAuth();
@@ -263,21 +265,101 @@ const InvitationAnalyticsDashboard = () => {
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
+          {/* Relationship Conversion Chart */}
+          {funnelData?.byRelationship && funnelData.byRelationship.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-primary" />
+                  Conversion by Relationship Type
+                </CardTitle>
+                <CardDescription>
+                  See how different relationships impact invitation conversion rates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={funnelData.byRelationship}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="category" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={80}
+                        tickFormatter={(value) => {
+                          const category = Object.values(RELATIONSHIP_CATEGORIES).find(
+                            c => c.label.toLowerCase().includes(value)
+                          );
+                          return category?.label.split(' - ')[0] || value;
+                        }}
+                      />
+                      <YAxis label={{ value: 'Conversion %', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip 
+                        formatter={(value: any) => [`${value.toFixed(1)}%`, 'Conversion Rate']}
+                        labelFormatter={(label) => {
+                          const category = Object.values(RELATIONSHIP_CATEGORIES).find(
+                            c => c.label.toLowerCase().includes(label)
+                          );
+                          return category?.label || label;
+                        }}
+                      />
+                      <Bar dataKey="conversionRate" fill="#8b5cf6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  
+                  <div className="space-y-3">
+                    {funnelData.byRelationship
+                      .sort((a: any, b: any) => b.conversionRate - a.conversionRate)
+                      .map((stat: any, index: number) => (
+                        <div key={stat.category} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium capitalize">{stat.category.replace('_', ' ')}</span>
+                              <span className="text-sm font-semibold text-primary">
+                                {stat.conversionRate.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{stat.converted}/{stat.total} converted</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2 mt-2">
+                              <div 
+                                className="h-2 rounded-full bg-primary" 
+                                style={{ width: `${stat.conversionRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <h3 className="text-lg font-semibold">Performance Insights</h3>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Award className="w-5 h-5 text-yellow-500" />
-                  <div>
-                    <p className="font-medium">Best Converting Relationship</p>
-                    <p className="text-sm text-muted-foreground">
-                      Family members convert 23% better than friends
-                    </p>
+                {funnelData?.byRelationship && funnelData.byRelationship.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <Award className="w-5 h-5 text-yellow-500" />
+                    <div>
+                      <p className="font-medium">Best Converting Relationship</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(() => {
+                          const best = funnelData.byRelationship.reduce((prev: any, curr: any) => 
+                            curr.conversionRate > prev.conversionRate ? curr : prev
+                          );
+                          return `${best.category.replace('_', ' ')} (${best.conversionRate.toFixed(1)}%)`;
+                        })()}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="flex items-center gap-3">
                   <Target className="w-5 h-5 text-blue-500" />

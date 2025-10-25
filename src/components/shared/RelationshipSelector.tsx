@@ -19,18 +19,18 @@ const RelationshipSelector: React.FC<RelationshipSelectorProps> = ({
   className
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const viewportRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Scroll to top when opening
-      setTimeout(() => {
-        const viewport = document.querySelector('[role="listbox"]');
-        if (viewport) {
-          viewport.scrollTop = 0;
-        }
-      }, 0);
+      // Force list to start at the very top; Radix scrolls selected into view by default
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const listboxes = document.querySelectorAll('[role="listbox"]');
+          const viewport = listboxes[listboxes.length - 1] as HTMLElement | undefined;
+          if (viewport) viewport.scrollTop = 0;
+        });
+      });
     }
   };
 

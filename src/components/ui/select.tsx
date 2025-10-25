@@ -79,12 +79,6 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
-      side={side}
-      align={align}
-      sideOffset={sideOffset}
-      avoidCollisions={avoidCollisions}
-      onWheelCapture={(e) => e.stopPropagation()}
-      onTouchMoveCapture={(e) => e.stopPropagation()}
       {...props}
     >
       <SelectScrollUpButton />

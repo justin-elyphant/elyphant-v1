@@ -6,8 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, UserPlus } from 'lucide-react';
-import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
-import { StandardizedAddress } from '@/services/googlePlacesService';
 import { unifiedRecipientService, UnifiedRecipient } from '@/services/unifiedRecipientService';
 import { toast } from 'sonner';
 
@@ -15,14 +13,6 @@ interface NewRecipientFormData {
   name: string;
   email: string;
   relationship_type: string;
-  address?: {
-    street: string;
-    address_line2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
   notes?: string;
 }
 
@@ -41,19 +31,12 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
     name: '',
     email: '',
     relationship_type: 'friend',
-    address: {
-      street: '',
-      address_line2: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'US'
-    },
     notes: ''
   });
-  const [addressValue, setAddressValue] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [creationProgress, setCreationProgress] = useState('');
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const relationshipTypes = [
     { value: 'friend', label: 'Friend' },
@@ -62,6 +45,25 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
     { value: 'partner', label: 'Partner' },
     { value: 'other', label: 'Other' }
   ];
+
+  // Check if email exists in the platform
+  const checkEmailExists = async (email: string) => {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailExists(null);
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const result = await unifiedRecipientService.checkEmailExists(email.trim().toLowerCase());
+      setEmailExists(result.exists);
+    } catch (error) {
+      console.error('Error checking email:', error);
+      setEmailExists(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,30 +87,13 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
       return;
     }
 
-    const address = formData.address;
-    if (!address?.street?.trim() || !address?.city?.trim() || 
-        !address?.state?.trim() || !address?.zipCode?.trim()) {
-      toast.error('Please fill in all required address fields');
-      setIsCreating(false);
-      setCreationProgress('');
-      return;
-    }
-
     try {
-      setCreationProgress('Creating recipient invitation...');
+      setCreationProgress('Sending invitation...');
       
       const sanitizedData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        relationship_type: formData.relationship_type,
-        address: {
-          street: address.street.trim(),
-          address_line2: address.address_line2?.trim() || '',
-          city: address.city.trim(),
-          state: address.state.trim(),
-          zipCode: address.zipCode.trim(),
-          country: address.country.trim()
-        }
+        relationship_type: formData.relationship_type
       };
       
       const newPendingRecipient = await unifiedRecipientService.createPendingRecipient(sanitizedData);
@@ -117,7 +102,6 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         id: newPendingRecipient.id,
         name: sanitizedData.name,
         email: sanitizedData.email,
-        address: sanitizedData.address,
         source: 'pending',
         relationship_type: sanitizedData.relationship_type,
         status: 'pending_invitation'
@@ -125,12 +109,12 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
       
       setCreationProgress('Finalizing...');
       onRecipientCreate(unifiedRecipient);
-      toast.success('Invitation sent to recipient');
+      toast.success(`Invitation sent! ${sanitizedData.name} will provide their address during signup.`);
       
     } catch (error: any) {
       console.error('Failed to create recipient:', error);
       
-      let userFriendlyMessage = 'Failed to create recipient. Please try again.';
+      let userFriendlyMessage = 'Failed to send invitation. Please try again.';
       
       if (error?.message?.includes('duplicate') || error?.code === '23505') {
         userFriendlyMessage = 'A recipient with this email already exists.';
@@ -145,19 +129,6 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
     }
   };
 
-  const handleAddressSelect = (standardizedAddress: StandardizedAddress) => {
-    setFormData(prev => ({
-      ...prev,
-      address: {
-        ...prev.address!,
-        street: standardizedAddress.street,
-        city: standardizedAddress.city,
-        state: standardizedAddress.state,
-        zipCode: standardizedAddress.zipCode,
-        country: standardizedAddress.country
-      }
-    }));
-  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col">
@@ -200,11 +171,23 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, email: e.target.value }));
+                  checkEmailExists(e.target.value);
+                }}
                 placeholder="recipient@example.com"
                 disabled={isCreating}
                 required
               />
+              {checkingEmail && (
+                <p className="text-xs text-muted-foreground mt-1">Checking email...</p>
+              )}
+              {emailExists === true && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ This user is already on Elyphant - we'll send a connection request instead</p>
+              )}
+              {emailExists === false && (
+                <p className="text-xs text-green-600 mt-1">✓ Available - invitation will be sent</p>
+              )}
             </div>
           </div>
 
@@ -228,115 +211,6 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
             </Select>
           </div>
 
-          <div className="space-y-4">
-            <Label>Shipping Address *</Label>
-            
-            <GooglePlacesAutocomplete
-              value={addressValue}
-              onChange={setAddressValue}
-              onAddressSelect={handleAddressSelect}
-              placeholder="Search for an address..."
-              disabled={isCreating}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="street">Street Address *</Label>
-                <Input
-                  id="street"
-                  value={formData.address?.street || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, street: e.target.value }
-                  }))}
-                  placeholder="123 Main St"
-                  disabled={isCreating}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="address_line2">Apartment/Unit</Label>
-                <Input
-                  id="address_line2"
-                  value={formData.address?.address_line2 || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, address_line2: e.target.value }
-                  }))}
-                  placeholder="Apt 4B"
-                  disabled={isCreating}
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  value={formData.address?.city || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, city: e.target.value }
-                  }))}
-                  placeholder="City"
-                  disabled={isCreating}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="state">State *</Label>
-                <Input
-                  id="state"
-                  value={formData.address?.state || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, state: e.target.value }
-                  }))}
-                  placeholder="CA"
-                  disabled={isCreating}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="zipCode">ZIP Code *</Label>
-                <Input
-                  id="zipCode"
-                  value={formData.address?.zipCode || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, zipCode: e.target.value }
-                  }))}
-                  placeholder="12345"
-                  disabled={isCreating}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="country">Country *</Label>
-                <Select
-                  value={formData.address?.country || 'US'}
-                  onValueChange={(value) => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address!, country: value }
-                  }))}
-                  disabled={isCreating}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
 
           <div>
             <Label htmlFor="notes">Notes (Optional)</Label>

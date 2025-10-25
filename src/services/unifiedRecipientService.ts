@@ -455,6 +455,42 @@ export const unifiedRecipientService = {
     );
   },
 
+  // Check if email exists on the platform
+  async checkEmailExists(email: string): Promise<{
+    exists: boolean;
+    userId?: string;
+    name?: string;
+    hasAddress?: boolean;
+  }> {
+    try {
+      // Check profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, name, shipping_address')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking email existence:', error);
+        return { exists: false };
+      }
+
+      if (profile) {
+        return {
+          exists: true,
+          userId: profile.id,
+          name: profile.name,
+          hasAddress: !!profile.shipping_address
+        };
+      }
+
+      return { exists: false };
+    } catch (error) {
+      console.error('Error in checkEmailExists:', error);
+      return { exists: false };
+    }
+  },
+
   // Comprehensive update for any recipient type
   async updateRecipient(id: string, updates: {
     name?: string;

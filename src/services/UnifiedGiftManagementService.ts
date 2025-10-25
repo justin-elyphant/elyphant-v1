@@ -1817,10 +1817,11 @@ class UnifiedGiftManagementService {
         pending_recipient_email: sanitizedEmail,
         pending_recipient_name: sanitizedName,
         pending_recipient_phone: recipientPhone,
-        pending_shipping_address: shippingAddress,
+        pending_shipping_address: shippingAddress || null, // Allow NULL for recipient-owned addresses
         pending_recipient_dob: birthday,
         relationship_context: relationshipContext,
         invitation_sent_at: new Date().toISOString(),
+        invitation_reminder_count: 0,
         created_at: new Date().toISOString()
       };
 

@@ -41,15 +41,6 @@ interface NewRecipientForm {
   name: string;
   email: string;
   relationship_type: string;
-  address?: {
-    street: string;
-    address_line2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  notes?: string;
 }
 
 const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
@@ -65,18 +56,8 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const [newRecipientForm, setNewRecipientForm] = useState<NewRecipientForm>({
     name: '',
     email: '',
-    relationship_type: 'friend',
-    address: {
-      street: '',
-      address_line2: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'US'
-    },
-    notes: ''
+    relationship_type: 'friend'
   });
-  const [addressValue, setAddressValue] = useState('');
   const [isCreatingRecipient, setIsCreatingRecipient] = useState(false);
   const [creationProgress, setCreationProgress] = useState('');
   const { user } = useAuth();
@@ -111,8 +92,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     console.log('📝 [RECIPIENT_CREATION] Form data:', {
       name: newRecipientForm.name,
       email: newRecipientForm.email,
-      relationship_type: newRecipientForm.relationship_type,
-      address: newRecipientForm.address
+      relationship_type: newRecipientForm.relationship_type
     });
 
     // Enhanced validation with detailed logging
@@ -142,50 +122,6 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       return;
     }
 
-    // Enhanced address validation
-    const address = newRecipientForm.address;
-    console.log('🏠 [VALIDATION] Address validation:', address);
-    
-    if (!address?.street?.trim()) {
-      console.error('❌ [VALIDATION] Address validation failed - missing street');
-      toast.error('Street address is required');
-      setIsCreatingRecipient(false);
-      setCreationProgress('');
-      return;
-    }
-    
-    if (!address?.city?.trim()) {
-      console.error('❌ [VALIDATION] Address validation failed - missing city');
-      toast.error('City is required');
-      setIsCreatingRecipient(false);
-      setCreationProgress('');
-      return;
-    }
-    
-    if (!address?.state?.trim()) {
-      console.error('❌ [VALIDATION] Address validation failed - missing state');
-      toast.error('State is required');
-      setIsCreatingRecipient(false);
-      setCreationProgress('');
-      return;
-    }
-    
-    if (!address?.zipCode?.trim()) {
-      console.error('❌ [VALIDATION] Address validation failed - missing ZIP code');
-      toast.error('ZIP code is required');
-      setIsCreatingRecipient(false);
-      setCreationProgress('');
-      return;
-    }
-    
-    if (!address?.country?.trim()) {
-      console.error('❌ [VALIDATION] Address validation failed - missing country');
-      toast.error('Country is required');
-      setIsCreatingRecipient(false);
-      setCreationProgress('');
-      return;
-    }
-
     // Relationship type validation
     const validRelationshipTypes = ['friend', 'family', 'colleague', 'partner', 'other'];
     if (!validRelationshipTypes.includes(newRecipientForm.relationship_type)) {
@@ -197,7 +133,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     }
 
     console.log('✅ [VALIDATION] All validations passed');
-    setCreationProgress('Checking authentication...');
+    setCreationProgress('Sending invitation...');
 
     try {
       console.log('📡 [API_CALL] Creating pending recipient...');
@@ -205,15 +141,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       const sanitizedData = {
         name: newRecipientForm.name.trim(),
         email: newRecipientForm.email.trim().toLowerCase(),
-        relationship_type: newRecipientForm.relationship_type,
-        address: {
-          street: address.street.trim(),
-          address_line2: address.address_line2?.trim() || '',
-          city: address.city.trim(),
-          state: address.state.trim(),
-          zipCode: address.zipCode.trim(),
-          country: address.country.trim()
-        }
+        relationship_type: newRecipientForm.relationship_type
       };
       
       console.log('🧹 [DATA_SANITIZATION] Sanitized data:', sanitizedData);
@@ -227,7 +155,6 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         id: newPendingRecipient.id,
         name: sanitizedData.name,
         email: sanitizedData.email,
-        address: sanitizedData.address,
         source: 'pending',
         relationship_type: sanitizedData.relationship_type,
         status: 'pending_invitation'
@@ -237,7 +164,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       
       setCreationProgress('Finalizing...');
       onRecipientSelect(unifiedRecipient);
-      toast.success('Invitation sent to recipient');
+      toast.success(`Invitation sent! ${sanitizedData.name} will provide their address during signup.`);
       
       setShowNewRecipientForm(false);
       resetNewRecipientForm();
@@ -293,33 +220,10 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     setNewRecipientForm({
       name: '',
       email: '',
-      relationship_type: 'friend',
-      address: {
-        street: '',
-        address_line2: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'US'
-      },
-      notes: ''
+      relationship_type: 'friend'
     });
-    setAddressValue('');
   };
 
-  const handleAddressSelect = (standardizedAddress: StandardizedAddress) => {
-    setNewRecipientForm(prev => ({
-      ...prev,
-      address: {
-        ...prev.address!,
-        street: standardizedAddress.street,
-        city: standardizedAddress.city,
-        state: standardizedAddress.state,
-        zipCode: standardizedAddress.zipCode,
-        country: standardizedAddress.country
-      }
-    }));
-  };
 
   const handleNonConnectedUserSelect = async (searchResult: FriendSearchResult) => {
     try {
@@ -748,69 +652,11 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     />
                   </div>
 
-                  {/* Address with Google Places Autocomplete */}
-                  <div className="space-y-4">
-                    <Label>Shipping Address *</Label>
-                    <div className="space-y-3">
-                      <GooglePlacesAutocomplete
-                        value={addressValue}
-                        onChange={setAddressValue}
-                        onAddressSelect={handleAddressSelect}
-                        placeholder="Start typing street address..."
-                        label=""
-                      />
-                      
-                      <Input
-                        placeholder="Apartment, suite, etc. (optional)"
-                        value={newRecipientForm.address?.address_line2 || ''}
-                        onChange={(e) => setNewRecipientForm(prev => ({ 
-                          ...prev, 
-                          address: { ...prev.address!, address_line2: e.target.value } 
-                        }))}
-                      />
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          placeholder="City *"
-                          value={newRecipientForm.address?.city || ''}
-                          onChange={(e) => setNewRecipientForm(prev => ({ 
-                            ...prev, 
-                            address: { ...prev.address!, city: e.target.value } 
-                          }))}
-                          required
-                        />
-                        <Input
-                          placeholder="State *"
-                          value={newRecipientForm.address?.state || ''}
-                          onChange={(e) => setNewRecipientForm(prev => ({ 
-                            ...prev, 
-                            address: { ...prev.address!, state: e.target.value } 
-                          }))}
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          placeholder="ZIP Code *"
-                          value={newRecipientForm.address?.zipCode || ''}
-                          onChange={(e) => setNewRecipientForm(prev => ({ 
-                            ...prev, 
-                            address: { ...prev.address!, zipCode: e.target.value } 
-                          }))}
-                          required
-                        />
-                        <Input
-                          placeholder="Country *"
-                          value={newRecipientForm.address?.country || 'US'}
-                          onChange={(e) => setNewRecipientForm(prev => ({ 
-                            ...prev, 
-                            address: { ...prev.address!, country: e.target.value } 
-                          }))}
-                          required
-                        />
-                      </div>
-                    </div>
+                  {/* Info badge explaining address collection */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      📦 <strong>{newRecipientForm.name || 'The recipient'}</strong> will provide their shipping address when they sign up.
+                    </p>
                   </div>
                 </form>
 

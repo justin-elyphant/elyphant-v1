@@ -4342,8 +4342,10 @@ export type Database = {
           gift_occasion: string | null
           has_pending_gift: boolean | null
           id: string
+          invitation_reminder_count: number | null
           invitation_sent_at: string | null
           invitation_token: string | null
+          last_reminder_sent_at: string | null
           pending_recipient_dob: string | null
           pending_recipient_email: string | null
           pending_recipient_name: string | null
@@ -4366,8 +4368,10 @@ export type Database = {
           gift_occasion?: string | null
           has_pending_gift?: boolean | null
           id?: string
+          invitation_reminder_count?: number | null
           invitation_sent_at?: string | null
           invitation_token?: string | null
+          last_reminder_sent_at?: string | null
           pending_recipient_dob?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null
@@ -4390,8 +4394,10 @@ export type Database = {
           gift_occasion?: string | null
           has_pending_gift?: boolean | null
           id?: string
+          invitation_reminder_count?: number | null
           invitation_sent_at?: string | null
           invitation_token?: string | null
+          last_reminder_sent_at?: string | null
           pending_recipient_dob?: string | null
           pending_recipient_email?: string | null
           pending_recipient_name?: string | null

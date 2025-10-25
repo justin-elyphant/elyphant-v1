@@ -10,11 +10,13 @@ import { WishlistItem } from "@/types/profile";
 interface WishlistItemsGridProps {
   items: WishlistItem[];
   onSaveItem: (item: WishlistItem) => void;
-  savingItemId: string | null;
+  savingItemId?: string | null;
   onGiftNow?: (item: WishlistItem) => void;
+  isOwner?: boolean;
+  isGuestPreview?: boolean;
 }
 
-const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow }: WishlistItemsGridProps) => {
+const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner = true, isGuestPreview = false }: WishlistItemsGridProps) => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showSchedulingModal, setShowSchedulingModal] = useState(false);
@@ -81,9 +83,21 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow }: Wishl
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Gift className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-        <p className="text-muted-foreground">This wishlist is empty.</p>
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="bg-muted/50 p-8 rounded-full mb-6">
+          <Gift className="h-16 w-16 text-muted-foreground" />
+        </div>
+        <h3 className="text-2xl font-semibold mb-3">Your wishlist is empty</h3>
+        <p className="text-muted-foreground text-center max-w-md mb-8 text-lg">
+          Start adding items to build your perfect wishlist. Browse products or search for what you love.
+        </p>
+        {isOwner && !isGuestPreview && (
+          <div className="flex gap-3">
+            <Button size="lg" onClick={() => window.history.back()}>
+              Browse Products
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -123,19 +137,20 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow }: Wishl
         </Button>
       </div>
 
-      {/* Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Items Grid - Larger, Babylist-style cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
           <EnhancedWishlistCard
             key={item.id}
             item={item}
-            onRemove={() => onSaveItem(item)}
+            onRemove={isOwner && !isGuestPreview ? () => onSaveItem(item) : undefined}
             isRemoving={savingItemId === item.id}
             onGiftNow={onGiftNow}
             onScheduleGift={handleSingleSchedule}
             isSelectionMode={isSelectionMode}
             isSelected={selectedItems.has(item.id)}
             onSelectionChange={handleSelectionChange}
+            className="min-h-[320px]"
           />
         ))}
       </div>

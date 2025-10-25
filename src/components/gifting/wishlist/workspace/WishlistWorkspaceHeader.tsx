@@ -30,8 +30,8 @@ const WishlistWorkspaceHeader = ({
   const totalValue = wishlist.items.reduce((sum, item) => sum + (item.price || 0), 0);
 
   return (
-    <div className="border-b border-border bg-card">
-      <div className="container mx-auto px-4 py-4">
+    <div className="border-b border-border bg-gradient-to-r from-background via-primary/5 to-background shadow-sm">
+      <div className="max-w-[1600px] mx-auto px-6 py-6">
         {/* Back button and wishlist switcher */}
         <div className="flex items-center gap-4 mb-4">
           <Button
@@ -98,8 +98,8 @@ const WishlistWorkspaceHeader = ({
           {isOwner && (
             <div className="flex items-center gap-2">
               {!isGuestPreview && (
-                <Button onClick={onAddItems} className="gap-2">
-                  <Plus className="h-4 w-4" />
+                <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
+                  <Plus className="h-5 w-5" />
                   Add Items
                 </Button>
               )}

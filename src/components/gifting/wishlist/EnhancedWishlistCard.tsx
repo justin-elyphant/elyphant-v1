@@ -137,8 +137,8 @@ const EnhancedWishlistCard = ({
         )}
 
         <CardContent className="p-0">
-          {/* Image */}
-          <div className="aspect-square bg-muted overflow-hidden cursor-pointer" onClick={() => !isSelectionMode && setShowDetails(true)}>
+          {/* Image - Larger for Babylist feel */}
+          <div className="aspect-square bg-muted overflow-hidden cursor-pointer min-h-[240px]" onClick={() => !isSelectionMode && setShowDetails(true)}>
             <img 
               src={item.image_url || "/placeholder.svg"} 
               alt={item.name || item.title || "Product"}
@@ -153,15 +153,17 @@ const EnhancedWishlistCard = ({
             )}
           </div>
           
-          {/* Content */}
-          <div className="p-4">
-            <p className="text-sm text-muted-foreground mb-1">{item.brand || "Unknown Brand"}</p>
-            <h3 className="font-medium mb-2 line-clamp-2 leading-tight">
+          {/* Content - Enhanced spacing and typography */}
+          <div className="p-5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-medium">
+              {item.brand || "Unknown Brand"}
+            </p>
+            <h3 className="font-semibold mb-3 line-clamp-2 leading-tight text-base">
               {item.name || item.title || "Unknown Item"}
             </h3>
             
             <div className="flex justify-between items-center">
-              <p className="font-bold text-lg">{formattedPrice}</p>
+              <p className="font-bold text-xl">{formattedPrice}</p>
               {!isSelectionMode && (
                 <div className="flex gap-2">
                   <Button 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Search, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -11,6 +11,9 @@ import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { toast } from "sonner";
 import QuickAddButton from "./QuickAddButton";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import RecentlyAddedSection from "./RecentlyAddedSection";
+import { WishlistItem } from "@/types/profile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -32,6 +35,45 @@ const ShoppingPanel = ({
   const { search, isLoading: isSearching, results } = useUnifiedSearch();
   
   const [hasSearched, setHasSearched] = useState(false);
+  const [recentlyAdded, setRecentlyAdded] = useState<WishlistItem[]>([]);
+
+  // Fetch recently added items for this wishlist
+  useEffect(() => {
+    const fetchRecentItems = async () => {
+      if (!wishlistId || !isOpen) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('wishlist_items')
+          .select('*')
+          .eq('wishlist_id', wishlistId)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        if (data) {
+          const items: WishlistItem[] = data.map(item => ({
+            id: item.id,
+            wishlist_id: item.wishlist_id,
+            product_id: item.product_id,
+            name: item.name,
+            title: item.title || item.name,
+            brand: item.brand,
+            price: item.price,
+            image_url: item.image_url,
+            added_at: item.created_at,
+            created_at: item.created_at
+          }));
+          setRecentlyAdded(items);
+        }
+      } catch (error) {
+        console.error("Error fetching recent items:", error);
+      }
+    };
+    
+    fetchRecentItems();
+  }, [wishlistId, isOpen]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -57,6 +99,9 @@ const ShoppingPanel = ({
 
       await addToWishlist(wishlistId, wishlistItem);
       toast.success(`Added ${product.name || product.title} to wishlist!`);
+      
+      // Update recently added list
+      setRecentlyAdded(prev => [wishlistItem as WishlistItem, ...prev].slice(0, 5));
       
       if (onProductAdded) {
         onProductAdded(wishlistItem);
@@ -97,12 +142,25 @@ const ShoppingPanel = ({
         )}
       </div>
 
+      {/* Recently Added Section */}
+      {recentlyAdded.length > 0 && (
+        <div className="px-4 pt-4">
+          <RecentlyAddedSection items={recentlyAdded} />
+        </div>
+      )}
+
       {/* Products Grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {displayProducts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16 px-4">
+            <div className="bg-muted/50 p-6 rounded-full inline-flex mb-4">
+              <Search className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">
+              {hasSearched ? "No products found" : "Loading products..."}
+            </h3>
             <p className="text-muted-foreground">
-              {hasSearched ? "No products found. Try a different search." : "Loading products..."}
+              {hasSearched ? "Try a different search term or browse trending products." : "Please wait while we load products for you."}
             </p>
           </div>
         ) : (

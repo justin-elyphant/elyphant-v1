@@ -29,6 +29,18 @@ const WishlistWorkspace = () => {
   
   const { removeFromWishlist, isRemoving } = useWishlist();
   
+  // Handle URL parameters for auto-opening shopping panel and category filtering
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openShopping') === 'true') {
+      setIsShoppingPanelOpen(true);
+    }
+    const category = params.get('category');
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, []);
+  
   const isOwner = user?.id === wishlist?.user_id;
 
   useEffect(() => {
@@ -180,7 +192,7 @@ const WishlistWorkspace = () => {
     : wishlist.items;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       {/* Header */}
       <WishlistWorkspaceHeader
         wishlist={wishlist}
@@ -191,24 +203,29 @@ const WishlistWorkspace = () => {
         onAddItems={() => setIsShoppingPanelOpen(true)}
       />
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar - Desktop only */}
+      {/* Main Content - Full Width Babylist-style Layout */}
+      <div className="px-6 py-8 max-w-[1600px] mx-auto">
+        <div className="flex gap-8">
+          {/* Sidebar - Wider, Babylist-style */}
           {!isMobile && isOwner && !isGuestPreview && (
-            <WishlistSidebar
-              wishlist={wishlist}
-              selectedCategory={selectedCategory}
-              onCategorySelect={setSelectedCategory}
-            />
+            <div className="w-[340px] flex-shrink-0">
+              <WishlistSidebar
+                wishlist={wishlist}
+                ownerProfile={ownerProfile}
+                selectedCategory={selectedCategory}
+                onCategorySelect={setSelectedCategory}
+              />
+            </div>
           )}
 
-          {/* Main Content Area */}
-          <div className="flex-1">
+          {/* Main Content Area - Spacious */}
+          <div className="flex-1 min-w-0">
             <WishlistItemsGrid
               items={filteredItems}
               onSaveItem={(item) => handleRemoveItem(item.id)}
               savingItemId={isRemoving ? 'removing' : undefined}
+              isOwner={isOwner}
+              isGuestPreview={isGuestPreview}
             />
           </div>
         </div>

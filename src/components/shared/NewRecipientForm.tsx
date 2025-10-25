@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { unifiedRecipientService, UnifiedRecipient } from '@/services/unifiedRecipientService';
 import { toast } from 'sonner';
+import RelationshipSelector from '@/components/shared/RelationshipSelector';
 
 interface NewRecipientFormData {
   name: string;
@@ -38,13 +38,7 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
-  const relationshipTypes = [
-    { value: 'friend', label: 'Friend' },
-    { value: 'family', label: 'Family' },
-    { value: 'colleague', label: 'Colleague' },
-    { value: 'partner', label: 'Partner' },
-    { value: 'other', label: 'Other' }
-  ];
+  // Relationship types now handled by RelationshipSelector component
 
   // Check if email exists in the platform
   const checkEmailExists = async (email: string) => {
@@ -193,22 +187,11 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
 
           <div>
             <Label htmlFor="relationship">Relationship *</Label>
-            <Select
+            <RelationshipSelector
               value={formData.relationship_type}
               onValueChange={(value) => setFormData(prev => ({ ...prev, relationship_type: value }))}
               disabled={isCreating}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {relationshipTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
 
 

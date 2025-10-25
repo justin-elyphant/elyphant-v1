@@ -1000,7 +1000,7 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
   console.log('📧 Sending connection invitation email:', customData);
   
   // Import template
-  const { connectionInvitationTemplate } = await import('./email-templates/index.ts');
+  const { giftInvitationTemplate } = await import('./email-templates/index.ts');
   
   // Extract data from customData (supports both queue metadata and direct customData)
   const senderName = customData.sender_name || customData.senderName || 'Someone';
@@ -1009,29 +1009,72 @@ async function handleConnectionInvitation(supabase: any, customData: any) {
   const message = customData.message || customData.customMessage;
   const connectionId = customData.connection_id || customData.connectionId;
   
+  // NEW: Fetch relationship type from connection record
+  let relationshipType = 'friend'; // Default
+  if (connectionId) {
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('relationship_type')
+      .eq('id', connectionId)
+      .single();
+    
+    if (connection?.relationship_type) {
+      relationshipType = connection.relationship_type;
+      console.log(`📊 Relationship type: ${relationshipType}`);
+    }
+  }
+  
   // Build invitation URL
   const baseUrl = Deno.env.get("SITE_URL") || "https://elyphant.ai";
   const invitationUrl = connectionId 
     ? `${baseUrl}/auth?invite=${connectionId}`
     : `${baseUrl}/auth?signup=true`;
   
-  // Use extracted template
-  const htmlContent = connectionInvitationTemplate({
-    sender_name: senderName,
+  // Use gift invitation template with relationship context
+  const htmlContent = giftInvitationTemplate({
+    sender_first_name: senderName,
     recipient_name: recipientName,
     invitation_url: invitationUrl,
-    custom_message: message
+    custom_message: message,
+    relationship_type: relationshipType
   });
+
+  // Personalized subject line based on relationship
+  const subjectEmoji = getSubjectEmojiForEmail(relationshipType);
+  const subject = `${senderName} invited you to connect on Elyphant! ${subjectEmoji}`;
 
   await resend.emails.send({
     from: "Elyphant <hello@elyphant.ai>",
     to: [recipientEmail],
-    subject: `${senderName} invited you to connect on Elyphant! 🎉`,
+    subject,
     html: htmlContent,
   });
 
   console.log('✅ Connection invitation email sent successfully');
   return { success: true };
+}
+
+// Helper for email subject
+function getSubjectEmojiForEmail(relationship?: string): string {
+  if (!relationship) return '🎉';
+  
+  const rel = relationship.toLowerCase();
+  
+  if (['father', 'mother', 'parent', 'son', 'daughter', 'child', 'brother', 'sister', 'sibling',
+       'uncle', 'aunt', 'cousin', 'nephew', 'niece', 'grandfather', 'grandmother', 'grandparent',
+       'grandson', 'granddaughter', 'grandchild'].includes(rel)) {
+    return '👨‍👩‍👧‍👦';
+  }
+  
+  if (['spouse', 'partner', 'fiancé', 'fiancée', 'boyfriend', 'girlfriend'].includes(rel)) {
+    return '💕';
+  }
+  
+  if (['colleague', 'coworker', 'boss', 'mentor'].includes(rel)) {
+    return '🎁';
+  }
+  
+  return '💝';
 }
 
 async function handleConnectionAccepted(supabase: any, customData: any) {

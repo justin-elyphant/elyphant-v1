@@ -1,5 +1,24 @@
-
-export type RelationshipType = 'friend' | 'spouse' | 'cousin' | 'child' | 'parent' | 'sibling' | 'colleague' | 'custom';
+export type RelationshipType = 
+  // Family - Parents
+  | 'father' | 'mother' | 'parent'
+  // Family - Children
+  | 'son' | 'daughter' | 'child'
+  // Family - Siblings
+  | 'brother' | 'sister' | 'sibling'
+  // Family - Extended
+  | 'uncle' | 'aunt' | 'cousin'
+  | 'nephew' | 'niece'
+  | 'grandfather' | 'grandmother' | 'grandparent'
+  | 'grandson' | 'granddaughter' | 'grandchild'
+  // Romantic
+  | 'spouse' | 'partner' | 'fiancé' | 'fiancée'
+  | 'boyfriend' | 'girlfriend'
+  // Social
+  | 'friend' | 'best_friend' | 'close_friend'
+  | 'colleague' | 'coworker' | 'boss' | 'mentor'
+  | 'neighbor'
+  // Other
+  | 'other' | 'custom';
 
 export type DataVerificationStatus = {
   shipping: 'verified' | 'missing' | 'outdated' | 'blocked';

@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import RelationshipSelector from '@/components/shared/RelationshipSelector';
 import { 
   Users, 
   Mail, 
@@ -624,18 +624,10 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="relationship">Relationship</Label>
-                      <Select value={newRecipientForm.relationship_type} onValueChange={(value) => setNewRecipientForm(prev => ({ ...prev, relationship_type: value }))}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="friend">Friend</SelectItem>
-                          <SelectItem value="family">Family</SelectItem>
-                          <SelectItem value="colleague">Colleague</SelectItem>
-                          <SelectItem value="partner">Partner</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <RelationshipSelector
+                        value={newRecipientForm.relationship_type}
+                        onValueChange={(value) => setNewRecipientForm(prev => ({ ...prev, relationship_type: value }))}
+                      />
                     </div>
                   </div>
 

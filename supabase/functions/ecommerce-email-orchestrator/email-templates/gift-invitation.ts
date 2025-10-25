@@ -6,16 +6,152 @@ export interface GiftInvitationProps {
   invitation_url: string;
   occasion?: string;
   custom_message?: string;
+  relationship_type?: string;
+}
+
+// Helper function to get personalized greeting
+function getPersonalizedGreeting(senderName: string, recipientName: string, relationship?: string): string {
+  const name = recipientName ? ` ${recipientName}` : '';
+  
+  if (!relationship) {
+    return `Hi${name}, ${senderName} wants to make gift-giving easier by connecting with you on Elyphant!`;
+  }
+  
+  // Family relationships - warm and personal
+  if (['father', 'dad'].includes(relationship.toLowerCase())) {
+    return `Hi Dad${name ? ` (${recipientName})` : ''}, your child ${senderName} wants to make celebrating you easier!`;
+  }
+  if (['mother', 'mom'].includes(relationship.toLowerCase())) {
+    return `Hi Mom${name ? ` (${recipientName})` : ''}, your child ${senderName} wants to make celebrating you easier!`;
+  }
+  if (['son', 'daughter', 'child'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your parent ${senderName} is inviting you to Elyphant to make gift-giving more meaningful!`;
+  }
+  if (['brother', 'sister', 'sibling'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your sibling ${senderName} wants to coordinate gifts and never miss special occasions!`;
+  }
+  if (['uncle', 'aunt'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your niece/nephew ${senderName} invited you to Elyphant!`;
+  }
+  if (['grandfather', 'grandmother', 'grandparent'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your grandchild ${senderName} wants to stay connected and make gifting easy!`;
+  }
+  if (['grandson', 'granddaughter', 'grandchild'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, ${senderName} is inviting you to share wishlists and celebrate together!`;
+  }
+  if (['cousin', 'nephew', 'niece'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your family member ${senderName} wants to connect on Elyphant!`;
+  }
+  
+  // Romantic relationships - affectionate
+  if (['spouse', 'partner', 'fiancé', 'fiancée'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, ${senderName} wants to share wishlists and make every celebration special! 💕`;
+  }
+  if (['boyfriend', 'girlfriend'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, ${senderName} invited you to Elyphant so gift-giving can be easier and more fun!`;
+  }
+  
+  // Friends - casual and friendly
+  if (['friend', 'best_friend', 'close_friend'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, your friend ${senderName} wants to connect on Elyphant and never miss a special occasion!`;
+  }
+  
+  // Professional - respectful
+  if (['colleague', 'coworker', 'boss', 'mentor'].includes(relationship.toLowerCase())) {
+    return `Hi${name}, ${senderName} invited you to join Elyphant to coordinate gifts and celebrations!`;
+  }
+  
+  // Default
+  return `Hi${name}, ${senderName} wants to make gift-giving easier by connecting with you on Elyphant!`;
+}
+
+// Helper to get relationship-specific benefits
+function getBenefitsList(relationship?: string): string[] {
+  const category = getRelationshipCategory(relationship);
+  
+  if (category === 'family') {
+    return [
+      '<strong style="color: #1a1a1a;">Share wishlists</strong> across the family so everyone knows what you want',
+      '<strong style="color: #1a1a1a;">Never forget</strong> birthdays, anniversaries, or special family occasions',
+      '<strong style="color: #1a1a1a;">Keep addresses updated</strong> - no more asking for shipping info',
+      '<strong style="color: #1a1a1a;">Coordinate gifts</strong> with other family members to avoid duplicates'
+    ];
+  }
+  
+  if (category === 'romantic') {
+    return [
+      '<strong style="color: #1a1a1a;">Share wishlists</strong> so you always know what makes them happy',
+      '<strong style="color: #1a1a1a;">Remember anniversaries</strong> and special dates automatically',
+      '<strong style="color: #1a1a1a;">Get AI suggestions</strong> for the perfect romantic gift',
+      '<strong style="color: #1a1a1a;">Make every occasion</strong> memorable with thoughtful, personalized gifts'
+    ];
+  }
+  
+  if (category === 'professional') {
+    return [
+      '<strong style="color: #1a1a1a;">Coordinate group gifts</strong> with colleagues easily',
+      '<strong style="color: #1a1a1a;">Track work celebrations</strong> like birthdays and milestones',
+      '<strong style="color: #1a1a1a;">Professional gift suggestions</strong> powered by AI',
+      '<strong style="color: #1a1a1a;">Easy contributions</strong> to team gifts and events'
+    ];
+  }
+  
+  // Default (friends & social)
+  return [
+    '<strong style="color: #1a1a1a;">Create wishlists</strong> so friends know exactly what you want',
+    '<strong style="color: #1a1a1a;">Never forget</strong> birthdays, anniversaries, or special occasions',
+    '<strong style="color: #1a1a1a;">Get smart suggestions</strong> powered by AI for the perfect gift',
+    '<strong style="color: #1a1a1a;">Connect with loved ones</strong> and make every gift meaningful'
+  ];
+}
+
+// Helper to determine relationship category
+function getRelationshipCategory(relationship?: string): string {
+  if (!relationship) return 'default';
+  
+  const rel = relationship.toLowerCase();
+  
+  if (['father', 'mother', 'parent', 'son', 'daughter', 'child', 'brother', 'sister', 'sibling',
+       'uncle', 'aunt', 'cousin', 'nephew', 'niece', 'grandfather', 'grandmother', 'grandparent',
+       'grandson', 'granddaughter', 'grandchild'].includes(rel)) {
+    return 'family';
+  }
+  
+  if (['spouse', 'partner', 'fiancé', 'fiancée', 'boyfriend', 'girlfriend'].includes(rel)) {
+    return 'romantic';
+  }
+  
+  if (['colleague', 'coworker', 'boss', 'mentor'].includes(rel)) {
+    return 'professional';
+  }
+  
+  return 'default';
+}
+
+// Helper to get subject line emoji
+function getSubjectEmoji(relationship?: string): string {
+  const category = getRelationshipCategory(relationship);
+  
+  switch (category) {
+    case 'family': return '👨‍👩‍👧‍👦';
+    case 'romantic': return '💕';
+    case 'professional': return '🎁';
+    default: return '💝';
+  }
 }
 
 export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
+  const emoji = getSubjectEmoji(props.relationship_type);
+  const greeting = getPersonalizedGreeting(props.sender_first_name, props.recipient_name, props.relationship_type);
+  const benefits = getBenefitsList(props.relationship_type);
+  
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.2;">
-      ${props.sender_first_name} invited you to Elyphant! 💝
+      ${props.sender_first_name} invited you to Elyphant! ${emoji}
     </h2>
     
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; line-height: 24px;">
-      Hi${props.recipient_name ? ` ${props.recipient_name}` : ''}, ${props.sender_first_name} wants to make gift-giving easier by connecting with you on Elyphant!
+      ${greeting}
     </p>
     
     ${props.occasion ? `
@@ -53,18 +189,11 @@ export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
     </h3>
     
     <ul style="margin: 0 0 30px 0; padding-left: 20px;">
-      <li style="margin-bottom: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-        <strong style="color: #1a1a1a;">Create wishlists</strong> so friends know exactly what you want
-      </li>
-      <li style="margin-bottom: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-        <strong style="color: #1a1a1a;">Never forget</strong> birthdays, anniversaries, or special occasions
-      </li>
-      <li style="margin-bottom: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-        <strong style="color: #1a1a1a;">Get smart suggestions</strong> powered by AI for the perfect gift
-      </li>
-      <li style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-        <strong style="color: #1a1a1a;">Connect with loved ones</strong> and make every gift meaningful
-      </li>
+      ${benefits.map(benefit => `
+        <li style="margin-bottom: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
+          ${benefit}
+        </li>
+      `).join('')}
     </ul>
     
     <!-- CTA button -->
@@ -85,6 +214,6 @@ export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
 
   return baseEmailTemplate({
     content,
-    preheader: `${props.sender_first_name} invited you to join Elyphant`
+    preheader: `${props.sender_first_name} invited you to join Elyphant ${emoji}`
   });
 };

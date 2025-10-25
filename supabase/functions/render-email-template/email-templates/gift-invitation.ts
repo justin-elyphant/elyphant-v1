@@ -6,6 +6,7 @@ export interface GiftInvitationProps {
   invitation_url: string;
   occasion?: string;
   custom_message?: string;
+  relationship_type?: string;
 }
 
 export const giftInvitationTemplate = (props: GiftInvitationProps): string => {

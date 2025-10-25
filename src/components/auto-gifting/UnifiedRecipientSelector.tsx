@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import RelationshipSelector from "@/components/shared/RelationshipSelector";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -240,21 +240,10 @@ const UnifiedRecipientSelector = ({ value, onChange, selectedRecipient }: Unifie
             
             <div>
               <Label htmlFor="relationship">Relationship</Label>
-              <Select 
-                value={newPersonForm.relationshipType} 
+              <RelationshipSelector
+                value={newPersonForm.relationshipType}
                 onValueChange={(value) => setNewPersonForm(prev => ({ ...prev, relationshipType: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="family">Family</SelectItem>
-                  <SelectItem value="friend">Friend</SelectItem>
-                  <SelectItem value="close_friend">Close Friend</SelectItem>
-                  <SelectItem value="colleague">Colleague</SelectItem>
-                  <SelectItem value="spouse">Spouse/Partner</SelectItem>
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div className="bg-blue-50 p-3 rounded-lg text-sm">

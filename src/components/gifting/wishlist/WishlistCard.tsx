@@ -59,12 +59,14 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
 
   const handleStartShopping = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate('/marketplace');
+    // Navigate to workspace to use shopping panel
+    navigate(`/wishlist/${wishlist.id}?openShopping=true`);
   };
 
   const handleAddMoreItems = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate('/marketplace');
+    // Navigate to workspace to use shopping panel
+    navigate(`/wishlist/${wishlist.id}?openShopping=true`);
   };
 
   // Determine badge styles based on priority

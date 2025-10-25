@@ -31,6 +31,7 @@ import EnhancedWishlistHeader from "./wishlist/EnhancedWishlistHeader";
 import TagBasedRecommendations from "./wishlist/TagBasedRecommendations";
 import MobileWishlistLayout from "./wishlist/MobileWishlistLayout";
 import MobileWishlistCard from "./wishlist/MobileWishlistCard";
+import AllItemsView from "./wishlist/AllItemsView";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -55,7 +56,7 @@ function isValidCategoryString(s: unknown): s is string {
   return typeof s === "string" && s.trim().length > 0;
 }
 
-type ViewMode = "pinterest" | "grid" | "list";
+type ViewMode = "pinterest" | "grid" | "list" | "all-items";
 type SortOption = "recent" | "name" | "items" | "updated";
 
 const MyWishlists = () => {
@@ -259,7 +260,7 @@ const MyWishlists = () => {
           wishlists={wishlists}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          viewMode={viewMode === "pinterest" ? "grid" : viewMode}
+          viewMode={viewMode === "pinterest" || viewMode === "all-items" ? "grid" : viewMode}
           onViewModeChange={(mode) => setViewMode(mode)}
           sortBy={sortBy}
           onSortChange={setSortBy}
@@ -386,18 +387,23 @@ const MyWishlists = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content Area */}
         <div className="lg:col-span-3">
-          {/* Empty state for filtered results */}
-          {wishlists?.length > 0 && filteredAndSortedWishlists.length === 0 && (
-            <div className="contextual-section p-6 text-center">
-              <p className="text-muted-foreground mb-2">No wishlists match your filters</p>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          )}
+          {/* All Items View */}
+          {viewMode === "all-items" && wishlists?.length > 0 ? (
+            <AllItemsView wishlists={wishlists} />
+          ) : (
+            <>
+              {/* Empty state for filtered results */}
+              {wishlists?.length > 0 && filteredAndSortedWishlists.length === 0 && (
+                <div className="contextual-section p-6 text-center">
+                  <p className="text-muted-foreground mb-2">No wishlists match your filters</p>
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
 
-          {/* Wishlists Display */}
-          {viewMode === "pinterest" && filteredAndSortedWishlists.length > 0 ? (
+              {/* Wishlists Display */}
+              {viewMode === "pinterest" && filteredAndSortedWishlists.length > 0 ? (
             <PinterestStyleWishlistGrid
               wishlists={filteredAndSortedWishlists}
               onEdit={handleEditWishlist}
@@ -440,6 +446,8 @@ const MyWishlists = () => {
               </div>
             </div>
           ) : null}
+            </>
+          )}
         </div>
 
         {/* Sidebar with Contextual Actions */}

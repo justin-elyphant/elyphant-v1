@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wishlist } from "@/types/profile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import WishlistSwitcher from "../navigation/WishlistSwitcher";
 
 interface WishlistWorkspaceHeaderProps {
   wishlist: Wishlist;
@@ -31,7 +32,7 @@ const WishlistWorkspaceHeader = ({
   return (
     <div className="border-b border-border bg-card">
       <div className="container mx-auto px-4 py-4">
-        {/* Back button and title */}
+        {/* Back button and wishlist switcher */}
         <div className="flex items-center gap-4 mb-4">
           <Button
             variant="ghost"
@@ -42,6 +43,9 @@ const WishlistWorkspaceHeader = ({
             <ArrowLeft className="h-4 w-4" />
             {!isMobile && "Back to Wishlists"}
           </Button>
+          
+          {/* Wishlist Switcher */}
+          <WishlistSwitcher currentWishlistId={wishlist.id} currentWishlistTitle={wishlist.title} />
         </div>
 
         {/* Main header content */}

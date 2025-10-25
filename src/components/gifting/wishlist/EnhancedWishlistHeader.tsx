@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type ViewMode = "pinterest" | "grid" | "list";
+type ViewMode = "pinterest" | "grid" | "list" | "all-items";
 type SortOption = "recent" | "name" | "items" | "updated";
 
 interface EnhancedWishlistHeaderProps {
@@ -123,6 +123,7 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
                 viewMode === "pinterest" ? "bg-muted" : ""
               }`}
               onClick={() => onViewModeChange("pinterest")}
+              title="Pinterest view"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -133,6 +134,7 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
                 viewMode === "grid" ? "bg-muted" : ""
               }`}
               onClick={() => onViewModeChange("grid")}
+              title="Grid view"
             >
               <Grid3X3 className="h-4 w-4" />
             </Button>
@@ -143,8 +145,20 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
                 viewMode === "list" ? "bg-muted" : ""
               }`}
               onClick={() => onViewModeChange("list")}
+              title="List view"
             >
               <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-none px-2.5 h-8 ${
+                viewMode === "all-items" ? "bg-muted" : ""
+              }`}
+              onClick={() => onViewModeChange("all-items")}
+              title="All items view"
+            >
+              <Filter className="h-4 w-4" />
             </Button>
           </div>
 

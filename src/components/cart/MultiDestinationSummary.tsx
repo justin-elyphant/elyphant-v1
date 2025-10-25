@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, Package, Truck, User } from 'lucide-react';
+import { MapPin, Users, Package, Truck, User, Mail, Clock, AlertCircle } from 'lucide-react';
 import { DeliveryGroup } from '@/types/recipient';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { CartItem } from '@/contexts/CartContext';
+import { formatDistanceToNow } from 'date-fns';
 
 interface MultiDestinationSummaryProps {
   deliveryGroups: DeliveryGroup[];
@@ -43,45 +44,80 @@ const MultiDestinationSummary: React.FC<MultiDestinationSummaryProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Delivery Groups */}
-        {deliveryGroups.map((group) => (
-          <div key={group.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-100 rounded-full">
-                <Users className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium text-green-800">{group.connectionName}</p>
-                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
-                    <Package className="h-3 w-3 mr-1" />
-                    {group.items.length} item{group.items.length > 1 ? 's' : ''}
-                  </Badge>
+        {deliveryGroups.map((group) => {
+          const isPending = group.connectionStatus === 'pending_invitation';
+          const bgColor = isPending ? 'bg-amber-50' : 'bg-green-50';
+          const borderColor = isPending ? 'border-amber-200' : 'border-green-200';
+          const textColor = isPending ? 'text-amber-800' : 'text-green-800';
+          const badgeBg = isPending ? 'bg-amber-100' : 'bg-green-100';
+          const badgeText = isPending ? 'text-amber-700' : 'text-green-700';
+          const badgeBorder = isPending ? 'border-amber-300' : 'border-green-300';
+          
+          return (
+            <div key={group.id} className={`p-3 ${bgColor} rounded-lg border ${borderColor}`}>
+              <div className="flex items-start gap-3">
+                <div className={`p-2 ${isPending ? 'bg-amber-100' : 'bg-green-100'} rounded-full`}>
+                  {isPending ? (
+                    <Mail className={`h-4 w-4 ${isPending ? 'text-amber-600' : 'text-green-600'}`} />
+                  ) : (
+                    <Users className="h-4 w-4 text-green-600" />
+                  )}
                 </div>
-                
-                {group.shippingAddress && (
-                  <div className="text-sm text-green-700">
-                    <p>{group.shippingAddress.address}</p>
-                    <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`font-medium ${textColor}`}>{group.connectionName}</p>
+                    <Badge variant="outline" className={`${badgeBg} ${badgeText} ${badgeBorder}`}>
+                      <Package className="h-3 w-3 mr-1" />
+                      {group.items.length} item{group.items.length > 1 ? 's' : ''}
+                    </Badge>
                   </div>
-                )}
-                
-                {group.giftMessage && (
-                  <div className="mt-2 p-2 bg-white rounded border border-green-200">
-                    <p className="text-xs text-green-600 font-medium mb-1">Gift Message:</p>
-                    <p className="text-sm text-green-800">{group.giftMessage}</p>
-                  </div>
-                )}
-                
-                {group.scheduledDeliveryDate && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                    <Truck className="h-3 w-3" />
-                    Scheduled for: {new Date(group.scheduledDeliveryDate).toLocaleDateString()}
-                  </div>
-                )}
+                  
+                  {/* Pending Invitation Status */}
+                  {isPending && (
+                    <div className="mb-2 space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs text-amber-700">
+                        <AlertCircle className="h-3 w-3" />
+                        <span className="font-medium">Invitation pending - awaiting signup</span>
+                      </div>
+                      {group.address_last_updated && (
+                        <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            Invited {formatDistanceToNow(new Date(group.address_last_updated), { addSuffix: true })}
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-xs text-amber-700">
+                        📦 Gift will be held until recipient provides their shipping address
+                      </p>
+                    </div>
+                  )}
+                  
+                  {group.shippingAddress && !isPending && (
+                    <div className="text-sm text-green-700">
+                      <p>{group.shippingAddress.address}</p>
+                      <p>{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                    </div>
+                  )}
+                  
+                  {group.giftMessage && (
+                    <div className={`mt-2 p-2 bg-white rounded border ${borderColor}`}>
+                      <p className={`text-xs ${isPending ? 'text-amber-600' : 'text-green-600'} font-medium mb-1`}>Gift Message:</p>
+                      <p className={`text-sm ${textColor}`}>{group.giftMessage}</p>
+                    </div>
+                  )}
+                  
+                  {group.scheduledDeliveryDate && (
+                    <div className={`mt-2 flex items-center gap-1 text-xs ${isPending ? 'text-amber-600' : 'text-green-600'}`}>
+                      <Truck className="h-3 w-3" />
+                      Scheduled for: {new Date(group.scheduledDeliveryDate).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Unassigned Items (Your Address) */}
         {unassignedItems.length > 0 && (

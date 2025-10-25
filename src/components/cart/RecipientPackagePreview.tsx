@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Package, MessageCircle, AlertTriangle, CheckCircle2, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Package, MessageCircle, AlertTriangle, CheckCircle2, Calendar as CalendarIcon, Clock, Mail, AlertCircle } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import { DeliveryGroup } from '@/types/recipient';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface RecipientPackagePreviewProps {
@@ -82,6 +82,7 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   };
 
   const messageStatus = getMessageStatus();
+  const isPending = deliveryGroup.connectionStatus === 'pending_invitation';
 
   const handleDeliveryTimingChange = (value: 'now' | 'scheduled') => {
     setDeliveryTiming(value);
@@ -99,10 +100,14 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   };
 
   return (
-    <Card className="border-l-4 border-l-blue-500">
+    <Card className={cn("border-l-4", isPending ? "border-l-amber-500" : "border-l-blue-500")}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Package className="h-5 w-5 text-blue-600" />
+          {isPending ? (
+            <Mail className="h-5 w-5 text-amber-600" />
+          ) : (
+            <Package className="h-5 w-5 text-blue-600" />
+          )}
           Package for {deliveryGroup.connectionName}
           <Badge variant="secondary" className="ml-auto">
             {groupItems.length} items
@@ -111,6 +116,29 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Pending Invitation Alert */}
+        {isPending && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">Invitation Pending</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  <strong>{deliveryGroup.connectionName}</strong> hasn't signed up yet. They'll receive reminders at 3, 7, and 14 days.
+                </p>
+                {deliveryGroup.address_last_updated && (
+                  <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Invited {formatDistanceToNow(new Date(deliveryGroup.address_last_updated), { addSuffix: true })}
+                  </p>
+                )}
+                <p className="text-xs text-amber-700 mt-2">
+                  📦 Your gift will be held securely until they provide their shipping address during signup.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Package Contents */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-muted-foreground">Contents:</h4>

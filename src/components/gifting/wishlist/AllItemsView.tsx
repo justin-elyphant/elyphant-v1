@@ -197,12 +197,49 @@ const AllItemsView = ({ wishlists }: AllItemsViewProps) => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            {searchQuery || wishlistFilter !== "all" || categoryFilter !== "all"
-              ? "No items match your filters"
-              : "No items in any wishlist yet"}
-          </p>
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="bg-muted/50 p-6 rounded-full mb-6">
+            <Package className="h-12 w-12 text-muted-foreground" />
+          </div>
+          
+          {searchQuery || wishlistFilter !== "all" || categoryFilter !== "all" ? (
+            <>
+              <h3 className="text-xl font-semibold mb-2">No items found</h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-md">
+                No items match your current filters. Try adjusting your search or filters.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setWishlistFilter("all");
+                  setCategoryFilter("all");
+                }}
+              >
+                Clear All Filters
+              </Button>
+            </>
+          ) : allItems.length === 0 && wishlists.length > 0 ? (
+            <>
+              <h3 className="text-xl font-semibold mb-2">Your wishlists are empty</h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-md">
+                Start adding items to your wishlists to see them here. Browse the marketplace or use the shopping panel to add items.
+              </p>
+              <Button onClick={() => navigate("/marketplace")}>
+                Browse Marketplace
+              </Button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl font-semibold mb-2">No wishlists yet</h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-md">
+                Create your first wishlist to start organizing your favorite items.
+              </p>
+              <Button onClick={() => navigate("/wishlists")}>
+                Create Your First Wishlist
+              </Button>
+            </>
+          )}
         </div>
       )}
     </div>

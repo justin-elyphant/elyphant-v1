@@ -68,7 +68,7 @@ const MyWishlists = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("all-items");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
   

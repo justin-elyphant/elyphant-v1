@@ -6,13 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Plus, 
   Search, 
-  Filter, 
   Grid3X3, 
   List, 
   LayoutGrid,
   SlidersHorizontal,
   X,
-  ChevronDown
+  ChevronDown,
+  Layers
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -158,7 +158,7 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
               onClick={() => onViewModeChange("all-items")}
               title="All items view"
             >
-              <Filter className="h-4 w-4" />
+              <Layers className="h-4 w-4" />
             </Button>
           </div>
 
@@ -192,7 +192,7 @@ const EnhancedWishlistHeader: React.FC<EnhancedWishlistHeaderProps> = ({
               
               <DropdownMenuLabel>Filters</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setIsFilterOpen(!isFilterOpen)}>
-                <Filter className="mr-2 h-4 w-4" />
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
                 {isFilterOpen ? "Hide Filters" : "Show Filters"}
               </DropdownMenuItem>
               

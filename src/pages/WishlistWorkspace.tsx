@@ -220,6 +220,15 @@ const WishlistWorkspace = () => {
 
           {/* Main Content Area - Spacious */}
           <div className="flex-1 min-w-0">
+            {/* Guest View Notice */}
+            {!isOwner && (
+              <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-sm text-center font-medium">
+                  You're viewing {ownerProfile?.name}'s wishlist
+                </p>
+              </div>
+            )}
+            
             <WishlistItemsGrid
               items={filteredItems}
               onSaveItem={(item) => handleRemoveItem(item.id)}

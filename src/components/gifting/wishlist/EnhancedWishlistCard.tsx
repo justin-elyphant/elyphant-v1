@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, ShoppingCart, Trash2, Gift, ExternalLink, Calendar, Check } from "lucide-react";
+import { Heart, ShoppingCart, Trash2, Gift, ExternalLink, Calendar, Check, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,10 @@ interface EnhancedWishlistCardProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onSelectionChange?: (itemId: string, selected: boolean) => void;
+  // Guest/public view props
+  isPurchased?: boolean;
+  onCopyToWishlist?: (item: WishlistItem) => void;
+  isGuestView?: boolean;
   // Style props
   className?: string;
 }
@@ -47,6 +51,9 @@ const EnhancedWishlistCard = ({
   isSelectionMode = false,
   isSelected = false,
   onSelectionChange,
+  isPurchased = false,
+  onCopyToWishlist,
+  isGuestView = false,
   className
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -70,6 +77,11 @@ const EnhancedWishlistCard = ({
   const handleScheduleGift = (e: React.MouseEvent) => {
     e.stopPropagation();
     onScheduleGift?.(item);
+  };
+
+  const handleCopyToWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCopyToWishlist?.(item);
   };
 
   const handleSelectionChange = (checked: boolean) => {
@@ -127,14 +139,21 @@ const EnhancedWishlistCard = ({
           )}
         </div>
         
-        {/* Product source badge */}
-        {(item as any).product_source === 'zinc_api' && !isSelectionMode && (
+        {/* Product source badge or Purchased badge */}
+        {isPurchased ? (
+          <div className="absolute top-3 left-3 z-10">
+            <Badge className="text-xs bg-green-500 text-white border-green-600">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Purchased
+            </Badge>
+          </div>
+        ) : (item as any).product_source === 'zinc_api' && !isSelectionMode ? (
           <div className="absolute top-3 left-3 z-10">
             <Badge variant="secondary" className="text-xs bg-background/90 backdrop-blur-sm">
               Amazon
             </Badge>
           </div>
-        )}
+        ) : null}
 
         <CardContent className="p-0">
           {/* Image - Larger for Babylist feel */}
@@ -166,24 +185,38 @@ const EnhancedWishlistCard = ({
               <p className="font-bold text-xl">{formattedPrice}</p>
               {!isSelectionMode && (
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => setShowDetails(true)}
-                    className="text-xs"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  {onGiftNow && (
+                  {isGuestView && onCopyToWishlist ? (
                     <Button 
                       size="sm" 
-                      onClick={handleGiftNow}
+                      variant="outline"
+                      onClick={handleCopyToWishlist}
                       className="text-xs"
                     >
-                      <Gift className="h-3 w-3 mr-1" />
-                      Gift
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
                     </Button>
+                  ) : (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setShowDetails(true)}
+                        className="text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      {onGiftNow && (
+                        <Button 
+                          size="sm" 
+                          onClick={handleGiftNow}
+                          className="text-xs"
+                        >
+                          <Gift className="h-3 w-3 mr-1" />
+                          Gift
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               )}

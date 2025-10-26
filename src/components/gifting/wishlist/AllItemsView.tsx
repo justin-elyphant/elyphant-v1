@@ -11,6 +11,7 @@ import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
 import CreateWishlistDialog from "./CreateWishlistDialog";
+import ProfileSidebar from "./ProfileSidebar";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -134,108 +135,118 @@ const AllItemsView = ({ wishlists }: AllItemsViewProps) => {
   };
 
   return (
-    <div className="space-y-0">
-      {/* Hero Section */}
-      <ShoppingHeroSection
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCategory={categoryFilter}
+    <div className="flex min-h-screen">
+      {/* Left Profile Sidebar */}
+      <ProfileSidebar 
+        wishlists={wishlists}
+        categoryFilter={categoryFilter}
         onCategorySelect={setCategoryFilter}
-        categories={categories}
       />
+      
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Hero Section */}
+        <ShoppingHeroSection
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCategory={categoryFilter}
+          onCategorySelect={setCategoryFilter}
+          categories={categories}
+        />
 
-      {/* Main Content */}
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Recently Added Section */}
-        {recentlyAddedItems.length > 0 && (
-          <div className="py-8 border-b border-border">
-            <RecentlyAddedSection items={recentlyAddedItems} />
-          </div>
-        )}
-
-        {/* Browse Products Section */}
-        {filteredProducts.length > 0 && (
-          <MarketplaceProductsSection
-            products={filteredProducts}
-            wishlists={wishlists}
-            onCreateWishlist={() => setCreateDialogOpen(true)}
-            isLoading={productsLoading}
-          />
-        )}
-
-        {/* Your Wishlist Items Section */}
-        {filteredItems.length > 0 && (
-          <div className="py-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-2xl font-bold">Your Wishlist Items</h2>
-                <Badge variant="secondary">
-                  {filteredItems.length} items
-                </Badge>
-              </div>
-              {(searchQuery || categoryFilter) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setCategoryFilter(null);
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              )}
+        {/* Main Content */}
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Recently Added Section */}
+          {recentlyAddedItems.length > 0 && (
+            <div className="py-8 border-b border-border">
+              <RecentlyAddedSection items={recentlyAddedItems} />
             </div>
+          )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {filteredItems.map((item) => (
-                <div key={`${item.wishlistId}-${item.id}`} className="relative">
-                  {/* Wishlist Badge */}
-                  <div 
-                    className="absolute -top-2 left-2 z-10 cursor-pointer"
-                    onClick={() => handleNavigateToWishlist(item.wishlistId)}
-                  >
-                    <Badge 
-                      variant="outline" 
-                      className="bg-background/95 backdrop-blur-sm hover:bg-primary/10 transition-colors text-xs"
-                    >
-                      {item.wishlistTitle}
-                    </Badge>
-                  </div>
+          {/* Browse Products Section */}
+          {filteredProducts.length > 0 && (
+            <MarketplaceProductsSection
+              products={filteredProducts}
+              wishlists={wishlists}
+              onCreateWishlist={() => setCreateDialogOpen(true)}
+              isLoading={productsLoading}
+            />
+          )}
 
-                  <EnhancedWishlistCard
-                    item={item}
-                    onRemove={() => handleRemoveItem(item)}
-                    isRemoving={removingItemId === item.id}
-                    className="mt-4"
-                  />
+          {/* Your Wishlist Items Section */}
+          {filteredItems.length > 0 && (
+            <div className="py-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-2xl font-bold">Your Wishlist Items</h2>
+                  <Badge variant="secondary">
+                    {filteredItems.length} items
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                {(searchQuery || categoryFilter) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCategoryFilter(null);
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
 
-        {/* Empty States */}
-        {filteredItems.length === 0 && allItems.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="bg-muted/50 p-6 rounded-full mb-6">
-              <Package className="h-12 w-12 text-muted-foreground" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {filteredItems.map((item) => (
+                  <div key={`${item.wishlistId}-${item.id}`} className="relative">
+                    {/* Wishlist Badge */}
+                    <div 
+                      className="absolute -top-2 left-2 z-10 cursor-pointer"
+                      onClick={() => handleNavigateToWishlist(item.wishlistId)}
+                    >
+                      <Badge 
+                        variant="outline" 
+                        className="bg-background/95 backdrop-blur-sm hover:bg-primary/10 transition-colors text-xs"
+                      >
+                        {item.wishlistTitle}
+                      </Badge>
+                    </div>
+
+                    <EnhancedWishlistCard
+                      item={item}
+                      onRemove={() => handleRemoveItem(item)}
+                      isRemoving={removingItemId === item.id}
+                      className="mt-4"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Your wishlists are empty</h3>
-            <p className="text-muted-foreground mb-6 text-center max-w-md">
-              Start browsing products above and add them to your wishlists with one click!
-            </p>
-          </div>
-        )}
+          )}
+
+          {/* Empty States */}
+          {filteredItems.length === 0 && allItems.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="bg-muted/50 p-6 rounded-full mb-6">
+                <Package className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Your wishlists are empty</h3>
+              <p className="text-muted-foreground mb-6 text-center max-w-md">
+                Start browsing products above and add them to your wishlists with one click!
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Create Wishlist Dialog */}
+        <CreateWishlistDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSubmit={handleCreateWishlist}
+        />
       </div>
-
-      {/* Create Wishlist Dialog */}
-      <CreateWishlistDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSubmit={handleCreateWishlist}
-      />
     </div>
   );
 };

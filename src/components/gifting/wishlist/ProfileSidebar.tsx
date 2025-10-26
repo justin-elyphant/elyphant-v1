@@ -1,10 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Package, DollarSign, Heart, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Package, DollarSign, Heart, ShoppingBag, Menu } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { cn } from "@/lib/utils";
 
@@ -92,9 +94,11 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const userName = getUserName();
   const avatarUrl = profile?.profile_image || user?.user_metadata?.avatar_url;
   const userInitials = userName.charAt(0).toUpperCase();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  return (
-    <div className="w-[280px] bg-background border-r border-border flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
+  // Sidebar content component
+  const SidebarContent = () => (
+    <>
       {/* Profile Section */}
       <div className="p-6 border-b border-border">
         <div className="flex flex-col items-center text-center">
@@ -147,7 +151,10 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         </div>
         <div className="space-y-1">
           <button
-            onClick={() => onCategorySelect(null)}
+            onClick={() => {
+              onCategorySelect(null);
+              setIsMobileOpen(false);
+            }}
             className={cn(
               "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
               categoryFilter === null
@@ -165,7 +172,10 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           {stats.categories.map((cat) => (
             <button
               key={cat.name}
-              onClick={() => onCategorySelect(cat.name)}
+              onClick={() => {
+                onCategorySelect(cat.name);
+                setIsMobileOpen(false);
+              }}
               className={cn(
                 "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
                 categoryFilter === cat.name
@@ -183,7 +193,72 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           ))}
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile: Sheet Drawer */}
+      <div className="md:hidden">
+        {/* Mobile Header with Avatar and Menu */}
+        <div className="sticky top-0 z-40 bg-background border-b border-border">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarFallback className="text-sm bg-primary/10 text-primary">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-sm">{userName}'s Wishlists</p>
+                <p className="text-xs text-muted-foreground">
+                  {stats.totalItems} items
+                </p>
+              </div>
+            </div>
+            <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] p-0 overflow-y-auto">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+          </div>
+          
+          {/* Mobile Categories - Horizontal Scroll */}
+          <div className="px-4 pb-3 overflow-x-auto">
+            <div className="flex gap-2 pb-2">
+              <Badge
+                variant={categoryFilter === null ? "default" : "outline"}
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => onCategorySelect(null)}
+              >
+                All ({stats.totalItems})
+              </Badge>
+              {stats.categories.map((cat) => (
+                <Badge
+                  key={cat.name}
+                  variant={categoryFilter === cat.name ? "default" : "outline"}
+                  className="cursor-pointer whitespace-nowrap"
+                  onClick={() => onCategorySelect(cat.name)}
+                >
+                  {cat.name} ({cat.count})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: Fixed Sidebar */}
+      <div className="hidden md:block w-[280px] bg-background border-r border-border flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
+        <SidebarContent />
+      </div>
+    </>
   );
 };
 

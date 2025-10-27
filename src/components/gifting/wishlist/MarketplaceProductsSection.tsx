@@ -1,8 +1,11 @@
 import React from "react";
 import { Product } from "@/contexts/ProductContext";
 import { Sparkles } from "lucide-react";
-import QuickAddToWishlist from "./QuickAddToWishlist";
 import { Wishlist } from "@/types/profile";
+import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 interface MarketplaceProductsSectionProps {
   products: Product[];
@@ -21,7 +24,23 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   mode = 'browse',
   title
 }) => {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const displayTitle = title || (mode === 'recommended' ? 'Recommended for You' : 'Browse Products');
+
+  const handleProductClick = (product: Product) => {
+    navigate(`/product/${product.product_id || product.id}`);
+  };
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product, 1);
+    toast.success(`${product.title || product.name} added to cart`);
+  };
+
+  const handleShare = (product: Product) => {
+    // Share functionality handled by AirbnbStyleProductCard
+    console.log('Share product:', product);
+  };
   if (isLoading) {
     return (
       <div className="py-12">
@@ -53,45 +72,13 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {products.slice(0, 20).map((product) => (
-          <div
+          <AirbnbStyleProductCard
             key={product.product_id || product.id}
-            className="group bg-card rounded-lg overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all"
-          >
-            {/* Product Image */}
-            <div className="aspect-square bg-muted overflow-hidden">
-              <img
-                src={product.image || "/placeholder.svg"}
-                alt={product.title || product.name || "Product"}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                loading="lazy"
-              />
-            </div>
-
-            {/* Product Info */}
-            <div className="p-4 space-y-3">
-              <div className="space-y-1">
-                <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
-                  {product.title || product.name}
-                </h3>
-                {product.brand && (
-                  <p className="text-xs text-muted-foreground">{product.brand}</p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-lg font-bold text-primary">
-                  ${product.price?.toFixed(2) || "0.00"}
-                </span>
-              </div>
-
-              {/* Quick Add Button */}
-              <QuickAddToWishlist
-                product={product}
-                wishlists={wishlists}
-                onWishlistCreate={onCreateWishlist}
-              />
-            </div>
-          </div>
+            product={product}
+            onProductClick={() => handleProductClick(product)}
+            onAddToCart={handleAddToCart}
+            onShare={handleShare}
+          />
         ))}
       </div>
     </div>

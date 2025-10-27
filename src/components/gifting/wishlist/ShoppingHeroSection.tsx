@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IOSSwitch } from "@/components/ui/ios-switch";
+import IntegratedSearchSection from "@/components/marketplace/IntegratedSearchSection";
 
 interface ShoppingHeroSectionProps {
   searchQuery: string;
@@ -17,6 +18,7 @@ interface ShoppingHeroSectionProps {
   aiSearchEnabled?: boolean;
   onAISearchToggle?: (enabled: boolean) => void;
   onAISearch?: () => void;
+  onRecentSearchClick?: (term: string) => void;
 }
 
 const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
@@ -30,7 +32,8 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
   onCreateWishlist,
   aiSearchEnabled = false,
   onAISearchToggle,
-  onAISearch
+  onAISearch,
+  onRecentSearchClick
 }) => {
   return (
     <div className="relative overflow-hidden py-4 px-4 sm:px-6 lg:px-8">
@@ -121,6 +124,13 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
             </div>
           )}
         </div>
+
+        {/* Recent Searches - only show when no active search */}
+        {!searchQuery && onRecentSearchClick && (
+          <div className="-mt-1">
+            <IntegratedSearchSection onRecentSearchClick={onRecentSearchClick} />
+          </div>
+        )}
 
         {/* Compact Category Quick Filters */}
         {categories.length > 0 && (

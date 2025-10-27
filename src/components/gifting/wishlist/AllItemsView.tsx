@@ -72,11 +72,16 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     performSearch();
   }, [searchQuery, searchProducts]);
 
-  // Auto-switch view mode based on search/filter activity
+  // Auto-switch view mode based on search/filter activity and URL view parameter
   useEffect(() => {
-    const isSearching = searchQuery.trim() !== "" || categoryFilter !== null;
-    setViewMode(isSearching ? 'shopping' : 'home');
-  }, [searchQuery, categoryFilter]);
+    const urlView = searchParams.get('view') as 'home' | 'shopping' | null;
+    if (urlView) {
+      setViewMode(urlView);
+    } else {
+      const isSearching = searchQuery.trim() !== "" || categoryFilter !== null;
+      setViewMode(isSearching ? 'shopping' : 'home');
+    }
+  }, [searchQuery, categoryFilter, searchParams]);
 
   // Fetch purchased items status
   useEffect(() => {
@@ -243,24 +248,36 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     navigate(marketplaceUrl.pathname + marketplaceUrl.search);
   };
 
-  // Build breadcrumb items
+  const handleRecentSearchClick = (term: string) => {
+    // Navigate to marketplace for product search, not wishlist filter
+    console.log(`🔍 Recent search clicked: "${term}" - navigating to marketplace`);
+    navigate(`/marketplace?search=${encodeURIComponent(term)}`);
+  };
+
+  // Build breadcrumb items with view parameter for toggling
   const breadcrumbItems: BreadcrumbItem[] = [
     { 
       label: "Home", 
-      href: searchQuery ? `/?search=${encodeURIComponent(searchQuery)}` : "/" 
+      href: "/" 
     },
     { 
       label: "My Wishlists", 
-      href: searchQuery ? `/wishlists?search=${encodeURIComponent(searchQuery)}` : "/wishlists",
-      isCurrentPage: !searchQuery && !categoryFilter 
+      // Preserve search but set view=home to show wishlists overview
+      href: searchQuery 
+        ? `/wishlists?search=${encodeURIComponent(searchQuery)}&view=home`
+        : "/wishlists",
+      // Clickable when we're in shopping view
+      isCurrentPage: !searchQuery || viewMode === 'home'
     }
   ];
 
-  // Show search/category breadcrumb whenever they exist, regardless of view mode
+  // Show search breadcrumb when active
   if (searchQuery) {
     breadcrumbItems.push({ 
       label: `Search: "${searchQuery}"`, 
-      isCurrentPage: true 
+      // Link back to search results view
+      href: `/wishlists?search=${encodeURIComponent(searchQuery)}&view=shopping`,
+      isCurrentPage: viewMode === 'shopping'
     });
   } else if (categoryFilter) {
     breadcrumbItems.push({ 
@@ -294,6 +311,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
             aiSearchEnabled={aiSearchEnabled}
             onAISearchToggle={handleAISearchToggle}
             onAISearch={handleAISearch}
+            onRecentSearchClick={handleRecentSearchClick}
           />
         </div>
 

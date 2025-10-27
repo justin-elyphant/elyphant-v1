@@ -2248,15 +2248,3 @@ async function handleWishlistWeeklySummary(supabase: any, customData: any) {
 }
 
 serve(handler);
-  await supabase.from('email_analytics').insert({
-    template_type: 'gift_purchased_notification',
-    recipient_email: recipientProfile.email,
-    resend_message_id: emailResponse.data?.id,
-    delivery_status: 'sent',
-    sent_at: new Date().toISOString()
-  });
-
-  return { emailSent: true, messageId: emailResponse.data?.id };
-}
-
-serve(handler);

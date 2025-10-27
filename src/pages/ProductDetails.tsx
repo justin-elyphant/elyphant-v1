@@ -12,9 +12,16 @@ const ProductDetailsPage: React.FC = () => {
   // Get product from navigation state if available
   const product = location.state?.product || null;
 
+  // Get context and return path from navigation state
+  const context = location.state?.context || 'marketplace';
+  const returnPath = location.state?.returnPath;
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      if (window.history.length > 1) {
+      if (returnPath) {
+        // Navigate back to the exact path with search params
+        navigate(returnPath);
+      } else if (window.history.length > 1) {
         navigate(-1);
       } else {
         navigate("/marketplace");
@@ -32,6 +39,7 @@ const ProductDetailsPage: React.FC = () => {
         open={true}
         onOpenChange={handleOpenChange}
         userData={user}
+        context={context}
       />
     </div>
   );

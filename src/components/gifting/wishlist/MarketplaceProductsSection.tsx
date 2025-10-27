@@ -1,9 +1,9 @@
 import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Product } from "@/contexts/ProductContext";
 import { Sparkles } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
-import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 
@@ -25,13 +25,18 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   title
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
   const displayTitle = title || (mode === 'recommended' ? 'Recommended for You' : 'Browse Products');
 
   const handleProductClick = (product: Product) => {
-    // Pass product data via navigation state to avoid edge function dependency
+    // Pass product data, context, and return path via navigation state
     navigate(`/marketplace/product/${product.product_id || product.id}`, {
-      state: { product }
+      state: { 
+        product,
+        context: 'wishlist',
+        returnPath: location.pathname + location.search
+      }
     });
   };
 
@@ -75,13 +80,14 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {products.slice(0, 20).map((product) => (
-          <AirbnbStyleProductCard
-            key={product.product_id || product.id}
-            product={product}
-            onProductClick={() => handleProductClick(product)}
-            onAddToCart={handleAddToCart}
-            onShare={handleShare}
-          />
+            <AirbnbStyleProductCard
+              key={product.product_id || product.id}
+              product={product}
+              onProductClick={() => handleProductClick(product)}
+              onAddToCart={handleAddToCart}
+              onShare={handleShare}
+              context="wishlist"
+            />
         ))}
       </div>
     </div>

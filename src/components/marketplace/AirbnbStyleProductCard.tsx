@@ -40,6 +40,8 @@ interface AirbnbStyleProductCardProps {
   onToggleWishlist?: () => void;
   // Category section specific prop for image ratio
   isInCategorySection?: boolean;
+  // Context for button priority
+  context?: 'marketplace' | 'wishlist';
 }
 
 const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
@@ -59,7 +61,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   isWishlisted: propIsWishlisted,
   isGifteeView = true,
   onToggleWishlist,
-  isInCategorySection = false
+  isInCategorySection = false,
+  context = 'marketplace'
 }) => {
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
@@ -317,37 +320,48 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
         )}
 
-        {/* Heart Icon - Top Right (Airbnb Style) */}
+        {/* Context-Aware Icon - Top Right */}
         <div className="absolute top-3 right-3 z-10" onClick={e => e.stopPropagation()}>
-          {user ? (
-            <WishlistSelectionPopoverButton
-              product={{
-                id: productId,
-                name: getProductTitle(),
-                image: getProductImage(),
-                price: product.price,
-                brand: product.brand || "",
-              }}
-              triggerClassName={cn(
-                "p-2 rounded-full transition-colors shadow-sm",
-                isWishlisted 
-                  ? "bg-white text-pink-500 hover:bg-pink-50" 
-                  : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
-              )}
-              onAdded={handleWishlistAdded}
-              isWishlisted={isWishlisted}
-            />
-          ) : (
+          {context === 'wishlist' ? (
+            // Wishlist context: Show cart icon
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleWishlistClick();
-              }}
+              onClick={handleAddToCartClick}
               className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
             >
-              <Heart className="h-4 w-4 text-gray-600 hover:text-pink-500 transition-colors" />
+              <ShoppingCart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
             </button>
+          ) : (
+            // Marketplace context: Show heart icon
+            user ? (
+              <WishlistSelectionPopoverButton
+                product={{
+                  id: productId,
+                  name: getProductTitle(),
+                  image: getProductImage(),
+                  price: product.price,
+                  brand: product.brand || "",
+                }}
+                triggerClassName={cn(
+                  "p-2 rounded-full transition-colors shadow-sm",
+                  isWishlisted 
+                    ? "bg-white text-pink-500 hover:bg-pink-50" 
+                    : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
+                )}
+                onAdded={handleWishlistAdded}
+                isWishlisted={isWishlisted}
+              />
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleWishlistClick();
+                }}
+                className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
+              >
+                <Heart className="h-4 w-4 text-gray-600 hover:text-pink-500 transition-colors" />
+              </button>
+            )
           )}
         </div>
 
@@ -439,7 +453,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             )}
           </div>
 
-          {/* Action Buttons - Bottom Right */}
+          {/* Action Buttons - Bottom Right - Context Aware */}
           <div className="flex items-center gap-1">
             {/* Share Button */}
             {onShare ? (
@@ -466,28 +480,90 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
               />
             )}
             
-            {/* Add to Cart Button */}
-            {viewMode === "list" ? (
-              <AddToCartButton
-                product={product}
-                variant="luxury"
-                size="sm"
-                className="min-w-[80px]"
-                onClick={handleAddToCartClick}
-              />
+            {/* Primary Action Button - Context Aware */}
+            {context === 'wishlist' ? (
+              // Wishlist context: Heart/Wishlist button prominent
+              viewMode === "list" ? (
+                user ? (
+                  <WishlistSelectionPopoverButton
+                    product={{
+                      id: productId,
+                      name: getProductTitle(),
+                      image: getProductImage(),
+                      price: product.price,
+                      brand: product.brand || "",
+                    }}
+                    triggerClassName="min-w-[80px] h-8"
+                    onAdded={handleWishlistAdded}
+                  />
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWishlistClick();
+                    }}
+                    className="px-3 py-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors text-sm font-medium"
+                  >
+                    Add
+                  </button>
+                )
+              ) : (
+                user ? (
+                  <WishlistSelectionPopoverButton
+                    product={{
+                      id: productId,
+                      name: getProductTitle(),
+                      image: getProductImage(),
+                      price: product.price,
+                      brand: product.brand || "",
+                    }}
+                    triggerClassName={cn(
+                      "flex items-center justify-center rounded-full transition-colors shadow-sm shrink-0",
+                      isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
+                      isWishlisted ? "bg-pink-500 text-white hover:bg-pink-600" : "bg-gray-900 text-white hover:bg-gray-800"
+                    )}
+                    onAdded={handleWishlistAdded}
+                    isWishlisted={isWishlisted}
+                  />
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWishlistClick();
+                    }}
+                    className={cn(
+                      "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0",
+                      isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
+                    )}
+                    aria-label="Add to wishlist"
+                  >
+                    <Heart className="h-4 w-4" />
+                  </button>
+                )
+              )
             ) : (
-              // Grid & Mobile: Icon-only for compact display
-              <button
-                onClick={handleAddToCartClick}
-                className={cn(
-                  "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0",
-                  isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
-                )}
-                aria-label="Add to cart"
-                title="Add to cart"
-              >
-                <ShoppingCart className="h-4 w-4" />
-              </button>
+              // Marketplace context: Cart button prominent
+              viewMode === "list" ? (
+                <AddToCartButton
+                  product={product}
+                  variant="luxury"
+                  size="sm"
+                  className="min-w-[80px]"
+                  onClick={handleAddToCartClick}
+                />
+              ) : (
+                <button
+                  onClick={handleAddToCartClick}
+                  className={cn(
+                    "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0",
+                    isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
+                  )}
+                  aria-label="Add to cart"
+                  title="Add to cart"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                </button>
+              )
             )}
           </div>
         </div>

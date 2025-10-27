@@ -20,6 +20,8 @@ interface ProductDetailsActionsSectionProps {
   selectedProductId?: string;
   variationText?: string;
   isVariationComplete?: boolean;
+  // Context for button priority
+  context?: 'marketplace' | 'wishlist';
 }
 
 const ProductDetailsActionsSection = ({
@@ -33,6 +35,7 @@ const ProductDetailsActionsSection = ({
   selectedProductId,
   variationText,
   isVariationComplete = true,
+  context = 'marketplace',
 }: ProductDetailsActionsSectionProps) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -118,39 +121,79 @@ const ProductDetailsActionsSection = ({
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Context Aware */}
         <div className="flex gap-3">
-          <Button 
-            onClick={handleAddToCart} 
-            className="flex-1"
-            disabled={!isVariationComplete}
-          >
-            <ShoppingBag className="h-4 w-4 mr-2" />
-            Add to Cart
-          </Button>
-
-          {/* Wishlist Button */}
-          {user ? (
-            <WishlistSelectionPopoverButton
-              product={{
-                id: String(selectedProductId || product.product_id || product.id),
-                name: product.title || product.name || "",
-                image: product.image || "",
-                price: product.price,
-                brand: product.brand || "",
-              }}
-              triggerClassName="p-2"
-              onAdded={handleWishlistAdded}
-            />
+          {context === 'wishlist' ? (
+            // Wishlist Context: Wishlist button primary, Cart secondary
+            <>
+              {user ? (
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: String(selectedProductId || product.product_id || product.id),
+                    name: product.title || product.name || "",
+                    image: product.image || "",
+                    price: product.price,
+                    brand: product.brand || "",
+                  }}
+                  triggerClassName="flex-1 h-10"
+                  onAdded={handleWishlistAdded}
+                />
+              ) : (
+                <Button
+                  variant="default"
+                  onClick={handleWishlistClick}
+                  className="flex-1"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Add to Wishlist
+                </Button>
+              )}
+              
+              <Button 
+                onClick={handleAddToCart} 
+                variant="outline"
+                size="icon"
+                disabled={!isVariationComplete}
+                className="flex-shrink-0"
+              >
+                <ShoppingBag className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleWishlistClick}
-              className="flex-shrink-0"
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
+            // Marketplace Context: Cart button primary, Wishlist secondary
+            <>
+              <Button 
+                onClick={handleAddToCart} 
+                className="flex-1"
+                disabled={!isVariationComplete}
+              >
+                <ShoppingBag className="h-4 w-4 mr-2" />
+                Add to Cart
+              </Button>
+
+              {user ? (
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: String(selectedProductId || product.product_id || product.id),
+                    name: product.title || product.name || "",
+                    image: product.image || "",
+                    price: product.price,
+                    brand: product.brand || "",
+                  }}
+                  triggerClassName="p-2"
+                  onAdded={handleWishlistAdded}
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleWishlistClick}
+                  className="flex-shrink-0"
+                >
+                  <Heart className="h-4 w-4" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -24,6 +24,7 @@ interface ProductDetailsDialogProps {
   userData: any | null;
   source?: 'wishlist' | 'interests' | 'ai' | 'trending'; // Context for display
   onWishlistChange?: () => void;
+  context?: 'marketplace' | 'wishlist'; // Button context for action priority
 }
 
 const ProductDetailsDialog = ({ 
@@ -33,7 +34,8 @@ const ProductDetailsDialog = ({
   onOpenChange,
   userData,
   source,
-  onWishlistChange
+  onWishlistChange,
+  context = 'marketplace'
 }: ProductDetailsDialogProps) => {
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -225,6 +227,7 @@ const ProductDetailsDialog = ({
                 selectedProductId={getEffectiveProductId()}
                 variationText={getVariationDisplayText()}
                 isVariationComplete={isVariationComplete()}
+                context={context}
               />
             </div>
             

@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X, Home } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ interface ShoppingHeroSectionProps {
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
   categories: string[];
+  viewMode?: 'home' | 'shopping';
+  onClearFilters?: () => void;
   onCreateWishlist?: () => void;
 }
 
@@ -19,6 +21,8 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
   selectedCategory,
   onCategorySelect,
   categories,
+  viewMode = 'home',
+  onClearFilters,
   onCreateWishlist
 }) => {
   return (
@@ -29,23 +33,45 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
       
       <div className="relative max-w-4xl mx-auto space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-            Shop Your Wishlists
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
+              Shop Your Wishlists
+            </h1>
+            {viewMode === 'shopping' && (
+              <Badge variant="secondary" className="text-xs">
+                <Search className="h-3 w-3 mr-1" />
+                Shopping Mode
+              </Badge>
+            )}
+          </div>
           <p className="text-lg text-muted-foreground">
-            Browse products and add to any wishlist in one click
+            {viewMode === 'home' 
+              ? 'Browse products and add to any wishlist in one click'
+              : 'Discover products matching your search'
+            }
           </p>
         </div>
 
-        {/* Large Search Bar */}
+        {/* Large Search Bar with Clear Button */}
         <div className="relative max-w-2xl mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="What are you looking for?"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-12 h-14 text-lg border-2 focus:border-primary shadow-lg"
+            className="pl-12 pr-24 h-14 text-lg border-2 focus:border-primary shadow-lg"
           />
+          {(searchQuery || selectedCategory) && onClearFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearFilters}
+              className="absolute right-2 top-1/2 -translate-y-1/2 gap-1"
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </Button>
+          )}
         </div>
 
         {/* Category Quick Filters */}

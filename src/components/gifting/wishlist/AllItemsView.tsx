@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package } from "lucide-react";
+import { Package, Home } from "lucide-react";
 import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
@@ -13,6 +13,7 @@ import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
 import CreateWishlistDialog from "./CreateWishlistDialog";
 import ProfileSidebar from "./ProfileSidebar";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
+import StandardBreadcrumb, { BreadcrumbItem } from "@/components/shared/StandardBreadcrumb";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -33,6 +34,13 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'home' | 'shopping'>('home');
+
+  // Auto-switch view mode based on search/filter activity
+  useEffect(() => {
+    const isSearching = searchQuery.trim() !== "" || categoryFilter !== null;
+    setViewMode(isSearching ? 'shopping' : 'home');
+  }, [searchQuery, categoryFilter]);
 
   // Fetch purchased items status
   useEffect(() => {
@@ -163,6 +171,31 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     setCreateDialogOpen(false);
   };
 
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter(null);
+  };
+
+  // Build breadcrumb items
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Home", href: "/" },
+    { label: "My Wishlists", href: "/wishlists", isCurrentPage: viewMode === 'home' }
+  ];
+
+  if (viewMode === 'shopping') {
+    if (searchQuery) {
+      breadcrumbItems.push({ 
+        label: `Search: "${searchQuery}"`, 
+        isCurrentPage: true 
+      });
+    } else if (categoryFilter) {
+      breadcrumbItems.push({ 
+        label: `Category: ${categoryFilter}`, 
+        isCurrentPage: true 
+      });
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-500/5 via-background to-pink-500/5">
       {/* Left Profile Sidebar */}
@@ -175,88 +208,156 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
       
       {/* Main Content Area */}
       <div className="flex-1">
-        {/* Hero Section */}
-        <ShoppingHeroSection
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedCategory={categoryFilter}
-          onCategorySelect={setCategoryFilter}
-          categories={categories}
-        />
+        {/* Hero Section with Sticky Behavior */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+          <ShoppingHeroSection
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={categoryFilter}
+            onCategorySelect={setCategoryFilter}
+            categories={categories}
+            viewMode={viewMode}
+            onClearFilters={handleClearFilters}
+          />
+        </div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Recently Added Section */}
-          {recentlyAddedItems.length > 0 && (
-            <div className="py-6">
-              <RecentlyAddedSection items={recentlyAddedItems} />
-            </div>
-          )}
-
-          {/* Browse Products Section */}
-          {filteredProducts.length > 0 && (
-            <div className="py-6">
-              <MarketplaceProductsSection
-                products={filteredProducts}
-                wishlists={wishlists}
-                onCreateWishlist={() => setCreateDialogOpen(true)}
-                isLoading={productsLoading}
-              />
-            </div>
-          )}
-
-          {/* Your Wishlist Items Section */}
-          {filteredItems.length > 0 && (
-            <div className="py-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-muted-foreground" />
-                  <h2 className="text-2xl font-bold">Your Wishlist Items</h2>
-                  <Badge variant="secondary">
-                    {filteredItems.length} items
-                  </Badge>
+          {/* Breadcrumb Navigation */}
+          <div className="pt-4">
+            <StandardBreadcrumb items={breadcrumbItems} />
+          </div>
+          {/* HOME MODE: Personal Content First */}
+          {viewMode === 'home' && (
+            <>
+              {/* Recently Added Section */}
+              {recentlyAddedItems.length > 0 && (
+                <div className="py-6">
+                  <RecentlyAddedSection items={recentlyAddedItems} />
                 </div>
-                {(searchQuery || categoryFilter) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setCategoryFilter(null);
-                    }}
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
+              )}
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {filteredItems.map((item) => (
-                  <div key={`${item.wishlistId}-${item.id}`} className="relative">
-                    {/* Wishlist Badge */}
-                    <div 
-                      className="absolute -top-2 left-2 z-10 cursor-pointer"
-                      onClick={() => handleNavigateToWishlist(item.wishlistId)}
-                    >
-                      <Badge 
-                        variant="outline" 
-                        className="bg-background/95 backdrop-blur-sm hover:bg-primary/10 transition-colors text-xs"
-                      >
-                        {item.wishlistTitle}
+              {/* Your Wishlist Items Section - Prominent */}
+              {filteredItems.length > 0 && (
+                <div className="py-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-5 w-5 text-muted-foreground" />
+                      <h2 className="text-2xl font-bold">Your Wishlist Items</h2>
+                      <Badge variant="secondary">
+                        {filteredItems.length} items
                       </Badge>
                     </div>
-
-                    <EnhancedWishlistCard
-                      item={item}
-                      onRemove={() => handleRemoveItem(item)}
-                      isRemoving={removingItemId === item.id}
-                      isPurchased={purchasedItems.has(item.id)}
-                      className="mt-4"
-                    />
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {filteredItems.map((item) => (
+                      <div key={`${item.wishlistId}-${item.id}`} className="relative">
+                        <div 
+                          className="absolute -top-2 left-2 z-10 cursor-pointer"
+                          onClick={() => handleNavigateToWishlist(item.wishlistId)}
+                        >
+                          <Badge 
+                            variant="outline" 
+                            className="bg-background/95 backdrop-blur-sm hover:bg-primary/10 transition-colors text-xs"
+                          >
+                            {item.wishlistTitle}
+                          </Badge>
+                        </div>
+
+                        <EnhancedWishlistCard
+                          item={item}
+                          onRemove={() => handleRemoveItem(item)}
+                          isRemoving={removingItemId === item.id}
+                          isPurchased={purchasedItems.has(item.id)}
+                          className="mt-4"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Products - Show top 8 */}
+              {products.length > 0 && (
+                <div className="py-6">
+                  <MarketplaceProductsSection
+                    products={products.slice(0, 8)}
+                    wishlists={wishlists}
+                    onCreateWishlist={() => setCreateDialogOpen(true)}
+                    isLoading={productsLoading}
+                    mode="recommended"
+                    title="Recommended for You"
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* SHOPPING MODE: Discovery Content First */}
+          {viewMode === 'shopping' && (
+            <>
+              {/* Browse Products Section - Prominent */}
+              {filteredProducts.length > 0 && (
+                <div className="py-6">
+                  <MarketplaceProductsSection
+                    products={filteredProducts}
+                    wishlists={wishlists}
+                    onCreateWishlist={() => setCreateDialogOpen(true)}
+                    isLoading={productsLoading}
+                    mode="browse"
+                  />
+                </div>
+              )}
+
+              {/* Recently Added - Compact Horizontal */}
+              {recentlyAddedItems.length > 0 && (
+                <div className="py-6 border-t border-border">
+                  <RecentlyAddedSection items={recentlyAddedItems} />
+                </div>
+              )}
+
+              {/* Your Wishlist Items Section - Compact */}
+              {filteredItems.length > 0 && (
+                <div className="py-6 border-t border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-lg font-semibold">In Your Wishlists</h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {filteredItems.length}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {filteredItems.map((item) => (
+                      <div key={`${item.wishlistId}-${item.id}`} className="relative">
+                        <div 
+                          className="absolute -top-2 left-2 z-10 cursor-pointer"
+                          onClick={() => handleNavigateToWishlist(item.wishlistId)}
+                        >
+                          <Badge 
+                            variant="outline" 
+                            className="bg-background/95 backdrop-blur-sm hover:bg-primary/10 transition-colors text-xs"
+                          >
+                            {item.wishlistTitle}
+                          </Badge>
+                        </div>
+
+                        <EnhancedWishlistCard
+                          item={item}
+                          onRemove={() => handleRemoveItem(item)}
+                          isRemoving={removingItemId === item.id}
+                          isPurchased={purchasedItems.has(item.id)}
+                          className="mt-4"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Empty States */}

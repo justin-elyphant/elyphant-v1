@@ -9,14 +9,19 @@ interface MarketplaceProductsSectionProps {
   wishlists: Wishlist[];
   onCreateWishlist: () => void;
   isLoading?: boolean;
+  mode?: 'browse' | 'recommended';
+  title?: string;
 }
 
 const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   products,
   wishlists,
   onCreateWishlist,
-  isLoading
+  isLoading,
+  mode = 'browse',
+  title
 }) => {
+  const displayTitle = title || (mode === 'recommended' ? 'Recommended for You' : 'Browse Products');
   if (isLoading) {
     return (
       <div className="py-12">
@@ -41,7 +46,9 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
     <div className="py-8">
       <div className="flex items-center gap-2 mb-6">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h2 className="text-2xl font-bold">Browse Products</h2>
+        <h2 className={mode === 'recommended' ? 'text-xl font-semibold' : 'text-2xl font-bold'}>
+          {displayTitle}
+        </h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

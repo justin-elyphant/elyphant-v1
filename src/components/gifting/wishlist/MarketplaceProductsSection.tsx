@@ -29,7 +29,10 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   const displayTitle = title || (mode === 'recommended' ? 'Recommended for You' : 'Browse Products');
 
   const handleProductClick = (product: Product) => {
-    navigate(`/marketplace/product/${product.product_id || product.id}`);
+    // Pass product data via navigation state to avoid edge function dependency
+    navigate(`/marketplace/product/${product.product_id || product.id}`, {
+      state: { product }
+    });
   };
 
   const handleAddToCart = (product: Product) => {

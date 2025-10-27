@@ -29,7 +29,7 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   const displayTitle = title || (mode === 'recommended' ? 'Recommended for You' : 'Browse Products');
 
   const handleProductClick = (product: Product) => {
-    navigate(`/product/${product.product_id || product.id}`);
+    navigate(`/marketplace/product/${product.product_id || product.id}`);
   };
 
   const handleAddToCart = (product: Product) => {

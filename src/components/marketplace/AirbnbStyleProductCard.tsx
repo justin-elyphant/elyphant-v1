@@ -518,17 +518,23 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
               // Wishlist context: Heart/Wishlist button prominent
               viewMode === "list" ? (
                 user ? (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: getProductTitle(),
-                      image: getProductImage(),
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName="min-w-[80px] h-8"
-                    onAdded={handleWishlistAdded}
-                  />
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <WishlistSelectionPopoverButton
+                      product={{
+                        id: productId,
+                        name: getProductTitle(),
+                        image: getProductImage(),
+                        price: product.price,
+                        brand: product.brand || "",
+                      }}
+                      triggerClassName="min-w-[80px] h-8"
+                      onAdded={handleWishlistAdded}
+                    />
+                  </div>
                 ) : (
                   <button
                     onClick={(e) => {
@@ -542,24 +548,30 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 )
               ) : (
                 user ? (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: getProductTitle(),
-                      image: getProductImage(),
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName={cn(
-                      "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
-                      isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
-                      isWishlisted 
-                        ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105" 
-                        : "bg-gray-900 text-white hover:bg-gray-800"
-                    )}
-                    onAdded={handleWishlistAdded}
-                    isWishlisted={isWishlisted}
-                  />
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <WishlistSelectionPopoverButton
+                      product={{
+                        id: productId,
+                        name: getProductTitle(),
+                        image: getProductImage(),
+                        price: product.price,
+                        brand: product.brand || "",
+                      }}
+                      triggerClassName={cn(
+                        "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
+                        isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
+                        isWishlisted 
+                          ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105" 
+                          : "bg-gray-900 text-white hover:bg-gray-800"
+                      )}
+                      onAdded={handleWishlistAdded}
+                      isWishlisted={isWishlisted}
+                    />
+                  </div>
                 ) : (
                   <button
                     onClick={(e) => {

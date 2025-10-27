@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, Home } from "lucide-react";
@@ -28,9 +28,20 @@ type EnhancedWishlistItem = WishlistItem & {
 
 const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { removeFromWishlist, createWishlist } = useWishlist();
   const { products, isLoading: productsLoading } = useProducts();
-  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Get search query from URL params
+  const searchQuery = searchParams.get('search') || '';
+  const setSearchQuery = (query: string) => {
+    if (query) {
+      setSearchParams({ search: query });
+    } else {
+      setSearchParams({});
+    }
+  };
+  
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

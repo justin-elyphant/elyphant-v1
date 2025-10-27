@@ -135,14 +135,14 @@ const ProductDetailsActionsSection = ({
                     price: product.price,
                     brand: product.brand || "",
                   }}
-                  triggerClassName="flex-1 h-10"
+                  triggerClassName="flex-1 h-10 bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105 transition-all text-white border-0"
                   onAdded={handleWishlistAdded}
                 />
               ) : (
                 <Button
                   variant="default"
                   onClick={handleWishlistClick}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105 transition-all text-white border-0"
                 >
                   <Heart className="h-4 w-4 mr-2" />
                   Add to Wishlist

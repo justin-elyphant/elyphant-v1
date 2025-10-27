@@ -2,7 +2,8 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Home } from "lucide-react";
+import { Package, Home, Plus, Heart, ShoppingBag, TrendingUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
@@ -16,9 +17,11 @@ import ProfileSidebar from "./ProfileSidebar";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 import StandardBreadcrumb, { BreadcrumbItem } from "@/components/shared/StandardBreadcrumb";
 import WishlistCard from "./WishlistCard";
+import CompactWishlistCard from "./CompactWishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import PopularBrands from "@/components/marketplace/PopularBrands";
 import TagBasedRecommendations from "./TagBasedRecommendations";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -322,29 +325,84 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           {viewMode === 'hub' && (
             <div className="space-y-8 py-6">
               {/* Hero Stats Banner */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-2">My Wishlists</h2>
-                <div className="flex gap-6 text-sm text-muted-foreground">
-                  <span>{wishlists.length} Wishlists</span>
-                  <span>{allItems.length} Total Items</span>
-                  <span>${allItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)} Value</span>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Heart className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{wishlists.length}</p>
+                      <p className="text-sm text-muted-foreground">Active Wishlists</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-purple-500/10">
+                      <ShoppingBag className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{allItems.length}</p>
+                      <p className="text-sm text-muted-foreground">Total Items</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-green-500/10">
+                      <TrendingUp className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        ${allItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(0)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total Value</p>
+                    </div>
+                  </div>
+                </Card>
               </div>
 
-              {/* Wishlist Cards Grid */}
+              {/* Wishlists Carousel Section */}
               <div>
-                <h3 className="text-xl font-semibold mb-4">Your Wishlists</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {wishlists.map((wishlist) => (
-                    <WishlistCard
-                      key={wishlist.id}
-                      wishlist={wishlist}
-                      onEdit={(id) => navigate(`/wishlist/${id}`)}
-                      onDelete={() => {}}
-                    />
-                  ))}
-                  <CreateWishlistCard onCreateNew={() => setCreateDialogOpen(true)} />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Your Wishlists</h2>
+                  <Button onClick={() => setCreateDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Wishlist
+                  </Button>
                 </div>
+                
+                {wishlists.length === 0 ? (
+                  <div className="flex justify-center">
+                    <CreateWishlistCard onCreateNew={() => setCreateDialogOpen(true)} />
+                  </div>
+                ) : (
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: false,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-4">
+                      <CarouselItem className="pl-4 basis-auto">
+                        <CreateWishlistCard onCreateNew={() => setCreateDialogOpen(true)} />
+                      </CarouselItem>
+                      {wishlists.map(wishlist => (
+                        <CarouselItem key={wishlist.id} className="pl-4 basis-auto">
+                          <CompactWishlistCard wishlist={wishlist} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {wishlists.length > 0 && (
+                      <>
+                        <CarouselPrevious className="-left-4" />
+                        <CarouselNext className="-right-4" />
+                      </>
+                    )}
+                  </Carousel>
+                )}
               </div>
 
               {/* Popular Brands */}

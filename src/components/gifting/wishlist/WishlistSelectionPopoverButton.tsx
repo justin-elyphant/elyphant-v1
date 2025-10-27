@@ -60,8 +60,8 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     >
       <Heart
         className="h-4 w-4"
-        fill={computedIsWishlisted ? "#ec4899" : "none"}
-        color={computedIsWishlisted ? "#ec4899" : undefined}
+        fill={computedIsWishlisted ? "white" : "none"}
+        color={computedIsWishlisted ? "white" : undefined}
         strokeWidth={computedIsWishlisted ? 2.5 : 2}
       />
     </Button>

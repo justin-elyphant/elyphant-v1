@@ -65,7 +65,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   context = 'marketplace'
 }) => {
   const { user } = useAuth();
-  const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
+  const { isProductWishlisted, loadWishlists, wishlists } = useUnifiedWishlistSystem();
   const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
   const isMobile = useIsMobile();
@@ -77,6 +77,11 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   const isWishlisted = propIsWishlisted !== undefined 
     ? propIsWishlisted 
     : (user ? isProductWishlisted(productId) : false);
+  
+  // Count how many wishlists contain this product
+  const wishlistCount = user ? wishlists.filter(wl => 
+    wl.items?.some(item => String(item.product_id) === productId)
+  ).length : 0;
   
   const handleWishlistAdded = async () => {
     await loadWishlists();
@@ -324,32 +329,60 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         <div className="absolute top-3 right-3 z-10" onClick={e => e.stopPropagation()}>
           {context === 'wishlist' ? (
             // Wishlist context: Show cart icon
-            <button
-              onClick={handleAddToCartClick}
-              className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
-            >
-              <ShoppingCart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleAddToCartClick}
+                    className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
+                  >
+                    <ShoppingCart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Add to cart</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
-            // Marketplace context: Show heart icon
+            // Marketplace context: Show heart icon with gradient when wishlisted
             user ? (
-              <WishlistSelectionPopoverButton
-                product={{
-                  id: productId,
-                  name: getProductTitle(),
-                  image: getProductImage(),
-                  price: product.price,
-                  brand: product.brand || "",
-                }}
-                triggerClassName={cn(
-                  "p-2 rounded-full transition-colors shadow-sm",
-                  isWishlisted 
-                    ? "bg-white text-pink-500 hover:bg-pink-50" 
-                    : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
-                )}
-                onAdded={handleWishlistAdded}
-                isWishlisted={isWishlisted}
-              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative">
+                      <WishlistSelectionPopoverButton
+                        product={{
+                          id: productId,
+                          name: getProductTitle(),
+                          image: getProductImage(),
+                          price: product.price,
+                          brand: product.brand || "",
+                        }}
+                        triggerClassName={cn(
+                          "p-2 rounded-full transition-all shadow-sm",
+                          isWishlisted 
+                            ? "bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105" 
+                            : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
+                        )}
+                        onAdded={handleWishlistAdded}
+                        isWishlisted={isWishlisted}
+                      />
+                      {wishlistCount > 1 && (
+                        <div className="absolute -top-1 -right-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">
+                          {wishlistCount}
+                        </div>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isWishlisted 
+                      ? wishlistCount > 1 
+                        ? `In ${wishlistCount} wishlists` 
+                        : "In wishlist"
+                      : "Add to wishlist"
+                    }
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : (
               <button
                 onClick={(e) => {

@@ -93,7 +93,12 @@ const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
         <PopoverTrigger asChild>
           {trigger}
         </PopoverTrigger>
-        <PopoverContent className={`w-80 p-0 ${className}`} align="end">
+        <PopoverContent 
+          className={`z-[70] w-80 p-0 bg-popover text-popover-foreground shadow-lg border rounded-md pointer-events-auto ${className || ""}`}
+          align="end"
+          sideOffset={8}
+          collisionPadding={12}
+        >
           <div className="p-3 border-b">
             <h4 className="font-medium">
               {productIsWishlisted ? "Manage Wishlist" : "Add to Wishlist"}

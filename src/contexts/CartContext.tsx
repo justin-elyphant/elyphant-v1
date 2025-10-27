@@ -34,13 +34,16 @@ export interface CartItem {
   recipientAssignment?: RecipientAssignment;
   variationText?: string;
   selectedVariations?: string;
+  // Wishlist tracking metadata
+  wishlist_id?: string;
+  wishlist_item_id?: string;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartTotal: number;
   deliveryGroups: DeliveryGroup[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -125,8 +128,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * ========================================================================
    */
 
-  const addToCart = async (product: Product, quantity: number = 1) => {
-    await serviceAddToCart(product, quantity);
+  const addToCart = async (product: Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => {
+    await serviceAddToCart(product, quantity, wishlistMetadata);
   };
 
   const removeFromCart = (productId: string) => {

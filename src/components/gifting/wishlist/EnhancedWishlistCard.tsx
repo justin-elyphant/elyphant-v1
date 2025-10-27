@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceWithDetection } from "@/utils/productSourceDetection";
 import { WishlistItem } from "@/types/profile";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 interface EnhancedWishlistCardProps {
   item: WishlistItem;
@@ -58,6 +60,7 @@ const EnhancedWishlistCard = ({
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const { addToCart } = useCart();
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,6 +85,24 @@ const EnhancedWishlistCard = ({
   const handleCopyToWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     onCopyToWishlist?.(item);
+  };
+  
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await addToCart(
+        item as any, // Cast WishlistItem to Product
+        1,
+        { 
+          wishlist_id: (item as any).wishlist_id || '', 
+          wishlist_item_id: item.id 
+        }
+      );
+      toast.success(`Added ${item.title || item.name} to cart`);
+    } catch (error) {
+      console.error('Failed to add wishlist item to cart:', error);
+      toast.error('Failed to add to cart');
+    }
   };
 
   const handleSelectionChange = (checked: boolean) => {
@@ -267,7 +288,7 @@ const EnhancedWishlistCard = ({
                     Schedule Gift
                   </Button>
                 )}
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={handleAddToCart}>
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>

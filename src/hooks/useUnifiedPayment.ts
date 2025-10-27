@@ -33,7 +33,7 @@ export interface UseUnifiedCartReturn {
   cartTotal: number;
   itemCount: number;
   isProcessing: boolean;
-  addToCart: (productOrId: string | Product, quantity?: number) => Promise<void>;
+  addToCart: (productOrId: string | Product, quantity?: number, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => Promise<void>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -76,10 +76,10 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
   }, [refreshCart]);
 
   // Cart operations
-  const addToCart = useCallback(async (productOrId: string | Product, quantity: number = 1) => {
+  const addToCart = useCallback(async (productOrId: string | Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => {
     try {
       setIsProcessing(true);
-      await unifiedPaymentService.addToCart(productOrId, quantity);
+      await unifiedPaymentService.addToCart(productOrId, quantity, wishlistMetadata);
     } finally {
       setIsProcessing(false);
     }

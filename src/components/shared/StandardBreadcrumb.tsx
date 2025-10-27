@@ -25,11 +25,11 @@ const StandardBreadcrumb = ({ items, className = "" }: StandardBreadcrumbProps) 
   if (items.length === 0) return null;
 
   return (
-    <div className={`mb-4 ${className}`}>
+    <div className={className ? `mb-4 ${className}` : "mb-4"}>
       <Breadcrumb>
         <BreadcrumbList>
           {items.map((item, index) => (
-            <React.Fragment key={index}>
+            <React.Fragment key={`breadcrumb-${index}`}>
               <BreadcrumbItem>
                 {item.isCurrentPage || !item.href ? (
                   <BreadcrumbPage>{item.label}</BreadcrumbPage>

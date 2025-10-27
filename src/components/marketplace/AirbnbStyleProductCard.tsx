@@ -467,17 +467,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             )}
             
             {/* Add to Cart Button */}
-            {isMobile ? (
-              // Mobile: Quick Add Button (+ icon only)
-              <button
-                onClick={handleAddToCartClick}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px] bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0 touch-target-44"
-                aria-label="Add to cart"
-                title="Add to cart"
-              >
-                <ShoppingCart className="h-4 w-4" />
-              </button>
-            ) : viewMode === "list" ? (
+            {viewMode === "list" ? (
               <AddToCartButton
                 product={product}
                 variant="luxury"
@@ -486,14 +476,17 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 onClick={handleAddToCartClick}
               />
             ) : (
+              // Grid & Mobile: Icon-only for compact display
               <button
                 onClick={handleAddToCartClick}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+                className={cn(
+                  "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0",
+                  isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
+                )}
                 aria-label="Add to cart"
                 title="Add to cart"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span>Add</span>
               </button>
             )}
           </div>

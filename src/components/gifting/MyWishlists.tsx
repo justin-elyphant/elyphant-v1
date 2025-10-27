@@ -32,7 +32,6 @@ import TagBasedRecommendations from "./wishlist/TagBasedRecommendations";
 import MobileWishlistLayout from "./wishlist/MobileWishlistLayout";
 import MobileWishlistCard from "./wishlist/MobileWishlistCard";
 import AllItemsView from "./wishlist/AllItemsView";
-import WishlistHubOverview from "./wishlist/WishlistHubOverview";
 
 // Form schema for validation (keep consistent with dialog components)
 const wishlistFormSchema = z.object({
@@ -69,7 +68,7 @@ const MyWishlists = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("all-items");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
   
@@ -361,27 +360,13 @@ const MyWishlists = () => {
     );
   }
 
-  // Desktop Layout - Hub Overview or All Items View
+  // Desktop Layout - Original design
   return (
     <div className="space-y-0">
-      {/* All Items View - Full Width Shopping Experience */}
-      {viewMode === "all-items" ? (
+      {/* All Items View - Full Width with Profile Sidebar */}
+      {viewMode === "all-items" && wishlists?.length > 0 ? (
         <AllItemsView wishlists={wishlists} onCreateWishlist={() => setDialogOpen(true)} />
       ) : (
-        <WishlistHubOverview
-          wishlists={wishlists}
-          onCreateWishlist={() => setDialogOpen(true)}
-          onEditWishlist={handleEditWishlist}
-          onDeleteWishlist={handleDeleteWishlist}
-          onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
-            await updateWishlistSharing({ wishlistId, isPublic });
-            return true;
-          }}
-        />
-      )}
-
-      {/* Legacy view modes - kept for backward compatibility but hidden */}
-      {(viewMode === "pinterest" || viewMode === "grid" || viewMode === "list") && (
         <div className="space-y-6 px-6 py-6">
           <EnhancedWishlistHeader
             onCreateNew={() => setDialogOpen(true)}
@@ -476,7 +461,7 @@ const MyWishlists = () => {
         </div>
       )}
 
-      <CreateWishlistDialog
+      <CreateWishlistDialog 
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSubmit={handleDialogSubmit}

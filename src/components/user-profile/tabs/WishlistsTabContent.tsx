@@ -53,7 +53,7 @@ const WishlistsTabContent = ({ isCurrentUser, wishlists }: WishlistsTabContentPr
               </CardContent>
               <CardFooter>
                 <Button variant="outline" size="sm" asChild className="w-full">
-                  <Link to={`/shared-wishlist/${wishlist.id}`}>View Wishlist</Link>
+                  <Link to={`/wishlist/${wishlist.id}`}>View Wishlist</Link>
                 </Button>
               </CardFooter>
             </Card>

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, ShoppingBag, Trash2, Loader2, Eye, Share2 } from "lucide-react";
+import { Edit, ShoppingBag, Trash2, Loader2, Eye } from "lucide-react";
 import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { toast } from "sonner";
 import { Wishlist, WishlistItem } from "@/types/profile";
@@ -67,21 +67,6 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
     e.stopPropagation();
     // Navigate to workspace to use shopping panel
     navigate(`/wishlist/${wishlist.id}?openShopping=true`);
-  };
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/shared-wishlist/${wishlist.id}`;
-    
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Wishlist link copied!", {
-        description: "Share this link with friends and family"
-      });
-    } catch (err) {
-      console.error("Failed to copy link:", err);
-      toast.error("Failed to copy link");
-    }
   };
 
   // Determine badge styles based on priority
@@ -210,15 +195,12 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
             <Eye className="mr-2 h-3 w-3" />
             View All
           </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={handleShare}
-            className="flex-1 bg-primary hover:bg-primary/90"
-          >
-            <Share2 className="mr-2 h-3 w-3" />
-            Share
-          </Button>
+          <WishlistShareButton 
+            wishlist={wishlist}
+            size="sm"
+            onShareSettingsChange={updateWishlistSharing}
+            className="flex-1"
+          />
         </div>
         
         {wishlist.items.length > 0 && (

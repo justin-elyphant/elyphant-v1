@@ -254,12 +254,20 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     navigate(`/marketplace?search=${encodeURIComponent(term)}`);
   };
 
-  // Build breadcrumb items - simplified for hub navigation
+  // Build breadcrumb items with view parameter for toggling
   const breadcrumbItems: BreadcrumbItem[] = [
     { 
+      label: "Home", 
+      href: "/" 
+    },
+    { 
       label: "My Wishlists", 
-      href: "/wishlists",
-      isCurrentPage: !searchQuery && !categoryFilter
+      // Preserve search but set view=home to show wishlists overview
+      href: searchQuery 
+        ? `/wishlists?search=${encodeURIComponent(searchQuery)}&view=home`
+        : "/wishlists",
+      // Clickable when we're in shopping view
+      isCurrentPage: !searchQuery || viewMode === 'home'
     }
   ];
 

@@ -183,7 +183,12 @@ const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
                         ) : (
                           <Button
                             size="sm"
-                            onClick={() => handleAddToWishlist(wishlist.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              console.log('Add button clicked for wishlist:', wishlist.id);
+                              handleAddToWishlist(wishlist.id);
+                            }}
                             disabled={isAdding}
                             className="h-7"
                           >

@@ -46,32 +46,45 @@ export const useWishlistPopoverLogic = ({
   };
 
   const handleAddToWishlist = async (wishlistId: string) => {
+    console.log('handleAddToWishlist called for wishlistId:', wishlistId);
+    console.log('Product details:', { productId, productName, productPrice, productImage, productBrand });
+    
     try {
       setAddingToWishlist(wishlistId);
+      console.log('Set addingToWishlist state to:', wishlistId);
       
-      const success = await addToWishlist({ wishlistId, item: {
+      const itemData = {
         product_id: productId,
         title: productName,
         name: productName,
         price: productPrice,
         image_url: productImage,
         brand: productBrand
-      }});
+      };
+      
+      console.log('Calling addToWishlist with:', { wishlistId, item: itemData });
+      const success = await addToWishlist({ wishlistId, item: itemData });
+      console.log('addToWishlist result:', success);
 
       if (success) {
-        console.log('useWishlistPopoverLogic - Successfully added to wishlist, reloading data');
+        console.log('Successfully added to wishlist, reloading data');
         await loadWishlists();
         toast.success(`Added to wishlist`);
         
         if (onClose) {
+          console.log('Calling onClose callback');
           onClose();
         }
         setOpen(false);
+      } else {
+        console.error('addToWishlist returned false');
+        toast.error("Failed to add to wishlist");
       }
     } catch (error) {
       console.error("Error adding to wishlist:", error);
       toast.error("Failed to add to wishlist");
     } finally {
+      console.log('Clearing addingToWishlist state');
       setAddingToWishlist(null);
     }
   };

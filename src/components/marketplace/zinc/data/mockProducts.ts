@@ -1,5 +1,6 @@
 import { Product } from "@/types/product";
 
+// Mock products database with diverse product categories
 export const allProducts: Product[] = [
   // Apple Products
   {

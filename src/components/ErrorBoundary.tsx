@@ -24,7 +24,19 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('🔴 ErrorBoundary caught an error:', error);
+    console.error('🔴 Error message:', error.message);
+    console.error('🔴 Error stack:', error.stack);
+    console.error('🔴 Component stack:', errorInfo.componentStack);
+    
+    // Also log to help identify the issue
+    if (error.message) {
+      console.error('🔴 Full error details:', JSON.stringify({
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      }, null, 2));
+    }
     
     // Check if it's a dynamic import error
     if (error.message.includes('Failed to fetch dynamically imported module')) {
@@ -52,11 +64,22 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="text-center max-w-md">
             <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-2">
               {this.state.error?.message.includes('Failed to fetch dynamically imported module')
                 ? 'Loading failed. The page will refresh automatically to fix this issue.'
                 : 'An unexpected error occurred. Please try refreshing the page.'}
             </p>
+            {this.state.error && (
+              <details className="text-left bg-muted/50 p-4 rounded-lg mb-6 text-xs">
+                <summary className="cursor-pointer font-semibold text-red-600 mb-2">
+                  Error Details (for debugging)
+                </summary>
+                <code className="block whitespace-pre-wrap break-all">
+                  {this.state.error.message}
+                  {this.state.error.stack && `\n\n${this.state.error.stack}`}
+                </code>
+              </details>
+            )}
             <div className="space-x-4">
               <Button onClick={this.handleRetry}>
                 Try Again

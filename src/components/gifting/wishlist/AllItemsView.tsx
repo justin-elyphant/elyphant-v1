@@ -245,22 +245,28 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
   // Build breadcrumb items
   const breadcrumbItems: BreadcrumbItem[] = [
-    { label: "Home", href: "/" },
-    { label: "My Wishlists", href: "/wishlists", isCurrentPage: viewMode === 'home' }
+    { 
+      label: "Home", 
+      href: searchQuery ? `/?search=${encodeURIComponent(searchQuery)}` : "/" 
+    },
+    { 
+      label: "My Wishlists", 
+      href: searchQuery ? `/wishlists?search=${encodeURIComponent(searchQuery)}` : "/wishlists",
+      isCurrentPage: !searchQuery && !categoryFilter 
+    }
   ];
 
-  if (viewMode === 'shopping') {
-    if (searchQuery) {
-      breadcrumbItems.push({ 
-        label: `Search: "${searchQuery}"`, 
-        isCurrentPage: true 
-      });
-    } else if (categoryFilter) {
-      breadcrumbItems.push({ 
-        label: `Category: ${categoryFilter}`, 
-        isCurrentPage: true 
-      });
-    }
+  // Show search/category breadcrumb whenever they exist, regardless of view mode
+  if (searchQuery) {
+    breadcrumbItems.push({ 
+      label: `Search: "${searchQuery}"`, 
+      isCurrentPage: true 
+    });
+  } else if (categoryFilter) {
+    breadcrumbItems.push({ 
+      label: `Category: ${categoryFilter}`, 
+      isCurrentPage: true 
+    });
   }
 
   return (

@@ -22,24 +22,19 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
   onCreateWishlist
 }) => {
   return (
-    <div className="bg-gradient-to-br from-primary/5 via-background to-primary/5 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header with Create Button */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-              Shop Your Wishlists
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Browse products and add to any wishlist in one click
-            </p>
-          </div>
-          {onCreateWishlist && (
-            <Button onClick={onCreateWishlist} variant="outline" size="lg" className="hidden md:flex">
-              <Plus className="h-4 w-4 mr-2" />
-              New Wishlist
-            </Button>
-          )}
+    <div className="relative overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
+      {/* Vibrant gradient background with purple/magenta tones matching logo */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-primary/5 to-pink-500/10" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-background/80 to-transparent" />
+      
+      <div className="relative max-w-4xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
+            Shop Your Wishlists
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Browse products and add to any wishlist in one click
+          </p>
         </div>
 
         {/* Large Search Bar */}

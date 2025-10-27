@@ -136,7 +136,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
+    <div className="flex min-h-screen bg-gradient-to-br from-purple-500/5 via-background to-pink-500/5">
       {/* Left Profile Sidebar */}
       <ProfileSidebar 
         wishlists={wishlists}
@@ -154,7 +154,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           selectedCategory={categoryFilter}
           onCategorySelect={setCategoryFilter}
           categories={categories}
-          onCreateWishlist={onCreateWishlist}
         />
 
         {/* Main Content */}

@@ -28,7 +28,7 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-background/80 to-transparent" />
       
       <div className="relative max-w-4xl mx-auto space-y-6">
-        <div className="space-y-2">
+        <div className="space-y-2 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
             Shop Your Wishlists
           </h1>

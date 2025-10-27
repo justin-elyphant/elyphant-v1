@@ -72,6 +72,17 @@ const MyWishlists = () => {
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
   
+  // Detect mobile screen size (declare before any early returns)
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+  
   // Use unified wishlist system directly
   const {
     wishlists,
@@ -239,18 +250,6 @@ const MyWishlists = () => {
   }
 
 
-  // Detect mobile screen size
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   // Mobile Layout
   if (isMobile) {

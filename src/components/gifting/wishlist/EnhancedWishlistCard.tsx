@@ -90,13 +90,16 @@ const EnhancedWishlistCard = ({
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+      // Cast item to Product and extract wishlist ID from enhanced item
+      const wishlistId = (item as any).wishlistId || '';
+      
       await addToCart(
         item as any, // Cast WishlistItem to Product
         1,
-        { 
-          wishlist_id: (item as any).wishlist_id || '', 
+        wishlistId ? { 
+          wishlist_id: wishlistId, 
           wishlist_item_id: item.id 
-        }
+        } : undefined
       );
       toast.success(`Added ${item.title || item.name} to cart`);
     } catch (error) {

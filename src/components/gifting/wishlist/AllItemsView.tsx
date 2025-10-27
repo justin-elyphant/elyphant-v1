@@ -7,7 +7,7 @@ import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
 import { useProducts } from "@/contexts/ProductContext";
-import { useZincSearch } from "@/hooks/useZincSearch";
+import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
@@ -37,13 +37,29 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'home' | 'shopping'>('home');
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
+  const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   
-  // Live search hook for marketplace products
+  // Live Zinc API search hook
   const { 
-    loading: searchLoading, 
-    zincResults, 
-    filteredProducts: searchResults 
-  } = useZincSearch(searchQuery);
+    searchProducts, 
+    isLoading: searchLoading 
+  } = useUnifiedSearch({ debounceMs: 300 });
+
+  // Execute live product search when query changes
+  useEffect(() => {
+    const performSearch = async () => {
+      if (searchQuery.trim()) {
+        console.log(`🔍 Searching live Zinc API for: "${searchQuery}"`);
+        const results = await searchProducts(searchQuery);
+        setLiveSearchResults(results);
+        console.log(`✅ Found ${results.length} live products`);
+      } else {
+        setLiveSearchResults([]);
+      }
+    };
+    
+    performSearch();
+  }, [searchQuery, searchProducts]);
 
   // Auto-switch view mode based on search/filter activity
   useEffect(() => {
@@ -138,9 +154,9 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
   // Determine which products to show based on search/filter state
   const displayProducts = useMemo(() => {
-    // If searching, prioritize live search results
+    // If searching, use live Zinc API results
     if (searchQuery.trim()) {
-      const results = searchResults.length > 0 ? searchResults : zincResults;
+      const results = liveSearchResults;
       
       // Apply category filter if set
       if (categoryFilter) {
@@ -161,7 +177,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     
     // Default: show ProductContext products
     return products;
-  }, [searchQuery, searchResults, zincResults, categoryFilter, products]);
+  }, [searchQuery, liveSearchResults, categoryFilter, products]);
   
   // Determine loading state
   const isSearching = searchQuery.trim() !== "";

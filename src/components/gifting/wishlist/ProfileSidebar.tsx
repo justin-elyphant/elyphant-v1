@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Package, DollarSign, Heart, ShoppingBag, Menu, Plus } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { cn } from "@/lib/utils";
+import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 
 interface ProfileSidebarProps {
   wishlists: Wishlist[];
@@ -45,6 +46,35 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const { user } = useAuth();
   const { profile } = useProfile();
 
+  // Fetch real purchase data
+  const [purchasedCount, setPurchasedCount] = useState(0);
+  const [percentPurchased, setPercentPurchased] = useState(0);
+
+  useEffect(() => {
+    const fetchPurchaseData = async () => {
+      if (!wishlists || wishlists.length === 0) return;
+
+      const wishlistIds = wishlists.map(w => w.id);
+      const allItems = wishlists.flatMap(w => 
+        (w.items || []).map(item => ({
+          id: item.id,
+          price: item.price,
+          category: w.category
+        }))
+      );
+
+      const stats = await WishlistPurchaseTrackingService.getWishlistStats({
+        wishlistIds,
+        items: allItems
+      });
+
+      setPurchasedCount(stats.purchasedCount);
+      setPercentPurchased(stats.percentPurchased);
+    };
+
+    fetchPurchaseData();
+  }, [wishlists]);
+
   // Calculate stats from wishlists
   const stats = useMemo(() => {
     const totalItems = wishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
@@ -52,10 +82,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       const wishlistValue = w.items?.reduce((itemSum, item) => itemSum + (item.price || 0), 0) || 0;
       return sum + wishlistValue;
     }, 0);
-    
-    // Mock purchased data - in real app, this would come from actual purchase tracking
-    const purchasedCount = Math.floor(totalItems * 0.25); // Mock: 25% purchased
-    const percentPurchased = totalItems > 0 ? (purchasedCount / totalItems) * 100 : 0;
 
     // Extract unique categories
     const categoryMap = new Map<string, number>();
@@ -74,7 +100,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       percentPurchased,
       categories: Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     };
-  }, [wishlists]);
+  }, [wishlists, purchasedCount, percentPurchased]);
 
   // Get user display name
   const getUserName = () => {

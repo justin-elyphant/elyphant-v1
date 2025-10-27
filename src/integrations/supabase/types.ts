@@ -4778,6 +4778,54 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlist_item_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          item_id: string
+          order_id: string | null
+          price_paid: number | null
+          product_id: string
+          purchased_at: string
+          purchaser_name: string | null
+          purchaser_user_id: string | null
+          quantity: number
+          updated_at: string
+          wishlist_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          item_id: string
+          order_id?: string | null
+          price_paid?: number | null
+          product_id: string
+          purchased_at?: string
+          purchaser_name?: string | null
+          purchaser_user_id?: string | null
+          quantity?: number
+          updated_at?: string
+          wishlist_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          item_id?: string
+          order_id?: string | null
+          price_paid?: number | null
+          product_id?: string
+          purchased_at?: string
+          purchaser_name?: string | null
+          purchaser_user_id?: string | null
+          quantity?: number
+          updated_at?: string
+          wishlist_id?: string
+        }
+        Relationships: []
+      }
       wishlist_items: {
         Row: {
           brand: string | null

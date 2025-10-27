@@ -75,24 +75,46 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && aiSearchEnabled && searchQuery.trim()) {
+                if (e.key === 'Enter') {
                   e.preventDefault();
-                  onAISearch?.();
+                  if (aiSearchEnabled && searchQuery.trim()) {
+                    onAISearch?.();
+                  } else {
+                    // Scroll to results section for standard search
+                    const el = document.getElementById('browse-products');
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
                 }
               }}
-              className={`pl-16 pr-24 h-14 text-lg border-2 focus:border-primary shadow-lg transition-all ${
+              className={`pl-16 pr-40 h-14 text-lg border-2 focus:border-primary shadow-lg transition-all ${
                 aiSearchEnabled ? 'ring-2 ring-purple-300 bg-gradient-to-r from-purple-50/50 to-indigo-50/50' : ''
               }`}
             />
+            {/* Clear button */}
             {(searchQuery || selectedCategory) && onClearFilters && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClearFilters}
-                className="absolute right-2 top-1/2 -translate-y-1/2 gap-1"
+                className="absolute right-24 top-1/2 -translate-y-1/2 gap-1"
               >
                 <X className="h-4 w-4" />
                 Clear
+              </Button>
+            )}
+            {/* Explicit Search button for standard mode */}
+            {!aiSearchEnabled && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const el = document.getElementById('browse-products');
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <Search className="h-4 w-4 mr-1" />
+                Search
               </Button>
             )}
           </div>

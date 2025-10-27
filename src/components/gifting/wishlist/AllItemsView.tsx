@@ -341,7 +341,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           {viewMode === 'shopping' && (
             <>
               {/* Browse Products Section - Prominent */}
-              <div className="py-6">
+              <div className="py-6" id="browse-products">
                 <MarketplaceProductsSection
                   products={displayProducts}
                   wishlists={wishlists}

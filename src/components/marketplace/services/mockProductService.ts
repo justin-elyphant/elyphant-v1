@@ -13,6 +13,13 @@ const searchMappings: Record<string, string[]> = {
   "headphones": ["audio", "music", "wireless", "earbuds"],
   "laptop": ["computer", "macbook", "notebook"],
   "phone": ["smartphone", "mobile", "iphone"],
+  // Footwear and sportswear mappings
+  "nike": ["shoe", "shoes", "sneaker", "sneakers", "running", "trainer", "footwear", "sportswear"],
+  "adidas": ["shoe", "shoes", "sneaker", "sneakers", "running", "trainer", "footwear", "sportswear"],
+  "new balance": ["shoe", "shoes", "sneaker", "sneakers", "running", "trainer", "footwear"],
+  "shoes": ["sneaker", "sneakers", "footwear", "running", "trainer"],
+  "sneakers": ["shoe", "shoes", "footwear", "running", "trainer"],
+  "running shoes": ["running", "sneaker", "sneakers", "shoe", "footwear"]
 };
 
 /**

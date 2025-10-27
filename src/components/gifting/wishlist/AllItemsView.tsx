@@ -15,6 +15,10 @@ import CreateWishlistDialog from "./CreateWishlistDialog";
 import ProfileSidebar from "./ProfileSidebar";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 import StandardBreadcrumb, { BreadcrumbItem } from "@/components/shared/StandardBreadcrumb";
+import WishlistCard from "./WishlistCard";
+import CreateWishlistCard from "./CreateWishlistCard";
+import PopularBrands from "@/components/marketplace/PopularBrands";
+import TagBasedRecommendations from "./TagBasedRecommendations";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -46,7 +50,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<'home' | 'shopping'>('home');
+  const [viewMode, setViewMode] = useState<'hub' | 'home' | 'shopping'>('hub');
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   
@@ -74,12 +78,12 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
   // Auto-switch view mode based on search/filter activity and URL view parameter
   useEffect(() => {
-    const urlView = searchParams.get('view') as 'home' | 'shopping' | null;
+    const urlView = searchParams.get('view') as 'hub' | 'home' | 'shopping' | null;
     if (urlView) {
       setViewMode(urlView);
     } else {
       const isSearching = searchQuery.trim() !== "" || categoryFilter !== null;
-      setViewMode(isSearching ? 'shopping' : 'home');
+      setViewMode(isSearching ? 'shopping' : 'hub');
     }
   }, [searchQuery, categoryFilter, searchParams]);
 
@@ -254,20 +258,12 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     navigate(`/marketplace?search=${encodeURIComponent(term)}`);
   };
 
-  // Build breadcrumb items with view parameter for toggling
+  // Build breadcrumb items
   const breadcrumbItems: BreadcrumbItem[] = [
     { 
-      label: "Home", 
-      href: "/" 
-    },
-    { 
       label: "My Wishlists", 
-      // Preserve search but set view=home to show wishlists overview
-      href: searchQuery 
-        ? `/wishlists?search=${encodeURIComponent(searchQuery)}&view=home`
-        : "/wishlists",
-      // Clickable when we're in shopping view
-      isCurrentPage: !searchQuery || viewMode === 'home'
+      href: "/wishlists?view=hub",
+      isCurrentPage: viewMode === 'hub'
     }
   ];
 
@@ -321,6 +317,58 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           <div className="pt-4">
             <StandardBreadcrumb items={breadcrumbItems} />
           </div>
+
+          {/* HUB MODE: Wishlist Overview Landing Page */}
+          {viewMode === 'hub' && (
+            <div className="space-y-8 py-6">
+              {/* Hero Stats Banner */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg p-6">
+                <h2 className="text-2xl font-bold mb-2">My Wishlists</h2>
+                <div className="flex gap-6 text-sm text-muted-foreground">
+                  <span>{wishlists.length} Wishlists</span>
+                  <span>{allItems.length} Total Items</span>
+                  <span>${allItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)} Value</span>
+                </div>
+              </div>
+
+              {/* Wishlist Cards Grid */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Your Wishlists</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {wishlists.map((wishlist) => (
+                    <WishlistCard
+                      key={wishlist.id}
+                      wishlist={wishlist}
+                      onEdit={(id) => navigate(`/wishlist/${id}`)}
+                      onDelete={() => {}}
+                    />
+                  ))}
+                  <CreateWishlistCard onCreateNew={() => setCreateDialogOpen(true)} />
+                </div>
+              </div>
+
+              {/* Popular Brands */}
+              <PopularBrands />
+
+              {/* AI Insights */}
+              <div className="max-w-md">
+                <TagBasedRecommendations />
+              </div>
+
+              {/* Trending Products */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Trending Gift Ideas</h3>
+                <MarketplaceProductsSection
+                  products={products.slice(0, 8)}
+                  wishlists={wishlists}
+                  onCreateWishlist={() => setCreateDialogOpen(true)}
+                  isLoading={productsLoading}
+                  mode="browse"
+                />
+              </div>
+            </div>
+          )}
+
           {/* HOME MODE: Personal Content First */}
           {viewMode === 'home' && (
             <>

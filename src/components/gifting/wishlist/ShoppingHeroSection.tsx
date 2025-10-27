@@ -12,7 +12,7 @@ interface ShoppingHeroSectionProps {
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
   categories: string[];
-  viewMode?: 'home' | 'shopping';
+  viewMode?: 'hub' | 'home' | 'shopping';
   onClearFilters?: () => void;
   onCreateWishlist?: () => void;
   aiSearchEnabled?: boolean;

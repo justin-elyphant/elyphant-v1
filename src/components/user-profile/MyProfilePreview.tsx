@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { UnifiedProfileData } from "@/services/profiles/UnifiedProfileService";
 import { publicProfileService } from "@/services/publicProfileService";
 import PublicProfileTabs from "./PublicProfileTabs";
@@ -6,7 +7,8 @@ import PrivacyNotice from "./PrivacyNotice";
 import InstagramProfileLayout from "./InstagramProfileLayout";
 import ProfileSharingDialog from "./ProfileSharingDialog";
 import { Badge } from "@/components/ui/badge";
-import { Eye, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Eye, AlertTriangle, List } from "lucide-react";
 import { useProfileSharing } from "@/hooks/useProfileSharing";
 import type { PublicProfileData } from "@/services/publicProfileService";
 
@@ -22,6 +24,7 @@ interface MyProfilePreviewProps {
  * profile completion and helps users understand their public presence.
  */
 const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("public-overview");
   const [publicViewData, setPublicViewData] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
@@ -101,6 +104,18 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
   // Secondary content for the preview mode
   const secondaryContent = (
     <>
+      {/* Manage Wishlists CTA */}
+      <div className="mb-6">
+        <Button 
+          onClick={() => navigate('/wishlists')}
+          className="w-full"
+          size="lg"
+        >
+          <List className="mr-2 h-4 w-4" />
+          Manage My Wishlists
+        </Button>
+      </div>
+
       {/* Privacy Notice */}
       <div className="mb-6">
         <PrivacyNotice 

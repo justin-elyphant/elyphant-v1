@@ -182,7 +182,10 @@ const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
                           </div>
                         ) : (
                           <Button
+                            type="button"
                             size="sm"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();

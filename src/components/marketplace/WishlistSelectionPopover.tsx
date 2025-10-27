@@ -220,7 +220,14 @@ const WishlistSelectionPopover: React.FC<WishlistSelectionPopoverProps> = ({
               <div className="p-3">
                 <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
                       <Plus className="mr-2 h-3 w-3" />
                       Create New Wishlist
                     </Button>

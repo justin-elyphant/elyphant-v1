@@ -33,7 +33,10 @@ interface EmailRequest {
     | 'birthday_reminder_curated'
     | 'birthday_connection_no_autogift'
     | 'birthday_connection_with_autogift'
-    | 'gift_purchased_for_you';
+    | 'gift_purchased_for_you'
+    | 'wishlist_item_purchased'
+    | 'wishlist_purchase_confirmation'
+    | 'wishlist_weekly_summary';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -121,6 +124,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'gift_purchased_for_you':
         result = await handleGiftPurchasedNotification(supabase, customData!);
+        break;
+      case 'wishlist_item_purchased':
+        result = await handleWishlistItemPurchased(supabase, customData!);
+        break;
+      case 'wishlist_purchase_confirmation':
+        result = await handleWishlistPurchaseConfirmation(supabase, customData!);
+        break;
+      case 'wishlist_weekly_summary':
+        result = await handleWishlistWeeklySummary(supabase, customData!);
         break;
       default:
         throw new Error(`Unknown event type: ${eventType}`);
@@ -1877,6 +1889,365 @@ async function handleGiftPurchasedNotification(supabase: any, customData: any) {
   console.log(`✅ Gift notification sent to ${recipientProfile.email}`);
 
   // Log email analytics
+  await supabase
+    .from('email_analytics')
+    .insert({
+      email_type: 'gift_purchased_notification',
+      recipient_id: recipient_id,
+      sent_at: new Date().toISOString(),
+      resend_message_id: emailResponse.data?.id
+    });
+
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+/**
+ * Handle wishlist item purchased notification
+ * Notify wishlist owner that someone bought an item from their wishlist
+ */
+async function handleWishlistItemPurchased(supabase: any, customData: any) {
+  const { wishlistId, itemId, itemName, itemImage, itemPrice, purchaserName, purchaserUserId } = customData;
+  
+  console.log(`📧 Sending wishlist item purchased notification for item ${itemId}`);
+  
+  // Get wishlist owner info
+  const { data: wishlist, error: wishlistError } = await supabase
+    .from('wishlists')
+    .select('user_id, title')
+    .eq('id', wishlistId)
+    .single();
+  
+  if (wishlistError || !wishlist) {
+    throw new Error(`Wishlist not found: ${wishlistId}`);
+  }
+  
+  // Get owner profile
+  const { data: ownerProfile, error: ownerError } = await supabase
+    .from('profiles')
+    .select('email, first_name, name')
+    .eq('id', wishlist.user_id)
+    .single();
+  
+  if (ownerError || !ownerProfile || !ownerProfile.email) {
+    throw new Error(`Wishlist owner profile not found for user ${wishlist.user_id}`);
+  }
+  
+  const ownerFirstName = ownerProfile.first_name || ownerProfile.name || 'there';
+  const wishlistUrl = `https://elyphant.ai/wishlist/${wishlistId}`;
+  
+  // Build email HTML
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Gift Purchased from Your Wishlist</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+              
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); padding: 32px; text-align: center;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🎁 Great News!</h1>
+                  <p style="margin: 8px 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">Someone bought you a gift from your wishlist</p>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px;">
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Hi ${ownerFirstName},
+                  </p>
+                  
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    ${purchaserName ? `<strong>${purchaserName}</strong> just` : 'Someone just'} purchased an item from your wishlist "<strong>${wishlist.title}</strong>"!
+                  </p>
+                  
+                  ${itemImage ? `
+                  <div style="text-align: center; margin: 32px 0;">
+                    <img src="${itemImage}" alt="${itemName}" style="max-width: 200px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                  </div>
+                  ` : ''}
+                  
+                  <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin: 24px 0;">
+                    <h3 style="margin: 0 0 12px; font-size: 18px; color: #111827;">Item Purchased:</h3>
+                    <p style="margin: 0 0 8px; font-size: 16px; color: #374151;"><strong>${itemName}</strong></p>
+                    ${itemPrice ? `<p style="margin: 0; font-size: 16px; color: #6B7280;">Price: $${Number(itemPrice).toFixed(2)}</p>` : ''}
+                  </div>
+                  
+                  <p style="margin: 24px 0; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Your gift is on its way! You'll receive a shipping notification once it's dispatched.
+                  </p>
+                  
+                  <!-- CTA Button -->
+                  <div style="text-align: center; margin: 32px 0;">
+                    <a href="${wishlistUrl}" style="display: inline-block; background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Your Wishlist
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0 0 8px; font-size: 14px; color: #6B7280;">
+                    Happy gifting! 🎉
+                  </p>
+                  <p style="margin: 0; font-size: 12px; color: #9CA3AF;">
+                    © ${new Date().getFullYear()} Elyphant. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+              
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+  
+  // Send email
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [ownerProfile.email],
+    subject: `🎁 Someone bought "${itemName}" from your wishlist!`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Wishlist purchase notification sent to ${ownerProfile.email}`);
+  
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+/**
+ * Handle wishlist purchase confirmation
+ * Confirm to the gifter that their wishlist item purchase was successful
+ */
+async function handleWishlistPurchaseConfirmation(supabase: any, customData: any) {
+  const { purchaserEmail, purchaserName, itemName, recipientName, orderNumber } = customData;
+  
+  console.log(`📧 Sending wishlist purchase confirmation to ${purchaserEmail}`);
+  
+  if (!purchaserEmail) {
+    throw new Error('Purchaser email required');
+  }
+  
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Wishlist Gift Purchase Confirmed</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              
+              <tr>
+                <td style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 32px; text-align: center;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">✅ Purchase Confirmed!</h1>
+                </td>
+              </tr>
+              
+              <tr>
+                <td style="padding: 40px;">
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Hi ${purchaserName || 'there'},
+                  </p>
+                  
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Thank you for purchasing <strong>${itemName}</strong> from ${recipientName ? `${recipientName}'s` : 'a'} wishlist! Your thoughtful gift is being prepared for shipment.
+                  </p>
+                  
+                  ${orderNumber ? `
+                  <div style="background-color: #f0fdf4; border-left: 4px solid #10B981; padding: 16px; margin: 24px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #065f46;">
+                      <strong>Order Number:</strong> ${orderNumber}
+                    </p>
+                  </div>
+                  ` : ''}
+                  
+                  <p style="margin: 24px 0 0; font-size: 16px; line-height: 1.6; color: #374151;">
+                    You'll receive a shipping confirmation email once your gift is on its way. ${recipientName ? `We've notified ${recipientName} that a gift is coming!` : ''}
+                  </p>
+                </td>
+              </tr>
+              
+              <tr>
+                <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; font-size: 12px; color: #9CA3AF;">
+                    © ${new Date().getFullYear()} Elyphant. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+              
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+  
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [purchaserEmail],
+    subject: `✅ Gift Purchase Confirmed - ${itemName}`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Purchase confirmation sent to ${purchaserEmail}`);
+  
+  return { emailSent: true, messageId: emailResponse.data?.id };
+}
+
+/**
+ * Handle wishlist weekly summary
+ * Send weekly digest of wishlist activity
+ */
+async function handleWishlistWeeklySummary(supabase: any, customData: any) {
+  const { userId, weekStart, weekEnd } = customData;
+  
+  console.log(`📧 Generating wishlist weekly summary for user ${userId}`);
+  
+  // Get user profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('email, first_name, name')
+    .eq('id', userId)
+    .single();
+  
+  if (profileError || !profile || !profile.email) {
+    throw new Error(`User profile not found: ${userId}`);
+  }
+  
+  // Get wishlist activity for the week
+  const { data: purchases, error: purchasesError } = await supabase
+    .from('wishlist_item_purchases')
+    .select(`
+      *,
+      wishlists!inner(title, user_id),
+      wishlist_items!inner(title, price, image_url)
+    `)
+    .eq('wishlists.user_id', userId)
+    .gte('created_at', weekStart)
+    .lte('created_at', weekEnd);
+  
+  if (purchasesError) {
+    console.error('Failed to fetch purchases:', purchasesError);
+  }
+  
+  const purchaseCount = purchases?.length || 0;
+  
+  // Only send if there's activity
+  if (purchaseCount === 0) {
+    console.log(`No wishlist activity for user ${userId} this week`);
+    return { skipped: true, reason: 'no_activity' };
+  }
+  
+  const firstName = profile.first_name || profile.name || 'there';
+  
+  const purchaseRows = (purchases || []).map((p: any) => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+        <strong>${p.wishlist_items?.title || 'Item'}</strong><br/>
+        <span style="color: #6B7280; font-size: 14px;">from "${p.wishlists?.title || 'Wishlist'}"</span>
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+        ${new Date(p.created_at).toLocaleDateString()}
+      </td>
+    </tr>
+  `).join('');
+  
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Your Weekly Wishlist Summary</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              
+              <tr>
+                <td style="background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); padding: 32px; text-align: center;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">📊 Your Weekly Wishlist Summary</h1>
+                </td>
+              </tr>
+              
+              <tr>
+                <td style="padding: 40px;">
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Hi ${firstName},
+                  </p>
+                  
+                  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
+                    Here's your wishlist activity for the week:
+                  </p>
+                  
+                  <div style="background-color: #f0fdf4; border-radius: 8px; padding: 24px; margin: 24px 0; text-align: center;">
+                    <h2 style="margin: 0; font-size: 36px; color: #10B981;">${purchaseCount}</h2>
+                    <p style="margin: 8px 0 0; font-size: 16px; color: #065f46;">
+                      ${purchaseCount === 1 ? 'item purchased' : 'items purchased'}
+                    </p>
+                  </div>
+                  
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                    ${purchaseRows}
+                  </table>
+                  
+                  <div style="text-align: center; margin: 32px 0;">
+                    <a href="https://elyphant.ai/wishlists" style="display: inline-block; background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View All Wishlists
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              
+              <tr>
+                <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; font-size: 12px; color: #9CA3AF;">
+                    © ${new Date().getFullYear()} Elyphant. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+              
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+  
+  const emailResponse = await resend.emails.send({
+    from: "Elyphant <hello@elyphant.ai>",
+    to: [profile.email],
+    subject: `📊 Your Wishlist Weekly Summary - ${purchaseCount} ${purchaseCount === 1 ? 'item' : 'items'} purchased`,
+    html: emailHtml
+  });
+  
+  console.log(`✅ Weekly summary sent to ${profile.email}`);
+  
+  return { emailSent: true, messageId: emailResponse.data?.id, purchaseCount };
+}
+
+serve(handler);
   await supabase.from('email_analytics').insert({
     template_type: 'gift_purchased_notification',
     recipient_email: recipientProfile.email,

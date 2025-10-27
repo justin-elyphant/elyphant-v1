@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
 import CreateWishlistDialog from "./CreateWishlistDialog";
 import ProfileSidebar from "./ProfileSidebar";
+import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -31,6 +32,33 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+
+  // Fetch purchased items status
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      if (wishlists.length === 0) return;
+      
+      try {
+        const wishlistIds = wishlists.map(w => w.id);
+        const results = await Promise.all(
+          wishlistIds.map(id => WishlistPurchaseTrackingService.getWishlistPurchases(id))
+        );
+        
+        const purchased = new Set<string>();
+        results.forEach(result => {
+          result.purchases?.forEach(p => purchased.add(p.item_id));
+        });
+        
+        setPurchasedItems(purchased);
+        console.log(`✅ Loaded purchase status for ${purchased.size} items`);
+      } catch (error) {
+        console.error('Failed to fetch purchase status:', error);
+      }
+    };
+    
+    fetchPurchases();
+  }, [wishlists]);
 
   // Aggregate all items from all wishlists
   const allItems = useMemo<EnhancedWishlistItem[]>(() => {
@@ -222,6 +250,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
                       item={item}
                       onRemove={() => handleRemoveItem(item)}
                       isRemoving={removingItemId === item.id}
+                      isPurchased={purchasedItems.has(item.id)}
                       className="mt-4"
                     />
                   </div>

@@ -363,34 +363,34 @@ const MyWishlists = () => {
 
   // Desktop Layout - Original design
   return (
-    <div className="space-y-6">
-      <EnhancedWishlistHeader
-        onCreateNew={() => setDialogOpen(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        categoryFilter={categoryFilter}
-        onCategoryFilterChange={setCategoryFilter}
-        availableCategories={selectableCategories}
-        totalWishlists={wishlists?.length || 0}
-      />
-      
-      <Alert className="border-border/50">
-        <AlertDescription>
-          Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
-        </AlertDescription>
-      </Alert>
-
+    <div className="space-y-0">
       {/* All Items View - Full Width with Profile Sidebar */}
       {viewMode === "all-items" && wishlists?.length > 0 ? (
-        <AllItemsView wishlists={wishlists} />
+        <AllItemsView wishlists={wishlists} onCreateWishlist={() => setDialogOpen(true)} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content Area */}
-          <div className="lg:col-span-3">
+        <div className="space-y-6 px-6 py-6">
+          <EnhancedWishlistHeader
+            onCreateNew={() => setDialogOpen(true)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            availableCategories={selectableCategories}
+            totalWishlists={wishlists?.length || 0}
+          />
+          
+          <Alert className="border-border/50">
+            <AlertDescription>
+              Create wishlists for different occasions and share them with friends and family. Browse the marketplace to add items to your wishlists.
+            </AlertDescription>
+          </Alert>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Main Content Area */}
+            <div className="lg:col-span-3">
             <>
               {/* Empty state for filtered results */}
               {wishlists?.length > 0 && filteredAndSortedWishlists.length === 0 && (
@@ -446,17 +446,18 @@ const MyWishlists = () => {
               </div>
             </div>
           ) : null}
-          </>
-          </div>
+            </>
+            </div>
 
-          {/* Sidebar with Contextual Actions - Only for non-all-items views */}
-          <div className="lg:col-span-1 space-y-4">
-            <TagBasedRecommendations />
-            <ContextualWishlistActions
-              recentlyViewedCount={contextualData.recentlyViewedCount}
-              trendingCategories={contextualData.trendingCategories}
-              collaborativeWishlists={contextualData.collaborativeWishlists}
-            />
+            {/* Sidebar with Contextual Actions - Only for non-all-items views */}
+            <div className="lg:col-span-1 space-y-4">
+              <TagBasedRecommendations />
+              <ContextualWishlistActions
+                recentlyViewedCount={contextualData.recentlyViewedCount}
+                trendingCategories={contextualData.trendingCategories}
+                collaborativeWishlists={contextualData.collaborativeWishlists}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Package, DollarSign, Heart, ShoppingBag, Menu } from "lucide-react";
+import { Package, DollarSign, Heart, ShoppingBag, Menu, Plus } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ interface ProfileSidebarProps {
   wishlists: Wishlist[];
   categoryFilter: string | null;
   onCategorySelect: (category: string | null) => void;
+  onCreateWishlist?: () => void;
 }
 
 interface StatCardProps {
@@ -38,7 +39,8 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, className }) =>
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ 
   wishlists, 
   categoryFilter, 
-  onCategorySelect 
+  onCategorySelect,
+  onCreateWishlist
 }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -114,6 +116,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           <p className="text-sm text-muted-foreground mt-1">
             {stats.totalWishlists} {stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • {stats.totalItems} {stats.totalItems === 1 ? 'item' : 'items'}
           </p>
+          {onCreateWishlist && (
+            <Button onClick={onCreateWishlist} className="w-full mt-4" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Wishlist
+            </Button>
+          )}
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import ProfileSidebar from "./ProfileSidebar";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
+  onCreateWishlist?: () => void;
 }
 
 type EnhancedWishlistItem = WishlistItem & {
@@ -22,7 +23,7 @@ type EnhancedWishlistItem = WishlistItem & {
   wishlistTitle: string;
 };
 
-const AllItemsView = ({ wishlists }: AllItemsViewProps) => {
+const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const navigate = useNavigate();
   const { removeFromWishlist, createWishlist } = useWishlist();
   const { products, isLoading: productsLoading } = useProducts();
@@ -135,12 +136,13 @@ const AllItemsView = ({ wishlists }: AllItemsViewProps) => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
       {/* Left Profile Sidebar */}
       <ProfileSidebar 
         wishlists={wishlists}
         categoryFilter={categoryFilter}
         onCategorySelect={setCategoryFilter}
+        onCreateWishlist={onCreateWishlist}
       />
       
       {/* Main Content Area */}
@@ -152,30 +154,33 @@ const AllItemsView = ({ wishlists }: AllItemsViewProps) => {
           selectedCategory={categoryFilter}
           onCategorySelect={setCategoryFilter}
           categories={categories}
+          onCreateWishlist={onCreateWishlist}
         />
 
         {/* Main Content */}
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Recently Added Section */}
           {recentlyAddedItems.length > 0 && (
-            <div className="py-8 border-b border-border">
+            <div className="py-6">
               <RecentlyAddedSection items={recentlyAddedItems} />
             </div>
           )}
 
           {/* Browse Products Section */}
           {filteredProducts.length > 0 && (
-            <MarketplaceProductsSection
-              products={filteredProducts}
-              wishlists={wishlists}
-              onCreateWishlist={() => setCreateDialogOpen(true)}
-              isLoading={productsLoading}
-            />
+            <div className="py-6">
+              <MarketplaceProductsSection
+                products={filteredProducts}
+                wishlists={wishlists}
+                onCreateWishlist={() => setCreateDialogOpen(true)}
+                isLoading={productsLoading}
+              />
+            </div>
           )}
 
           {/* Your Wishlist Items Section */}
           {filteredItems.length > 0 && (
-            <div className="py-8">
+            <div className="py-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-muted-foreground" />

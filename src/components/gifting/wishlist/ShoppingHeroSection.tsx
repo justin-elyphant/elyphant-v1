@@ -1,7 +1,8 @@
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface ShoppingHeroSectionProps {
   searchQuery: string;
@@ -9,6 +10,7 @@ interface ShoppingHeroSectionProps {
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
   categories: string[];
+  onCreateWishlist?: () => void;
 }
 
 const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
@@ -16,18 +18,28 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
   onSearchChange,
   selectedCategory,
   onCategorySelect,
-  categories
+  categories,
+  onCreateWishlist
 }) => {
   return (
-    <div className="bg-gradient-to-br from-primary/5 via-background to-primary/5 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-            Shop Your Wishlists
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Browse products and add to any wishlist in one click
-          </p>
+    <div className="bg-gradient-to-br from-primary/5 via-background to-primary/5 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header with Create Button */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
+              Shop Your Wishlists
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Browse products and add to any wishlist in one click
+            </p>
+          </div>
+          {onCreateWishlist && (
+            <Button onClick={onCreateWishlist} variant="outline" size="lg" className="hidden md:flex">
+              <Plus className="h-4 w-4 mr-2" />
+              New Wishlist
+            </Button>
+          )}
         </div>
 
         {/* Large Search Bar */}

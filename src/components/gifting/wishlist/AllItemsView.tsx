@@ -7,6 +7,7 @@ import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
 import { useProducts } from "@/contexts/ProductContext";
+import { useZincSearch } from "@/hooks/useZincSearch";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
@@ -36,6 +37,13 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'home' | 'shopping'>('home');
   const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
+  
+  // Live search hook for marketplace products
+  const { 
+    loading: searchLoading, 
+    zincResults, 
+    filteredProducts: searchResults 
+  } = useZincSearch(searchQuery);
 
   // Auto-switch view mode based on search/filter activity
   useEffect(() => {
@@ -128,29 +136,36 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     });
   }, [allItems, categoryFilter, searchQuery]);
 
-  // Filter marketplace products
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
+  // Determine which products to show based on search/filter state
+  const displayProducts = useMemo(() => {
+    // If searching, prioritize live search results
+    if (searchQuery.trim()) {
+      const results = searchResults.length > 0 ? searchResults : zincResults;
+      
+      // Apply category filter if set
+      if (categoryFilter) {
+        return results.filter(product => 
+          product.category === categoryFilter || product.brand === categoryFilter
+        );
+      }
+      
+      return results;
+    }
     
-    return products.filter(product => {
-      // Category filter
-      if (categoryFilter && product.category !== categoryFilter && product.brand !== categoryFilter) {
-        return false;
-      }
-
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesName = (product.name || product.title || "").toLowerCase().includes(query);
-        const matchesBrand = (product.brand || "").toLowerCase().includes(query);
-        const matchesCategory = (product.category || "").toLowerCase().includes(query);
-        
-        return matchesName || matchesBrand || matchesCategory;
-      }
-
-      return true;
-    });
-  }, [products, categoryFilter, searchQuery]);
+    // If only category filter (no search), filter ProductContext products
+    if (categoryFilter) {
+      return products.filter(product => 
+        product.category === categoryFilter || product.brand === categoryFilter
+      );
+    }
+    
+    // Default: show ProductContext products
+    return products;
+  }, [searchQuery, searchResults, zincResults, categoryFilter, products]);
+  
+  // Determine loading state
+  const isSearching = searchQuery.trim() !== "";
+  const showLoading = isSearching ? searchLoading : productsLoading;
 
   const handleRemoveItem = async (item: EnhancedWishlistItem) => {
     try {
@@ -326,17 +341,15 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           {viewMode === 'shopping' && (
             <>
               {/* Browse Products Section - Prominent */}
-              {filteredProducts.length > 0 && (
-                <div className="py-6">
-                  <MarketplaceProductsSection
-                    products={filteredProducts}
-                    wishlists={wishlists}
-                    onCreateWishlist={() => setCreateDialogOpen(true)}
-                    isLoading={productsLoading}
-                    mode="browse"
-                  />
-                </div>
-              )}
+              <div className="py-6">
+                <MarketplaceProductsSection
+                  products={displayProducts}
+                  wishlists={wishlists}
+                  onCreateWishlist={() => setCreateDialogOpen(true)}
+                  isLoading={showLoading}
+                  mode="browse"
+                />
+              </div>
 
               {/* Recently Added - Compact Horizontal */}
               {recentlyAddedItems.length > 0 && (

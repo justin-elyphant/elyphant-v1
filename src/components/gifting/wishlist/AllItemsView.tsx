@@ -35,6 +35,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'home' | 'shopping'>('home');
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(false);
 
   // Auto-switch view mode based on search/filter activity
   useEffect(() => {
@@ -174,6 +175,30 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const handleClearFilters = () => {
     setSearchQuery("");
     setCategoryFilter(null);
+    setAiSearchEnabled(false);
+  };
+
+  const handleAISearchToggle = (enabled: boolean) => {
+    setAiSearchEnabled(enabled);
+    if (!enabled) {
+      // Switching back to standard search
+      console.log("Switched to standard search mode");
+    } else {
+      console.log("Switched to AI search mode");
+    }
+  };
+
+  const handleAISearch = () => {
+    if (!searchQuery.trim()) return;
+    
+    // Navigate to marketplace with AI context
+    const marketplaceUrl = new URL('/marketplace', window.location.origin);
+    marketplaceUrl.searchParams.set('search', searchQuery.trim());
+    marketplaceUrl.searchParams.set('source', 'nicole');
+    marketplaceUrl.searchParams.set('mode', 'nicole');
+    
+    console.log(`🤖 AI Search triggered for: "${searchQuery.trim()}"`);
+    navigate(marketplaceUrl.pathname + marketplaceUrl.search);
   };
 
   // Build breadcrumb items
@@ -218,6 +243,9 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
             categories={categories}
             viewMode={viewMode}
             onClearFilters={handleClearFilters}
+            aiSearchEnabled={aiSearchEnabled}
+            onAISearchToggle={handleAISearchToggle}
+            onAISearch={handleAISearch}
           />
         </div>
 

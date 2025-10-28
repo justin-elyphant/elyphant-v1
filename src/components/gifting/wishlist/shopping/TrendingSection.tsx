@@ -37,11 +37,11 @@ const TrendingSection = ({ items, onQuickAdd, onProductClick }: TrendingSectionP
         <h3 className="font-semibold text-sm">Trending on Amazon</h3>
       </div>
       
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin snap-x snap-mandatory">
         {trendingItems.map((item) => {
           const product = transformToProduct(item);
           return (
-            <div key={item.id} className="flex-shrink-0 w-48">
+            <div key={item.id} className="flex-shrink-0 w-36 snap-start">
               <AirbnbStyleProductCard
                 product={product}
                 onProductClick={() => {

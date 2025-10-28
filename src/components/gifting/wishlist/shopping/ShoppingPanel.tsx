@@ -14,6 +14,7 @@ import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ const ShoppingPanel = ({
   const [hasSearched, setHasSearched] = useState(false);
   const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Fetch diverse trending products from Amazon
   useEffect(() => {
@@ -93,6 +96,11 @@ const ShoppingPanel = ({
     await search(searchQuery);
   };
 
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowDetails(true);
+  };
+
   const handleQuickAdd = async (product: Product) => {
     try {
       const wishlistItem = {
@@ -125,8 +133,8 @@ const ShoppingPanel = ({
 
   const content = (
     <div className="flex flex-col h-full">
-      {/* Search Section */}
-      <div className="p-4 border-b border-border">
+      {/* Search Section - Sticky */}
+      <div className="p-4 border-b border-border sticky top-0 bg-background z-10">
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -151,47 +159,57 @@ const ShoppingPanel = ({
         )}
       </div>
 
-      {/* Trending Section */}
-      {!isTrendingLoading && trendingProducts.length > 0 && (
-        <div className="px-4 pt-4">
-          <TrendingSection 
-            items={trendingProducts}
-            onQuickAdd={handleQuickAdd}
-          />
-        </div>
-      )}
-
-      {/* Products Grid */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {displayProducts.length === 0 ? (
-          <div className="text-center py-16 px-4">
-            <div className="bg-muted/50 p-6 rounded-full inline-flex mb-4">
-              <Search className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">
-              {hasSearched ? "No products found" : "Loading products..."}
-            </h3>
-            <p className="text-muted-foreground">
-              {hasSearched ? "Try a different search term or browse trending products." : "Please wait while we load products for you."}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {displayProducts.map((product) => (
-              <AirbnbStyleProductCard
-                key={product.id || product.product_id}
-                product={product}
-                onProductClick={() => {
-                  console.log('Product clicked:', product);
-                }}
-                context="wishlist"
-                viewMode="grid"
-                onAddToCart={handleQuickAdd}
-              />
-            ))}
+      {/* Unified Scroll Area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Trending Section - Only show if not searched */}
+        {!hasSearched && !isTrendingLoading && trendingProducts.length > 0 && (
+          <div className="px-4 pt-4">
+            <TrendingSection 
+              items={trendingProducts}
+              onQuickAdd={handleQuickAdd}
+              onProductClick={handleProductClick}
+            />
           </div>
         )}
+
+        {/* Products List/Results */}
+        <div className="p-4">
+          {displayProducts.length === 0 ? (
+            <div className="text-center py-16 px-4">
+              <div className="bg-muted/50 p-6 rounded-full inline-flex mb-4">
+                <Search className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                {hasSearched ? "No products found" : "Loading products..."}
+              </h3>
+              <p className="text-muted-foreground">
+                {hasSearched ? "Try a different search term or browse trending products." : "Please wait while we load products for you."}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {displayProducts.map((product) => (
+                <AirbnbStyleProductCard
+                  key={product.id || product.product_id}
+                  product={product}
+                  onProductClick={() => handleProductClick(product)}
+                  context="wishlist"
+                  viewMode="list"
+                  onAddToCart={handleQuickAdd}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Product Details Dialog */}
+      <ProductDetailsDialog
+        product={selectedProduct}
+        open={showDetails}
+        onOpenChange={setShowDetails}
+        userData={null}
+      />
     </div>
   );
 

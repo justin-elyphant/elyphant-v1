@@ -487,30 +487,32 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
 
           {/* Action Buttons - Bottom Right - Context Aware */}
-          <div className="flex items-center gap-1">
-            {/* Share Button */}
-            {onShare ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShare(product);
-                }}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
-                title="Share product"
-              >
-                <Share className="h-4 w-4" />
-              </button>
-            ) : (
-              <SocialShareButton
-                product={{
-                  ...product,
-                  id: productId,
-                  name: getProductTitle()
-                } as any}
-                variant="ghost"
-                size="sm"
-                className="p-2 hover:bg-gray-100"
-              />
+          <div className="flex items-center gap-1 relative z-30">
+            {/* Share Button (hidden in wishlist grid to free space) */}
+            {(context !== 'wishlist' || viewMode === 'list') && (
+              onShare ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShare(product);
+                  }}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
+                  title="Share product"
+                >
+                  <Share className="h-4 w-4" />
+                </button>
+              ) : (
+                <SocialShareButton
+                  product={{
+                    ...product,
+                    id: productId,
+                    name: getProductTitle()
+                  } as any}
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 hover:bg-gray-100"
+                />
+              )
             )}
             
             {/* Primary Action Button - Context Aware */}

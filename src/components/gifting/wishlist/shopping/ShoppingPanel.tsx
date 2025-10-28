@@ -9,11 +9,11 @@ import { useProducts } from "@/contexts/ProductContext";
 import { Product } from "@/contexts/ProductContext";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { toast } from "sonner";
-import QuickAddButton from "./QuickAddButton";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -154,7 +154,10 @@ const ShoppingPanel = ({
       {/* Trending Section */}
       {!isTrendingLoading && trendingProducts.length > 0 && (
         <div className="px-4 pt-4">
-          <TrendingSection items={trendingProducts} />
+          <TrendingSection 
+            items={trendingProducts}
+            onQuickAdd={handleQuickAdd}
+          />
         </div>
       )}
 
@@ -175,34 +178,16 @@ const ShoppingPanel = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {displayProducts.map((product) => (
-              <div 
-                key={product.id || product.product_id} 
-                className="border border-border rounded-lg p-3 hover:shadow-md transition-shadow"
-              >
-                <div className="aspect-square bg-muted rounded-md overflow-hidden mb-3">
-                  <img
-                    src={product.image || (product as any).image_url || "/placeholder.svg"}
-                    alt={product.name || product.title || "Product"}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                <p className="text-xs text-muted-foreground mb-1">
-                  {product.brand || "Unknown Brand"}
-                </p>
-                <h3 className="font-medium text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
-                  {product.name || product.title || "Unnamed Product"}
-                </h3>
-                
-                <div className="flex items-center justify-between">
-                  <p className="font-bold">${product.price?.toFixed(2) || "0.00"}</p>
-                  <QuickAddButton
-                    product={product}
-                    onAdd={() => handleQuickAdd(product)}
-                    isAdding={isAdding}
-                  />
-                </div>
-              </div>
+              <AirbnbStyleProductCard
+                key={product.id || product.product_id}
+                product={product}
+                onProductClick={() => {
+                  console.log('Product clicked:', product);
+                }}
+                context="wishlist"
+                viewMode="grid"
+                onAddToCart={handleQuickAdd}
+              />
             ))}
           </div>
         )}

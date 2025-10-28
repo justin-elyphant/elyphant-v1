@@ -1,17 +1,33 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp } from "lucide-react";
 import { WishlistItem } from "@/types/profile";
+import { Product } from "@/types/product";
+import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
 
 interface TrendingSectionProps {
   items: WishlistItem[];
+  onQuickAdd?: (product: Product) => void;
 }
 
-const TrendingSection = ({ items }: TrendingSectionProps) => {
+const TrendingSection = ({ items, onQuickAdd }: TrendingSectionProps) => {
   if (items.length === 0) return null;
 
   // Show only the first 6 items
   const trendingItems = items.slice(0, 6);
+
+  // Transform WishlistItem to Product format
+  const transformToProduct = (item: WishlistItem): Product => ({
+    id: item.id,
+    product_id: item.product_id || item.id,
+    title: item.name || item.title || "Product",
+    name: item.name || item.title || "Product",
+    price: item.price || 0,
+    image: item.image_url || "/placeholder.svg",
+    images: [item.image_url || "/placeholder.svg"],
+    brand: item.brand || "Amazon",
+    rating: 0,
+    reviewCount: 0,
+  });
 
   return (
     <div className="border-b border-border pb-4">
@@ -21,26 +37,22 @@ const TrendingSection = ({ items }: TrendingSectionProps) => {
       </div>
       
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-        {trendingItems.map((item) => (
-          <div 
-            key={item.id} 
-            className="flex-shrink-0 w-24 group"
-          >
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
-              <img
-                src={item.image_url || "/placeholder.svg"}
-                alt={item.name || item.title || "Product"}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+        {trendingItems.map((item) => {
+          const product = transformToProduct(item);
+          return (
+            <div key={item.id} className="flex-shrink-0 w-48">
+              <AirbnbStyleProductCard
+                product={product}
+                onProductClick={() => {
+                  console.log('Trending product clicked:', product);
+                }}
+                context="wishlist"
+                viewMode="grid"
+                onAddToCart={onQuickAdd}
               />
             </div>
-            <p className="text-xs font-medium line-clamp-2 leading-tight">
-              {item.name || item.title}
-            </p>
-            <p className="text-xs text-primary font-bold mt-1">
-              ${item.price?.toFixed(2) || "0.00"}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

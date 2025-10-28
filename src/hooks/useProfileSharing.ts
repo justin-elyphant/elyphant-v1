@@ -29,7 +29,7 @@ export const useProfileSharing = ({
   const quickShare = useCallback(async () => {
     const shareData = {
       title: `${profileName}'s Profile`,
-      text: `Join me on Elyphant so we can see each other's wishlists! Perfect for birthdays, holidays, or just because gifts 💝`,
+      text: `Check out my wishlists on Elyphant! 🎁 Perfect for gift ideas and inspiration.`,
       url: profileUrl,
     };
     

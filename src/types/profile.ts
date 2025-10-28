@@ -112,6 +112,7 @@ export interface Wishlist {
   category?: string;
   tags?: string[];
   priority?: 'low' | 'medium' | 'high';
+  cover_image?: string; // Custom cover image for social sharing
 }
 
 export interface WishlistItem {

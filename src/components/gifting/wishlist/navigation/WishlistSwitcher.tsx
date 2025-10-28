@@ -23,9 +23,10 @@ import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 interface WishlistSwitcherProps {
   currentWishlistId: string;
   currentWishlistTitle: string;
+  onWishlistSelect?: (wishlistId: string) => void;
 }
 
-const WishlistSwitcher = ({ currentWishlistId, currentWishlistTitle }: WishlistSwitcherProps) => {
+const WishlistSwitcher = ({ currentWishlistId, currentWishlistTitle, onWishlistSelect }: WishlistSwitcherProps) => {
   const navigate = useNavigate();
   const { wishlists } = useUnifiedWishlistSystem();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -57,7 +58,11 @@ const WishlistSwitcher = ({ currentWishlistId, currentWishlistTitle }: WishlistS
   }, [wishlists, searchQuery]);
 
   const handleWishlistSelect = (wishlistId: string) => {
-    navigate(`/wishlist/${wishlistId}`);
+    if (onWishlistSelect) {
+      onWishlistSelect(wishlistId);
+    } else {
+      navigate(`/wishlist/${wishlistId}`);
+    }
     setSearchOpen(false);
     setSearchQuery("");
   };

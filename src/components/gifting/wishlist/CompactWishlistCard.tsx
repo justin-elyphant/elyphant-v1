@@ -9,13 +9,18 @@ import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
 
 interface CompactWishlistCardProps {
   wishlist: Wishlist;
+  onSelect?: (wishlistId: string) => void;
 }
 
-const CompactWishlistCard = ({ wishlist }: CompactWishlistCardProps) => {
+const CompactWishlistCard = ({ wishlist, onSelect }: CompactWishlistCardProps) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/wishlist/${wishlist.id}`);
+    if (onSelect) {
+      onSelect(wishlist.id);
+    } else {
+      navigate(`/wishlist/${wishlist.id}`);
+    }
   };
 
   const getPriorityColor = () => {

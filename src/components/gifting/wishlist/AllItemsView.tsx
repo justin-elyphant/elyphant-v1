@@ -22,6 +22,7 @@ import CreateWishlistCard from "./CreateWishlistCard";
 import PopularBrands from "@/components/marketplace/PopularBrands";
 import TagBasedRecommendations from "./TagBasedRecommendations";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import InlineWishlistWorkspace from "./InlineWishlistWorkspace";
 
 interface AllItemsViewProps {
   wishlists: Wishlist[];
@@ -38,6 +39,9 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { removeFromWishlist, createWishlist } = useWishlist();
   const { products, isLoading: productsLoading } = useProducts();
+  
+  // Inline wishlist navigation state
+  const [selectedWishlistId, setSelectedWishlistId] = useState<string | null>(null);
   
   // Get search query from URL params
   const searchQuery = searchParams.get('search') || '';
@@ -62,6 +66,16 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     searchProducts, 
     isLoading: searchLoading 
   } = useUnifiedSearch({ debounceMs: 300 });
+
+  // Sync URL parameters with inline wishlist state
+  useEffect(() => {
+    const wishlistParam = searchParams.get('wishlist');
+    if (wishlistParam) {
+      setSelectedWishlistId(wishlistParam);
+    } else {
+      setSelectedWishlistId(null);
+    }
+  }, [searchParams]);
 
   // Execute live product search when query changes
   useEffect(() => {
@@ -261,28 +275,79 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     navigate(`/marketplace?search=${encodeURIComponent(term)}`);
   };
 
-  // Build breadcrumb items
-  const breadcrumbItems: BreadcrumbItem[] = [
-    { 
-      label: "My Wishlists", 
-      href: "/wishlists?view=hub",
-      isCurrentPage: viewMode === 'hub'
-    }
-  ];
+  // Handle inline wishlist navigation
+  const handleWishlistSelect = (wishlistId: string) => {
+    setSelectedWishlistId(wishlistId);
+    setSearchParams({ wishlist: wishlistId });
+  };
 
-  // Show search breadcrumb when active
-  if (searchQuery) {
-    breadcrumbItems.push({ 
-      label: `Search: "${searchQuery}"`, 
-      // Link back to search results view
-      href: `/wishlists?search=${encodeURIComponent(searchQuery)}&view=shopping`,
-      isCurrentPage: viewMode === 'shopping'
-    });
-  } else if (categoryFilter) {
-    breadcrumbItems.push({ 
-      label: `Category: ${categoryFilter}`, 
-      isCurrentPage: true 
-    });
+  const handleBackToHub = () => {
+    setSelectedWishlistId(null);
+    setSearchParams({});
+  };
+
+  // Build breadcrumb items
+  const breadcrumbItems: BreadcrumbItem[] = useMemo(() => {
+    // If viewing an inline wishlist
+    if (selectedWishlistId) {
+      const wishlist = wishlists.find(w => w.id === selectedWishlistId);
+      return [
+        { 
+          label: "My Wishlists", 
+          href: "/wishlists",
+          isCurrentPage: false
+        },
+        { 
+          label: wishlist?.title || "Wishlist", 
+          isCurrentPage: true 
+        }
+      ];
+    }
+
+    // Default hub view
+    const items: BreadcrumbItem[] = [
+      { 
+        label: "My Wishlists", 
+        href: "/wishlists?view=hub",
+        isCurrentPage: viewMode === 'hub'
+      }
+    ];
+
+    // Show search breadcrumb when active
+    if (searchQuery) {
+      items.push({ 
+        label: `Search: "${searchQuery}"`, 
+        href: `/wishlists?search=${encodeURIComponent(searchQuery)}&view=shopping`,
+        isCurrentPage: viewMode === 'shopping'
+      });
+    } else if (categoryFilter) {
+      items.push({ 
+        label: `Category: ${categoryFilter}`, 
+        isCurrentPage: true 
+      });
+    }
+
+    return items;
+  }, [selectedWishlistId, wishlists, viewMode, searchQuery, categoryFilter]);
+
+  // If viewing inline wishlist, render the workspace component
+  if (selectedWishlistId) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Breadcrumb Navigation */}
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-6 py-4">
+            <StandardBreadcrumb items={breadcrumbItems} />
+          </div>
+        </div>
+        
+        {/* Inline Wishlist Workspace */}
+        <InlineWishlistWorkspace
+          wishlistId={selectedWishlistId}
+          onBack={handleBackToHub}
+        />
+      </div>
+    );
   }
 
   return (
@@ -387,7 +452,10 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
                       </CarouselItem>
                       {wishlists.map(wishlist => (
                         <CarouselItem key={wishlist.id} className="pl-4 basis-auto">
-                          <CompactWishlistCard wishlist={wishlist} />
+                          <CompactWishlistCard 
+                            wishlist={wishlist} 
+                            onSelect={handleWishlistSelect}
+                          />
                         </CarouselItem>
                       ))}
                     </CarouselContent>

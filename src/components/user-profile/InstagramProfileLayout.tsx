@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -6,6 +7,7 @@ import { cn } from "@/lib/utils";
 import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
+import InstagramWishlistGrid from "./InstagramWishlistGrid";
 
 
 interface InstagramProfileLayoutProps {
@@ -57,6 +59,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   secondaryTitle = "More Details"
 }) => {
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div 
@@ -84,7 +87,29 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 
       {/* Main Content Container - Full Width */}
       <div className="w-full py-4">
-        {/* Social Product Grid - Primary Focus */}
+        {/* Instagram Wishlist Grid - Primary Focus */}
+        <div className="mb-8 w-full">
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Wishlists</h2>
+              {isCurrentUser && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/wishlists')}
+                >
+                  Manage
+                </Button>
+              )}
+            </div>
+          </div>
+          <InstagramWishlistGrid
+            profileId={profile.id || profile.user_id}
+            isOwnProfile={isCurrentUser}
+          />
+        </div>
+
+        {/* Social Product Grid - Collapsible Section */}
         <div className="mb-6 w-full">
           <SocialProductGrid profile={profile} isOwnProfile={isCurrentUser} />
         </div>

@@ -14,17 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { formatPriceWithDetection } from "@/utils/productSourceDetection";
 import { WishlistItem } from "@/types/profile";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
+import { Product } from "@/types/product";
 
 interface EnhancedWishlistCardProps {
   item: WishlistItem;
@@ -111,6 +106,25 @@ const EnhancedWishlistCard = ({
   const handleSelectionChange = (checked: boolean) => {
     onSelectionChange?.(item.id, checked);
   };
+
+  // Transform WishlistItem to Product format for dialog
+  const transformToProduct = (): Product => ({
+    id: item.product_id || item.id,
+    product_id: item.product_id || item.id,
+    title: item.name || item.title || "Product",
+    name: item.name || item.title || "Product",
+    price: item.price || 0,
+    image: item.image_url || "/placeholder.svg",
+    images: [item.image_url || "/placeholder.svg"],
+    brand: item.brand || "",
+    rating: 0,
+    reviewCount: 0,
+    vendor: (item as any).vendor,
+    retailer: (item as any).retailer,
+    productSource: (item as any).product_source,
+    isZincApiProduct: (item as any).isZincApiProduct,
+    skipCentsDetection: (item as any).skipCentsDetection,
+  });
 
   // Use database product_source for accurate pricing
   const formattedPrice = formatPriceWithDetection({
@@ -249,57 +263,15 @@ const EnhancedWishlistCard = ({
         </CardContent>
       </Card>
 
-      {/* Product Details Modal */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{item.name || item.title || "Product Details"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-              <img 
-                src={item.image_url || "/placeholder.svg"} 
-                alt={item.name || item.title || "Product"}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">{item.brand || "Unknown Brand"}</p>
-                <h2 className="text-xl font-semibold">{item.name || item.title || "Unknown Item"}</h2>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-2xl font-bold">{formattedPrice}</p>
-                {(item as any).product_source && (
-                  <Badge variant="outline">
-                    Source: {(item as any).product_source.replace('_', ' ').toUpperCase()}
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                {onGiftNow && (
-                  <Button onClick={handleGiftNow} className="flex-1">
-                    <Gift className="h-4 w-4 mr-2" />
-                    Gift Now
-                  </Button>
-                )}
-                {onScheduleGift && (
-                  <Button onClick={handleScheduleGift} variant="outline" className="flex-1">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Gift
-                  </Button>
-                )}
-                <Button variant="outline" className="flex-1" onClick={handleAddToCart}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Product Details Dialog - Wishlist First */}
+      <ProductDetailsDialog
+        product={transformToProduct()}
+        open={showDetails}
+        onOpenChange={setShowDetails}
+        userData={null}
+        context="wishlist"
+        source="wishlist"
+      />
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

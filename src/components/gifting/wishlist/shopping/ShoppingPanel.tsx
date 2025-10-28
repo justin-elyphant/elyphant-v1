@@ -73,8 +73,10 @@ const ShoppingPanel = ({
             price: product.price,
             image_url: product.image || product.main_image,
             wishlist_id: wishlistId,
-            created_at: new Date().toISOString()
-          }));
+            created_at: new Date().toISOString(),
+            stars: product.stars || product.rating || 0,
+            review_count: product.review_count || product.reviews || 0
+          } as any));
           
           console.log('Trending products with diversity:', transformedProducts.map(p => `${p.brand} - ${p.name}`));
           setTrendingProducts(transformedProducts);

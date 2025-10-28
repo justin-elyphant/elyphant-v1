@@ -7,6 +7,10 @@ interface ProductInfoHeaderProps {
 }
 
 const ProductInfoHeader = ({ product }: ProductInfoHeaderProps) => {
+  // Handle both field naming conventions for compatibility
+  const rating = product.stars || product.rating || 0;
+  const reviewCount = product.review_count || product.reviewCount || 0;
+  
   return (
     <div>
       <h3 className="text-2xl font-bold">
@@ -15,7 +19,7 @@ const ProductInfoHeader = ({ product }: ProductInfoHeaderProps) => {
           skipCentsDetection: product.skipCentsDetection || false
         })}
       </h3>
-      <ProductRating rating={product.stars} reviewCount={product.review_count} size="lg" />
+      <ProductRating rating={rating} reviewCount={reviewCount} size="lg" />
     </div>
   );
 };

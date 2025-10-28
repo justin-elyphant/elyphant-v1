@@ -89,7 +89,7 @@ class UnifiedMarketplaceService {
     // Note: Sonner automatically handles loading toast dismissal on success/error
 
     if (type === 'loading') {
-      toast.loading(message, { description });
+      return toast.loading(message, { description });
     } else if (type === 'error') {
       toast.error(message, { description });
     } else {
@@ -362,10 +362,14 @@ class UnifiedMarketplaceService {
           console.log(`[UnifiedMarketplaceService] Mapped to diverse categories: ${categories.join(', ')}`);
           
           if (categories.length > 0) {
+            let toastId;
             if (!silent) {
-              this.showToast('Finding diverse gift options...', 'loading', `Searching across ${categories.length} categories`);
+              toastId = this.showToast('Finding diverse gift options...', 'loading', `Searching across ${categories.length} categories`);
             }
             response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
+            if (toastId) {
+              toast.dismiss(toastId);
+            }
           }
         }
         
@@ -380,10 +384,14 @@ class UnifiedMarketplaceService {
             console.log(`[UnifiedMarketplaceService] Extracted interests: ${interests.join(', ')}`);
             console.log(`[UnifiedMarketplaceService] Mapped categories: ${categories.join(', ')}`);
             
+            let toastId;
             if (!silent) {
-              this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
+              toastId = this.showToast('Finding diverse gift options...', 'loading', `Searching ${categories.join(', ')} categories`);
             }
             response = await enhancedZincApiService.searchBestSellingByInterests(categories, maxResults, searchOptions);
+            if (toastId) {
+              toast.dismiss(toastId);
+            }
           }
         }
       } else {

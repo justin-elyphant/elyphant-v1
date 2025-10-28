@@ -521,7 +521,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           )}
 
           {/* SHOPPING MODE: Discovery Content First */}
-          {viewMode === 'shopping' && !selectedWishlistId && (
+          {viewMode === 'shopping' && (
             <>
               {/* Browse Products Section - Prominent */}
               <div className="py-6" id="browse-products">

@@ -385,45 +385,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           {/* HUB MODE: Wishlist Overview Landing Page */}
           {viewMode === 'hub' && (
             <div className="space-y-8 py-6">
-              {/* Hero Stats Banner */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Heart className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{wishlists.length}</p>
-                      <p className="text-sm text-muted-foreground">Active Wishlists</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-purple-500/10">
-                      <ShoppingBag className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{allItems.length}</p>
-                      <p className="text-sm text-muted-foreground">Total Items</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-green-500/10">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">
-                        ${allItems.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(0)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Total Value</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
               {/* Wishlists Carousel Section */}
               <div>
                 <div className="mb-4">

@@ -151,6 +151,25 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         </div>
       </div>
 
+      {/* Stats Overview */}
+      <div className="p-4 border-b border-border space-y-2">
+        <StatCard
+          icon={<Heart className="h-5 w-5" />}
+          label="Active Wishlists"
+          value={stats.totalWishlists}
+        />
+        <StatCard
+          icon={<ShoppingBag className="h-5 w-5" />}
+          label="Total Items"
+          value={stats.totalItems}
+        />
+        <StatCard
+          icon={<DollarSign className="h-5 w-5" />}
+          label="Total Value"
+          value={`$${stats.totalValue.toFixed(0)}`}
+        />
+      </div>
+
       {/* Gift Tracker */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 mb-3">

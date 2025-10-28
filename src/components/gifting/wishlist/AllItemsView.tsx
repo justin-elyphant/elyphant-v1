@@ -45,10 +45,12 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   // Get search query from URL params
   const searchQuery = searchParams.get('search') || '';
   const setSearchQuery = (query: string) => {
+    const currentParams = Object.fromEntries(searchParams.entries());
     if (query) {
-      setSearchParams({ search: query });
+      setSearchParams({ ...currentParams, search: query });
     } else {
-      setSearchParams({});
+      const { search, ...rest } = currentParams;
+      setSearchParams(rest);
     }
   };
   
@@ -291,6 +293,28 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     // If viewing an inline wishlist
     if (selectedWishlistId) {
       const wishlist = wishlists.find(w => w.id === selectedWishlistId);
+      
+      // Three-level breadcrumb when searching within a wishlist
+      if (searchQuery) {
+        return [
+          { 
+            label: "My Wishlists", 
+            href: "/wishlists",
+            isCurrentPage: false
+          },
+          { 
+            label: wishlist?.title || "Wishlist", 
+            href: `/wishlists?wishlist=${selectedWishlistId}`,
+            isCurrentPage: false
+          },
+          { 
+            label: `Search: "${searchQuery}"`, 
+            isCurrentPage: true 
+          }
+        ];
+      }
+      
+      // Two-level breadcrumb for wishlist without search
       return [
         { 
           label: "My Wishlists", 

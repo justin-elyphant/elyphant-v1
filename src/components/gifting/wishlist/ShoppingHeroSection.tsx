@@ -46,7 +46,7 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
       <div className="relative max-w-4xl mx-auto space-y-3">
         <div className="flex items-center justify-center gap-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Shop Wishlists
+            Shop for your Wishlists
           </h1>
           {viewMode === 'shopping' && (
             <Badge variant="secondary" className="text-xs">
@@ -69,7 +69,7 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
                 )}
               </div>
               <Input
-                placeholder={aiSearchEnabled ? "Ask AI for gift ideas..." : "Search products..."}
+                placeholder={aiSearchEnabled ? "Ask AI for gift ideas..." : "Search your favorite brands and products..."}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 onKeyDown={(e) => {

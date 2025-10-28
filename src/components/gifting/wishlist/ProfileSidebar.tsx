@@ -151,6 +151,18 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         </div>
       </div>
 
+      {/* Gift Tracker */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center gap-2 mb-3">
+          <Heart className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm">Gift Tracker</h3>
+        </div>
+        <Progress value={stats.percentPurchased} className="h-2 mb-2" />
+        <p className="text-xs text-muted-foreground">
+          {stats.purchasedCount} of {stats.totalItems} purchased ({Math.round(stats.percentPurchased)}%)
+        </p>
+      </div>
+
       {/* Stats Overview */}
       <div className="p-4 border-b border-border space-y-2">
         <StatCard
@@ -168,18 +180,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           label="Total Value"
           value={`$${stats.totalValue.toFixed(0)}`}
         />
-      </div>
-
-      {/* Gift Tracker */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Heart className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Gift Tracker</h3>
-        </div>
-        <Progress value={stats.percentPurchased} className="h-2 mb-2" />
-        <p className="text-xs text-muted-foreground">
-          {stats.purchasedCount} of {stats.totalItems} purchased ({Math.round(stats.percentPurchased)}%)
-        </p>
       </div>
 
       {/* Categories */}

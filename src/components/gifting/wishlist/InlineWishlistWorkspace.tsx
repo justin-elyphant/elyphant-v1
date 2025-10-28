@@ -5,10 +5,9 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlistSkeleton";
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
-import WishlistWorkspaceHeader from "@/components/gifting/wishlist/workspace/WishlistWorkspaceHeader";
-import WishlistSidebar from "@/components/gifting/wishlist/workspace/WishlistSidebar";
 import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
+import WishlistActionToolbar from "@/components/gifting/wishlist/workspace/WishlistActionToolbar";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,20 +28,15 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
   const [loading, setLoading] = useState(true);
   const [ownerProfile, setOwnerProfile] = useState<any | null>(null);
   const [isGuestPreview, setIsGuestPreview] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isShoppingPanelOpen, setIsShoppingPanelOpen] = useState(false);
   
   const { removeFromWishlist, isRemoving } = useWishlist();
   
-  // Handle URL parameters for auto-opening shopping panel and category filtering
+  // Handle URL parameters for auto-opening shopping panel
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('openShopping') === 'true') {
       setIsShoppingPanelOpen(true);
-    }
-    const category = params.get('category');
-    if (category) {
-      setSelectedCategory(category);
     }
   }, []);
   
@@ -187,62 +181,39 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
     );
   }
 
-  const filteredItems = selectedCategory 
-    ? wishlist.items.filter(item => {
-        const itemBrand = item.brand?.toLowerCase() || '';
-        const itemName = (item.name || item.title || '').toLowerCase();
-        return itemBrand.includes(selectedCategory.toLowerCase()) || 
-               itemName.includes(selectedCategory.toLowerCase());
-      })
-    : wishlist.items;
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Header */}
-      <WishlistWorkspaceHeader
-        wishlist={wishlist}
-        ownerProfile={ownerProfile}
-        isOwner={isOwner}
-        isGuestPreview={isGuestPreview}
-        onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
-        onAddItems={() => setIsShoppingPanelOpen(true)}
-      />
+    <>
+      <div className="space-y-6">
+        {/* Action Toolbar (only for owners) */}
+        {isOwner && (
+          <WishlistActionToolbar
+            wishlistId={wishlistId}
+            ownerId={ownerProfile?.id || ''}
+            ownerName={ownerProfile?.name || ''}
+            isOwner={isOwner}
+            isGuestPreview={isGuestPreview}
+            onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
+            onAddItems={() => setIsShoppingPanelOpen(true)}
+          />
+        )}
 
-      {/* Main Content - Full Width Babylist-style Layout */}
-      <div className="px-6 py-8 max-w-[1600px] mx-auto">
-        <div className="flex gap-8">
-          {/* Sidebar - Wider, Babylist-style */}
-          {!isMobile && isOwner && !isGuestPreview && (
-            <div className="w-[340px] flex-shrink-0">
-              <WishlistSidebar
-                wishlist={wishlist}
-                ownerProfile={ownerProfile}
-                selectedCategory={selectedCategory}
-                onCategorySelect={setSelectedCategory}
-              />
-            </div>
-          )}
-
-          {/* Main Content Area - Spacious */}
-          <div className="flex-1 min-w-0">
-            {/* Guest View Notice */}
-            {!isOwner && (
-              <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-sm text-center font-medium">
-                  You're viewing {ownerProfile?.name}'s wishlist
-                </p>
-              </div>
-            )}
-            
-            <WishlistItemsGrid
-              items={filteredItems}
-              onSaveItem={(item) => handleRemoveItem(item.id)}
-              savingItemId={isRemoving ? 'removing' : undefined}
-              isOwner={isOwner}
-              isGuestPreview={isGuestPreview}
-            />
+        {/* Guest View Notice (for non-owners) */}
+        {!isOwner && (
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-sm text-center font-medium">
+              You're viewing {ownerProfile?.name}'s wishlist
+            </p>
           </div>
-        </div>
+        )}
+        
+        {/* Items Grid - Full Width */}
+        <WishlistItemsGrid
+          items={wishlist.items}
+          onSaveItem={(item) => handleRemoveItem(item.id)}
+          savingItemId={isRemoving ? 'removing' : undefined}
+          isOwner={isOwner}
+          isGuestPreview={isGuestPreview}
+        />
       </div>
 
       {/* Shopping Panel */}
@@ -254,7 +225,7 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
           onProductAdded={handleProductAdded}
         />
       )}
-    </div>
+    </>
   );
 };
 

@@ -331,25 +331,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
     return items;
   }, [selectedWishlistId, wishlists, viewMode, searchQuery, categoryFilter]);
 
-  // If viewing inline wishlist, render the workspace component
-  if (selectedWishlistId) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Breadcrumb Navigation */}
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-6 py-4">
-            <StandardBreadcrumb items={breadcrumbItems} />
-          </div>
-        </div>
-        
-        {/* Inline Wishlist Workspace */}
-        <InlineWishlistWorkspace
-          wishlistId={selectedWishlistId}
-          onBack={handleBackToHub}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-500/5 via-background to-pink-500/5">
@@ -383,8 +364,17 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Inline Wishlist Workspace Mode */}
+          {selectedWishlistId && (
+            <div className="py-6">
+              <InlineWishlistWorkspace
+                wishlistId={selectedWishlistId}
+                onBack={handleBackToHub}
+              />
+            </div>
+          )}
           {/* HUB MODE: Wishlist Overview Landing Page */}
-          {viewMode === 'hub' && (
+          {viewMode === 'hub' && !selectedWishlistId && (
             <div className="space-y-8 py-6">
               {/* Wishlists Carousel Section */}
               <div>
@@ -450,7 +440,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           )}
 
           {/* HOME MODE: Personal Content First */}
-          {viewMode === 'home' && (
+          {viewMode === 'home' && !selectedWishlistId && (
             <>
               {/* Recently Added Section */}
               {recentlyAddedItems.length > 0 && (
@@ -517,7 +507,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           )}
 
           {/* SHOPPING MODE: Discovery Content First */}
-          {viewMode === 'shopping' && (
+          {viewMode === 'shopping' && !selectedWishlistId && (
             <>
               {/* Browse Products Section - Prominent */}
               <div className="py-6" id="browse-products">

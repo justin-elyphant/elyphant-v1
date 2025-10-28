@@ -5,6 +5,7 @@ import ProductInfoHeader from "./ProductInfoHeader";
 import ProductInfoDetails from "./ProductInfoDetails";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import VariationSelector from "./VariationSelector";
+import WishlistStatusBanner from "./WishlistStatusBanner";
 import { getProductName, getProductImages } from "../product-item/productUtils";
 
 interface MobileProductLayoutProps {
@@ -20,6 +21,9 @@ interface MobileProductLayoutProps {
   getVariationDisplayText: () => string;
   isVariationComplete: () => boolean;
   source?: 'wishlist' | 'interests' | 'ai' | 'trending';
+  context?: 'marketplace' | 'wishlist';
+  isInWishlist?: boolean;
+  wishlistCount?: number;
 }
 
 const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
@@ -34,7 +38,10 @@ const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
   getEffectiveProductId,
   getVariationDisplayText,
   isVariationComplete,
-  source
+  source,
+  context = 'marketplace',
+  isInWishlist = false,
+  wishlistCount = 0
 }) => {
   return (
     <div className="space-y-4 ios-typography-optimize">
@@ -48,6 +55,14 @@ const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
       
       {/* Product Info */}
       <div className="space-y-4">
+        {/* Wishlist Status Banner - Show when in wishlist context */}
+        {context === 'wishlist' && isInWishlist && (
+          <WishlistStatusBanner 
+            isInWishlist={isInWishlist}
+            wishlistCount={wishlistCount}
+          />
+        )}
+        
         <ProductInfoHeader product={productDetail} />
         
         {/* Variations - Mobile optimized */}
@@ -74,6 +89,7 @@ const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
           selectedProductId={getEffectiveProductId()}
           variationText={getVariationDisplayText()}
           isVariationComplete={isVariationComplete()}
+          context={context}
         />
       </div>
       

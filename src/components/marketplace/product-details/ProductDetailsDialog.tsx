@@ -9,12 +9,14 @@ import ProductInfoHeader from "./ProductInfoHeader";
 import ProductInfoDetails from "./ProductInfoDetails";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import VariationSelector from "./VariationSelector";
+import WishlistStatusBanner from "./WishlistStatusBanner";
 import { getProductDetail } from "@/api/product";
 import { Spinner } from '@/components/ui/spinner';
 import { normalizeProduct, Product } from "@/contexts/ProductContext";
 import { getProductName, getProductImages } from "../product-item/productUtils";
 import { useProductVariations } from "@/hooks/useProductVariations";
 import { useViewport } from "@/hooks/useViewport";
+import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 
 interface ProductDetailsDialogProps {
   productId?: string | null;
@@ -41,6 +43,21 @@ const ProductDetailsDialog = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [quantity, setQuantity] = useState(1);
   const [isHeartAnimating, setIsHeartAnimating] = useState(false);
+  
+  // Check if product is in wishlist
+  const { isProductWishlisted, wishlists } = useWishlist();
+  const effectiveProductId = productDetail?.product_id || productDetail?.id || productId;
+  const isInWishlist = effectiveProductId ? isProductWishlisted(String(effectiveProductId)) : false;
+  
+  // Count how many wishlists contain this product
+  const wishlistCount = effectiveProductId 
+    ? wishlists.filter(wl => 
+        wl.items?.some(item => 
+          String(item.product_id) === String(effectiveProductId) || 
+          String(item.id) === String(effectiveProductId)
+        )
+      ).length 
+    : 0;
   
   // Use product variations hook
   const {
@@ -190,6 +207,9 @@ const ProductDetailsDialog = ({
             getVariationDisplayText={getVariationDisplayText}
             isVariationComplete={isVariationComplete}
             source={source}
+            context={context}
+            isInWishlist={isInWishlist}
+            wishlistCount={wishlistCount}
           />
         ) : (
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 py-4">
@@ -203,6 +223,14 @@ const ProductDetailsDialog = ({
             
             {/* Product Info - Above the fold content */}
             <div className="flex flex-col space-y-4 order-2 lg:order-2">
+              {/* Wishlist Status Banner - Show when in wishlist context */}
+              {context === 'wishlist' && isInWishlist && (
+                <WishlistStatusBanner 
+                  isInWishlist={isInWishlist}
+                  wishlistCount={wishlistCount}
+                />
+              )}
+              
               <ProductInfoHeader product={productDetail} />
               
               {/* Product Variations - Keep prominent */}

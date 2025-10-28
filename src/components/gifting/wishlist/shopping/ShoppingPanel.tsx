@@ -14,7 +14,7 @@ import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
-import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -209,6 +209,9 @@ const ShoppingPanel = ({
         open={showDetails}
         onOpenChange={setShowDetails}
         userData={null}
+        context="wishlist"
+        source={hasSearched ? 'ai' : 'trending'}
+        onWishlistChange={() => onProductAdded?.(selectedProduct)}
       />
     </div>
   );

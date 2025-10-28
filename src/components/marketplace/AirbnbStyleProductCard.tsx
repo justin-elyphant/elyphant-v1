@@ -72,11 +72,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
-  // Debug: Log context to ensure it's being passed correctly
-  React.useEffect(() => {
-    console.log('ProductCard context:', context, 'for product:', product.product_id || product.id);
-  }, [context, product.product_id, product.id]);
-  
   const productId = String(product.product_id || product.id);
   // Use prop isWishlisted if provided, otherwise use unified wishlist system
   const isWishlisted = propIsWishlisted !== undefined 
@@ -333,58 +328,20 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         {/* Context-Aware Icon - Top Right */}
         <div className="absolute top-3 right-3 z-30" onClick={e => e.stopPropagation()}>
           {context === 'wishlist' ? (
-            // Wishlist context: Show heart icon for adding to wishlist
-            user ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="relative">
-                      <WishlistSelectionPopoverButton
-                        product={{
-                          id: productId,
-                          name: getProductTitle(),
-                          image: getProductImage(),
-                          price: product.price,
-                          brand: product.brand || "",
-                        }}
-                        triggerClassName={cn(
-                          "p-2 rounded-full transition-all shadow-sm",
-                          isWishlisted 
-                            ? "bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105" 
-                            : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
-                        )}
-                        onAdded={handleWishlistAdded}
-                        isWishlisted={isWishlisted}
-                      />
-                      {wishlistCount > 1 && (
-                        <div className="absolute -top-1 -right-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">
-                          {wishlistCount}
-                        </div>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isWishlisted 
-                      ? wishlistCount > 1 
-                        ? `In ${wishlistCount} wishlists` 
-                        : "In wishlist"
-                      : "Add to wishlist"
-                    }
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleWishlistClick();
-                }}
-                className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
-              >
-                <Heart className="h-4 w-4 text-gray-600 hover:text-pink-500 transition-colors" />
-              </button>
-            )
+            // Wishlist context: Show cart icon
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleAddToCartClick}
+                    className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
+                  >
+                    <ShoppingCart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Add to cart</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             // Marketplace context: Show heart icon with gradient when wishlisted
             user ? (
@@ -558,19 +515,78 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             
             {/* Primary Action Button - Context Aware */}
             {context === 'wishlist' ? (
-              // Wishlist context: Show cart button for adding to cart
-              onAddToCart && (
-                <button
-                  onClick={handleAddToCartClick}
-                  className={cn(
-                    "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
-                    isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
-                    "bg-gray-900 text-white hover:bg-gray-800"
-                  )}
-                  aria-label="Add to cart"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                </button>
+              // Wishlist context: Heart/Wishlist button prominent
+              viewMode === "list" ? (
+                user ? (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <WishlistSelectionPopoverButton
+                      product={{
+                        id: productId,
+                        name: getProductTitle(),
+                        image: getProductImage(),
+                        price: product.price,
+                        brand: product.brand || "",
+                      }}
+                      triggerClassName="min-w-[80px] h-8"
+                      onAdded={handleWishlistAdded}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWishlistClick();
+                    }}
+                    className="px-3 py-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors text-sm font-medium"
+                  >
+                    Add
+                  </button>
+                )
+              ) : (
+                user ? (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <WishlistSelectionPopoverButton
+                      product={{
+                        id: productId,
+                        name: getProductTitle(),
+                        image: getProductImage(),
+                        price: product.price,
+                        brand: product.brand || "",
+                      }}
+                      triggerClassName={cn(
+                        "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
+                        isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
+                        isWishlisted 
+                          ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105" 
+                          : "bg-gray-900 text-white hover:bg-gray-800"
+                      )}
+                      onAdded={handleWishlistAdded}
+                      isWishlisted={isWishlisted}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWishlistClick();
+                    }}
+                    className={cn(
+                      "flex items-center justify-center bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-full hover:shadow-lg hover:scale-105 transition-all shadow-sm shrink-0",
+                      isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
+                    )}
+                    aria-label="Add to wishlist"
+                  >
+                    <Heart className="h-4 w-4" />
+                  </button>
+                )
               )
             ) : (
               // Marketplace context: Cart button prominent

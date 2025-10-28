@@ -192,7 +192,7 @@ const ShoppingPanel = ({
             <div className="flex flex-col gap-3">
               {displayProducts.map((product) => (
                 <AirbnbStyleProductCard
-                  key={`wishlist-panel-${product.id || product.product_id}`}
+                  key={product.id || product.product_id}
                   product={product}
                   onProductClick={() => handleProductClick(product)}
                   context="wishlist"

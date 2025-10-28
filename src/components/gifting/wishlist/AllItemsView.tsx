@@ -376,16 +376,12 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
             onAISearchToggle={handleAISearchToggle}
             onAISearch={handleAISearch}
             onRecentSearchClick={handleRecentSearchClick}
+            breadcrumbItems={breadcrumbItems}
           />
         </div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumb Navigation */}
-          <div className="pt-4">
-            <StandardBreadcrumb items={breadcrumbItems} />
-          </div>
-
           {/* HUB MODE: Wishlist Overview Landing Page */}
           {viewMode === 'hub' && (
             <div className="space-y-8 py-6">

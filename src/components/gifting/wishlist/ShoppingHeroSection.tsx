@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import IntegratedSearchSection from "@/components/marketplace/IntegratedSearchSection";
+import StandardBreadcrumb, { BreadcrumbItem } from "@/components/shared/StandardBreadcrumb";
 
 interface ShoppingHeroSectionProps {
   searchQuery: string;
@@ -19,6 +20,7 @@ interface ShoppingHeroSectionProps {
   onAISearchToggle?: (enabled: boolean) => void;
   onAISearch?: () => void;
   onRecentSearchClick?: (term: string) => void;
+  breadcrumbItems?: BreadcrumbItem[];
 }
 
 const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
@@ -33,7 +35,8 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
   aiSearchEnabled = false,
   onAISearchToggle,
   onAISearch,
-  onRecentSearchClick
+  onRecentSearchClick,
+  breadcrumbItems
 }) => {
   return (
     <div className="relative overflow-hidden py-4 px-4 sm:px-6 lg:px-8">
@@ -129,6 +132,13 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
         {!searchQuery && onRecentSearchClick && (
           <div className="-mt-1">
             <IntegratedSearchSection onRecentSearchClick={onRecentSearchClick} />
+          </div>
+        )}
+
+        {/* Breadcrumb Navigation - inline under search */}
+        {breadcrumbItems && breadcrumbItems.length > 0 && (
+          <div className="max-w-2xl mx-auto -mt-1">
+            <StandardBreadcrumb items={breadcrumbItems} className="mb-0" />
           </div>
         )}
 

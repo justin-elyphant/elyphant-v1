@@ -184,6 +184,14 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
   return (
     <>
       <div className="space-y-6">
+        {/* Wishlist Title */}
+        <div>
+          <h1 className="text-3xl font-bold">{wishlist.title}</h1>
+          {wishlist.description && (
+            <p className="text-muted-foreground mt-2">{wishlist.description}</p>
+          )}
+        </div>
+
         {/* Action Toolbar (only for owners) */}
         {isOwner && (
           <WishlistActionToolbar

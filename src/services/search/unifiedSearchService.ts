@@ -31,20 +31,52 @@ const mockBrands = [
 /**
  * Detect if a query looks like a person's name
  * Simple heuristics: multiple words with capital letters, common name patterns
+ * BUT excludes sports teams, brands, and product-related queries
  */
 const isLikelyPersonName = (query: string): boolean => {
   const trimmed = query.trim();
+  const lowerQuery = trimmed.toLowerCase();
+  
+  // Known sports teams and brand patterns that should NOT be treated as person names
+  const sportsTeamKeywords = [
+    'cowboys', 'patriots', 'lakers', 'yankees', 'celtics', 'bulls', 'warriors', 
+    'eagles', 'giants', 'united', 'city', 'fc', 'arsenal', 'madrid', 'barcelona',
+    'rangers', 'knights', 'saints', 'raiders', 'dolphins', 'bears', 'packers'
+  ];
+  
+  // Product/brand keywords that indicate this is NOT a person name
+  const productKeywords = [
+    'nike', 'apple', 'samsung', 'laptop', 'phone', 'watch', 'bag', 'shoes',
+    'shirt', 'jersey', 'hat', 'cap', 'pants', 'shorts', 'jacket', 'dress',
+    'brand', 'store', 'shop', 'merchandise', 'apparel', 'clothing', 'gear',
+    'electronics', 'fashion', 'sports', 'athletic', 'running', 'training'
+  ];
+  
+  // If query contains any sports team or product keywords, it's NOT a person name
+  const allExclusionKeywords = [...sportsTeamKeywords, ...productKeywords];
+  const containsExclusionKeyword = allExclusionKeywords.some(keyword => 
+    lowerQuery.includes(keyword)
+  );
+  
+  if (containsExclusionKeyword) {
+    return false;
+  }
+  
+  const words = trimmed.split(/\s+/);
   
   // Check if it contains multiple words with capital letters (e.g., "Justin Me", "John Smith")
-  const words = trimmed.split(/\s+/);
-  if (words.length >= 2) {
-    const hasCapitalizedWords = words.filter(word => /^[A-Z]/.test(word)).length >= 2;
-    if (hasCapitalizedWords) return true;
+  // But only if it's 2 words exactly (person names are typically first + last name)
+  if (words.length === 2) {
+    const hasCapitalizedWords = words.filter(word => /^[A-Z]/.test(word)).length === 2;
+    // Only treat as person name if both words are relatively short (typical names are 2-12 chars)
+    const bothWordsReasonableLength = words.every(word => word.length >= 2 && word.length <= 12);
+    if (hasCapitalizedWords && bothWordsReasonableLength) {
+      return true;
+    }
   }
   
   // Single capitalized word that's not a common product term
-  const productTerms = ['nike', 'apple', 'samsung', 'laptop', 'phone', 'watch', 'bag', 'shoes'];
-  if (words.length === 1 && /^[A-Z]/.test(trimmed) && !productTerms.includes(trimmed.toLowerCase())) {
+  if (words.length === 1 && /^[A-Z]/.test(trimmed) && !productKeywords.includes(lowerQuery)) {
     return true;
   }
   

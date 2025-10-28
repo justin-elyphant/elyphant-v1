@@ -395,9 +395,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
                     className="w-full"
                   >
                     <CarouselContent className="-ml-4">
-                      <CarouselItem className="pl-4 basis-auto">
-                        <CreateWishlistCard onCreateNew={() => setCreateDialogOpen(true)} />
-                      </CarouselItem>
                       {wishlists.map(wishlist => (
                         <CarouselItem key={wishlist.id} className="pl-4 basis-auto">
                           <CompactWishlistCard 

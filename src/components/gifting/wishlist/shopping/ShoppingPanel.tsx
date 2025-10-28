@@ -38,17 +38,30 @@ const ShoppingPanel = ({
   const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
 
-  // Fetch trending products from Amazon
+  // Fetch diverse trending products from Amazon
   useEffect(() => {
     const fetchTrendingProducts = async () => {
       if (!isOpen) return;
       
       setIsTrendingLoading(true);
       try {
-        const response = await enhancedZincApiService.getDefaultProducts(6);
+        // Use searchBestSellingCategories for diverse product selection
+        const response = await enhancedZincApiService.searchBestSellingCategories(12); // Get more to filter
         
         if (!response.error && response.results) {
-          const transformedProducts: WishlistItem[] = response.results.map((product: any) => ({
+          // Deduplicate products by brand to ensure diversity
+          const seenBrands = new Set<string>();
+          const diverseProducts = response.results.filter((product: any) => {
+            const brand = (product.brand || '').toLowerCase();
+            // Skip if we already have this brand and we have enough products
+            if (seenBrands.has(brand) && seenBrands.size >= 6) {
+              return false;
+            }
+            seenBrands.add(brand);
+            return true;
+          }).slice(0, 6); // Take first 6 diverse products
+
+          const transformedProducts: WishlistItem[] = diverseProducts.map((product: any) => ({
             id: product.product_id,
             product_id: product.product_id,
             name: product.title,
@@ -59,6 +72,8 @@ const ShoppingPanel = ({
             wishlist_id: wishlistId,
             created_at: new Date().toISOString()
           }));
+          
+          console.log('Trending products with diversity:', transformedProducts.map(p => `${p.brand} - ${p.name}`));
           setTrendingProducts(transformedProducts);
         }
       } catch (error) {

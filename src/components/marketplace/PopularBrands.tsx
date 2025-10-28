@@ -19,7 +19,7 @@ const PopularBrands = () => {
     {
       id: "samsung",
       name: "Samsung",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Samsung_wordmark.svg",
       searchTerm: "samsung"
     },
     {
@@ -43,7 +43,7 @@ const PopularBrands = () => {
     {
       id: "madein",
       name: "Made In",
-      logo: "https://cdn.shopify.com/s/files/1/0013/9949/4180/files/MadeIn_Logo_Black_320x.png",
+      logo: "/lovable-uploads/fafc0202-32b9-4ea2-8754-fba313037ea7.png",
       searchTerm: "made in cookware"
     },
     {

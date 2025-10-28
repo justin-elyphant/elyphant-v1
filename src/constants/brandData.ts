@@ -27,7 +27,7 @@ export const brandData: Record<string, BrandData> = {
   samsung: {
     id: "samsung",
     name: "Samsung",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Samsung_wordmark.svg",
     searchTerm: "samsung",
     heroTagline: "Do What You Can't",
     description: "Experience cutting-edge technology with Samsung's innovative lineup of smartphones, tablets, and home appliances.",

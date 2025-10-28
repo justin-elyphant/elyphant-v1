@@ -72,6 +72,11 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
+  // Debug: Log context to ensure it's being passed correctly
+  React.useEffect(() => {
+    console.log('ProductCard context:', context, 'for product:', product.product_id || product.id);
+  }, [context, product.product_id, product.id]);
+  
   const productId = String(product.product_id || product.id);
   // Use prop isWishlisted if provided, otherwise use unified wishlist system
   const isWishlisted = propIsWishlisted !== undefined 
@@ -515,7 +520,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             
             {/* Primary Action Button - Context Aware */}
             {context === 'wishlist' ? (
-              // Wishlist context: Heart/Wishlist button prominent
+              // Wishlist context: Only show wishlist button in list view
               viewMode === "list" ? (
                 user ? (
                   <div
@@ -546,48 +551,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                     Add
                   </button>
                 )
-              ) : (
-                user ? (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <WishlistSelectionPopoverButton
-                      product={{
-                        id: productId,
-                        name: getProductTitle(),
-                        image: getProductImage(),
-                        price: product.price,
-                        brand: product.brand || "",
-                      }}
-                      triggerClassName={cn(
-                        "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
-                        isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
-                        isWishlisted 
-                          ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105" 
-                          : "bg-gray-900 text-white hover:bg-gray-800"
-                      )}
-                      onAdded={handleWishlistAdded}
-                      isWishlisted={isWishlisted}
-                    />
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWishlistClick();
-                    }}
-                    className={cn(
-                      "flex items-center justify-center bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-full hover:shadow-lg hover:scale-105 transition-all shadow-sm shrink-0",
-                      isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
-                    )}
-                    aria-label="Add to wishlist"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </button>
-                )
-              )
+              ) : null  // Grid view in wishlist context: no bottom button (cart is in top-right)
             ) : (
               // Marketplace context: Cart button prominent
               viewMode === "list" ? (

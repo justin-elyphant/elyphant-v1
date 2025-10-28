@@ -41,7 +41,7 @@ const TrendingSection = ({ items, onQuickAdd, onProductClick }: TrendingSectionP
         {trendingItems.map((item) => {
           const product = transformToProduct(item);
           return (
-            <div key={item.id} className="flex-shrink-0 w-36 snap-start">
+            <div key={`trending-${item.id}`} className="flex-shrink-0 w-36 snap-start">
               <AirbnbStyleProductCard
                 product={product}
                 onProductClick={() => {

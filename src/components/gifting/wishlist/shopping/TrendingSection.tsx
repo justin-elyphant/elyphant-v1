@@ -7,9 +7,10 @@ import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductC
 interface TrendingSectionProps {
   items: WishlistItem[];
   onQuickAdd?: (product: Product) => void;
+  onProductClick?: (product: Product) => void;
 }
 
-const TrendingSection = ({ items, onQuickAdd }: TrendingSectionProps) => {
+const TrendingSection = ({ items, onQuickAdd, onProductClick }: TrendingSectionProps) => {
   if (items.length === 0) return null;
 
   // Show only the first 6 items
@@ -44,7 +45,7 @@ const TrendingSection = ({ items, onQuickAdd }: TrendingSectionProps) => {
               <AirbnbStyleProductCard
                 product={product}
                 onProductClick={() => {
-                  console.log('Trending product clicked:', product);
+                  onProductClick?.(product);
                 }}
                 context="wishlist"
                 viewMode="grid"

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -276,10 +276,11 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   };
 
   // Handle inline wishlist navigation
-  const handleWishlistSelect = (wishlistId: string) => {
+  const handleWishlistSelect = useCallback((wishlistId: string) => {
+    console.log(`[AllItemsView] Wishlist selected: ${wishlistId}`);
     setSelectedWishlistId(wishlistId);
     setSearchParams({ wishlist: wishlistId });
-  };
+  }, [setSearchParams]);
 
   const handleBackToHub = () => {
     setSelectedWishlistId(null);

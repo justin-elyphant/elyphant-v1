@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingBag, ChevronRight } from "lucide-react";
@@ -14,11 +14,21 @@ interface CompactWishlistCardProps {
 
 const CompactWishlistCard = ({ wishlist, onSelect }: CompactWishlistCardProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleCardClick = () => {
-    if (onSelect) {
+    console.log(`[CompactWishlistCard] Card clicked:`, {
+      wishlistId: wishlist.id,
+      hasOnSelect: !!onSelect,
+      currentPath: location.pathname
+    });
+
+    // Only use inline navigation if onSelect is provided AND we're on /wishlists
+    if (onSelect && location.pathname === '/wishlists') {
+      console.log(`[CompactWishlistCard] Using inline navigation`);
       onSelect(wishlist.id);
     } else {
+      console.log(`[CompactWishlistCard] Using full page navigation`);
       navigate(`/wishlist/${wishlist.id}`);
     }
   };

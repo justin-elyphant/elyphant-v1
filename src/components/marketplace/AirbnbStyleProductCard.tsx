@@ -326,7 +326,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         )}
 
         {/* Context-Aware Icon - Top Right */}
-        <div className="absolute top-3 right-3 z-10" onClick={e => e.stopPropagation()}>
+        <div className="absolute top-3 right-3 z-30" onClick={e => e.stopPropagation()}>
           {context === 'wishlist' ? (
             // Wishlist context: Show cart icon
             <TooltipProvider>

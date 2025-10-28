@@ -225,7 +225,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     <>
       <Card 
         className={cn(
-          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col gpu-accelerated relative hover:z-40",
+          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col gpu-accelerated relative z-0",
           viewMode === "list" && "flex flex-row h-auto",
           isWishlisted && "border-2 border-pink-200 hover:border-pink-300",
           isMobile && "active:scale-[0.98] touch-manipulation mobile-card-hover"

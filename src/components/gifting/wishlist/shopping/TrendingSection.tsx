@@ -1,27 +1,27 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Clock } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { WishlistItem } from "@/types/profile";
 
-interface RecentlyAddedSectionProps {
+interface TrendingSectionProps {
   items: WishlistItem[];
 }
 
-const RecentlyAddedSection = ({ items }: RecentlyAddedSectionProps) => {
+const TrendingSection = ({ items }: TrendingSectionProps) => {
   if (items.length === 0) return null;
 
-  // Show only the last 5 items
-  const recentItems = items.slice(0, 5);
+  // Show only the first 6 items
+  const trendingItems = items.slice(0, 6);
 
   return (
     <div className="border-b border-border pb-4">
       <div className="flex items-center gap-2 mb-3">
-        <Clock className="h-4 w-4 text-primary" />
-        <h3 className="font-semibold text-sm">Recently Added to Your Wishlist</h3>
+        <TrendingUp className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold text-sm">Trending on Amazon</h3>
       </div>
       
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-        {recentItems.map((item) => (
+        {trendingItems.map((item) => (
           <div 
             key={item.id} 
             className="flex-shrink-0 w-24 group"
@@ -46,4 +46,4 @@ const RecentlyAddedSection = ({ items }: RecentlyAddedSectionProps) => {
   );
 };
 
-export default RecentlyAddedSection;
+export default TrendingSection;

@@ -11,9 +11,9 @@ import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { toast } from "sonner";
 import QuickAddButton from "./QuickAddButton";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
-import RecentlyAddedSection from "./RecentlyAddedSection";
+import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
-import { supabase } from "@/integrations/supabase/client";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -35,45 +35,41 @@ const ShoppingPanel = ({
   const { search, isLoading: isSearching, results } = useUnifiedSearch();
   
   const [hasSearched, setHasSearched] = useState(false);
-  const [recentlyAdded, setRecentlyAdded] = useState<WishlistItem[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(false);
 
-  // Fetch recently added items for this wishlist
+  // Fetch trending products from Amazon
   useEffect(() => {
-    const fetchRecentItems = async () => {
-      if (!wishlistId || !isOpen) return;
+    const fetchTrendingProducts = async () => {
+      if (!isOpen) return;
       
+      setIsTrendingLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('wishlist_items')
-          .select('*')
-          .eq('wishlist_id', wishlistId)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        const response = await enhancedZincApiService.getDefaultProducts(6);
         
-        if (error) throw error;
-        
-        if (data) {
-          const items: WishlistItem[] = data.map(item => ({
-            id: item.id,
-            wishlist_id: item.wishlist_id,
-            product_id: item.product_id,
-            name: item.name,
-            title: item.title || item.name,
-            brand: item.brand,
-            price: item.price,
-            image_url: item.image_url,
-            added_at: item.created_at,
-            created_at: item.created_at
+        if (!response.error && response.results) {
+          const transformedProducts: WishlistItem[] = response.results.map((product: any) => ({
+            id: product.product_id,
+            product_id: product.product_id,
+            name: product.title,
+            title: product.title,
+            brand: product.brand,
+            price: product.price,
+            image_url: product.image || product.main_image,
+            wishlist_id: wishlistId,
+            created_at: new Date().toISOString()
           }));
-          setRecentlyAdded(items);
+          setTrendingProducts(transformedProducts);
         }
       } catch (error) {
-        console.error("Error fetching recent items:", error);
+        console.error("Error fetching trending products:", error);
+      } finally {
+        setIsTrendingLoading(false);
       }
     };
     
-    fetchRecentItems();
-  }, [wishlistId, isOpen]);
+    fetchTrendingProducts();
+  }, [isOpen, wishlistId]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -100,8 +96,6 @@ const ShoppingPanel = ({
       await addToWishlist(wishlistId, wishlistItem);
       toast.success(`Added ${product.name || product.title} to wishlist!`);
       
-      // Update recently added list
-      setRecentlyAdded(prev => [wishlistItem as WishlistItem, ...prev].slice(0, 5));
       
       if (onProductAdded) {
         onProductAdded(wishlistItem);
@@ -142,10 +136,10 @@ const ShoppingPanel = ({
         )}
       </div>
 
-      {/* Recently Added Section */}
-      {recentlyAdded.length > 0 && (
+      {/* Trending Section */}
+      {!isTrendingLoading && trendingProducts.length > 0 && (
         <div className="px-4 pt-4">
-          <RecentlyAddedSection items={recentlyAdded} />
+          <TrendingSection items={trendingProducts} />
         </div>
       )}
 

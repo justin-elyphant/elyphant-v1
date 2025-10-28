@@ -11,7 +11,6 @@ import { useProducts } from "@/contexts/ProductContext";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
-import RecentlyAddedSection from "./shopping/RecentlyAddedSection";
 import CreateWishlistDialog from "./CreateWishlistDialog";
 import ProfileSidebar from "./ProfileSidebar";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
@@ -443,13 +442,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           {/* HOME MODE: Personal Content First */}
           {viewMode === 'home' && !selectedWishlistId && (
             <>
-              {/* Recently Added Section */}
-              {recentlyAddedItems.length > 0 && (
-                <div className="py-6">
-                  <RecentlyAddedSection items={recentlyAddedItems} />
-                </div>
-              )}
-
               {/* Your Wishlist Items Section - Prominent */}
               {filteredItems.length > 0 && (
                 <div className="py-6">
@@ -520,13 +512,6 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
                   mode="browse"
                 />
               </div>
-
-              {/* Recently Added - Compact Horizontal */}
-              {recentlyAddedItems.length > 0 && (
-                <div className="py-6 border-t border-border">
-                  <RecentlyAddedSection items={recentlyAddedItems} />
-                </div>
-              )}
 
               {/* Your Wishlist Items Section - Compact */}
               {filteredItems.length > 0 && (

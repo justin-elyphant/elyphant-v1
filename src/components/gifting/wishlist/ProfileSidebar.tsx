@@ -16,6 +16,7 @@ interface ProfileSidebarProps {
   categoryFilter: string | null;
   onCategorySelect: (category: string | null) => void;
   onCreateWishlist?: () => void;
+  selectedWishlistId?: string | null;
 }
 
 interface StatCardProps {
@@ -41,10 +42,27 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   wishlists, 
   categoryFilter, 
   onCategorySelect,
-  onCreateWishlist
+  onCreateWishlist,
+  selectedWishlistId
 }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+
+  // Filter wishlists based on selection
+  const filteredWishlists = useMemo(() => {
+    if (selectedWishlistId) {
+      return wishlists.filter(w => w.id === selectedWishlistId);
+    }
+    return wishlists;
+  }, [wishlists, selectedWishlistId]);
+
+  // Get selected wishlist for title display
+  const selectedWishlist = useMemo(() => {
+    if (selectedWishlistId) {
+      return wishlists.find(w => w.id === selectedWishlistId);
+    }
+    return null;
+  }, [wishlists, selectedWishlistId]);
 
   // Fetch real purchase data
   const [purchasedCount, setPurchasedCount] = useState(0);
@@ -52,10 +70,10 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   useEffect(() => {
     const fetchPurchaseData = async () => {
-      if (!wishlists || wishlists.length === 0) return;
+      if (!filteredWishlists || filteredWishlists.length === 0) return;
 
-      const wishlistIds = wishlists.map(w => w.id);
-      const allItems = wishlists.flatMap(w => 
+      const wishlistIds = filteredWishlists.map(w => w.id);
+      const allItems = filteredWishlists.flatMap(w => 
         (w.items || []).map(item => ({
           id: item.id,
           price: item.price,
@@ -73,19 +91,19 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     };
 
     fetchPurchaseData();
-  }, [wishlists]);
+  }, [filteredWishlists]);
 
-  // Calculate stats from wishlists
+  // Calculate stats from filtered wishlists
   const stats = useMemo(() => {
-    const totalItems = wishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
-    const totalValue = wishlists.reduce((sum, w) => {
+    const totalItems = filteredWishlists.reduce((sum, w) => sum + (w.items?.length || 0), 0);
+    const totalValue = filteredWishlists.reduce((sum, w) => {
       const wishlistValue = w.items?.reduce((itemSum, item) => itemSum + (item.price || 0), 0) || 0;
       return sum + wishlistValue;
     }, 0);
 
     // Extract unique categories
     const categoryMap = new Map<string, number>();
-    wishlists.forEach(wishlist => {
+    filteredWishlists.forEach(wishlist => {
       wishlist.items?.forEach(item => {
         const category = wishlist.category || 'General';
         categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
@@ -93,14 +111,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     });
 
     return {
-      totalWishlists: wishlists.length,
+      totalWishlists: filteredWishlists.length,
       totalItems,
       totalValue,
       purchasedCount,
       percentPurchased,
       categories: Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     };
-  }, [wishlists, purchasedCount, percentPurchased]);
+  }, [filteredWishlists, purchasedCount, percentPurchased]);
 
   // Get user display name
   const getUserName = () => {
@@ -137,10 +155,13 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             </AvatarFallback>
           </Avatar>
           <h2 className="text-xl font-semibold">
-            {userName}'s Wishlists
+            {selectedWishlist ? selectedWishlist.title : `${userName}'s Wishlists`}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {stats.totalWishlists} {stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • {stats.totalItems} {stats.totalItems === 1 ? 'item' : 'items'}
+            {selectedWishlist 
+              ? `${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}`
+              : `${stats.totalWishlists} ${stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • ${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}`
+            }
           </p>
           {onCreateWishlist && (
             <Button onClick={onCreateWishlist} className="w-full mt-4" size="sm">
@@ -250,7 +271,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold text-sm">{userName}'s Wishlists</p>
+                <p className="font-semibold text-sm">
+                  {selectedWishlist ? selectedWishlist.title : `${userName}'s Wishlists`}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {stats.totalItems} items
                 </p>

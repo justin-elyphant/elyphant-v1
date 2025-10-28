@@ -340,6 +340,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
         categoryFilter={categoryFilter}
         onCategorySelect={setCategoryFilter}
         onCreateWishlist={onCreateWishlist}
+        selectedWishlistId={selectedWishlistId}
       />
       
       {/* Main Content Area */}

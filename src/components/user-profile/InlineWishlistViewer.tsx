@@ -119,17 +119,11 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
       if (!isConnected) return;
 
       try {
-        const { data, error } = await (supabase as any)
-          .from('orders')
-          .select('created_at')
-          .eq('buyer_id', profileOwner.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const result = await (supabase as any).from('orders').select('created_at').eq('buyer_id', profileOwner.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
 
-        if (error) throw error;
-        if (data) {
-          setLastGiftDate(data.created_at);
+        if (result.error) throw result.error;
+        if (result.data) {
+          setLastGiftDate(result.data.created_at);
         }
       } catch (error) {
         console.error('Error fetching last gift date:', error);

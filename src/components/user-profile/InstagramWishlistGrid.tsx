@@ -6,6 +6,7 @@ import InstagramWishlistCard from "./InstagramWishlistCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import WishlistPriceRange from "./WishlistPriceRange";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
 interface InstagramWishlistGridProps {
   profileId: string;
@@ -24,38 +25,36 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   wishlistItems = [],
   displayName = "Their"
 }) => {
-  const [wishlists, setWishlists] = useState<Wishlist[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [publicWishlists, setPublicWishlists] = useState<Wishlist[]>([]);
+  const [loadingPublic, setLoadingPublic] = useState(false);
   
+  // Use unified system for own profile (with real-time updates)
+  const { wishlists: ownWishlists, loading: loadingOwn } = useUnifiedWishlistSystem();
+  
+  // Fetch public wishlists for other profiles
   useEffect(() => {
-    const fetchWishlists = async () => {
+    const fetchPublicWishlists = async () => {
+      if (isOwnProfile) return; // Skip for own profile
+      
       try {
-        setLoading(true);
+        setLoadingPublic(true);
         
-        // Fetch wishlists from the wishlists table
-        const query = supabase
+        const { data, error } = await supabase
           .from('wishlists')
           .select(`
             *,
             wishlist_items(*)
           `)
           .eq('user_id', profileId)
+          .eq('is_public', true)
           .order('updated_at', { ascending: false });
         
-        // Filter by public status if not own profile
-        if (!isOwnProfile) {
-          query.eq('is_public', true);
-        }
-        
-        const { data, error } = await query;
-        
         if (error) {
-          console.error('Error fetching wishlists:', error);
+          console.error('Error fetching public wishlists:', error);
           return;
         }
         
-        // Transform the data to match Wishlist type
         const transformedWishlists: Wishlist[] = (data || []).map(wishlist => ({
           id: wishlist.id,
           user_id: wishlist.user_id,
@@ -65,7 +64,7 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
           is_public: wishlist.is_public,
           created_at: wishlist.created_at,
           updated_at: wishlist.updated_at,
-          cover_image: (wishlist as any).cover_image, // Optional field - may not exist in DB yet
+          cover_image: (wishlist as any).cover_image,
           items: (wishlist.wishlist_items || []).map((item: any) => ({
             id: item.id,
             wishlist_id: item.wishlist_id,
@@ -80,21 +79,27 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
           }))
         }));
         
-        setWishlists(transformedWishlists);
-        
-        // Notify parent component with wishlist data
-        if (onWishlistsLoaded) {
-          onWishlistsLoaded(transformedWishlists);
-        }
+        setPublicWishlists(transformedWishlists);
       } catch (error) {
-        console.error('Error fetching wishlists:', error);
+        console.error('Error fetching public wishlists:', error);
       } finally {
-        setLoading(false);
+        setLoadingPublic(false);
       }
     };
     
-    fetchWishlists();
+    fetchPublicWishlists();
   }, [profileId, isOwnProfile]);
+  
+  // Determine which wishlists to use
+  const wishlists = isOwnProfile ? ownWishlists : publicWishlists;
+  const loading = isOwnProfile ? loadingOwn : loadingPublic;
+  
+  // Notify parent component when wishlists are loaded
+  useEffect(() => {
+    if (!loading && onWishlistsLoaded) {
+      onWishlistsLoaded(wishlists);
+    }
+  }, [wishlists, loading, onWishlistsLoaded]);
   
   if (loading) {
     return (

@@ -101,9 +101,13 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
       setViewMode(urlView);
     } else {
       const isSearching = searchQuery.trim() !== "" || categoryFilter !== null;
-      setViewMode(isSearching ? 'shopping' : 'hub');
+      if (selectedWishlistId && !isSearching) {
+        setViewMode('home');
+      } else {
+        setViewMode(isSearching ? 'shopping' : 'hub');
+      }
     }
-  }, [searchQuery, categoryFilter, searchParams]);
+  }, [searchQuery, categoryFilter, searchParams, selectedWishlistId]);
 
   // Fetch purchased items status
   useEffect(() => {

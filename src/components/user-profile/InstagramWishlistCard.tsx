@@ -21,7 +21,7 @@ const InstagramWishlistCard: React.FC<InstagramWishlistCardProps> = ({
       className="flex flex-col items-center cursor-pointer group flex-shrink-0"
     >
       {/* Circular Image Container with Gradient Ring */}
-      <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28">
+      <div className="relative w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32">
         {/* Gradient Ring Border */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-500 p-[2px] transition-transform group-hover:scale-105">
           {/* White Ring Padding */}
@@ -53,7 +53,7 @@ const InstagramWishlistCard: React.FC<InstagramWishlistCardProps> = ({
       </div>
       
       {/* Title Below Circle */}
-      <div className="mt-2 text-center w-20 md:w-24 lg:w-28">
+      <div className="mt-2 text-center w-24 md:w-28 lg:w-32">
         <p className="text-xs font-medium line-clamp-2 leading-tight">
           {wishlist.title}
         </p>

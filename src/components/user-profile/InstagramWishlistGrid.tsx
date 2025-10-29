@@ -99,8 +99,8 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
       <div className="flex gap-4 overflow-x-auto scrollbar-none py-2">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="flex flex-col items-center flex-shrink-0">
-            <Skeleton className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full" />
-            <Skeleton className="w-16 h-3 mt-2 rounded" />
+            <Skeleton className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full" />
+            <Skeleton className="w-20 h-3 mt-2 rounded" />
           </div>
         ))}
       </div>

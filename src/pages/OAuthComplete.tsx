@@ -17,9 +17,9 @@ const OAuthComplete = () => {
       
       setStatus('success');
       
-      // Redirect to profile completion if needed, otherwise dashboard
+      // Redirect to home after successful OAuth sign-in
       setTimeout(() => {
-        navigate('/profile/complete', { replace: true });
+        navigate('/home', { replace: true });
       }, 2000);
     } else {
       console.error('OAuth authentication failed - no user found');
@@ -51,7 +51,7 @@ const OAuthComplete = () => {
             <CheckCircle className="h-8 w-8 mx-auto mb-4 text-green-500" />
             <h2 className="text-xl font-semibold mb-2">Sign In Successful!</h2>
             <p className="text-muted-foreground">
-              Redirecting you to complete your profile...
+              Redirecting you to your home page...
             </p>
           </div>
         );

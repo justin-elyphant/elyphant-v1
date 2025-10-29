@@ -74,8 +74,8 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 
   return (
     <div 
-      className="w-full bg-background"
-      style={{ width: '100vw', maxWidth: '100vw', overflow: 'hidden' }}
+      className="w-full bg-background overflow-x-hidden"
+      style={{ width: '100vw', maxWidth: '100vw' }}
     >
       {/* Compact Profile Header (Instagram-style) */}
       <div className="w-full" style={{ maxWidth: '100%' }}>
@@ -101,13 +101,15 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
       <div className="w-full py-4">
         {/* Instagram Wishlist Grid - Primary Focus */}
         <div className="mb-8 w-full">
-          <InstagramWishlistGrid
-            profileId={profile.id || profile.user_id}
-            isOwnProfile={isCurrentUser}
-            isPreviewMode={isPreviewMode}
-            onWishlistsLoaded={handleWishlistsLoaded}
-            wishlistItems={wishlistItems}
-          />
+          <DesktopProfileWrapper className="w-full">
+            <InstagramWishlistGrid
+              profileId={profile.id || profile.user_id}
+              isOwnProfile={isCurrentUser}
+              isPreviewMode={isPreviewMode}
+              onWishlistsLoaded={handleWishlistsLoaded}
+              wishlistItems={wishlistItems}
+            />
+          </DesktopProfileWrapper>
         </div>
 
         {/* Social Product Grid - Collapsible Section */}

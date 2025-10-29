@@ -226,7 +226,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
+    <div className="sticky top-0 z-[60] bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative flex items-center justify-between p-4 lg:px-6 min-w-0 overflow-x-hidden w-full" style={{ width: '100%', maxWidth: 'none' }}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -285,7 +285,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
         </div>
 
         {/* Stats and Actions */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-wrap justify-end pr-2 md:pr-4">
           {/* Enhanced Stats with Social Proof */}
           <div className="hidden sm:flex items-center gap-4 text-white">
             <button className="text-center hover:opacity-80 transition-opacity">

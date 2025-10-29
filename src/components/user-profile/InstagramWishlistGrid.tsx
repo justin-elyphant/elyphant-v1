@@ -4,19 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Wishlist } from "@/types/profile";
 import InstagramWishlistCard from "./InstagramWishlistCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import WishlistPriceRange from "./WishlistPriceRange";
 
 interface InstagramWishlistGridProps {
   profileId: string;
   isOwnProfile: boolean;
   isPreviewMode?: boolean;
   onWishlistsLoaded?: (wishlists: Wishlist[]) => void;
+  wishlistItems?: Array<{ price?: number }>;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   profileId,
   isOwnProfile,
   isPreviewMode = false,
-  onWishlistsLoaded
+  onWishlistsLoaded,
+  wishlistItems = []
 }) => {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +117,25 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   }
   
   return (
-    <div className="w-full">
+    <div className="w-full px-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xl font-bold">Wishlists</h2>
+        {isOwnProfile && !isPreviewMode && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/wishlists')}
+          >
+            Manage
+          </Button>
+        )}
+      </div>
+      {/* Price Range Summary for Visitors */}
+      {!isOwnProfile && wishlistItems.length > 0 && (
+        <div className="mb-3">
+          <WishlistPriceRange items={wishlistItems} />
+        </div>
+      )}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 md:gap-2">
         {wishlists.map((wishlist) => (
           <InstagramWishlistCard

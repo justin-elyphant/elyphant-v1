@@ -83,7 +83,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     if (isCurrentUser && !isPreviewMode) {
       const buttonSize = isMobile ? "icon" : "sm";
       const buttonClass = "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm";
-      const gapClass = isMobile ? "gap-1" : "gap-2";
+      const gapClass = isMobile ? "gap-2" : "gap-3";
       
       return (
         <div className={`flex flex-wrap ${gapClass}`}>
@@ -133,7 +133,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     }
 
     const buttonSize = isMobile ? "icon" : "sm";
-    const gapClass = isMobile ? "gap-1" : "gap-2";
+    const gapClass = isMobile ? "gap-2" : "gap-3";
     
     return (
       <div className={`flex flex-wrap ${gapClass}`}>
@@ -226,7 +226,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 w-full overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative flex items-center justify-between p-4 lg:px-6 min-w-0 overflow-x-hidden w-full" style={{ width: '100%', maxWidth: 'none' }}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -303,7 +303,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex">
+          <div className="flex px-2">
             {renderActionButtons()}
           </div>
         </div>

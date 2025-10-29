@@ -388,8 +388,8 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Inline Wishlist Workspace Mode - Show when in 'home' view */}
-          {selectedWishlistId && viewMode === 'home' && (
+          {/* Inline Wishlist Workspace Mode - Show when selected wishlist and either no search or view=home */}
+          {selectedWishlistId && (!searchQuery || viewMode === 'home') && (
             <div className="py-6">
               <InlineWishlistWorkspace
                 wishlistId={selectedWishlistId}

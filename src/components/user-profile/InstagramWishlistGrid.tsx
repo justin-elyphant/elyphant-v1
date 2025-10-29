@@ -154,7 +154,7 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
               key={wishlist.id}
               wishlist={wishlist}
               isOwnProfile={isOwnProfile}
-              onClick={() => navigate(`/wishlist/${wishlist.id}`)}
+              onClick={() => navigate(`/wishlists?wishlist=${wishlist.id}&view=home`)}
             />
           ))}
         </div>

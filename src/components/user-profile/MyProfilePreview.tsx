@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { UnifiedProfileData } from "@/services/profiles/UnifiedProfileService";
 import { publicProfileService } from "@/services/publicProfileService";
 import PublicProfileTabs from "./PublicProfileTabs";
@@ -8,6 +8,8 @@ import ProfileSharingDialog from "./ProfileSharingDialog";
 import { Badge } from "@/components/ui/badge";
 import { Eye, AlertTriangle } from "lucide-react";
 import { useProfileSharing } from "@/hooks/useProfileSharing";
+import { useWishlists } from "@/components/gifting/hooks/useWishlists";
+import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import type { PublicProfileData } from "@/services/publicProfileService";
 
 interface MyProfilePreviewProps {
@@ -26,6 +28,19 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewM
   const [activeTab, setActiveTab] = useState("public-overview");
   const [publicViewData, setPublicViewData] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+
+  // Fetch real wishlist and connection counts
+  const { wishlists } = useWishlists();
+  const { connections } = useEnhancedConnections();
+
+  // Calculate actual counts
+  const wishlistCount = useMemo(() => {
+    return wishlists.length;
+  }, [wishlists]);
+
+  const connectionCount = useMemo(() => {
+    return connections.length;
+  }, [connections]);
 
   // Enhanced profile sharing functionality
   const {
@@ -90,8 +105,8 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewM
     if (profile.profile_image) completed++;
     if ((profile as any).location) completed++;
     if (profile.gift_preferences && Array.isArray(profile.gift_preferences) && profile.gift_preferences.length > 0) completed++;
-    if ((profile as any).wishlist_count && (profile as any).wishlist_count > 0) completed++;
-    if ((profile as any).connection_count && (profile as any).connection_count > 0) completed++;
+    if (wishlistCount > 0) completed++;
+    if (connectionCount > 0) completed++;
 
     return Math.round((completed / total) * 100);
   };
@@ -157,8 +172,8 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewM
         isConnected={false}
         onConnect={() => {}}
         onShare={handleShare}
-        connectionCount={(profile as any).connection_count ?? 0}
-        wishlistCount={(profile as any).wishlist_count ?? 0}
+        connectionCount={connectionCount}
+        wishlistCount={wishlistCount}
         canConnect={false}
         canMessage={false}
         isAnonymousUser={false}

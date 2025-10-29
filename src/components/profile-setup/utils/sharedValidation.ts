@@ -30,7 +30,7 @@ export const validateProfileStep = (step: number, data: ProfileData): boolean =>
         return !!(data.data_sharing_settings && 
                  data.data_sharing_settings.dob &&
                  data.data_sharing_settings.shipping_address &&
-                 data.data_sharing_settings.gift_preferences &&
+                 (data.data_sharing_settings.interests || data.data_sharing_settings.gift_preferences) &&
                  data.data_sharing_settings.email);
       
       case 5: // Next steps (always valid)

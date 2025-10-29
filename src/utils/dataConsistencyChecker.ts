@@ -59,7 +59,8 @@ export async function validateAndFixProfile(
       ...(profile.data_sharing_settings || {}),
       dob: profile.data_sharing_settings?.dob || 'private',
       shipping_address: profile.data_sharing_settings?.shipping_address || 'private',
-      gift_preferences: profile.data_sharing_settings?.gift_preferences || 'public',
+      interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || 'public',
+      gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || 'public',
       email: 'private'
     };
     needsFixes = true;

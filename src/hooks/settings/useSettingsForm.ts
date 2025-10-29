@@ -94,7 +94,8 @@ export const useSettingsForm = () => {
       const dataSharingSettings: DataSharingSettings = {
         dob: data.data_sharing_settings.dob || "private",
         shipping_address: data.data_sharing_settings.shipping_address || "private",
-        gift_preferences: data.data_sharing_settings.gift_preferences || "friends",
+        interests: data.data_sharing_settings.interests || data.data_sharing_settings.gift_preferences || "friends",
+        gift_preferences: data.data_sharing_settings.gift_preferences || data.data_sharing_settings.interests || "friends",
         email: data.data_sharing_settings.email || "private"
       };
       

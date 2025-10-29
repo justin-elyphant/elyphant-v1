@@ -304,7 +304,7 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           },
           { 
             label: wishlist?.title || "Wishlist", 
-            href: `/wishlists?wishlist=${selectedWishlistId}`,
+            href: `/wishlists?wishlist=${selectedWishlistId}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`,
             isCurrentPage: false
           },
           { 

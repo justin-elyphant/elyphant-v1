@@ -115,15 +115,16 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
         </CardContent>
       </Card>
 
-      {/* Gift Preferences - Show interests as gift preferences */}
+      {/* Interests - Show as gift preferences for UI */}
       {((interests && interests.length > 0) || (gift_preferences && gift_preferences.length > 0)) && 
-       data_sharing_settings?.gift_preferences && data_sharing_settings.gift_preferences !== 'private' && (
+       (data_sharing_settings?.interests || data_sharing_settings?.gift_preferences) && 
+       (data_sharing_settings?.interests !== 'private' && data_sharing_settings?.gift_preferences !== 'private') && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Gift className="h-5 w-5" />
               Gift Preferences
-              <PrivacyNotice level={data_sharing_settings.gift_preferences} />
+              <PrivacyNotice level={data_sharing_settings.interests || data_sharing_settings.gift_preferences || 'private'} />
             </CardTitle>
           </CardHeader>
           <CardContent>

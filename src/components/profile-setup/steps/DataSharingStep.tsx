@@ -82,10 +82,10 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label>Gift Preferences</Label>
+          <Label>Interests</Label>
           <Select
-            value={profileData.data_sharing_settings?.gift_preferences || "friends"}
-            onValueChange={(value) => handlePrivacyChange("gift_preferences", value)}
+            value={profileData.data_sharing_settings?.interests || "friends"}
+            onValueChange={(value) => handlePrivacyChange("interests", value)}
           >
             <SelectTrigger>
               <SelectValue />

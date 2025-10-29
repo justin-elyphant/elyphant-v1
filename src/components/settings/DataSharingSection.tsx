@@ -88,14 +88,14 @@ const DataSharingSection = () => {
           
           <FormField
             control={form.control}
-            name="data_sharing_settings.gift_preferences"
+            name="data_sharing_settings.interests"
             render={({ field }) => (
               <FormItem>
                 <PrivacySelector
                   value={field.value as SharingLevel}
-                  onChange={(value) => handleSharingChange("gift_preferences", value)}
-                  label="Gift Preferences Visibility"
-                  description="Who can see your gift preferences and interests"
+                  onChange={(value) => handleSharingChange("interests", value)}
+                  label="Interests Visibility"
+                  description="Who can see your interests and preferences"
                 />
               </FormItem>
             )}

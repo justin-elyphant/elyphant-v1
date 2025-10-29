@@ -23,7 +23,8 @@ export function getDefaultDataSharingSettings(): DataSharingSettings {
   return {
     dob: 'friends',
     shipping_address: 'friends',
-    gift_preferences: 'public',
+    interests: 'public',
+    gift_preferences: 'public', // Deprecated, sync'd from interests
     email: 'friends'
   };
 }
@@ -36,7 +37,8 @@ export function normalizeDataSharingSettings(settings?: DataSharingSettings | nu
   return {
     dob: settings.dob || defaultSettings.dob,
     shipping_address: settings.shipping_address || defaultSettings.shipping_address,
-    gift_preferences: settings.gift_preferences || defaultSettings.gift_preferences,
+    interests: settings.interests || settings.gift_preferences || defaultSettings.interests, // Fallback to gift_preferences for transition
+    gift_preferences: settings.gift_preferences || settings.interests || defaultSettings.gift_preferences, // Sync from interests
     email: settings.email || defaultSettings.email
   };
 }

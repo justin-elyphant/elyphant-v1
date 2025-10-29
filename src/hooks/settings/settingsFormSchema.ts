@@ -50,6 +50,7 @@ export const formSchema = z.object({
   data_sharing_settings: z.object({
     dob: z.enum(["private", "friends", "public"]),
     shipping_address: z.enum(["private", "friends", "public"]),
+    interests: z.enum(["private", "friends", "public"]),
     gift_preferences: z.enum(["private", "friends", "public"]),
     email: z.enum(["private", "friends", "public"]),
   })

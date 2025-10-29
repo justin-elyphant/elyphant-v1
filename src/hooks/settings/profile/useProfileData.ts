@@ -24,6 +24,7 @@ export const useProfileData = () => {
     data_sharing_settings: {
       dob: "private",
       shipping_address: "private",
+      interests: "friends",
       gift_preferences: "friends",
       email: "private"
     }
@@ -112,6 +113,7 @@ export const useProfileData = () => {
             data_sharing_settings: (data.data_sharing_settings as any) || {
               dob: "friends",
               shipping_address: "friends",
+              interests: "public",
               gift_preferences: "public",
             }
           });

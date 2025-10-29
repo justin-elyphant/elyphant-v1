@@ -99,6 +99,7 @@ export interface ImportantDate {
 export interface DataSharingSettings {
   dob?: 'private' | 'friends' | 'public';
   shipping_address?: 'private' | 'friends' | 'public';
+  interests?: 'private' | 'friends' | 'public';
   /**
    * @deprecated Use `interests` privacy setting instead. This field is maintained for backwards compatibility.
    */

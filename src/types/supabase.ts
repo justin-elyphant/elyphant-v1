@@ -76,6 +76,8 @@ export type UserAddress = {
 export type DataSharingSettings = {
   dob?: PrivacyLevel;
   shipping_address?: PrivacyLevel;
+  interests?: PrivacyLevel;
+  /** @deprecated Use `interests` field instead. Maintained for backwards compatibility during transition. */
   gift_preferences?: PrivacyLevel;
   email?: PrivacyLevel;
 };

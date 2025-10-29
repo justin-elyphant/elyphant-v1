@@ -214,6 +214,9 @@ const WishlistWorkspace = () => {
                 ownerProfile={ownerProfile}
                 selectedCategory={selectedCategory}
                 onCategorySelect={setSelectedCategory}
+                isOwner={isOwner}
+                isGuestPreview={isGuestPreview}
+                onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
               />
             </div>
           )}

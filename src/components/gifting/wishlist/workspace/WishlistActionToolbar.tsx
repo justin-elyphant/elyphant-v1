@@ -65,39 +65,7 @@ const WishlistActionToolbar = ({
 
   return (
     <div className="space-y-4">
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between gap-3 pb-6 border-b">
-        <div className="flex items-center gap-2">
-          {!isGuestPreview && (
-            <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
-              <Plus className="h-5 w-5" />
-              {!isMobile && "Add Items"}
-            </Button>
-          )}
-          
-          <Button
-            variant="outline"
-            onClick={handlePreviewAsGuest}
-            className="gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            {!isMobile && "Preview as Guest"}
-          </Button>
-        </div>
-
-        {!isMobile && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handleShare}>
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleSettings}>
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Guest Preview Banner (if toggled inline) */}
+      {/* Guest Preview Banner */}
       {isGuestPreview && (
         <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
           <div className="flex items-center justify-between">

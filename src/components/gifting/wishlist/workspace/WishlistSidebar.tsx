@@ -1,28 +1,45 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Wishlist } from "@/types/profile";
-import { Package, DollarSign, TrendingUp, Grid3x3, User, Share2 } from "lucide-react";
+import { Package, DollarSign, Grid3x3, User, Eye, Settings } from "lucide-react";
 import WishlistShareButton from "../share/WishlistShareButton";
 import { useWishlist } from "../../hooks/useWishlist";
+import { toast } from "sonner";
 
 interface WishlistSidebarProps {
   wishlist: Wishlist;
   ownerProfile: any;
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
+  isOwner: boolean;
+  isGuestPreview: boolean;
+  onToggleGuestPreview: () => void;
 }
 
 const WishlistSidebar = ({
   wishlist,
   ownerProfile,
   selectedCategory,
-  onCategorySelect
+  onCategorySelect,
+  isOwner,
+  isGuestPreview,
+  onToggleGuestPreview
 }: WishlistSidebarProps) => {
+  const navigate = useNavigate();
   const { updateWishlistSharing } = useWishlist();
+  
+  const handlePreviewAsGuest = () => {
+    navigate(`/profile/${wishlist.user_id}`);
+  };
+
+  const handleSettings = () => {
+    toast.info("Settings coming soon!");
+  };
   const totalValue = wishlist.items.reduce((sum, item) => sum + (item.price || 0), 0);
   const avgPrice = wishlist.items.length > 0 ? totalValue / wishlist.items.length : 0;
   
@@ -70,6 +87,38 @@ const WishlistSidebar = ({
         </div>
         
         <CardContent className="p-6 space-y-6">
+          {/* Action Buttons - Owner Only */}
+          {isOwner && (
+            <div className="space-y-2 pb-6 border-b border-border/50">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviewAsGuest}
+                className="w-full justify-start gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Preview as Guest
+              </Button>
+              
+              <WishlistShareButton 
+                wishlist={wishlist}
+                onShareSettingsChange={updateWishlistSharing}
+                size="sm"
+                className="w-full"
+              />
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSettings}
+                className="w-full justify-start gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </div>
+          )}
+          
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-muted/50 rounded-lg p-4 text-center">
@@ -97,13 +146,6 @@ const WishlistSidebar = ({
             </div>
             <Progress value={purchaseProgress} className="h-2" />
           </div>
-          
-          {/* Share Button */}
-          <WishlistShareButton 
-            wishlist={wishlist}
-            onShareSettingsChange={updateWishlistSharing}
-            className="w-full"
-          />
         </CardContent>
       </Card>
 

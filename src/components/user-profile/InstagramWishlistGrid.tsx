@@ -96,9 +96,12 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   
   if (loading) {
     return (
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 md:gap-2">
-        {[...Array(12)].map((_, i) => (
-          <Skeleton key={i} className="aspect-square rounded-sm" />
+      <div className="flex gap-4 overflow-x-auto scrollbar-none py-2">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex flex-col items-center flex-shrink-0">
+            <Skeleton className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full" />
+            <Skeleton className="w-16 h-3 mt-2 rounded" />
+          </div>
         ))}
       </div>
     );
@@ -136,15 +139,21 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
           <WishlistPriceRange items={wishlistItems} />
         </div>
       )}
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 md:gap-2">
-        {wishlists.map((wishlist) => (
-          <InstagramWishlistCard
-            key={wishlist.id}
-            wishlist={wishlist}
-            isOwnProfile={isOwnProfile}
-            onClick={() => navigate(`/wishlist/${wishlist.id}`)}
-          />
-        ))}
+      {/* Horizontal Scrollable Row of Circular Highlights */}
+      <div className="relative">
+        <div 
+          className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none py-2 snap-x snap-mandatory"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {wishlists.map((wishlist) => (
+            <InstagramWishlistCard
+              key={wishlist.id}
+              wishlist={wishlist}
+              isOwnProfile={isOwnProfile}
+              onClick={() => navigate(`/wishlist/${wishlist.id}`)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

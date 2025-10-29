@@ -5425,6 +5425,18 @@ export type Database = {
         Args: { order_uuid: string }
         Returns: Json
       }
+      get_public_profile_by_identifier: {
+        Args: { identifier: string }
+        Returns: {
+          bio: string
+          created_at: string
+          id: string
+          location: string
+          name: string
+          profile_image: string
+          username: string
+        }[]
+      }
       get_safe_profile_data: {
         Args: { profile_user_id: string }
         Returns: boolean

@@ -30,62 +30,27 @@ export const publicProfileService = {
       // Get current user for connection status checks
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
-      // Try to fetch profile by username first, then by ID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      // Use secure RPC to fetch public profile (bypasses RLS, only returns safe fields)
+      const { data: publicProfile, error: rpcError } = await supabase
+        .rpc('get_public_profile_by_identifier', { identifier });
       
-      let query;
-      if (uuidRegex.test(identifier)) {
-        query = supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', identifier)
-          .single();
-      } else {
-        query = supabase
-          .from('profiles')
-          .select('*')
-          .eq('username', identifier)
-          .single();
-      }
-      
-      const { data: profile, error } = await query;
-      
-      if (error) {
-        console.error("❌ Error fetching profile:", error);
+      if (rpcError) {
+        console.error("❌ RPC error fetching public profile:", rpcError);
         return null;
       }
       
-      if (!profile) {
-        console.log("❌ No profile found for identifier:", identifier);
+      // RPC returns empty array if not found or not public
+      if (!publicProfile || publicProfile.length === 0) {
+        console.log("❌ No public profile found for identifier:", identifier);
         return null;
       }
       
-      console.log("✅ Profile found:", profile.name, "- ID:", profile.id);
+      const profile = publicProfile[0];
+      console.log("✅ Public profile found:", profile.name, "- ID:", profile.id);
       
-      // Get privacy settings for this user
-      const privacySettings = await this.getPrivacySettings(profile.id);
-      console.log("🔒 Privacy settings:", privacySettings);
-      
-      // Check if profile is public
-      const isPublic = privacySettings.profile_visibility === 'public';
-      
-      if (!isPublic) {
-        console.log("🚫 Profile is not public, returning limited data");
-        return {
-          id: profile.id,
-          name: profile.name,
-          username: profile.username,
-          profile_image: profile.profile_image,
-          created_at: profile.created_at,
-          is_public: false,
-          can_connect: false,
-          can_message: false,
-          is_connected: false,
-          connection_status: 'none'
-        };
-      }
-      
+      // Profile is confirmed public by RPC (it only returns public profiles)
       console.log("🔢 Getting counts for public profile...");
+      
       // Get connection counts and wishlist count
       const connectionCount = await this.getConnectionCount(profile.id);
       const wishlistCount = await this.getWishlistCount(profile.id);
@@ -95,20 +60,26 @@ export const publicProfileService = {
       // Check connection status with current user
       const connectionStatus = await this.getConnectionStatus(profile.id, currentUser?.id);
       
+      // Get privacy settings for message requests setting
+      const { data: privacySettings } = await supabase
+        .from('privacy_settings')
+        .select('allow_message_requests')
+        .eq('user_id', profile.id)
+        .single();
+      
       const finalProfile = {
         id: profile.id,
         name: profile.name,
         username: profile.username,
-        profile_image: profile.profile_image,
-        bio: profile.bio,
-        location: profile.location,
-        email: profile.email, // Will be filtered based on data sharing settings
+        profile_image: profile.profile_image || undefined,
+        bio: profile.bio || undefined,
+        location: profile.location || undefined,
         created_at: profile.created_at,
         connection_count: connectionCount,
         wishlist_count: wishlistCount,
         is_public: true,
         can_connect: connectionStatus.can_connect,
-        can_message: privacySettings.allow_message_requests,
+        can_message: privacySettings?.allow_message_requests ?? true,
         is_connected: connectionStatus.is_connected,
         connection_status: connectionStatus.status
       };

@@ -6,10 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Package, DollarSign, Heart, ShoppingBag, Menu, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Package, DollarSign, Heart, ShoppingBag, Menu, Plus, Eye, Share2, Settings } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { cn } from "@/lib/utils";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
+import { useNavigate } from "react-router-dom";
+import { useProfileSharing } from "@/hooks/useProfileSharing";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProfileSidebarProps {
   wishlists: Wishlist[];
@@ -47,6 +52,64 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const navigate = useNavigate();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Get user display name
+  const getUserName = () => {
+    if (profile?.first_name) {
+      return profile.first_name;
+    }
+    if (profile?.name) {
+      return profile.name.split(' ')[0];
+    }
+    if (user?.user_metadata?.first_name) {
+      return user.user_metadata.first_name;
+    }
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name.split(' ')[0];
+    }
+    return "My";
+  };
+
+  const userName = getUserName();
+
+  // Setup profile sharing
+  const { quickShare, profileUrl } = useProfileSharing({
+    profileId: profile?.id || user?.id || "",
+    profileName: userName,
+    profileUsername: profile?.username
+  });
+
+  // Bulk privacy update handler
+  const handleBulkPrivacyUpdate = async (makePublic: boolean) => {
+    if (!user?.id) return;
+    
+    const { error } = await supabase
+      .from('wishlists')
+      .update({ is_public: makePublic })
+      .eq('user_id', user.id);
+    
+    if (error) {
+      toast.error("Failed to update wishlists");
+      return;
+    }
+    
+    toast.success(`All wishlists set to ${makePublic ? "public" : "private"}`);
+    setSettingsOpen(false);
+  };
+
+  // Navigation handlers
+  const handlePreviewAsGuest = () => {
+    const profilePath = profile?.username 
+      ? `/profile/${profile.username}` 
+      : `/profile/${profile?.id || user?.id}`;
+    navigate(profilePath);
+  };
+
+  const handleSettings = () => {
+    setSettingsOpen(true);
+  };
 
   // Filter wishlists based on selection
   const filteredWishlists = useMemo(() => {
@@ -120,24 +183,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     };
   }, [filteredWishlists, purchasedCount, percentPurchased]);
 
-  // Get user display name
-  const getUserName = () => {
-    if (profile?.first_name) {
-      return profile.first_name;
-    }
-    if (profile?.name) {
-      return profile.name.split(' ')[0];
-    }
-    if (user?.user_metadata?.first_name) {
-      return user.user_metadata.first_name;
-    }
-    if (user?.user_metadata?.name) {
-      return user.user_metadata.name.split(' ')[0];
-    }
-    return "My";
-  };
-
-  const userName = getUserName();
   const avatarUrl = profile?.profile_image || user?.user_metadata?.avatar_url;
   const userInitials = userName.charAt(0).toUpperCase();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -171,6 +216,41 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Wishlist Actions - Only show when a specific wishlist is selected */}
+      {selectedWishlistId && (
+        <div className="p-4 border-b border-border space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={handlePreviewAsGuest}
+          >
+            <Eye className="h-4 w-4" />
+            Preview as Guest
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={quickShare}
+          >
+            <Share2 className="h-4 w-4" />
+            Share Profile
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={handleSettings}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Button>
+        </div>
+      )}
 
       {/* Gift Tracker */}
       <div className="p-4 border-b border-border">
@@ -320,6 +400,33 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       <div className="hidden md:block w-[280px] bg-background border-r border-border flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <SidebarContent />
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wishlist Privacy Settings</DialogTitle>
+            <DialogDescription>
+              Apply privacy settings to all your wishlists at once.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-4">
+            <Button 
+              className="w-full" 
+              onClick={() => handleBulkPrivacyUpdate(true)}
+            >
+              Make All Wishlists Public
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => handleBulkPrivacyUpdate(false)}
+            >
+              Make All Wishlists Private
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

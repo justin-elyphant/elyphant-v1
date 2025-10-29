@@ -4,6 +4,7 @@ import MyProfilePreview from "./MyProfilePreview";
 import InstagramProfileLayout from "./InstagramProfileLayout";
 import ProfileTabs from "./ProfileTabs";
 import ProfileSharingDialog from "./ProfileSharingDialog";
+import ProfileMetaTags from "./ProfileMetaTags";
 import { useProfileSharing } from "@/hooks/useProfileSharing";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import type { ConnectionProfile } from "@/services/connectionService";
@@ -80,6 +81,15 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
 
     return (
       <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+        {/* Social Sharing Meta Tags */}
+        <ProfileMetaTags
+          profileName={connectionProfile.profile.name || 'User'}
+          profileBio={connectionProfile.profile.bio}
+          profileImage={connectionProfile.profile.profile_image}
+          profileUrl={connectionSharing.profileUrl}
+          wishlistCount={connectionProfile.profile.wishlist_count}
+        />
+        
         <InstagramProfileLayout
           userData={connectionProfile.profile}
           profile={connectionProfile.profile}
@@ -137,6 +147,15 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
 
     return (
       <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
+        {/* Social Sharing Meta Tags */}
+        <ProfileMetaTags
+          profileName={publicProfile.name || 'User'}
+          profileBio={publicProfile.bio}
+          profileImage={publicProfile.profile_image}
+          profileUrl={publicSharing.profileUrl}
+          wishlistCount={publicProfile.wishlist_count}
+        />
+        
         <InstagramProfileLayout
           userData={publicProfile}
           profile={publicProfile}

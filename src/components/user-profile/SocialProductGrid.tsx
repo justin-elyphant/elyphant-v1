@@ -113,42 +113,46 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
     fetchWishlistItems();
   }, [profile?.id]);
 
+  // State for categorized products
+  const [wishlistProducts, setWishlistProducts] = useState<ProductWithSource[]>([]);
+  const [interestProducts, setInterestProducts] = useState<ProductWithSource[]>([]);
+  const [aiProducts, setAiProducts] = useState<ProductWithSource[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<ProductWithSource[]>([]);
+
   useEffect(() => {
     const loadSocialGrid = async () => {
       if (!profile) return;
 
       setLoading(true);
-      const gridProducts: ProductWithSource[] = [];
 
       try {
         console.log('🚀 Loading social grid with wishlist items:', wishlistItems.length);
         
-        // 1. Get wishlist items (50% of grid) - PRIORITIZE THESE!
-        const wishlistProducts = extractWishlistProducts();
-        console.log('❤️ Wishlist products extracted:', wishlistProducts.length);
-        gridProducts.push(...wishlistProducts);
+        // 1. Get wishlist items - PRIORITIZE THESE!
+        const wishlist = extractWishlistProducts();
+        console.log('❤️ Wishlist products extracted:', wishlist.length);
+        setWishlistProducts(wishlist);
 
-        // 2. Get interest-based products (30% of grid)
-        const interestProducts = await getInterestBasedProducts();
-        console.log('🎯 Interest products:', interestProducts.length);
-        gridProducts.push(...interestProducts.slice(0, 6));
+        // 2. Get interest-based products
+        const interests = await getInterestBasedProducts();
+        console.log('🎯 Interest products:', interests.length);
+        setInterestProducts(interests.slice(0, 8));
 
-        // 3. Get AI recommendations (15% of grid) - Only for others viewing
-        if (!isOwnProfile) {
-          const aiProducts = await getAIRecommendations();
-          console.log('🤖 AI products:', aiProducts.length);
-          gridProducts.push(...aiProducts.slice(0, 3));
+        // 3. Get AI recommendations - Only for others viewing
+        if (!isOwnProfile && !isPreviewMode) {
+          const ai = await getAIRecommendations();
+          console.log('🤖 AI products:', ai.length);
+          setAiProducts(ai.slice(0, 6));
         }
 
-        // 4. Get trending products (5% of grid)
-        const trendingProducts = await getTrendingProducts();
-        console.log('📈 Trending products:', trendingProducts.length);
-        gridProducts.push(...trendingProducts.slice(0, 2));
+        // 4. Get trending products
+        const trending = await getTrendingProducts();
+        console.log('📈 Trending products:', trending.length);
+        setTrendingProducts(trending.slice(0, 6));
 
-        // Shuffle and limit to 24 items for better desktop display
-        const shuffledProducts = shuffleArray(gridProducts).slice(0, 24);
-        console.log('🎲 Final grid products:', shuffledProducts.length);
-        setProducts(shuffledProducts);
+        // Also set combined products for backward compatibility
+        const combined = [...wishlist, ...interests.slice(0, 6), ...trending.slice(0, 4)];
+        setProducts(shuffleArray(combined).slice(0, 24));
       } catch (error) {
         console.error('Error loading social grid:', error);
       } finally {
@@ -156,9 +160,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       }
     };
 
-    // Only load the grid once we have attempted to fetch wishlist items
     loadSocialGrid();
-  }, [profile?.id, wishlistItems]);
+  }, [profile?.id, wishlistItems, isOwnProfile, isPreviewMode]);
 
   const extractWishlistProducts = (): ProductWithSource[] => {
     console.log('🎁 Extracting wishlist products from items:', wishlistItems.length);
@@ -395,7 +398,10 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
     );
   }
 
-  if (products.length === 0) {
+  const hasAnyProducts = wishlistProducts.length > 0 || interestProducts.length > 0 || 
+                          aiProducts.length > 0 || trendingProducts.length > 0;
+
+  if (!hasAnyProducts) {
     return (
       <DesktopProfileWrapper className="w-full px-4">
         <div className="text-center py-8">
@@ -410,18 +416,123 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
     );
   }
 
+  // Helper function to handle product clicks in categorized sections
+  const handleCategorizedProductClick = (product: Product, source: string) => {
+    const productWithSource: ProductWithSource = {
+      ...product,
+      source: source as any,
+      sourceIcon: source === 'wishlist' ? Heart : source === 'interests' ? Target : source === 'ai' ? Bot : TrendingUp,
+      sourceLabel: source === 'wishlist' ? 'Wishlist' : source === 'interests' ? 'Interests' : source === 'ai' ? 'AI Pick' : 'Trending',
+      sourceColor: source === 'wishlist' ? 'bg-red-100 text-red-700' : source === 'interests' ? 'bg-blue-100 text-blue-700' : source === 'ai' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+    };
+    handleProductClick(productWithSource);
+  };
+
   return (
     <div>
       <DesktopProfileWrapper className="w-full px-4">
-        <ResponsiveProductGrid
-          products={products}
-          isOwnProfile={isOwnProfile}
-          isPreviewMode={isPreviewMode}
-          onProductClick={handleProductClick}
-          onWishlistAction={handleWishlistAction}
-          onRemoveFromWishlist={handleRemoveFromWishlist}
-          wishlistedProducts={wishlistedProducts}
-        />
+        {/* Categorized Product Sections */}
+        <div className="space-y-8">
+          {/* Wishlist Section - Primary */}
+          {wishlistProducts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Heart className="h-6 w-6 text-red-500" />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">Their Wishlist</h3>
+                  <p className="text-sm text-muted-foreground">Items they actually want - perfect gift ideas!</p>
+                </div>
+                <Badge variant="secondary" className="bg-red-100 text-red-700">
+                  {wishlistProducts.length} {wishlistProducts.length === 1 ? 'item' : 'items'}
+                </Badge>
+              </div>
+              <ResponsiveProductGrid
+                products={wishlistProducts}
+                isOwnProfile={isOwnProfile}
+                isPreviewMode={isPreviewMode}
+                onProductClick={handleProductClick}
+                onWishlistAction={handleWishlistAction}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistedProducts={wishlistedProducts}
+              />
+            </div>
+          )}
+
+          {/* Interest-Based Section */}
+          {interestProducts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Target className="h-6 w-6 text-blue-500" />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">Based on Their Interests</h3>
+                  <p className="text-sm text-muted-foreground">Products matching their hobbies and preferences</p>
+                </div>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  {interestProducts.length} {interestProducts.length === 1 ? 'item' : 'items'}
+                </Badge>
+              </div>
+              <ResponsiveProductGrid
+                products={interestProducts}
+                isOwnProfile={isOwnProfile}
+                isPreviewMode={isPreviewMode}
+                onProductClick={handleProductClick}
+                onWishlistAction={handleWishlistAction}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistedProducts={wishlistedProducts}
+              />
+            </div>
+          )}
+
+          {/* AI Recommendations Section - Only for others viewing */}
+          {!isOwnProfile && !isPreviewMode && aiProducts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Bot className="h-6 w-6 text-purple-500" />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">AI Gift Suggestions</h3>
+                  <p className="text-sm text-muted-foreground">Smart recommendations based on their profile</p>
+                </div>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                  {aiProducts.length} {aiProducts.length === 1 ? 'item' : 'items'}
+                </Badge>
+              </div>
+              <ResponsiveProductGrid
+                products={aiProducts}
+                isOwnProfile={isOwnProfile}
+                isPreviewMode={isPreviewMode}
+                onProductClick={handleProductClick}
+                onWishlistAction={handleWishlistAction}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistedProducts={wishlistedProducts}
+              />
+            </div>
+          )}
+
+          {/* Trending Section */}
+          {trendingProducts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <TrendingUp className="h-6 w-6 text-orange-500" />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">Popular Right Now</h3>
+                  <p className="text-sm text-muted-foreground">Trending gifts people love</p>
+                </div>
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                  {trendingProducts.length} {trendingProducts.length === 1 ? 'item' : 'items'}
+                </Badge>
+              </div>
+              <ResponsiveProductGrid
+                products={trendingProducts}
+                isOwnProfile={isOwnProfile}
+                isPreviewMode={isPreviewMode}
+                onProductClick={handleProductClick}
+                onWishlistAction={handleWishlistAction}
+                onRemoveFromWishlist={handleRemoveFromWishlist}
+                wishlistedProducts={wishlistedProducts}
+              />
+            </div>
+          )}
+        </div>
       </DesktopProfileWrapper>
 
       {/* Dialogs */}

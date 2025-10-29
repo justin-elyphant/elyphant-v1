@@ -9,12 +9,14 @@ interface InstagramWishlistGridProps {
   profileId: string;
   isOwnProfile: boolean;
   isPreviewMode?: boolean;
+  onWishlistsLoaded?: (wishlists: Wishlist[]) => void;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   profileId,
   isOwnProfile,
-  isPreviewMode = false
+  isPreviewMode = false,
+  onWishlistsLoaded
 }) => {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,11 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
         }));
         
         setWishlists(transformedWishlists);
+        
+        // Notify parent component with wishlist data
+        if (onWishlistsLoaded) {
+          onWishlistsLoaded(transformedWishlists);
+        }
       } catch (error) {
         console.error('Error fetching wishlists:', error);
       } finally {

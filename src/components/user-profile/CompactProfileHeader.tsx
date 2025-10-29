@@ -243,6 +243,12 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
             <div className="flex items-center gap-2 mb-1 min-w-0">
               <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate min-w-0">{userData?.name || 'User'}</h1>
               <div className="flex gap-1 flex-shrink-0">
+                {/* Gift Mode Indicator for visitors */}
+                {!isCurrentUser && !isAnonymousUser && (
+                  <Badge variant="secondary" className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-white border-white/30 text-xs">
+                    🎁 Gift Mode
+                  </Badge>
+                )}
                 {connectionData?.isAutoGiftEnabled && (
                   <Badge variant="secondary" className="bg-green-500/20 text-green-100 border-green-300/30 text-xs">
                     Auto-Gift
@@ -280,15 +286,19 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
 
         {/* Stats and Actions */}
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          {/* Stats */}
+          {/* Enhanced Stats with Social Proof */}
           <div className="hidden sm:flex items-center gap-4 text-white">
             <button className="text-center hover:opacity-80 transition-opacity">
               <div className="text-lg font-bold">{connectionCount}</div>
-              <div className="text-xs opacity-90">connections</div>
+              <div className="text-xs opacity-90">
+                {connectionCount === 1 ? 'connection' : 'connections'}
+              </div>
             </button>
             <button className="text-center hover:opacity-80 transition-opacity">
               <div className="text-lg font-bold">{wishlistCount}</div>
-              <div className="text-xs opacity-90">wishlists</div>
+              <div className="text-xs opacity-90">
+                {wishlistCount === 1 ? 'wishlist' : 'wishlists'}
+              </div>
             </button>
           </div>
 
@@ -299,16 +309,20 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Stats Row */}
+      {/* Mobile Stats Row with Social Proof */}
       <div className="sm:hidden relative px-4 pb-3">
         <div className="flex justify-center gap-8 text-white">
           <div className="text-center">
             <div className="text-lg font-bold">{connectionCount}</div>
-            <div className="text-xs opacity-90">connections</div>
+            <div className="text-xs opacity-90">
+              {connectionCount === 1 ? 'connection' : 'connections'}
+            </div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold">{wishlistCount}</div>
-            <div className="text-xs opacity-90">wishlists</div>
+            <div className="text-xs opacity-90">
+              {wishlistCount === 1 ? 'wishlist' : 'wishlists'}
+            </div>
           </div>
         </div>
       </div>

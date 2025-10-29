@@ -8,6 +8,7 @@ import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
 import InstagramWishlistGrid from "./InstagramWishlistGrid";
+import WishlistPriceRange from "./WishlistPriceRange";
 
 
 interface InstagramProfileLayoutProps {
@@ -61,7 +62,14 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   secondaryTitle = "More Details"
 }) => {
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
+  const [wishlistItems, setWishlistItems] = useState<Array<{ price?: number }>>([]);
   const navigate = useNavigate();
+
+  const handleWishlistsLoaded = (wishlists: any[]) => {
+    // Flatten all wishlist items for price calculation
+    const allItems = wishlists.flatMap(w => w.items || []);
+    setWishlistItems(allItems);
+  };
 
   return (
     <div 
@@ -93,7 +101,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
         {/* Instagram Wishlist Grid - Primary Focus */}
         <div className="mb-8 w-full">
           <div className="px-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl font-bold">Wishlists</h2>
               {isCurrentUser && !isPreviewMode && (
                 <Button
@@ -105,11 +113,18 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
                 </Button>
               )}
             </div>
+            {/* Price Range Summary for Visitors */}
+            {!isCurrentUser && wishlistItems.length > 0 && (
+              <div className="mb-3">
+                <WishlistPriceRange items={wishlistItems} />
+              </div>
+            )}
           </div>
           <InstagramWishlistGrid
             profileId={profile.id || profile.user_id}
             isOwnProfile={isCurrentUser}
             isPreviewMode={isPreviewMode}
+            onWishlistsLoaded={handleWishlistsLoaded}
           />
         </div>
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
 import SocialProductGrid from "./SocialProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
@@ -65,7 +66,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   const [wishlistItems, setWishlistItems] = useState<Array<{ price?: number }>>([]);
   const navigate = useNavigate();
 
-  const handleWishlistsLoaded = (wishlists: any[]) => {
+  const handleWishlistsLoaded = (wishlists: Wishlist[]) => {
     // Flatten all wishlist items for price calculation
     const allItems = wishlists.flatMap(w => w.items || []);
     setWishlistItems(allItems);

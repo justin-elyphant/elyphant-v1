@@ -55,19 +55,22 @@ export const useProfileUpdate = () => {
 
       // PHASE 1: Sync interests to gift_preferences for backwards compatibility (TRANSITION PERIOD)
       // NOTE: gift_preferences is DEPRECATED - interests is now the single source of truth
-      if (updateData.interests && Array.isArray(updateData.interests)) {
+      // Create a mutable copy to avoid mutation issues
+      const mutableUpdateData = { ...updateData };
+      
+      if (mutableUpdateData.interests && Array.isArray(mutableUpdateData.interests)) {
         console.log('🔄 [TRANSITION] Syncing interests to gift_preferences for backwards compatibility');
-        updateData.gift_preferences = updateData.interests.map(interest => ({
+        mutableUpdateData.gift_preferences = mutableUpdateData.interests.map(interest => ({
           category: interest,
           importance: 'medium' as const
         }));
       }
 
-      const hasAddressUpdate = updateData.shipping_address !== undefined;
+      const hasAddressUpdate = mutableUpdateData.shipping_address !== undefined;
       const hasVerificationFields = (
-        updateData.address_verified !== undefined ||
-        updateData.address_verification_method !== undefined ||
-        updateData.address_verified_at !== undefined
+        mutableUpdateData.address_verified !== undefined ||
+        mutableUpdateData.address_verification_method !== undefined ||
+        mutableUpdateData.address_verified_at !== undefined
       );
 
       // Build base and verification payloads
@@ -82,22 +85,22 @@ export const useProfileUpdate = () => {
 
       // Normalize and include shipping address if present
       if (hasAddressUpdate) {
-        baseUpdate.shipping_address = normalizeShippingAddress(updateData.shipping_address);
+        baseUpdate.shipping_address = normalizeShippingAddress(mutableUpdateData.shipping_address);
       }
 
       // Normalize gift preferences if present (in base update)
-      if (updateData.gift_preferences !== undefined) {
-        baseUpdate.gift_preferences = Array.isArray(updateData.gift_preferences)
-          ? updateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
+      if (mutableUpdateData.gift_preferences !== undefined) {
+        baseUpdate.gift_preferences = Array.isArray(mutableUpdateData.gift_preferences)
+          ? mutableUpdateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
           : [];
       }
 
       // Split other fields into base vs verify depending on two-step condition
       const isTwoStep = hasAddressUpdate && hasVerificationFields;
 
-      Object.keys(updateData).forEach((key) => {
+      Object.keys(mutableUpdateData).forEach((key) => {
         if (key === 'shipping_address' || key === 'gift_preferences') return;
-        const value = (updateData as any)[key];
+        const value = (mutableUpdateData as any)[key];
 
         if (isTwoStep && (key === 'address_verified' || key === 'address_verification_method' || key === 'address_verified_at')) {
           verifyUpdate[key] = value;
@@ -109,9 +112,9 @@ export const useProfileUpdate = () => {
       // Special logging for verification fields
       if (hasVerificationFields) {
         console.log('🔍 VERIFICATION FIELDS PRESENT', {
-          address_verified: updateData.address_verified,
-          address_verification_method: updateData.address_verification_method,
-          address_verified_at: updateData.address_verified_at,
+          address_verified: mutableUpdateData.address_verified,
+          address_verification_method: mutableUpdateData.address_verification_method,
+          address_verified_at: mutableUpdateData.address_verified_at,
           isTwoStep
         });
       }

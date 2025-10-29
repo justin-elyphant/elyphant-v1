@@ -22,7 +22,7 @@ export function getSharingLevelLabel(level: PrivacyLevel): string {
 export function getDefaultDataSharingSettings(): DataSharingSettings {
   return {
     dob: 'friends',
-    shipping_address: 'friends',
+    shipping_address: 'private', // Most sensitive data - private by default
     interests: 'public',
     gift_preferences: 'public', // Deprecated, sync'd from interests
     email: 'friends'

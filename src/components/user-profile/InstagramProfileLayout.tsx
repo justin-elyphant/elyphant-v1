@@ -10,6 +10,7 @@ import SocialProductGrid from "./SocialProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
 import InstagramWishlistGrid from "./InstagramWishlistGrid";
 import WishlistPriceRange from "./WishlistPriceRange";
+import InlineWishlistViewer from "./InlineWishlistViewer";
 
 
 interface InstagramProfileLayoutProps {
@@ -64,6 +65,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
 }) => {
   const [showSecondaryContent, setShowSecondaryContent] = useState(false);
   const [wishlistItems, setWishlistItems] = useState<Array<{ price?: number }>>([]);
+  const [selectedWishlist, setSelectedWishlist] = useState<Wishlist | null>(null);
   const navigate = useNavigate();
 
   const handleWishlistsLoaded = (wishlists: Wishlist[]) => {
@@ -109,9 +111,28 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
               onWishlistsLoaded={handleWishlistsLoaded}
               wishlistItems={wishlistItems}
               displayName={profile?.display_name || profile?.full_name || profile?.username || userData?.user_metadata?.display_name}
+              onWishlistClick={setSelectedWishlist}
             />
           </DesktopProfileWrapper>
         </div>
+
+        {/* Inline Wishlist Viewer - Shows when visitor clicks wishlist bubble */}
+        {selectedWishlist && !isCurrentUser && (
+          <div className="mb-8 w-full">
+            <DesktopProfileWrapper className="w-full">
+              <InlineWishlistViewer
+                wishlist={selectedWishlist}
+                profileOwner={{
+                  id: profile.id || profile.user_id,
+                  name: profile?.display_name || profile?.full_name || profile?.username || userData?.user_metadata?.display_name || 'User'
+                }}
+                isConnected={isConnected}
+                connectionData={connectionData}
+                onClose={() => setSelectedWishlist(null)}
+              />
+            </DesktopProfileWrapper>
+          </div>
+        )}
 
         {/* Social Product Grid - Collapsible Section */}
         <div className="mb-6 w-full">

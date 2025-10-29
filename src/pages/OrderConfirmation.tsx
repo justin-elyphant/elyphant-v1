@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Truck, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 
 interface Order {
   id: string;
@@ -32,6 +33,8 @@ const OrderConfirmation = () => {
   const [pollingCount, setPollingCount] = useState(0);
   const [pollingStartTime] = useState<number>(Date.now());
   const [showProgressiveError, setShowProgressiveError] = useState(false);
+  const [showAutoGiftUpsell, setShowAutoGiftUpsell] = useState(false);
+  const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
 
   useEffect(() => {
     if (!orderId) {
@@ -62,6 +65,75 @@ const OrderConfirmation = () => {
     };
   }, [orderId]);
 
+  const checkForAutoGiftUpsell = async (orderData: Order) => {
+    try {
+      // Check if order contains wishlist items
+      const isFromWishlist = orderData.cart_data?.source === 'wishlist' || 
+                            orderData.cart_data?.wishlist_id ||
+                            orderData.cart_data?.wishlist_owner_id;
+
+      if (!isFromWishlist) return;
+
+      const wishlistOwnerId = orderData.cart_data?.wishlist_owner_id;
+      const wishlistOwnerName = orderData.cart_data?.wishlist_owner_name || 'them';
+      const totalAmount = orderData.total_amount;
+
+      if (!wishlistOwnerId) return;
+
+      // Try to infer event type from profile's important_dates
+      const { data: profile } = await (supabase as any)
+        .from('profiles')
+        .select('important_dates')
+        .eq('id', wishlistOwnerId)
+        .single();
+
+      let eventType = 'other';
+      let eventDate = null;
+
+      if (profile && profile.important_dates) {
+        const dates = Array.isArray(profile.important_dates) ? profile.important_dates : [];
+        const today = new Date();
+        
+        // Find next upcoming date
+        const upcomingDate = dates
+          .map((date: any) => {
+            const dateStr = date.date;
+            const [month, day] = dateStr.split('-').map(Number);
+            const parsedDate = new Date(today.getFullYear(), month - 1, day);
+            if (parsedDate < today) {
+              parsedDate.setFullYear(parsedDate.getFullYear() + 1);
+            }
+            return { ...date, parsedDate };
+          })
+          .filter((date: any) => date.parsedDate >= today)
+          .sort((a: any, b: any) => a.parsedDate.getTime() - b.parsedDate.getTime())[0];
+
+        if (upcomingDate) {
+          eventType = upcomingDate.type || 'other';
+          eventDate = upcomingDate.parsedDate.toISOString();
+        }
+      }
+
+      // Prepare initial data for auto-gift setup
+      setAutoGiftInitialData({
+        recipientId: wishlistOwnerId,
+        recipientName: wishlistOwnerName,
+        eventType: eventType,
+        eventDate: eventDate,
+        budgetLimit: Math.ceil(totalAmount),
+        selectedProducts: orderData.order_items?.map(item => ({
+          productId: item.product_id,
+          name: item.product_name,
+          price: item.unit_price,
+          image: item.product_image
+        }))
+      });
+
+    } catch (error) {
+      console.error('Error checking for auto-gift upsell:', error);
+    }
+  };
+
   const fetchOrderDetails = async () => {
     try {
       const result = await (supabase as any).from('orders').select('*, order_items(*)').eq('id', orderId).maybeSingle();
@@ -83,6 +155,10 @@ const OrderConfirmation = () => {
           const childResult = await (supabase as any).from('orders').select('*, order_items(*)').eq('parent_order_id', orderData.id).order('split_order_index');
           if (childResult.data) setChildOrders(childResult.data);
         }
+        
+        // Check if order is from a wishlist for auto-gift upsell
+        checkForAutoGiftUpsell(orderData);
+        
         setLoading(false);
       }
     } catch (err: any) {
@@ -404,6 +480,43 @@ const OrderConfirmation = () => {
           </Card>
         )}
 
+        {/* Auto-Gift Upsell Banner */}
+        {autoGiftInitialData && !showAutoGiftUpsell && (
+          <Card className="p-6 mb-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">
+                  Want to automate gifts for {autoGiftInitialData.recipientName}?
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Never miss their special occasions! Set up auto-gifting and we'll handle everything - 
+                  from product selection to delivery - so you can focus on what matters.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowAutoGiftUpsell(true)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    Set Up Auto-Gifting
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setAutoGiftInitialData(null)}
+                  >
+                    Maybe Later
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Actions */}
         <div className="flex gap-4">
           <Button onClick={() => navigate('/orders')} variant="default" className="flex-1">
@@ -414,6 +527,13 @@ const OrderConfirmation = () => {
           </Button>
         </div>
       </div>
+
+      {/* Auto-Gift Setup Dialog */}
+      <AutoGiftSetupFlow
+        open={showAutoGiftUpsell}
+        onOpenChange={setShowAutoGiftUpsell}
+        initialData={autoGiftInitialData}
+      />
     </SidebarLayout>
   );
 };

@@ -15,6 +15,7 @@ interface InstagramWishlistGridProps {
   onWishlistsLoaded?: (wishlists: Wishlist[]) => void;
   wishlistItems?: Array<{ price?: number }>;
   displayName?: string;
+  onWishlistClick?: (wishlist: Wishlist) => void;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
@@ -23,7 +24,8 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   isPreviewMode = false,
   onWishlistsLoaded,
   wishlistItems = [],
-  displayName = "Their"
+  displayName = "Their",
+  onWishlistClick
 }) => {
   const navigate = useNavigate();
   const [publicWishlists, setPublicWishlists] = useState<Wishlist[]>([]);
@@ -154,14 +156,28 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
           className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-none py-2 snap-x snap-mandatory"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {wishlists.map((wishlist) => (
-            <InstagramWishlistCard
-              key={wishlist.id}
-              wishlist={wishlist}
-              isOwnProfile={isOwnProfile}
-              onClick={() => navigate(`/wishlists?wishlist=${wishlist.id}&view=home`)}
-            />
-          ))}
+          {wishlists.map((wishlist) => {
+            const handleWishlistClick = (wishlist: Wishlist) => {
+              if (isOwnProfile) {
+                // Navigate to wishlist workspace for owner
+                navigate(`/wishlists?wishlist=${wishlist.id}&view=home`);
+              } else {
+                // Expand wishlist inline for visitors
+                if (onWishlistClick) {
+                  onWishlistClick(wishlist);
+                }
+              }
+            };
+
+            return (
+              <InstagramWishlistCard
+                key={wishlist.id}
+                wishlist={wishlist}
+                isOwnProfile={isOwnProfile}
+                onClick={() => handleWishlistClick(wishlist)}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

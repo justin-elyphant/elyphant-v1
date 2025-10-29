@@ -13,6 +13,7 @@ interface InstagramWishlistGridProps {
   isPreviewMode?: boolean;
   onWishlistsLoaded?: (wishlists: Wishlist[]) => void;
   wishlistItems?: Array<{ price?: number }>;
+  displayName?: string;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
@@ -20,7 +21,8 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   isOwnProfile,
   isPreviewMode = false,
   onWishlistsLoaded,
-  wishlistItems = []
+  wishlistItems = [],
+  displayName = "Their"
 }) => {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,9 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   return (
     <div className="w-full px-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-bold">Wishlists</h2>
+        <h2 className="text-xl font-bold">
+          {isOwnProfile ? "My Wishlists" : `${displayName}'s Wishlists`}
+        </h2>
         {isOwnProfile && !isPreviewMode && (
           <Button
             variant="outline"

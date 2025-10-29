@@ -108,6 +108,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
               isPreviewMode={isPreviewMode}
               onWishlistsLoaded={handleWishlistsLoaded}
               wishlistItems={wishlistItems}
+              displayName={profile?.display_name || profile?.full_name || profile?.username || userData?.user_metadata?.display_name}
             />
           </DesktopProfileWrapper>
         </div>

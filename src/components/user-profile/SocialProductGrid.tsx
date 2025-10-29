@@ -48,6 +48,9 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [loading, setLoading] = useState(true);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<EnhancedProduct | null>(null);
+  
+  // Extract display name for personalized headings
+  const displayName = profile?.display_name || profile?.full_name || profile?.username || "Their";
   const [selectedWishlistItem, setSelectedWishlistItem] = useState<WishlistItem | null>(null);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
@@ -439,8 +442,12 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
               <div className="flex items-center gap-3 mb-4">
                 <Heart className="h-6 w-6 text-red-500" />
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold">Their Wishlist</h3>
-                  <p className="text-sm text-muted-foreground">Items they actually want - perfect gift ideas!</p>
+                  <h3 className="text-xl font-bold">
+                    {isOwnProfile ? "My Wishlist Items" : `Everything ${displayName} Wants`}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isOwnProfile ? "Your favorite items" : "Items they actually want - perfect gift ideas!"}
+                  </p>
                 </div>
                 <Badge variant="secondary" className="bg-red-100 text-red-700">
                   {wishlistProducts.length} {wishlistProducts.length === 1 ? 'item' : 'items'}
@@ -464,8 +471,12 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
               <div className="flex items-center gap-3 mb-4">
                 <Target className="h-6 w-6 text-blue-500" />
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold">Based on Their Interests</h3>
-                  <p className="text-sm text-muted-foreground">Products matching their hobbies and preferences</p>
+                  <h3 className="text-xl font-bold">
+                    {isOwnProfile ? "Based on My Interests" : `Based on ${displayName}'s Interests`}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isOwnProfile ? "Products matching your hobbies and preferences" : "Products matching their hobbies and preferences"}
+                  </p>
                 </div>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                   {interestProducts.length} {interestProducts.length === 1 ? 'item' : 'items'}

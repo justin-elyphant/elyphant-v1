@@ -35,12 +35,24 @@ export const useProfileSharing = ({
     
     if (navigator.share) {
       try {
+        // Some browsers block Web Share inside iframes (like the preview). Attempt share and fallback on error.
         await navigator.share(shareData);
       } catch (error) {
-        console.log('Share cancelled or failed');
+        console.warn('Web Share failed, falling back to clipboard', error);
+        try {
+          await navigator.clipboard.writeText(profileUrl);
+          const err = error as any;
+          const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+          const blocked = err?.name === 'NotAllowedError' || isIframe;
+          toast.success(blocked 
+            ? "Link copied (native share not available in preview)" 
+            : "Profile link copied to clipboard!");
+        } catch (copyErr) {
+          toast.error("Failed to share or copy link");
+        }
       }
     } else {
-      // Fallback to copying link
+      // Fallback to copying link when Web Share API is not available
       try {
         await navigator.clipboard.writeText(profileUrl);
         toast.success("Profile link copied to clipboard!");

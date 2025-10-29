@@ -25,20 +25,14 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Own profile layout with sidebar (for authenticated users) - no main header
+  // Own profile layout (no main header or sidebar on profile to avoid overlay)
   if (isOwnProfile && user) {
     return (
-      <div className="min-h-screen w-full bg-background">
-        <SidebarProvider defaultOpen={false}>
-          <div className="flex w-full min-h-screen">
-            <AppSidebar />
-            <SidebarInset className="flex-1">
-              <main className="flex-1 w-full" style={{ width: '100%', maxWidth: 'none' }}>
-                {children}
-              </main>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
+      <div className="min-h-screen w-full bg-background flex flex-col">
+        <main className="flex-1 w-full" style={{ width: '100%', maxWidth: 'none' }}>
+          {children}
+        </main>
+        <Footer />
       </div>
     );
   }

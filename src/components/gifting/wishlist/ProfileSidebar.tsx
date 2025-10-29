@@ -77,7 +77,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   // Setup profile sharing
   const { quickShare, profileUrl } = useProfileSharing({
     profileId: profile?.id || user?.id || "",
-    profileName: userName,
+    profileName: profile?.name || userName,
     profileUsername: profile?.username
   });
 

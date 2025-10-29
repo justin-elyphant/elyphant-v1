@@ -57,7 +57,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ preFilledEmail }) => {
       }
 
       toast.success("Welcome back!");
-      const redirectPath = searchParams.get('redirect') || '/home';
+      const redirectPath = searchParams.get('redirect') || '/';
       navigate(redirectPath, { replace: true });
     } catch (error) {
       console.error("Sign in error:", error);

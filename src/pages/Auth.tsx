@@ -126,7 +126,7 @@ const Auth = () => {
       }
       
       // Normal redirect flow
-      const redirectPath = searchParams.get('redirect') || '/gifting';
+      const redirectPath = searchParams.get('redirect') || '/';
       navigate(redirectPath, { replace: true });
     }
   }, [user, isLoading, profileData, navigate, searchParams]);

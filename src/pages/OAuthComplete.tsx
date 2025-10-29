@@ -19,7 +19,7 @@ const OAuthComplete = () => {
       
       // Redirect to home after successful OAuth sign-in
       setTimeout(() => {
-        navigate('/home', { replace: true });
+        navigate('/', { replace: true });
       }, 2000);
     } else {
       console.error('OAuth authentication failed - no user found');

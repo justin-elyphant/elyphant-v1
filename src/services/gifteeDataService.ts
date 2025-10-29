@@ -81,10 +81,14 @@ export const fetchGifteeData = async (gifteeName: string): Promise<GifteeData | 
     }
 
     // Extract preferences
+    // PHASE 2: Use interests as primary source (gift_preferences is deprecated)
     const preferences: GifteePreferences = {
       interests: Array.isArray(profile.interests) 
         ? profile.interests.filter((x: any): x is string => typeof x === 'string') 
-        : [],
+        : (Array.isArray(profile.gift_preferences) 
+            ? profile.gift_preferences.map((p: any) => typeof p === 'string' ? p : p.category).filter(Boolean)
+            : []),
+      // Keep gift_preferences for backwards compatibility (will be removed in Phase 5)
       gift_preferences: Array.isArray(profile.gift_preferences)
         ? profile.gift_preferences.map((p: any) => typeof p === 'string' ? ({ category: p }) : p)
         : []

@@ -13,6 +13,10 @@ export interface Profile {
   dob?: string | null;
   birth_year?: number; // New mandatory field for AI recommendations
   shipping_address?: ShippingAddress;
+  /**
+   * @deprecated Use `interests` field instead. This field is maintained for backwards compatibility during Phase 1-4 migration.
+   * Will be removed in Phase 5 (3-6 months after Phase 2 completion).
+   */
   gift_preferences?: GiftPreference[];
   important_dates?: ImportantDate[];
   data_sharing_settings?: DataSharingSettings;
@@ -95,6 +99,9 @@ export interface ImportantDate {
 export interface DataSharingSettings {
   dob?: 'private' | 'friends' | 'public';
   shipping_address?: 'private' | 'friends' | 'public';
+  /**
+   * @deprecated Use `interests` privacy setting instead. This field is maintained for backwards compatibility.
+   */
   gift_preferences?: 'private' | 'friends' | 'public';
   email?: 'private' | 'friends' | 'public';
 }
@@ -276,6 +283,8 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     };
   });
 
+  // PHASE 2: Stop mapping interests to gift_preferences
+  // interests is now the single source of truth
   const result = {
     name: formData.name || `${firstName} ${lastName}`.trim(),
     first_name: firstName,
@@ -286,11 +295,9 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     birth_year: formData.date_of_birth ? formData.date_of_birth.getFullYear() : new Date().getFullYear() - 25, // Default to 25 years old if no date provided
     dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
-    gift_preferences: formData.interests?.map((interest: string) => ({
-      category: interest,
-      importance: 'medium' as 'low' | 'medium' | 'high'
-    })),
-    interests: formData.interests,  // Add interests mapping
+    // NOTE: gift_preferences is DEPRECATED - no longer mapping from interests
+    // The ProfileContext will handle backwards compatibility sync if needed
+    interests: formData.interests,  // PRIMARY source of truth for user interests
     data_sharing_settings: formData.data_sharing_settings,
     important_dates: processedImportantDates
   };

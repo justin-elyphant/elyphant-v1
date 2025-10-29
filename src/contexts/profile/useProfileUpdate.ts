@@ -53,6 +53,16 @@ export const useProfileUpdate = () => {
       setIsUpdating(true);
       setUpdateError(null);
 
+      // PHASE 1: Sync interests to gift_preferences for backwards compatibility (TRANSITION PERIOD)
+      // NOTE: gift_preferences is DEPRECATED - interests is now the single source of truth
+      if (updateData.interests && Array.isArray(updateData.interests)) {
+        console.log('🔄 [TRANSITION] Syncing interests to gift_preferences for backwards compatibility');
+        updateData.gift_preferences = updateData.interests.map(interest => ({
+          category: interest,
+          importance: 'medium' as const
+        }));
+      }
+
       const hasAddressUpdate = updateData.shipping_address !== undefined;
       const hasVerificationFields = (
         updateData.address_verified !== undefined ||

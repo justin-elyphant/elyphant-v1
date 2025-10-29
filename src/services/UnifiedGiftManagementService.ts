@@ -531,8 +531,15 @@ class UnifiedGiftManagementService {
 
       const searchTerms = [];
       
-      // Add gift preferences
-      if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
+      // PHASE 2: Use interests as primary source (gift_preferences is deprecated)
+      // Add interests (PRIMARY SOURCE OF TRUTH)
+      if (profile.interests && Array.isArray(profile.interests)) {
+        searchTerms.push(...profile.interests);
+        console.log('✅ Using interests (primary):', profile.interests);
+      }
+      // Fallback to gift_preferences for backwards compatibility during transition
+      else if (profile.gift_preferences && Array.isArray(profile.gift_preferences)) {
+        console.log('⚠️ Falling back to gift_preferences (deprecated)');
         profile.gift_preferences.forEach((pref: any) => {
           if (typeof pref === 'string') {
             searchTerms.push(pref);
@@ -540,11 +547,6 @@ class UnifiedGiftManagementService {
             searchTerms.push(pref.category);
           }
         });
-      }
-
-      // Add interests
-      if (profile.interests && Array.isArray(profile.interests)) {
-        searchTerms.push(...profile.interests);
       }
 
       // Add relationship-based categories

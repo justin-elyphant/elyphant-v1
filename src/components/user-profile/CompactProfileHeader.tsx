@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users, Settings } from "lucide-react";
+import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users, Settings, Eye, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConnectButton from "./ConnectButton";
 import { Link } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
@@ -108,26 +109,38 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
             </Tooltip>
           </TooltipProvider>
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onShare}
-                  variant="outline"
-                  size={buttonSize}
-                  className={buttonClass}
-                >
-                  <Share2 className="h-4 w-4" />
-                  {!isMobile && <span className="ml-2">Share</span>}
-                </Button>
-              </TooltipTrigger>
-              {isMobile && (
-                <TooltipContent>
-                  <p>Share Profile</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size={buttonSize}
+                className={buttonClass}
+              >
+                <Share2 className="h-4 w-4" />
+                {!isMobile && <span className="ml-2">Share</span>}
+                {!isMobile && <ChevronDown className="h-4 w-4 ml-1" />}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-background border shadow-md z-[70]">
+              <DropdownMenuItem 
+                onClick={() => {
+                  const publicUrl = `/profile/@${userData?.username || userData?.id}`;
+                  window.open(publicUrl, '_blank');
+                }}
+                className="cursor-pointer"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Public Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={onShare}
+                className="cursor-pointer"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Profile Link
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       );
     }

@@ -8,11 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface InstagramWishlistGridProps {
   profileId: string;
   isOwnProfile: boolean;
+  isPreviewMode?: boolean;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   profileId,
-  isOwnProfile
+  isOwnProfile,
+  isPreviewMode = false
 }) => {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);

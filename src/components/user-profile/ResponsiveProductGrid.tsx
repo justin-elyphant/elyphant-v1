@@ -20,6 +20,7 @@ interface ProductWithSource {
 interface ResponsiveProductGridProps {
   products: ProductWithSource[];
   isOwnProfile: boolean;
+  isPreviewMode?: boolean;
   onProductClick: (product: ProductWithSource) => void;
   onWishlistAction: (e: React.MouseEvent, product: ProductWithSource) => void;
   onRemoveFromWishlist: (e: React.MouseEvent, product: ProductWithSource) => void;
@@ -29,6 +30,7 @@ interface ResponsiveProductGridProps {
 const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
   products,
   isOwnProfile,
+  isPreviewMode = false,
   onProductClick,
   onWishlistAction,
   onRemoveFromWishlist,
@@ -84,7 +86,7 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
 
                 {/* Action Buttons - Context Aware */}
                 <div className="absolute top-1 right-1 flex gap-1">
-                  {product.source === 'wishlist' && isOwnProfile ? (
+                  {product.source === 'wishlist' && isOwnProfile && !isPreviewMode ? (
                     // Show remove button for own wishlist items
                     <Button
                       variant="ghost"
@@ -175,7 +177,7 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
 
                 {/* Action Buttons */}
                 <div className="absolute top-2 right-2">
-                  {product.source === 'wishlist' && isOwnProfile ? (
+                  {product.source === 'wishlist' && isOwnProfile && !isPreviewMode ? (
                     <Button
                       variant="ghost"
                       size="sm"

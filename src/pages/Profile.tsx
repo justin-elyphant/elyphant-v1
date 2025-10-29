@@ -25,6 +25,7 @@ const Profile: React.FC = () => {
   const [profileNotFound, setProfileNotFound] = useState(false);
 
   const context = searchParams.get('context');
+  const isPreviewMode = searchParams.get('preview') === 'true';
 
   // Enhanced debugging
   console.log("=== Profile Page Debug ===");
@@ -205,6 +206,7 @@ const Profile: React.FC = () => {
         publicProfile={publicProfile}
         connectionProfile={connectionProfile}
         ownProfile={ownProfile}
+        isPreviewMode={isPreviewMode}
         onSendGift={() => console.log("Send gift clicked")}
         onRemoveConnection={() => console.log("Remove connection clicked")}
         onRefreshConnection={() => console.log("Refresh connection clicked")}

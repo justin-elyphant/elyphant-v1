@@ -21,6 +21,7 @@ interface CompactProfileHeaderProps {
   canConnect?: boolean;
   canMessage?: boolean;
   isAnonymousUser?: boolean;
+  isPreviewMode?: boolean;
   connectionData?: {
     relationship?: string;
     customRelationship?: string;
@@ -43,6 +44,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   canConnect = true,
   canMessage = true,
   isAnonymousUser = false,
+  isPreviewMode = false,
   connectionData,
   onSendGift,
   onRemoveConnection
@@ -77,13 +79,14 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   const isMobile = useIsMobile();
 
   const renderActionButtons = () => {
-    if (isCurrentUser) {
+    // In preview mode, hide owner-specific actions and show public view
+    if (isCurrentUser && !isPreviewMode) {
       const buttonSize = isMobile ? "icon" : "sm";
       const buttonClass = "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm";
       const gapClass = isMobile ? "gap-1" : "gap-2";
       
       return (
-        <div className={`flex ${gapClass}`}>
+        <div className={`flex flex-wrap ${gapClass}`}>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -133,7 +136,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     const gapClass = isMobile ? "gap-1" : "gap-2";
     
     return (
-      <div className={`flex ${gapClass}`}>
+      <div className={`flex flex-wrap ${gapClass}`}>
         {canConnect && !isConnected && !isAnonymousUser && (
           <TooltipProvider>
             <Tooltip>
@@ -198,6 +201,26 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
             </Tooltip>
           </TooltipProvider>
         )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onShare}
+                variant="outline"
+                size={buttonSize}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm rounded-full"
+              >
+                <Share2 className="h-4 w-4" />
+                {!isMobile && <span className="ml-2">Share</span>}
+              </Button>
+            </TooltipTrigger>
+            {isMobile && (
+              <TooltipContent>
+                <p>Share Profile</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     );
   };

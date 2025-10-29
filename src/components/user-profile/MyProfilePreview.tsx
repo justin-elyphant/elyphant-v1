@@ -12,6 +12,7 @@ import type { PublicProfileData } from "@/services/publicProfileService";
 
 interface MyProfilePreviewProps {
   profile: UnifiedProfileData | null;
+  isPreviewMode?: boolean;
 }
 
 /**
@@ -21,7 +22,7 @@ interface MyProfilePreviewProps {
  * This is the "LinkedIn-style" social proof dashboard that encourages
  * profile completion and helps users understand their public presence.
  */
-const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
+const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewMode = false }) => {
   const [activeTab, setActiveTab] = useState("public-overview");
   const [publicViewData, setPublicViewData] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
@@ -161,6 +162,7 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile }) => {
         canConnect={false}
         canMessage={false}
         isAnonymousUser={false}
+        isPreviewMode={isPreviewMode}
         secondaryContent={secondaryContent}
         secondaryTitle="Profile Details & Privacy Settings"
       />

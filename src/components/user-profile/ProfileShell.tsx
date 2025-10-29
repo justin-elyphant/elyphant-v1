@@ -14,6 +14,7 @@ interface ProfileShellProps {
   publicProfile?: PublicProfileData | null;
   connectionProfile?: ConnectionProfile | null;
   ownProfile?: any;
+  isPreviewMode?: boolean;
   onSendGift?: () => void;
   onRemoveConnection?: () => void;
   onRefreshConnection?: () => void;
@@ -32,6 +33,7 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
   publicProfile,
   connectionProfile,
   ownProfile,
+  isPreviewMode = false,
   onSendGift,
   onRemoveConnection,
   onRefreshConnection
@@ -56,7 +58,7 @@ const ProfileShell: React.FC<ProfileShellProps> = ({
   if (isOwnProfile && ownProfile) {
     return (
       <div className="w-full" style={{ width: '100%', maxWidth: 'none' }}>
-        <MyProfilePreview profile={ownProfile} />
+        <MyProfilePreview profile={ownProfile} isPreviewMode={isPreviewMode} />
       </div>
     );
   }

@@ -25,6 +25,7 @@ interface InstagramProfileLayoutProps {
   canConnect?: boolean;
   canMessage?: boolean;
   isAnonymousUser?: boolean;
+  isPreviewMode?: boolean;
   connectionData?: {
     relationship?: string;
     customRelationship?: string;
@@ -52,6 +53,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   canConnect = true,
   canMessage = true,
   isAnonymousUser = false,
+  isPreviewMode = false,
   connectionData,
   onSendGift,
   onRemoveConnection,
@@ -79,6 +81,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
           canConnect={canConnect}
           canMessage={canMessage}
           isAnonymousUser={isAnonymousUser}
+          isPreviewMode={isPreviewMode}
           connectionData={connectionData}
           onSendGift={onSendGift}
           onRemoveConnection={onRemoveConnection}
@@ -92,7 +95,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
           <div className="px-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Wishlists</h2>
-              {isCurrentUser && (
+              {isCurrentUser && !isPreviewMode && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -106,12 +109,17 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
           <InstagramWishlistGrid
             profileId={profile.id || profile.user_id}
             isOwnProfile={isCurrentUser}
+            isPreviewMode={isPreviewMode}
           />
         </div>
 
         {/* Social Product Grid - Collapsible Section */}
         <div className="mb-6 w-full">
-          <SocialProductGrid profile={profile} isOwnProfile={isCurrentUser} />
+          <SocialProductGrid 
+            profile={profile} 
+            isOwnProfile={isCurrentUser} 
+            isPreviewMode={isPreviewMode}
+          />
         </div>
 
         {/* Expandable Secondary Content */}

@@ -18,6 +18,7 @@ import DesktopProfileWrapper from "./DesktopProfileWrapper";
 interface SocialProductGridProps {
   profile: any;
   isOwnProfile: boolean;
+  isPreviewMode?: boolean;
 }
 
 interface ProductWithSource extends Product {
@@ -42,7 +43,7 @@ interface EnhancedProduct extends Product {
   isZincApiProduct?: boolean;
 }
 
-const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile }) => {
+const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile, isPreviewMode = false }) => {
   const [products, setProducts] = useState<ProductWithSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -258,8 +259,9 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   };
 
   const handleProductClick = (product: ProductWithSource) => {
-    if (product.source === 'wishlist' && isOwnProfile) {
-      // For wishlist items on own profile, show wishlist management
+    // In preview mode, don't allow editing
+    if (product.source === 'wishlist' && isOwnProfile && !isPreviewMode) {
+      // For wishlist items on own profile (not in preview), show wishlist management
       const wishlistItem = wishlistItems.find(item => 
         (item.name || item.title) === product.title
       );
@@ -324,6 +326,10 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   const handleRemoveFromWishlist = async (e: React.MouseEvent, product: ProductWithSource) => {
     e.stopPropagation();
+    
+    // Don't allow removal in preview mode
+    if (isPreviewMode) return;
+    
     const wishlistItem = wishlistItems.find(item => 
       (item.name || item.title) === product.title
     );
@@ -410,6 +416,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         <ResponsiveProductGrid
           products={products}
           isOwnProfile={isOwnProfile}
+          isPreviewMode={isPreviewMode}
           onProductClick={handleProductClick}
           onWishlistAction={handleWishlistAction}
           onRemoveFromWishlist={handleRemoveFromWishlist}

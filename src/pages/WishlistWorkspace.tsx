@@ -41,7 +41,9 @@ const WishlistWorkspace = () => {
     }
   }, []);
   
-  const isOwner = user?.id === wishlist?.user_id;
+  const isOwner = React.useMemo(() => {
+    return user?.id === wishlist?.user_id;
+  }, [user?.id, wishlist?.user_id]);
 
   useEffect(() => {
     const fetchWishlist = async () => {

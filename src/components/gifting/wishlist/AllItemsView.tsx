@@ -304,12 +304,12 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
           },
           { 
             label: wishlist?.title || "Wishlist", 
-            href: `/wishlists?wishlist=${selectedWishlistId}`,
-            isCurrentPage: false
+            href: `/wishlists?wishlist=${selectedWishlistId}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}&view=home`,
+            isCurrentPage: viewMode === 'home'
           },
           {
             label: `Search: "${searchQuery}"`, 
-            isCurrentPage: true 
+            isCurrentPage: viewMode !== 'home'
           }
         ];
       }
@@ -388,8 +388,8 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Inline Wishlist Workspace Mode - Only show when NOT searching */}
-          {selectedWishlistId && !searchQuery && (
+          {/* Inline Wishlist Workspace Mode - Show when in 'home' view */}
+          {selectedWishlistId && viewMode === 'home' && (
             <div className="py-6">
               <InlineWishlistWorkspace
                 wishlistId={selectedWishlistId}

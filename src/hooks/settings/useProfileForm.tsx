@@ -111,7 +111,9 @@ export const useProfileForm = () => {
       const dataSharingSettings = {
         dob: profile.data_sharing_settings?.dob || "private",
         shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-        gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends"
+        interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || "friends",
+        gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || "friends",
+        email: profile.data_sharing_settings?.email || "friends"
       };
       
       form.reset({

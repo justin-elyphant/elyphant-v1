@@ -45,6 +45,8 @@ export type UserConnection = {
   relationship_type: string;
   data_access_permissions?: {
     dob: boolean;
+    interests: boolean;
+    /** @deprecated Use `interests` field instead. Maintained for backwards compatibility. */
     gift_preferences: boolean;
     shipping_address: boolean;
   };

@@ -84,10 +84,13 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label>Gift Preferences</Label>
+          <Label>Interests</Label>
           <Select
-            value={currentSettings.gift_preferences || "friends"}
-            onValueChange={(value) => handlePrivacyChange("gift_preferences", value)}
+            value={currentSettings.interests || currentSettings.gift_preferences || "friends"}
+            onValueChange={(value) => {
+              handlePrivacyChange("interests", value);
+              handlePrivacyChange("gift_preferences", value); // Backwards compat
+            }}
           >
             <SelectTrigger>
               <SelectValue />

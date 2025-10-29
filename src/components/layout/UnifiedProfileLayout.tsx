@@ -25,14 +25,12 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Own profile layout with sidebar (for authenticated users)
+  // Own profile layout with sidebar (for authenticated users) - no main header
   if (isOwnProfile && user) {
     return (
       <div className="min-h-screen w-full bg-background">
-        <UnifiedShopperHeader mode="main" />
-        
         <SidebarProvider defaultOpen={false}>
-          <div className="flex w-full" style={{ height: 'calc(100vh - 80px)' }}>
+          <div className="flex w-full min-h-screen">
             <AppSidebar />
             <SidebarInset className="flex-1">
               <main className="flex-1 w-full" style={{ width: '100%', maxWidth: 'none' }}>
@@ -45,10 +43,9 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
     );
   }
 
-  // Public/connection profile layout (standard header/footer)
+  // Public/connection profile layout (no main header - profile has its own header)
   return (
     <div className="min-h-screen w-full bg-background flex flex-col" style={{ width: '100vw', maxWidth: '100vw' }}>
-      <UnifiedShopperHeader mode="main" />
       <main className="flex-1 w-full" style={{ width: '100%', maxWidth: 'none' }}>
         {children}
       </main>

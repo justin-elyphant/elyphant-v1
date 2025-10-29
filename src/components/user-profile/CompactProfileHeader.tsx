@@ -285,7 +285,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
         </div>
 
         {/* Stats and Actions */}
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-wrap justify-end pr-2 md:pr-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-wrap justify-end pr-4 md:pr-6">
           {/* Enhanced Stats with Social Proof */}
           <div className="hidden sm:flex items-center gap-4 text-white">
             <button className="text-center hover:opacity-80 transition-opacity">

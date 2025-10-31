@@ -198,16 +198,31 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
     if (interests.length === 0) return [];
 
     try {
-      const searchQuery = interests.slice(0, 3).join(' ');
-      const results = await searchProducts(searchQuery);
+      const allResults: ProductWithSource[] = [];
       
-      return results.map(product => ({
-        ...product,
-        source: 'interests' as const,
-        sourceIcon: Target,
-        sourceLabel: 'Interests',
-        sourceColor: 'bg-blue-100 text-blue-700'
-      }));
+      // Search for each interest separately to ensure diverse results
+      for (const interest of interests.slice(0, 3)) {
+        try {
+          const results = await searchProducts(interest);
+          
+          // Take top 2-3 products from each interest for diversity
+          const productsPerInterest = Math.ceil(8 / Math.min(interests.length, 3));
+          const interestProducts = results.slice(0, productsPerInterest).map(product => ({
+            ...product,
+            source: 'interests' as const,
+            sourceIcon: Target,
+            sourceLabel: 'Interests',
+            sourceColor: 'bg-blue-100 text-blue-700'
+          }));
+          
+          allResults.push(...interestProducts);
+        } catch (error) {
+          console.error(`Error fetching products for interest "${interest}":`, error);
+        }
+      }
+      
+      // Shuffle to mix different interests together and limit to 8
+      return shuffleArray(allResults).slice(0, 8);
     } catch (error) {
       console.error('Error fetching interest-based products:', error);
       return [];

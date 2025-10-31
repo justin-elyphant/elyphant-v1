@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { UnifiedProfileData } from "@/services/profiles/UnifiedProfileService";
 import { publicProfileService } from "@/services/publicProfileService";
-import PublicProfileTabs from "./PublicProfileTabs";
-import PrivacyNotice from "./PrivacyNotice";
 import InstagramProfileLayout from "./InstagramProfileLayout";
 import ProfileSharingDialog from "./ProfileSharingDialog";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +23,6 @@ interface MyProfilePreviewProps {
  * profile completion and helps users understand their public presence.
  */
 const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewMode = false }) => {
-  const [activeTab, setActiveTab] = useState("public-overview");
   const [publicViewData, setPublicViewData] = useState<PublicProfileData | null>(null);
   const [isLoadingPublic, setIsLoadingPublic] = useState(false);
 
@@ -114,29 +111,6 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewM
   const completeness = calculateCompleteness();
   const needsAttention = completeness < 80;
 
-  // Secondary content for the preview mode
-  const secondaryContent = (
-    <>
-      {/* Privacy Notice */}
-      <div className="mb-6">
-        <PrivacyNotice 
-          level="public" 
-          className="w-full"
-        />
-      </div>
-      
-      {/* Profile Tabs Preview */}
-      <PublicProfileTabs
-        profile={profile}
-        publicViewData={publicViewData}
-        isLoadingPublic={isLoadingPublic}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        completeness={completeness}
-      />
-    </>
-  );
-
   return (
     <>
       {/* REMOVED: Preview Mode Indicator - Testing for width constraints */}
@@ -178,8 +152,6 @@ const MyProfilePreview: React.FC<MyProfilePreviewProps> = ({ profile, isPreviewM
         canMessage={false}
         isAnonymousUser={false}
         isPreviewMode={isPreviewMode}
-        secondaryContent={secondaryContent}
-        secondaryTitle="Profile Details & Privacy Settings"
       />
 
       {/* Enhanced Profile Sharing Dialog */}

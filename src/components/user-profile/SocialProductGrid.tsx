@@ -14,6 +14,7 @@ import ProductDetailsDialog from "@/components/marketplace/product-details/Produ
 import WishlistItemManagementDialog from "./WishlistItemManagementDialog";
 import ResponsiveProductGrid from "./ResponsiveProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
+import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 
 interface SocialProductGridProps {
   profile: any;
@@ -240,10 +241,15 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   const getTrendingProducts = async (): Promise<ProductWithSource[]> => {
     try {
-      const results = await searchProducts('trending popular bestseller');
+      // Use the dedicated best-selling categories endpoint for real Amazon trending products
+      const response = await enhancedZincApiService.searchBestSellingCategories(4);
       
-      return results.slice(0, 4).map(product => ({
+      return (response.results || []).map(product => ({
         ...product,
+        product_id: product.product_id || product.id,
+        title: product.title || product.name,
+        price: product.price,
+        image: product.image || product.main_image,
         source: 'trending' as const,
         sourceIcon: TrendingUp,
         sourceLabel: 'Trending',

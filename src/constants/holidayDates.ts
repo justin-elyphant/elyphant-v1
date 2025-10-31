@@ -23,11 +23,13 @@ export const calculateHolidayDate = (holidayKey: string, year?: number): string 
   const targetYear = year || currentDate.getFullYear();
   
   if (holiday.type === 'fixed') {
-    const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!);
+    // Set time to end of day (23:59:59) so holiday remains visible throughout the entire day
+    const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
     
     // If the holiday has passed this year, suggest next year
     if (holidayDate < currentDate && !year) {
-      return new Date(targetYear + 1, holiday.month - 1, holiday.day!).toISOString().split('T')[0];
+      const nextYearDate = new Date(targetYear + 1, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
+      return nextYearDate.toISOString().split('T')[0];
     }
     
     return holidayDate.toISOString().split('T')[0];
@@ -42,7 +44,8 @@ export const calculateHolidayDate = (holidayKey: string, year?: number): string 
     
     // Calculate the date for the nth occurrence
     const targetDate = firstTarget + (holiday.week - 1) * 7;
-    const holidayDate = new Date(targetYear, holiday.month - 1, targetDate);
+    // Set time to end of day (23:59:59) so holiday remains visible throughout the entire day
+    const holidayDate = new Date(targetYear, holiday.month - 1, targetDate, 23, 59, 59, 999);
     
     // If the holiday has passed this year, suggest next year
     if (holidayDate < currentDate && !year) {

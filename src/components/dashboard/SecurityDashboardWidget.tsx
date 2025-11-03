@@ -19,7 +19,7 @@ import { useSecurityAnomalies } from '@/hooks/useSecurityAnomalies';
 export function SecurityDashboardWidget() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { anomalies, loading: anomaliesLoading } = useSecurityAnomalies(user?.id || '');
+  const { anomalies = [], loading: anomaliesLoading } = useSecurityAnomalies(user?.id || '');
   const [sessionCount, setSessionCount] = useState(0);
   const [securityScore, setSecurityScore] = useState(0);
 

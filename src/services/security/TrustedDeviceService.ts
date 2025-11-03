@@ -22,11 +22,11 @@ export async function isDeviceTrusted(
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase
-      .from('trusted_devices' as any)
+      .from('trusted_devices')
       .select('id')
       .eq('user_id', userId)
       .eq('device_fingerprint', deviceFingerprint)
-      .maybeSingle();
+      .maybeSingle() as any;
 
     if (error) {
       console.error('Failed to check trusted device:', error);
@@ -50,16 +50,16 @@ export async function trustCurrentDevice(
 ): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('trusted_devices' as any)
+      .from('trusted_devices')
       .upsert({
         user_id: userId,
         device_fingerprint: deviceFingerprint,
         device_name: deviceName,
         trusted_at: new Date().toISOString(),
         last_used_at: new Date().toISOString()
-      } as any, {
+      }, {
         onConflict: 'user_id,device_fingerprint'
-      });
+      }) as any;
 
     if (error) {
       console.error('Failed to trust device:', error);
@@ -79,10 +79,10 @@ export async function trustCurrentDevice(
 export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]> {
   try {
     const { data, error } = await supabase
-      .from('trusted_devices' as any)
+      .from('trusted_devices')
       .select('*')
       .eq('user_id', userId)
-      .order('last_used_at', { ascending: false });
+      .order('last_used_at', { ascending: false }) as any;
 
     if (error) {
       console.error('Failed to fetch trusted devices:', error);
@@ -108,9 +108,9 @@ export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]
 export async function revokeTrustedDevice(deviceId: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('trusted_devices' as any)
+      .from('trusted_devices')
       .delete()
-      .eq('id', deviceId);
+      .eq('id', deviceId) as any;
 
     if (error) {
       console.error('Failed to revoke trusted device:', error);
@@ -132,11 +132,11 @@ export async function updateDeviceLastUsed(
   deviceFingerprint: string
 ): Promise<void> {
   try {
-    await supabase
-      .from('trusted_devices' as any)
-      .update({ last_used_at: new Date().toISOString() } as any)
+    await (supabase
+      .from('trusted_devices')
+      .update({ last_used_at: new Date().toISOString() })
       .eq('user_id', userId)
-      .eq('device_fingerprint', deviceFingerprint);
+      .eq('device_fingerprint', deviceFingerprint) as any);
   } catch (error) {
     console.error('Error updating device last used:', error);
   }

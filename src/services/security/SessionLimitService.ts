@@ -54,7 +54,7 @@ export async function getUserSessions(userId: string): Promise<SessionInfo[]> {
       id: s.id,
       deviceFingerprint: s.device_fingerprint,
       userAgent: s.user_agent,
-      ipAddress: typeof s.ip_address === 'string' ? s.ip_address : null,
+      ipAddress: s.ip_address && typeof s.ip_address === 'string' ? s.ip_address : null,
       locationData: s.location_data,
       lastActivityAt: s.last_activity_at,
       createdAt: s.created_at,

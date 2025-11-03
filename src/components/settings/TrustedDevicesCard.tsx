@@ -29,8 +29,8 @@ import {
 export function TrustedDevicesCard() {
   const { user } = useAuth();
   const [session, setSession] = useState<Session | null>(null);
-  const sessionTracking = useSessionTracking(session);
-  const deviceFingerprint = sessionTracking.sessionId; // Use session ID as device fingerprint
+  const { sessionId } = useSessionTracking(session);
+  const deviceFingerprint = sessionId; // Use session ID as device fingerprint
   const [devices, setDevices] = useState<TrustedDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [revokeDeviceId, setRevokeDeviceId] = useState<string | null>(null);

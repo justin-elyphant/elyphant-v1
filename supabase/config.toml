@@ -72,6 +72,9 @@ verify_jwt = false
 [functions.session-validator]
 verify_jwt = false
 
+[functions.cleanup-auth-rate-limits]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
@@ -81,3 +84,8 @@ schedule = "* * * * *"
 [[crons.cleanup_expired_sessions]]
 function_name = "cleanup-expired-sessions"
 schedule = "0 2 * * *"
+
+# Cron to cleanup auth rate limits daily at 3 AM
+[[crons.cleanup_auth_rate_limits]]
+function_name = "cleanup-auth-rate-limits"
+schedule = "0 3 * * *"

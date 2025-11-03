@@ -434,6 +434,42 @@ export type Database = {
           },
         ]
       }
+      auth_rate_limits: {
+        Row: {
+          attempt_count: number | null
+          blocked_until: string | null
+          created_at: string | null
+          event_type: string
+          first_attempt_at: string | null
+          id: string
+          identifier: string
+          last_attempt_at: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          event_type: string
+          first_attempt_at?: string | null
+          id?: string
+          identifier: string
+          last_attempt_at?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          event_type?: string
+          first_attempt_at?: string | null
+          id?: string
+          identifier?: string
+          last_attempt_at?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       auto_gift_data_access: {
         Row: {
           access_reason: string | null
@@ -5478,6 +5514,15 @@ export type Database = {
         Args: { cancellation_reason?: string; order_id: string }
         Returns: Json
       }
+      check_auth_rate_limit: {
+        Args: {
+          p_event_type: string
+          p_identifier: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       check_auto_gift_permission: {
         Args: { p_connection_id: string; p_user_id: string }
         Returns: Json
@@ -5496,6 +5541,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_abandoned_orders: { Args: never; Returns: number }
+      cleanup_auth_rate_limits: { Args: never; Returns: undefined }
       cleanup_expired_fingerprints: { Args: never; Returns: number }
       cleanup_expired_invitation_cache: { Args: never; Returns: number }
       cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
@@ -5732,6 +5778,10 @@ export type Database = {
       recover_stuck_orders: {
         Args: { max_age_minutes?: number }
         Returns: Json
+      }
+      reset_auth_rate_limit: {
+        Args: { p_event_type: string; p_identifier: string }
+        Returns: undefined
       }
       resolve_anomaly: { Args: { anomaly_id: string }; Returns: boolean }
       search_users_for_friends: {

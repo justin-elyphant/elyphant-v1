@@ -123,13 +123,55 @@ export function useAuthSession(): UseAuthSessionReturn {
     processAuthRedirect();
   }, []);
 
+  // Validate session matches stored user ID - CRITICAL for account switching bug
+  const validateSessionUser = async (session: Session | null) => {
+    if (!session?.user) return true; // No session to validate
+    
+    const storedUserId = localStorage.getItem("userId");
+    const sessionUserId = session.user.id;
+    
+    // Check for user ID mismatch - critical security issue
+    if (storedUserId && storedUserId !== sessionUserId) {
+      console.error('CRITICAL: Session user mismatch detected!', {
+        stored: storedUserId,
+        session: sessionUserId,
+        timestamp: new Date().toISOString(),
+        userEmail: session.user.email
+      });
+      
+      // Log security event
+      await supabase.from('security_logs').insert({
+        user_id: sessionUserId,
+        event_type: 'session_mismatch_detected',
+        details: {
+          stored_user_id: storedUserId,
+          session_user_id: sessionUserId,
+          detection_time: new Date().toISOString()
+        },
+        user_agent: navigator.userAgent,
+        risk_level: 'critical'
+      });
+      
+      // Force sign out to prevent account switching
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.reload();
+      return false;
+    }
+    
+    return true;
+  };
+
   // Simplified auth state management
   useEffect(() => {
     let mounted = true;
 
-    const updateAuthState = (newSession: Session | null, event?: string) => {
+    const updateAuthState = async (newSession: Session | null, event?: string) => {
       if (!mounted) return;
 
+      // Validate session before updating state
+      const isValid = await validateSessionUser(newSession);
+      if (!isValid) return; // Session validation failed, already handled
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
@@ -145,17 +187,15 @@ export function useAuthSession(): UseAuthSessionReturn {
           localStorage.setItem("userName", newSession.user.user_metadata.name);
         }
       } else if (event === 'SIGNED_OUT') {
-        // Clear localStorage on sign out
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("newSignUp");
-        localStorage.removeItem("emailVerified");
-        localStorage.removeItem("verifiedEmail");
-        localStorage.removeItem("modalCurrentStep");
-        localStorage.removeItem("modalInSignupFlow");
-        localStorage.removeItem("modalForceOpen");
-        localStorage.removeItem("modalTargetStep");
+        // Clear ALL localStorage on sign out except theme/language preferences
+        const theme = localStorage.getItem("theme");
+        const language = localStorage.getItem("language");
+        
+        localStorage.clear();
+        
+        // Restore theme/language
+        if (theme) localStorage.setItem("theme", theme);
+        if (language) localStorage.setItem("language", language);
         
         // Emit custom event for navigation in Router context
         window.dispatchEvent(new CustomEvent('auth-signout'));
@@ -180,12 +220,16 @@ export function useAuthSession(): UseAuthSessionReturn {
             await supabase.auth.signOut();
             return;
           }
+          
+          // Validate session matches stored user
+          const isValid = await validateSessionUser(session);
+          if (!isValid) return;
         } catch (err) {
           console.error("Auth: Error validating user:", err);
         }
       }
       
-      updateAuthState(session);
+      await updateAuthState(session);
     });
 
     return () => {

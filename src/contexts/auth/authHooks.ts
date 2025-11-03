@@ -4,29 +4,43 @@ import { toast } from "sonner";
 export const useAuthFunctions = (user: any) => {
   const signOut = async () => {
     try {
-      // Ensure logged-out view starts with an empty guest cart (preserve user cart)
-      localStorage.removeItem('guest_cart');
-      localStorage.removeItem('guest_cart_version');
+      // Log security event before sign out
+      if (user?.id) {
+        await supabase.from('security_logs').insert({
+          user_id: user.id,
+          event_type: 'user_signout',
+          details: {
+            timestamp: new Date().toISOString(),
+            manual_signout: true
+          },
+          user_agent: navigator.userAgent,
+          risk_level: 'low'
+        });
+      }
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // COMPREHENSIVE CLEANUP: Clear ALL localStorage except preferences
+      const theme = localStorage.getItem("theme");
+      const language = localStorage.getItem("language");
+      
+      // Clear all data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Restore preferences
+      if (theme) localStorage.setItem("theme", theme);
+      if (language) localStorage.setItem("language", language);
+      
       toast.success("You have been signed out");
       
-      // Clear any user-related localStorage items and old modal flags
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("modalCurrentStep");
-      localStorage.removeItem("modalInSignupFlow");
-      localStorage.removeItem("modalForceOpen");
-      localStorage.removeItem("modalTargetStep");
-      localStorage.removeItem("profileCompletionState");
-      localStorage.removeItem("onboardingStep");
-      localStorage.removeItem("signupFlowActive");
+      // Force page reload to clear memory state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
       
-      // Cart persistence: preserve per-user cart. UnifiedPaymentService switches to guest cart on sign-out.
-
-      // Auth state change will trigger navigation in Router context
     } catch (error: any) {
       console.error("Error signing out:", error.message);
       toast.error("Failed to sign out");

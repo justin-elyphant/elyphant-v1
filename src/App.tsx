@@ -13,6 +13,7 @@ import { usePerformanceMonitor } from "./utils/performanceMonitoring";
 import { OnboardingFlowTester } from "./utils/onboardingFlowTester";
 import { EmployeeRouteGuard } from "./components/auth/EmployeeRouteGuard";
 import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandler";
+import { SessionMonitor } from "./components/auth/SessionMonitor";
 import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
@@ -201,7 +202,10 @@ function AppContent() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">{/* Import at top level - inside Router context */}
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Session monitoring for security */}
+      <SessionMonitor />
+      {/* Import at top level - inside Router context */}
       <ErrorBoundary>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center">

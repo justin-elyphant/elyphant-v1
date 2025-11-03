@@ -4540,6 +4540,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          device_fingerprint: string
+          expires_at: string
+          id: string
+          ip_address: unknown
+          is_active: boolean | null
+          last_activity_at: string | null
+          location_data: Json | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_fingerprint: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          location_data?: Json | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_fingerprint?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          location_data?: Json | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_special_dates: {
         Row: {
           archived_at: string | null
@@ -5373,6 +5415,7 @@ export type Database = {
       cleanup_expired_fingerprints: { Args: never; Returns: number }
       cleanup_expired_invitation_cache: { Args: never; Returns: number }
       cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_failed_orders: { Args: never; Returns: number }
       cleanup_payment_intent_cache: { Args: never; Returns: number }
       cleanup_zma_validation_cache: { Args: never; Returns: number }
@@ -5406,6 +5449,10 @@ export type Database = {
           wishlist_id: string
           wishlist_title: string
         }[]
+      }
+      get_active_session_count: {
+        Args: { target_user_id: string }
+        Returns: number
       }
       get_full_shipping_address_for_gifting: {
         Args: { target_user_id: string }
@@ -5630,6 +5677,14 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_order_processing: { Args: { order_uuid: string }; Returns: Json }
+      terminate_other_sessions: {
+        Args: { current_session_token: string; target_user_id: string }
+        Returns: undefined
+      }
+      terminate_session: {
+        Args: { target_session_id: string }
+        Returns: undefined
+      }
       track_zma_cost: {
         Args: {
           cost: number

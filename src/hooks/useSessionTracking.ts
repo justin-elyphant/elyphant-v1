@@ -12,17 +12,24 @@ export const useSessionTracking = (session: Session | null) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Guard against rapid re-renders during auth initialization
     if (!session?.user || sessionTracked) return;
-
-    const trackSession = async () => {
+    
+    // Capture session values to avoid stale closures
+    const currentSession = session;
+    const userId = session.user.id;
+    const accessToken = session.access_token;
+    
+    // Add a small delay to ensure auth state is stable
+    const timeoutId = setTimeout(async () => {
+      // Double-check session is still valid
+      if (!currentSession?.user) return;
+      
       try {
         // Generate device fingerprint
         const fingerprint = await SessionFingerprintService.generateFingerprint();
         const deviceDescription = SessionFingerprintService.getDeviceDescription(fingerprint);
         const location = SessionFingerprintService.getApproximateLocation();
-
-        // Create session token (using access token as unique identifier)
-        const sessionToken = session.access_token;
 
         // Calculate expiration (30 days from now - absolute timeout)
         const expiresAt = new Date();
@@ -32,8 +39,8 @@ export const useSessionTracking = (session: Session | null) => {
         const { data: existingSession } = await supabase
           .from('user_sessions')
           .select('id')
-          .eq('session_token', sessionToken)
-          .eq('user_id', session.user.id)
+          .eq('session_token', accessToken)
+          .eq('user_id', userId)
           .single();
 
         if (existingSession) {
@@ -52,8 +59,8 @@ export const useSessionTracking = (session: Session | null) => {
           const { data: newSession, error } = await supabase
             .from('user_sessions')
             .insert({
-              user_id: session.user.id,
-              session_token: sessionToken,
+              user_id: userId,
+              session_token: accessToken,
               device_fingerprint: fingerprint.hash,
               user_agent: fingerprint.raw.userAgent,
               location_data: {
@@ -75,7 +82,7 @@ export const useSessionTracking = (session: Session | null) => {
 
           // Log security event
           await supabase.from('security_logs').insert({
-            user_id: session.user.id,
+            user_id: userId,
             event_type: 'session_created',
             details: {
               device_fingerprint: fingerprint.hash,
@@ -92,10 +99,10 @@ export const useSessionTracking = (session: Session | null) => {
       } catch (error) {
         console.error('Session tracking error:', error);
       }
-    };
+    }, 100); // 100ms delay to ensure auth state is stable
 
-    trackSession();
-  }, [session, sessionTracked]);
+    return () => clearTimeout(timeoutId);
+  }, [session?.user?.id, sessionTracked]); // Use stable user ID instead of whole session object
 
   // Update activity timestamp periodically (every 5 minutes)
   useEffect(() => {

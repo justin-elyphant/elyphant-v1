@@ -9,6 +9,7 @@ import { Shield, Eye, Users, MessageSquare, Heart } from "lucide-react";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings.ts";
 import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
+import { SessionManagement } from "./SessionManagement";
 
 const PrivacySecuritySettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -148,6 +149,9 @@ const PrivacySecuritySettings: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Session Management - Phase 2 Enterprise Feature */}
+      <SessionManagement />
 
       <Card>
         <CardHeader>

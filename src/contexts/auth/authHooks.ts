@@ -4,6 +4,19 @@ import { toast } from "sonner";
 export const useAuthFunctions = (user: any) => {
   const signOut = async () => {
     try {
+      // Get current session token before signing out
+      const { data: { session } } = await supabase.auth.getSession();
+      const sessionToken = session?.access_token;
+
+      // Mark session as inactive in database
+      if (sessionToken && user?.id) {
+        await supabase
+          .from('user_sessions')
+          .update({ is_active: false })
+          .eq('session_token', sessionToken)
+          .eq('user_id', user.id);
+      }
+
       // Log security event before sign out
       if (user?.id) {
         await supabase.from('security_logs').insert({
@@ -11,7 +24,8 @@ export const useAuthFunctions = (user: any) => {
           event_type: 'user_signout',
           details: {
             timestamp: new Date().toISOString(),
-            manual_signout: true
+            manual_signout: true,
+            session_token: sessionToken ? 'present' : 'missing',
           },
           user_agent: navigator.userAgent,
           risk_level: 'low'

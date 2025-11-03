@@ -69,7 +69,15 @@ verify_jwt = false
 [functions.migrate-interests-consolidation]
 verify_jwt = false
 
+[functions.session-validator]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
 schedule = "* * * * *"
+
+# Cron to cleanup expired sessions daily at 2 AM
+[[crons.cleanup_expired_sessions]]
+function_name = "cleanup-expired-sessions"
+schedule = "0 2 * * *"

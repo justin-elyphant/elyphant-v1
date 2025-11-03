@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeDetectionService } from "@/services/employee/EmployeeDetectionService";
+import { useSessionTracking } from "@/hooks/useSessionTracking";
 
 interface UseAuthSessionReturn {
   user: User | null;
@@ -16,6 +17,9 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
+
+  // Track sessions in database (Phase 2: Enterprise Session Management)
+  useSessionTracking(session);
 
   // Validate session matches stored user ID - CRITICAL for account switching bug
   const validateSessionUser = async (session: Session | null) => {

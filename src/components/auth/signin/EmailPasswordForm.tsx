@@ -8,10 +8,10 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import { useAuthWithRateLimit } from "@/hooks/useAuthWithRateLimit";
 
 const signInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -25,8 +25,8 @@ interface EmailPasswordFormProps {
 }
 
 export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { signIn, isLoading: authLoading } = useAuthWithRateLimit();
 
   const form = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -38,15 +38,11 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
 
   const onSubmit = async (values: SignInValues) => {
     try {
-      setIsLoading(true);
       setErrorMessage(null);
       
       console.log("Attempting to sign in with email:", values.email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      const { data, error } = await signIn(values.email, values.password);
       
       if (error) {
         console.error("Sign in error:", error);
@@ -82,8 +78,6 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
     } catch (err: any) {
       console.error("Sign in submission error:", err);
       setErrorMessage(err.message || "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -110,7 +104,7 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
                     placeholder="your@email.com"
                     className="pl-10"
                     {...field}
-                    disabled={isLoading}
+                    disabled={authLoading}
                     type="email"
                   />
                 </div>
@@ -134,7 +128,7 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
                     placeholder="••••••••"
                     className="pl-10"
                     {...field}
-                    disabled={isLoading}
+                    disabled={authLoading}
                   />
                 </div>
               </FormControl>
@@ -145,10 +139,10 @@ export function EmailPasswordForm({ onSuccess }: EmailPasswordFormProps) {
         
         <Button 
           type="submit" 
-          className="w-full bg-purple-600 hover:bg-purple-700" // Styled like sign-up button
-          disabled={isLoading}
+          className="w-full bg-purple-600 hover:bg-purple-700"
+          disabled={authLoading}
         >
-          {isLoading ? (
+          {authLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Signing in...

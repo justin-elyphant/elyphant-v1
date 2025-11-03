@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
 import MainLayout from '@/components/layout/MainLayout';
+import { useAuthWithRateLimit } from '@/hooks/useAuthWithRateLimit';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { resetPassword, isLoading: loading } = useAuthWithRateLimit();
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,21 +17,13 @@ const ForgotPassword = () => {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      // Use UnifiedAuthService for enhanced security and logging
-      const result = await unifiedAuthService.initiatePasswordReset(email);
-      
-      if (result.success) {
-        toast.success(result.message || 'Password reset email sent! Check your inbox.');
-      } else {
-        toast.error(result.error || 'Unable to send reset email. Please try again.');
-      }
-    } catch (error: any) {
-      toast.error('Unable to send reset email. Please try again later.');
-    } finally {
-      setLoading(false);
+    const { error } = await resetPassword(email);
+    
+    if (!error) {
+      toast.success('Password reset email sent!', {
+        description: 'Please check your email for the reset link.',
+      });
+      setEmail('');
     }
   };
 
@@ -56,9 +48,9 @@ const ForgotPassword = () => {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
+            <Button 
+              type="submit" 
+              className="w-full" 
               disabled={loading}
             >
               {loading ? 'Sending...' : 'Send Reset Email'}

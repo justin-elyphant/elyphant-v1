@@ -30,6 +30,7 @@ import { MobileActionBar } from "@/components/mobile/MobileActionBar";
 import { supabase } from "@/integrations/supabase/client";
 import MobileDashboardGrid from "./MobileDashboardGrid";
 import { cn } from "@/lib/utils";
+import { SecurityDashboardWidget } from "./SecurityDashboardWidget";
 
 const DashboardGrid = () => {
   const { user } = useAuth();
@@ -132,6 +133,9 @@ const DashboardGrid = () => {
 
       {/* Profile Data Integrity Panel - Top Priority */}
       <ProfileDataIntegrityPanel />
+
+      {/* Security Dashboard Widget */}
+      <SecurityDashboardWidget />
 
       {/* Quick Gift Setup CTA */}
       <QuickGiftCTA />

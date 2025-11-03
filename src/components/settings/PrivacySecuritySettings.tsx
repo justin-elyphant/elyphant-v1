@@ -12,6 +12,8 @@ import DeleteAccountSection from "./DeleteAccountSection";
 import { SessionManagement } from "./SessionManagement";
 import { SecurityAlerts } from "./SecurityAlerts";
 import { SecurityNotificationPreferences } from "./SecurityNotificationPreferences";
+import { ActiveSessionsCard } from "./ActiveSessionsCard";
+import { TrustedDevicesCard } from "./TrustedDevicesCard";
 
 const PrivacySecuritySettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -151,6 +153,12 @@ const PrivacySecuritySettings: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Active Sessions Management */}
+      <ActiveSessionsCard />
+
+      {/* Trusted Devices */}
+      <TrustedDevicesCard />
 
       {/* Session Management - Phase 2 Enterprise Feature */}
       <SessionManagement />

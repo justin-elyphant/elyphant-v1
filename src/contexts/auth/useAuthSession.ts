@@ -169,13 +169,20 @@ export function useAuthSession(): UseAuthSessionReturn {
     const updateAuthState = async (newSession: Session | null, event?: string) => {
       if (!mounted) return;
 
-      // Validate session before updating state
-      const isValid = await validateSessionUser(newSession);
-      if (!isValid) return; // Session validation failed, already handled
-
+      // Set session and user FIRST to make them available immediately
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setIsLoading(false);
+
+      // Then validate in background (non-blocking)
+      if (newSession?.user) {
+        validateSessionUser(newSession).then(isValid => {
+          if (!isValid && mounted) {
+            // Validation failed, session was already handled by validateSessionUser
+            return;
+          }
+        });
+      }
 
       // Simple localStorage operations without batching
       if (newSession?.user) {
@@ -211,8 +218,10 @@ export function useAuthSession(): UseAuthSessionReturn {
 
     // Get initial session and validate user still exists
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // Set auth state immediately for faster initialization
+      await updateAuthState(session);
       
-      // If we have a session, verify the user still exists
+      // Then validate in background
       if (session?.user) {
         try {
           const { data, error } = await supabase.auth.getUser();
@@ -221,15 +230,12 @@ export function useAuthSession(): UseAuthSessionReturn {
             return;
           }
           
-          // Validate session matches stored user
-          const isValid = await validateSessionUser(session);
-          if (!isValid) return;
+          // Additional validation check
+          validateSessionUser(session);
         } catch (err) {
           console.error("Auth: Error validating user:", err);
         }
       }
-      
-      await updateAuthState(session);
     });
 
     return () => {

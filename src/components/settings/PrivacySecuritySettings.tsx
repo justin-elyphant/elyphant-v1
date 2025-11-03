@@ -10,6 +10,8 @@ import { usePrivacySettings } from "@/hooks/usePrivacySettings.ts";
 import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
 import { SessionManagement } from "./SessionManagement";
+import { SecurityAlerts } from "./SecurityAlerts";
+import { SecurityNotificationPreferences } from "./SecurityNotificationPreferences";
 
 const PrivacySecuritySettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -152,6 +154,12 @@ const PrivacySecuritySettings: React.FC = () => {
 
       {/* Session Management - Phase 2 Enterprise Feature */}
       <SessionManagement />
+
+      {/* Security Alerts - Phase 3: Anomaly Detection */}
+      <SecurityAlerts />
+
+      {/* Security Notification Preferences - Phase 3 */}
+      <SecurityNotificationPreferences />
 
       <Card>
         <CardHeader>

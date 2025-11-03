@@ -4050,6 +4050,50 @@ export type Database = {
         }
         Relationships: []
       }
+      security_anomalies: {
+        Row: {
+          anomaly_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          risk_score: number
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          anomaly_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          risk_score?: number
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          anomaly_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          risk_score?: number
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_anomalies_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_audit: {
         Row: {
           access_granted: boolean
@@ -4459,6 +4503,42 @@ export type Database = {
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_notification_preferences: {
+        Row: {
+          created_at: string
+          device_change_alerts: boolean | null
+          email_notifications: boolean | null
+          id: string
+          location_change_alerts: boolean | null
+          new_session_alerts: boolean | null
+          suspicious_activity_alerts: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_change_alerts?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          location_change_alerts?: boolean | null
+          new_session_alerts?: boolean | null
+          suspicious_activity_alerts?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_change_alerts?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          location_change_alerts?: boolean | null
+          new_session_alerts?: boolean | null
+          suspicious_activity_alerts?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -5354,6 +5434,10 @@ export type Database = {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
       }
+      calculate_risk_score: {
+        Args: { anomaly_type_param: string; details_param: Json }
+        Returns: number
+      }
       can_abort_order: { Args: { order_id: string }; Returns: Json }
       can_access_order_notes: {
         Args: { note_order_id: string }
@@ -5502,6 +5586,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_active_anomalies: {
+        Args: { target_user_id: string }
+        Returns: {
+          anomaly_type: string
+          created_at: string
+          details: Json
+          id: string
+          risk_score: number
+        }[]
+      }
       get_user_context: { Args: { check_user_id: string }; Returns: Json }
       get_user_privacy_settings: {
         Args: { target_user_id: string }
@@ -5639,6 +5733,7 @@ export type Database = {
         Args: { max_age_minutes?: number }
         Returns: Json
       }
+      resolve_anomaly: { Args: { anomaly_id: string }; Returns: boolean }
       search_users_for_friends: {
         Args: {
           requesting_user_id?: string

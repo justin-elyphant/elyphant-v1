@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { SessionFingerprintService } from '@/services/auth/sessionFingerprint';
+import { AnomalyDetectionService } from '@/services/security/AnomalyDetectionService';
 
 /**
  * Hook to track user sessions in the database
@@ -93,6 +94,24 @@ export const useSessionTracking = (session: Session | null) => {
             user_agent: fingerprint.raw.userAgent,
             risk_level: 'low',
           });
+
+          // Run anomaly detection (Phase 3)
+          setTimeout(async () => {
+            try {
+              const anomalies = await AnomalyDetectionService.runAllChecks(
+                userId,
+                fingerprint,
+                location
+              );
+
+              // Log detected anomalies
+              for (const anomaly of anomalies) {
+                await AnomalyDetectionService.logAnomaly(userId, newSession.id, anomaly);
+              }
+            } catch (error) {
+              console.error('Anomaly detection failed:', error);
+            }
+          }, 0);
         }
 
         setSessionTracked(true);

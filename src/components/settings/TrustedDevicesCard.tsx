@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, Trash2, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   getTrustedDevices, 
   revokeTrustedDevice, 
@@ -26,11 +28,19 @@ import {
 
 export function TrustedDevicesCard() {
   const { user } = useAuth();
-  const { deviceFingerprint } = useSessionTracking();
+  const [session, setSession] = useState<Session | null>(null);
+  const sessionTracking = useSessionTracking(session);
+  const deviceFingerprint = sessionTracking.sessionId; // Use session ID as device fingerprint
   const [devices, setDevices] = useState<TrustedDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [revokeDeviceId, setRevokeDeviceId] = useState<string | null>(null);
   const [isCurrentTrusted, setIsCurrentTrusted] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
 
   useEffect(() => {
     loadDevices();

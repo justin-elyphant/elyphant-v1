@@ -22,7 +22,7 @@ export async function isDeviceTrusted(
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase
-      .from('trusted_devices')
+      .from('trusted_devices' as any)
       .select('id')
       .eq('user_id', userId)
       .eq('device_fingerprint', deviceFingerprint)
@@ -50,14 +50,14 @@ export async function trustCurrentDevice(
 ): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('trusted_devices')
+      .from('trusted_devices' as any)
       .upsert({
         user_id: userId,
         device_fingerprint: deviceFingerprint,
         device_name: deviceName,
         trusted_at: new Date().toISOString(),
         last_used_at: new Date().toISOString()
-      }, {
+      } as any, {
         onConflict: 'user_id,device_fingerprint'
       });
 
@@ -79,7 +79,7 @@ export async function trustCurrentDevice(
 export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]> {
   try {
     const { data, error } = await supabase
-      .from('trusted_devices')
+      .from('trusted_devices' as any)
       .select('*')
       .eq('user_id', userId)
       .order('last_used_at', { ascending: false });
@@ -89,7 +89,7 @@ export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]
       return [];
     }
 
-    return (data || []).map(d => ({
+    return ((data || []) as any[]).map((d: any) => ({
       id: d.id,
       deviceFingerprint: d.device_fingerprint,
       deviceName: d.device_name,
@@ -108,7 +108,7 @@ export async function getTrustedDevices(userId: string): Promise<TrustedDevice[]
 export async function revokeTrustedDevice(deviceId: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('trusted_devices')
+      .from('trusted_devices' as any)
       .delete()
       .eq('id', deviceId);
 
@@ -133,8 +133,8 @@ export async function updateDeviceLastUsed(
 ): Promise<void> {
   try {
     await supabase
-      .from('trusted_devices')
-      .update({ last_used_at: new Date().toISOString() })
+      .from('trusted_devices' as any)
+      .update({ last_used_at: new Date().toISOString() } as any)
       .eq('user_id', userId)
       .eq('device_fingerprint', deviceFingerprint);
   } catch (error) {

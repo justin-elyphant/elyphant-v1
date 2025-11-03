@@ -19,7 +19,7 @@ import { useSecurityAnomalies } from '@/hooks/useSecurityAnomalies';
 export function SecurityDashboardWidget() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { anomalies, loading: anomaliesLoading } = useSecurityAnomalies();
+  const { anomalies, loading: anomaliesLoading } = useSecurityAnomalies(user?.id || '');
   const [sessionCount, setSessionCount] = useState(0);
   const [securityScore, setSecurityScore] = useState(0);
 
@@ -46,11 +46,11 @@ export function SecurityDashboardWidget() {
     if (sessions > 5) score -= 10;
     
     // Deduct for active anomalies
-    const highRiskAnomalies = anomalies.filter(a => a.riskScore >= 70);
+    const highRiskAnomalies = anomalies.filter(a => a.risk_score >= 70);
     score -= highRiskAnomalies.length * 15;
     
     // Deduct for medium risk anomalies
-    const mediumRiskAnomalies = anomalies.filter(a => a.riskScore >= 40 && a.riskScore < 70);
+    const mediumRiskAnomalies = anomalies.filter(a => a.risk_score >= 40 && a.risk_score < 70);
     score -= mediumRiskAnomalies.length * 5;
     
     setSecurityScore(Math.max(0, score));
@@ -68,7 +68,7 @@ export function SecurityDashboardWidget() {
     return 'destructive';
   };
 
-  const highRiskAnomalies = anomalies.filter(a => a.riskScore >= 70);
+  const highRiskAnomalies = anomalies.filter(a => a.risk_score >= 70);
 
   return (
     <Card>
@@ -137,10 +137,10 @@ export function SecurityDashboardWidget() {
                 className="p-3 rounded-lg border border-orange-200 bg-orange-50 dark:bg-orange-950/20"
               >
                 <p className="text-sm font-medium">
-                  {anomaly.anomalyType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {anomaly.anomaly_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Risk Score: {anomaly.riskScore}/100
+                  Risk Score: {anomaly.risk_score}/100
                 </p>
               </div>
             ))}

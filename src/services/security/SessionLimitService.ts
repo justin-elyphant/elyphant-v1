@@ -18,6 +18,17 @@ export interface SessionInfo {
   isCurrent: boolean;
 }
 
+interface DbSession {
+  id: string;
+  device_fingerprint: string;
+  user_agent: string | null;
+  ip_address: unknown;
+  location_data: any;
+  last_activity_at: string;
+  created_at: string;
+  session_token: string;
+}
+
 /**
  * Get user's active sessions
  */
@@ -39,11 +50,11 @@ export async function getUserSessions(userId: string): Promise<SessionInfo[]> {
     const { data: { session } } = await supabase.auth.getSession();
     const currentToken = session?.access_token;
 
-    return (sessions || []).map(s => ({
+    return ((sessions || []) as DbSession[]).map(s => ({
       id: s.id,
       deviceFingerprint: s.device_fingerprint,
       userAgent: s.user_agent,
-      ipAddress: s.ip_address,
+      ipAddress: typeof s.ip_address === 'string' ? s.ip_address : null,
       locationData: s.location_data,
       lastActivityAt: s.last_activity_at,
       createdAt: s.created_at,

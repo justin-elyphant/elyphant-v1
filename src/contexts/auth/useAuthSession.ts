@@ -17,6 +17,45 @@ export function useAuthSession(): UseAuthSessionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
 
+  // Validate session matches stored user ID - CRITICAL for account switching bug
+  const validateSessionUser = async (session: Session | null) => {
+    if (!session?.user) return true; // No session to validate
+    
+    const storedUserId = localStorage.getItem("userId");
+    const sessionUserId = session.user.id;
+    
+    // Check for user ID mismatch - critical security issue
+    if (storedUserId && storedUserId !== sessionUserId) {
+      console.error('CRITICAL: Session user mismatch detected!', {
+        stored: storedUserId,
+        session: sessionUserId,
+        timestamp: new Date().toISOString(),
+        userEmail: session.user.email
+      });
+      
+      // Log security event
+      await supabase.from('security_logs').insert({
+        user_id: sessionUserId,
+        event_type: 'session_mismatch_detected',
+        details: {
+          stored_user_id: storedUserId,
+          session_user_id: sessionUserId,
+          detection_time: new Date().toISOString()
+        },
+        user_agent: navigator.userAgent,
+        risk_level: 'critical'
+      });
+      
+      // Force sign out to prevent account switching
+      await supabase.auth.signOut();
+      localStorage.clear();
+      window.location.reload();
+      return false;
+    }
+    
+    return true;
+  };
+
   // Process OAuth tokens from URL - SECURITY: Only on allowed routes
   useEffect(() => {
     let isProcessed = false;
@@ -122,45 +161,6 @@ export function useAuthSession(): UseAuthSessionReturn {
 
     processAuthRedirect();
   }, []);
-
-  // Validate session matches stored user ID - CRITICAL for account switching bug
-  const validateSessionUser = async (session: Session | null) => {
-    if (!session?.user) return true; // No session to validate
-    
-    const storedUserId = localStorage.getItem("userId");
-    const sessionUserId = session.user.id;
-    
-    // Check for user ID mismatch - critical security issue
-    if (storedUserId && storedUserId !== sessionUserId) {
-      console.error('CRITICAL: Session user mismatch detected!', {
-        stored: storedUserId,
-        session: sessionUserId,
-        timestamp: new Date().toISOString(),
-        userEmail: session.user.email
-      });
-      
-      // Log security event
-      await supabase.from('security_logs').insert({
-        user_id: sessionUserId,
-        event_type: 'session_mismatch_detected',
-        details: {
-          stored_user_id: storedUserId,
-          session_user_id: sessionUserId,
-          detection_time: new Date().toISOString()
-        },
-        user_agent: navigator.userAgent,
-        risk_level: 'critical'
-      });
-      
-      // Force sign out to prevent account switching
-      await supabase.auth.signOut();
-      localStorage.clear();
-      window.location.reload();
-      return false;
-    }
-    
-    return true;
-  };
 
   // Simplified auth state management
   useEffect(() => {

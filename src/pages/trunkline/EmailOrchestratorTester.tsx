@@ -31,28 +31,28 @@ interface EventTypeOption {
 
 const eventTypes: EventTypeOption[] = [
   // Core E-Commerce
-  { value: 'order_confirmation', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['orderId'] },
-  { value: 'order_status_update', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['orderId', 'customData'] },
-  { value: 'order_cancelled', label: 'Order Cancellation', category: 'Orders', icon: Package, description: 'Order was cancelled', requiredFields: ['orderId'] },
-  { value: 'cart_abandoned', label: 'Abandoned Cart', category: 'Orders', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['cartSessionId'] },
-  { value: 'post_purchase_followup', label: 'Post-Purchase Follow-up', category: 'Orders', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['orderId'] },
+  { value: 'order.confirmed', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['customData'] },
+  { value: 'order.status_update', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['customData'] },
+  { value: 'order.cancelled', label: 'Order Cancellation', category: 'Orders', icon: Package, description: 'Order was cancelled', requiredFields: ['customData'] },
+  { value: 'cart.abandoned', label: 'Abandoned Cart', category: 'Orders', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['customData'] },
+  { value: 'post_purchase.followup', label: 'Post-Purchase Follow-up', category: 'Orders', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['customData'] },
   
   // Gifting
-  { value: 'gift_invitation', label: 'Gift Invitation', category: 'Gifting', icon: Gift, description: 'Invitation to receive a gift', requiredFields: ['customData'] },
-  { value: 'auto_gift_approval', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
-  { value: 'gift_received_notification', label: 'Gift Received Notification', category: 'Gifting', icon: Gift, description: 'Someone bought you a gift', requiredFields: ['customData'] },
+  { value: 'gift.invitation', label: 'Gift Invitation', category: 'Gifting', icon: Gift, description: 'Invitation to receive a gift', requiredFields: ['customData'] },
+  { value: 'auto_gift.approval_request', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
+  { value: 'gift.purchased_notification', label: 'Gift Purchased Notification', category: 'Gifting', icon: Gift, description: 'Someone bought a gift for you', requiredFields: ['customData'] },
   
   // Connections
-  { value: 'connection_invitation', label: 'Connection Invitation', category: 'Connections', icon: Users, description: 'Invite to connect', requiredFields: ['customData'] },
-  { value: 'connection_established', label: 'Connection Established', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
+  { value: 'connection.invitation', label: 'Connection Invitation', category: 'Connections', icon: Users, description: 'Invite to connect', requiredFields: ['customData'] },
+  { value: 'connection.established', label: 'Connection Established', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
   
   // Onboarding & Engagement
-  { value: 'welcome_email', label: 'Welcome Email', category: 'Onboarding', icon: Mail, description: 'Welcome new users', requiredFields: ['userId'] },
-  { value: 'birthday_reminder', label: 'Birthday Reminder', category: 'Onboarding', icon: Gift, description: 'Birthday gift reminder', requiredFields: ['customData'] },
+  { value: 'onboarding.welcome', label: 'Welcome Email', category: 'Onboarding', icon: Mail, description: 'Welcome new users', requiredFields: ['customData'] },
+  { value: 'onboarding.birthday_reminder', label: 'Birthday Reminder', category: 'Onboarding', icon: Gift, description: 'Birthday gift reminder', requiredFields: ['customData'] },
   
   // Wishlist
-  { value: 'wishlist_purchase_notification', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought your wishlist item', requiredFields: ['customData'] },
-  { value: 'address_request', label: 'Address Request', category: 'Wishlist', icon: Heart, description: 'Request shipping address', requiredFields: ['customData'] },
+  { value: 'wishlist.purchase_notification', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought your wishlist item', requiredFields: ['customData'] },
+  { value: 'wishlist.item_back_in_stock', label: 'Item Back in Stock', category: 'Wishlist', icon: Heart, description: 'Wishlist item is back in stock', requiredFields: ['customData'] },
 ];
 
 const EmailOrchestratorTester: React.FC = () => {
@@ -199,35 +199,117 @@ const EmailOrchestratorTester: React.FC = () => {
   };
 
   const generateMockData = () => {
-    const mockData: any = {
-      first_name: 'Test',
-      name: 'Test User',
-      email: testEmail || 'test@example.com',
+    const mockDataMap: Record<string, any> = {
+      'order.confirmed': {
+        first_name: 'Sarah',
+        order_number: 'ORD-2024-1234',
+        total_amount: '$89.97',
+        order_date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        items: [
+          { name: 'Wireless Headphones', quantity: 1, price: '$49.99' },
+          { name: 'Phone Case', quantity: 2, price: '$19.99' }
+        ],
+        shipping_address: '123 Main St\nApt 4B\nNew York, NY 10001',
+        tracking_url: 'https://elyphant.ai/track/ABC123'
+      },
+      'order.status_update': {
+        first_name: 'Michael',
+        order_number: 'ORD-2024-5678',
+        status: 'Shipped',
+        status_message: 'Your order is on its way!',
+        tracking_url: 'https://elyphant.ai/track/XYZ789',
+        estimated_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+      },
+      'order.cancelled': {
+        first_name: 'Jennifer',
+        order_number: 'ORD-2024-9012',
+        cancellation_reason: 'Customer requested cancellation',
+        refund_amount: '$125.50',
+        refund_timeline: '5-7 business days'
+      },
+      'cart.abandoned': {
+        first_name: 'David',
+        cart_items: [
+          { title: 'Smart Watch', price: '$299.99', image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' },
+          { title: 'Fitness Tracker', price: '$79.99', image_url: 'https://images.unsplash.com/photo-1434494878577-86c23bcb06b9' }
+        ],
+        cart_total: '$379.98',
+        cart_url: 'https://elyphant.ai/cart'
+      },
+      'post_purchase.followup': {
+        first_name: 'Amanda',
+        order_number: 'ORD-2024-3456',
+        product_names: ['Laptop Stand', 'Wireless Mouse'],
+        feedback_url: 'https://elyphant.ai/feedback',
+        support_url: 'https://elyphant.ai/support'
+      },
+      'gift.invitation': {
+        sender_name: 'Emily',
+        recipient_name: 'James',
+        occasion: 'Birthday',
+        message: 'Happy Birthday! Hope you find something you love!',
+        invitation_url: 'https://elyphant.ai/gift/accept/abc123'
+      },
+      'auto_gift.approval_request': {
+        recipient_name: 'Lisa',
+        occasion: 'Anniversary',
+        gift_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+        suggested_gift: 'Premium Wireless Earbuds',
+        budget: '$150.00',
+        approval_url: 'https://elyphant.ai/approve/def456'
+      },
+      'gift.purchased_notification': {
+        recipient_name: 'Robert',
+        gift_name: 'Coffee Maker Deluxe',
+        sender_name: 'Alex',
+        occasion: 'Housewarming',
+        expected_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+      },
+      'connection.invitation': {
+        sender_name: 'Jessica',
+        sender_email: 'jessica@example.com',
+        invitation_message: 'Let\'s connect on Elyphant! I\'d love to exchange gift ideas.',
+        accept_url: 'https://elyphant.ai/connect/accept/ghi789'
+      },
+      'connection.established': {
+        connection_name: 'Mark',
+        connection_email: 'mark@example.com',
+        profile_url: 'https://elyphant.ai/profile/mark'
+      },
+      'onboarding.welcome': {
+        first_name: 'Taylor',
+        dashboard_url: 'https://elyphant.ai/dashboard',
+        profile_url: 'https://elyphant.ai/profile'
+      },
+      'onboarding.birthday_reminder': {
+        first_name: 'Chris',
+        recipient_name: 'Jordan',
+        days_until: '7',
+        occasion: 'Birthday',
+        setup_url: 'https://elyphant.ai/gifts/setup'
+      },
+      'wishlist.purchase_notification': {
+        first_name: 'Morgan',
+        item_name: 'Designer Backpack',
+        purchaser_name: 'Sam',
+        expected_delivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+      },
+      'wishlist.item_back_in_stock': {
+        first_name: 'Casey',
+        item_name: 'Limited Edition Sneakers',
+        item_price: '$189.99',
+        item_url: 'https://elyphant.ai/product/sneakers-123',
+        item_image: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2'
+      }
     };
 
-    if (selectedEvent?.includes('order')) {
-      mockData.order_number = 'TEST-001';
-      mockData.total_amount = '$99.99';
-    }
-
-    if (selectedEvent?.includes('gift')) {
-      mockData.sender_name = 'Alice Smith';
-      mockData.recipient_name = 'Bob Johnson';
-      mockData.gift_message = 'Happy Birthday!';
-      mockData.occasion = 'birthday';
-    }
-
-    if (selectedEvent?.includes('connection')) {
-      mockData.sender_name = 'Alice Smith';
-      mockData.invitation_url = 'https://elyphant.ai/accept-invitation';
-    }
-
-    if (selectedEvent?.includes('password')) {
-      mockData.reset_url = 'https://elyphant.ai/reset-password';
-    }
+    const mockData = mockDataMap[selectedEvent] || {
+      first_name: 'Test',
+      name: 'Test User',
+    };
 
     setCustomData(JSON.stringify(mockData, null, 2));
-    toast.success('Generated mock data');
+    toast.success('Generated realistic mock data');
   };
 
   const groupedEvents = eventTypes.reduce((acc, event) => {

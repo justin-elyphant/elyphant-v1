@@ -13,30 +13,26 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface EmailRequest {
   eventType: 
-    | 'order_created' 
-    | 'order_status_changed' 
-    | 'order_cancelled' 
+    // Core E-Commerce (5)
+    | 'order_confirmation'
+    | 'order_status_update'
+    | 'order_cancelled'
     | 'cart_abandoned'
-    | 'post_purchase_followup' 
-    | 'auto_gift_approval' 
+    | 'post_purchase_followup'
+    // Gifting Core (3)
     | 'gift_invitation'
-    | 'gift_invitation_with_connection_request'
+    | 'auto_gift_approval'
+    | 'gift_received_notification'
+    // Social/Connections (2)
     | 'connection_invitation'
-    | 'connection_accepted'
-    | 'connection_welcome'
-    | 'password_reset'
-    | 'password_changed'
-    | 'account_deletion'
-    | 'wishlist_welcome'
-    | 'address_request'
-    | 'nudge_reminder'
-    | 'birthday_reminder_curated'
-    | 'birthday_connection_no_autogift'
-    | 'birthday_connection_with_autogift'
-    | 'gift_purchased_for_you'
-    | 'wishlist_item_purchased'
-    | 'wishlist_purchase_confirmation'
-    | 'wishlist_weekly_summary';
+    | 'connection_established'
+    // Onboarding & Engagement (2)
+    | 'welcome_email'
+    | 'birthday_reminder'
+    // Wishlist (1)
+    | 'wishlist_purchase_notification'
+    // Operational
+    | 'address_request';
   orderId?: string;
   userId?: string;
   cartSessionId?: string;
@@ -62,10 +58,11 @@ const handler = async (req: Request): Promise<Response> => {
     let result;
     
     switch (eventType) {
-      case 'order_created':
+      // Core E-Commerce
+      case 'order_confirmation':
         result = await handleOrderConfirmation(supabase, orderId!);
         break;
-      case 'order_status_changed':
+      case 'order_status_update':
         result = await handleOrderStatusUpdate(supabase, orderId!, customData?.status);
         break;
       case 'order_cancelled':
@@ -77,63 +74,44 @@ const handler = async (req: Request): Promise<Response> => {
       case 'post_purchase_followup':
         result = await handlePostPurchaseFollowup(supabase, orderId!);
         break;
+      
+      // Gifting Core
+      case 'gift_invitation':
+        result = await handleGiftInvitation(supabase, customData!);
+        break;
       case 'auto_gift_approval':
         result = await handleAutoGiftApproval(supabase, customData!);
         break;
-    case 'gift_invitation':
-      result = await handleGiftInvitation(supabase, customData!);
-      break;
-    case 'gift_invitation_with_connection_request':
-      result = await handleGiftInvitationWithConnection(supabase, customData!);
-      break;
-    case 'connection_invitation':
+      case 'gift_received_notification':
+        result = await handleGiftPurchasedNotification(supabase, customData!);
+        break;
+      
+      // Social/Connections
+      case 'connection_invitation':
         result = await handleConnectionInvitation(supabase, customData!);
         break;
-      case 'connection_accepted':
-        result = await handleConnectionAccepted(supabase, customData!);
+      case 'connection_established':
+        result = await handleConnectionEstablished(supabase, customData!);
         break;
-      case 'connection_welcome':
-        result = await handleConnectionWelcome(supabase, customData!);
+      
+      // Onboarding & Engagement
+      case 'welcome_email':
+        result = await handleWelcomeEmail(supabase, customData!);
         break;
-      case 'password_reset':
-        result = await handlePasswordReset(supabase, customData!);
+      case 'birthday_reminder':
+        result = await handleBirthdayReminder(supabase, customData!);
         break;
-      case 'password_changed':
-        result = await handlePasswordChanged(supabase, customData!);
+      
+      // Wishlist
+      case 'wishlist_purchase_notification':
+        result = await handleWishlistPurchaseNotification(supabase, customData!);
         break;
-      case 'account_deletion':
-        result = await handleAccountDeletion(supabase, customData!);
-        break;
-      case 'wishlist_welcome':
-        result = await handleWishlistWelcome(supabase, customData!);
-        break;
+      
+      // Operational
       case 'address_request':
         result = await handleAddressRequest(supabase, customData!);
         break;
-      case 'nudge_reminder':
-        result = await handleNudgeReminder(supabase, customData!);
-        break;
-      case 'birthday_reminder_curated':
-        result = await handleBirthdayReminderCurated(supabase, customData!);
-        break;
-      case 'birthday_connection_no_autogift':
-        result = await handleBirthdayConnectionNoAutogift(supabase, customData!);
-        break;
-      case 'birthday_connection_with_autogift':
-        result = await handleBirthdayConnectionWithAutogift(supabase, customData!);
-        break;
-      case 'gift_purchased_for_you':
-        result = await handleGiftPurchasedNotification(supabase, customData!);
-        break;
-      case 'wishlist_item_purchased':
-        result = await handleWishlistItemPurchased(supabase, customData!);
-        break;
-      case 'wishlist_purchase_confirmation':
-        result = await handleWishlistPurchaseConfirmation(supabase, customData!);
-        break;
-      case 'wishlist_weekly_summary':
-        result = await handleWishlistWeeklySummary(supabase, customData!);
-        break;
+      
       default:
         throw new Error(`Unknown event type: ${eventType}`);
     }

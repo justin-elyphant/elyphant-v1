@@ -7,6 +7,9 @@ export interface GiftInvitationProps {
   occasion?: string;
   custom_message?: string;
   relationship_type?: string;
+  // Optional: For gift + connection request combo
+  is_gift_with_connection?: boolean;
+  gift_message?: string;
 }
 
 // Helper function to get personalized greeting
@@ -142,17 +145,47 @@ function getSubjectEmoji(relationship?: string): string {
 
 export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
   const emoji = getSubjectEmoji(props.relationship_type);
-  const greeting = getPersonalizedGreeting(props.sender_first_name, props.recipient_name, props.relationship_type);
+  const greeting = props.is_gift_with_connection 
+    ? `${props.sender_first_name} just sent you a gift and wants to connect with you on Elyphant!`
+    : getPersonalizedGreeting(props.sender_first_name, props.recipient_name, props.relationship_type);
   const benefits = getBenefitsList(props.relationship_type);
+  
+  // Gift notification box (if this is a gift + connection combo)
+  const giftNotificationHtml = props.is_gift_with_connection ? `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 24px; border-radius: 12px; margin: 24px 0; border: 2px solid #0ea5e9;">
+      <tr>
+        <td>
+          <h3 style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #0c4a6e;">
+            📦 Your Gift is Being Prepared
+          </h3>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #0c4a6e; line-height: 1.6;">
+            We're processing your gift${props.occasion ? ` for ${props.occasion}` : ''} and will send you tracking details soon!
+          </p>
+          ${props.gift_message ? `
+            <div style="background: white; padding: 16px; border-radius: 8px; margin-top: 16px;">
+              <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">
+                Personal Message
+              </p>
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1e293b; font-style: italic;">
+                "${props.gift_message}"
+              </p>
+            </div>
+          ` : ''}
+        </td>
+      </tr>
+    </table>
+  ` : '';
   
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.2;">
-      ${props.sender_first_name} invited you to Elyphant! ${emoji}
+      ${props.is_gift_with_connection ? `🎁 ${props.sender_first_name} sent you a gift!` : `${props.sender_first_name} invited you to Elyphant! ${emoji}`}
     </h2>
     
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; line-height: 24px;">
       ${greeting}
     </p>
+    
+    ${giftNotificationHtml}
     
     ${props.occasion ? `
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
@@ -201,7 +234,7 @@ export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
       <tr>
         <td align="center" style="padding: 20px 0;">
           <a href="${props.invitation_url}" style="display: inline-block; padding: 18px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600;">
-            Accept Invitation
+            ${props.is_gift_with_connection ? 'Accept Connection & Say Thanks' : 'Accept Invitation'}
           </a>
         </td>
       </tr>

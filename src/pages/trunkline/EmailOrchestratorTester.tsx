@@ -79,6 +79,8 @@ const EmailOrchestratorTester: React.FC = () => {
 
   const selectedEventType = eventTypes.find(e => e.value === selectedEvent);
 
+  console.log('[EmailOrchestratorTester] mounted/rendered');
+
   const validateForm = () => {
     if (!selectedEvent) {
       toast.error('Please select an event type');

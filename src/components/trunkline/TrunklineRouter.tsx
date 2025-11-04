@@ -21,6 +21,7 @@ import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
   const path = location.pathname.replace('/trunkline', '') || '/';
+  console.log('[TrunklineRouter] computed path:', path);
 
   const renderContent = () => {
     switch (path) {
@@ -56,8 +57,10 @@ export const TrunklineRouter: React.FC = () => {
         return <EmailTemplatesManager />;
       case '/communications/email-analytics':
         return <EmailAnalyticsDashboard />;
-      case '/communications/orchestrator-test':
+      case '/communications/orchestrator-test': {
+        console.log('[TrunklineRouter] Rendering EmailOrchestratorTester');
         return <EmailOrchestratorTester />;
+      }
       default:
         return <OverviewTab />;
     }

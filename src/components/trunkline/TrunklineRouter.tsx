@@ -59,7 +59,16 @@ export const TrunklineRouter: React.FC = () => {
         return <EmailAnalyticsDashboard />;
       case '/communications/orchestrator-test': {
         console.log('[TrunklineRouter] Rendering EmailOrchestratorTester');
-        return <EmailOrchestratorTester />;
+        return (
+          <div>
+            <h2 className="text-lg font-semibold mb-4" data-testid="orchestrator-header">
+              Orchestrator Tester Loaded
+            </h2>
+            <React.Suspense fallback={<div>Loading tester…</div>}>
+              <EmailOrchestratorTester />
+            </React.Suspense>
+          </div>
+        );
       }
       default:
         return <OverviewTab />;

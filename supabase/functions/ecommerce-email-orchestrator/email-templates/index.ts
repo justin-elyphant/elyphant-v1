@@ -12,6 +12,9 @@ export type { OrderConfirmationProps } from './order-confirmation.ts';
 export { orderStatusUpdateTemplate } from './order-status-update.ts';
 export type { OrderStatusUpdateProps } from './order-status-update.ts';
 
+export { orderCancelledTemplate } from './order-cancelled.ts';
+export type { OrderCancelledProps } from './order-cancelled.ts';
+
 export { cartAbandonedTemplate } from './cart-abandoned.ts';
 export type { CartAbandonedProps } from './cart-abandoned.ts';
 

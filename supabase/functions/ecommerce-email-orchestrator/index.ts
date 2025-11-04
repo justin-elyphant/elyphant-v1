@@ -8,6 +8,7 @@ import {
   // Core E-Commerce
   orderConfirmationTemplate,
   orderStatusUpdateTemplate,
+  orderCancelledTemplate,
   cartAbandonedTemplate,
   postPurchaseFollowupTemplate,
   
@@ -31,6 +32,7 @@ import {
 import type {
   OrderConfirmationProps,
   OrderStatusUpdateProps,
+  OrderCancelledProps,
   CartAbandonedProps,
   PostPurchaseFollowupProps,
   GiftInvitationProps,
@@ -228,25 +230,15 @@ async function handleOrderStatusUpdate(data: OrderStatusUpdateProps, recipientEm
 /**
  * Handler: Order Cancelled
  */
-async function handleOrderCancelled(data: any, recipientEmail: string) {
+async function handleOrderCancelled(data: OrderCancelledProps, recipientEmail: string) {
   console.log('🚫 Handling order cancellation email');
   
-  // TODO: Create proper order-cancelled.ts template
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
-      <h1>Order Cancelled</h1>
-      <p>Your order #${data.order_number} has been cancelled.</p>
-      <p>Your refund will be processed within 5-7 business days.</p>
-    </body>
-    </html>
-  `;
+  const emailHtml = orderCancelledTemplate(data);
 
   return {
     to: recipientEmail,
-    subject: `Order Cancelled - #${data.order_number}`,
-    html: html,
+    subject: `Order Cancelled - Refund Processing for #${data.order_number}`,
+    html: emailHtml,
   };
 }
 

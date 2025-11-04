@@ -47,6 +47,17 @@ export interface OrderConfirmationProps {
 export const orderConfirmationTemplate = (props: OrderConfirmationProps): string => {
   // Helper function to render single-recipient items
   const renderSingleRecipientItems = () => {
+    if (!props.items || props.items.length === 0) {
+      return `
+        <h3 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+          Order Items
+        </h3>
+        <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666;">
+          No items found for this order.
+        </p>
+      `;
+    }
+    
     const itemsHtml = props.items.map(item => `
       <tr>
         <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
@@ -80,7 +91,7 @@ export const orderConfirmationTemplate = (props: OrderConfirmationProps): string
     if (!props.child_orders || props.child_orders.length === 0) return '';
     
     return props.child_orders.map((childOrder, index) => {
-      const childItemsHtml = childOrder.items.map(item => `
+      const childItemsHtml = (childOrder.items || []).map(item => `
         <tr>
           <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
             <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #333333; font-weight: 500;">

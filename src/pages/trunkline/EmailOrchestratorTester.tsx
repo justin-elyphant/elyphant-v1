@@ -30,41 +30,29 @@ interface EventTypeOption {
 }
 
 const eventTypes: EventTypeOption[] = [
-  // Order Events
-  { value: 'order_created', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['orderId'] },
-  { value: 'order_status_changed', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['orderId', 'customData'] },
+  // Core E-Commerce
+  { value: 'order_confirmation', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['orderId'] },
+  { value: 'order_status_update', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['orderId', 'customData'] },
   { value: 'order_cancelled', label: 'Order Cancellation', category: 'Orders', icon: Package, description: 'Order was cancelled', requiredFields: ['orderId'] },
-  
-  // Cart & Post-Purchase
-  { value: 'cart_abandoned', label: 'Abandoned Cart', category: 'Cart & Post-Purchase', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['cartSessionId'] },
-  { value: 'post_purchase_followup', label: 'Post-Purchase Follow-up', category: 'Cart & Post-Purchase', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['orderId'] },
+  { value: 'cart_abandoned', label: 'Abandoned Cart', category: 'Orders', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['cartSessionId'] },
+  { value: 'post_purchase_followup', label: 'Post-Purchase Follow-up', category: 'Orders', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['orderId'] },
   
   // Gifting
-  { value: 'auto_gift_approval', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
   { value: 'gift_invitation', label: 'Gift Invitation', category: 'Gifting', icon: Gift, description: 'Invitation to receive a gift', requiredFields: ['customData'] },
-  { value: 'gift_invitation_with_connection_request', label: 'Gift + Connection Invite', category: 'Gifting', icon: Gift, description: 'Gift with connection request', requiredFields: ['customData'] },
-  { value: 'gift_purchased_for_you', label: 'Gift Purchased For You', category: 'Gifting', icon: Gift, description: 'Someone bought you a gift', requiredFields: ['customData'] },
+  { value: 'auto_gift_approval', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
+  { value: 'gift_received_notification', label: 'Gift Received Notification', category: 'Gifting', icon: Gift, description: 'Someone bought you a gift', requiredFields: ['customData'] },
   
   // Connections
   { value: 'connection_invitation', label: 'Connection Invitation', category: 'Connections', icon: Users, description: 'Invite to connect', requiredFields: ['customData'] },
-  { value: 'connection_accepted', label: 'Connection Accepted', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
-  { value: 'connection_welcome', label: 'Connection Welcome', category: 'Connections', icon: Users, description: 'Welcome new connection', requiredFields: ['customData'] },
+  { value: 'connection_established', label: 'Connection Established', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
   
-  // Account Security
-  { value: 'password_reset', label: 'Password Reset', category: 'Account Security', icon: Lock, description: 'Password reset request', requiredFields: ['customData'] },
-  { value: 'password_changed', label: 'Password Changed', category: 'Account Security', icon: Lock, description: 'Password was changed', requiredFields: ['customData'] },
-  { value: 'account_deletion', label: 'Account Deletion', category: 'Account Security', icon: Lock, description: 'Account deletion confirmation', requiredFields: ['customData'] },
+  // Onboarding & Engagement
+  { value: 'welcome_email', label: 'Welcome Email', category: 'Onboarding', icon: Mail, description: 'Welcome new users', requiredFields: ['userId'] },
+  { value: 'birthday_reminder', label: 'Birthday Reminder', category: 'Onboarding', icon: Gift, description: 'Birthday gift reminder', requiredFields: ['customData'] },
   
   // Wishlist
-  { value: 'wishlist_welcome', label: 'Wishlist Welcome', category: 'Wishlist', icon: Heart, description: 'Welcome to wishlist feature', requiredFields: ['customData'] },
+  { value: 'wishlist_purchase_notification', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought your wishlist item', requiredFields: ['customData'] },
   { value: 'address_request', label: 'Address Request', category: 'Wishlist', icon: Heart, description: 'Request shipping address', requiredFields: ['customData'] },
-  { value: 'nudge_reminder', label: 'Nudge Reminder', category: 'Wishlist', icon: Heart, description: 'Reminder nudge', requiredFields: ['customData'] },
-  { value: 'birthday_reminder_curated', label: 'Birthday Reminder (Curated)', category: 'Wishlist', icon: Heart, description: 'Curated birthday gift reminder', requiredFields: ['customData'] },
-  { value: 'birthday_connection_no_autogift', label: 'Birthday (No AutoGift)', category: 'Wishlist', icon: Heart, description: 'Birthday without auto-gift', requiredFields: ['customData'] },
-  { value: 'birthday_connection_with_autogift', label: 'Birthday (With AutoGift)', category: 'Wishlist', icon: Heart, description: 'Birthday with auto-gift', requiredFields: ['customData'] },
-  { value: 'wishlist_item_purchased', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought wishlist item', requiredFields: ['customData'] },
-  { value: 'wishlist_purchase_confirmation', label: 'Wishlist Purchase Confirm', category: 'Wishlist', icon: Heart, description: 'Confirmation of wishlist purchase', requiredFields: ['customData'] },
-  { value: 'wishlist_weekly_summary', label: 'Wishlist Weekly Summary', category: 'Wishlist', icon: Heart, description: 'Weekly wishlist summary', requiredFields: ['customData'] },
 ];
 
 const EmailOrchestratorTester: React.FC = () => {

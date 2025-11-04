@@ -67,7 +67,7 @@ const eventTypes: EventTypeOption[] = [
   { value: 'wishlist_weekly_summary', label: 'Wishlist Weekly Summary', category: 'Wishlist', icon: Heart, description: 'Weekly wishlist summary', requiredFields: ['customData'] },
 ];
 
-const EmailOrchestratorTester = () => {
+const EmailOrchestratorTester: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [testEmail, setTestEmail] = useState('');
   const [orderId, setOrderId] = useState('');

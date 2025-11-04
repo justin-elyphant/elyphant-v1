@@ -79,6 +79,11 @@ const communicationItems = [
     url: "/trunkline/communications/email-analytics",
     icon: BarChart3,
   },
+  {
+    title: "Orchestrator Tester",
+    url: "/trunkline/communications/orchestrator-test",
+    icon: TestTube,
+  },
 ];
 
 const settingsItems = [

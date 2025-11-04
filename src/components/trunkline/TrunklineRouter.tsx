@@ -16,6 +16,7 @@ import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
 import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
 import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
+import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
 
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
@@ -55,6 +56,8 @@ export const TrunklineRouter: React.FC = () => {
         return <EmailTemplatesManager />;
       case '/communications/email-analytics':
         return <EmailAnalyticsDashboard />;
+      case '/communications/orchestrator-test':
+        return <EmailOrchestratorTester />;
       default:
         return <OverviewTab />;
     }

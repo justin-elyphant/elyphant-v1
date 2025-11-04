@@ -76,7 +76,7 @@ interface EmailRequest {
     // Operational (kept for backward compatibility)
     | 'address_request';
   data: any;
-  recipientEmail?: string;
+  recipientEmail?: string; // Optional: For testing, overrides DB lookup
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -100,56 +100,56 @@ const handler = async (req: Request): Promise<Response> => {
     switch (eventType) {
       // Core E-Commerce
       case 'order_confirmation':
-        emailData = await handleOrderConfirmation(data, recipientEmail!);
+        emailData = await handleOrderConfirmation(supabase, data, recipientEmail);
         break;
       case 'order_status_update':
-        emailData = await handleOrderStatusUpdate(data, recipientEmail!);
+        emailData = await handleOrderStatusUpdate(supabase, data, recipientEmail);
         break;
       case 'order_cancelled':
-        emailData = await handleOrderCancelled(data, recipientEmail!);
+        emailData = await handleOrderCancelled(supabase, data, recipientEmail);
         break;
       case 'cart_abandoned':
-        emailData = await handleCartAbandoned(data, recipientEmail!);
+        emailData = await handleCartAbandoned(supabase, data, recipientEmail);
         break;
       case 'post_purchase_followup':
-        emailData = await handlePostPurchaseFollowup(data, recipientEmail!);
+        emailData = await handlePostPurchaseFollowup(supabase, data, recipientEmail);
         break;
       
       // Gifting Core
       case 'gift_invitation':
-        emailData = await handleGiftInvitation(data, recipientEmail!);
+        emailData = await handleGiftInvitation(supabase, data, recipientEmail);
         break;
       case 'auto_gift_approval':
-        emailData = await handleAutoGiftApproval(data, recipientEmail!);
+        emailData = await handleAutoGiftApproval(supabase, data, recipientEmail);
         break;
       case 'gift_received_notification':
-        emailData = await handleGiftReceivedNotification(data, recipientEmail!);
+        emailData = await handleGiftReceivedNotification(supabase, data, recipientEmail);
         break;
       
       // Social/Connections
       case 'connection_invitation':
-        emailData = await handleConnectionInvitation(data, recipientEmail!);
+        emailData = await handleConnectionInvitation(supabase, data, recipientEmail);
         break;
       case 'connection_established':
-        emailData = await handleConnectionEstablished(data, recipientEmail!);
+        emailData = await handleConnectionEstablished(supabase, data, recipientEmail);
         break;
       
       // Onboarding & Engagement
       case 'welcome_email':
-        emailData = await handleWelcomeEmail(data, recipientEmail!);
+        emailData = await handleWelcomeEmail(supabase, data, recipientEmail);
         break;
       case 'birthday_reminder':
-        emailData = await handleBirthdayReminder(data, recipientEmail!);
+        emailData = await handleBirthdayReminder(supabase, data, recipientEmail);
         break;
       
       // Wishlist
       case 'wishlist_purchase_notification':
-        emailData = await handleWishlistPurchaseNotification(data, recipientEmail!);
+        emailData = await handleWishlistPurchaseNotification(supabase, data, recipientEmail);
         break;
       
       // Operational (legacy support)
       case 'address_request':
-        emailData = await handleAddressRequest(data, recipientEmail!);
+        emailData = await handleAddressRequest(supabase, data, recipientEmail);
         break;
       
       default:
@@ -193,8 +193,20 @@ const handler = async (req: Request): Promise<Response> => {
 /**
  * Handler: Order Confirmation
  */
-async function handleOrderConfirmation(data: OrderConfirmationProps, recipientEmail: string) {
+async function handleOrderConfirmation(supabase: any, data: any, recipientEmail?: string) {
   console.log('📦 Handling order confirmation email');
+  
+  // If no recipientEmail provided, fetch from database
+  if (!recipientEmail) {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('user_id, profiles!inner(email)')
+      .eq('id', data.orderId || data.order_id)
+      .single();
+    
+    recipientEmail = order?.profiles?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  }
   
   const emailHtml = orderConfirmationTemplate(data);
 
@@ -208,8 +220,20 @@ async function handleOrderConfirmation(data: OrderConfirmationProps, recipientEm
 /**
  * Handler: Order Status Update
  */
-async function handleOrderStatusUpdate(data: OrderStatusUpdateProps, recipientEmail: string) {
+async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?: string) {
   console.log('📦 Handling order status update email');
+  
+  // If no recipientEmail provided, fetch from database
+  if (!recipientEmail) {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('user_id, profiles!inner(email)')
+      .eq('id', data.orderId || data.order_id)
+      .single();
+    
+    recipientEmail = order?.profiles?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  }
   
   const emailHtml = orderStatusUpdateTemplate(data);
   
@@ -230,8 +254,20 @@ async function handleOrderStatusUpdate(data: OrderStatusUpdateProps, recipientEm
 /**
  * Handler: Order Cancelled
  */
-async function handleOrderCancelled(data: OrderCancelledProps, recipientEmail: string) {
+async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: string) {
   console.log('🚫 Handling order cancellation email');
+  
+  // If no recipientEmail provided, fetch from database
+  if (!recipientEmail) {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('user_id, profiles!inner(email)')
+      .eq('id', data.orderId || data.order_id)
+      .single();
+    
+    recipientEmail = order?.profiles?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  }
   
   const emailHtml = orderCancelledTemplate(data);
 
@@ -245,8 +281,20 @@ async function handleOrderCancelled(data: OrderCancelledProps, recipientEmail: s
 /**
  * Handler: Cart Abandoned
  */
-async function handleCartAbandoned(data: CartAbandonedProps, recipientEmail: string) {
+async function handleCartAbandoned(supabase: any, data: any, recipientEmail?: string) {
   console.log('🛒 Handling cart abandoned email');
+  
+  // If no recipientEmail provided, fetch from database
+  if (!recipientEmail) {
+    const { data: cart } = await supabase
+      .from('cart_sessions')
+      .select('user_id, profiles!inner(email)')
+      .eq('id', data.cartSessionId || data.cart_session_id)
+      .single();
+    
+    recipientEmail = cart?.profiles?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for cart');
+  }
   
   const emailHtml = cartAbandonedTemplate(data);
 
@@ -260,8 +308,20 @@ async function handleCartAbandoned(data: CartAbandonedProps, recipientEmail: str
 /**
  * Handler: Post Purchase Followup
  */
-async function handlePostPurchaseFollowup(data: PostPurchaseFollowupProps, recipientEmail: string) {
+async function handlePostPurchaseFollowup(supabase: any, data: any, recipientEmail?: string) {
   console.log('⭐ Handling post-purchase followup email');
+  
+  // If no recipientEmail provided, fetch from database
+  if (!recipientEmail) {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('user_id, profiles!inner(email)')
+      .eq('id', data.orderId || data.order_id)
+      .single();
+    
+    recipientEmail = order?.profiles?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  }
   
   const emailHtml = postPurchaseFollowupTemplate(data);
 
@@ -276,8 +336,14 @@ async function handlePostPurchaseFollowup(data: PostPurchaseFollowupProps, recip
  * Handler: Gift Invitation
  * Handles both simple gift invitations and gift+connection requests
  */
-async function handleGiftInvitation(data: GiftInvitationProps, recipientEmail: string) {
+async function handleGiftInvitation(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎁 Handling gift invitation email');
+  
+  // recipientEmail must be provided for gift invitations (external recipients)
+  if (!recipientEmail) {
+    recipientEmail = data.recipient_email || data.recipientEmail;
+    if (!recipientEmail) throw new Error('Recipient email required for gift invitation');
+  }
   
   const emailHtml = giftInvitationTemplate(data);
   
@@ -293,8 +359,20 @@ async function handleGiftInvitation(data: GiftInvitationProps, recipientEmail: s
 /**
  * Handler: Auto Gift Approval
  */
-async function handleAutoGiftApproval(data: AutoGiftApprovalProps, recipientEmail: string) {
+async function handleAutoGiftApproval(supabase: any, data: any, recipientEmail?: string) {
   console.log('✅ Handling auto-gift approval email');
+  
+  // If no recipientEmail provided, fetch from user who set up the auto-gift
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId || data.user_id)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for auto-gift approval');
+  }
   
   const emailHtml = autoGiftApprovalTemplate(data);
 
@@ -308,8 +386,14 @@ async function handleAutoGiftApproval(data: AutoGiftApprovalProps, recipientEmai
 /**
  * Handler: Gift Received Notification
  */
-async function handleGiftReceivedNotification(data: GiftPurchasedNotificationProps, recipientEmail: string) {
+async function handleGiftReceivedNotification(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎁 Handling gift received notification email');
+  
+  // recipientEmail must be provided or in data (external recipients)
+  if (!recipientEmail) {
+    recipientEmail = data.recipient_email || data.recipientEmail;
+    if (!recipientEmail) throw new Error('Recipient email required for gift notification');
+  }
   
   const emailHtml = giftPurchasedNotificationTemplate(data);
 
@@ -323,8 +407,14 @@ async function handleGiftReceivedNotification(data: GiftPurchasedNotificationPro
 /**
  * Handler: Connection Invitation
  */
-async function handleConnectionInvitation(data: ConnectionInvitationProps, recipientEmail: string) {
+async function handleConnectionInvitation(supabase: any, data: any, recipientEmail?: string) {
   console.log('👥 Handling connection invitation email');
+  
+  // recipientEmail must be provided (external invitations)
+  if (!recipientEmail) {
+    recipientEmail = data.recipient_email || data.recipientEmail;
+    if (!recipientEmail) throw new Error('Recipient email required for connection invitation');
+  }
   
   const emailHtml = connectionInvitationTemplate(data);
 
@@ -339,8 +429,20 @@ async function handleConnectionInvitation(data: ConnectionInvitationProps, recip
  * Handler: Connection Established
  * Sent to both parties when connection is accepted
  */
-async function handleConnectionEstablished(data: ConnectionEstablishedProps, recipientEmail: string) {
+async function handleConnectionEstablished(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎉 Handling connection established email');
+  
+  // If no recipientEmail provided, fetch from user_id
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId || data.user_id)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for connection');
+  }
   
   const emailHtml = connectionEstablishedTemplate(data);
 
@@ -355,8 +457,20 @@ async function handleConnectionEstablished(data: ConnectionEstablishedProps, rec
  * Handler: Welcome Email
  * Smart welcome email with optional product suggestions
  */
-async function handleWelcomeEmail(data: WelcomeEmailConsolidatedProps, recipientEmail: string) {
+async function handleWelcomeEmail(supabase: any, data: any, recipientEmail?: string) {
   console.log('👋 Handling welcome email');
+  
+  // If no recipientEmail provided, fetch from user_id
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId || data.user_id)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for welcome');
+  }
   
   const emailHtml = welcomeEmailConsolidatedTemplate(data);
 
@@ -371,8 +485,20 @@ async function handleWelcomeEmail(data: WelcomeEmailConsolidatedProps, recipient
  * Handler: Birthday Reminder
  * Handles all birthday contexts: self, connection with auto-gift, connection without auto-gift
  */
-async function handleBirthdayReminder(data: BirthdayReminderProps, recipientEmail: string) {
+async function handleBirthdayReminder(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎂 Handling birthday reminder email');
+  
+  // If no recipientEmail provided, fetch from user_id
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId || data.user_id)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for birthday reminder');
+  }
   
   const emailHtml = birthdayReminderConsolidatedTemplate(data);
   
@@ -393,8 +519,24 @@ async function handleBirthdayReminder(data: BirthdayReminderProps, recipientEmai
  * Handler: Wishlist Purchase Notification
  * Consolidates: wishlist_item_purchased + wishlist_purchase_confirmation
  */
-async function handleWishlistPurchaseNotification(data: WishlistPurchaseNotificationProps, recipientEmail: string) {
+async function handleWishlistPurchaseNotification(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎁 Handling wishlist purchase notification email');
+  
+  // If no recipientEmail provided, fetch based on notification type
+  if (!recipientEmail) {
+    const userId = data.notification_type === 'purchaser_confirmation' 
+      ? data.purchaser_id || data.purchaserId
+      : data.wishlist_owner_id || data.wishlistOwnerId;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userId)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find recipient email for wishlist notification');
+  }
   
   const emailHtml = wishlistPurchaseNotificationTemplate(data);
   
@@ -412,8 +554,14 @@ async function handleWishlistPurchaseNotification(data: WishlistPurchaseNotifica
 /**
  * Handler: Address Request (Legacy - operational necessity)
  */
-async function handleAddressRequest(data: any, recipientEmail: string) {
+async function handleAddressRequest(supabase: any, data: any, recipientEmail?: string) {
   console.log('📍 Handling address request email');
+  
+  // recipientEmail must be provided (external recipients)
+  if (!recipientEmail) {
+    recipientEmail = data.recipient_email || data.recipientEmail;
+    if (!recipientEmail) throw new Error('Recipient email required for address request');
+  }
   
   const html = `
     <!DOCTYPE html>

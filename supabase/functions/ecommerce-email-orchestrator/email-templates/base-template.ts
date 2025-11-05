@@ -77,22 +77,9 @@ export const baseEmailTemplate = ({ content, preheader }: BaseTemplateProps): st
           <!-- Header with gradient and logo -->
           <tr>
             <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="padding-right: 12px; vertical-align: middle;">
-                    <img 
-                      src="https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" 
-                      alt="Elyphant logo" 
-                      style="height: 40px; width: auto; display: block;"
-                    />
-                  </td>
-                  <td style="vertical-align: middle;">
-                    <span style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; line-height: 1;">
-                      Elyphant
-                    </span>
-                  </td>
-                </tr>
-              </table>
+              <span style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; line-height: 1;">
+                🎁 Elyphant
+              </span>
             </td>
           </tr>
           

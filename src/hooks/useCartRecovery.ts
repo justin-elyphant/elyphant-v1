@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,7 @@ export const useCartRecovery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { addToCart, cartItems, clearCart, assignItemToRecipient } = useCart();
-  const navigate = useNavigate();
+  
   const [state, setState] = useState<CartRecoveryState>({
     isRecovering: false,
     error: null,
@@ -185,13 +185,13 @@ export const useCartRecovery = () => {
       setState({ isRecovering: false, error: error.message, success: false });
       setSearchParams({}); // Clear URL parameter even on error
     }
-  }, [user?.id, addToCart, clearCart, assignItemToRecipient, cartItems.length, setSearchParams]);
+  }, [user?.id, addToCart, clearCart, assignItemToRecipient, setSearchParams]);
 
   useEffect(() => {
     const recoverSessionId = searchParams.get('recover');
     if (!recoverSessionId) return;
     recoverCart(recoverSessionId);
-  }, [searchParams, recoverCart]);
+  }, [searchParams.get('recover'), recoverCart]);
 
   return state;
 };

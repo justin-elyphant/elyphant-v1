@@ -200,11 +200,19 @@ async function handleOrderConfirmation(supabase: any, data: any, recipientEmail?
   if (!recipientEmail) {
     const { data: order } = await supabase
       .from('orders')
-      .select('user_id, profiles!inner(email)')
+      .select('user_id')
       .eq('id', data.orderId || data.order_id)
       .single();
-    
-    recipientEmail = order?.profiles?.email;
+
+    if (order?.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', order.user_id)
+        .single();
+      recipientEmail = profile?.email;
+    }
+
     if (!recipientEmail) throw new Error('Could not find recipient email for order');
   }
   
@@ -232,8 +240,7 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
       tracking_number,
       merchant_tracking_data,
       delivery_dates,
-      user_id,
-      profiles!inner(email, first_name)
+      user_id
     `)
     .eq('id', data.orderId || data.order_id)
     .single();
@@ -242,8 +249,15 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
     throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
   }
   
-  // Use provided recipientEmail or get from order
-  const emailTo = recipientEmail || order.profiles?.email;
+  // Fetch profile separately (no FK join available)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, first_name')
+    .eq('id', order.user_id)
+    .single();
+  
+  // Use provided recipientEmail or get from profile
+  const emailTo = recipientEmail || profile?.email;
   if (!emailTo) throw new Error('Could not find recipient email for order');
   
   // Extract tracking URL from merchant_tracking_data
@@ -264,7 +278,7 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
   
   // Transform data into format expected by email template
   const templateData: OrderStatusUpdateProps = {
-    first_name: order.profiles?.first_name || 'there',
+    first_name: profile?.first_name || 'there',
     order_number: order.order_number,
     status: data.newStatus || data.status,
     tracking_number: order.tracking_number || null,
@@ -311,8 +325,7 @@ async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: s
       order_number,
       total_amount,
       status,
-      user_id,
-      profiles!inner(email, first_name)
+      user_id
     `)
     .eq('id', data.orderId || data.order_id)
     .single();
@@ -320,6 +333,13 @@ async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: s
   if (orderError || !order) {
     throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
   }
+  
+  // Fetch profile separately (no FK join available)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, first_name')
+    .eq('id', order.user_id)
+    .single();
   
   // Fetch order items
   const { data: orderItems, error: itemsError } = await supabase
@@ -331,13 +351,13 @@ async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: s
     console.error('Error fetching order items:', itemsError);
   }
   
-  // Use provided recipientEmail or get from order
-  const emailTo = recipientEmail || order.profiles?.email;
+  // Use provided recipientEmail or get from profile
+  const emailTo = recipientEmail || profile?.email;
   if (!emailTo) throw new Error('Could not find recipient email for order');
   
   // Transform data into format expected by email template
   const templateData: OrderCancelledProps = {
-    first_name: order.profiles?.first_name || 'there',
+    first_name: profile?.first_name || 'there',
     order_number: order.order_number,
     order_items: (orderItems || []).map(item => ({
       name: item.product_name,
@@ -377,11 +397,19 @@ async function handleCartAbandoned(supabase: any, data: any, recipientEmail?: st
   if (!recipientEmail) {
     const { data: cart } = await supabase
       .from('cart_sessions')
-      .select('user_id, profiles!inner(email)')
+      .select('user_id')
       .eq('id', data.cartSessionId || data.cart_session_id)
       .single();
     
-    recipientEmail = cart?.profiles?.email;
+    if (cart?.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', cart.user_id)
+        .single();
+      recipientEmail = profile?.email;
+    }
+    
     if (!recipientEmail) throw new Error('Could not find recipient email for cart');
   }
   
@@ -404,11 +432,19 @@ async function handlePostPurchaseFollowup(supabase: any, data: any, recipientEma
   if (!recipientEmail) {
     const { data: order } = await supabase
       .from('orders')
-      .select('user_id, profiles!inner(email)')
+      .select('user_id')
       .eq('id', data.orderId || data.order_id)
       .single();
     
-    recipientEmail = order?.profiles?.email;
+    if (order?.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', order.user_id)
+        .single();
+      recipientEmail = profile?.email;
+    }
+    
     if (!recipientEmail) throw new Error('Could not find recipient email for order');
   }
   

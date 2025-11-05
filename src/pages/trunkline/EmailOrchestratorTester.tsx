@@ -215,10 +215,10 @@ const EmailOrchestratorTester: React.FC = () => {
       'order_status_update': {
         first_name: 'Michael',
         order_number: 'ORD-2024-5678',
-        status: 'Shipped',
-        status_message: 'Your order is on its way!',
+        status: 'shipped',
+        tracking_number: 'TRK123456789',
         tracking_url: 'https://elyphant.ai/track/XYZ789',
-        estimated_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+        expected_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       },
       'order_cancelled': {
         first_name: 'Jennifer',

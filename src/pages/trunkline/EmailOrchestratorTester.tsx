@@ -31,28 +31,28 @@ interface EventTypeOption {
 
 const eventTypes: EventTypeOption[] = [
   // Core E-Commerce
-  { value: 'order.confirmed', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['customData'] },
-  { value: 'order.status_update', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['customData'] },
-  { value: 'order.cancelled', label: 'Order Cancellation', category: 'Orders', icon: Package, description: 'Order was cancelled', requiredFields: ['customData'] },
-  { value: 'cart.abandoned', label: 'Abandoned Cart', category: 'Orders', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['customData'] },
-  { value: 'post_purchase.followup', label: 'Post-Purchase Follow-up', category: 'Orders', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['customData'] },
+  { value: 'order_confirmation', label: 'Order Confirmation', category: 'Orders', icon: Package, description: 'Sent when order is created', requiredFields: ['customData'] },
+  { value: 'order_status_update', label: 'Order Status Update', category: 'Orders', icon: Package, description: 'Order status changed (shipped, delivered)', requiredFields: ['customData'] },
+  { value: 'order_cancelled', label: 'Order Cancellation', category: 'Orders', icon: Package, description: 'Order was cancelled', requiredFields: ['customData'] },
+  { value: 'cart_abandoned', label: 'Abandoned Cart', category: 'Orders', icon: ShoppingCart, description: 'Cart left without checkout', requiredFields: ['customData'] },
+  { value: 'post_purchase_followup', label: 'Post-Purchase Follow-up', category: 'Orders', icon: ShoppingCart, description: 'Follow-up after purchase', requiredFields: ['customData'] },
   
   // Gifting
-  { value: 'gift.invitation', label: 'Gift Invitation', category: 'Gifting', icon: Gift, description: 'Invitation to receive a gift', requiredFields: ['customData'] },
-  { value: 'auto_gift.approval_request', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
-  { value: 'gift.purchased_notification', label: 'Gift Purchased Notification', category: 'Gifting', icon: Gift, description: 'Someone bought a gift for you', requiredFields: ['customData'] },
+  { value: 'gift_invitation', label: 'Gift Invitation', category: 'Gifting', icon: Gift, description: 'Invitation to receive a gift', requiredFields: ['customData'] },
+  { value: 'auto_gift_approval', label: 'Auto Gift Approval', category: 'Gifting', icon: Gift, description: 'Auto gift needs approval', requiredFields: ['customData'] },
+  { value: 'gift_received_notification', label: 'Gift Purchased Notification', category: 'Gifting', icon: Gift, description: 'Someone bought a gift for you', requiredFields: ['customData'] },
   
   // Connections
-  { value: 'connection.invitation', label: 'Connection Invitation', category: 'Connections', icon: Users, description: 'Invite to connect', requiredFields: ['customData'] },
-  { value: 'connection.established', label: 'Connection Established', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
+  { value: 'connection_invitation', label: 'Connection Invitation', category: 'Connections', icon: Users, description: 'Invite to connect', requiredFields: ['customData'] },
+  { value: 'connection_established', label: 'Connection Established', category: 'Connections', icon: Users, description: 'Connection request accepted', requiredFields: ['customData'] },
   
   // Onboarding & Engagement
-  { value: 'onboarding.welcome', label: 'Welcome Email', category: 'Onboarding', icon: Mail, description: 'Welcome new users', requiredFields: ['customData'] },
-  { value: 'onboarding.birthday_reminder', label: 'Birthday Reminder', category: 'Onboarding', icon: Gift, description: 'Birthday gift reminder', requiredFields: ['customData'] },
+  { value: 'welcome_email', label: 'Welcome Email', category: 'Onboarding', icon: Mail, description: 'Welcome new users', requiredFields: ['customData'] },
+  { value: 'birthday_reminder', label: 'Birthday Reminder', category: 'Onboarding', icon: Gift, description: 'Birthday gift reminder', requiredFields: ['customData'] },
   
   // Wishlist
-  { value: 'wishlist.purchase_notification', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought your wishlist item', requiredFields: ['customData'] },
-  { value: 'wishlist.item_back_in_stock', label: 'Item Back in Stock', category: 'Wishlist', icon: Heart, description: 'Wishlist item is back in stock', requiredFields: ['customData'] },
+  { value: 'wishlist_purchase_notification', label: 'Wishlist Item Purchased', category: 'Wishlist', icon: Heart, description: 'Someone bought your wishlist item', requiredFields: ['customData'] },
+  { value: 'address_request', label: 'Address Request', category: 'Wishlist', icon: Heart, description: 'Request shipping address', requiredFields: ['customData'] },
 ];
 
 const EmailOrchestratorTester: React.FC = () => {
@@ -200,7 +200,7 @@ const EmailOrchestratorTester: React.FC = () => {
 
   const generateMockData = () => {
     const mockDataMap: Record<string, any> = {
-      'order.confirmed': {
+      'order_confirmation': {
         first_name: 'Sarah',
         order_number: 'ORD-2024-1234',
         total_amount: '$89.97',
@@ -212,7 +212,7 @@ const EmailOrchestratorTester: React.FC = () => {
         shipping_address: '123 Main St\nApt 4B\nNew York, NY 10001',
         tracking_url: 'https://elyphant.ai/track/ABC123'
       },
-      'order.status_update': {
+      'order_status_update': {
         first_name: 'Michael',
         order_number: 'ORD-2024-5678',
         status: 'Shipped',
@@ -220,14 +220,14 @@ const EmailOrchestratorTester: React.FC = () => {
         tracking_url: 'https://elyphant.ai/track/XYZ789',
         estimated_delivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       },
-      'order.cancelled': {
+      'order_cancelled': {
         first_name: 'Jennifer',
         order_number: 'ORD-2024-9012',
         cancellation_reason: 'Customer requested cancellation',
         refund_amount: '$125.50',
         refund_timeline: '5-7 business days'
       },
-      'cart.abandoned': {
+      'cart_abandoned': {
         first_name: 'David',
         cart_items: [
           { title: 'Smart Watch', price: '$299.99', image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' },
@@ -236,21 +236,21 @@ const EmailOrchestratorTester: React.FC = () => {
         cart_total: '$379.98',
         cart_url: 'https://elyphant.ai/cart'
       },
-      'post_purchase.followup': {
+      'post_purchase_followup': {
         first_name: 'Amanda',
         order_number: 'ORD-2024-3456',
         product_names: ['Laptop Stand', 'Wireless Mouse'],
         feedback_url: 'https://elyphant.ai/feedback',
         support_url: 'https://elyphant.ai/support'
       },
-      'gift.invitation': {
+      'gift_invitation': {
         sender_name: 'Emily',
         recipient_name: 'James',
         occasion: 'Birthday',
         message: 'Happy Birthday! Hope you find something you love!',
         invitation_url: 'https://elyphant.ai/gift/accept/abc123'
       },
-      'auto_gift.approval_request': {
+      'auto_gift_approval': {
         recipient_name: 'Lisa',
         occasion: 'Anniversary',
         gift_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
@@ -258,48 +258,47 @@ const EmailOrchestratorTester: React.FC = () => {
         budget: '$150.00',
         approval_url: 'https://elyphant.ai/approve/def456'
       },
-      'gift.purchased_notification': {
+      'gift_received_notification': {
         recipient_name: 'Robert',
         gift_name: 'Coffee Maker Deluxe',
         sender_name: 'Alex',
         occasion: 'Housewarming',
         expected_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       },
-      'connection.invitation': {
+      'connection_invitation': {
         sender_name: 'Jessica',
         sender_email: 'jessica@example.com',
         invitation_message: 'Let\'s connect on Elyphant! I\'d love to exchange gift ideas.',
         accept_url: 'https://elyphant.ai/connect/accept/ghi789'
       },
-      'connection.established': {
+      'connection_established': {
         connection_name: 'Mark',
         connection_email: 'mark@example.com',
         profile_url: 'https://elyphant.ai/profile/mark'
       },
-      'onboarding.welcome': {
+      'welcome_email': {
         first_name: 'Taylor',
         dashboard_url: 'https://elyphant.ai/dashboard',
         profile_url: 'https://elyphant.ai/profile'
       },
-      'onboarding.birthday_reminder': {
+      'birthday_reminder': {
         first_name: 'Chris',
         recipient_name: 'Jordan',
         days_until: '7',
         occasion: 'Birthday',
         setup_url: 'https://elyphant.ai/gifts/setup'
       },
-      'wishlist.purchase_notification': {
+      'wishlist_purchase_notification': {
         first_name: 'Morgan',
         item_name: 'Designer Backpack',
         purchaser_name: 'Sam',
         expected_delivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       },
-      'wishlist.item_back_in_stock': {
+      'address_request': {
         first_name: 'Casey',
-        item_name: 'Limited Edition Sneakers',
-        item_price: '$189.99',
-        item_url: 'https://elyphant.ai/product/sneakers-123',
-        item_image: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2'
+        sender_name: 'Jordan',
+        gift_occasion: 'Birthday',
+        request_url: 'https://elyphant.ai/address/provide/xyz789'
       }
     };
 

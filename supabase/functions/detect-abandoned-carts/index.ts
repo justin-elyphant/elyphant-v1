@@ -134,6 +134,7 @@ Deno.serve(async (req) => {
             recipient_email: userEmail,
             recipient_name: firstName,
             template_variables: {
+              eventType: 'cart_abandoned',
               first_name: firstName,
               cart_items: cartItems,
               cart_total: `$${cart.total_amount.toFixed(2)}`,

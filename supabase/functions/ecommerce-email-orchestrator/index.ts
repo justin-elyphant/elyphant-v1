@@ -303,23 +303,66 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
 async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: string) {
   console.log('🚫 Handling order cancellation email');
   
-  // If no recipientEmail provided, fetch from database
-  if (!recipientEmail) {
-    const { data: order } = await supabase
-      .from('orders')
-      .select('user_id, profiles!inner(email)')
-      .eq('id', data.orderId || data.order_id)
-      .single();
-    
-    recipientEmail = order?.profiles?.email;
-    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  // Fetch complete order data from database
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(`
+      id,
+      order_number,
+      total_amount,
+      status,
+      user_id,
+      profiles!inner(email, first_name)
+    `)
+    .eq('id', data.orderId || data.order_id)
+    .single();
+  
+  if (orderError || !order) {
+    throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
   }
   
-  const emailHtml = orderCancelledTemplate(data);
+  // Fetch order items
+  const { data: orderItems, error: itemsError } = await supabase
+    .from('order_items')
+    .select('product_name, price, quantity')
+    .eq('order_id', order.id);
+  
+  if (itemsError) {
+    console.error('Error fetching order items:', itemsError);
+  }
+  
+  // Use provided recipientEmail or get from order
+  const emailTo = recipientEmail || order.profiles?.email;
+  if (!emailTo) throw new Error('Could not find recipient email for order');
+  
+  // Transform data into format expected by email template
+  const templateData: OrderCancelledProps = {
+    first_name: order.profiles?.first_name || 'there',
+    order_number: order.order_number,
+    order_items: (orderItems || []).map(item => ({
+      name: item.product_name,
+      price: item.price,
+      quantity: item.quantity
+    })),
+    refund_amount: order.total_amount,
+    refund_timeline: '5-10 business days',
+    cancellation_reason: data.cancellation_reason || data.reason,
+    support_url: 'https://elyphant.com/support'
+  };
+  
+  console.log('🚫 Order cancellation data:', {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    itemCount: templateData.order_items.length,
+    refundAmount: templateData.refund_amount,
+    hasCancellationReason: !!templateData.cancellation_reason
+  });
+  
+  const emailHtml = orderCancelledTemplate(templateData);
 
   return {
-    to: recipientEmail,
-    subject: `Order Cancelled - Refund Processing for #${data.order_number}`,
+    to: emailTo,
+    subject: `Order Cancelled - Refund Processing for #${order.order_number}`,
     html: emailHtml,
   };
 }

@@ -52,6 +52,8 @@ export const useCartSessionTracking = (
             product_name: item.product.name,
             quantity: item.quantity,
             price: item.product.price,
+            image_url: item.product.image || item.product.images?.[0] || null,
+            images: item.product.images || [],
             recipient_assignment: item.recipientAssignment ? {
               connectionId: item.recipientAssignment.connectionId,
               connectionName: item.recipientAssignment.connectionName,

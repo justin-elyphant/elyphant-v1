@@ -89,3 +89,8 @@ schedule = "0 2 * * *"
 [[crons.cleanup_auth_rate_limits]]
 function_name = "cleanup-auth-rate-limits"
 schedule = "0 3 * * *"
+
+# Cron to detect abandoned carts every 15 minutes
+[[crons.detect_abandoned_carts]]
+function_name = "detect-abandoned-carts"
+schedule = "*/15 * * * *"

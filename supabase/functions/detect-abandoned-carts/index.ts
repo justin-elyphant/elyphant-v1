@@ -15,12 +15,15 @@ interface CartSession {
       product_name: string;
       quantity: number;
       price: number;
+      image_url?: string;
+      images?: string[];
       recipient_id?: string;
     }>;
   };
   total_amount: number;
   last_updated: string;
   checkout_initiated_at: string | null;
+  recovery_emails_sent?: number;
 }
 
 Deno.serve(async (req) => {
@@ -99,12 +102,15 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Prepare cart items for email
+        // Prepare cart items for email with real product images
         const cartItems = cart.cart_data.items.map(item => ({
           title: item.product_name,
           price: `$${item.price.toFixed(2)}`,
-          image_url: 'https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/product-images/placeholder.jpg' // Default image
+          image_url: item.image_url || item.images?.[0] || 'https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/product-images/placeholder.jpg'
         }));
+        
+        // Determine email sequence number for differentiated messaging
+        const emailSequence = (cart.recovery_emails_sent || 0) + 1;
 
         // Get the cart_abandoned template ID
         const { data: template } = await supabase
@@ -120,7 +126,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Queue abandoned cart email
+        // Queue abandoned cart email with sequence info for differentiated messaging
         const { error: emailError } = await supabase
           .from('email_queue')
           .insert({
@@ -131,7 +137,10 @@ Deno.serve(async (req) => {
               first_name: firstName,
               cart_items: cartItems,
               cart_total: `$${cart.total_amount.toFixed(2)}`,
-              cart_url: 'https://dmkxtkvlispxeqfzlczr.supabase.co/cart'
+              cart_url: 'https://dmkxtkvlispxeqfzlczr.supabase.co/cart',
+              email_sequence: emailSequence, // 1, 2, or 3 for differentiated messaging
+              is_first_reminder: emailSequence === 1,
+              is_final_reminder: emailSequence === 3
             },
             scheduled_for: new Date().toISOString()
           });

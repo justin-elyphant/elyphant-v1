@@ -223,19 +223,65 @@ async function handleOrderConfirmation(supabase: any, data: any, recipientEmail?
 async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?: string) {
   console.log('📦 Handling order status update email');
   
-  // If no recipientEmail provided, fetch from database
-  if (!recipientEmail) {
-    const { data: order } = await supabase
-      .from('orders')
-      .select('user_id, profiles!inner(email)')
-      .eq('id', data.orderId || data.order_id)
-      .single();
-    
-    recipientEmail = order?.profiles?.email;
-    if (!recipientEmail) throw new Error('Could not find recipient email for order');
+  // Fetch complete order data from database
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(`
+      id,
+      order_number,
+      tracking_number,
+      merchant_tracking_data,
+      delivery_dates,
+      user_id,
+      profiles!inner(email, first_name)
+    `)
+    .eq('id', data.orderId || data.order_id)
+    .single();
+  
+  if (orderError || !order) {
+    throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
   }
   
-  const emailHtml = orderStatusUpdateTemplate(data);
+  // Use provided recipientEmail or get from order
+  const emailTo = recipientEmail || order.profiles?.email;
+  if (!emailTo) throw new Error('Could not find recipient email for order');
+  
+  // Extract tracking URL from merchant_tracking_data
+  let trackingUrl = null;
+  if (order.merchant_tracking_data?.merchant_order_ids?.[0]?.tracking_url) {
+    trackingUrl = order.merchant_tracking_data.merchant_order_ids[0].tracking_url;
+  }
+  
+  // Format expected delivery date from delivery_dates if available
+  let expectedDelivery = null;
+  if (order.delivery_dates?.guarantee) {
+    const deliveryDate = new Date(order.delivery_dates.guarantee);
+    expectedDelivery = deliveryDate.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+  
+  // Transform data into format expected by email template
+  const templateData: OrderStatusUpdateProps = {
+    first_name: order.profiles?.first_name || 'there',
+    order_number: order.order_number,
+    status: data.newStatus || data.status,
+    tracking_number: order.tracking_number || null,
+    tracking_url: trackingUrl,
+    expected_delivery: expectedDelivery
+  };
+  
+  console.log('📦 Order status update data:', {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    status: templateData.status,
+    hasTrackingNumber: !!templateData.tracking_number,
+    hasTrackingUrl: !!templateData.tracking_url,
+    hasExpectedDelivery: !!templateData.expected_delivery
+  });
+  
+  const emailHtml = orderStatusUpdateTemplate(templateData);
   
   const statusTitles = {
     'processing': 'Order Processing',
@@ -245,8 +291,8 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
   };
 
   return {
-    to: recipientEmail,
-    subject: `${statusTitles[data.new_status as keyof typeof statusTitles] || 'Order Update'} - #${data.order_number}`,
+    to: emailTo,
+    subject: `${statusTitles[templateData.status as keyof typeof statusTitles] || 'Order Update'} - #${order.order_number}`,
     html: emailHtml,
   };
 }

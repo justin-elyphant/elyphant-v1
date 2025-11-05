@@ -18,7 +18,7 @@ interface CartRecoveryState {
 export const useCartRecovery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems, clearCart, assignItemToRecipient } = useCart();
   const navigate = useNavigate();
   const [state, setState] = useState<CartRecoveryState>({
     isRecovering: false,
@@ -80,33 +80,33 @@ export const useCartRecovery = () => {
         });
 
         // Check if user already has items in cart
+        let shouldClearFirst = false;
         if (cartItems.length > 0) {
           // Ask user if they want to merge or replace
-          const shouldMerge = await new Promise<boolean>((resolve) => {
+          shouldClearFirst = await new Promise<boolean>((resolve) => {
             toast('You have items in your cart', {
               description: 'Would you like to add recovered items or replace your current cart?',
               action: {
                 label: 'Add to Cart',
-                onClick: () => resolve(true)
+                onClick: () => resolve(false) // Don't clear
               },
               cancel: {
                 label: 'Replace Cart',
-                onClick: () => resolve(false)
+                onClick: () => resolve(true) // Clear first
               },
               duration: 10000
             });
-            // Default to merge after 10 seconds
-            setTimeout(() => resolve(true), 10000);
+            // Default to merge (don't clear) after 10 seconds
+            setTimeout(() => resolve(false), 10000);
           });
 
-          if (!shouldMerge) {
-            // User chose to replace - clear current cart first
-            // Note: We can't call clearCart here due to async nature
-            // Let's just proceed with adding items, they'll merge naturally
+          if (shouldClearFirst) {
+            console.log('🗑️ [CartRecovery] Clearing existing cart before recovery');
+            clearCart();
           }
         }
 
-        // Add items to cart
+        // Add items to cart with recipient assignments
         let recoveredCount = 0;
         for (const item of cartData.items) {
           try {
@@ -122,8 +122,25 @@ export const useCartRecovery = () => {
 
             await addToCart(product as any, item.quantity);
             
-            // If item had recipient assignment, restore it
-            // This would require additional implementation in CartContext
+            // Restore recipient assignment if it existed
+            if (item.recipient_assignment) {
+              console.log('🎁 [CartRecovery] Restoring recipient assignment for:', item.product_name);
+              
+              assignItemToRecipient(item.product_id, {
+                connectionId: item.recipient_assignment.connectionId,
+                connectionName: item.recipient_assignment.connectionName,
+                deliveryGroupId: item.recipient_assignment.deliveryGroupId,
+                giftMessage: item.recipient_assignment.giftMessage,
+                scheduledDeliveryDate: item.recipient_assignment.scheduledDeliveryDate,
+                shippingAddress: item.recipient_assignment.shippingAddress,
+                isPrivateAddress: item.recipient_assignment.isPrivateAddress,
+                connectionStatus: item.recipient_assignment.connectionStatus,
+                address_verified: item.recipient_assignment.address_verified,
+                address_verification_method: item.recipient_assignment.address_verification_method,
+                address_verified_at: item.recipient_assignment.address_verified_at,
+                address_last_updated: item.recipient_assignment.address_last_updated
+              });
+            }
             
             recoveredCount++;
           } catch (itemError) {
@@ -156,7 +173,7 @@ export const useCartRecovery = () => {
     };
 
     recoverCart();
-  }, [searchParams, user, addToCart, cartItems.length]);
+  }, [searchParams.get('recover'), user?.id]); // Only depend on recover param and user ID
 
   return state;
 };

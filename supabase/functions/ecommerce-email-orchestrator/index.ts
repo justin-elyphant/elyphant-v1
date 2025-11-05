@@ -316,73 +316,120 @@ async function handleOrderStatusUpdate(supabase: any, data: any, recipientEmail?
  */
 async function handleOrderCancelled(supabase: any, data: any, recipientEmail?: string) {
   console.log('🚫 Handling order cancellation email');
-  
-  // Fetch complete order data from database
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .select(`
-      id,
-      order_number,
-      total_amount,
-      status,
-      user_id
-    `)
-    .eq('id', data.orderId || data.order_id)
-    .single();
-  
-  if (orderError || !order) {
-    throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
+
+  const orderId = data.orderId || data.order_id;
+
+  // If we have an orderId, fetch from DB; otherwise treat as test mode and use provided data
+  if (orderId) {
+    // Fetch complete order data from database
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        total_amount,
+        status,
+        user_id
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      throw new Error(`Could not find order: ${orderError?.message || 'Order not found'}`);
+    }
+
+    // Fetch profile separately (no FK join available)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, first_name')
+      .eq('id', order.user_id)
+      .single();
+
+    // Fetch order items
+    const { data: orderItems, error: itemsError } = await supabase
+      .from('order_items')
+      .select('product_name, price, quantity')
+      .eq('order_id', order.id);
+
+    if (itemsError) {
+      console.error('Error fetching order items:', itemsError);
+    }
+
+    // Use provided recipientEmail or get from profile
+    const emailTo = recipientEmail || profile?.email;
+    if (!emailTo) throw new Error('Could not find recipient email for order');
+
+    // Transform data into format expected by email template
+    const templateData: OrderCancelledProps = {
+      first_name: profile?.first_name || 'there',
+      order_number: order.order_number,
+      order_items: (orderItems || []).map(item => ({
+        name: item.product_name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      refund_amount: order.total_amount,
+      refund_timeline: '5-10 business days',
+      cancellation_reason: data.cancellation_reason || data.reason,
+      support_url: 'https://elyphant.com/support'
+    };
+
+    console.log('🚫 Order cancellation data (DB mode):', {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      itemCount: templateData.order_items.length,
+      refundAmount: templateData.refund_amount,
+      hasCancellationReason: !!templateData.cancellation_reason
+    });
+
+    const emailHtml = orderCancelledTemplate(templateData);
+
+    return {
+      to: emailTo,
+      subject: `Order Cancelled - Refund Processing for #${order.order_number}`,
+      html: emailHtml,
+    };
   }
-  
-  // Fetch profile separately (no FK join available)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('email, first_name')
-    .eq('id', order.user_id)
-    .single();
-  
-  // Fetch order items
-  const { data: orderItems, error: itemsError } = await supabase
-    .from('order_items')
-    .select('product_name, price, quantity')
-    .eq('order_id', order.id);
-  
-  if (itemsError) {
-    console.error('Error fetching order items:', itemsError);
-  }
-  
-  // Use provided recipientEmail or get from profile
-  const emailTo = recipientEmail || profile?.email;
-  if (!emailTo) throw new Error('Could not find recipient email for order');
-  
-  // Transform data into format expected by email template
+
+  // TEST MODE: no orderId provided, build email directly from data
+  console.log('🧪 Order cancellation in test mode (no orderId provided)');
+
+  const emailTo = recipientEmail || data.recipient_email || data.recipientEmail;
+  if (!emailTo) throw new Error('Recipient email is required when no orderId is provided');
+
+  const rawItems = Array.isArray(data.order_items)
+    ? data.order_items
+    : Array.isArray(data.items)
+      ? data.items
+      : [];
+
+  const normalizedItems = rawItems.filter(Boolean).map((item: any) => ({
+    name: item.name || item.title || item.product_name || 'Item',
+    price: Number(item.price ?? item.unit_price ?? 0),
+    quantity: Number(item.quantity ?? 1),
+  }));
+
   const templateData: OrderCancelledProps = {
-    first_name: profile?.first_name || 'there',
-    order_number: order.order_number,
-    order_items: (orderItems || []).map(item => ({
-      name: item.product_name,
-      price: item.price,
-      quantity: item.quantity
-    })),
-    refund_amount: order.total_amount,
-    refund_timeline: '5-10 business days',
+    first_name: data.first_name || data.firstName || 'there',
+    order_number: data.order_number || data.orderNumber || 'TEST-ORDER',
+    order_items: normalizedItems,
+    refund_amount: Number(data.refund_amount ?? data.refundAmount ?? 0),
+    refund_timeline: data.refund_timeline || data.refundTimeline || '5-10 business days',
     cancellation_reason: data.cancellation_reason || data.reason,
-    support_url: 'https://elyphant.com/support'
+    support_url: data.support_url || 'https://elyphant.com/support',
   };
-  
-  console.log('🚫 Order cancellation data:', {
-    orderId: order.id,
-    orderNumber: order.order_number,
+
+  console.log('🧪 Order cancellation data (test mode):', {
+    orderNumber: templateData.order_number,
     itemCount: templateData.order_items.length,
     refundAmount: templateData.refund_amount,
-    hasCancellationReason: !!templateData.cancellation_reason
   });
-  
+
   const emailHtml = orderCancelledTemplate(templateData);
 
   return {
     to: emailTo,
-    subject: `Order Cancelled - Refund Processing for #${order.order_number}`,
+    subject: `Order Cancelled - Refund Processing for #${templateData.order_number}`,
     html: emailHtml,
   };
 }

@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
               first_name: firstName,
               cart_items: cartItems,
               cart_total: `$${cart.total_amount.toFixed(2)}`,
-              cart_url: 'https://dmkxtkvlispxeqfzlczr.supabase.co/cart',
+              cart_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/cart?recover=${cart.session_id}`,
               email_sequence: emailSequence, // 1, 2, or 3 for differentiated messaging
               is_first_reminder: emailSequence === 1,
               is_final_reminder: emailSequence === 3

@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { useCartSessionTracking } from "@/hooks/useCartSessionTracking";
+import { useCartRecovery } from "@/hooks/useCartRecovery";
 import { emergencyCartCleanup } from "@/utils/cartSecurityUtils";
 import { clearUserCartData } from "@/services/clearCartSessions";
 
@@ -46,6 +47,9 @@ const Cart = () => {
   const isMobile = useIsMobile();
   const [showRecipientModal, setShowRecipientModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  // Recover abandoned cart from email link
+  const cartRecovery = useCartRecovery();
 
   // Track cart session for abandoned cart detection and persistence
   useCartSessionTracking(
@@ -252,6 +256,12 @@ const Cart = () => {
     <SidebarLayout>
       <ZincMetadataDebugger />
       <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container mobile-content-spacing">
+          {/* Cart Recovery Status */}
+          {cartRecovery.isRecovering && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">Recovering your cart...</p>
+            </div>
+          )}
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Button

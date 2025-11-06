@@ -517,7 +517,15 @@ async function handleGiftInvitation(supabase: any, data: any, recipientEmail?: s
     if (!recipientEmail) throw new Error('Recipient email required for gift invitation');
   }
   
-  const emailHtml = giftInvitationTemplate(data);
+  // Construct the invitation acceptance URL
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const invitationUrl = `${supabaseUrl}/functions/v1/handle-invitation-acceptance?invitation_id=${data.invitationId || data.invitation_id}`;
+  
+  // Pass the invitation URL to the template
+  const emailHtml = giftInvitationTemplate({
+    ...data,
+    invitation_url: invitationUrl
+  });
   
   const subjectPrefix = data.occasion ? `Gift for ${data.occasion}` : 'Gift Invitation';
 

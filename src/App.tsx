@@ -28,6 +28,7 @@ import MobileBottomNavigation from "./components/navigation/MobileBottomNavigati
 // Lazy load non-critical pages
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
+const GiftPreview = lazy(() => import("./pages/GiftPreview"));
 
 // Lazy load non-critical pages with retry logic
 const Cart = lazy(() => import("./pages/Cart").catch(() => {
@@ -225,6 +226,7 @@ function AppContent() {
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/oauth-complete" element={<OAuthComplete />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />
+          <Route path="/gifts/preview/:token" element={<GiftPreview />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
           <Route path="/search" element={<SearchPage />} />

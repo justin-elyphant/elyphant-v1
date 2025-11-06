@@ -334,6 +334,21 @@ serve(async (req) => {
           const deliveryDate = group.scheduledDeliveryDate || childOrder.scheduled_delivery_date;
           const formattedDeliveryDate = deliveryDate ? new Date(deliveryDate).toISOString() : undefined;
 
+          // Generate gift preview token
+          let previewToken = null;
+          try {
+            const { data: tokenData } = await supabase.functions.invoke('generate-gift-preview-token', {
+              body: {
+                orderId: childOrder.id,
+                recipientEmail: recipientProfile.email
+              }
+            });
+            previewToken = tokenData?.token;
+            console.log('✅ Generated gift preview token:', previewToken?.substring(0, 10) + '...');
+          } catch (tokenError) {
+            console.error('⚠️ Failed to generate preview token (non-critical):', tokenError);
+          }
+
           await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: 'gift_received_notification',
@@ -344,7 +359,8 @@ serve(async (req) => {
                 occasion: group.occasion || childOrder.occasion || 'special occasion',
                 expected_delivery_date: formattedDeliveryDate,
                 gift_message: group.giftMessage,
-                order_number: childOrder.order_number
+                order_number: childOrder.order_number,
+                preview_token: previewToken
               }
             }
           });

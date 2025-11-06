@@ -12,6 +12,7 @@ export interface GiftPurchasedNotificationProps {
   expected_delivery_date?: string;
   gift_message?: string;
   order_number: string;
+  preview_token?: string;
 }
 
 export const giftPurchasedNotificationTemplate = (props: GiftPurchasedNotificationProps): string => {
@@ -21,7 +22,8 @@ export const giftPurchasedNotificationTemplate = (props: GiftPurchasedNotificati
     occasion,
     expected_delivery_date,
     gift_message,
-    order_number
+    order_number,
+    preview_token
   } = props;
 
   // Format delivery date if provided
@@ -74,9 +76,36 @@ export const giftPurchasedNotificationTemplate = (props: GiftPurchasedNotificati
     ${messageBox}
 
     <div style="text-align: center; margin: 40px 0;">
-      <a href="https://elyphant.ai/orders/${order_number}" style="display: inline-block; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
-        Track Your Gift
-      </a>
+      ${preview_token ? `
+        <!-- Interactive Sneak Peek Section -->
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+          <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; color: #92400e; font-weight: 600;">
+            🎁 Curious what's inside?
+          </p>
+          <p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f; line-height: 22px;">
+            Choose your adventure:
+          </p>
+          <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <a href="https://elyphant.ai/gifts/preview/${preview_token}" 
+               style="display: inline-block; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4); min-width: 160px; text-align: center;">
+              👀 Preview Gift
+            </a>
+            <a href="https://elyphant.ai/gifts/preview/${preview_token}?action=thankyou" 
+               style="display: inline-block; background: #ffffff; color: #9333ea; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; border: 2px solid #9333ea; box-shadow: 0 2px 8px rgba(147, 51, 234, 0.2); min-width: 160px; text-align: center;">
+              🎉 Keep Surprise
+            </a>
+          </div>
+          <p style="margin: 25px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #92400e; line-height: 18px;">
+            Either way, you can thank ${giftor_name} with a message! ✨
+          </p>
+        </div>
+      ` : `
+        <!-- Fallback: Traditional tracking link -->
+        <a href="https://elyphant.ai/orders/${order_number}" 
+           style="display: inline-block; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+          Track Your Gift
+        </a>
+      `}
     </div>
 
     <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 30px;">

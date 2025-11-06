@@ -1735,6 +1735,51 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_preview_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          order_id: string
+          recipient_email: string
+          token: string
+          viewed_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          order_id: string
+          recipient_email: string
+          token: string
+          viewed_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          order_id?: string
+          recipient_email?: string
+          token?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_preview_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_preview_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_proposal_votes: {
         Row: {
           created_at: string | null
@@ -3049,6 +3094,8 @@ export type Database = {
           funding_status: string | null
           gift_message: string | null
           gift_options: Json | null
+          gift_preview_viewed: boolean | null
+          gift_preview_viewed_at: string | null
           gift_scheduling_options: Json | null
           gifting_fee: number | null
           gifting_fee_description: string | null
@@ -3081,6 +3128,8 @@ export type Database = {
           stripe_session_id: string | null
           subtotal: number
           tax_amount: number
+          thank_you_sent: boolean | null
+          thank_you_sent_at: string | null
           total_amount: number
           total_split_orders: number | null
           tracking_number: string | null
@@ -3113,6 +3162,8 @@ export type Database = {
           funding_status?: string | null
           gift_message?: string | null
           gift_options?: Json | null
+          gift_preview_viewed?: boolean | null
+          gift_preview_viewed_at?: string | null
           gift_scheduling_options?: Json | null
           gifting_fee?: number | null
           gifting_fee_description?: string | null
@@ -3145,6 +3196,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal: number
           tax_amount?: number
+          thank_you_sent?: boolean | null
+          thank_you_sent_at?: string | null
           total_amount: number
           total_split_orders?: number | null
           tracking_number?: string | null
@@ -3177,6 +3230,8 @@ export type Database = {
           funding_status?: string | null
           gift_message?: string | null
           gift_options?: Json | null
+          gift_preview_viewed?: boolean | null
+          gift_preview_viewed_at?: string | null
           gift_scheduling_options?: Json | null
           gifting_fee?: number | null
           gifting_fee_description?: string | null
@@ -3209,6 +3264,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal?: number
           tax_amount?: number
+          thank_you_sent?: boolean | null
+          thank_you_sent_at?: string | null
           total_amount?: number
           total_split_orders?: number | null
           tracking_number?: string | null

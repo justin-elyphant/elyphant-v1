@@ -24,6 +24,7 @@ import ChatGiftModal from "./ChatGiftModal";
 import FileAttachment from "./FileAttachment";
 import AttachmentDisplay from "./AttachmentDisplay";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
 interface EnhancedChatInterfaceProps {
   connectionId: string;
@@ -39,6 +40,7 @@ const EnhancedChatInterface = ({
   relationshipType = 'friend'
 }: EnhancedChatInterfaceProps) => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [newMessage, setNewMessage] = useState("");
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -72,6 +74,20 @@ const EnhancedChatInterface = ({
   }, []);
 
   const userStatus = getUserStatus(connectionId);
+
+  // Handle gift thank you context from URL
+  useEffect(() => {
+    const giftContext = searchParams.get('context');
+    const giftorName = searchParams.get('giftor');
+    const orderNumber = searchParams.get('order');
+
+    if (giftContext === 'gift_thankyou' && giftorName && !messages.length) {
+      const thankYouMessage = `Hi ${giftorName}! Thank you so much for the thoughtful gift${orderNumber ? ` (Order #${orderNumber})` : ''}! I'm so excited to receive it! 🎁❤️`;
+      setNewMessage(thankYouMessage);
+      
+      toast.info(`Message pre-filled! Edit and send your thank you to ${giftorName} ✨`);
+    }
+  }, [searchParams, messages.length]);
 
   // Set up intersection observer for automatic infinite scroll
   useEffect(() => {

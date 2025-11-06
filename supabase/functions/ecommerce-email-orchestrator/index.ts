@@ -595,7 +595,7 @@ async function handleGiftReceivedNotification(supabase: any, data: any, recipien
 
   return {
     to: recipientEmail,
-    subject: `${data.sender_name} sent you a gift! 🎁`,
+    subject: `${data.giftor_name} sent you a gift! 🎁`,
     html: emailHtml,
   };
 }

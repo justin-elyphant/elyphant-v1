@@ -340,7 +340,7 @@ serve(async (req) => {
               data: {
                 recipient_email: recipientProfile.email,
                 recipient_first_name: recipientProfile.first_name || recipientProfile.full_name?.split(' ')[0] || 'there',
-                sender_name: senderName,
+                giftor_name: senderName,
                 occasion: group.occasion || childOrder.occasion || 'special occasion',
                 expected_delivery_date: formattedDeliveryDate,
                 gift_message: group.giftMessage,

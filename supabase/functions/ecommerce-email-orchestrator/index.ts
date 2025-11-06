@@ -20,6 +20,7 @@ import {
   // Social/Connections
   connectionInvitationTemplate,
   connectionEstablishedTemplate,
+  nudgeReminderTemplate,
   
   // Onboarding & Engagement
   welcomeEmailConsolidatedTemplate,
@@ -40,6 +41,7 @@ import type {
   GiftPurchasedNotificationProps,
   ConnectionInvitationProps,
   ConnectionEstablishedProps,
+  NudgeReminderProps,
   WelcomeEmailConsolidatedProps,
   BirthdayReminderProps,
   WishlistPurchaseNotificationProps
@@ -65,9 +67,10 @@ interface EmailRequest {
     | 'gift_invitation'
     | 'auto_gift_approval'
     | 'gift_received_notification'
-    // Social/Connections (2)
+    // Social/Connections (3)
     | 'connection_invitation'
     | 'connection_established'
+    | 'nudge_reminder'
     // Onboarding & Engagement (2)
     | 'welcome_email'
     | 'birthday_reminder'
@@ -132,6 +135,9 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'connection_established':
         emailData = await handleConnectionEstablished(supabase, data, recipientEmail);
+        break;
+      case 'nudge_reminder':
+        emailData = await handleNudgeReminder(supabase, data, recipientEmail);
         break;
       
       // Onboarding & Engagement
@@ -645,6 +651,45 @@ async function handleConnectionEstablished(supabase: any, data: any, recipientEm
   return {
     to: recipientEmail,
     subject: `You're now connected with ${data.connection_name}! 🎉`,
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Nudge Reminder
+ * Sent to shopper when recipient hasn't accepted invitation after 7 days
+ */
+async function handleNudgeReminder(supabase: any, data: any, recipientEmail?: string) {
+  console.log('📧 Handling nudge reminder email (shopper notification)');
+  
+  // If no recipientEmail provided, fetch from shopper_user_id
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, name, first_name')
+      .eq('id', data.shopper_user_id)
+      .single();
+    
+    recipientEmail = profile?.email;
+    if (!recipientEmail) throw new Error('Could not find shopper email for nudge reminder');
+    
+    // Add shopper name to data if not provided
+    if (!data.shopper_name) {
+      data.shopper_name = profile?.first_name || profile?.name || 'there';
+    }
+  }
+  
+  const emailHtml = nudgeReminderTemplate({
+    shopper_name: data.shopper_name,
+    recipient_name: data.recipient_name,
+    recipient_email: data.recipient_email,
+    days_since_invitation: data.days_since_invitation || 7,
+    connections_url: 'https://app.elyphant.ai/connections'
+  });
+
+  return {
+    to: recipientEmail,
+    subject: `Connection Update: ${data.recipient_name} hasn't responded yet`,
     html: emailHtml,
   };
 }

@@ -5,16 +5,46 @@ export interface ConnectionInvitationProps {
   recipient_name: string;
   invitation_url: string;
   custom_message?: string;
+  is_reminder?: boolean;
+  reminder_number?: number;
 }
 
 export const connectionInvitationTemplate = (props: ConnectionInvitationProps): string => {
+  // Declining urgency messaging based on reminder number
+  const getHeadline = () => {
+    if (!props.is_reminder) return "You've been invited! 🎉";
+    if (props.reminder_number === 1) return "Friendly reminder 👋";
+    if (props.reminder_number === 2) return "Still interested? 🤔";
+    return "Last chance to connect 📌";
+  };
+
+  const getSubheadline = () => {
+    if (!props.is_reminder) {
+      return `${props.sender_name} wants to connect with you on Elyphant!`;
+    }
+    if (props.reminder_number === 1) {
+      return `${props.sender_name} sent you a connection request 3 days ago. They're excited to connect!`;
+    }
+    if (props.reminder_number === 2) {
+      return `${props.sender_name} is still waiting to connect with you on Elyphant.`;
+    }
+    return `This is your final reminder - ${props.sender_name}'s invitation will expire soon.`;
+  };
+
+  const getCTAText = () => {
+    if (!props.is_reminder) return "Accept Invitation";
+    if (props.reminder_number === 1) return "Accept Invitation";
+    if (props.reminder_number === 2) return "Connect Now";
+    return "Accept Before It Expires";
+  };
+
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.2;">
-      You've been invited! 🎉
+      ${getHeadline()}
     </h2>
     
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; line-height: 24px;">
-      ${props.sender_name} wants to connect with you on Elyphant!
+      ${getSubheadline()}
     </p>
     
     ${props.custom_message ? `
@@ -106,11 +136,17 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
       <tr>
         <td align="center" style="padding: 20px 0;">
           <a href="${props.invitation_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
-            Accept Invitation
+            ${getCTAText()}
           </a>
         </td>
       </tr>
     </table>
+    
+    ${props.is_reminder && props.reminder_number === 3 ? `
+    <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #999999; text-align: center; line-height: 20px;">
+      Not interested? No worries - this is our final reminder.
+    </p>
+    ` : ''}
   `;
 
   return baseEmailTemplate({

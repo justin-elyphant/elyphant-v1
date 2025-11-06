@@ -31,12 +31,15 @@ export type { AutoGiftApprovalProps } from './auto-gift-approval.ts';
 export { giftPurchasedNotificationTemplate } from './gift-purchased-notification.ts';
 export type { GiftPurchasedNotificationProps } from './gift-purchased-notification.ts';
 
-// Social/Connections (2)
+// Social/Connections (3)
 export { connectionInvitationTemplate } from './connection-invitation.ts';
 export type { ConnectionInvitationProps } from './connection-invitation.ts';
 
 export { connectionEstablishedTemplate } from './connection-established.ts';
 export type { ConnectionEstablishedProps } from './connection-established.ts';
+
+export { nudgeReminderTemplate } from './nudge-reminder.ts';
+export type { NudgeReminderProps } from './nudge-reminder.ts';
 
 // Onboarding & Engagement (2)
 export { welcomeEmailConsolidatedTemplate } from './welcome-email-consolidated.ts';

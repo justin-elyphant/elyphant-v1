@@ -78,6 +78,9 @@ verify_jwt = false
 [functions.generate-gift-preview-token]
 verify_jwt = false
 
+[functions.send-invitation-reminders]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
@@ -97,3 +100,8 @@ schedule = "0 3 * * *"
 [[crons.detect_abandoned_carts]]
 function_name = "detect-abandoned-carts"
 schedule = "*/15 * * * *"
+
+# Cron to send invitation reminders daily at 10 AM
+[[crons.send_invitation_reminders]]
+function_name = "send-invitation-reminders"
+schedule = "0 10 * * *"

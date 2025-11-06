@@ -80,13 +80,17 @@ export const autoGiftApprovalTemplate = (props: AutoGiftApprovalProps): string =
     </table>
     
     <!-- Action buttons -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 400px; margin: 0 auto;">
       <tr>
-        <td align="center" style="padding: 20px 0;">
-          <a href="${props.approve_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 10px 10px 0;">
+        <td align="center" style="padding: 20px 0 10px 0;">
+          <a href="${props.approve_url}" style="display: block; width: 100%; padding: 16px 24px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; text-align: center; box-sizing: border-box;">
             ✓ Approve & Send Gift
           </a>
-          <a href="${props.reject_url}" style="display: inline-block; padding: 16px 40px; background-color: #ffffff; color: #dc2626; text-decoration: none; border-radius: 8px; border: 2px solid #dc2626; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 0 10px 10px;">
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding: 10px 0;">
+          <a href="${props.reject_url}" style="display: block; width: 100%; padding: 16px 24px; background-color: #ffffff; color: #dc2626; text-decoration: none; border-radius: 8px; border: 2px solid #dc2626; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; text-align: center; box-sizing: border-box;">
             ✕ Reject
           </a>
         </td>

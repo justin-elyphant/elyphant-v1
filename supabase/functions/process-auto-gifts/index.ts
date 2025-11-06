@@ -338,40 +338,83 @@ serve(async (req) => {
               // Get user (gift giver) details for the email
               const { data: giverProfile } = await supabase
                 .from('profiles')
-                .select('email, full_name')
+                .select('email, full_name, username')
                 .eq('id', userId)
                 .single();
               
               if (giverProfile?.email) {
                 emailSentTo = giverProfile.email;
                 
-                // Invoke the email orchestrator to send approval email
-                const emailResult = await supabase.functions.invoke('ecommerce-email-orchestrator', {
-                  body: {
-                    eventType: 'auto_gift_approval',
-                    userId: userId,
-                    customData: {
-                      executionId: execution.id,
-                      recipientEmail: giverProfile.email, // Send to the giver, not recipient
-                      recipientName: recipientName,
-                      occasion: rule.date_type,
-                      suggested_gifts: selectedProducts.slice(0, 3).map((p: any) => ({
-                        name: p.title || p.product_name || p.name,
-                        price: p.price,
-                        image_url: p.image || p.image_url
-                      })),
-                      total_budget: rule.budget_limit || 50,
-                      approve_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/approve-gift/${execution.id}`,
-                      reject_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/reject-gift/${execution.id}`
-                    }
-                  }
-                });
+                // Generate approval token
+                const token = crypto.randomUUID().replace(/-/g, '');
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 2); // 48 hours
                 
-                if (emailResult.error) {
-                  console.error(`❌ Failed to send approval email for execution ${execution.id}:`, emailResult.error);
+                // Create token in database
+                const { data: tokenData, error: tokenError } = await supabase
+                  .from('email_approval_tokens')
+                  .insert({
+                    execution_id: execution.id,
+                    user_id: userId,
+                    token,
+                    expires_at: expiresAt.toISOString(),
+                    email_sent_at: new Date().toISOString()
+                  })
+                  .select()
+                  .single();
+                
+                if (tokenError) {
+                  console.error('❌ Failed to create approval token:', tokenError);
                   emailSentTo = null;
                 } else {
-                  console.log(`✅ Auto-approval email sent successfully for execution ${execution.id}`);
+                  // Format execution date
+                  const executionDate = new Date(execution.execution_date);
+                  const formattedDate = executionDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  });
+                  
+                  // Format occasion for display
+                  const occasionMap: Record<string, string> = {
+                    'birthday': 'Birthday',
+                    'anniversary': 'Anniversary',
+                    'christmas': 'Christmas',
+                    'valentines_day': "Valentine's Day",
+                    'mothers_day': "Mother's Day",
+                    'fathers_day': "Father's Day"
+                  };
+                  const formattedOccasion = occasionMap[rule.date_type] || rule.date_type || 'special occasion';
+                  
+                  // Invoke the email orchestrator with token-based approval URLs
+                  const emailResult = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                    body: {
+                      eventType: 'auto_gift_approval',
+                      userId: userId,
+                      customData: {
+                        executionId: execution.id,
+                        recipientEmail: giverProfile.email,
+                        first_name: giverProfile.full_name?.split(' ')[0] || giverProfile.username || 'there',
+                        recipient_name: recipientName,
+                        occasion: formattedOccasion,
+                        execution_date: formattedDate,
+                        suggested_gifts: selectedProducts.slice(0, 3).map((p: any) => ({
+                          name: p.title || p.product_name || p.name || 'Gift Item',
+                          price: '$' + (p.price || 0).toFixed(2),
+                          image_url: p.image || p.image_url || p.main_image || null
+                        })),
+                        approve_url: `https://elyphant.com/auto-gifts/approve/${token}`,
+                        reject_url: `https://elyphant.com/auto-gifts/approve/${token}`
+                      }
+                    }
+                  });
+                  
+                  if (emailResult.error) {
+                    console.error(`❌ Failed to send approval email for execution ${execution.id}:`, emailResult.error);
+                    emailSentTo = null;
+                  } else {
+                    console.log(`✅ Auto-approval email sent successfully for execution ${execution.id}`);
+                  }
                 }
               }
             } catch (emailError) {

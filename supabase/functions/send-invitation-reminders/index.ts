@@ -79,11 +79,11 @@ serve(async (req) => {
         const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
           body: {
             eventType: 'connection_invitation',
-            customData: {
+            recipientEmail: invitation.pending_recipient_email,
+            data: {
               sender_name: senderName,
-              recipient_email: invitation.pending_recipient_email,
               recipient_name: invitation.pending_recipient_name,
-              connection_id: invitation.id,
+              invitation_url: `https://app.elyphant.ai/connections/accept/${invitation.id}`,
               is_reminder: true,
               reminder_number: reminderCount + 1
             }
@@ -112,7 +112,7 @@ serve(async (req) => {
           const { error: shopperEmailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: 'nudge_reminder',
-              customData: {
+              data: {
                 shopper_user_id: invitation.user_id,
                 recipient_email: invitation.pending_recipient_email,
                 recipient_name: invitation.pending_recipient_name,

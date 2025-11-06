@@ -554,7 +554,23 @@ async function handleAutoGiftApproval(supabase: any, data: any, recipientEmail?:
     if (!recipientEmail) throw new Error('Could not find recipient email for auto-gift approval');
   }
   
-  const emailHtml = autoGiftApprovalTemplate(data);
+  // Normalize suggested_gifts format - handle both array and single gift
+  let suggested_gifts = data.suggested_gifts;
+  if (!suggested_gifts && data.suggested_gift) {
+    // Convert single gift to array format
+    suggested_gifts = [{
+      name: data.suggested_gift,
+      price: data.gift_price || 'TBD',
+      image_url: data.gift_image_url
+    }];
+  } else if (!Array.isArray(suggested_gifts)) {
+    suggested_gifts = [];
+  }
+  
+  const emailHtml = autoGiftApprovalTemplate({
+    ...data,
+    suggested_gifts
+  });
 
   return {
     to: recipientEmail,

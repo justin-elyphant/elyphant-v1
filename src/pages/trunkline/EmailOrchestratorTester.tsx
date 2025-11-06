@@ -276,11 +276,13 @@ const EmailOrchestratorTester: React.FC = () => {
         reject_url: 'https://elyphant.com/auto-gifts/approve/test-token-123'
       },
       'gift_received_notification': {
-        recipient_name: 'Robert',
-        gift_name: 'Coffee Maker Deluxe',
-        sender_name: 'Alex',
+        recipient_first_name: 'Robert',
+        giftor_name: 'Alex',
         occasion: 'Housewarming',
-        expected_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+        expected_delivery_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        gift_message: 'Hope you love this! Enjoy your new home! 🏡',
+        order_number: 'ORD-DEMO-12345',
+        preview_token: 'demo-preview-token-abc123def456'
       },
       'connection_invitation': {
         sender_name: 'Jessica',

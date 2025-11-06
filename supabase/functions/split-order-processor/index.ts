@@ -310,20 +310,45 @@ serve(async (req) => {
         console.log(`📧 Sending gift notification to recipient ${group.connectionId}`);
         
         try {
+          // Fetch recipient profile to get email and name
+          const { data: recipientProfile, error: recipientError } = await supabase
+            .from('profiles')
+            .select('email, first_name, full_name')
+            .eq('id', group.connectionId)
+            .single();
+
+          if (recipientError) {
+            console.error(`⚠️ Failed to fetch recipient profile:`, recipientError);
+            throw new Error(`Recipient profile not found: ${recipientError.message}`);
+          }
+
+          if (!recipientProfile?.email) {
+            console.error(`⚠️ Recipient ${group.connectionId} has no email address`);
+            throw new Error('Recipient email address not found');
+          }
+
+          // Get sender name from parent order profile
+          const senderName = parentOrder.profiles?.full_name || parentOrder.profiles?.first_name || 'A friend';
+
+          // Format delivery date as ISO string if present
+          const deliveryDate = group.scheduledDeliveryDate || childOrder.scheduled_delivery_date;
+          const formattedDeliveryDate = deliveryDate ? new Date(deliveryDate).toISOString() : undefined;
+
           await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
-              eventType: 'gift_purchased_for_you',
-              customData: {
-                recipient_id: group.connectionId,
-                giftor_name: parentOrder.profiles?.name || parentOrder.profiles?.first_name || 'A friend',
+              eventType: 'gift_received_notification',
+              data: {
+                recipient_email: recipientProfile.email,
+                recipient_first_name: recipientProfile.first_name || recipientProfile.full_name?.split(' ')[0] || 'there',
+                sender_name: senderName,
                 occasion: group.occasion || childOrder.occasion || 'special occasion',
-                expected_delivery_date: group.scheduledDeliveryDate || childOrder.scheduled_delivery_date,
+                expected_delivery_date: formattedDeliveryDate,
                 gift_message: group.giftMessage,
                 order_number: childOrder.order_number
               }
             }
           });
-          console.log(`✅ Gift notification sent for child order ${childOrder.order_number}`);
+          console.log(`✅ Gift notification sent to ${recipientProfile.email} for order ${childOrder.order_number}`);
         } catch (emailError) {
           console.error(`⚠️ Failed to send gift notification:`, emailError);
           // Don't fail the order if email fails

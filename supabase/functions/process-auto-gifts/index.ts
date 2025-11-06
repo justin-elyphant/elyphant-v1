@@ -321,6 +321,7 @@ serve(async (req) => {
           console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
 
           // Send automatic approval email if pending approval (not auto-approved)
+          let emailSentTo = null;
           if (finalStatus === 'pending_approval' && selectedProducts.length > 0) {
             console.log(`📧 Sending auto-approval email for execution ${execution.id}`);
             
@@ -342,6 +343,8 @@ serve(async (req) => {
                 .single();
               
               if (giverProfile?.email) {
+                emailSentTo = giverProfile.email;
+                
                 // Invoke the email orchestrator to send approval email
                 const emailResult = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                   body: {
@@ -366,12 +369,14 @@ serve(async (req) => {
                 
                 if (emailResult.error) {
                   console.error(`❌ Failed to send approval email for execution ${execution.id}:`, emailResult.error);
+                  emailSentTo = null;
                 } else {
                   console.log(`✅ Auto-approval email sent successfully for execution ${execution.id}`);
                 }
               }
             } catch (emailError) {
               console.error(`❌ Error sending auto-approval email for execution ${execution.id}:`, emailError);
+              emailSentTo = null;
               // Don't fail the whole execution if email fails
             }
           }
@@ -387,11 +392,11 @@ serve(async (req) => {
           
           // Create appropriate notification
           const notificationType = shouldAutoApprove ? 'gift_auto_approved' : 'gift_suggestions_ready';
-          const emailSent = finalStatus === 'pending_approval' ? ' - Approval email sent' : '';
+          const emailSent = emailSentTo ? ' - Approval email sent' : '';
           const title = shouldAutoApprove ? 'Gift Auto-Approved & Scheduled' : `Gift Suggestions Ready for Review${emailSent}`;
           const message = shouldAutoApprove 
             ? `Auto-approved ${selectedProducts.length} gift(s) totaling $${selectedProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0).toFixed(2)}`
-            : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget - approval email sent to ${giverProfile?.email || 'you'}`;
+            : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget${emailSentTo ? ` - approval email sent to ${emailSentTo}` : ' - review needed'}`;
 
           await supabase
             .from('auto_gift_notifications')

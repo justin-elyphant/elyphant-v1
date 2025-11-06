@@ -320,6 +320,62 @@ serve(async (req) => {
 
           console.log(`✅ Successfully processed execution ${execution.id} with ${selectedProducts.length} products`);
 
+          // Send automatic approval email if pending approval (not auto-approved)
+          if (finalStatus === 'pending_approval' && selectedProducts.length > 0) {
+            console.log(`📧 Sending auto-approval email for execution ${execution.id}`);
+            
+            try {
+              // Get recipient details
+              let recipientEmail = rule.pending_recipient_email;
+              let recipientName = 'Friend';
+              
+              if (rule.recipient_id && recipientProfile) {
+                recipientEmail = recipientEmail || recipientProfile.email;
+                recipientName = recipientProfile.full_name || recipientProfile.username || 'Friend';
+              }
+              
+              // Get user (gift giver) details for the email
+              const { data: giverProfile } = await supabase
+                .from('profiles')
+                .select('email, full_name')
+                .eq('id', userId)
+                .single();
+              
+              if (giverProfile?.email) {
+                // Invoke the email orchestrator to send approval email
+                const emailResult = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                  body: {
+                    eventType: 'auto_gift_approval',
+                    userId: userId,
+                    customData: {
+                      executionId: execution.id,
+                      recipientEmail: giverProfile.email, // Send to the giver, not recipient
+                      recipientName: recipientName,
+                      occasion: rule.date_type,
+                      suggested_gifts: selectedProducts.slice(0, 3).map((p: any) => ({
+                        name: p.title || p.product_name || p.name,
+                        price: p.price,
+                        image_url: p.image || p.image_url
+                      })),
+                      total_budget: rule.budget_limit || 50,
+                      approve_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/approve-gift/${execution.id}`,
+                      reject_url: `https://dmkxtkvlispxeqfzlczr.supabase.co/reject-gift/${execution.id}`
+                    }
+                  }
+                });
+                
+                if (emailResult.error) {
+                  console.error(`❌ Failed to send approval email for execution ${execution.id}:`, emailResult.error);
+                } else {
+                  console.log(`✅ Auto-approval email sent successfully for execution ${execution.id}`);
+                }
+              }
+            } catch (emailError) {
+              console.error(`❌ Error sending auto-approval email for execution ${execution.id}:`, emailError);
+              // Don't fail the whole execution if email fails
+            }
+          }
+
           // If auto-approved, proceed to order placement
           if (shouldAutoApprove && selectedProducts.length > 0) {
             console.log(`🛒 Auto-approved execution ${execution.id}, proceeding to order placement...`);
@@ -331,10 +387,11 @@ serve(async (req) => {
           
           // Create appropriate notification
           const notificationType = shouldAutoApprove ? 'gift_auto_approved' : 'gift_suggestions_ready';
-          const title = shouldAutoApprove ? 'Gift Auto-Approved & Scheduled' : 'Gift Suggestions Ready for Review';
+          const emailSent = finalStatus === 'pending_approval' ? ' - Approval email sent' : '';
+          const title = shouldAutoApprove ? 'Gift Auto-Approved & Scheduled' : `Gift Suggestions Ready for Review${emailSent}`;
           const message = shouldAutoApprove 
             ? `Auto-approved ${selectedProducts.length} gift(s) totaling $${selectedProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0).toFixed(2)}`
-            : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget - review needed`;
+            : `Found ${selectedProducts.length} gift suggestions within your $${rule.budget_limit || 50} budget - approval email sent to ${giverProfile?.email || 'you'}`;
 
           await supabase
             .from('auto_gift_notifications')

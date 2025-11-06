@@ -251,12 +251,29 @@ const EmailOrchestratorTester: React.FC = () => {
         invitation_url: 'https://elyphant.ai/gift/accept/abc123'
       },
       'auto_gift_approval': {
+        first_name: 'John',
         recipient_name: 'Lisa',
         occasion: 'Anniversary',
-        gift_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-        suggested_gift: 'Premium Wireless Earbuds',
-        budget: '$150.00',
-        approval_url: 'https://elyphant.ai/approve/def456'
+        execution_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        suggested_gifts: [
+          {
+            name: 'Premium Wireless Earbuds',
+            price: '$89.99',
+            image_url: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df'
+          },
+          {
+            name: 'Portable Bluetooth Speaker',
+            price: '$45.00',
+            image_url: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1'
+          },
+          {
+            name: 'Wireless Charging Pad',
+            price: '$29.99',
+            image_url: 'https://images.unsplash.com/photo-1591290619762-9b2e5e9e1d01'
+          }
+        ],
+        approve_url: 'https://elyphant.com/auto-gifts/approve/test-token-123',
+        reject_url: 'https://elyphant.com/auto-gifts/approve/test-token-123'
       },
       'gift_received_notification': {
         recipient_name: 'Robert',

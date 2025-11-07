@@ -226,7 +226,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
               id="recipient-search-input"
               ref={inputRef}
               type="text"
-              placeholder="Search connections or find people..."
+              placeholder="Find friends on Elyphant..."
               value={searchQuery}
               onChange={(e) => {
                 console.log('[RecipientSearchCombobox] input change:', e.target.value);

@@ -18,28 +18,12 @@ const RelationshipSelector: React.FC<RelationshipSelectorProps> = ({
   placeholder = "Select relationship",
   className
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (open) {
-      // Force list to start at the very top; Radix scrolls selected into view by default
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const listboxes = document.querySelectorAll('[role="listbox"]');
-          const viewport = listboxes[listboxes.length - 1] as HTMLElement | undefined;
-          if (viewport) viewport.scrollTop = 0;
-        });
-      });
-    }
-  };
-
   return (
-    <Select value={value} onValueChange={onValueChange} disabled={disabled} open={isOpen} onOpenChange={handleOpenChange}>
+    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className="max-h-[400px]" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={false}>
+      <SelectContent className="max-h-[240px]" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={true} collisionPadding={8}>
         {Object.entries(RELATIONSHIP_CATEGORIES).map(([categoryKey, category]) => (
           <SelectGroup key={categoryKey}>
             <SelectLabel>{category.label}</SelectLabel>

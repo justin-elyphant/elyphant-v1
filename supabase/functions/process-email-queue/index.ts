@@ -55,7 +55,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Process each email
     for (const email of pendingEmails) {
       try {
-        const eventType = email.template_variables?.eventType;
+        // Get event_type from either the new email_queue.event_type column or legacy template_variables
+        const eventType = email.event_type || email.template_variables?.eventType;
         console.log(`📧 Processing ${eventType || 'unknown'} email for ${email.recipient_email}`);
 
         // Route to appropriate handler based on event type
@@ -74,13 +75,14 @@ const handler = async (req: Request): Promise<Response> => {
           }
         } else {
           // Route all modern emails to ecommerce orchestrator
+          // Merge metadata and template_variables for backward compatibility
+          const emailData = email.metadata || email.template_variables?.customData || {};
+          
           const { error: orchestratorError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: eventType,
-              orderId: email.template_variables?.orderId,
-              userId: email.template_variables?.userId,
-              cartSessionId: email.template_variables?.cartSessionId,
-              customData: email.template_variables?.customData
+              recipientEmail: email.recipient_email,
+              data: emailData
             }
           });
 

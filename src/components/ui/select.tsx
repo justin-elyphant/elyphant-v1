@@ -83,13 +83,14 @@ const SelectContent = React.forwardRef<
     >
       <SelectPrimitive.Viewport
         className={cn(
-          "p-1 overflow-y-auto overscroll-contain [overflow-y:overlay]",
+          "p-1 overflow-y-auto overscroll-contain touch-pan-y max-h-60 [overflow-y:overlay]",
           position === "popper" &&
             "max-h-[var(--radix-select-content-available-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
-        style={{ 
+        style={{
           WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'thin'
+          scrollbarWidth: 'thin',
+          maxHeight: 'var(--radix-select-content-available-height)'
         } as React.CSSProperties}
       >
         {children}

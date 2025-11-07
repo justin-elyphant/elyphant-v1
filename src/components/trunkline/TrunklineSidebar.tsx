@@ -16,7 +16,8 @@ import {
   Monitor,
   TrendingUp,
   TestTube,
-  Mail
+  Mail,
+  Zap
 } from "lucide-react";
 import {
   Sidebar,
@@ -114,6 +115,11 @@ const operationsItems = [
     title: "Order Operations",
     url: "/trunkline/zinc-debugger",
     icon: Bug,
+  },
+  {
+    title: "Auto-Gift Testing",
+    url: "/trunkline/auto-gift-testing",
+    icon: Zap,
   },
 ];
 

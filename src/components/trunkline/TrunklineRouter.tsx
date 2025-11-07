@@ -17,6 +17,7 @@ import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCent
 import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
 import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
+import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
 
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
@@ -70,6 +71,8 @@ export const TrunklineRouter: React.FC = () => {
           </div>
         );
       }
+      case '/auto-gift-testing':
+        return <AutoGiftTestingTab />;
       default:
         return <OverviewTab />;
     }

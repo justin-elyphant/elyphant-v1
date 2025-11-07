@@ -787,7 +787,27 @@ async function handleWishlistPurchaseNotification(supabase: any, data: any, reci
     if (!recipientEmail) throw new Error('Could not find recipient email for wishlist notification');
   }
   
-  const emailHtml = wishlistPurchaseNotificationTemplate(data);
+  // Check if there's a connection between purchaser and wishlist owner (for thank you CTA)
+  let hasConnection = false;
+  if (data.purchaser_user_id && data.wishlist_owner_id) {
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('status')
+      .or(`and(user_id.eq.${data.purchaser_user_id},connected_user_id.eq.${data.wishlist_owner_id}),and(user_id.eq.${data.wishlist_owner_id},connected_user_id.eq.${data.purchaser_user_id})`)
+      .eq('status', 'accepted')
+      .maybeSingle();
+    
+    hasConnection = !!connection;
+  }
+  
+  console.log(`🎁 Wishlist purchase notification - purchaser_user_id: ${data.purchaser_user_id}, has_connection: ${hasConnection}`);
+  
+  const enrichedData = {
+    ...data,
+    has_connection: hasConnection
+  };
+  
+  const emailHtml = wishlistPurchaseNotificationTemplate(enrichedData);
   
   const subject = data.notification_type === 'purchaser_confirmation'
     ? `Gift Purchase Confirmed - ${data.product_name}`

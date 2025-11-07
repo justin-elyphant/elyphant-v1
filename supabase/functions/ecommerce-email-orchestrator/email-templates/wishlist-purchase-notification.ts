@@ -9,6 +9,8 @@ import { baseEmailTemplate } from './base-template.ts';
 export interface WishlistPurchaseNotificationProps {
   owner_name: string;
   purchaser_name?: string;
+  purchaser_user_id?: string;
+  has_connection?: boolean;
   item_name: string;
   item_price?: number;
   item_image?: string;
@@ -84,15 +86,54 @@ export const wishlistPurchaseNotificationTemplate = (props: WishlistPurchaseNoti
       Your gift is on its way! You'll receive tracking details soon.
     </p>
     
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-      <tr>
-        <td align="center" style="padding: 20px 0;">
-          <a href="${props.wishlist_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
-            View Your Wishlist
-          </a>
-        </td>
-      </tr>
-    </table>
+    ${props.purchaser_user_id && props.has_connection ? `
+      <!-- Connected User: Send Thank You Message -->
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="padding: 20px 0;">
+            <a href="https://app.elyphant.ai/messages/${props.purchaser_user_id}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+              💬 Send Thank You Message
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 10px 0;">
+            <a href="${props.wishlist_url}" style="color: #7c3aed; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px;">
+              View Your Wishlist →
+            </a>
+          </td>
+        </tr>
+      </table>
+    ` : props.purchaser_user_id && !props.has_connection ? `
+      <!-- Non-Connected User: View Profile & Say Thanks -->
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="padding: 20px 0;">
+            <a href="https://app.elyphant.ai/profile/${props.purchaser_user_id}?action=thankyou" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+              👋 View Their Profile & Say Thanks
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 10px 0;">
+            <a href="${props.wishlist_url}" style="color: #7c3aed; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px;">
+              View Your Wishlist →
+            </a>
+          </td>
+        </tr>
+      </table>
+    ` : `
+      <!-- Anonymous Purchase: View Wishlist -->
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="padding: 20px 0;">
+            <a href="${props.wishlist_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+              View Your Wishlist
+            </a>
+          </td>
+        </tr>
+      </table>
+    `}
     
     <p style="margin: 30px 0 0 0; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #999999; line-height: 22px;">
       Happy gifting! 🎉

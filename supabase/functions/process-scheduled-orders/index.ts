@@ -223,6 +223,7 @@ serve(async (req) => {
 
     // Enhanced query with correct columns from database schema
     // FUNDING-AWARE: Only process orders that are funded
+    // INCLUDES: Both manual scheduled orders AND auto-gift held orders
     const { data: ordersToProcess, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -236,10 +237,12 @@ serve(async (req) => {
         gift_scheduling_options,
         delivery_groups,
         has_multiple_recipients,
-        funding_status
+        funding_status,
+        hold_for_scheduled_delivery,
+        zinc_scheduled_processing_date
       `)
       .eq('status', 'scheduled')
-      .lte('scheduled_delivery_date', cutoffDateString)
+      .or(`scheduled_delivery_date.lte.${cutoffDateString},and(hold_for_scheduled_delivery.eq.true,zinc_scheduled_processing_date.lte.${new Date().toISOString()})`)
       .neq('funding_status', 'awaiting_funds') // Skip orders awaiting funding
       .order('scheduled_delivery_date', { ascending: true })
 

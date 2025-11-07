@@ -236,6 +236,15 @@ serve(async (req) => {
           pending_recipient_email: execution.auto_gifting_rules.pending_recipient_email
         }).eq('id', executionId);
         
+        // Get sender's name for the email
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', execution.user_id)
+          .single();
+        
+        const senderName = senderProfile?.name || 'Someone';
+        
         // Send address request email
         const addressRequestUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/collect-recipient-address?token=${addressToken}`;
         
@@ -243,7 +252,7 @@ serve(async (req) => {
           body: {
             eventType: 'address_request',
             data: {
-              requester_name: recipientProfile?.name || 'Someone',
+              requester_name: senderName,
               recipient_name: execution.auto_gifting_rules.pending_recipient_email.split('@')[0],
               recipient_email: execution.auto_gifting_rules.pending_recipient_email,
               occasion: execution.auto_gifting_rules.date_type || 'a special occasion',

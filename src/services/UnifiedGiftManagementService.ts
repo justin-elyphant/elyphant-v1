@@ -894,6 +894,76 @@ class UnifiedGiftManagementService {
       data.id
     );
     
+    // Phase 7: Send gift invitation email for pending recipients
+    if (isPendingInvitation && rule.pending_recipient_email) {
+      try {
+        console.log('📧 [UNIFIED] Sending gift invitation email to pending recipient');
+        
+        // Get user's profile for personalization
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('name, first_name')
+          .eq('id', rule.user_id)
+          .single();
+        
+        const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
+        
+        // Generate invitation token
+        const invitationToken = crypto.randomUUID();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiry
+        
+        // Create pending invitation record
+        const { error: invitationError } = await supabase
+          .from('pending_gift_invitations')
+          .insert({
+            user_id: rule.user_id,
+            recipient_email: rule.pending_recipient_email,
+            recipient_name: rule.pending_recipient_name || rule.pending_recipient_email.split('@')[0],
+            invitation_token: invitationToken,
+            status: 'pending',
+            expires_at: expiresAt.toISOString(),
+            gift_occasion: rule.date_type,
+            relationship_type: 'friend'
+          });
+        
+        if (invitationError) {
+          console.error('Failed to create invitation record:', invitationError);
+        } else {
+          // Send the invitation email via orchestrator
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'gift_invitation',
+              recipientEmail: rule.pending_recipient_email,
+              data: {
+                sender_first_name: senderName,
+                recipient_name: rule.pending_recipient_name || rule.pending_recipient_email.split('@')[0],
+                invitation_url: `${window.location.origin}/signin?invitation_token=${invitationToken}`,
+                occasion: rule.date_type,
+                relationship_type: 'friend'
+              }
+            }
+          });
+          
+          console.log('✅ [UNIFIED] Gift invitation email sent successfully');
+          
+          // Log the invitation send event
+          await this.logAutoGiftEvent(
+            rule.user_id,
+            'gift_invitation_sent',
+            {
+              recipientEmail: rule.pending_recipient_email,
+              invitationToken: invitationToken,
+              ruleId: data.id
+            }
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send gift invitation email:', emailError);
+        // Don't throw - rule is already created, email is nice-to-have
+      }
+    }
+    
     console.log(`✅ [UNIFIED] Auto-gifting rule created successfully ${isPendingInvitation ? '(pending invitation)' : ''} with security tracking:`, data.id);
     return data as unknown as UnifiedGiftRule;
   }

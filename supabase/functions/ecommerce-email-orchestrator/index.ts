@@ -1153,7 +1153,13 @@ async function handleAutoGiftFulfillmentFailed(supabase: any, data: any, recipie
   };
 }
 
-serve(handler);
+/**
+ * Handler: Address Request (Legacy support)
+ */
+async function handleAddressRequest(supabase: any, data: any, recipientEmail?: string) {
+  console.log('📬 Handling address request email');
+  
+  if (!recipientEmail) {
     recipientEmail = data.recipient_email || data.recipientEmail;
     if (!recipientEmail) throw new Error('Recipient email required for address request');
   }

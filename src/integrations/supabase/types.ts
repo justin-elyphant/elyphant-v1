@@ -553,6 +553,64 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_gift_fulfillment_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          execution_id: string | null
+          id: string
+          last_attempt_at: string | null
+          order_id: string | null
+          retry_count: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_id?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          order_id?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_id?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          order_id?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_gift_fulfillment_queue_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_gift_fulfillment_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order_monitoring_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_gift_fulfillment_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_gift_notifications: {
         Row: {
           created_at: string | null
@@ -597,6 +655,53 @@ export type Database = {
           },
         ]
       }
+      auto_gift_payment_audit: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          error_message: string | null
+          execution_id: string | null
+          id: string
+          payment_intent_id: string
+          payment_method_id: string | null
+          status: string
+          stripe_response: Json | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          execution_id?: string | null
+          id?: string
+          payment_intent_id: string
+          payment_method_id?: string | null
+          status: string
+          stripe_response?: Json | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          execution_id?: string | null
+          id?: string
+          payment_intent_id?: string
+          payment_method_id?: string | null
+          status?: string
+          stripe_response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_gift_payment_audit_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_gifting_rules: {
         Row: {
           budget_limit: number | null
@@ -610,6 +715,9 @@ export type Database = {
           is_active: boolean | null
           notification_preferences: Json | null
           payment_method_id: string | null
+          payment_method_last_verified: string | null
+          payment_method_status: string | null
+          payment_method_validation_error: string | null
           pending_recipient_email: string | null
           privacy_settings: Json | null
           recipient_id: string | null
@@ -636,6 +744,9 @@ export type Database = {
           is_active?: boolean | null
           notification_preferences?: Json | null
           payment_method_id?: string | null
+          payment_method_last_verified?: string | null
+          payment_method_status?: string | null
+          payment_method_validation_error?: string | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id?: string | null
@@ -662,6 +773,9 @@ export type Database = {
           is_active?: boolean | null
           notification_preferences?: Json | null
           payment_method_id?: string | null
+          payment_method_last_verified?: string | null
+          payment_method_status?: string | null
+          payment_method_validation_error?: string | null
           pending_recipient_email?: string | null
           privacy_settings?: Json | null
           recipient_id?: string | null
@@ -772,12 +886,19 @@ export type Database = {
           execution_date: string
           id: string
           invitation_context: Json | null
+          last_payment_attempt_at: string | null
+          next_payment_retry_at: string | null
           next_retry_at: string | null
           order_id: string | null
+          payment_confirmed_at: string | null
+          payment_error_message: string | null
+          payment_retry_count: number | null
+          payment_status: string | null
           retry_count: number | null
           rule_id: string | null
           selected_products: Json | null
           status: string
+          stripe_payment_intent_id: string | null
           total_amount: number | null
           updated_at: string | null
           urgency_level: number | null
@@ -793,12 +914,19 @@ export type Database = {
           execution_date: string
           id?: string
           invitation_context?: Json | null
+          last_payment_attempt_at?: string | null
+          next_payment_retry_at?: string | null
           next_retry_at?: string | null
           order_id?: string | null
+          payment_confirmed_at?: string | null
+          payment_error_message?: string | null
+          payment_retry_count?: number | null
+          payment_status?: string | null
           retry_count?: number | null
           rule_id?: string | null
           selected_products?: Json | null
           status?: string
+          stripe_payment_intent_id?: string | null
           total_amount?: number | null
           updated_at?: string | null
           urgency_level?: number | null
@@ -814,12 +942,19 @@ export type Database = {
           execution_date?: string
           id?: string
           invitation_context?: Json | null
+          last_payment_attempt_at?: string | null
+          next_payment_retry_at?: string | null
           next_retry_at?: string | null
           order_id?: string | null
+          payment_confirmed_at?: string | null
+          payment_error_message?: string | null
+          payment_retry_count?: number | null
+          payment_status?: string | null
           retry_count?: number | null
           rule_id?: string | null
           selected_products?: Json | null
           status?: string
+          stripe_payment_intent_id?: string | null
           total_amount?: number | null
           updated_at?: string | null
           urgency_level?: number | null

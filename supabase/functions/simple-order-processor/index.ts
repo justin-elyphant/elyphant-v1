@@ -388,6 +388,55 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Track wishlist purchases (triggers email notification automatically)
+    console.log(`📋 Checking for wishlist purchases in order ${orderId}`);
+    for (const item of order.order_items) {
+      if (!item.product_id) continue;
+      
+      // Find if this product is on anyone's wishlist
+      const { data: wishlistItems } = await supabase
+        .from('wishlist_items')
+        .select('id, wishlist_id, wishlists(user_id)')
+        .eq('product_id', item.product_id);
+      
+      if (wishlistItems && wishlistItems.length > 0) {
+        for (const wishlistItem of wishlistItems) {
+          // Don't track if user bought their own wishlist item
+          if (wishlistItem.wishlists?.user_id === order.user_id) continue;
+          
+          console.log(`💝 Tracking wishlist purchase: product ${item.product_id} from wishlist ${wishlistItem.wishlist_id}`);
+          
+          // Get purchaser name
+          const { data: purchaserProfile } = await supabase
+            .from('profiles')
+            .select('display_name, full_name, email')
+            .eq('id', order.user_id)
+            .single();
+          
+          const purchaserName = purchaserProfile?.display_name || 
+                               purchaserProfile?.full_name || 
+                               purchaserProfile?.email || 
+                               'Someone';
+          
+          // Insert into wishlist_item_purchases (trigger will queue email)
+          await supabase.from('wishlist_item_purchases').insert({
+            wishlist_id: wishlistItem.wishlist_id,
+            item_id: wishlistItem.id,
+            product_id: item.product_id,
+            purchaser_user_id: order.user_id,
+            purchaser_name: purchaserName,
+            is_anonymous: false,
+            order_id: orderId,
+            quantity: item.quantity || 1,
+            price_paid: item.price,
+            purchased_at: new Date().toISOString()
+          });
+          
+          console.log(`✅ Wishlist purchase tracked - email notification queued`);
+        }
+      }
+    }
+
     console.log(`✅ Order ${orderId} successfully processed. ZMA Order ID: ${zmaResult.request_id}`);
 
     return new Response(JSON.stringify({

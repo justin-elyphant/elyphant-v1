@@ -209,6 +209,63 @@ serve(async (req) => {
     // Proceed to order placement with payment processing
     console.log('🛒 [approve-auto-gift] Starting order placement process...');
     try {
+      // Check if this is a pending recipient (no recipient_id, only email)
+      const isPendingRecipient = !execution.auto_gifting_rules.recipient_id && execution.auto_gifting_rules.pending_recipient_email;
+      
+      if (isPendingRecipient) {
+        console.log('📬 [approve-auto-gift] Pending recipient detected - requesting address collection');
+        
+        // Generate address collection token
+        const { data: tokenData } = await supabase.rpc('generate_address_collection_token');
+        const addressToken = tokenData;
+        
+        // Store address request
+        await supabase.from('pending_recipient_addresses').insert({
+          execution_id: executionId,
+          recipient_email: execution.auto_gifting_rules.pending_recipient_email,
+          token: addressToken,
+          requested_by: execution.user_id,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        });
+        
+        // Update execution status
+        await supabase.from('automated_gift_executions').update({
+          status: 'awaiting_address',
+          address_collection_status: 'requested',
+          address_collection_token: addressToken,
+          pending_recipient_email: execution.auto_gifting_rules.pending_recipient_email
+        }).eq('id', executionId);
+        
+        // Send address request email
+        const addressRequestUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/collect-recipient-address?token=${addressToken}`;
+        
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'address_request',
+            data: {
+              requester_name: recipientProfile?.name || 'Someone',
+              recipient_name: execution.auto_gifting_rules.pending_recipient_email.split('@')[0],
+              recipient_email: execution.auto_gifting_rules.pending_recipient_email,
+              occasion: execution.auto_gifting_rules.date_type || 'a special occasion',
+              request_url: addressRequestUrl,
+              message: 'We need your shipping address to complete your gift delivery.'
+            }
+          }
+        });
+        
+        console.log('✅ [approve-auto-gift] Address request sent - execution on hold');
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Address request sent to recipient',
+            status: 'awaiting_address',
+            executionId
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       // Get recipient profile for shipping info
       console.log('👤 [approve-auto-gift] Fetching recipient profile...');
       const { data: recipientProfile, error: profileError } = await supabase
@@ -402,6 +459,37 @@ serve(async (req) => {
         throw new Error('Missing required shipping address information');
       }
 
+      // ========== SMART DELIVERY TIMING CALCULATION ==========
+      console.log('⏰ [approve-auto-gift] Calculating optimal delivery timing...');
+      
+      // Get the target event date from execution
+      const targetEventDate = execution.execution_date ? new Date(execution.execution_date) : null;
+      let shouldHoldOrder = false;
+      let zincScheduledDate = null;
+      let orderStatus = 'processing';
+      
+      if (targetEventDate) {
+        const today = new Date();
+        const daysUntilEvent = Math.ceil((targetEventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        console.log(`📅 [approve-auto-gift] Event date: ${targetEventDate.toISOString()}, Days until event: ${daysUntilEvent}`);
+        
+        // If event is more than 6 days away, hold the order
+        if (daysUntilEvent > 6) {
+          // Submit order 4 days before event (assumes 2-day Amazon Prime shipping)
+          const optimalSubmissionDate = new Date(targetEventDate);
+          optimalSubmissionDate.setDate(optimalSubmissionDate.getDate() - 4);
+          
+          shouldHoldOrder = true;
+          zincScheduledDate = optimalSubmissionDate.toISOString();
+          orderStatus = 'scheduled';
+          
+          console.log(`🔒 [approve-auto-gift] Holding order until ${optimalSubmissionDate.toISOString()} (4 days before event)`);
+        } else {
+          console.log(`🚀 [approve-auto-gift] Event is within 6 days - processing immediately`);
+        }
+      }
+      
       // Create the order record with all required fields
       const { data: newOrder, error: createOrderError } = await supabase
         .from('orders')
@@ -412,13 +500,16 @@ serve(async (req) => {
           shipping_cost: shippingCost,
           tax_amount: taxAmount,
           currency: currency,
-          status: 'processing',
+          status: orderStatus,
           payment_status: 'succeeded',
           stripe_payment_intent_id: paymentResult.payment_intent_id,
           order_number: `AUTO-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${Math.floor(Math.random() * 1000)}`,
           shipping_info: shippingInfo,
           is_gift: true,
           gift_message: getGiftMessage(execution),
+          hold_for_scheduled_delivery: shouldHoldOrder,
+          zinc_scheduled_processing_date: zincScheduledDate,
+          scheduled_delivery_date: targetEventDate?.toISOString(),
           gift_options: {
             auto_gift_execution_id: executionId,
             recipient_id: execution.auto_gifting_rules.recipient_id,
@@ -462,25 +553,52 @@ serve(async (req) => {
         throw new Error(`Failed to create order items: ${itemsError.message}`);
       }
 
-      // Queue for async fulfillment instead of synchronous processing
-      console.log(`📦 [approve-auto-gift] Queueing order ${newOrder.id} for async fulfillment`);
-      
-      await supabase.from('auto_gift_fulfillment_queue').insert({
-        execution_id: executionId,
-        order_id: newOrder.id,
-        status: 'queued',
-      });
-      
-      console.log(`✅ [approve-auto-gift] Order queued for fulfillment`);
-      
-      // Update execution status to payment_confirmed_pending_fulfillment
-      await supabase
-        .from('automated_gift_executions')
-        .update({
-          status: 'approved', // Will be moved to 'completed' after fulfillment
+      // Check if order should be held for scheduled delivery
+      if (shouldHoldOrder) {
+        console.log(`🕐 [approve-auto-gift] Order ${newOrder.id} held for scheduled delivery on ${zincScheduledDate}`);
+        
+        // Update execution to scheduled status
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'scheduled',
+            order_id: newOrder.id,
+          })
+          .eq('id', executionId);
+        
+        // Send scheduled notification
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'auto_gift_scheduled',
+            userId: execution.user_id,
+            orderNumber: newOrder.order_number,
+            scheduledDate: zincScheduledDate,
+            eventDate: targetEventDate?.toISOString()
+          }
+        });
+        
+        console.log(`✅ [approve-auto-gift] Order scheduled successfully`);
+      } else {
+        // Queue for async fulfillment (immediate processing)
+        console.log(`📦 [approve-auto-gift] Queueing order ${newOrder.id} for async fulfillment`);
+        
+        await supabase.from('auto_gift_fulfillment_queue').insert({
+          execution_id: executionId,
           order_id: newOrder.id,
-        })
-        .eq('id', executionId);
+          status: 'queued',
+        });
+        
+        console.log(`✅ [approve-auto-gift] Order queued for fulfillment`);
+        
+        // Update execution status to approved (will be moved to 'completed' after fulfillment)
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'approved',
+            order_id: newOrder.id,
+          })
+          .eq('id', executionId);
+      }
       
       // For backward compatibility, keep the old synchronous call as a comment
       // The fulfillment queue processor will handle this asynchronously

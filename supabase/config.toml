@@ -90,6 +90,9 @@ verify_jwt = false
 [functions.process-fulfillment-queue]
 verify_jwt = false
 
+[functions.collect-recipient-address]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
@@ -133,3 +136,8 @@ schedule = "0 10,16,22 * * *"
 [[crons.process_fulfillment_queue]]
 function_name = "process-fulfillment-queue"
 schedule = "*/15 * * * *"
+
+# Cron to process scheduled orders (held for delivery timing) twice daily
+[[crons.process_scheduled_orders]]
+function_name = "process-scheduled-orders"
+schedule = "0 6,14 * * *"

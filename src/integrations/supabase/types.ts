@@ -877,6 +877,8 @@ export type Database = {
       }
       automated_gift_executions: {
         Row: {
+          address_collection_status: string | null
+          address_collection_token: string | null
           address_metadata: Json | null
           ai_agent_source: Json | null
           created_at: string | null
@@ -894,6 +896,7 @@ export type Database = {
           payment_error_message: string | null
           payment_retry_count: number | null
           payment_status: string | null
+          pending_recipient_email: string | null
           retry_count: number | null
           rule_id: string | null
           selected_products: Json | null
@@ -905,6 +908,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address_collection_status?: string | null
+          address_collection_token?: string | null
           address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
@@ -922,6 +927,7 @@ export type Database = {
           payment_error_message?: string | null
           payment_retry_count?: number | null
           payment_status?: string | null
+          pending_recipient_email?: string | null
           retry_count?: number | null
           rule_id?: string | null
           selected_products?: Json | null
@@ -933,6 +939,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address_collection_status?: string | null
+          address_collection_token?: string | null
           address_metadata?: Json | null
           ai_agent_source?: Json | null
           created_at?: string | null
@@ -950,6 +958,7 @@ export type Database = {
           payment_error_message?: string | null
           payment_retry_count?: number | null
           payment_status?: string | null
+          pending_recipient_email?: string | null
           retry_count?: number | null
           rule_id?: string | null
           selected_products?: Json | null
@@ -3237,6 +3246,7 @@ export type Database = {
           gifting_fee_name: string | null
           group_gift_project_id: string | null
           has_multiple_recipients: boolean | null
+          hold_for_scheduled_delivery: boolean | null
           id: string
           is_gift: boolean | null
           is_split_order: boolean | null
@@ -3272,6 +3282,7 @@ export type Database = {
           user_id: string | null
           webhook_token: string | null
           zinc_order_id: string | null
+          zinc_scheduled_processing_date: string | null
           zinc_status: string | null
           zinc_timeline_events: Json | null
           zma_account_used: string | null
@@ -3305,6 +3316,7 @@ export type Database = {
           gifting_fee_name?: string | null
           group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
+          hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_gift?: boolean | null
           is_split_order?: boolean | null
@@ -3340,6 +3352,7 @@ export type Database = {
           user_id?: string | null
           webhook_token?: string | null
           zinc_order_id?: string | null
+          zinc_scheduled_processing_date?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null
           zma_account_used?: string | null
@@ -3373,6 +3386,7 @@ export type Database = {
           gifting_fee_name?: string | null
           group_gift_project_id?: string | null
           has_multiple_recipients?: boolean | null
+          hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_gift?: boolean | null
           is_split_order?: boolean | null
@@ -3408,6 +3422,7 @@ export type Database = {
           user_id?: string | null
           webhook_token?: string | null
           zinc_order_id?: string | null
+          zinc_scheduled_processing_date?: string | null
           zinc_status?: string | null
           zinc_timeline_events?: Json | null
           zma_account_used?: string | null
@@ -3633,6 +3648,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pending_recipient_addresses: {
+        Row: {
+          collected_at: string | null
+          created_at: string
+          execution_id: string
+          expires_at: string
+          id: string
+          recipient_email: string
+          requested_by: string
+          shipping_address: Json | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          collected_at?: string | null
+          created_at?: string
+          execution_id: string
+          expires_at?: string
+          id?: string
+          recipient_email: string
+          requested_by: string
+          shipping_address?: Json | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          collected_at?: string | null
+          created_at?: string
+          execution_id?: string
+          expires_at?: string
+          id?: string
+          recipient_email?: string
+          requested_by?: string
+          shipping_address?: Json | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_recipient_addresses_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automated_gift_executions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       popularity_scores: {
         Row: {
@@ -5785,6 +5847,7 @@ export type Database = {
       detect_abandoned_carts: { Args: never; Returns: undefined }
       emergency_security_verification: { Args: never; Returns: Json }
       fix_function_security_warnings: { Args: never; Returns: string }
+      generate_address_collection_token: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       get_accessible_wishlist_items: {

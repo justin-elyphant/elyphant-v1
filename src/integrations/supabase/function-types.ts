@@ -11,5 +11,6 @@ export enum SUPABASE_FUNCTIONS {
   SIMPLE_ORDER_PROCESSOR = "simple-order-processor",
   CLEANUP_DUPLICATE_ORDERS = "cleanup-duplicate-orders",
   ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator",
-  CLEAR_USER_CART_SESSIONS = "clear-user-cart-sessions"
+  CLEAR_USER_CART_SESSIONS = "clear-user-cart-sessions",
+  COLLECT_RECIPIENT_ADDRESS = "collect-recipient-address"
 }

@@ -84,7 +84,9 @@ interface EmailRequest {
     // Wishlist (1)
     | 'wishlist_purchase_notification'
     // Operational (kept for backward compatibility)
-    | 'address_request';
+    | 'address_request'
+    | 'address_collected_notification'
+    | 'auto_gift_scheduled';
   data: any;
   recipientEmail?: string; // Optional: For testing, overrides DB lookup
 }
@@ -183,6 +185,14 @@ const handler = async (req: Request): Promise<Response> => {
       // Operational (legacy support)
       case 'address_request':
         emailData = await handleAddressRequest(supabase, data, recipientEmail);
+        break;
+      
+      case 'address_collected_notification':
+        emailData = await handleAddressCollected(supabase, data, recipientEmail);
+        break;
+      
+      case 'auto_gift_scheduled':
+        emailData = await handleAutoGiftScheduled(supabase, data, recipientEmail);
         break;
       
       default:
@@ -1182,6 +1192,105 @@ async function handleAddressRequest(supabase: any, data: any, recipientEmail?: s
   return {
     to: recipientEmail,
     subject: `${data.requester_name} requested your address`,
+    html: html,
+  };
+}
+
+/**
+ * Handler: Address Collected Notification
+ */
+async function handleAddressCollected(supabase: any, data: any, recipientEmail?: string) {
+  console.log('✅ Handling address collected notification');
+  
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #48bb78;">✅ Address Received!</h1>
+      <p>Great news!</p>
+      <p><strong>${data.recipientEmail}</strong> has shared their shipping address with you.</p>
+      <p style="background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78;">
+        Your auto-gift order will now be processed and sent to them at the scheduled time.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/gifting/auto-gifting" style="background-color: #9333ea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block;">View Auto-Gifts</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '✅ Recipient Address Received',
+    html: html,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Scheduled Notification
+ */
+async function handleAutoGiftScheduled(supabase: any, data: any, recipientEmail?: string) {
+  console.log('📅 Handling auto-gift scheduled notification');
+  
+  if (!recipientEmail) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  const scheduledDate = new Date(data.scheduledDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const eventDate = new Date(data.eventDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #9333ea;">🎁 Auto-Gift Scheduled</h1>
+      <p>Your auto-gift order <strong>#${data.orderNumber}</strong> has been successfully approved and scheduled!</p>
+      
+      <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Delivery Schedule:</h3>
+        <p style="margin: 5px 0;">📦 <strong>Order will be sent:</strong> ${scheduledDate}</p>
+        <p style="margin: 5px 0;">🎉 <strong>For event on:</strong> ${eventDate}</p>
+      </div>
+      
+      <p style="background: #edf2f7; padding: 15px; border-radius: 8px;">
+        ℹ️ We're holding your order to ensure it arrives at the perfect time - about 2-3 days before the special occasion!
+      </p>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/gifting/auto-gifting" style="background-color: #9333ea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block;">View Order Details</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: `🎁 Auto-Gift Scheduled - Order #${data.orderNumber}`,
     html: html,
   };
 }

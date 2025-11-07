@@ -1791,6 +1791,7 @@ class UnifiedGiftManagementService {
                 recipient_email: sanitizedEmail,
                 recipient_name: sanitizedName,
                 connection_id: data.id,
+                invitation_url: `https://app.elyphant.ai/auth?invite=${data.invitation_token}`,
                 custom_message: relationshipContext?.custom_message
               }
             }
@@ -1881,6 +1882,7 @@ class UnifiedGiftManagementService {
               recipient_email: sanitizedEmail,
               recipient_name: sanitizedName,
               connection_id: data.id,
+              invitation_url: `https://app.elyphant.ai/auth?invite=${data.invitation_token}`,
               custom_message: relationshipContext?.custom_message
             }
           }

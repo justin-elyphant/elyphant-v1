@@ -114,11 +114,15 @@ schedule = "*/15 * * * *"
 [[crons.send_invitation_reminders]]
 function_name = "send-invitation-reminders"
 schedule = "0 10 * * *"
-
 # Cron to validate payment methods daily at 8 AM UTC (before auto-gift processing)
 [[crons.validate_payment_methods]]
 function_name = "validate-payment-methods"
 schedule = "0 8 * * *"
+
+# Cron to check for upcoming auto-gift events and create executions daily at 9 AM UTC
+[[crons.daily_auto_gift_check]]
+function_name = "daily-auto-gift-check"
+schedule = "0 9 * * *"
 
 # Cron to retry failed auto-gift payments 3x daily
 [[crons.retry_auto_gift_payments]]

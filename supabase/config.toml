@@ -81,6 +81,15 @@ verify_jwt = false
 [functions.send-invitation-reminders]
 verify_jwt = false
 
+[functions.validate-payment-methods]
+verify_jwt = false
+
+[functions.retry-auto-gift-payment]
+verify_jwt = false
+
+[functions.process-fulfillment-queue]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
@@ -105,3 +114,18 @@ schedule = "*/15 * * * *"
 [[crons.send_invitation_reminders]]
 function_name = "send-invitation-reminders"
 schedule = "0 10 * * *"
+
+# Cron to validate payment methods daily at 8 AM UTC (before auto-gift processing)
+[[crons.validate_payment_methods]]
+function_name = "validate-payment-methods"
+schedule = "0 8 * * *"
+
+# Cron to retry failed auto-gift payments 3x daily
+[[crons.retry_auto_gift_payments]]
+function_name = "retry-auto-gift-payment"
+schedule = "0 10,16,22 * * *"
+
+# Cron to process fulfillment queue every 15 minutes
+[[crons.process_fulfillment_queue]]
+function_name = "process-fulfillment-queue"
+schedule = "*/15 * * * *"

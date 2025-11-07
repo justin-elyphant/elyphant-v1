@@ -122,7 +122,11 @@ serve(async (req) => {
       metadata: {
         ...metadata,
         created_source: 'create-payment-intent-function',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        // Add auto-gift identification for webhook reconciliation
+        order_type: metadata.order_type || 'marketplace',
+        execution_id: metadata.execution_id || metadata.auto_gift_execution_id || null,
+        rule_id: metadata.rule_id || null,
       }
     };
 

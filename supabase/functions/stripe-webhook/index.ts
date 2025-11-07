@@ -118,6 +118,46 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
   const startTime = Date.now();
   
   try {
+    // ========================================================================
+    // AUTO-GIFT WEBHOOK BACKUP - Priority 3: Webhook Redundancy
+    // ========================================================================
+    // Handle auto-gift payments asynchronously (backup to approve-auto-gift)
+    if (paymentIntent.metadata?.order_type === 'auto_gift') {
+      console.log('🎁 Auto-gift payment succeeded via webhook');
+      const executionId = paymentIntent.metadata.execution_id;
+      
+      if (!executionId) {
+        console.error('❌ Auto-gift payment missing execution_id in metadata');
+        return;
+      }
+      
+      // Update execution payment status (webhook backup)
+      await supabase
+        .from('automated_gift_executions')
+        .update({
+          payment_status: 'succeeded',
+          payment_confirmed_at: new Date().toISOString(),
+          stripe_payment_intent_id: paymentIntent.id,
+        })
+        .eq('id', executionId);
+      
+      // Log webhook delivery for auto-gift
+      await supabase.from('auto_gift_payment_audit').insert({
+        execution_id: executionId,
+        payment_intent_id: paymentIntent.id,
+        status: 'webhook_confirmed',
+        amount: paymentIntent.amount,
+        stripe_response: paymentIntent,
+      });
+      
+      console.log(`✅ Auto-gift payment confirmed via webhook for execution ${executionId}`);
+      return; // Exit early - order already created in approve-auto-gift
+    }
+    
+    // ========================================================================
+    // MARKETPLACE ORDER WEBHOOK HANDLING (existing logic)
+    // ========================================================================
+    
     // Log webhook delivery
     await supabase.from('webhook_delivery_log').insert({
       event_type: 'payment_intent.succeeded',
@@ -129,7 +169,8 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,
         customer: paymentIntent.customer,
-        has_cart_session: Boolean(paymentIntent.metadata?.cart_session_id)
+        has_cart_session: Boolean(paymentIntent.metadata?.cart_session_id),
+        order_type: paymentIntent.metadata?.order_type || 'marketplace',
       }
     });
 

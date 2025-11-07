@@ -67,6 +67,13 @@ interface EmailRequest {
     | 'gift_invitation'
     | 'auto_gift_approval'
     | 'gift_received_notification'
+    // Auto-Gift Payment Flow (5) - NEW
+    | 'payment_method_expiring'
+    | 'payment_method_invalid'
+    | 'auto_gift_payment_retrying'
+    | 'auto_gift_payment_retry_success'
+    | 'auto_gift_payment_failed_final'
+    | 'auto_gift_fulfillment_failed'
     // Social/Connections (3)
     | 'connection_invitation'
     | 'connection_established'
@@ -127,6 +134,26 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'gift_received_notification':
         emailData = await handleGiftReceivedNotification(supabase, data, recipientEmail);
+        break;
+      
+      // Auto-Gift Payment Flow (NEW)
+      case 'payment_method_expiring':
+        emailData = await handlePaymentMethodExpiring(supabase, data, recipientEmail);
+        break;
+      case 'payment_method_invalid':
+        emailData = await handlePaymentMethodInvalid(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_payment_retrying':
+        emailData = await handleAutoGiftPaymentRetrying(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_payment_retry_success':
+        emailData = await handleAutoGiftPaymentRetrySuccess(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_payment_failed_final':
+        emailData = await handleAutoGiftPaymentFailedFinal(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_fulfillment_failed':
+        emailData = await handleAutoGiftFulfillmentFailed(supabase, data, recipientEmail);
         break;
       
       // Social/Connections
@@ -833,6 +860,300 @@ async function handleAddressRequest(supabase: any, data: any, recipientEmail?: s
   
   // recipientEmail must be provided (external recipients)
   if (!recipientEmail) {
+    throw new Error('Recipient email is required for address request');
+  }
+  
+  // Simple template for address request
+  const emailHtml = `
+    <html>
+      <body>
+        <h2>Address Information Needed</h2>
+        <p>Hello,</p>
+        <p>We need your shipping address to complete a gift order.</p>
+        <p>Please reply with your shipping address at your earliest convenience.</p>
+        <p>Thank you!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: 'Address Information Needed',
+    html: emailHtml,
+  };
+}
+
+// =============================================================================
+// AUTO-GIFT PAYMENT FLOW HANDLERS (NEW)
+// =============================================================================
+
+/**
+ * Handler: Payment Method Expiring (30 days before expiration)
+ */
+async function handlePaymentMethodExpiring(supabase: any, data: any, recipientEmail?: string) {
+  console.log('💳 Handling payment method expiring notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #ff9800;">⚠️ Your Payment Method is Expiring Soon</h2>
+        <p>Hi there,</p>
+        <p>Your payment method for auto-gifting will expire in <strong>${data.daysRemaining || 30} days</strong> (${data.expirationDate}).</p>
+        <p>To ensure uninterrupted auto-gifting, please update your payment method before it expires.</p>
+        <p style="margin: 20px 0;">
+          <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifts/settings" 
+             style="background-color: #ff9800; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            Update Payment Method
+          </a>
+        </p>
+        <p>Thank you for using Elyphant's Auto-Gifting!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '⚠️ Payment Method Expiring Soon - Update Required',
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Payment Method Invalid (expired, detached, or failed validation)
+ */
+async function handlePaymentMethodInvalid(supabase: any, data: any, recipientEmail?: string) {
+  console.log('❌ Handling payment method invalid notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const statusMessages = {
+    expired: 'Your payment method has expired',
+    invalid: 'Your payment method is no longer valid',
+    detached: 'Your payment method is no longer attached to your account',
+  };
+  
+  const message = statusMessages[data.status] || 'There is an issue with your payment method';
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #f44336;">❌ Action Required: Payment Method Issue</h2>
+        <p>Hi there,</p>
+        <p><strong>${message}.</strong></p>
+        <p>Your auto-gifting is currently paused. Please update your payment method to resume automatic gift purchases.</p>
+        ${data.errorMessage ? `<p style="color: #666;"><em>Details: ${data.errorMessage}</em></p>` : ''}
+        <p style="margin: 20px 0;">
+          <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifts/settings" 
+             style="background-color: #f44336; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            Update Payment Method Now
+          </a>
+        </p>
+        <p>Thank you for your prompt attention!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '❌ Action Required: Update Your Payment Method',
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Payment Retrying
+ */
+async function handleAutoGiftPaymentRetrying(supabase: any, data: any, recipientEmail?: string) {
+  console.log('🔄 Handling auto-gift payment retry notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const nextRetryDate = data.nextRetryAt ? new Date(data.nextRetryAt).toLocaleString() : 'soon';
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #2196F3;">🔄 Auto-Gift Payment - We'll Try Again</h2>
+        <p>Hi there,</p>
+        <p>We encountered an issue processing your auto-gift payment (attempt ${data.retryCount || 1} of 3).</p>
+        <p><strong>Don't worry - we'll automatically retry in a few hours.</strong></p>
+        <p>Next retry: ${nextRetryDate}</p>
+        ${data.errorMessage ? `<p style="color: #666;"><em>Reason: ${data.errorMessage}</em></p>` : ''}
+        <p>If you'd like to update your payment method or check your auto-gift settings, you can do so anytime:</p>
+        <p style="margin: 20px 0;">
+          <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifts/settings" 
+             style="background-color: #2196F3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            View Auto-Gift Settings
+          </a>
+        </p>
+        <p>We'll keep you updated!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '🔄 Auto-Gift Payment - We\'ll Retry Soon',
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Payment Retry Success
+ */
+async function handleAutoGiftPaymentRetrySuccess(supabase: any, data: any, recipientEmail?: string) {
+  console.log('✅ Handling auto-gift payment retry success notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #4CAF50;">✅ Auto-Gift Payment Successful!</h2>
+        <p>Hi there,</p>
+        <p>Good news! Your auto-gift payment was successfully processed on retry attempt ${data.retryCount || 1}.</p>
+        <p><strong>Your gift is now being prepared for delivery! 🎁</strong></p>
+        <p>You can track your auto-gift orders anytime:</p>
+        <p style="margin: 20px 0;">
+          <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifts/executions" 
+             style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            View Auto-Gift Orders
+          </a>
+        </p>
+        <p>Thank you for using Elyphant!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '✅ Auto-Gift Payment Successful!',
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Payment Failed Final (after 3 retries)
+ */
+async function handleAutoGiftPaymentFailedFinal(supabase: any, data: any, recipientEmail?: string) {
+  console.log('❌ Handling auto-gift payment final failure notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #f44336;">❌ Auto-Gift Payment Failed - Action Required</h2>
+        <p>Hi there,</p>
+        <p>We tried processing your auto-gift payment 3 times, but unfortunately all attempts failed.</p>
+        <p><strong>Your gift order has been cancelled.</strong></p>
+        ${data.errorMessage ? `<p style="color: #666;"><em>Reason: ${data.errorMessage}</em></p>` : ''}
+        <p>To prevent this from happening again, please update your payment method:</p>
+        <p style="margin: 20px 0;">
+          <a href="https://dmkxtkvlispxeqfzlczr.supabase.co/auto-gifts/settings" 
+             style="background-color: #f44336; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            Update Payment Method
+          </a>
+        </p>
+        <p>If you have questions, please don't hesitate to reach out to our support team.</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '❌ Auto-Gift Payment Failed - Update Required',
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Fulfillment Failed (Zinc processing error)
+ */
+async function handleAutoGiftFulfillmentFailed(supabase: any, data: any, recipientEmail?: string) {
+  console.log('📦 Handling auto-gift fulfillment failure notification');
+  
+  if (!recipientEmail && data.userId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', data.userId)
+      .single();
+    recipientEmail = profile?.email;
+  }
+  
+  if (!recipientEmail) throw new Error('Could not find recipient email');
+  
+  const emailHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #ff9800;">⚠️ Auto-Gift Order Issue</h2>
+        <p>Hi there,</p>
+        <p>Your payment was processed successfully, but we encountered an issue placing your auto-gift order with our retailer.</p>
+        <p><strong>Don't worry - you have NOT been charged.</strong></p>
+        ${data.errorMessage ? `<p style="color: #666;"><em>Details: ${data.errorMessage}</em></p>` : ''}
+        <p>Our team has been notified and will resolve this issue. We'll reach out to you within 24 hours.</p>
+        <p>If you have immediate questions, please contact our support team.</p>
+        <p>We apologize for the inconvenience!</p>
+      </body>
+    </html>
+  `;
+
+  return {
+    to: recipientEmail,
+    subject: '⚠️ Auto-Gift Order Issue - We\'re On It',
+    html: emailHtml,
+  };
+}
+
+serve(handler);
     recipientEmail = data.recipient_email || data.recipientEmail;
     if (!recipientEmail) throw new Error('Recipient email required for address request');
   }

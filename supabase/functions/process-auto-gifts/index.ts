@@ -132,6 +132,36 @@ serve(async (req) => {
 
         const rule = execution.auto_gifting_rules;
 
+        // ========================================================================
+        // Priority 1: Payment Method Health Check
+        // ========================================================================
+        // Check payment method status before processing
+        if (rule.payment_method_status && ['expired', 'invalid', 'detached'].includes(rule.payment_method_status)) {
+          console.log(`⚠️ Payment method invalid for rule ${rule.id}: ${rule.payment_method_status}`);
+          
+          await supabase
+            .from('automated_gift_executions')
+            .update({
+              status: 'failed',
+              error_message: `Payment method is ${rule.payment_method_status}. Please update your payment method.`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', execution.id);
+          
+          // Notify user to update payment method
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'payment_method_invalid',
+              userId: execution.user_id,
+              ruleId: rule.id,
+              status: rule.payment_method_status,
+              errorMessage: rule.payment_method_validation_error,
+            },
+          });
+          
+          continue; // Skip this execution
+        }
+
         // ✨ Handle both registered recipients AND pending invitations
         const isPendingInvitation = !rule.recipient_id && rule.pending_recipient_email;
 

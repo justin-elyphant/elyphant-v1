@@ -273,25 +273,97 @@ serve(async (req) => {
             paymentMethodId: paymentMethodId,
             auto_gift_execution_id: executionId,
             user_id: execution.user_id,
-            order_type: 'auto_gift'
+            order_type: 'auto_gift',
+            rule_id: execution.rule_id,
+            execution_id: executionId
           }
         }
       });
       
       if (paymentResponse.error) {
         console.error('❌ Payment intent creation failed:', paymentResponse.error);
+        
+        // Log failed payment attempt
+        await supabase.from('auto_gift_payment_audit').insert({
+          execution_id: executionId,
+          payment_intent_id: 'creation_failed',
+          status: 'failed',
+          amount: Math.round(orderTotal * 100),
+          error_message: paymentResponse.error.message,
+        });
+        
         throw new Error(`Payment processing failed: ${paymentResponse.error.message}`);
       }
       
       const paymentResult = paymentResponse.data;
+      const paymentIntentId = paymentResult.payment_intent_id;
+      
+      // Store payment intent ID immediately
+      await supabase
+        .from('automated_gift_executions')
+        .update({
+          stripe_payment_intent_id: paymentIntentId,
+          last_payment_attempt_at: new Date().toISOString(),
+        })
+        .eq('id', executionId);
+      
+      console.log(`💾 Stored payment intent ID: ${paymentIntentId}`);
+      
+      // Log payment attempt
+      await supabase.from('auto_gift_payment_audit').insert({
+        execution_id: executionId,
+        payment_intent_id: paymentIntentId,
+        status: paymentResult.status,
+        amount: Math.round(orderTotal * 100),
+        payment_method_id: paymentMethodId,
+        stripe_response: paymentResult,
+      });
       
       // Verify payment was successful before proceeding
       if (paymentResult.status !== 'succeeded') {
         console.error('❌ Payment not confirmed:', paymentResult);
-        throw new Error(`Payment failed with status: ${paymentResult.status}. Please check your payment method.`);
+        
+        // Set up retry schedule (12h from now for first retry)
+        const nextRetryAt = new Date();
+        nextRetryAt.setHours(nextRetryAt.getHours() + 12);
+        
+        // Mark for retry instead of immediate failure
+        await supabase
+          .from('automated_gift_executions')
+          .update({
+            status: 'payment_retry_pending',
+            payment_status: 'failed',
+            payment_error_message: `Payment failed with status: ${paymentResult.status}`,
+            payment_retry_count: 0,
+            next_payment_retry_at: nextRetryAt.toISOString(),
+          })
+          .eq('id', executionId);
+        
+        // Notify user about retry
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'auto_gift_payment_retrying',
+            userId: execution.user_id,
+            executionId: executionId,
+            retryCount: 1,
+            nextRetryAt: nextRetryAt.toISOString(),
+            errorMessage: `Payment failed with status: ${paymentResult.status}`,
+          },
+        });
+        
+        throw new Error(`Payment failed with status: ${paymentResult.status}. We'll retry in 12 hours.`);
       }
       
-      console.log(`✅ Real payment confirmed for auto-gift: ${paymentResult.payment_intent_id}`);
+      // Update payment status
+      await supabase
+        .from('automated_gift_executions')
+        .update({
+          payment_status: 'succeeded',
+          payment_confirmed_at: new Date().toISOString(),
+        })
+        .eq('id', executionId);
+      
+      console.log(`✅ Real payment confirmed for auto-gift: ${paymentIntentId}`);
 
       // Calculate order breakdown for required fields
       const subtotal = orderTotal;
@@ -390,24 +462,35 @@ serve(async (req) => {
         throw new Error(`Failed to create order items: ${itemsError.message}`);
       }
 
-      // Call process-zma-order edge function to handle actual order placement
-      console.log(`🔄 [approve-auto-gift] Invoking process-zma-order for auto-gift order ${newOrder.id}`);
-      const orderPlacementResponse = await supabase.functions.invoke('process-zma-order', {
-        body: {
-          orderId: newOrder.id, // Use the real order ID
-          isTestMode: false, // Set to false for production auto-gifts
-          debugMode: false,
-          retryAttempt: false,
-          isAutoGift: true,
-          executionMetadata: {
-            execution_id: executionId,
-            user_id: execution.user_id,
-            recipient_id: execution.auto_gifting_rules.recipient_id,
-            budget_limit: execution.auto_gifting_rules.budget_limit,
-            auto_approved: true
-          }
-        }
+      // Queue for async fulfillment instead of synchronous processing
+      console.log(`📦 [approve-auto-gift] Queueing order ${newOrder.id} for async fulfillment`);
+      
+      await supabase.from('auto_gift_fulfillment_queue').insert({
+        execution_id: executionId,
+        order_id: newOrder.id,
+        status: 'queued',
       });
+      
+      console.log(`✅ [approve-auto-gift] Order queued for fulfillment`);
+      
+      // Update execution status to payment_confirmed_pending_fulfillment
+      await supabase
+        .from('automated_gift_executions')
+        .update({
+          status: 'approved', // Will be moved to 'completed' after fulfillment
+          order_id: newOrder.id,
+        })
+        .eq('id', executionId);
+      
+      // For backward compatibility, keep the old synchronous call as a comment
+      // The fulfillment queue processor will handle this asynchronously
+      const orderPlacementResponse = { 
+        data: { 
+          success: true, 
+          message: 'Order queued for async fulfillment',
+          queued: true 
+        } 
+      };
 
       // Use database transaction to ensure both order and execution are updated together
       if (orderPlacementResponse.error) {

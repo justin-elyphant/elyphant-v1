@@ -32,8 +32,8 @@ export const useWelcomeWishlist = () => {
           recipientEmail: data.userEmail,
           data: {
             first_name: data.userFirstName,
-            dashboard_url: 'https://app.elyphant.ai/dashboard',
-            profile_url: 'https://app.elyphant.ai/profile',
+            gifting_url: 'https://app.elyphant.ai/gifting',
+            wishlists_url: 'https://app.elyphant.ai/wishlists',
             signup_context: 'direct',
             user_id: data.userId,
             interests: data.interests,
@@ -77,8 +77,8 @@ export const useWelcomeWishlist = () => {
         max_attempts: 3,
         metadata: {
           first_name: data.userFirstName,
-          dashboard_url: 'https://app.elyphant.ai/dashboard',
-          profile_url: 'https://app.elyphant.ai/profile',
+          gifting_url: 'https://app.elyphant.ai/gifting',
+          wishlists_url: 'https://app.elyphant.ai/wishlists',
           signup_context: 'direct',
           user_id: data.userId,
           interests: data.interests,

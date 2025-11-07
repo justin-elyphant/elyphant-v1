@@ -789,15 +789,20 @@ async function handleWishlistPurchaseNotification(supabase: any, data: any, reci
   
   // Check if there's a connection between purchaser and wishlist owner (for thank you CTA)
   let hasConnection = false;
-  if (data.purchaser_user_id && data.wishlist_owner_id) {
+  const wishlistOwnerId = data.wishlist_owner_id || data.wishlistOwnerId;
+  const purchaserUserId = data.purchaser_user_id || data.purchaserUserId;
+  
+  if (purchaserUserId && wishlistOwnerId) {
     const { data: connection } = await supabase
       .from('user_connections')
       .select('status')
-      .or(`and(user_id.eq.${data.purchaser_user_id},connected_user_id.eq.${data.wishlist_owner_id}),and(user_id.eq.${data.wishlist_owner_id},connected_user_id.eq.${data.purchaser_user_id})`)
+      .or(`and(user_id.eq.${purchaserUserId},connected_user_id.eq.${wishlistOwnerId}),and(user_id.eq.${wishlistOwnerId},connected_user_id.eq.${purchaserUserId})`)
       .eq('status', 'accepted')
       .maybeSingle();
     
     hasConnection = !!connection;
+    
+    console.log(`🔍 Connection check: purchaser=${purchaserUserId}, owner=${wishlistOwnerId}, hasConnection=${hasConnection}`);
   }
   
   console.log(`🎁 Wishlist purchase notification - purchaser_user_id: ${data.purchaser_user_id}, has_connection: ${hasConnection}`);

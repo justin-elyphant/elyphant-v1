@@ -69,7 +69,8 @@ export const useAutoGiftTesting = () => {
             date_type,
             recipient_id,
             pending_recipient_email,
-            budget_limit
+            budget_limit,
+            payment_method_id
           ),
           profiles:user_id (
             name,

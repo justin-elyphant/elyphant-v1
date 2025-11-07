@@ -16,6 +16,14 @@ serve(async (req) => {
   try {
     console.log('🕐 Daily auto-gift check started - Enhanced with security tracking')
 
+    // Parse request body for optional user filter
+    const body = await req.json().catch(() => ({}));
+    const { userId } = body || {};
+
+    if (userId) {
+      console.log(`🎯 Running targeted check for user: ${userId}`);
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -31,7 +39,10 @@ serve(async (req) => {
     console.log('🔍 Phase 1: Checking for upcoming events requiring executions...')
     
     const { data: upcomingEvents, error: eventsError } = await supabaseClient
-      .rpc('get_upcoming_auto_gift_events', { days_ahead: 7 })
+      .rpc('get_upcoming_auto_gift_events', { 
+        days_ahead: 7,
+        user_filter: userId || null
+      })
     
     if (eventsError) {
       console.error('❌ Failed to fetch upcoming events:', eventsError)

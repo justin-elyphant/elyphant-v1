@@ -275,20 +275,56 @@ serve(async (req) => {
         );
       }
       
-      // Get recipient profile for shipping info
-      console.log('👤 [approve-auto-gift] Fetching recipient profile...');
-      const { data: recipientProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', execution.auto_gifting_rules.recipient_id)
-        .single();
-
-      if (profileError || !recipientProfile) {
-        console.error('❌ [approve-auto-gift] Failed to fetch recipient profile:', profileError);
-        throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
-      }
+      // Build shipping info based on recipient type
+      let shippingInfo;
       
-      console.log('✅ [approve-auto-gift] Recipient profile fetched successfully');
+      // Check if this is a pending recipient with collected address
+      if (isPendingRecipient && execution.address_collection_status === 'received') {
+        console.log('📬 [approve-auto-gift] Using collected address for pending recipient');
+        
+        // Get collected address
+        const { data: addressData, error: addressError } = await supabase
+          .from('pending_recipient_addresses')
+          .select('shipping_address, recipient_email')
+          .eq('execution_id', executionId)
+          .single();
+          
+        if (addressError || !addressData) {
+          throw new Error(`Failed to retrieve collected address: ${addressError?.message}`);
+        }
+        
+        const address = addressData.shipping_address;
+        const nameParts = (address.name || 'Recipient').split(' ');
+        
+        // Build shipping info from collected address
+        shippingInfo = {
+          first_name: nameParts[0] || 'Recipient',
+          last_name: nameParts.slice(1).join(' ') || '',
+          address_line1: address.address_line1,
+          address_line2: address.address_line2 || '',
+          city: address.city,
+          state: address.state,
+          zip_code: address.zip_code,
+          country: address.country || 'US',
+          phone_number: '5551234567' // Default, no phone collected
+        };
+        
+        console.log('✅ [approve-auto-gift] Shipping info built from collected address');
+      } else {
+        // Get recipient profile for shipping info (registered users)
+        console.log('👤 [approve-auto-gift] Fetching recipient profile...');
+        const { data: recipientProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', execution.auto_gifting_rules.recipient_id)
+          .single();
+
+        if (profileError || !recipientProfile) {
+          console.error('❌ [approve-auto-gift] Failed to fetch recipient profile:', profileError);
+          throw new Error(`Failed to fetch recipient profile: ${profileError?.message}`);
+        }
+        
+        console.log('✅ [approve-auto-gift] Recipient profile fetched successfully');
       
       // Log gift message source for debugging
       const rule = execution.auto_gifting_rules;
@@ -437,30 +473,31 @@ serve(async (req) => {
       const taxAmount = 0; // Auto-gifts are tax-free for now
       const currency = 'USD';
       
-      // Extract shipping address with proper field mapping
-      const rawAddress = recipientProfile.shipping_address || {};
-      console.log('🏠 [approve-auto-gift] Raw shipping address:', JSON.stringify(rawAddress, null, 2));
-      
-      // Extract recipient name parts
-      const fullName = recipientProfile.name || 'Recipient';
-      const nameParts = fullName.split(' ');
-      const firstName = nameParts[0] || 'Recipient';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      // Proper address field mapping with multiple fallback options
-      const shippingInfo = {
-        first_name: firstName,
-        last_name: lastName,
-        address_line1: rawAddress.street || rawAddress.address_line1 || '',
-        address_line2: rawAddress.line2 || rawAddress.address_line2 || '',
-        city: rawAddress.city || '',
-        state: rawAddress.state || '',
-        zip_code: rawAddress.zipCode || rawAddress.zip_code || '',
-        country: rawAddress.country || 'US',
-        phone_number: recipientProfile.phone || '5551234567'
-      };
-      
-      console.log('📦 [approve-auto-gift] Mapped shipping info:', JSON.stringify(shippingInfo, null, 2));
+        // Extract shipping address with proper field mapping
+        const rawAddress = recipientProfile.shipping_address || {};
+        console.log('🏠 [approve-auto-gift] Raw shipping address:', JSON.stringify(rawAddress, null, 2));
+        
+        // Extract recipient name parts
+        const fullName = recipientProfile.name || 'Recipient';
+        const nameParts = fullName.split(' ');
+        const firstName = nameParts[0] || 'Recipient';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        // Proper address field mapping with multiple fallback options
+        shippingInfo = {
+          first_name: firstName,
+          last_name: lastName,
+          address_line1: rawAddress.street || rawAddress.address_line1 || '',
+          address_line2: rawAddress.line2 || rawAddress.address_line2 || '',
+          city: rawAddress.city || '',
+          state: rawAddress.state || '',
+          zip_code: rawAddress.zipCode || rawAddress.zip_code || '',
+          country: rawAddress.country || 'US',
+          phone_number: recipientProfile.phone || '5551234567'
+        };
+        
+        console.log('📦 [approve-auto-gift] Mapped shipping info:', JSON.stringify(shippingInfo, null, 2));
+      }
       
       // Validate required fields
       if (!shippingInfo.address_line1) {

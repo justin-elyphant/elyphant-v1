@@ -24,31 +24,41 @@ export const useWelcomeWishlist = () => {
     setIsLoading(true);
     
     try {
-      console.log('🎁 Triggering welcome wishlist for user:', data.userId);
+      console.log('🎁 Triggering welcome email for user:', data.userId);
 
       const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          eventType: 'wishlist_welcome',
-          customData: data
+          eventType: 'welcome_email',
+          recipientEmail: data.userEmail,
+          data: {
+            first_name: data.userFirstName,
+            dashboard_url: 'https://app.elyphant.ai/dashboard',
+            profile_url: 'https://app.elyphant.ai/profile',
+            signup_context: 'direct',
+            user_id: data.userId,
+            interests: data.interests,
+            birth_year: data.birthYear,
+            profile_data: data.profileData
+          }
         }
       });
 
       if (error) {
-        console.error('❌ Failed to trigger welcome wishlist:', error);
+        console.error('❌ Failed to trigger welcome email:', error);
         throw error;
       }
 
-      console.log('✅ Welcome wishlist triggered successfully:', result);
+      console.log('✅ Welcome email sent successfully:', result);
       
-      toast.success("Welcome email sent! 📧 Nicole has sent you a curated starter wishlist to get you started.");
+      toast.success("Welcome email sent! 📧 Check your inbox for personalized recommendations.");
 
       return { success: true, data: result };
     } catch (error: any) {
-      console.error('❌ Welcome wishlist trigger error:', error);
+      console.error('❌ Welcome email trigger error:', error);
       
       toast.info("Welcome email delayed - Don't worry, you'll receive your personalized recommendations shortly!");
 
-      return { success: false, error: error.message || 'Failed to send welcome wishlist' };
+      return { success: false, error: error.message || 'Failed to send welcome email' };
     } finally {
       setIsLoading(false);
     }
@@ -56,18 +66,26 @@ export const useWelcomeWishlist = () => {
 
   const scheduleDelayedWelcomeEmail = async (data: WelcomeWishlistTriggerData, delayMinutes = 15) => {
     try {
-      // Store the welcome email trigger data for delayed processing
+      // Store the welcome email trigger data for delayed processing using modern format
       const { error } = await supabase.from('email_queue').insert({
+        event_type: 'welcome_email',
         recipient_email: data.userEmail,
-        recipient_name: data.userFirstName,
-        template_id: null, // We'll use custom template
-        template_variables: {
-          welcomeWishlistData: data as any,
-          source: 'delayed_signup'
-        } as any,
         scheduled_for: new Date(Date.now() + delayMinutes * 60 * 1000).toISOString(),
+        priority: 'normal',
         status: 'pending',
-        max_attempts: 2
+        attempts: 0,
+        max_attempts: 3,
+        metadata: {
+          first_name: data.userFirstName,
+          dashboard_url: 'https://app.elyphant.ai/dashboard',
+          profile_url: 'https://app.elyphant.ai/profile',
+          signup_context: 'direct',
+          user_id: data.userId,
+          interests: data.interests,
+          birth_year: data.birthYear,
+          profile_data: data.profileData,
+          source: 'delayed_signup'
+        }
       });
 
       if (error) {

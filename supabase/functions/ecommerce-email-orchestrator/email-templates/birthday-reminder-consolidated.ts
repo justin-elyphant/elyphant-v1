@@ -10,6 +10,7 @@ export interface BirthdayReminderProps {
   recipient_name: string;
   recipient_type: 'birthday_person' | 'connection';
   birthday_person_name?: string; // Only if recipient_type is 'connection'
+  birthday_person_id?: string; // User ID for profile link
   days_until?: number;
   birthday_date?: string;
   has_autogift_enabled?: boolean;
@@ -21,6 +22,7 @@ export interface BirthdayReminderProps {
   }>;
   wishlist_url?: string;
   autogift_settings_url?: string;
+  recipient_profile_url?: string; // Direct link to birthday person's profile
 }
 
 export const birthdayReminderConsolidatedTemplate = (props: BirthdayReminderProps): string => {
@@ -47,9 +49,10 @@ export const birthdayReminderConsolidatedTemplate = (props: BirthdayReminderProp
   } else {
     // Email to connection without auto-gifting
     headline = `${props.birthday_person_name}'s Birthday is ${daysText === 'tomorrow' ? 'Tomorrow' : 'Coming Up'} 🎉`;
-    intro = `Don't forget! ${props.birthday_person_name}'s birthday is ${daysText}. Browse their wishlist to find the perfect gift, or set up auto-gifting for next time.`;
+    intro = `Don't forget! ${props.birthday_person_name}'s birthday is ${daysText}. Browse their wishlist and interests to find the perfect gift, or set up auto-gifting for next time.`;
     ctaText = `Shop for ${props.birthday_person_name}`;
-    ctaUrl = props.wishlist_url || "https://elyphant.ai/connections";
+    // Link to birthday person's profile to show wishlists and interests
+    ctaUrl = props.recipient_profile_url || `https://app.elyphant.ai/profile/${props.birthday_person_id}` || "https://app.elyphant.ai/connections";
   }
   
   // Build product cards if we have curated products (for birthday person)

@@ -741,7 +741,15 @@ async function handleBirthdayReminder(supabase: any, data: any, recipientEmail?:
     if (!recipientEmail) throw new Error('Could not find recipient email for birthday reminder');
   }
   
-  const emailHtml = birthdayReminderConsolidatedTemplate(data);
+  // Construct profile URL for birthday person (for connection emails)
+  const enrichedData = {
+    ...data,
+    recipient_profile_url: data.birthday_person_id 
+      ? `https://app.elyphant.ai/profile/${data.birthday_person_id}`
+      : data.recipient_profile_url
+  };
+  
+  const emailHtml = birthdayReminderConsolidatedTemplate(enrichedData);
   
   const subjects = {
     'self': `Happy Birthday from Elyphant! 🎂`,

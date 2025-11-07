@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UnifiedPaymentForm from "./UnifiedPaymentForm";
+import { PaymentMethodHealthBadge } from "./PaymentMethodHealthBadge";
 
 interface PaymentMethod {
   id: string;
@@ -70,6 +71,7 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [rulesCount, setRulesCount] = useState<Map<string, number>>(new Map());
   const { user } = useAuth();
   
   const fetchPaymentMethods = async () => {
@@ -95,6 +97,23 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
         payment_method_id: method.stripe_payment_method_id
       }));
       setPaymentMethods(mappedData);
+
+      // Fetch rules count for each payment method
+      const { data: rulesData } = await supabase
+        .from('auto_gifting_rules')
+        .select('payment_method_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (rulesData) {
+        const counts = new Map<string, number>();
+        rulesData.forEach(rule => {
+          if (rule.payment_method_id) {
+            counts.set(rule.payment_method_id, (counts.get(rule.payment_method_id) || 0) + 1);
+          }
+        });
+        setRulesCount(counts);
+      }
     } catch (err) {
       console.error('Error fetching payment methods:', err);
       toast.error('Failed to load payment methods');
@@ -182,6 +201,18 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
   const renderPaymentMethodCard = (method: PaymentMethod) => {
     const isSelected = selectedMethodId === method.id;
     const isExpired = new Date(method.exp_year, method.exp_month - 1) < new Date();
+    const now = new Date();
+    const expDate = new Date(method.exp_year, method.exp_month - 1);
+    const monthsUntilExpiry = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    const isExpiringSoon = !isExpired && monthsUntilExpiry <= 1;
+    const methodRulesCount = rulesCount.get(method.id) || 0;
+    
+    let healthStatus: 'valid' | 'expired' | 'expiring_soon' | 'invalid' | 'detached' = 'valid';
+    if (isExpired) {
+      healthStatus = 'expired';
+    } else if (isExpiringSoon) {
+      healthStatus = 'expiring_soon';
+    }
     
     return (
       <Card 
@@ -212,21 +243,27 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
                     Selected
                   </Badge>
                 )}
-                {isExpired && (
-                  <Badge variant="destructive" className="text-xs px-1 py-0">
-                    <AlertCircle className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                    Expired
-                  </Badge>
-                )}
+                <PaymentMethodHealthBadge 
+                  status={healthStatus}
+                  expirationDate={expDate}
+                  className="text-xs px-1 py-0"
+                />
               </div>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2 sm:py-3 pt-0 px-3 sm:px-6">
           <div className="flex flex-col gap-3 w-full min-w-0">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
-              {isExpired && <span className="text-destructive ml-1 sm:ml-2 block sm:inline">- Update required</span>}
+            <div className="space-y-1">
+              <div className="text-xs sm:text-sm text-muted-foreground">
+                Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
+                {isExpired && <span className="text-destructive ml-1 sm:ml-2 block sm:inline">- Update required</span>}
+              </div>
+              {methodRulesCount > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Used by {methodRulesCount} auto-gift rule{methodRulesCount !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
             
             {mode === 'management' && (

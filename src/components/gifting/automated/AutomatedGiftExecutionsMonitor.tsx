@@ -4,14 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Play } from "lucide-react";
+import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Play, CreditCard, RotateCcw } from "lucide-react";
 import { unifiedGiftAutomationService, UnifiedGiftExecution } from "@/services/UnifiedGiftAutomationService";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useAutoGiftPaymentRetry } from "@/hooks/useAutoGiftPaymentRetry";
 
 const AutomatedGiftExecutionsMonitor = () => {
   const { user } = useAuth();
+  const { retryPayment, isRetrying } = useAutoGiftPaymentRetry();
   const [executions, setExecutions] = useState<UnifiedGiftExecution[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,6 +105,33 @@ const AutomatedGiftExecutionsMonitor = () => {
     }
   };
 
+  const getPaymentStatusBadge = (execution: UnifiedGiftExecution) => {
+    const paymentStatus = (execution as any).payment_status;
+    const retryCount = (execution as any).payment_retry_count || 0;
+
+    if (!paymentStatus) return null;
+
+    switch (paymentStatus) {
+      case 'succeeded':
+        return <Badge variant="default" className="ml-2">✅ Paid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="ml-2">⏳ Processing</Badge>;
+      case 'payment_retry_pending':
+        return <Badge variant="secondary" className="ml-2">🔄 Retry {retryCount}/3</Badge>;
+      case 'failed':
+        return <Badge variant="destructive" className="ml-2">❌ Payment Failed</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const handleRetryPayment = async (executionId: string) => {
+    const result = await retryPayment(executionId, true);
+    if (result.success) {
+      await loadExecutions();
+    }
+  };
+
   const pendingApprovals = executions.filter(e => e.status === 'pending');
 
   if (loading) {
@@ -166,63 +195,131 @@ const AutomatedGiftExecutionsMonitor = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {executions.map((execution) => (
-                <div key={execution.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(execution.status)}
-                      <Badge variant={getStatusColor(execution.status) as any}>
-                        {execution.status}
-                      </Badge>
-                      <span className="font-medium">
-                        {formatDistanceToNow(execution.execution_date, { addSuffix: true })}
-                      </span>
+              {executions.map((execution) => {
+                const paymentStatus = (execution as any).payment_status;
+                const paymentIntentId = (execution as any).stripe_payment_intent_id;
+                const retryCount = (execution as any).payment_retry_count || 0;
+                const nextRetry = (execution as any).next_payment_retry_at;
+                const paymentMethodId = (execution as any).payment_method_id;
+
+                return (
+                  <div key={execution.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getStatusIcon(execution.status)}
+                        <Badge variant={getStatusColor(execution.status) as any}>
+                          {execution.status}
+                        </Badge>
+                        {getPaymentStatusBadge(execution)}
+                        <span className="font-medium">
+                          {formatDistanceToNow(execution.execution_date, { addSuffix: true })}
+                        </span>
+                      </div>
+                      {execution.total_amount && (
+                        <span className="font-semibold">
+                          ${execution.total_amount.toFixed(2)}
+                        </span>
+                      )}
                     </div>
-                    {execution.total_amount && (
-                      <span className="font-semibold">
-                        ${execution.total_amount.toFixed(2)}
-                      </span>
+
+                    {/* Payment Status Details */}
+                    {paymentStatus && (
+                      <div className="mb-3 p-3 bg-muted/50 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Payment Status:</span>
+                          <span className="font-medium">{paymentStatus}</span>
+                        </div>
+                        {paymentIntentId && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Stripe Payment:</span>
+                            <a 
+                              href={`https://dashboard.stripe.com/payments/${paymentIntentId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline text-xs"
+                            >
+                              View in Stripe ↗
+                            </a>
+                          </div>
+                        )}
+                        {retryCount > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Retry Attempts:</span>
+                            <span className="font-medium">{retryCount} / 3</span>
+                          </div>
+                        )}
+                        {nextRetry && paymentStatus === 'payment_retry_pending' && (
+                          <div className="text-xs text-muted-foreground">
+                            Next retry: {formatDistanceToNow(new Date(nextRetry), { addSuffix: true })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {execution.selected_products && (
+                      <div className="mb-3">
+                        <span className="text-sm font-medium">Selected Products:</span>
+                        <ul className="text-sm text-muted-foreground mt-1">
+                          {execution.selected_products.map((product, index) => (
+                            <li key={index}>
+                              • {product.name} - ${product.price}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {execution.error_message && (
+                      <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                        {execution.error_message}
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    {execution.status === 'pending' && (
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApprove(execution.id)}
+                        >
+                          Approve & Purchase
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancel(execution.id)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Payment Retry Actions */}
+                    {paymentStatus === 'payment_retry_pending' && retryCount < 3 && (
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleRetryPayment(execution.id)}
+                          disabled={isRetrying}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Retry Payment Now
+                        </Button>
+                      </div>
+                    )}
+
+                    {paymentStatus === 'failed' && retryCount >= 3 && (
+                      <Alert variant="destructive" className="mt-3">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Payment failed after 3 attempts. Please update your payment method and try again.
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </div>
-
-                  {execution.selected_products && (
-                    <div className="mb-3">
-                      <span className="text-sm font-medium">Selected Products:</span>
-                      <ul className="text-sm text-muted-foreground mt-1">
-                        {execution.selected_products.map((product, index) => (
-                          <li key={index}>
-                            • {product.name} - ${product.price}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {execution.error_message && (
-                    <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-                      {execution.error_message}
-                    </div>
-                  )}
-
-                  {execution.status === 'pending' && (
-                    <div className="flex gap-2 mt-3">
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(execution.id)}
-                      >
-                        Approve & Purchase
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCancel(execution.id)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

@@ -7,10 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, DollarSign, Bell, Gift } from "lucide-react";
+import { Settings, DollarSign, Bell, Gift, Shield } from "lucide-react";
 import BudgetTrackingSection from "./events/automated-tab/BudgetTrackingSection";
 import NotificationSettingsSection from "./events/automated-tab/NotificationSettingsSection";
 import DefaultGiftSourceSection from "./events/automated-tab/DefaultGiftSourceSection";
+import PaymentHealthSection from "./auto-gift/PaymentHealthSection";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 
 interface AutoGiftSettingsDialogProps {
@@ -38,7 +39,7 @@ export const AutoGiftSettingsDialog: React.FC<AutoGiftSettingsDialogProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="budget" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="budget" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Budget
@@ -50,6 +51,10 @@ export const AutoGiftSettingsDialog: React.FC<AutoGiftSettingsDialogProps> = ({
             <TabsTrigger value="sources" className="flex items-center gap-2">
               <Gift className="h-4 w-4" />
               Gift Sources
+            </TabsTrigger>
+            <TabsTrigger value="payment-health" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Payment Health
             </TabsTrigger>
           </TabsList>
 
@@ -74,6 +79,13 @@ export const AutoGiftSettingsDialog: React.FC<AutoGiftSettingsDialogProps> = ({
                 onUpdateSettings={updateSettings}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="payment-health" className="mt-6">
+            <PaymentHealthSection 
+              settings={settings}
+              onUpdateSettings={updateSettings}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

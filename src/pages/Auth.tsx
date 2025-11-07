@@ -23,8 +23,8 @@ const Auth = () => {
   // Get pre-filled email from password reset navigation state
   const preFilledEmail = location.state?.email;
   
-  // Handle invitation links
-  const inviteToken = searchParams.get('invite');
+  // Handle invitation links (both connection invites and gift invitations)
+  const inviteToken = searchParams.get('invite') || searchParams.get('invitation_token');
   const [invitationData, setInvitationData] = useState<{
     connectionId: string;
     recipientEmail: string;

@@ -57,6 +57,9 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
 
       if (requestError) throw requestError;
 
+      // Construct the request URL for the email CTA
+      const requestUrl = `https://app.elyphant.ai/address/provide/${requestData.id}`;
+
       // Send email notification via orchestrator
       const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
@@ -67,7 +70,8 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
             recipient_name: recipient.name,
             recipient_email: recipient.email,
             message: message,
-            request_id: requestData.id
+            request_id: requestData.id,
+            request_url: requestUrl
           }
         }
       });

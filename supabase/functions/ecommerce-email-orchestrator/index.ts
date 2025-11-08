@@ -838,7 +838,7 @@ async function handleNudgeReminder(supabase: any, data: any, recipientEmail?: st
     recipient_name: data.recipient_name,
     recipient_email: data.recipient_email,
     days_since_invitation: data.days_since_invitation || 7,
-    connections_url: 'https://app.elyphant.ai/connections'
+    connections_url: 'https://elyphant.ai/connections'
   });
 
   return {
@@ -899,7 +899,7 @@ async function handleBirthdayReminder(supabase: any, data: any, recipientEmail?:
   const enrichedData = {
     ...data,
     recipient_profile_url: data.birthday_person_id 
-      ? `https://app.elyphant.ai/profile/${data.birthday_person_id}`
+      ? `https://elyphant.ai/profile/${data.birthday_person_id}`
       : data.recipient_profile_url
   };
   

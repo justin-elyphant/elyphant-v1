@@ -83,7 +83,7 @@ serve(async (req) => {
             data: {
               sender_name: senderName,
               recipient_name: invitation.pending_recipient_name,
-              invitation_url: `https://app.elyphant.ai/auth?invite=${invitation.id}`,
+              invitation_url: `https://elyphant.ai/auth?invite=${invitation.id}`,
               is_reminder: true,
               reminder_number: reminderCount + 1
             }

@@ -64,6 +64,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   const [formData, setFormData] = useLocalStorage('autoGiftDraft', {
     recipientId: recipientId || "",
+    recipientName: undefined as string | undefined,
+    relationshipType: undefined as string | undefined,
     selectedEvents: [] as SelectedEvent[],
     eventType: eventType || "", // Keep for backward compatibility
     specificHoliday: "",
@@ -238,7 +240,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       // Try to find connection by ID first, then by email if recipientId looks like an email
       const isEmail = formData.recipientId.includes('@');
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.recipientId);
-      const selectedConnection = allConnections.find(conn => {
+      
+      let selectedConnection = allConnections.find(conn => {
         if (isEmail) {
           return conn.pending_recipient_email === formData.recipientId || conn.profile_email === formData.recipientId;
         } else if (isUuid) {
@@ -247,26 +250,95 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         return false;
       });
 
+      // AUTO-CREATE CONNECTION IF MISSING
+      if (isEmail && !selectedConnection) {
+        console.log('🔄 [AUTO-CREATE] Connection not found for email, creating pending connection:', formData.recipientId);
+        
+        try {
+          toast.info("Creating recipient connection...", { duration: 2000 });
+          
+          // Use the recipient name from form data or extract from email
+          const recipientName = formData.recipientName || formData.recipientId.split('@')[0];
+          
+          const newConnection = await unifiedGiftManagementService.createPendingConnection(
+            formData.recipientId,  // email
+            recipientName,
+            formData.relationshipType || 'friend',
+            null,  // No shipping address yet
+            null,  // No birthday
+            null   // No relationship context
+          );
+          
+          console.log('✅ [AUTO-CREATE] Successfully created pending connection:', newConnection);
+          
+          // Create a compatible connection object for the rest of the flow
+          selectedConnection = {
+            id: newConnection.id,
+            status: 'pending_invitation',
+            pending_recipient_email: formData.recipientId,
+            pending_recipient_name: recipientName,
+            display_user_id: null,
+            connected_user_id: null,
+            profile_email: null
+          } as any;
+          
+          toast.success("Recipient connection created!");
+        } catch (createError) {
+          console.error('❌ [AUTO-CREATE] Failed to create pending connection:', createError);
+          toast.error("Failed to create recipient connection. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Determine invitation vs accepted and resolve identifiers safely
       const isPendingInvitation = (selectedConnection?.status === 'pending_invitation') || (isEmail && !selectedConnection);
       const emailFromInitial = initialData?.recipientEmail as string | undefined;
 
+      // CRITICAL: For pending invitations, recipient_id MUST be null
       const actualRecipientId = isPendingInvitation
         ? null
-        : (selectedConnection?.display_user_id || (isUuid ? formData.recipientId : null));
+        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || null);
 
       const pendingEmail = isPendingInvitation
         ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : emailFromInitial))
         : null;
 
-      console.log('🔍 Auto-gift setup - Connection resolution:', {
-        isPendingInvitation,
+      console.log('🔍 Auto-gift setup - Enhanced connection resolution:', {
+        formDataRecipientId: formData.recipientId,
+        isEmail,
+        isUuid,
         hasSelectedConnection: !!selectedConnection,
+        connectionId: selectedConnection?.id,
         connectionStatus: selectedConnection?.status,
-        actualRecipientId,
-        pendingEmail,
-        formDataRecipientId: formData.recipientId
+        isPendingInvitation,
+        actualRecipientId,  // Should be null for pending
+        pendingEmail,  // Should be email for pending
+        autoCreated: isEmail && selectedConnection && !allConnections.find(c => c.id === selectedConnection?.id)
       });
+
+      // Validation: Ensure data integrity
+      if (isPendingInvitation) {
+        if (actualRecipientId !== null) {
+          console.error('❌ CRITICAL: recipient_id should be null for pending invitations but got:', actualRecipientId);
+          toast.error('Internal error: Invalid recipient configuration');
+          setIsLoading(false);
+          return;
+        }
+        if (!pendingEmail) {
+          console.error('❌ CRITICAL: pending_recipient_email is required for pending invitations');
+          toast.error('Internal error: Missing recipient email');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        if (!actualRecipientId) {
+          console.error('❌ CRITICAL: recipient_id is required for accepted connections');
+          toast.error('Internal error: Missing recipient ID');
+          setIsLoading(false);
+          return;
+        }
+      }
       
       // Create rule data for each selected event
       const rulesToCreate = formData.selectedEvents.map(event => ({
@@ -451,13 +523,25 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       </Badge>
                     )}
                   </Label>
-                  <RecipientSearchCombobox
+                   <RecipientSearchCombobox
                     value={formData.recipientId}
-                    onChange={(recipientId) => setFormData(prev => ({ ...prev, recipientId }))}
+                    onChange={({ recipientId, recipientName, relationshipType }) => 
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        recipientId,
+                        recipientName,
+                        relationshipType: relationshipType || prev.relationshipType
+                      }))
+                    }
                     connections={connections}
                     pendingInvitations={pendingInvitations}
                     onNewRecipientCreate={(recipient) => {
-                      setFormData(prev => ({ ...prev, recipientId: recipient.id }));
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        recipientId: recipient.id,
+                        recipientName: recipient.name,
+                        relationshipType: recipient.relationship_type || 'friend'
+                      }));
                       toast.success(`Added ${recipient.name} as recipient`);
                     }}
                   />

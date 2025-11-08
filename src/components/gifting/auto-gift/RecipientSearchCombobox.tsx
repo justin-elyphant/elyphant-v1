@@ -18,7 +18,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface RecipientSearchComboboxProps {
   value: string;
-  onChange: (recipientId: string) => void;
+  onChange: (selection: { 
+    recipientId: string; 
+    recipientName?: string;
+    relationshipType?: string;
+  }) => void;
   connections: EnhancedConnection[];
   pendingInvitations: EnhancedConnection[];
   onNewRecipientCreate: (recipient: UnifiedRecipient) => void;
@@ -144,7 +148,11 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         
         // Select the user as the recipient so they can proceed with auto-gift setup
         setSelectedLabel(targetName);
-        onChange(targetUserId);
+        onChange({ 
+          recipientId: targetUserId,
+          recipientName: targetName,
+          relationshipType: 'friend'
+        });
         
         // Update search results to show pending status
         setSearchResults(prev => prev.map(r => 
@@ -179,8 +187,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
     }
   };
 
-  const handleSelect = (recipientId: string) => {
-    onChange(recipientId);
+  const handleSelect = (recipientId: string, recipientName?: string, relationshipType?: string) => {
+    onChange({ recipientId, recipientName, relationshipType });
     setOpen(false);
     setSearchQuery("");
   };
@@ -249,19 +257,23 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Your Connections
                 </div>
-                {acceptedConnections.map((connection) => {
-                  const connectionId = connection.display_user_id || connection.connected_user_id;
-                  const isSelected = value === connectionId;
-                  
-                  return (
-                    <button
-                      key={connection.id}
-                      onClick={() => handleSelect(connectionId!)}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
-                        isSelected && "bg-accent"
-                      )}
-                    >
+                  {acceptedConnections.map((connection) => {
+                    const connectionId = connection.display_user_id || connection.connected_user_id;
+                    const isSelected = value === connectionId;
+                    
+                    return (
+                      <button
+                        key={connection.id}
+                        onClick={() => handleSelect(
+                          connectionId!, 
+                          connection.profile_name || undefined, 
+                          connection.relationship_type || undefined
+                        )}
+                        className={cn(
+                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
+                          isSelected && "bg-accent"
+                        )}
+                      >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={connection.profile_image} />
                         <AvatarFallback>
@@ -299,7 +311,11 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                     return (
                       <button
                         key={invitation.id}
-                        onClick={() => handleSelect(invitation.id)}
+                        onClick={() => handleSelect(
+                          invitation.id, 
+                          invitation.profile_name || invitation.pending_recipient_name || undefined,
+                          invitation.relationship_type || undefined
+                        )}
                         className={cn(
                           "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
                           isSelected && "bg-accent"
@@ -352,7 +368,11 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                         onClick={() => {
                           if (isClickable) {
                             setSelectedLabel(result.name || null);
-                            onChange(result.id);
+                            onChange({ 
+                              recipientId: result.id,
+                              recipientName: result.name,
+                              relationshipType: 'friend'
+                            });
                             setOpen(false);
                             setSearchQuery("");
                           }

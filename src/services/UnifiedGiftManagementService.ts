@@ -807,23 +807,64 @@ class UnifiedGiftManagementService {
   }
 
   async createRule(rule: Omit<UnifiedGiftRule, 'id' | 'created_at' | 'updated_at'>): Promise<UnifiedGiftRule> {
-    console.log('📝 [UNIFIED] Creating auto-gifting rule with security validation:', rule);
+    console.log('📝 [UNIFIED] Creating auto-gifting rule with enhanced validation:', rule);
     
     // Phase 1: Validate that we have either recipient_id OR pending_recipient_email
     if (!rule.recipient_id && !rule.pending_recipient_email) {
+      console.error('❌ [VALIDATION] Neither recipient_id nor pending_recipient_email provided');
       throw new Error('Either recipient_id or pending_recipient_email must be provided');
+    }
+    
+    // Phase 2: Validate that recipient_id exists in profiles if provided
+    if (rule.recipient_id) {
+      console.log('🔍 [VALIDATION] Checking if recipient_id exists in profiles:', rule.recipient_id);
+      
+      const { data: profileExists, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', rule.recipient_id)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('❌ [VALIDATION] Error checking profile existence:', profileError);
+        throw new Error('Failed to validate recipient profile');
+      }
+      
+      if (!profileExists) {
+        console.error('❌ [VALIDATION] recipient_id does not exist in profiles table:', {
+          recipient_id: rule.recipient_id,
+          pending_recipient_email: rule.pending_recipient_email
+        });
+        
+        throw new Error(
+          `Invalid recipient_id: ${rule.recipient_id}. ` +
+          `This user does not exist in the profiles table. ` +
+          `For pending invitations, set recipient_id to null and use pending_recipient_email instead. ` +
+          `Pending email provided: ${rule.pending_recipient_email || 'none'}`
+        );
+      }
+      
+      console.log('✅ [VALIDATION] recipient_id validated successfully');
+    } else {
+      console.log('✅ [VALIDATION] Using pending invitation mode with email:', rule.pending_recipient_email);
+    }
+    
+    // Phase 3: Validate user_id exists (should always be set by this point)
+    if (!rule.user_id) {
+      console.error('❌ [VALIDATION] user_id is required');
+      throw new Error('User ID is required for creating auto-gifting rules');
     }
     
     const isPendingInvitation = !rule.recipient_id && !!rule.pending_recipient_email;
     
-    // Phase 2: Existing validations
+    // Phase 4: Existing validations
     await this.validateUserConsent(rule.user_id);
     await this.validateBudgetLimits(rule.user_id, rule.budget_limit || 0);
 
-    // Phase 3: Generate secure setup token
+    // Phase 5: Generate secure setup token
     const setupToken = await this.generateSetupToken(rule.user_id);
     
-    // Phase 4: Log setup initiation with pending invitation flag
+    // Phase 6: Log setup initiation with pending invitation flag
     await this.logAutoGiftEvent(
       rule.user_id, 
       'auto_gift_setup_initiated', 
@@ -842,7 +883,7 @@ class UnifiedGiftManagementService {
       setupToken
     );
 
-    // Phase 4: Atomic rule creation with setup token
+    // Phase 7: Atomic rule creation with setup token
     const { data, error } = await supabase
       .from('auto_gifting_rules')
       .insert({

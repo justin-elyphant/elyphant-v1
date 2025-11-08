@@ -13,7 +13,7 @@ const GiftingHub = () => {
       
       const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          event_type: 'auto_gift_rule_created',
+          eventType: 'auto_gift_rule_created',
           recipientEmail: 'justin@elyphant.com',
           data: {
             recipient_name: 'Charles Meeks',

@@ -104,7 +104,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const requestBody = await req.json();
-    const { eventType, recipientEmail } = requestBody;
+    // Support both camelCase and snake_case for backward compatibility
+    const eventType = requestBody.eventType ?? requestBody.event_type;
+    const recipientEmail = requestBody.recipientEmail ?? requestBody.recipient_email;
     // Support both 'data' and 'customData' for backward compatibility
     const data = requestBody.data ?? requestBody.customData ?? {};
     

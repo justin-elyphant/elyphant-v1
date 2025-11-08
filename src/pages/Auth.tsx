@@ -38,7 +38,8 @@ const Auth = () => {
       if (!inviteToken) return;
       
       try {
-        const { data, error } = await supabase
+        // First, try to find a connection invitation
+        const { data: connectionData, error: connectionError } = await supabase
           .from('user_connections')
           .select(`
             id,
@@ -49,25 +50,49 @@ const Auth = () => {
           `)
           .eq('id', inviteToken)
           .eq('status', 'pending_invitation')
-          .single();
+          .maybeSingle();
         
-        if (error || !data) {
-          toast.error('Invalid or expired invitation link');
+        if (connectionData) {
+          // This is a connection invitation
+          const senderName = connectionData.profiles?.first_name || connectionData.profiles?.name || 'Someone';
+          
+          setInvitationData({
+            connectionId: connectionData.id,
+            recipientEmail: connectionData.pending_recipient_email || '',
+            recipientName: connectionData.pending_recipient_name || '',
+            senderName
+          });
+          
+          toast.success(`${senderName} invited you to connect on Elyphant!`);
           return;
         }
         
-        const senderName = data.profiles?.first_name || data.profiles?.name || 'Someone';
+        // If not found in connections, check pending_gift_invitations
+        const { data: giftInvitationData, error: giftError } = await supabase
+          .from('pending_gift_invitations')
+          .select('recipient_email, recipient_name')
+          .eq('invitation_token', inviteToken)
+          .eq('status', 'pending')
+          .maybeSingle();
         
-        setInvitationData({
-          connectionId: data.id,
-          recipientEmail: data.pending_recipient_email || '',
-          recipientName: data.pending_recipient_name || '',
-          senderName
-        });
+        if (giftInvitationData) {
+          // This is a gift invitation - sender info will be in the invitation context
+          setInvitationData({
+            connectionId: inviteToken, // Use token as ID for gift invitations
+            recipientEmail: giftInvitationData.recipient_email || '',
+            recipientName: giftInvitationData.recipient_name || '',
+            senderName: 'Someone' // Gift invitation sender name handled separately
+          });
+          
+          toast.success(`🎁 You've been invited to join Elyphant!`);
+          return;
+        }
         
-        toast.success(`${senderName} invited you to connect on Elyphant!`);
+        // Neither found - invalid or expired
+        toast.error('Invalid or expired invitation link');
       } catch (error) {
         console.error('Failed to validate invitation:', error);
+        toast.error('Failed to validate invitation');
       }
     };
     

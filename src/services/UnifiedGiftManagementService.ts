@@ -2041,6 +2041,49 @@ class UnifiedGiftManagementService {
       .single();
 
     if (error) throw error;
+    
+    // Send auto-gift rule created email
+    try {
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('email, first_name, name')
+        .eq('id', user.user.id)
+        .single();
+      
+      const { data: connection } = await supabase
+        .from('user_connections')
+        .select('pending_recipient_name')
+        .eq('id', connectionId)
+        .single();
+      
+      if (senderProfile?.email) {
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'auto_gift_rule_created',
+            recipientEmail: senderProfile.email,
+            data: {
+              user_email: senderProfile.email,
+              recipient_name: connection?.pending_recipient_name || 'your recipient',
+              recipient_email: recipientEmail,
+              occasion: dateType,
+              budget_limit: budgetLimit,
+              is_recurring: true,
+              auto_approve_enabled: false,
+              rule_details: {
+                occasion: dateType,
+                budget_limit: budgetLimit,
+                is_recurring: true
+              }
+            }
+          }
+        });
+        console.log('✅ Auto-gift rule created email sent');
+      }
+    } catch (emailError) {
+      console.error('⚠️ Failed to send auto-gift rule created email:', emailError);
+      // Non-blocking error
+    }
+    
     return data;
   }
 

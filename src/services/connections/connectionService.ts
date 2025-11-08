@@ -136,6 +136,13 @@ export const acceptConnectionRequest = async (requestId: string): Promise<Connec
   try {
     console.log('🔗 [connectionService] Accepting connection request:', requestId);
     
+    // First, fetch the connection and check for auto-gift rules
+    const { data: connection } = await supabase
+      .from('user_connections')
+      .select('user_id, pending_recipient_email')
+      .eq('id', requestId)
+      .single();
+    
     const { error } = await supabase
       .from('user_connections')
       .update({ status: 'accepted' })
@@ -147,6 +154,64 @@ export const acceptConnectionRequest = async (requestId: string): Promise<Connec
     }
     
     console.log('🔗 [connectionService] Connection accepted. Emails queued automatically via trigger.');
+    
+    // Check if there are any auto-gift rules waiting for this connection
+    if (connection?.user_id && connection?.pending_recipient_email) {
+      try {
+        const { data: autoGiftRules } = await supabase
+          .from('auto_gifting_rules')
+          .select('id, user_id, date_type, budget_limit, pending_recipient_email')
+          .eq('user_id', connection.user_id)
+          .eq('pending_recipient_email', connection.pending_recipient_email)
+          .eq('is_active', true);
+        
+        // Send activation emails for each rule
+        if (autoGiftRules && autoGiftRules.length > 0) {
+          const { data: senderProfile } = await supabase
+            .from('profiles')
+            .select('email, first_name, name')
+            .eq('id', connection.user_id)
+            .single();
+          
+          const { data: recipientConnection } = await supabase
+            .from('user_connections')
+            .select('pending_recipient_name')
+            .eq('user_id', connection.user_id)
+            .eq('pending_recipient_email', connection.pending_recipient_email)
+            .single();
+          
+          for (const rule of autoGiftRules) {
+            if (senderProfile?.email) {
+              await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                body: {
+                  eventType: 'auto_gift_rule_activated',
+                  recipientEmail: senderProfile.email,
+                  data: {
+                    user_email: senderProfile.email,
+                    recipient_name: recipientConnection?.pending_recipient_name || 'your recipient',
+                    recipient_email: connection.pending_recipient_email,
+                    occasion: rule.date_type,
+                    budget_limit: rule.budget_limit,
+                    is_recurring: true,
+                    auto_approve_enabled: false,
+                    rule_details: {
+                      occasion: rule.date_type,
+                      budget_limit: rule.budget_limit,
+                      is_recurring: true
+                    }
+                  }
+                }
+              });
+              console.log('✅ Auto-gift rule activated email sent for rule:', rule.id);
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('⚠️ Failed to send auto-gift rule activated email:', emailError);
+        // Non-blocking error
+      }
+    }
+    
     toast.success("Connection request accepted!");
     return { success: true };
   } catch (error) {

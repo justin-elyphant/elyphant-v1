@@ -15,6 +15,8 @@ import {
   // Gifting Core
   giftInvitationTemplate,
   autoGiftApprovalTemplate,
+  autoGiftRuleCreatedTemplate,
+  autoGiftRuleActivatedTemplate,
   giftPurchasedNotificationTemplate,
   
   // Social/Connections
@@ -38,6 +40,8 @@ import type {
   PostPurchaseFollowupProps,
   GiftInvitationProps,
   AutoGiftApprovalProps,
+  AutoGiftRuleCreatedProps,
+  AutoGiftRuleActivatedProps,
   GiftPurchasedNotificationProps,
   ConnectionInvitationProps,
   ConnectionEstablishedProps,
@@ -63,9 +67,11 @@ interface EmailRequest {
     | 'order_cancelled'
     | 'cart_abandoned'
     | 'post_purchase_followup'
-    // Gifting Core (3)
+    // Gifting Core (5)
     | 'gift_invitation'
     | 'auto_gift_approval'
+    | 'auto_gift_rule_created'
+    | 'auto_gift_rule_activated'
     | 'gift_received_notification'
     // Auto-Gift Payment Flow (5) - NEW
     | 'payment_method_expiring'
@@ -138,6 +144,12 @@ const handler = async (req: Request): Promise<Response> => {
         break;
       case 'auto_gift_approval':
         emailData = await handleAutoGiftApproval(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_rule_created':
+        emailData = await handleAutoGiftRuleCreated(supabase, data, recipientEmail);
+        break;
+      case 'auto_gift_rule_activated':
+        emailData = await handleAutoGiftRuleActivated(supabase, data, recipientEmail);
         break;
       case 'gift_received_notification':
         emailData = await handleGiftReceivedNotification(supabase, data, recipientEmail);
@@ -654,6 +666,71 @@ async function handleGiftReceivedNotification(supabase: any, data: any, recipien
     html: emailHtml,
   };
 }
+
+/**
+ * Handler: Auto-Gift Rule Created
+ */
+async function handleAutoGiftRuleCreated(supabase: any, data: any, recipientEmail?: string) {
+  console.log('🎁 Handling auto-gift rule created email');
+  
+  const emailTo = recipientEmail || data?.user_email || data?.userEmail;
+  
+  if (!emailTo) {
+    console.error('❌ Missing user email. Data:', JSON.stringify(data));
+    throw new Error('User email required for auto-gift rule created notification');
+  }
+  
+  const emailHtml = autoGiftRuleCreatedTemplate({
+    recipient_name: data.recipient_name || data.recipientName,
+    recipient_email: data.recipient_email || data.recipientEmail,
+    rule_details: {
+      occasion: data.occasion || data.rule_details?.occasion || 'Special Occasion',
+      budget_limit: data.budget_limit || data.rule_details?.budget_limit,
+      is_recurring: data.is_recurring ?? data.rule_details?.is_recurring ?? false,
+      next_event_date: data.next_event_date || data.rule_details?.next_event_date
+    },
+    auto_approve_enabled: data.auto_approve_enabled ?? data.autoApproveEnabled ?? false
+  });
+
+  return {
+    to: emailTo,
+    subject: `Auto-Gift Rule Created for ${data.recipient_name || 'your recipient'} 🎁`,
+    html: emailHtml,
+  };
+}
+
+/**
+ * Handler: Auto-Gift Rule Activated
+ */
+async function handleAutoGiftRuleActivated(supabase: any, data: any, recipientEmail?: string) {
+  console.log('✅ Handling auto-gift rule activated email');
+  
+  const emailTo = recipientEmail || data?.user_email || data?.userEmail;
+  
+  if (!emailTo) {
+    console.error('❌ Missing user email. Data:', JSON.stringify(data));
+    throw new Error('User email required for auto-gift rule activated notification');
+  }
+  
+  const emailHtml = autoGiftRuleActivatedTemplate({
+    recipient_name: data.recipient_name || data.recipientName,
+    recipient_email: data.recipient_email || data.recipientEmail,
+    rule_details: {
+      occasion: data.occasion || data.rule_details?.occasion || 'Special Occasion',
+      budget_limit: data.budget_limit || data.rule_details?.budget_limit,
+      is_recurring: data.is_recurring ?? data.rule_details?.is_recurring ?? false,
+      next_event_date: data.next_event_date || data.rule_details?.next_event_date
+    },
+    auto_approve_enabled: data.auto_approve_enabled ?? data.autoApproveEnabled ?? false
+  });
+
+  return {
+    to: emailTo,
+    subject: `Auto-Gift Rule Activated! ${data.recipient_name || 'Your recipient'} is ready 🎉`,
+    html: emailHtml,
+  };
+}
+
 
 /**
  * Handler: Connection Invitation

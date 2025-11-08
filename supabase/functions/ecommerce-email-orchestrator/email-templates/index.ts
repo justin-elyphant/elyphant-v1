@@ -28,6 +28,12 @@ export type { GiftInvitationProps } from './gift-invitation.ts';
 export { autoGiftApprovalTemplate } from './auto-gift-approval.ts';
 export type { AutoGiftApprovalProps } from './auto-gift-approval.ts';
 
+export { autoGiftRuleCreatedTemplate } from './auto-gift-rule-created.ts';
+export type { AutoGiftRuleCreatedProps } from './auto-gift-rule-created.ts';
+
+export { autoGiftRuleActivatedTemplate } from './auto-gift-rule-activated.ts';
+export type { AutoGiftRuleActivatedProps } from './auto-gift-rule-activated.ts';
+
 export { giftPurchasedNotificationTemplate } from './gift-purchased-notification.ts';
 export type { GiftPurchasedNotificationProps } from './gift-purchased-notification.ts';
 

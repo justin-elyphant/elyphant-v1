@@ -52,7 +52,7 @@ export const birthdayReminderConsolidatedTemplate = (props: BirthdayReminderProp
     intro = `Don't forget! ${props.birthday_person_name}'s birthday is ${daysText}. Browse their wishlist and interests to find the perfect gift, or set up auto-gifting for next time.`;
     ctaText = `Shop for ${props.birthday_person_name}`;
     // Link to birthday person's profile to show wishlists and interests
-    ctaUrl = props.recipient_profile_url || `https://app.elyphant.ai/profile/${props.birthday_person_id}` || "https://app.elyphant.ai/connections";
+    ctaUrl = props.recipient_profile_url || `https://elyphant.ai/profile/${props.birthday_person_id}` || "https://elyphant.ai/connections";
   }
   
   // Build product cards if we have curated products (for birthday person)

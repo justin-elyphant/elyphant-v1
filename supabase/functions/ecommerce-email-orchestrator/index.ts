@@ -862,36 +862,7 @@ async function handleWishlistPurchaseNotification(supabase: any, data: any, reci
   };
 }
 
-/**
- * Handler: Address Request (Legacy - operational necessity)
- */
-async function handleAddressRequest(supabase: any, data: any, recipientEmail?: string) {
-  console.log('📍 Handling address request email');
-  
-  // recipientEmail must be provided (external recipients)
-  if (!recipientEmail) {
-    throw new Error('Recipient email is required for address request');
-  }
-  
-  // Simple template for address request
-  const emailHtml = `
-    <html>
-      <body>
-        <h2>Address Information Needed</h2>
-        <p>Hello,</p>
-        <p>We need your shipping address to complete a gift order.</p>
-        <p>Please reply with your shipping address at your earliest convenience.</p>
-        <p>Thank you!</p>
-      </body>
-    </html>
-  `;
-
-  return {
-    to: recipientEmail,
-    subject: 'Address Information Needed',
-    html: emailHtml,
-  };
-}
+// handleAddressRequest moved below - see line 1169 for implementation
 
 // =============================================================================
 // AUTO-GIFT PAYMENT FLOW HANDLERS (NEW)

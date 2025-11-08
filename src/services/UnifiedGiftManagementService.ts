@@ -895,7 +895,66 @@ class UnifiedGiftManagementService {
       data.id
     );
     
-    // Phase 7: Send gift invitation email for pending recipients
+    // Phase 7: Send confirmation email to rule creator
+    try {
+      console.log('📧 [UNIFIED] Sending auto-gift rule created confirmation email');
+      
+      // Get user's profile and settings
+      const [userProfileResult, settingsResult] = await Promise.all([
+        supabase.from('profiles').select('email, name, first_name').eq('id', rule.user_id).single(),
+        this.getSettings(rule.user_id)
+      ]);
+      
+      const userEmail = userProfileResult.data?.email;
+      
+      if (!userEmail) {
+        console.warn('⚠️ User email not found, skipping confirmation email');
+      } else {
+        // Gather recipient information
+        let recipientName = 'Your recipient';
+        
+        if (isPendingInvitation && rule.pending_recipient_email) {
+          recipientName = rule.pending_recipient_name || rule.pending_recipient_email.split('@')[0];
+        } else if (rule.recipient_id) {
+          // Fetch recipient from profiles
+          const { data: recipientProfile } = await supabase
+            .from('profiles')
+            .select('name, first_name')
+            .eq('id', rule.recipient_id)
+            .single();
+          
+          if (recipientProfile) {
+            recipientName = recipientProfile.first_name || recipientProfile.name || 'Your recipient';
+          }
+        }
+        
+        // Send confirmation email via orchestrator
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'auto_gift_rule_created',
+            recipientEmail: userEmail,
+            data: {
+              recipient_name: recipientName,
+              rule_details: {
+                occasion: rule.date_type || 'custom event',
+                budget_limit: rule.budget_limit || 0,
+                is_recurring: rule.date_type !== 'custom'
+              },
+              auto_approve_enabled: settingsResult?.auto_approve_gifts || false
+            }
+          }
+        });
+        
+        console.log('✅ [UNIFIED] Auto-gift rule created confirmation email sent');
+        toast.success('Auto-gift rule created! Check your email for confirmation.');
+      }
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Don't throw - rule is already created, email is nice-to-have
+      toast.success('Auto-gift rule created successfully!');
+    }
+    
+    // Phase 8: Send gift invitation email for pending recipients
     if (isPendingInvitation && rule.pending_recipient_email) {
       try {
         console.log('📧 [UNIFIED] Sending gift invitation email to pending recipient');

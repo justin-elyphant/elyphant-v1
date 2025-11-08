@@ -97,7 +97,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { eventType, data, recipientEmail }: EmailRequest = await req.json();
+    const requestBody = await req.json();
+    const { eventType, recipientEmail } = requestBody;
+    // Support both 'data' and 'customData' for backward compatibility
+    const data = requestBody.data || requestBody.customData;
     
     console.log(`📧 Processing email event: ${eventType}`);
 

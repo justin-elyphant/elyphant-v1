@@ -100,9 +100,11 @@ const handler = async (req: Request): Promise<Response> => {
     const requestBody = await req.json();
     const { eventType, recipientEmail } = requestBody;
     // Support both 'data' and 'customData' for backward compatibility
-    const data = requestBody.data || requestBody.customData;
+    const data = requestBody.data ?? requestBody.customData ?? {};
     
     console.log(`📧 Processing email event: ${eventType}`);
+    console.log(`📦 Payload keys: ${Object.keys(requestBody).join(', ')}`);
+    console.log(`📦 Data keys: ${Object.keys(data).join(', ')}`);
 
     // Create Supabase client with service role for full access
     const supabase = createClient(
@@ -631,17 +633,24 @@ async function handleAutoGiftApproval(supabase: any, data: any, recipientEmail?:
 async function handleGiftReceivedNotification(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎁 Handling gift received notification email');
   
-  // recipientEmail must be provided or in data (external recipients)
-  if (!recipientEmail) {
-    recipientEmail = data.recipient_email || data.recipientEmail;
-    if (!recipientEmail) throw new Error('Recipient email required for gift notification');
+  // Extract email with multiple fallbacks
+  const emailTo = recipientEmail || data?.recipient_email || data?.recipientEmail;
+  
+  if (!emailTo) {
+    console.error('❌ Missing recipient email. Data:', JSON.stringify(data));
+    throw new Error('Recipient email required for gift notification');
   }
   
-  const emailHtml = giftPurchasedNotificationTemplate(data);
+  const giftorName = data?.giftor_name || data?.giftorName || 'Someone';
+  
+  const emailHtml = giftPurchasedNotificationTemplate({
+    ...data,
+    giftor_name: giftorName
+  });
 
   return {
-    to: recipientEmail,
-    subject: `${data.giftor_name} sent you a gift! 🎁`,
+    to: emailTo,
+    subject: `${giftorName} sent you a gift! 🎁`,
     html: emailHtml,
   };
 }
@@ -651,18 +660,32 @@ async function handleGiftReceivedNotification(supabase: any, data: any, recipien
  */
 async function handleConnectionInvitation(supabase: any, data: any, recipientEmail?: string) {
   console.log('👥 Handling connection invitation email');
+  console.log('👥 Data received:', JSON.stringify(data, null, 2));
+  console.log('👥 RecipientEmail param:', recipientEmail);
   
-  // recipientEmail must be provided (external invitations)
-  if (!recipientEmail) {
-    recipientEmail = data.recipient_email || data.recipientEmail;
-    if (!recipientEmail) throw new Error('Recipient email required for connection invitation');
+  // Extract email with multiple fallbacks
+  const emailTo = recipientEmail || data?.recipient_email || data?.recipientEmail;
+  
+  console.log('👥 Resolved emailTo:', emailTo);
+  
+  if (!emailTo) {
+    console.error('❌ Missing recipient email. Data:', JSON.stringify(data));
+    throw new Error('Recipient email required for connection invitation');
   }
   
-  const emailHtml = connectionInvitationTemplate(data);
+  // Safely extract other required fields
+  const senderName = data?.sender_name || data?.senderName || 'Someone';
+  const invitationUrl = data?.invitation_url || data?.invitationUrl || '';
+  
+  const emailHtml = connectionInvitationTemplate({
+    ...data,
+    sender_name: senderName,
+    invitation_url: invitationUrl
+  });
 
   return {
-    to: recipientEmail,
-    subject: `${data.sender_name} wants to connect on Elyphant 💝`,
+    to: emailTo,
+    subject: `${senderName} wants to connect on Elyphant 💝`,
     html: emailHtml,
   };
 }
@@ -676,21 +699,33 @@ async function handleConnectionEstablished(supabase: any, data: any, recipientEm
   
   // If no recipientEmail provided, fetch from user_id
   if (!recipientEmail) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', data.userId || data.user_id)
-      .single();
+    const userId = data?.userId || data?.user_id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .single();
+      
+      recipientEmail = profile?.email;
+    }
     
-    recipientEmail = profile?.email;
-    if (!recipientEmail) throw new Error('Could not find recipient email for connection');
+    if (!recipientEmail) {
+      console.error('❌ Could not find recipient email. Data:', JSON.stringify(data));
+      throw new Error('Could not find recipient email for connection');
+    }
   }
   
-  const emailHtml = connectionEstablishedTemplate(data);
+  const connectionName = data?.connection_name || data?.connectionName || 'your connection';
+  
+  const emailHtml = connectionEstablishedTemplate({
+    ...data,
+    connection_name: connectionName
+  });
 
   return {
     to: recipientEmail,
-    subject: `You're now connected with ${data.connection_name}! 🎉`,
+    subject: `You're now connected with ${connectionName}! 🎉`,
     html: emailHtml,
   };
 }

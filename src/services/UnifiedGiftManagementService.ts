@@ -1933,21 +1933,30 @@ class UnifiedGiftManagementService {
       // NEW: Trigger invitation email
       try {
         console.log('📧 [EMAIL] Triggering invitation email...');
+        console.log('📧 [EMAIL] User ID:', user.user.id);
         
         // Get sender's profile for email personalization
-        const { data: senderProfile } = await supabase
+        const { data: senderProfile, error: profileError } = await supabase
           .from('profiles')
           .select('name, first_name')
           .eq('id', user.user.id)
           .single();
         
-        const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
+        if (profileError) {
+          console.error('⚠️ [EMAIL] Failed to fetch sender profile:', profileError);
+        }
         
-        // Invoke email orchestrator
-        const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
+        console.log('📧 [EMAIL] Sender name:', senderName);
+        console.log('📧 [EMAIL] Recipient email:', sanitizedEmail);
+        console.log('📧 [EMAIL] About to invoke ecommerce-email-orchestrator...');
+        
+        // Invoke email orchestrator with proper payload structure
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
           body: {
             eventType: 'connection_invitation',
-            customData: {
+            recipientEmail: sanitizedEmail,  // Add at top level for the orchestrator
+            data: {
               sender_name: senderName,
               recipient_email: sanitizedEmail,
               recipient_name: sanitizedName,
@@ -1958,15 +1967,18 @@ class UnifiedGiftManagementService {
           }
         });
         
+        console.log('📧 [EMAIL] Invoke completed. Error:', emailError, 'Data:', emailData);
+        
         if (emailError) {
           console.error('⚠️ [EMAIL] Failed to send invitation email:', emailError);
-          // Don't throw - connection was created successfully, email failure is non-critical
+          toast.error(`Connection created but email failed: ${emailError.message}`);
         } else {
           console.log('✅ [EMAIL] Invitation email queued successfully');
+          toast.success('Invitation sent successfully!');
         }
       } catch (emailError) {
         console.error('⚠️ [EMAIL] Error invoking email orchestrator:', emailError);
-        // Non-blocking error - connection still created
+        toast.error(`Connection created but email failed to send`);
       }
       
       return data;

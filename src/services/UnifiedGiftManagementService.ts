@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { protectedAutoGiftingService } from "./protected-auto-gifting-service";
 import { unifiedProfileService } from "./profiles/UnifiedProfileService";
 import { toast } from "sonner";
+import { isValidRelationshipType } from "@/config/relationshipTypes";
 
 // ============= UNIFIED TYPES =============
 
@@ -1746,8 +1747,7 @@ class UnifiedGiftManagementService {
       throw new Error('Recipient name is required');
     }
 
-    const validRelationshipTypes = ['friend', 'family', 'colleague', 'partner', 'other'];
-    if (!validRelationshipTypes.includes(relationshipType)) {
+    if (!isValidRelationshipType(relationshipType)) {
       console.error('❌ [VALIDATION] Invalid relationship type:', relationshipType);
       throw new Error(`Invalid relationship type: ${relationshipType}`);
     }

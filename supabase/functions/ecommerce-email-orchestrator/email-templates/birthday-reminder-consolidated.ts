@@ -113,7 +113,7 @@ export const birthdayReminderConsolidatedTemplate = (props: BirthdayReminderProp
   
   // Auto-gift status box (for connections with auto-gifting)
   const autoGiftStatusHtml = !isBirthdayPerson && props.has_autogift_enabled ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #10b981;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #d1fae5; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #10b981;">
       <tr>
         <td>
           <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #065f46; font-weight: 600;">
@@ -143,7 +143,7 @@ export const birthdayReminderConsolidatedTemplate = (props: BirthdayReminderProp
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${ctaUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #fb923c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);">
+          <a href="${ctaUrl}" style="display: inline-block; padding: 16px 40px; background-color: #ea580c; background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #fb923c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);">
             ${ctaText}
           </a>
         </td>

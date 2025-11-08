@@ -50,7 +50,7 @@ export const autoGiftApprovalTemplate = (props: AutoGiftApprovalProps): string =
     </p>
     
     <!-- Occasion info -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fdf4ff; background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
       <tr>
         <td>
           <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -83,7 +83,7 @@ export const autoGiftApprovalTemplate = (props: AutoGiftApprovalProps): string =
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${props.approve_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 10px 10px 0;">
+          <a href="${props.approve_url}" style="display: inline-block; padding: 16px 40px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 10px 10px 0;">
             ✓ Approve & Send Gift
           </a>
           <a href="${props.reject_url}" style="display: inline-block; padding: 16px 40px; background-color: #ffffff; color: #dc2626; text-decoration: none; border-radius: 8px; border: 2px solid #dc2626; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 0 10px 10px;">

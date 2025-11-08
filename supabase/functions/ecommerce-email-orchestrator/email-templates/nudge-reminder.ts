@@ -23,7 +23,7 @@ export const nudgeReminderTemplate = (props: NudgeReminderProps): string => {
     </p>
     
     <!-- Info Box -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #f59e0b;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef3c7; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #f59e0b;">
       <tr>
         <td>
           <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; font-weight: 600;">
@@ -52,7 +52,7 @@ export const nudgeReminderTemplate = (props: NudgeReminderProps): string => {
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${props.connections_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+          <a href="${props.connections_url}" style="display: inline-block; padding: 16px 40px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
             View Pending Connections
           </a>
         </td>

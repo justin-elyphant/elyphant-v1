@@ -53,7 +53,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
       </p>
     </div>
 
-    <div style="background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <div style="background-color: #F3F4F6; background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
       <h2 style="margin: 0 0 16px 0; color: #1F2937; font-size: 18px; font-weight: 600;">
         Rule Details
       </h2>

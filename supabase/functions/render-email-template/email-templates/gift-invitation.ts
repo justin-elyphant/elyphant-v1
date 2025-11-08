@@ -20,7 +20,7 @@ export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
     </p>
     
     ${props.occasion ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff7ed; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
       <tr>
         <td>
           <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -72,7 +72,7 @@ export const giftInvitationTemplate = (props: GiftInvitationProps): string => {
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${props.invitation_url}" style="display: inline-block; padding: 18px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600;">
+          <a href="${props.invitation_url}" style="display: inline-block; padding: 18px 40px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600;">
             Accept Invitation
           </a>
         </td>

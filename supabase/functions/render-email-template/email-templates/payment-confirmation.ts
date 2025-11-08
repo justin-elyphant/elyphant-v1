@@ -19,7 +19,7 @@ export const paymentConfirmationTemplate = (props: PaymentConfirmationProps): st
     </p>
     
     <!-- Payment details box -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border: 1px solid #86efac;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border: 1px solid #86efac;">
       <tr>
         <td align="center">
           <div style="width: 48px; height: 48px; background-color: #22c55e; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">

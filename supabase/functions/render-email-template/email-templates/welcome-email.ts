@@ -19,7 +19,7 @@ export const welcomeEmailTemplate = (props: WelcomeEmailProps): string => {
     <!-- Feature highlights -->
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
       <tr>
-        <td style="padding: 20px; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; margin-bottom: 15px;">
+        <td style="padding: 20px; background-color: #faf5ff; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; margin-bottom: 15px;">
           <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; color: #7c3aed; font-weight: 600;">
             📝 Create Your Wishlist
           </p>
@@ -30,7 +30,7 @@ export const welcomeEmailTemplate = (props: WelcomeEmailProps): string => {
       </tr>
       <tr><td style="height: 15px;"></td></tr>
       <tr>
-        <td style="padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; margin-bottom: 15px;">
+        <td style="padding: 20px; background-color: #f0f9ff; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; margin-bottom: 15px;">
           <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; color: #0ea5e9; font-weight: 600;">
             🤝 Connect with Friends
           </p>
@@ -41,7 +41,7 @@ export const welcomeEmailTemplate = (props: WelcomeEmailProps): string => {
       </tr>
       <tr><td style="height: 15px;"></td></tr>
       <tr>
-        <td style="padding: 20px; background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-radius: 8px;">
+        <td style="padding: 20px; background-color: #fdf4ff; background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-radius: 8px;">
           <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; color: #c026d3; font-weight: 600;">
             🎯 Smart Gift Suggestions
           </p>
@@ -56,7 +56,7 @@ export const welcomeEmailTemplate = (props: WelcomeEmailProps): string => {
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${props.gifting_url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 5px 10px 5px;">
+          <a href="${props.gifting_url}" style="display: inline-block; padding: 16px 32px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 5px 10px 5px;">
             🎁 Start Gifting Now
           </a>
           <a href="${props.wishlists_url}" style="display: inline-block; padding: 16px 32px; background-color: #ffffff; color: #9333ea; text-decoration: none; border-radius: 8px; border: 2px solid #9333ea; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin: 0 5px 10px 5px;">

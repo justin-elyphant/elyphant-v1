@@ -38,7 +38,7 @@ export const baseEmailTemplate = ({ content, preheader }: BaseTemplateProps): st
     body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     
     /* Brand colors */
-    .brand-gradient { background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); }
+    .brand-gradient { background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); }
     .brand-purple { color: #9333ea; }
     .brand-violet { color: #7c3aed; }
     .brand-cyan { color: #0ea5e9; }
@@ -76,8 +76,8 @@ export const baseEmailTemplate = ({ content, preheader }: BaseTemplateProps): st
           
           <!-- Header with gradient and logo -->
           <tr>
-            <td align="center" style="padding: 40px 30px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <img 
+            <td align="center" style="padding: 40px 30px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
+              <img
                 src="https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/email-assets/elyphant-logo.png" 
                 alt="Elyphant" 
                 style="height: 50px; width: auto; display: block; margin: 0 auto;"

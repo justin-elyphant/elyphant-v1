@@ -49,7 +49,7 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
     
     ${props.custom_message ? `
     <!-- Custom Message -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #faf5ff; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
       <tr>
         <td>
           <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic; line-height: 22px;">
@@ -71,7 +71,7 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
           <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
               <td width="40" valign="top">
-                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
+                <div style="width: 32px; height: 32px; background-color: #9333ea; background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
                   🎁
                 </div>
               </td>
@@ -92,7 +92,7 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
           <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
               <td width="40" valign="top">
-                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #7c3aed 0%, #0ea5e9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
+                <div style="width: 32px; height: 32px; background-color: #7c3aed; background: linear-gradient(135deg, #7c3aed 0%, #0ea5e9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
                   🤖
                 </div>
               </td>
@@ -113,7 +113,7 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
           <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
               <td width="40" valign="top">
-                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
+                <div style="width: 32px; height: 32px; background-color: #0ea5e9; background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;">
                   🔔
                 </div>
               </td>
@@ -135,7 +135,7 @@ export const connectionInvitationTemplate = (props: ConnectionInvitationProps): 
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr>
         <td align="center" style="padding: 20px 0;">
-          <a href="${props.invitation_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
+          <a href="${props.invitation_url}" style="display: inline-block; padding: 16px 40px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);">
             ${getCTAText()}
           </a>
         </td>

@@ -48,7 +48,7 @@ const Auth = () => {
             user_id,
             profiles!user_connections_user_id_fkey(name, first_name)
           `)
-          .eq('id', inviteToken)
+          .eq('invitation_token', inviteToken)
           .eq('status', 'pending_invitation')
           .maybeSingle();
         

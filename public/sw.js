@@ -14,12 +14,10 @@ const CACHE_DURATION = {
 };
 
 // Resources to cache immediately
+// Note: Only runtime-available paths - build artifacts handled by cache strategies
 const STATIC_RESOURCES = [
   '/',
-  '/marketplace',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/marketplace'
 ];
 
 // API endpoints to cache

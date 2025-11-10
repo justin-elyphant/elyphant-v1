@@ -45,6 +45,25 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     },
   });
 
+  // Pre-fill form fields when invitation data loads (handles async race condition)
+  React.useEffect(() => {
+    if (invitationData) {
+      const currentName = form.getValues('name');
+      const currentEmail = form.getValues('email');
+      
+      // Only prefill if fields are empty (don't overwrite user input)
+      if (!currentName && invitationData.recipientName) {
+        console.log('[SignUpForm] Pre-filling name:', invitationData.recipientName);
+        form.setValue('name', invitationData.recipientName);
+      }
+      
+      if (!currentEmail && invitationData.recipientEmail) {
+        console.log('[SignUpForm] Pre-filling email:', invitationData.recipientEmail);
+        form.setValue('email', invitationData.recipientEmail);
+      }
+    }
+  }, [invitationData, form]);
+
   const handleSubmit = async (values: SignUpFormValues) => {
     try {
       setErrorMessage(null);

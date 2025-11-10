@@ -189,26 +189,62 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                             size="sm"
                             onClick={async () => {
                               try {
+                                // Fetch connection data including invitation token
+                                const { data: conn, error: connError } = await supabase
+                                  .from('user_connections')
+                                  .select('id, user_id, invitation_token, pending_recipient_email, pending_recipient_name')
+                                  .eq('id', connection.connectionId || connection.id)
+                                  .single();
+                                
+                                if (connError || !conn?.invitation_token) {
+                                  console.error('❌ Could not find invitation token:', connError);
+                                  toast.error('Could not find invitation token');
+                                  return;
+                                }
+
+                                // Build production invite URL
+                                const inviteUrl = `https://elyphant.ai/auth?invite=${conn.invitation_token}`;
+                                console.log('✅ [Resend] Built invite URL:', inviteUrl);
+
+                                // Fetch sender name
+                                const { data: sender } = await supabase
+                                  .from('profiles')
+                                  .select('first_name, name')
+                                  .eq('id', conn.user_id)
+                                  .single();
+                                const senderName = sender?.first_name || sender?.name || 'Someone';
+
+                                console.log('📧 [Resend] Invoking orchestrator with:', {
+                                  recipient_email: conn.pending_recipient_email,
+                                  recipient_name: conn.pending_recipient_name,
+                                  sender_name: senderName,
+                                  invitation_url: inviteUrl,
+                                  connection_id: conn.id
+                                });
+
+                                // Invoke orchestrator with standardized payload
                                 const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                                   body: {
                                     eventType: 'connection_invitation',
-                                    customData: {
-                                      recipientEmail: connection.recipientEmail,
-                                      recipientName: connection.name,
-                                      senderName: 'You',
-                                      customMessage: `Hi ${connection.name.split(' ')[0]}! Just following up on my invitation to connect on Elyphant. I'd love to share wishlists and find perfect gifts for each other!`,
-                                      invitationUrl: window.location.origin + '/signup'
+                                    data: {
+                                      sender_name: senderName,
+                                      recipient_email: conn.pending_recipient_email,
+                                      recipient_name: conn.pending_recipient_name,
+                                      connection_id: conn.id,
+                                      invitation_url: inviteUrl
                                     }
                                   }
                                 });
                                 
                                 if (error) {
+                                  console.error('❌ [Resend] Orchestrator error:', error);
                                   toast.error('Failed to resend invitation');
                                 } else {
+                                  console.log('✅ [Resend] Invitation resent successfully');
                                   toast.success('Invitation resent successfully!');
                                 }
                               } catch (error) {
-                                console.error('Error resending invitation:', error);
+                                console.error('❌ [Resend] Error resending invitation:', error);
                                 toast.error('Failed to resend invitation');
                               }
                             }}

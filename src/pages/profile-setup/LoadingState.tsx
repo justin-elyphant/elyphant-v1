@@ -23,15 +23,20 @@ const LoadingState: React.FC<LoadingStateProps> = ({
       
       // Check if we have necessary signup data
       const newSignUp = localStorage.getItem("newSignUp") === "true";
-      const userIntent = localStorage.getItem("userIntent");
+      const userIntent = localStorage.getItem("userIntent"); // OLD
+      const signupContext = localStorage.getItem("signupContext"); // NEW
+
+      // Support both old and new signup context patterns
+      const isGiftRecipient = userIntent === "giftee" || signupContext === "gift_recipient";
+      const isGiftGiver = userIntent === "giftor" || signupContext === "gift_giver";
       
-      if (newSignUp && userIntent === "giftee") {
+      if (newSignUp && isGiftRecipient) {
         // Continue to profile setup
-        console.log("[LoadingState] Fallback: Continuing to profile setup");
+        console.log("[LoadingState] Fallback: Gift recipient, continuing to profile setup");
         navigate("/profile-setup", { replace: true });
-      } else if (newSignUp && userIntent === "giftor") {
+      } else if (newSignUp && isGiftGiver) {
         // Go to marketplace
-        console.log("[LoadingState] Fallback: Redirecting to marketplace");
+        console.log("[LoadingState] Fallback: Gift giver, redirecting to marketplace");
         navigate("/marketplace", { replace: true });
       } else {
         // Go to dashboard as fallback

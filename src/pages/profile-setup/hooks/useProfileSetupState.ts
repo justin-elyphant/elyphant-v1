@@ -31,25 +31,30 @@ export const useProfileSetupState = () => {
 
     // At this point, authLoading is false AND user object exists
     const newSignUpFlag = localStorage.getItem("newSignUp") === "true";
-    const intent = localStorage.getItem("userIntent");
-    const validIntent = intent === "giftor" || intent === "giftee";
+    const intent = localStorage.getItem("userIntent"); // OLD: giftor/giftee
+    const signupContext = localStorage.getItem("signupContext"); // NEW: gift_recipient/gift_giver
+
+    // Check for BOTH old and new signup context patterns
+    const validOldIntent = intent === "giftor" || intent === "giftee";
+    const validNewContext = signupContext === "gift_recipient" || signupContext === "gift_giver";
+    const hasValidContext = validOldIntent || validNewContext;
 
     console.log(
       "[useProfileSetupState] Auth loaded, user exists. newSignUpFlag:", newSignUpFlag,
-      "intent:", intent, "validIntent:", validIntent
+      "oldIntent:", intent, "newSignupContext:", signupContext, "hasValidContext:", hasValidContext
     );
 
-    // If new signup without valid intent, redirect to signup page to show intent modal
-    if (newSignUpFlag && !validIntent) {
-      console.log("[useProfileSetupState] New signup without valid intent, redirecting to signup");
+    // If new signup without ANY valid context (old OR new), redirect to signup page
+    if (newSignUpFlag && !hasValidContext) {
+      console.log("[useProfileSetupState] New signup without valid context, redirecting to signup");
       setIsInitializing(true);
       navigate("/signup", { replace: true });
       return;
     }
 
-    // If we have a giftor intent, redirect to marketplace instead of profile setup
-    if (validIntent && intent === "giftor") {
-      console.log("[useProfileSetupState] Giftor intent detected, redirecting to marketplace");
+    // If we have a giftor/gift_giver context, redirect to marketplace/gifting instead of profile setup
+    if (hasValidContext && (intent === "giftor" || signupContext === "gift_giver")) {
+      console.log("[useProfileSetupState] Gift giver detected, redirecting to marketplace");
       setIsInitializing(true);
       navigate("/marketplace", { replace: true });
       return;

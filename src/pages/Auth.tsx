@@ -37,33 +37,48 @@ const Auth = () => {
     const validateInvitation = async () => {
       if (!inviteToken) return;
       
+      console.log('[Auth] Validating invite token:', inviteToken);
+      
       try {
-        // First, try to find a connection invitation
+        // First, try to find a connection invitation (without profile join to avoid RLS blocking)
         const { data: connectionData, error: connectionError } = await supabase
           .from('user_connections')
-          .select(`
-            id,
-            pending_recipient_email,
-            pending_recipient_name,
-            user_id,
-            profiles!user_connections_user_id_fkey(name, first_name)
-          `)
+          .select('id, pending_recipient_email, pending_recipient_name, user_id')
           .eq('invitation_token', inviteToken)
           .eq('status', 'pending_invitation')
           .maybeSingle();
         
+        console.log('[Auth] user_connections match:', !!connectionData, connectionData);
+        
         if (connectionData) {
-          // This is a connection invitation
-          const senderName = connectionData.profiles?.first_name || connectionData.profiles?.name || 'Someone';
-          
+          // This is a connection invitation - use generic sender name initially
           setInvitationData({
             connectionId: connectionData.id,
             recipientEmail: connectionData.pending_recipient_email || '',
             recipientName: connectionData.pending_recipient_name || '',
-            senderName
+            senderName: 'Your friend' // Generic initially to avoid RLS block
           });
           
-          toast.success(`${senderName} invited you to connect on Elyphant!`);
+          toast.success("You've been invited to join Elyphant!");
+          
+          // Optionally try to fetch sender name (non-blocking, may fail due to RLS)
+          try {
+            const { data: senderProfile } = await supabase
+              .from('profiles')
+              .select('first_name, name')
+              .eq('id', connectionData.user_id)
+              .single();
+            
+            if (senderProfile) {
+              const senderName = senderProfile.first_name || senderProfile.name || 'Your friend';
+              setInvitationData(prev => prev ? { ...prev, senderName } : null);
+              toast.success(`${senderName} invited you to connect on Elyphant!`);
+            }
+          } catch (profileError) {
+            // Silently ignore - RLS likely blocked this for anonymous user
+            console.log('[Auth] Could not fetch sender profile (expected for anonymous users)');
+          }
+          
           return;
         }
         
@@ -74,6 +89,8 @@ const Auth = () => {
           .eq('invitation_token', inviteToken)
           .eq('status', 'pending')
           .maybeSingle();
+        
+        console.log('[Auth] pending_gift_invitations match:', !!giftInvitationData, giftInvitationData);
         
         if (giftInvitationData) {
           // This is a gift invitation - sender info will be in the invitation context

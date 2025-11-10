@@ -40,75 +40,49 @@ const Auth = () => {
       console.log('[Auth] Validating invite token:', inviteToken);
       
       try {
-        // First, try to find a connection invitation (without profile join to avoid RLS blocking)
-        const { data: connectionData, error: connectionError } = await supabase
-          .from('user_connections')
-          .select('id, pending_recipient_email, pending_recipient_name, user_id')
-          .eq('invitation_token', inviteToken)
-          .eq('status', 'pending_invitation')
-          .maybeSingle();
+        // Call edge function to validate invitation (bypasses RLS issues)
+        const { data, error } = await supabase.functions.invoke('validate-invite', {
+          body: { token: inviteToken }
+        });
         
-        console.log('[Auth] user_connections match:', !!connectionData, connectionData);
+        console.log('[Auth] Edge function response:', data, error);
         
-        if (connectionData) {
-          // This is a connection invitation - use generic sender name initially
-          setInvitationData({
-            connectionId: connectionData.id,
-            recipientEmail: connectionData.pending_recipient_email || '',
-            recipientName: connectionData.pending_recipient_name || '',
-            senderName: 'Your friend' // Generic initially to avoid RLS block
-          });
-          
-          toast.success("You've been invited to join Elyphant!");
-          
-          // Optionally try to fetch sender name (non-blocking, may fail due to RLS)
-          try {
-            const { data: senderProfile } = await supabase
-              .from('profiles')
-              .select('first_name, name')
-              .eq('id', connectionData.user_id)
-              .single();
-            
-            if (senderProfile) {
-              const senderName = senderProfile.first_name || senderProfile.name || 'Your friend';
-              setInvitationData(prev => prev ? { ...prev, senderName } : null);
-              toast.success(`${senderName} invited you to connect on Elyphant!`);
-            }
-          } catch (profileError) {
-            // Silently ignore - RLS likely blocked this for anonymous user
-            console.log('[Auth] Could not fetch sender profile (expected for anonymous users)');
-          }
-          
+        if (error || !data) {
+          console.error('[Auth] Failed to validate invitation:', error);
+          toast.error('Invalid or expired invitation link');
           return;
         }
         
-        // If not found in connections, check pending_gift_invitations
-        const { data: giftInvitationData, error: giftError } = await supabase
-          .from('pending_gift_invitations')
-          .select('recipient_email, recipient_name')
-          .eq('invitation_token', inviteToken)
-          .eq('status', 'pending')
-          .maybeSingle();
-        
-        console.log('[Auth] pending_gift_invitations match:', !!giftInvitationData, giftInvitationData);
-        
-        if (giftInvitationData) {
-          // This is a gift invitation - sender info will be in the invitation context
+        if (data.type === 'connection') {
+          // This is a connection invitation
           setInvitationData({
-            connectionId: inviteToken, // Use token as ID for gift invitations
-            recipientEmail: giftInvitationData.recipient_email || '',
-            recipientName: giftInvitationData.recipient_name || '',
-            senderName: 'Someone' // Gift invitation sender name handled separately
+            connectionId: data.connectionId,
+            recipientEmail: data.recipientEmail || '',
+            recipientName: data.recipientName || '',
+            senderName: data.senderName || 'Your friend'
+          });
+          
+          toast.success(`${data.senderName || 'Your friend'} invited you to connect on Elyphant!`);
+          return;
+        }
+        
+        if (data.type === 'gift') {
+          // This is a gift invitation
+          setInvitationData({
+            connectionId: data.connectionId,
+            recipientEmail: data.recipientEmail || '',
+            recipientName: data.recipientName || '',
+            senderName: data.senderName || 'Someone'
           });
           
           toast.success(`🎁 You've been invited to join Elyphant!`);
           return;
         }
         
-        // Neither found - invalid or expired
-        toast.error('Invalid or expired invitation link');
+        // Invalid response type
+        toast.error('Invalid invitation link');
       } catch (error) {
-        console.error('Failed to validate invitation:', error);
+        console.error('[Auth] Failed to validate invitation:', error);
         toast.error('Failed to validate invitation');
       }
     };

@@ -3607,11 +3607,13 @@ export type Database = {
           created_at: string | null
           expires_at: string | null
           gift_events: Json | null
+          gift_occasion: string | null
           id: string
           invitation_sent_at: string | null
           invitation_token: string
           recipient_email: string
           recipient_name: string
+          relationship_type: string | null
           shipping_address: Json | null
           status: string | null
           updated_at: string | null
@@ -3622,11 +3624,13 @@ export type Database = {
           created_at?: string | null
           expires_at?: string | null
           gift_events?: Json | null
+          gift_occasion?: string | null
           id?: string
           invitation_sent_at?: string | null
           invitation_token: string
           recipient_email: string
           recipient_name: string
+          relationship_type?: string | null
           shipping_address?: Json | null
           status?: string | null
           updated_at?: string | null
@@ -3637,11 +3641,13 @@ export type Database = {
           created_at?: string | null
           expires_at?: string | null
           gift_events?: Json | null
+          gift_occasion?: string | null
           id?: string
           invitation_sent_at?: string | null
           invitation_token?: string
           recipient_email?: string
           recipient_name?: string
+          relationship_type?: string | null
           shipping_address?: Json | null
           status?: string | null
           updated_at?: string | null

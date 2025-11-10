@@ -93,12 +93,20 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
             // NEW: Auto-accept invitation if present
             if (invitationData?.connectionId) {
               try {
+                console.log('📝 Updating connection with corrected data:', {
+                  name: values.name,
+                  email: values.email
+                });
+                
                 const { error: acceptError } = await supabase
                   .from('user_connections')
                   .update({
                     connected_user_id: data.user.id,
                     status: 'accepted',
-                    accepted_at: new Date().toISOString()
+                    accepted_at: new Date().toISOString(),
+                    // Sync the actual name/email the user provided (in case they corrected it)
+                    pending_recipient_name: values.name,
+                    pending_recipient_email: values.email
                   })
                   .eq('id', invitationData.connectionId);
                 

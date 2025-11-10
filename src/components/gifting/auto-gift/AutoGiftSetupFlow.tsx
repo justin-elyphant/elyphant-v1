@@ -55,7 +55,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 }) => {
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
-  const { connections, pendingInvitations } = useEnhancedConnections();
+  const { connections, pendingInvitations, fetchConnections } = useEnhancedConnections();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -535,7 +535,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     }
                     connections={connections}
                     pendingInvitations={pendingInvitations}
-                    onNewRecipientCreate={(recipient) => {
+                    onNewRecipientCreate={async (recipient) => {
                       setFormData(prev => ({ 
                         ...prev, 
                         recipientId: recipient.id,
@@ -543,6 +543,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                         relationshipType: recipient.relationship_type || 'friend'
                       }));
                       toast.success(`Added ${recipient.name} as recipient`);
+                      
+                      // Refresh connections to include the newly created recipient
+                      await fetchConnections();
                     }}
                   />
                   {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (

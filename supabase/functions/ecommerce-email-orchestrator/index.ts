@@ -573,6 +573,7 @@ async function handlePostPurchaseFollowup(supabase: any, data: any, recipientEma
  */
 async function handleGiftInvitation(supabase: any, data: any, recipientEmail?: string) {
   console.log('🎁 Handling gift invitation email');
+  console.log('🎁 Gift invitation data:', JSON.stringify(data, null, 2));
   
   // recipientEmail must be provided for gift invitations (external recipients)
   if (!recipientEmail) {
@@ -580,9 +581,30 @@ async function handleGiftInvitation(supabase: any, data: any, recipientEmail?: s
     if (!recipientEmail) throw new Error('Recipient email required for gift invitation');
   }
   
-  // Construct the invitation acceptance URL
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const invitationUrl = `${supabaseUrl}/functions/v1/handle-invitation-acceptance?invitation_id=${data.invitationId || data.invitation_id}`;
+  // Construct the invitation acceptance URL with proper priority
+  const domain = 'https://elyphant.ai';
+  let invitationUrl = data.invitation_url;
+  
+  // Priority 1: Use invitation_url if provided
+  if (!invitationUrl && data.invitation_token) {
+    // Priority 2: Construct from invitation_token
+    invitationUrl = `${domain}/auth?invite=${data.invitation_token}`;
+    console.log('🎁 Built invitation URL from token:', invitationUrl);
+  }
+  
+  // Priority 3: Fallback to edge function URL (temporary, for backwards compatibility)
+  if (!invitationUrl && (data.invitationId || data.invitation_id)) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    invitationUrl = `${supabaseUrl}/functions/v1/handle-invitation-acceptance?invitation_id=${data.invitationId || data.invitation_id}`;
+    console.log('⚠️ Using fallback edge function URL:', invitationUrl);
+  }
+  
+  if (!invitationUrl) {
+    console.error('❌ No invitation_url or invitation_token provided');
+    throw new Error('No invitation_url or invitation_token provided for gift invitation');
+  }
+  
+  console.log('🎁 Final invitation URL:', invitationUrl);
   
   // Pass the invitation URL to the template
   const emailHtml = giftInvitationTemplate({
@@ -766,6 +788,8 @@ async function handleConnectionInvitation(supabase: any, data: any, recipientEma
   const invitationUrl = data?.invitation_url || data?.invitationUrl || '';
   const fullRecipientName = data?.recipient_name || data?.recipientName || '';
   const recipientFirstName = extractFirstName(fullRecipientName);
+  
+  console.log('👥 Final invitation URL:', invitationUrl);
   
   const emailHtml = connectionInvitationTemplate({
     ...data,

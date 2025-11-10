@@ -6,6 +6,7 @@ import { baseEmailTemplate } from './base-template.ts';
 
 export interface AutoGiftRuleCreatedProps {
   recipient_name: string;
+  recipient_first_name: string;
   recipient_email: string;
   rule_details: {
     occasion: string;
@@ -19,6 +20,7 @@ export interface AutoGiftRuleCreatedProps {
 export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): string => {
   const {
     recipient_name,
+    recipient_first_name,
     recipient_email,
     rule_details,
     auto_approve_enabled
@@ -49,7 +51,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
         Auto-Gift Rule Created!
       </h1>
       <p style="margin: 0; color: #6B7280; font-size: 16px;">
-        You've set up automated gifting for ${recipient_name}
+        You've set up automated gifting for ${recipient_first_name}
       </p>
     </div>
 
@@ -59,7 +61,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
       </h2>
       
       <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
-        <strong>Recipient:</strong> ${recipient_name} (${recipient_email})
+        <strong>Recipient:</strong> ${recipient_first_name} (${recipient_email})
       </p>
       
       <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
@@ -84,7 +86,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
     <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <p style="margin: 0; color: #92400E; font-size: 14px; line-height: 1.6;">
         <strong>⏳ Waiting for Profile Completion</strong><br>
-        ${recipient_name} needs to complete their profile (including shipping address) before the auto-gift rule becomes active. 
+        ${recipient_first_name} needs to complete their profile (including shipping address) before the auto-gift rule becomes active. 
         We'll send you a confirmation email once they're all set up!
       </p>
     </div>
@@ -104,7 +106,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
 
   return baseEmailTemplate({
     content,
-    preheader: `Auto-gift rule created for ${recipient_name}`,
+    preheader: `Auto-gift rule created for ${recipient_first_name}`,
     footer: 'You can manage your auto-gift rules anytime in your Elyphant dashboard.'
   });
 };

@@ -3,6 +3,7 @@ import { baseEmailTemplate } from './base-template.ts';
 export interface ConnectionInvitationProps {
   sender_name: string;
   recipient_name: string;
+  recipient_first_name: string;
   invitation_url: string;
   custom_message?: string;
   is_reminder?: boolean;
@@ -12,7 +13,7 @@ export interface ConnectionInvitationProps {
 export const connectionInvitationTemplate = (props: ConnectionInvitationProps): string => {
   // Declining urgency messaging based on reminder number
   const getHeadline = () => {
-    if (!props.is_reminder) return "You've been invited! 🎉";
+    if (!props.is_reminder) return `${props.recipient_first_name}, You've Been Invited! 🎉`;
     if (props.reminder_number === 1) return "Friendly reminder 👋";
     if (props.reminder_number === 2) return "Still interested? 🤔";
     return "Last chance to connect 📌";

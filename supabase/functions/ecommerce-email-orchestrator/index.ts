@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.1.0";
+import { extractFirstName } from './utils/name-helpers.ts';
 
 // Import consolidated email templates
 import {
@@ -682,8 +683,12 @@ async function handleAutoGiftRuleCreated(supabase: any, data: any, recipientEmai
     throw new Error('User email required for auto-gift rule created notification');
   }
   
+  const fullName = data.recipient_name || data.recipientName;
+  const firstName = extractFirstName(fullName);
+  
   const emailHtml = autoGiftRuleCreatedTemplate({
-    recipient_name: data.recipient_name || data.recipientName,
+    recipient_name: fullName,
+    recipient_first_name: firstName,
     recipient_email: data.recipient_email || data.recipientEmail,
     rule_details: {
       occasion: data.occasion || data.rule_details?.occasion || 'Special Occasion',
@@ -696,7 +701,7 @@ async function handleAutoGiftRuleCreated(supabase: any, data: any, recipientEmai
 
   return {
     to: emailTo,
-    subject: `Auto-Gift Rule Created for ${data.recipient_name || 'your recipient'} 🎁`,
+    subject: `Auto-Gift Rule Created for ${firstName} 🎁`,
     html: emailHtml,
   };
 }
@@ -714,8 +719,12 @@ async function handleAutoGiftRuleActivated(supabase: any, data: any, recipientEm
     throw new Error('User email required for auto-gift rule activated notification');
   }
   
+  const fullName = data.recipient_name || data.recipientName;
+  const firstName = extractFirstName(fullName);
+  
   const emailHtml = autoGiftRuleActivatedTemplate({
-    recipient_name: data.recipient_name || data.recipientName,
+    recipient_name: fullName,
+    recipient_first_name: firstName,
     recipient_email: data.recipient_email || data.recipientEmail,
     rule_details: {
       occasion: data.occasion || data.rule_details?.occasion || 'Special Occasion',
@@ -728,7 +737,7 @@ async function handleAutoGiftRuleActivated(supabase: any, data: any, recipientEm
 
   return {
     to: emailTo,
-    subject: `Auto-Gift Rule Activated! ${data.recipient_name || 'Your recipient'} is ready 🎉`,
+    subject: `Auto-Gift Rule Activated! ${firstName} is ready 🎉`,
     html: emailHtml,
   };
 }
@@ -755,16 +764,20 @@ async function handleConnectionInvitation(supabase: any, data: any, recipientEma
   // Safely extract other required fields
   const senderName = data?.sender_name || data?.senderName || 'Someone';
   const invitationUrl = data?.invitation_url || data?.invitationUrl || '';
+  const fullRecipientName = data?.recipient_name || data?.recipientName || '';
+  const recipientFirstName = extractFirstName(fullRecipientName);
   
   const emailHtml = connectionInvitationTemplate({
     ...data,
     sender_name: senderName,
+    recipient_name: fullRecipientName,
+    recipient_first_name: recipientFirstName,
     invitation_url: invitationUrl
   });
 
   return {
     to: emailTo,
-    subject: `${senderName} wants to connect on Elyphant 💝`,
+    subject: `${recipientFirstName}, ${senderName} wants to connect on Elyphant 💝`,
     html: emailHtml,
   };
 }

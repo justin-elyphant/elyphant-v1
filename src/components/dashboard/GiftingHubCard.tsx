@@ -241,7 +241,7 @@ const GiftingHubCard = () => {
           <Tabs defaultValue="smart-gifting" className="w-full">
             <TabsList className="grid w-full grid-cols-2 px-3 md:px-6 marketplace-touch-target" data-testid="tabs-list">
               <TabsTrigger value="smart-gifting" className="min-h-[44px] text-xs md:text-sm">Smart Gifting</TabsTrigger>
-              <TabsTrigger value="my-gifts" className="min-h-[44px] text-xs md:text-sm">My Gifts</TabsTrigger>
+              <TabsTrigger value="my-gifts" className="min-h-[44px] text-xs md:text-sm">Manage Gifts</TabsTrigger>
             </TabsList>
             
             <TabsContent value="smart-gifting" className="mt-4 md:mt-6">

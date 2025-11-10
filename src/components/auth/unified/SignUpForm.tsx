@@ -138,6 +138,17 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
             localStorage.setItem("newSignUp", "true");
             localStorage.setItem("profileCompletionState", "pending");
             
+            // Store signup context for intelligent routing
+            if (invitationData) {
+              // This user was invited as a gift recipient
+              localStorage.setItem("signupContext", "gift_recipient");
+              console.log("🎁 Gift recipient signup detected - will route to /wishlists after onboarding");
+            } else {
+              // This user signed up to give gifts
+              localStorage.setItem("signupContext", "gift_giver");
+              console.log("🎁 Gift giver signup detected - will route to /gifting after onboarding");
+            }
+            
             // Redirect to profile setup where they'll complete profile then see interests modal
             navigate("/profile-setup", { replace: true });
             return;

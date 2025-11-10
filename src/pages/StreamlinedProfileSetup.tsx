@@ -52,8 +52,24 @@ const StreamlinedProfileSetup = () => {
       console.log("📬 Showing pending connections modal");
       setShowPendingConnectionsModal(true);
     } else {
-      console.log("📍 Existing user, redirecting directly to gifting");
-      navigate('/gifting', { replace: true });
+      console.log("📍 Existing user or no pending connections, routing based on signup context");
+      
+      // Intelligent routing - existing users without context → /home
+      const signupContext = localStorage.getItem("signupContext");
+      let destination = "/home"; // Default for existing users
+      
+      if (signupContext === "gift_recipient") {
+        destination = "/wishlists";
+      } else if (signupContext === "gift_giver") {
+        destination = "/gifting";
+      }
+      
+      console.log(`🎯 Routing ${signupContext || 'existing user'} to ${destination}`);
+      
+      // Clean up context flag
+      localStorage.removeItem("signupContext");
+      
+      navigate(destination, { replace: true });
     }
   };
 
@@ -67,11 +83,26 @@ const StreamlinedProfileSetup = () => {
       console.log("📬 Showing pending connections modal");
       setShowPendingConnectionsModal(true);
     } else {
-      console.log("📍 No pending connections, redirecting to gifting");
+      console.log("📍 No pending connections, routing based on signup context");
+      
+      // Intelligent routing based on signup context
+      const signupContext = localStorage.getItem("signupContext");
+      let destination = "/home"; // Default for existing users
+      
+      if (signupContext === "gift_recipient") {
+        destination = "/wishlists";
+      } else if (signupContext === "gift_giver") {
+        destination = "/gifting";
+      }
+      
+      console.log(`🎯 Routing ${signupContext || 'existing user'} to ${destination}`);
+      
       // Clean up signup flags
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileCompletionState");
-      navigate('/gifting', { replace: true });
+      localStorage.removeItem("signupContext");
+      
+      navigate(destination, { replace: true });
     }
   };
 
@@ -81,14 +112,27 @@ const StreamlinedProfileSetup = () => {
   };
 
   const handlePendingConnectionsClose = () => {
-    console.log("✅ Pending connections modal closed, redirecting to gifting...");
+    console.log("✅ Pending connections modal closed, routing based on signup context...");
+    
+    // Intelligent routing based on signup context
+    const signupContext = localStorage.getItem("signupContext");
+    let destination = "/home"; // Default for existing users
+    
+    if (signupContext === "gift_recipient") {
+      destination = "/wishlists";
+    } else if (signupContext === "gift_giver") {
+      destination = "/gifting";
+    }
+    
+    console.log(`🎯 Routing ${signupContext || 'existing user'} to ${destination}`);
     
     // Clean up signup flags
     localStorage.removeItem("newSignUp");
     localStorage.removeItem("profileCompletionState");
+    localStorage.removeItem("signupContext");
     
     setShowPendingConnectionsModal(false);
-    navigate('/gifting', { replace: true });
+    navigate(destination, { replace: true });
   };
 
   if (isLoading) {

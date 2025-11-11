@@ -15,7 +15,7 @@ export const useProfileUpdate = () => {
   const updateLockRef = useRef(false);
   const updateQueueRef = useRef<Array<{ data: Partial<Profile>; resolve: (value: any) => void; reject: (error: any) => void }>>([]);
 
-  const updateProfile = useCallback(async (updateData: Partial<Profile>) => {
+  const updateProfile = useCallback(async (updateData: Partial<Profile>, options?: { skipLegacyMapping?: boolean }) => {
     if (!user) {
       toast.error("You must be logged in to update your profile");
       return null;
@@ -93,12 +93,15 @@ export const useProfileUpdate = () => {
       // Create a mutable copy to avoid mutation issues
       const mutableUpdateData = { ...updateData };
       
-      if (mutableUpdateData.interests && Array.isArray(mutableUpdateData.interests)) {
+      // Skip legacy mapping if explicitly requested (e.g., interests-only saves during onboarding)
+      if (!options?.skipLegacyMapping && mutableUpdateData.interests && Array.isArray(mutableUpdateData.interests)) {
         console.log('🔄 [TRANSITION] Syncing interests to gift_preferences for backwards compatibility');
         mutableUpdateData.gift_preferences = mutableUpdateData.interests.map(interest => ({
           category: interest,
           importance: 'medium' as const
         }));
+      } else if (options?.skipLegacyMapping) {
+        console.log('⏭️  Skipping legacy gift_preferences mapping as requested');
       }
 
       const hasAddressUpdate = mutableUpdateData.shipping_address !== undefined;

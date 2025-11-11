@@ -8,6 +8,7 @@ import { useProfileUpdate } from "@/contexts/profile/useProfileUpdate";
 import { toast } from "sonner";
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
 import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
+import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
 
 interface QuickInterestsModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateProfile } = useProfileUpdate();
   const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
+  const { handleOnboardingComplete } = useOnboardingCompletion();
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev => 
@@ -76,8 +78,9 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     onClose();
+    await handleOnboardingComplete();
     onComplete();
   };
 
@@ -89,17 +92,21 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
       const result = await updateProfile({ 
         interests: interestsToSave,
         onboarding_completed: true 
-      });
+      }, { skipLegacyMapping: true });
       
       // Check if update actually succeeded (returns null on failure)
       if (!result) {
         // Error toast already shown by useProfileUpdate
+        toast.error("Failed to save interests. Please try again.");
         return;
       }
       
       if (selectedInterests.length > 0) {
         toast.success(`Added ${selectedInterests.length} interests to your profile!`);
       }
+
+      // Clear localStorage flags and refetch profile data
+      await handleOnboardingComplete();
 
       // Trigger welcome email with user data and interests
       if (userData) {

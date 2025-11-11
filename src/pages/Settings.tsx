@@ -90,8 +90,9 @@ const Settings = () => {
     }
   }, [loading, hasTimedOut]);
 
-  // Show error state if there's an error or timeout
-  if (error || hasTimedOut) {
+  // Show error state only if there's no profile data AND (error or timeout)
+  // This allows Settings to render with existing data even if a background update failed
+  if (!profile && (error || hasTimedOut)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive" />

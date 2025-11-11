@@ -134,7 +134,8 @@ export const useProfileUpdate = () => {
       }
 
       // Split other fields into base vs verify depending on two-step condition
-      const isTwoStep = hasAddressUpdate && hasVerificationFields;
+      // Only use two-step if we have address update AND address is actually verified
+      const isTwoStep = hasAddressUpdate && mutableUpdateData.address_verified === true;
 
       Object.keys(mutableUpdateData).forEach((key) => {
         if (key === 'shipping_address' || key === 'gift_preferences') return;
@@ -171,6 +172,15 @@ export const useProfileUpdate = () => {
         const verifyPayload: Record<string, any> = { ...verifyUpdate };
         // Safety: do not send shipping_address again
         delete verifyPayload.shipping_address;
+        
+        // Validate verification method - only allow 'automatic' or 'user_confirmed'
+        const method = verifyPayload.address_verification_method;
+        if (method && method !== 'automatic' && method !== 'user_confirmed') {
+          console.warn(`⚠️ Invalid verification method '${method}' - omitting verification fields`);
+          delete verifyPayload.address_verified;
+          delete verifyPayload.address_verification_method;
+          delete verifyPayload.address_verified_at;
+        }
 
         const verifyRes = await upsertWithRetry(verifyPayload, 'verification-only');
         finalResult = { ...baseRes, ...verifyRes };

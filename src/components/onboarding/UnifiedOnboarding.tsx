@@ -470,9 +470,12 @@ const UnifiedOnboarding: React.FC = () => {
           street: formData.address.street,
           zipCode: formData.address.zipCode
         },
-        address_verified: isAddressVerified,
-        address_verification_method: addressVerificationData?.method || (isAddressVerified ? 'user_confirmed' : 'profile_setup'),
-        address_verified_at: isAddressVerified ? new Date().toISOString() : null,
+        // Only include verification fields if address is actually verified
+        ...(isAddressVerified && {
+          address_verified: true,
+          address_verification_method: addressVerificationData?.method || 'user_confirmed',
+          address_verified_at: new Date().toISOString()
+        }),
         address_last_updated: new Date().toISOString(),
         interests: selectedInterests,
         important_dates: [],

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,28 @@ export const useProfileUpdate = () => {
   const { user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<Error | null>(null);
+  
+  // Concurrency control to prevent race conditions
+  const updateLockRef = useRef(false);
+  const updateQueueRef = useRef<Array<{ data: Partial<Profile>; resolve: (value: any) => void; reject: (error: any) => void }>>([]);
 
   const updateProfile = useCallback(async (updateData: Partial<Profile>) => {
     if (!user) {
       toast.error("You must be logged in to update your profile");
       return null;
     }
+
+    // If an update is already in progress, queue this one
+    if (updateLockRef.current) {
+      console.log('⏳ Update already in progress - queuing this update');
+      return new Promise((resolve, reject) => {
+        updateQueueRef.current.push({ data: updateData, resolve, reject });
+      });
+    }
+
+    // Acquire lock
+    updateLockRef.current = true;
+    console.log('🔒 Acquired update lock');
 
     // Helper to run an upsert with retries (handles both new and existing profiles)
     const upsertWithRetry = async (payload: Record<string, any>, label: string) => {
@@ -38,14 +54,31 @@ export const useProfileUpdate = () => {
           if (error) {
             lastError = error;
             console.error(`Error upserting profile (${label}) attempt ${attempts}:`, error);
-            await new Promise(r => setTimeout(r, 400));
+            
+            // Don't retry on conflict or bad request - these indicate concurrent operations or validation failures
+            const errorCode = error.code || (error as any).status;
+            if (errorCode === '409' || errorCode === 409 || errorCode === '400' || errorCode === 400) {
+              console.log(`❌ Non-retryable error (${errorCode}) - aborting retry loop`);
+              throw error;
+            }
+            
+            // Increased delay to reduce overlap
+            await new Promise(r => setTimeout(r, 1000));
           } else {
             return data;
           }
         } catch (err) {
           lastError = err;
           console.error(`Error in upsert operation (${label}) attempt ${attempts}:`, err);
-          await new Promise(r => setTimeout(r, 400));
+          
+          // Don't retry on conflict or bad request
+          const errorCode = (err as any)?.code || (err as any)?.status;
+          if (errorCode === '409' || errorCode === 409 || errorCode === '400' || errorCode === 400) {
+            console.log(`❌ Non-retryable error (${errorCode}) - throwing immediately`);
+            throw err;
+          }
+          
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
       throw lastError || new Error(`Failed to upsert profile (${label})`);
@@ -146,14 +179,41 @@ export const useProfileUpdate = () => {
       }
 
       toast.success('Profile updated successfully');
+      
+      // Process next queued update if any
+      const nextUpdate = updateQueueRef.current.shift();
+      if (nextUpdate) {
+        console.log('📋 Processing next queued update');
+        setImmediate(() => {
+          updateProfile(nextUpdate.data)
+            .then(nextUpdate.resolve)
+            .catch(nextUpdate.reject);
+        });
+      }
+      
       return finalResult;
     } catch (err) {
       console.error('Error updating profile:', err);
       setUpdateError(err instanceof Error ? err : new Error('Failed to update profile'));
       toast.error('Failed to update profile');
+      
+      // Process next queued update even on error
+      const nextUpdate = updateQueueRef.current.shift();
+      if (nextUpdate) {
+        console.log('📋 Processing next queued update after error');
+        setImmediate(() => {
+          updateProfile(nextUpdate.data)
+            .then(nextUpdate.resolve)
+            .catch(nextUpdate.reject);
+        });
+      }
+      
       return null;
     } finally {
       setIsUpdating(false);
+      // Release lock
+      updateLockRef.current = false;
+      console.log('🔓 Released update lock');
     }
   }, [user]);
 

@@ -56,13 +56,17 @@ export const getIframeSafeHeight = (height: "auto" | "min-screen" | "screen" | "
 };
 
 // Iframe-safe navigation function
-export const navigateInIframe = (path: string) => {
+export const navigateInIframe = (path: string, navigate?: (path: string) => void) => {
   if (isInIframe()) {
     // Use history API for iframe navigation to prevent reload
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
   } else {
-    // Normal navigation for standalone windows
-    window.location.href = path;
+    // Use React Router navigate if provided, otherwise fallback to location.href
+    if (navigate) {
+      navigate(path);
+    } else {
+      window.location.href = path;
+    }
   }
 };

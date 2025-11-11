@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Share2, Calendar, MapPin, Mail, UserPlus, Lock, Gift, UserMinus, Heart } from "lucide-react";
 import ConnectButton from "./ConnectButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 
@@ -49,6 +49,8 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   onSendGift,
   onRemoveConnection
 }) => {
+  const navigate = useNavigate();
+
   // Privacy logic for email display
   const shouldShowEmail = () => {
     // Always show for current user
@@ -71,17 +73,17 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   };
   const handleMessageClick = () => {
     if (isAnonymousUser) {
-      navigateInIframe('/signup');
+      navigateInIframe('/signup', navigate);
       return;
     }
     
     // Navigate to messaging with this user using iframe-safe navigation
-    navigateInIframe(`/messages/${userData.id}`);
+    navigateInIframe(`/messages/${userData.id}`, navigate);
   };
 
   const handleConnectClick = () => {
     if (isAnonymousUser) {
-      navigateInIframe('/signup');
+      navigateInIframe('/signup', navigate);
       return;
     }
     

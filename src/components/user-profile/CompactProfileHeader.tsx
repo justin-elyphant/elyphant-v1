@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { MessageCircle, Share2, MapPin, Mail, UserPlus, Lock, Gift, Heart, Users, Settings, Eye, ChevronDown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ConnectButton from "./ConnectButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { navigateInIframe } from "@/utils/iframeUtils";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -61,17 +61,19 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     return !isAnonymousUser;
   };
 
+  const navigate = useNavigate();
+
   const handleMessageClick = () => {
     if (isAnonymousUser) {
-      navigateInIframe('/signup');
+      navigateInIframe('/signup', navigate);
       return;
     }
-    navigateInIframe(`/messages/${userData.id}`);
+    navigateInIframe(`/messages/${userData.id}`, navigate);
   };
 
   const handleConnectClick = () => {
     if (isAnonymousUser) {
-      navigateInIframe('/signup');
+      navigateInIframe('/signup', navigate);
       return;
     }
     onConnect();
@@ -92,7 +94,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={() => navigateInIframe('/settings')}
+                  onClick={() => navigateInIframe('/settings', navigate)}
                   variant="outline"
                   size={buttonSize}
                   className={buttonClass}

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sparkles, Heart, ExternalLink, Search } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +36,7 @@ const QuickGiftIdeasModal: React.FC<QuickGiftIdeasModalProps> = ({
   onOpenChange,
   connection
 }) => {
+  const navigate = useNavigate();
   const [giftIdeas, setGiftIdeas] = useState<GiftIdea[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -149,7 +151,7 @@ const QuickGiftIdeasModal: React.FC<QuickGiftIdeasModalProps> = ({
                 const searchParams = new URLSearchParams();
                 searchParams.set('friend', connection.id);
                 searchParams.set('name', connection.name);
-                navigateInIframe(`/marketplace?${searchParams.toString()}`);
+                navigateInIframe(`/marketplace?${searchParams.toString()}`, navigate);
               }}
             >
               <Search className="h-4 w-4 mr-2" />

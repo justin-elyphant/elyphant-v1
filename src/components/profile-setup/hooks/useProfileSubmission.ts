@@ -43,9 +43,9 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
             ...apiData,
             birth_year: birthYear,
             email: profileData.email || user.email, // Ensure email is present
-            first_name: apiData.first_name || profileData.name?.split(' ')[0] || '', // Ensure first_name
-            last_name: apiData.last_name || profileData.name?.split(' ').slice(1).join(' ') || '', // Ensure last_name
-            username: apiData.username || profileData.email?.split('@')[0] || '', // Generate username from email if missing
+            first_name: apiData.first_name || profileData.name?.split(' ')[0] || 'User', // Ensure first_name with fallback
+            last_name: apiData.last_name || profileData.name?.split(' ').slice(1).join(' ') || 'Name', // Ensure last_name with fallback
+            username: apiData.username || profileData.email?.split('@')[0] || `user${Date.now()}`, // Generate username from email if missing
             updated_at: new Date().toISOString(),
             data_sharing_settings: apiData.data_sharing_settings ? JSON.stringify(apiData.data_sharing_settings) : null,
             gift_preferences: apiData.gift_preferences ? JSON.stringify(apiData.gift_preferences) : null,

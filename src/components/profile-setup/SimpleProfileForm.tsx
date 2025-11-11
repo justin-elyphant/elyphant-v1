@@ -180,16 +180,20 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
       const formattedBirthday = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
       const birthYear = date.getFullYear();
 
-      // Use existing name from auth metadata
-      const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || '';
-      const lastName = user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || '';
+      // Use existing name from auth metadata with fallbacks
+      const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || 'User';
+      const lastName = user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || 'Name';
       const fullName = user.user_metadata?.name || `${firstName} ${lastName}`.trim();
+      
+      // Generate username from email if not provided (required field in database)
+      const username = user.user_metadata?.username || user.email?.split('@')[0] || `user${Date.now()}`;
 
       const profileData = {
         first_name: firstName,
         last_name: lastName,
         name: fullName,
         email: user.email,
+        username: username,
         profile_image: data.profile_image,
         dob: formattedBirthday,
         birth_year: birthYear,

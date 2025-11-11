@@ -3,12 +3,12 @@ import { z } from "zod";
 
 // Enhanced validation schema for profile data
 const profileValidationSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().optional(),
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
-  first_name: z.string().min(1, "First name is required").max(100, "First name too long").optional(),
-  last_name: z.string().min(1, "Last name is required").max(100, "Last name too long").optional(),
+  first_name: z.string().min(1, "First name is required").max(100, "First name too long"),
+  last_name: z.string().min(1, "Last name is required").max(100, "Last name too long"),
   email: z.string().email("Invalid email format").max(255, "Email too long"),
-  username: z.string().max(50, "Username too long").nullable().optional(),
+  username: z.string().min(1, "Username is required").max(50, "Username too long"),
   bio: z.string().max(500, "Bio too long").nullable().optional(),
   profile_image: z.string().url().nullable().optional().or(z.literal(null)),
   dob: z.string().regex(/^\d{2}-\d{2}$/, "Invalid date format (MM-DD)").nullable().optional(),

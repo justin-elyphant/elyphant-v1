@@ -57,7 +57,7 @@ const StreamlinedProfileSetup = () => {
         
         // Intelligent routing - existing users without context → /home
         const signupContext = localStorage.getItem("signupContext");
-        let destination = "/home"; // Default for existing users
+        let destination = "/"; // Default for existing users
         
         if (signupContext === "gift_recipient") {
           destination = "/wishlists";
@@ -75,7 +75,7 @@ const StreamlinedProfileSetup = () => {
     } catch (error) {
       console.error("❌ Error in profile completion flow:", error);
       // Fallback: route to home on error
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 
@@ -94,7 +94,7 @@ const StreamlinedProfileSetup = () => {
         
         // Intelligent routing based on signup context
         const signupContext = localStorage.getItem("signupContext");
-        let destination = "/home"; // Default for existing users
+        let destination = "/"; // Default for existing users
         
         if (signupContext === "gift_recipient") {
           destination = "/wishlists";
@@ -114,7 +114,7 @@ const StreamlinedProfileSetup = () => {
     } catch (error) {
       console.error("❌ Error in interests completion flow:", error);
       // Fallback: route to home on error
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 
@@ -129,7 +129,7 @@ const StreamlinedProfileSetup = () => {
       
       // Intelligent routing based on signup context
       const signupContext = localStorage.getItem("signupContext");
-      let destination = "/home"; // Default for existing users
+      let destination = "/"; // Default for existing users
       
       if (signupContext === "gift_recipient") {
         destination = "/wishlists";
@@ -149,7 +149,7 @@ const StreamlinedProfileSetup = () => {
     } catch (error) {
       console.error("❌ Error in pending connections close flow:", error);
       // Fallback: route to home on error
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 

@@ -17,36 +17,38 @@ export const useProfileUpdate = () => {
       return null;
     }
 
-    // Helper to run an update with retries
-    const updateWithRetry = async (payload: Record<string, any>, label: string) => {
+    // Helper to run an upsert with retries (handles both new and existing profiles)
+    const upsertWithRetry = async (payload: Record<string, any>, label: string) => {
       let attempts = 0;
       let lastError: any = null;
       while (attempts < 3) {
         attempts++;
-        console.log(`Attempt ${attempts} to update profile (${label})`, payload);
+        console.log(`Attempt ${attempts} to upsert profile (${label})`, payload);
         try {
+          // Ensure id is always included in the payload for upsert
+          const upsertPayload = { ...payload, id: user.id };
+          
           const { data, error } = await supabase
             .from('profiles')
-            .update(payload)
-            .eq('id', user.id)
+            .upsert(upsertPayload as any)
             .select()
             .single();
 
-          console.log(`🔍 Database update response (${label}):`, { data, error });
+          console.log(`🔍 Database upsert response (${label}):`, { data, error });
           if (error) {
             lastError = error;
-            console.error(`Error updating profile (${label}) attempt ${attempts}:`, error);
+            console.error(`Error upserting profile (${label}) attempt ${attempts}:`, error);
             await new Promise(r => setTimeout(r, 400));
           } else {
             return data;
           }
         } catch (err) {
           lastError = err;
-          console.error(`Error in update operation (${label}) attempt ${attempts}:`, err);
+          console.error(`Error in upsert operation (${label}) attempt ${attempts}:`, err);
           await new Promise(r => setTimeout(r, 400));
         }
       }
-      throw lastError || new Error(`Failed to update profile (${label})`);
+      throw lastError || new Error(`Failed to upsert profile (${label})`);
     };
 
     try {
@@ -127,19 +129,19 @@ export const useProfileUpdate = () => {
         delete baseUpdate.address_verification_method;
         delete baseUpdate.address_verified_at;
 
-        const baseRes = await updateWithRetry(baseUpdate, 'base (address + non-verification)');
+        const baseRes = await upsertWithRetry(baseUpdate, 'base (address + non-verification)');
 
         // Now apply verification-only fields
         const verifyPayload: Record<string, any> = { ...verifyUpdate };
         // Safety: do not send shipping_address again
         delete verifyPayload.shipping_address;
 
-        const verifyRes = await updateWithRetry(verifyPayload, 'verification-only');
+        const verifyRes = await upsertWithRetry(verifyPayload, 'verification-only');
         finalResult = { ...baseRes, ...verifyRes };
       } else {
-        // Single update path
+        // Single upsert path
         const singlePayload = { ...baseUpdate };
-        const res = await updateWithRetry(singlePayload, 'single');
+        const res = await upsertWithRetry(singlePayload, 'single');
         finalResult = res;
       }
 

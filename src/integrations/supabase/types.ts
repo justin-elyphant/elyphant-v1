@@ -4702,6 +4702,7 @@ export type Database = {
       }
       user_connections: {
         Row: {
+          accepted_at: string | null
           blocked_at: string | null
           blocked_by: string | null
           connected_user_id: string | null
@@ -4728,6 +4729,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accepted_at?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
           connected_user_id?: string | null
@@ -4754,6 +4756,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accepted_at?: string | null
           blocked_at?: string | null
           blocked_by?: string | null
           connected_user_id?: string | null

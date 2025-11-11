@@ -262,17 +262,17 @@ const UnifiedOnboarding: React.FC = () => {
     console.log("🔍 Triggering address verification before save...");
     toast.info("Verifying your address...");
     
+    // Prepare standardized address before try block so it's accessible in catch
+    const standardizedAddress = {
+      street: address.street,
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode,
+      country: address.country || 'US',
+      formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+    };
+    
     try {
-      // Manually trigger verification
-      const standardizedAddress = {
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        zipCode: address.zipCode,
-        country: address.country || 'US',
-        formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-      };
-      
       const validation = await unifiedLocationService.validateAddressForDelivery(standardizedAddress);
       
       if (validation.isValid) {
@@ -287,14 +287,34 @@ const UnifiedOnboarding: React.FC = () => {
         console.log("✅ Address verified successfully");
         return true;
       } else {
-        // Address has issues - ask user to confirm anyway
-        toast.warning("Address couldn't be automatically verified. Please confirm it's correct.");
-        // Allow user to proceed with manual confirmation
-        return true; // Don't block, but log for debugging
+        // Address has issues - set as user_confirmed to allow manual verification
+        console.log("⚠️ Address validation failed, marking as user_confirmed");
+        toast.warning("Address couldn't be automatically verified. Proceeding with manual confirmation.");
+        
+        // Set as verified with user_confirmed method
+        const verifyData = {
+          address: standardizedAddress,
+          confidence: 'medium' as const,
+          method: 'user_confirmed' as const
+        };
+        
+        setIsAddressVerified(true);
+        setAddressVerificationData(verifyData);
+        return true; // Allow signup to proceed
       }
     } catch (error) {
       console.error("❌ Address verification error:", error);
-      toast.warning("Couldn't verify address automatically, but you can proceed.");
+      toast.warning("Couldn't verify address automatically. Proceeding with manual confirmation.");
+      
+      // Set as verified with user_confirmed method even on error
+      const verifyData = {
+        address: standardizedAddress,
+        confidence: 'low' as const,
+        method: 'user_confirmed' as const
+      };
+      
+      setIsAddressVerified(true);
+      setAddressVerificationData(verifyData);
       return true; // Don't block signup flow
     }
   };

@@ -955,7 +955,15 @@ class UnifiedGiftManagementService {
         let recipientName = 'Your recipient';
         
         if (isPendingInvitation && rule.pending_recipient_email) {
-          recipientName = rule.pending_recipient_name || rule.pending_recipient_email.split('@')[0];
+          // Fetch the actual name from user_connections table
+          const { data: connection } = await supabase
+            .from('user_connections')
+            .select('pending_recipient_name')
+            .eq('user_id', rule.user_id)
+            .eq('pending_recipient_email', rule.pending_recipient_email)
+            .maybeSingle();
+          
+          recipientName = connection?.pending_recipient_name || rule.pending_recipient_email.split('@')[0];
         } else if (rule.recipient_id) {
           // Fetch recipient from profiles
           const { data: recipientProfile } = await supabase

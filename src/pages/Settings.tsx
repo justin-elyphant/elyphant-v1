@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { supabase } from "@/integrations/supabase/client";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -43,13 +44,25 @@ const Settings = () => {
   // Force profile refresh when navigating to settings to ensure fresh data
   useEffect(() => {
     const forceRefreshProfileOnNavigation = async () => {
-      if (user && refetchProfile) {
-        console.log("🔄 Settings page: Force refreshing profile data on navigation");
+      if (user) {
+        // Refresh auth session for new signups to ensure clean state
         try {
-          await refetchProfile();
-          setForceRefreshCount(prev => prev + 1);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log("🔐 Settings: Auth session validated");
+          }
         } catch (error) {
-          console.error("❌ Error force refreshing profile on settings navigation:", error);
+          console.error("❌ Error validating auth session:", error);
+        }
+        
+        if (refetchProfile) {
+          console.log("🔄 Settings page: Force refreshing profile data on navigation");
+          try {
+            await refetchProfile();
+            setForceRefreshCount(prev => prev + 1);
+          } catch (error) {
+            console.error("❌ Error force refreshing profile on settings navigation:", error);
+          }
         }
       }
     };

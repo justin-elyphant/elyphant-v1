@@ -86,7 +86,16 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
     try {
       // Save interests to profile (empty array if none selected)
       const interestsToSave = selectedInterests.length > 0 ? selectedInterests : [];
-      await updateProfile({ interests: interestsToSave });
+      const result = await updateProfile({ 
+        interests: interestsToSave,
+        onboarding_completed: true 
+      });
+      
+      // Check if update actually succeeded (returns null on failure)
+      if (!result) {
+        // Error toast already shown by useProfileUpdate
+        return;
+      }
       
       if (selectedInterests.length > 0) {
         toast.success(`Added ${selectedInterests.length} interests to your profile!`);

@@ -57,3 +57,7 @@ export type { BirthdayReminderProps } from './birthday-reminder-consolidated.ts'
 // Wishlist (1)
 export { wishlistPurchaseNotificationTemplate } from './wishlist-purchase-notification.ts';
 export type { WishlistPurchaseNotificationProps } from './wishlist-purchase-notification.ts';
+
+// Account Management (1)
+export { accountDeletionConfirmationTemplate } from './account-deletion-confirmation.ts';
+export type { AccountDeletionConfirmationProps } from './account-deletion-confirmation.ts';

@@ -133,6 +133,32 @@ serve(async (req) => {
 
     console.log('User account deleted successfully from both database and auth')
 
+    // Send account deletion confirmation email
+    try {
+      console.log('Sending account deletion confirmation email to:', user.email)
+      const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'account_deletion_confirmation',
+          recipientEmail: user.email,
+          data: {
+            first_name: user.user_metadata?.first_name || user.user_metadata?.firstName || 'there',
+            email: user.email,
+            deletion_timestamp: new Date().toISOString()
+          }
+        }
+      })
+
+      if (emailError) {
+        console.error('Failed to send deletion confirmation email:', emailError)
+        // Don't fail the deletion if email fails, just log it
+      } else {
+        console.log('Account deletion confirmation email sent successfully:', emailResult)
+      }
+    } catch (emailError) {
+      console.error('Exception while sending deletion confirmation email:', emailError)
+      // Don't fail the deletion if email fails, just log it
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

@@ -30,7 +30,10 @@ import {
   birthdayReminderConsolidatedTemplate,
   
   // Wishlist
-  wishlistPurchaseNotificationTemplate
+  wishlistPurchaseNotificationTemplate,
+  
+  // Account Management
+  accountDeletionConfirmationTemplate
 } from './email-templates/index.ts';
 
 import type {
@@ -49,7 +52,8 @@ import type {
   NudgeReminderProps,
   WelcomeEmailConsolidatedProps,
   BirthdayReminderProps,
-  WishlistPurchaseNotificationProps
+  WishlistPurchaseNotificationProps,
+  AccountDeletionConfirmationProps
 } from './email-templates/index.ts';
 
 const corsHeaders = {
@@ -90,6 +94,8 @@ interface EmailRequest {
     | 'birthday_reminder'
     // Wishlist (1)
     | 'wishlist_purchase_notification'
+    // Account Management (1)
+    | 'account_deletion_confirmation'
     // Operational (kept for backward compatibility)
     | 'address_request'
     | 'address_collected_notification'
@@ -200,6 +206,11 @@ const handler = async (req: Request): Promise<Response> => {
       // Wishlist
       case 'wishlist_purchase_notification':
         emailData = await handleWishlistPurchaseNotification(supabase, data, recipientEmail);
+        break;
+      
+      // Account Management
+      case 'account_deletion_confirmation':
+        emailData = await handleAccountDeletionConfirmation(data, recipientEmail);
         break;
       
       // Operational (legacy support)
@@ -1417,6 +1428,39 @@ async function handleAutoGiftScheduled(supabase: any, data: any, recipientEmail?
     to: recipientEmail,
     subject: `🎁 Auto-Gift Scheduled - Order #${data.orderNumber}`,
     html: html,
+  };
+}
+
+/**
+ * Handler: Account Deletion Confirmation
+ * Sends immediate confirmation email after account deletion
+ */
+async function handleAccountDeletionConfirmation(data: any, recipientEmail?: string) {
+  console.log('🗑️ Handling account deletion confirmation email');
+
+  // recipientEmail should be provided directly since user is already deleted
+  const emailTo = recipientEmail || data.email;
+  if (!emailTo) {
+    throw new Error('Recipient email is required for account deletion confirmation');
+  }
+
+  const templateData: AccountDeletionConfirmationProps = {
+    first_name: data.first_name || 'there',
+    email: emailTo,
+    deletion_timestamp: data.deletion_timestamp || new Date().toISOString()
+  };
+
+  console.log('🗑️ Account deletion confirmation data:', {
+    email: emailTo,
+    deletionTimestamp: templateData.deletion_timestamp
+  });
+
+  const emailHtml = accountDeletionConfirmationTemplate(templateData);
+
+  return {
+    to: emailTo,
+    subject: 'Your Elyphant Account Has Been Deleted',
+    html: emailHtml,
   };
 }
 

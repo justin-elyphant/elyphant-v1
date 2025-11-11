@@ -45,7 +45,13 @@ export function useProfileFetch() {
       console.log("Profile fetched successfully:", profile);
       
       // Ensure profile data consistency (fix any missing fields)
-      await ensureProfileDataConsistency(user.id);
+      // Skip during active onboarding to prevent concurrent update conflicts
+      const isOnboarding = localStorage.getItem("newSignUp") === "true";
+      if (!isOnboarding) {
+        await ensureProfileDataConsistency(user.id);
+      } else {
+        console.log("⏭️ Skipping consistency check during active onboarding");
+      }
       
       // Add the user_id field that's expected by certain components
       const enhancedProfile: Profile = {

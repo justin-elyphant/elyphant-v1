@@ -21,13 +21,10 @@ export const useOnboardingCompletion = () => {
     invalidateCache();
     
     // Wait a moment for database write to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Force fresh profile data fetch
-    await Promise.all([
-      refetchProfile(),
-      refetchUnifiedProfile()
-    ]);
+    // ProfileContext is already updated by updateProfile(), no refetch needed
+    // Removing redundant refetches to prevent concurrent update conflicts
     
     console.log("✅ Onboarding completion handled");
   }, [invalidateCache, refetchProfile, refetchUnifiedProfile]);

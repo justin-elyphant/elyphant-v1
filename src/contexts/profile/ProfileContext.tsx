@@ -12,7 +12,7 @@ interface ProfileContextType {
   profile: Profile | null;
   loading: boolean;
   error: Error | null;
-  updateProfile: (data: Partial<Profile>) => Promise<any>;
+  updateProfile: (data: Partial<Profile>, options?: { skipLegacyMapping?: boolean }) => Promise<any>;
   refetchProfile: () => Promise<Profile | null>;
   refreshProfile: () => Promise<Profile | null>; 
   lastRefreshTime: number | null;
@@ -26,7 +26,7 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { fetchProfile, loading: isFetching, error: fetchError } = useProfileFetch();
-  const { updateProfile, isUpdating, updateError } = useProfileUpdate();
+  const { updateProfile: updateProfileInternal, isUpdating, updateError } = useProfileUpdate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number | null>(null);
 
@@ -125,7 +125,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, fetchProfile]);
 
   // Wrapper for updating the profile that also updates local state with validation
-  const handleUpdateProfile = async (data: Partial<Profile>) => {
+  const handleUpdateProfile = async (data: Partial<Profile>, options?: { skipLegacyMapping?: boolean }) => {
     try {
       // Validate data before updating
       const validation = ProfileDataValidator.validate(data);
@@ -137,7 +137,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log("Updating profile with validated data:", JSON.stringify(validation.sanitizedData, null, 2));
-      const result = await updateProfile(validation.sanitizedData!);
+      const result = await updateProfileInternal(validation.sanitizedData!, options);
       
       if (result !== null) {
         console.log("✅ Profile update successful, refetching profile data");

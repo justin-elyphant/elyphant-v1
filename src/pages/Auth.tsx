@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
-import QuickInterestsModal from "@/components/auth/QuickInterestsModal";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,7 +13,6 @@ const Auth = () => {
   const location = useLocation();
   const { user, isLoading } = useAuth();
   const { profileData } = useProfileRetrieval();
-  const [showQuickInterests, setShowQuickInterests] = useState(false);
 
   // Detect initial mode from URL parameters
   const mode = searchParams.get('mode') as 'signin' | 'signup' | null;
@@ -116,41 +114,12 @@ const Auth = () => {
       };
       
       linkPendingRules();
-
-      // Check if we should show the quick interests modal
-      const shouldShowQuickInterests = localStorage.getItem("showQuickInterests") === "true";
-      
-      if (shouldShowQuickInterests) {
-        // Wait for profile data to load before checking interests
-        if (profileData !== null) {
-          const hasNoInterests = !profileData.interests || profileData.interests.length === 0;
-          const hasRedirect = searchParams.get('redirect');
-          
-          if (hasNoInterests && !hasRedirect) {
-            // Clear the flag and show modal
-            localStorage.removeItem("showQuickInterests");
-            setShowQuickInterests(true);
-            return;
-          } else {
-            // User already has interests or there's a redirect, skip modal
-            localStorage.removeItem("showQuickInterests");
-          }
-        } else if (profileData === null) {
-          // Still loading profile data, wait
-          return;
-        }
-      }
       
       // Normal redirect flow
       const redirectPath = searchParams.get('redirect') || '/';
       navigate(redirectPath, { replace: true });
     }
   }, [user, isLoading, profileData, navigate, searchParams]);
-
-  const handleInterestsComplete = () => {
-    // After interests are set (or skipped), redirect to gifting
-    navigate('/gifting', { replace: true });
-  };
 
   if (isLoading) {
     return (
@@ -174,13 +143,6 @@ const Auth = () => {
           invitationData={invitationData}
         />
       </div>
-      
-      {/* Quick Interests Modal */}
-      <QuickInterestsModal
-        isOpen={showQuickInterests}
-        onClose={() => setShowQuickInterests(false)}
-        onComplete={handleInterestsComplete}
-      />
     </MainLayout>
   );
 };

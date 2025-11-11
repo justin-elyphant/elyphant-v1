@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SmartInput } from "@/components/ui/smart-input";
 import { Check, ArrowRight, Plus } from "lucide-react";
-import { useProfileUpdate } from "@/contexts/profile/useProfileUpdate";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
 import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
@@ -43,7 +43,7 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { updateProfile } = useProfileUpdate();
+  const { updateProfile } = useProfile();
   const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
   const { handleOnboardingComplete } = useOnboardingCompletion();
 

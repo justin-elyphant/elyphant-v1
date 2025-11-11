@@ -113,17 +113,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
                 if (!acceptError) {
                   toast.success(`You're now connected with ${invitationData.senderName}! 🎉`);
                   
-                  // Trigger connection accepted email to sender
-                  await supabase.functions.invoke('ecommerce-email-orchestrator', {
-                    body: {
-                      eventType: 'connection_accepted',
-                      customData: {
-                        sender_name: invitationData.senderName,
-                        acceptor_name: values.name,
-                        connection_id: invitationData.connectionId
-                      }
-                    }
-                  });
+                  // Note: connection_established emails are now sent automatically by the database trigger
+                  // No manual email invocation needed - the trigger queue_connection_established_emails() handles it
                 }
               } catch (error) {
                 console.error('Failed to auto-accept invitation:', error);

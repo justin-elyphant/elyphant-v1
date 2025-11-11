@@ -546,6 +546,11 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       
                       // Refresh connections to include the newly created recipient
                       await fetchConnections();
+                      
+                      // Scroll back to top so user can verify the recipient was added
+                      if (scrollContainerRef.current) {
+                        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
                     }}
                   />
                   {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (

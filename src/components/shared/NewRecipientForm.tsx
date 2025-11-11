@@ -144,6 +144,16 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         </CardTitle>
       </CardHeader>
       
+      <div className="px-6 pt-4 pb-2 border-b bg-blue-50/50 dark:bg-blue-950/20">
+        <div className="flex items-start gap-3 text-sm">
+          <UserPlus className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+          <p className="text-blue-900/80 dark:text-blue-100/80 leading-relaxed">
+            <strong className="font-semibold">Setting up auto-gifting:</strong> After sending the invitation, 
+            you'll continue to configure gift preferences, budget, and notification settings.
+          </p>
+        </div>
+      </div>
+      
       <CardContent className="p-6 pb-32 pt-16 md:pt-20 overflow-y-auto ios-smooth-scroll">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

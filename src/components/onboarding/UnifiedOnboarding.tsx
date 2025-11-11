@@ -23,7 +23,7 @@ import { ArrowRight, ArrowLeft, Check, Plus, Gift, X, Sparkles } from "lucide-re
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
 import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
-import { AddressValidationResult } from "@/services/location/UnifiedLocationService";
+import { AddressValidationResult, unifiedLocationService } from "@/services/location/UnifiedLocationService";
 
 type OnboardingStep = 'profile' | 'interests' | 'connections';
 
@@ -243,12 +243,78 @@ const UnifiedOnboarding: React.FC = () => {
     setAddressVerificationData(result);
   };
 
-  const handleProfileStepComplete = () => {
+  const ensureAddressVerified = async (): Promise<boolean> => {
+    const formData = form.getValues();
+    const address = formData.address;
+    
+    // Check if address is complete
+    if (!address.street || !address.city || !address.state || !address.zipCode) {
+      toast.error("Please complete all required address fields");
+      return false;
+    }
+    
+    // If already verified, we're good
+    if (isAddressVerified && addressVerificationData) {
+      console.log("✅ Address already verified");
+      return true;
+    }
+    
+    console.log("🔍 Triggering address verification before save...");
+    toast.info("Verifying your address...");
+    
+    try {
+      // Manually trigger verification
+      const standardizedAddress = {
+        street: address.street,
+        city: address.city,
+        state: address.state,
+        zipCode: address.zipCode,
+        country: address.country || 'US',
+        formatted_address: `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+      };
+      
+      const validation = await unifiedLocationService.validateAddressForDelivery(standardizedAddress);
+      
+      if (validation.isValid) {
+        const verifyData = {
+          address: standardizedAddress,
+          confidence: validation.confidence,
+          method: validation.confidence === 'high' ? 'automatic' as const : 'user_confirmed' as const
+        };
+        
+        setIsAddressVerified(true);
+        setAddressVerificationData(verifyData);
+        console.log("✅ Address verified successfully");
+        return true;
+      } else {
+        // Address has issues - ask user to confirm anyway
+        toast.warning("Address couldn't be automatically verified. Please confirm it's correct.");
+        // Allow user to proceed with manual confirmation
+        return true; // Don't block, but log for debugging
+      }
+    } catch (error) {
+      console.error("❌ Address verification error:", error);
+      toast.warning("Couldn't verify address automatically, but you can proceed.");
+      return true; // Don't block signup flow
+    }
+  };
+
+  const handleProfileStepComplete = async () => {
     // Validate form first
-    form.handleSubmit(() => {
-      console.log('✅ Profile step validated, moving to interests');
-      setCurrentStep('interests');
-    })();
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast.error("Please fix the form errors before continuing");
+      return;
+    }
+    
+    // Ensure address is verified before proceeding
+    const addressVerified = await ensureAddressVerified();
+    if (!addressVerified) {
+      return; // Don't proceed if verification fails
+    }
+    
+    console.log('✅ Profile step validated and address verified, moving to interests');
+    setCurrentStep('interests');
   };
 
   // Step 2: Interests handlers
@@ -471,6 +537,9 @@ const UnifiedOnboarding: React.FC = () => {
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileCompletionState");
       localStorage.removeItem("signupContext");
+      
+      // Before navigation, ensure profile update propagates
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       navigate(destination, { replace: true });
     } catch (error) {

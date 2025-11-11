@@ -140,24 +140,19 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       const result = await updateProfileInternal(validation.sanitizedData!, options);
       
       if (result !== null) {
-        console.log("✅ Profile update successful, refetching profile data");
+        console.log("✅ Profile update successful, applying optimistic update");
         
-        // Force a proper refetch to get the actual database data
-        try {
-          await refetchProfile();
-          console.log("✅ Profile refetch completed successfully");
-        } catch (refetchError) {
-          console.error("⚠️ Profile refetch failed, using optimistic update:", refetchError);
-          // Fallback to optimistic update if refetch fails
-          if (profile) {
-            const optimisticUpdate = { 
-              ...profile, 
-              ...validation.sanitizedData,
-              updated_at: new Date().toISOString()
-            };
-            setProfile(optimisticUpdate);
-            setLastFetchTime(Date.now());
-          }
+        // Apply optimistic update immediately without refetch
+        // This prevents concurrent operations and is faster
+        if (profile) {
+          const optimisticUpdate = { 
+            ...profile, 
+            ...validation.sanitizedData,
+            updated_at: new Date().toISOString()
+          };
+          setProfile(optimisticUpdate);
+          setLastFetchTime(Date.now());
+          console.log("✅ Optimistic profile update applied");
         }
       }
       
@@ -205,8 +200,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     console.log("🧹 Invalidating profile cache");
     unifiedDataService.invalidateCache();
     setLastFetchTime(null);
-    // Reset profile state to force fresh fetch
-    setProfile(null);
+    // Don't nullify profile - just mark cache as stale
+    // Next refetch will update with fresh data without causing loading state
   }, []);
 
   const validateProfileData = useCallback((data: Partial<Profile>) => {

@@ -7,7 +7,7 @@ import { baseEmailTemplate } from './base-template.ts';
 export interface AutoGiftRuleCreatedProps {
   recipient_name: string;
   recipient_first_name: string;
-  recipient_email: string;
+  recipient_username?: string;
   rule_details: {
     occasion: string;
     budget_limit?: number;
@@ -21,7 +21,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
   const {
     recipient_name,
     recipient_first_name,
-    recipient_email,
+    recipient_username,
     rule_details,
     auto_approve_enabled
   } = props;
@@ -61,7 +61,7 @@ export const autoGiftRuleCreatedTemplate = (props: AutoGiftRuleCreatedProps): st
       </h2>
       
       <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">
-        <strong>Recipient:</strong> ${recipient_first_name} (${recipient_email})
+        <strong>Recipient:</strong> ${recipient_username ? `${recipient_name} (@${recipient_username})` : recipient_name}
       </p>
       
       <p style="margin: 0 0 12px 0; color: #4B5563; font-size: 14px; line-height: 1.6;">

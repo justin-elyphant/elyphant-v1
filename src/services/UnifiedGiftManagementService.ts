@@ -953,6 +953,7 @@ class UnifiedGiftManagementService {
       } else {
         // Gather recipient information
         let recipientName = 'Your recipient';
+        let recipientUsername: string | null = null;
         
         if (isPendingInvitation && rule.pending_recipient_email) {
           // Fetch the actual name from user_connections table
@@ -964,16 +965,19 @@ class UnifiedGiftManagementService {
             .maybeSingle();
           
           recipientName = connection?.pending_recipient_name || rule.pending_recipient_email.split('@')[0];
+          // Username not available for pending invitations (they haven't signed up yet)
+          recipientUsername = null;
         } else if (rule.recipient_id) {
           // Fetch recipient from profiles
           const { data: recipientProfile } = await supabase
             .from('profiles')
-            .select('name, first_name')
+            .select('name, first_name, username')
             .eq('id', rule.recipient_id)
             .single();
           
           if (recipientProfile) {
-            recipientName = recipientProfile.first_name || recipientProfile.name || 'Your recipient';
+            recipientName = recipientProfile.name || recipientProfile.first_name || 'Your recipient';
+            recipientUsername = recipientProfile.username || null;
           }
         }
         
@@ -984,6 +988,7 @@ class UnifiedGiftManagementService {
             recipientEmail: userEmail,
             data: {
               recipient_name: recipientName,
+              recipient_username: recipientUsername,
               rule_details: {
                 occasion: rule.date_type || 'custom event',
                 budget_limit: rule.budget_limit || 0,

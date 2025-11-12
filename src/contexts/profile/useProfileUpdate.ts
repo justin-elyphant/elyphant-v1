@@ -91,7 +91,43 @@ export const useProfileUpdate = () => {
       // PHASE 1: Sync interests to gift_preferences for backwards compatibility (TRANSITION PERIOD)
       // NOTE: gift_preferences is DEPRECATED - interests is now the single source of truth
       // Create a mutable copy to avoid mutation issues
-      const mutableUpdateData = { ...updateData };
+      const mutableUpdateData = { ...updateData } as Record<string, any>;
+      
+      // Normalize DOB before any payload building to prevent Postgres date errors
+      if (mutableUpdateData.dob) {
+        try {
+          const rawDob = mutableUpdateData.dob;
+          const by = mutableUpdateData.birth_year;
+          let normalizedDob: string | null = null;
+
+          if (rawDob instanceof Date) {
+            normalizedDob = rawDob.toISOString();
+          } else if (typeof rawDob === 'string') {
+            // MM-DD pattern
+            const mmddMatch = /^\d{2}-\d{2}$/.test(rawDob);
+            const isoParsable = !isNaN(Date.parse(rawDob));
+            if (mmddMatch && by && typeof by === 'number') {
+              const [mm, dd] = rawDob.split('-').map((s) => parseInt(s, 10));
+              const d = new Date(by, (mm || 1) - 1, dd || 1);
+              normalizedDob = d.toISOString();
+            } else if (isoParsable) {
+              normalizedDob = new Date(rawDob).toISOString();
+            } else {
+              console.warn('⚠️ Invalid dob format, removing from payload:', rawDob);
+              normalizedDob = null;
+            }
+          }
+
+          if (normalizedDob) {
+            mutableUpdateData.dob = normalizedDob;
+          } else {
+            delete mutableUpdateData.dob;
+          }
+        } catch (e) {
+          console.warn('⚠️ Failed to normalize dob, removing from payload:', mutableUpdateData.dob, e);
+          delete mutableUpdateData.dob;
+        }
+      }
       
       // Skip legacy mapping if explicitly requested (e.g., interests-only saves during onboarding)
       if (!options?.skipLegacyMapping && mutableUpdateData.interests && Array.isArray(mutableUpdateData.interests)) {

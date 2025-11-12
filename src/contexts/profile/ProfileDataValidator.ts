@@ -79,7 +79,8 @@ export class ProfileDataValidator {
       const sanitized = this.sanitizeData(data);
       
       // Validate with Zod schema
-      const result = profileValidationSchema.partial().safeParse(sanitized);
+  // Use passthrough() to preserve all fields, including those not explicitly in schema
+  const result = profileValidationSchema.partial().passthrough().safeParse(sanitized);
       
       if (result.success) {
         return {

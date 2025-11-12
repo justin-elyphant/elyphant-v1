@@ -127,17 +127,34 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Wrapper for updating the profile that also updates local state with validation
   const handleUpdateProfile = async (data: Partial<Profile>, options?: { skipLegacyMapping?: boolean }) => {
     try {
-      // Validate data before updating
+      // DETAILED LOGGING: Track data flow through validation
+      console.log("📝 RAW data before validation (keys):", Object.keys(data));
+      console.log("📝 RAW data before validation (full):", JSON.stringify(data, null, 2));
+      
       const validation = ProfileDataValidator.validate(data);
       
+      console.log("✅ Validation result:", {
+        isValid: validation.isValid,
+        hasErrors: !!validation.errors,
+        sanitizedKeys: Object.keys(validation.sanitizedData || {})
+      });
+      console.log("✅ Validated data (full):", JSON.stringify(validation.sanitizedData, null, 2));
+      
+      // Compare raw vs sanitized to identify stripped fields
+      const lostKeys = Object.keys(data).filter(k => !(validation.sanitizedData || {})[k]);
+      if (lostKeys.length > 0) {
+        console.warn("⚠️ Fields lost during validation:", lostKeys);
+      }
+      
       if (!validation.isValid) {
-        console.error("Profile validation failed:", validation.errors);
-        toast.error(`Validation failed: ${validation.errors[0]}`);
-        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+        console.error("❌ Profile validation failed:", validation.errors);
+        toast.error("Failed to update profile: Invalid data format");
+        return { success: false, error: "Invalid data format" };
       }
 
-      console.log("Updating profile with validated data:", JSON.stringify(validation.sanitizedData, null, 2));
-      const result = await updateProfileInternal(validation.sanitizedData!, options);
+      const sanitizedData = validation.sanitizedData;
+      console.log("Updating profile with validated data:", JSON.stringify(sanitizedData, null, 2));
+      const result = await updateProfileInternal(sanitizedData!, options);
       
       if (result !== null) {
         console.log("✅ Profile update successful, applying optimistic update");

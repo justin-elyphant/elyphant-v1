@@ -215,6 +215,15 @@ export const useProfileUpdate = () => {
           }
         }
         
+        // DETAILED LOGGING: Final payload before database operation
+        console.log("📤 FINAL PAYLOAD being sent to database:", JSON.stringify(singlePayload, null, 2));
+        console.log("📤 Critical fields check:", {
+          has_dob: !!singlePayload.dob,
+          has_shipping_address: !!singlePayload.shipping_address,
+          has_interests: !!singlePayload.interests,
+          has_onboarding_completed: !!singlePayload.onboarding_completed
+        });
+        
         const res = await upsertWithRetry(singlePayload, 'single');
         finalResult = res;
       }

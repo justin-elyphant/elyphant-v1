@@ -530,10 +530,36 @@ const UnifiedOnboarding: React.FC = () => {
       // ONE ProfileContext.updateProfile call with ALL data (skip legacy mapping to prevent 400 errors)
       await updateProfile(completeProfileData, { skipLegacyMapping: true });
       
-      toast.success("Profile saved!");
+      // POST-SAVE VERIFICATION: Query database to confirm data actually persisted
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Verify address verification persisted (logging only)
-      console.log("✅ Profile save completed. Verification state should now persist to Settings.");
+      const { data: verifyProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('dob, shipping_address, interests, onboarding_completed')
+        .eq('id', user.id)
+        .single();
+      
+      console.log("🔍 Post-save verification result:", verifyProfile);
+      
+      if (verifyError || !verifyProfile?.onboarding_completed) {
+        console.error("❌ Save verification FAILED:", { verifyError, verifyProfile });
+        throw new Error("Profile data failed to persist to database");
+      }
+      
+      // Type-safe interests check (Json can be array or other types)
+      const interestsArray = Array.isArray(verifyProfile.interests) ? verifyProfile.interests : [];
+      
+      if (!verifyProfile.dob || !verifyProfile.shipping_address || interestsArray.length === 0) {
+        console.error("❌ Save verification FAILED - missing critical fields:", {
+          has_dob: !!verifyProfile.dob,
+          has_address: !!verifyProfile.shipping_address,
+          has_interests: interestsArray.length > 0,
+          actual_data: verifyProfile
+        });
+        throw new Error("Critical profile fields missing after save");
+      }
+      
+      toast.success("Profile saved!");
       
       // Clear localStorage flags and refetch profile data
       await handleOnboardingComplete();

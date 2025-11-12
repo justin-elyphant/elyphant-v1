@@ -13,7 +13,8 @@ const profileValidationSchema = z.object({
   profile_image: z.string().url().nullable().optional().or(z.literal(null)),
   dob: z.union([
     z.string().regex(/^\d{2}-\d{2}$/, "Invalid date format (MM-DD)"),
-    z.string().datetime("Invalid ISO datetime format")
+    z.string().datetime("Invalid ISO datetime format"),
+    z.instanceof(Date)
   ]).nullable().optional(),
   birth_year: z.number().min(1900, "Birth year must be valid").max(new Date().getFullYear(), "Birth year cannot be in the future"),
   shipping_address: z.object({

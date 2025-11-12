@@ -237,8 +237,16 @@ export const useProfileUpdate = () => {
           console.log('⏭️ Skipping verify-only upsert - no valid verification fields');
           finalResult = baseRes;
         } else {
-          const verifyRes = await upsertWithRetry(verifyPayload, 'verification-only');
-          finalResult = { ...baseRes, ...verifyRes };
+          // Gracefully handle verification-only failures - don't block the entire save
+          try {
+            const verifyRes = await upsertWithRetry(verifyPayload, 'verification-only');
+            finalResult = { ...baseRes, ...verifyRes };
+          } catch (verifyError) {
+            console.warn('⚠️ Verification-only update failed, but base data saved successfully:', verifyError);
+            console.warn('⚠️ Verification payload that failed:', verifyPayload);
+            // Return base result - the critical data (profile, address, interests) already saved
+            finalResult = baseRes;
+          }
         }
       } else {
         // Single upsert path - CRITICAL: Strip out verification fields if address_verified is false

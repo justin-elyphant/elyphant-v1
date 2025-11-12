@@ -221,7 +221,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         confidence: addressVerificationData?.confidence
       });
       
-      await updateProfile(profileData);
+      await updateProfile(profileData as any);
       
       // Welcome email will be triggered AFTER interests are collected in QuickInterestsModal
       

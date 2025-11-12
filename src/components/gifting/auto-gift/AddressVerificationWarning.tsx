@@ -23,17 +23,19 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
 
   useEffect(() => {
     const checkVerification = async () => {
-      // First check connections array
+      // Try to find connection - recipientId could be connection.id, connected_user_id, or pending email
       let connection = connections.find(c => 
         c.id === recipientId || 
-        c.connected_user_id === recipientId
+        c.connected_user_id === recipientId ||
+        c.display_user_id === recipientId
       );
 
-      // Check pending invitations if not found
+      // Check pending invitations if not found in accepted connections
       if (!connection) {
         connection = pendingInvitations.find(c => 
           c.id === recipientId ||
-          c.pending_recipient_email === recipientId
+          c.pending_recipient_email === recipientId ||
+          c.display_user_id === recipientId
         );
       }
 
@@ -43,27 +45,39 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
         return;
       }
 
+      const connectionName = connection.profile_name || connection.pending_recipient_name || 'this recipient';
+
       // For pending invitations, address is not verified yet
       if (connection.status === 'pending_invitation') {
         setVerificationStatus({
           verified: false,
-          connectionName: connection.pending_recipient_name || 'this recipient',
+          connectionName,
           isPending: true
         });
         return;
       }
 
       // For accepted connections, check profile address verification
-      if (connection.connected_user_id) {
+      // Use connected_user_id for bi-directional connections
+      const targetUserId = connection.connected_user_id || connection.display_user_id;
+      
+      if (targetUserId) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('address_verified, name')
-          .eq('id', connection.connected_user_id)
+          .eq('id', targetUserId)
           .single();
 
         setVerificationStatus({
           verified: profile?.address_verified || false,
-          connectionName: profile?.name || connection.profile_name || 'this recipient',
+          connectionName: profile?.name || connectionName,
+          isPending: false
+        });
+      } else {
+        // No target user ID available
+        setVerificationStatus({
+          verified: false,
+          connectionName,
           isPending: false
         });
       }

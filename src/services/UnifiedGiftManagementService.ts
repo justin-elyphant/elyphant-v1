@@ -1327,6 +1327,34 @@ class UnifiedGiftManagementService {
   // ============= EXECUTION MANAGEMENT (Consolidated) =============
 
   async createExecution(rule: UnifiedGiftRule, eventId: string): Promise<string> {
+    console.log(`🔄 Creating execution for rule ${rule.id}, event ${eventId}`);
+    
+    // Fetch recipient address with verification status
+    let addressMetadata = null;
+    if (rule.recipient_id) {
+      try {
+        const { recipientAddressResolver } = await import('@/services/recipientAddressResolver');
+        const addressResult = await recipientAddressResolver.getAddressForOrder(
+          rule.user_id,
+          rule.recipient_id
+        );
+        
+        if (addressResult) {
+          addressMetadata = {
+            ...addressResult.address,
+            ...addressResult.metadata
+          };
+          console.log(`📍 Address metadata fetched for execution:`, {
+            source: addressResult.metadata.source,
+            is_verified: addressResult.metadata.is_verified,
+            needs_confirmation: addressResult.metadata.needs_confirmation
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch address metadata for execution:', error);
+      }
+    }
+
     const { data, error } = await supabase
       .from('automated_gift_executions')
       .insert({
@@ -1335,12 +1363,15 @@ class UnifiedGiftManagementService {
         user_id: rule.user_id,
         execution_date: new Date().toISOString().split('T')[0],
         status: 'pending',
-        retry_count: 0
+        retry_count: 0,
+        address_metadata: addressMetadata
       })
       .select()
       .single();
 
     if (error) throw error;
+    
+    console.log(`✅ Execution created: ${data.id} with address verification status:`, addressMetadata?.is_verified);
     return data.id;
   }
 

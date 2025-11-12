@@ -175,11 +175,6 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
 
     setIsSubmitting(true);
     try {
-      // Format date of birth for storage
-      const date = new Date(data.date_of_birth);
-      const formattedBirthday = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-      const birthYear = date.getFullYear();
-
       // Use existing name from auth metadata with fallbacks
       const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || 'User';
       const lastName = user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || 'Name';

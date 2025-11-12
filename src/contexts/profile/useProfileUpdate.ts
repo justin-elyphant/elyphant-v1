@@ -37,12 +37,39 @@ export const useProfileUpdate = () => {
     const upsertWithRetry = async (payload: Record<string, any>, label: string) => {
       let attempts = 0;
       let lastError: any = null;
+      
+      // FETCH CURRENT PROFILE FIRST to ensure all NOT NULL fields are present
+      console.log(`🔍 Fetching current profile before upsert (${label})`);
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.warn(`⚠️ Could not fetch existing profile (${label}):`, fetchError);
+      } else if (existingProfile) {
+        console.log(`✅ Fetched existing profile (${label}) - merging with update payload`);
+      } else {
+        console.log(`ℹ️ No existing profile found (${label}) - will create new one`);
+      }
+      
       while (attempts < 3) {
         attempts++;
         console.log(`Attempt ${attempts} to upsert profile (${label})`, payload);
         try {
-          // Ensure id is always included in the payload for upsert
-          const upsertPayload = { ...payload, id: user.id };
+          // Merge with existing profile data to ensure all NOT NULL fields are present
+          const upsertPayload = existingProfile
+            ? { ...existingProfile, ...payload, id: user.id }
+            : { ...payload, id: user.id };
+          
+          console.log(`📦 Complete upsert payload (${label}):`, {
+            hasFirstName: !!(upsertPayload as any).first_name,
+            hasLastName: !!(upsertPayload as any).last_name,
+            hasEmail: !!(upsertPayload as any).email,
+            hasUsername: !!(upsertPayload as any).username,
+            updateFields: Object.keys(payload)
+          });
           
           const { data, error } = await supabase
             .from('profiles')

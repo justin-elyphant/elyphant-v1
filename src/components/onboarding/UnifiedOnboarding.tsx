@@ -457,9 +457,8 @@ const UnifiedOnboarding: React.FC = () => {
     try {
       const formData = form.getValues();
       
-      // Format date of birth for storage
+      // Format date of birth for storage (ISO format for database)
       const date = new Date(formData.date_of_birth);
-      const formattedBirthday = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
       const birthYear = date.getFullYear();
 
       // Use existing name from auth metadata with fallbacks
@@ -478,7 +477,7 @@ const UnifiedOnboarding: React.FC = () => {
         email: user.email,
         username: username,
         profile_image: formData.profile_image,
-        dob: formattedBirthday,
+        dob: date.toISOString(),
         birth_year: birthYear,
         shipping_address: {
           address_line1: formData.address.street,
@@ -493,12 +492,20 @@ const UnifiedOnboarding: React.FC = () => {
         // Only include verification fields if verification ACTUALLY succeeded with valid data
         // This prevents constraint violations from invalid verification states
         ...(isAddressVerified && addressVerificationData?.method && 
-            (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed') && {
-          address_verified: true,
-          address_verification_method: addressVerificationData.method,
-          address_verified_at: new Date().toISOString()
-        }),
-        address_last_updated: new Date().toISOString(),
+            (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed') 
+          ? (() => {
+              const verifiedAt = new Date().toISOString();
+              return {
+                address_verified: true,
+                address_verification_method: addressVerificationData.method,
+                address_verified_at: verifiedAt,
+                address_last_updated: verifiedAt
+              };
+            })()
+          : {
+              address_last_updated: new Date().toISOString()
+            }
+        ),
         interests: selectedInterests,
         important_dates: [],
         data_sharing_settings: {
@@ -520,8 +527,13 @@ const UnifiedOnboarding: React.FC = () => {
           (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed'))
       });
       
-      // ONE ProfileContext.updateProfile call with ALL data
-      await updateProfile(completeProfileData);
+      // ONE ProfileContext.updateProfile call with ALL data (skip legacy mapping to prevent 400 errors)
+      await updateProfile(completeProfileData, { skipLegacyMapping: true });
+      
+      toast.success("Profile saved!");
+      
+      // Verify address verification persisted (logging only)
+      console.log("✅ Profile save completed. Verification state should now persist to Settings.");
       
       // Clear localStorage flags and refetch profile data
       await handleOnboardingComplete();

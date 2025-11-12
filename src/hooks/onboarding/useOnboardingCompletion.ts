@@ -1,13 +1,12 @@
 import { useCallback } from 'react';
 import { useProfile } from '@/contexts/profile/ProfileContext';
-import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
+import { unifiedProfileService } from '@/services/profiles/UnifiedProfileService';
 
 /**
  * Hook to handle onboarding completion and ensure data sync
  */
 export const useOnboardingCompletion = () => {
-  const { invalidateCache, refetchProfile } = useProfile();
-  const { refetch: refetchUnifiedProfile } = useUnifiedProfile();
+  const { invalidateCache } = useProfile();
 
   const handleOnboardingComplete = useCallback(async () => {
     console.log("🎯 Handling onboarding completion");
@@ -19,6 +18,7 @@ export const useOnboardingCompletion = () => {
     
     // Invalidate all caches
     invalidateCache();
+    unifiedProfileService.invalidateCache();
     
     // Wait a moment for database write to complete
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -27,7 +27,7 @@ export const useOnboardingCompletion = () => {
     // Removing redundant refetches to prevent concurrent update conflicts
     
     console.log("✅ Onboarding completion handled");
-  }, [invalidateCache, refetchProfile, refetchUnifiedProfile]);
+  }, [invalidateCache]);
 
   return { handleOnboardingComplete };
 };

@@ -364,7 +364,7 @@ const MyWishlists = () => {
   return (
     <div className="space-y-0">
       {/* All Items View - Full Width with Profile Sidebar */}
-      {viewMode === "all-items" && wishlists?.length > 0 ? (
+      {viewMode === "all-items" ? (
         <AllItemsView wishlists={wishlists} onCreateWishlist={() => setDialogOpen(true)} />
       ) : (
         <div className="space-y-6 px-6 py-6">

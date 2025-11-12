@@ -7,6 +7,10 @@ import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { SuggestionDropdown } from "./components/SuggestionDropdown";
 import { SpellingAlert } from "./components/SpellingAlert";
 
+// Stable default references to prevent infinite re-renders
+const EMPTY_SUGGESTIONS: string[] = [];
+const EMPTY_CORRECTIONS: Record<string, string> = {};
+
 export interface SmartInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -22,8 +26,8 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   value,
   onChange,
   placeholder,
-  suggestions = [],
-  spellingCorrections = {},
+  suggestions = EMPTY_SUGGESTIONS,
+  spellingCorrections = EMPTY_CORRECTIONS,
   onKeyDown,
   className,
   showSpellingSuggestions = true

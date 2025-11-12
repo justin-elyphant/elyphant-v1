@@ -158,130 +158,80 @@ export const useProfileUpdate = () => {
         mutableUpdateData.address_verified_at !== undefined
       );
 
-      // Build base and verification payloads
+      // Build base update
       const baseUpdate: Record<string, any> = {
-        id: user.id,
-        updated_at: new Date().toISOString()
-      };
-      const verifyUpdate: Record<string, any> = {
         id: user.id,
         updated_at: new Date().toISOString()
       };
 
       // Normalize and include shipping address if present
+      const shipping_address: Record<string, any> = {};
       if (hasAddressUpdate) {
-        baseUpdate.shipping_address = normalizeShippingAddress(mutableUpdateData.shipping_address);
+        shipping_address.shipping_address = normalizeShippingAddress(mutableUpdateData.shipping_address);
       }
 
-      // Normalize gift preferences if present (in base update)
+      // Normalize gift preferences if present
+      const gift_preferences: Record<string, any> = {};
       if (mutableUpdateData.gift_preferences !== undefined) {
-        baseUpdate.gift_preferences = Array.isArray(mutableUpdateData.gift_preferences)
+        gift_preferences.gift_preferences = Array.isArray(mutableUpdateData.gift_preferences)
           ? mutableUpdateData.gift_preferences.map(pref => normalizeGiftPreference(pref))
           : [];
       }
 
-      // Split other fields into base vs verify depending on two-step condition
-      // Only use two-step if we have address update, address is verified, AND we have valid verification method
-      const isTwoStep = hasAddressUpdate && 
-                        mutableUpdateData.address_verified === true && 
-                        (mutableUpdateData.address_verification_method === 'automatic' || 
-                         mutableUpdateData.address_verification_method === 'user_confirmed');
-
+      // Build all fields into base update (no more two-step split)
       Object.keys(mutableUpdateData).forEach((key) => {
         if (key === 'shipping_address' || key === 'gift_preferences') return;
-        const value = (mutableUpdateData as any)[key];
-
-        if (isTwoStep && (key === 'address_verified' || key === 'address_verification_method' || key === 'address_verified_at')) {
-          verifyUpdate[key] = value;
-        } else {
-          baseUpdate[key] = value;
-        }
+        baseUpdate[key] = (mutableUpdateData as any)[key];
       });
+
+      // Build single payload with all fields
+      const updatePayload: Record<string, any> = {
+        ...baseUpdate,
+        ...gift_preferences,
+        ...shipping_address,
+      };
+
+      // Conditionally include verification fields if address is verified
+      if (hasAddressUpdate && mutableUpdateData.address_verified === true) {
+        const method = mutableUpdateData.address_verification_method;
+        
+        // Only include verification fields if method is valid
+        if (method === 'automatic' || method === 'user_confirmed') {
+          updatePayload.address_verified = true;
+          updatePayload.address_verification_method = method;
+          updatePayload.address_verified_at = mutableUpdateData.address_verified_at;
+          updatePayload.address_last_updated = mutableUpdateData.address_last_updated;
+          
+          console.log('✅ Including address verification fields in update', { method });
+        } else {
+          console.warn(`⚠️ Invalid verification method '${method}' - omitting verification fields`);
+          updatePayload.address_last_updated = new Date().toISOString();
+        }
+      } else if (hasAddressUpdate) {
+        // Address updated but not verified - only update timestamp
+        updatePayload.address_last_updated = new Date().toISOString();
+      }
 
       // Special logging for verification fields
       if (hasVerificationFields) {
-        console.log('🔍 VERIFICATION FIELDS PRESENT', {
-          address_verified: mutableUpdateData.address_verified,
-          address_verification_method: mutableUpdateData.address_verification_method,
-          address_verified_at: mutableUpdateData.address_verified_at,
-          isTwoStep
+        console.log('🔍 VERIFICATION FIELDS in final payload', {
+          address_verified: updatePayload.address_verified,
+          address_verification_method: updatePayload.address_verification_method,
+          address_verified_at: updatePayload.address_verified_at,
         });
       }
 
-      // EXECUTION: If two-step required, run base update first, then verification-only update
-      let finalResult: any = null;
-      if (isTwoStep) {
-        // Ensure base update does NOT include verification fields
-        delete baseUpdate.address_verified;
-        delete baseUpdate.address_verification_method;
-        delete baseUpdate.address_verified_at;
+      // DETAILED LOGGING: Final payload before database operation
+      console.log("📤 FINAL PAYLOAD being sent to database:", JSON.stringify(updatePayload, null, 2));
+      console.log("📤 Critical fields check:", {
+        has_dob: !!updatePayload.dob,
+        has_shipping_address: !!updatePayload.shipping_address,
+        has_interests: !!updatePayload.interests,
+        has_onboarding_completed: !!updatePayload.onboarding_completed
+      });
 
-        const baseRes = await upsertWithRetry(baseUpdate, 'base (address + non-verification)');
-
-        // Now apply verification-only fields
-        const verifyPayload: Record<string, any> = { ...verifyUpdate };
-        // Safety: do not send shipping_address again
-        delete verifyPayload.shipping_address;
-        
-        // Validate verification method - only allow 'automatic' or 'user_confirmed'
-        const method = verifyPayload.address_verification_method;
-        if (method && method !== 'automatic' && method !== 'user_confirmed') {
-          console.warn(`⚠️ Invalid verification method '${method}' - omitting verification fields`);
-          delete verifyPayload.address_verified;
-          delete verifyPayload.address_verification_method;
-          delete verifyPayload.address_verified_at;
-        }
-
-        // Only run verify-only upsert if we actually have verification fields to send
-        if (Object.keys(verifyPayload).length === 0) {
-          console.log('⏭️ Skipping verify-only upsert - no valid verification fields');
-          finalResult = baseRes;
-        } else {
-          // Gracefully handle verification-only failures - don't block the entire save
-          try {
-            const verifyRes = await upsertWithRetry(verifyPayload, 'verification-only');
-            finalResult = { ...baseRes, ...verifyRes };
-          } catch (verifyError) {
-            console.warn('⚠️ Verification-only update failed, but base data saved successfully:', verifyError);
-            console.warn('⚠️ Verification payload that failed:', verifyPayload);
-            // Return base result - the critical data (profile, address, interests) already saved
-            finalResult = baseRes;
-          }
-        }
-      } else {
-        // Single upsert path - CRITICAL: Strip out verification fields if address_verified is false
-        // This prevents constraint violations from invalid verification states
-        const singlePayload = { ...baseUpdate };
-        
-        // If address_verified is explicitly false or undefined, remove ALL verification fields
-        if (!singlePayload.address_verified) {
-          console.log('⚠️ address_verified is false/undefined - stripping verification fields to prevent constraint violation');
-          delete singlePayload.address_verified;
-          delete singlePayload.address_verification_method;
-          delete singlePayload.address_verified_at;
-        } else {
-          // Validate verification method even when address_verified is true
-          const method = singlePayload.address_verification_method;
-          if (method && method !== 'automatic' && method !== 'user_confirmed') {
-            console.warn(`⚠️ Invalid verification method '${method}' in single path - stripping all verification fields`);
-            delete singlePayload.address_verified;
-            delete singlePayload.address_verification_method;
-            delete singlePayload.address_verified_at;
-          }
-        }
-        
-        // DETAILED LOGGING: Final payload before database operation
-        console.log("📤 FINAL PAYLOAD being sent to database:", JSON.stringify(singlePayload, null, 2));
-        console.log("📤 Critical fields check:", {
-          has_dob: !!singlePayload.dob,
-          has_shipping_address: !!singlePayload.shipping_address,
-          has_interests: !!singlePayload.interests,
-          has_onboarding_completed: !!singlePayload.onboarding_completed
-        });
-        
-        const res = await upsertWithRetry(singlePayload, 'single');
-        finalResult = res;
-      }
+      // Single upsert with all data
+      const finalResult = await upsertWithRetry(updatePayload, 'complete-profile');
 
       toast.success('Profile updated successfully');
       

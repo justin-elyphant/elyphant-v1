@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +16,7 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
+import heroThanksgivingImage from "@/assets/hero-thanksgiving.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -63,12 +63,12 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated will-change-transform"
         style={{
-          backgroundImage: `url('/lovable-uploads/71b54185-9bbb-41d9-a722-df038ac4de04.png')`,
+          backgroundImage: `url('${heroThanksgivingImage}')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center 20%',
+          backgroundPosition: 'left center',
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-black/15"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/25"></div>
       </div>
 
       {/* Desktop Countdown Card */}

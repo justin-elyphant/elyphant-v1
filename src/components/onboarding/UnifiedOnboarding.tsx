@@ -275,33 +275,28 @@ const UnifiedOnboarding: React.FC = () => {
     try {
       const validation = await unifiedLocationService.validateAddressForDelivery(standardizedAddress);
       
-      if (validation.isValid) {
-        const verifyData = {
-          address: standardizedAddress,
-          confidence: validation.confidence,
-          method: validation.confidence === 'high' ? 'automatic' as const : 'user_confirmed' as const
-        };
-        
-        setIsAddressVerified(true);
-        setAddressVerificationData(verifyData);
-        console.log("✅ Address verified successfully");
-        return true;
-      } else {
-        // Address has issues - set as user_confirmed to allow manual verification
+      // Determine verification data based on validation result
+      const verifyData = {
+        address: standardizedAddress,
+        confidence: validation.isValid 
+          ? validation.confidence 
+          : (validation.confidence || 'low' as const),
+        method: (validation.isValid && validation.confidence === 'high') 
+          ? 'automatic' as const 
+          : 'user_confirmed' as const
+      };
+      
+      if (!validation.isValid) {
         console.log("⚠️ Address validation failed, marking as user_confirmed");
         toast.warning("Address couldn't be automatically verified. Proceeding with manual confirmation.");
-        
-        // Set as verified with user_confirmed method
-        const verifyData = {
-          address: standardizedAddress,
-          confidence: 'medium' as const,
-          method: 'user_confirmed' as const
-        };
-        
-        setIsAddressVerified(true);
-        setAddressVerificationData(verifyData);
-        return true; // Allow signup to proceed
+      } else {
+        console.log("✅ Address verified successfully");
       }
+      
+      setIsAddressVerified(true);
+      setAddressVerificationData(verifyData);
+      return true; // Allow signup to proceed
+      
     } catch (error) {
       console.error("❌ Address verification error:", error);
       toast.warning("Couldn't verify address automatically. Proceeding with manual confirmation.");
@@ -456,13 +451,6 @@ const UnifiedOnboarding: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = form.getValues();
-      
-      // Format date of birth for storage (MM-DD format for database)
-      const date = new Date(formData.date_of_birth);
-      const birthYear = date.getFullYear();
-      const dobMonth = String(date.getMonth() + 1).padStart(2, '0');
-      const dobDay = String(date.getDate()).padStart(2, '0');
-      const dobFormatted = `${dobMonth}-${dobDay}`;
 
       // Use existing name from auth metadata with fallbacks
       const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || 'User';
@@ -480,8 +468,7 @@ const UnifiedOnboarding: React.FC = () => {
         email: user.email,
         username: username,
         profile_image: formData.profile_image,
-        dob: dobFormatted,
-        birth_year: birthYear,
+        dob: formData.date_of_birth, // Send Date object - useProfileUpdate will normalize to MM-DD
         shipping_address: {
           address_line1: formData.address.street,
           address_line2: formData.address.line2 || "",
@@ -531,7 +518,7 @@ const UnifiedOnboarding: React.FC = () => {
       });
       
       // ONE ProfileContext.updateProfile call with ALL data (skip legacy mapping to prevent 400 errors)
-      await updateProfile(completeProfileData, { skipLegacyMapping: true });
+      await updateProfile(completeProfileData as any, { skipLegacyMapping: true });
       
       // POST-SAVE VERIFICATION: Query database to confirm data actually persisted
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -578,7 +565,7 @@ const UnifiedOnboarding: React.FC = () => {
           userEmail: user.email || '',
           userFirstName: firstName,
           userLastName: lastName,
-          birthYear: birthYear,
+          birthYear: formData.date_of_birth.getFullYear(), // Extract year from Date object
           interests: emailInterests,
           inviterName: undefined,
           profileData: {

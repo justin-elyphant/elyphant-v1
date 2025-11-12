@@ -41,7 +41,8 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
   };
 
   const openCamera = () => {
-    setShowCameraCapture(true);
+    // Defer opening to allow DropdownMenu to close cleanly (avoids immediate outside-click close)
+    setTimeout(() => setShowCameraCapture(true), 75);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

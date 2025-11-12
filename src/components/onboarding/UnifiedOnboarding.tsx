@@ -565,7 +565,7 @@ const UnifiedOnboarding: React.FC = () => {
           userEmail: user.email || '',
           userFirstName: firstName,
           userLastName: lastName,
-          birthYear: birthYear,
+          birthYear: formData.date_of_birth.getFullYear(), // Extract year from Date object
           interests: emailInterests,
           inviterName: undefined,
           profileData: {

@@ -190,8 +190,7 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         email: user.email,
         username: username,
         profile_image: data.profile_image,
-        dob: formattedBirthday,
-        birth_year: birthYear,
+        dob: data.date_of_birth, // Send Date object - useProfileUpdate will normalize to MM-DD
         shipping_address: {
           address_line1: data.address.street,
           address_line2: data.address.line2 || "",

@@ -272,6 +272,39 @@ class RecipientAddressResolver {
       };
     }
   }
+
+  /**
+   * Validate if a connection has a verified address for auto-gifting
+   * Used to enforce address verification for connection-based gifts
+   * @returns { isValid: boolean, reason?: string }
+   */
+  async validateConnectionAddressForAutoGift(
+    userId: string,
+    recipientId: string
+  ): Promise<{ isValid: boolean; reason?: string }> {
+    console.log(`🔍 Validating address verification for auto-gift: user ${userId} → recipient ${recipientId}`);
+    
+    const result = await this.getAddressForOrder(userId, recipientId);
+    
+    if (!result || !result.address) {
+      console.log(`❌ Validation failed: No address available`);
+      return { 
+        isValid: false, 
+        reason: 'No address available for this connection' 
+      };
+    }
+    
+    if (!result.metadata.is_verified) {
+      console.log(`❌ Validation failed: Address is not verified`);
+      return { 
+        isValid: false, 
+        reason: 'Recipient address has not been verified' 
+      };
+    }
+    
+    console.log(`✅ Validation passed: Address is verified`);
+    return { isValid: true };
+  }
 }
 
 export const recipientAddressResolver = new RecipientAddressResolver();

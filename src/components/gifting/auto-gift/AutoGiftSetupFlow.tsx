@@ -26,6 +26,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 import MultiEventSelector, { SelectedEvent } from "@/components/gifting/events/add-dialog/MultiEventSelector";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
+import AddressVerificationWarning from "./AddressVerificationWarning";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -559,6 +560,15 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     </p>
                   )}
                 </div>
+
+                {/* Address Verification Status */}
+                {formData.recipientId && (
+                  <AddressVerificationWarning
+                    recipientId={formData.recipientId}
+                    connections={connections}
+                    pendingInvitations={pendingInvitations}
+                  />
+                )}
 
                 <MultiEventSelector
                   value={formData.selectedEvents}

@@ -91,6 +91,9 @@ class UnifiedOrderProcessingService {
       // Step 2: Update status to processing if not already
       await this.updateExecutionStatus(executionId, 'processing', 'order_creation');
 
+      // Step 2.5: Validate address verification (CRITICAL: Prevents auto-gifts to unverified addresses)
+      await this.validateRecipientAddress(execution);
+
       // Step 3: Create order from execution
       const order = await this.createOrderFromExecution(execution);
       console.log(`✅ Order created: ${order.id}`);
@@ -134,6 +137,34 @@ class UnifiedOrderProcessingService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * Validate recipient address is verified before auto-gift execution
+   * CRITICAL: This enforces address verification for connection-based auto-gifts
+   */
+  private async validateRecipientAddress(execution: AutoGiftExecution): Promise<void> {
+    console.log(`🔍 [Auto-Gift Guard] Validating address verification for execution: ${execution.id}`);
+    
+    const addressMetadata = execution.address_metadata;
+    
+    // Check if address verification metadata exists
+    if (!addressMetadata?.is_verified) {
+      console.error(`❌ [Auto-Gift Guard] Blocked: Unverified address for execution ${execution.id}`);
+      console.log(`📋 [Auto-Gift Guard] Address metadata:`, addressMetadata);
+      
+      // Update execution status to failed with specific error
+      await this.updateExecutionStatus(
+        execution.id,
+        'failed',
+        'address_validation',
+        'Cannot execute auto-gift: recipient address is not verified. Please request address verification from the recipient.'
+      );
+      
+      throw new Error('UNVERIFIED_ADDRESS: Recipient address must be verified for auto-gifting');
+    }
+    
+    console.log(`✅ [Auto-Gift Guard] Address verification confirmed for execution ${execution.id}`);
   }
 
   /**

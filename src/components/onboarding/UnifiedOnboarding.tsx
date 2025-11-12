@@ -518,7 +518,7 @@ const UnifiedOnboarding: React.FC = () => {
       });
       
       // ONE ProfileContext.updateProfile call with ALL data (skip legacy mapping to prevent 400 errors)
-      await updateProfile(completeProfileData, { skipLegacyMapping: true });
+      await updateProfile(completeProfileData as any, { skipLegacyMapping: true });
       
       // POST-SAVE VERIFICATION: Query database to confirm data actually persisted
       await new Promise(resolve => setTimeout(resolve, 800));

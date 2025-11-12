@@ -194,8 +194,27 @@ export const useProfileUpdate = () => {
           finalResult = { ...baseRes, ...verifyRes };
         }
       } else {
-        // Single upsert path
+        // Single upsert path - CRITICAL: Strip out verification fields if address_verified is false
+        // This prevents constraint violations from invalid verification states
         const singlePayload = { ...baseUpdate };
+        
+        // If address_verified is explicitly false or undefined, remove ALL verification fields
+        if (!singlePayload.address_verified) {
+          console.log('⚠️ address_verified is false/undefined - stripping verification fields to prevent constraint violation');
+          delete singlePayload.address_verified;
+          delete singlePayload.address_verification_method;
+          delete singlePayload.address_verified_at;
+        } else {
+          // Validate verification method even when address_verified is true
+          const method = singlePayload.address_verification_method;
+          if (method && method !== 'automatic' && method !== 'user_confirmed') {
+            console.warn(`⚠️ Invalid verification method '${method}' in single path - stripping all verification fields`);
+            delete singlePayload.address_verified;
+            delete singlePayload.address_verification_method;
+            delete singlePayload.address_verified_at;
+          }
+        }
+        
         const res = await upsertWithRetry(singlePayload, 'single');
         finalResult = res;
       }

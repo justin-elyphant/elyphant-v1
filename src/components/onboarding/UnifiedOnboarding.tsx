@@ -490,10 +490,12 @@ const UnifiedOnboarding: React.FC = () => {
           street: formData.address.street,
           zipCode: formData.address.zipCode
         },
-        // Only include verification fields if address is actually verified
-        ...(isAddressVerified && {
+        // Only include verification fields if verification ACTUALLY succeeded with valid data
+        // This prevents constraint violations from invalid verification states
+        ...(isAddressVerified && addressVerificationData?.method && 
+            (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed') && {
           address_verified: true,
-          address_verification_method: addressVerificationData?.method || 'user_confirmed',
+          address_verification_method: addressVerificationData.method,
           address_verified_at: new Date().toISOString()
         }),
         address_last_updated: new Date().toISOString(),
@@ -509,6 +511,14 @@ const UnifiedOnboarding: React.FC = () => {
       };
 
       console.log("🚀 Saving complete profile data:", completeProfileData);
+      console.log("🔍 Address verification state:", {
+        isAddressVerified,
+        hasValidMethod: addressVerificationData?.method && 
+          (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed'),
+        method: addressVerificationData?.method,
+        willIncludeVerification: !!(isAddressVerified && addressVerificationData?.method && 
+          (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed'))
+      });
       
       // ONE ProfileContext.updateProfile call with ALL data
       await updateProfile(completeProfileData);

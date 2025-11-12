@@ -73,6 +73,9 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
     
     console.log("Camera capture - calling onImageSelect with file:", file.name);
     onImageSelect(file);
+    
+    // Close camera modal immediately after capture
+    setShowCameraCapture(false);
   };
 
   // Get initials from name

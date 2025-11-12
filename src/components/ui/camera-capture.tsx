@@ -144,7 +144,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     // Prefer the captured Blob if available
     if (capturedBlob) {
       onCapture(capturedBlob);
-      handleClose();
+      // Close immediately and cleanup
+      stopCamera();
+      setCapturedImage(null);
+      setCapturedBlob(null);
+      onClose();
       return;
     }
 
@@ -153,7 +157,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       const res = await fetch(capturedImage);
       const blob = await res.blob();
       onCapture(blob);
-      handleClose();
+      // Close immediately and cleanup
+      stopCamera();
+      setCapturedImage(null);
+      setCapturedBlob(null);
+      onClose();
     } catch (e) {
       console.error('Failed to use captured photo', e);
       toast.error('Failed to use photo. Please try again.');

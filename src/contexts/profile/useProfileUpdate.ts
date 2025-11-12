@@ -48,7 +48,7 @@ export const useProfileUpdate = () => {
             .from('profiles')
             .upsert(upsertPayload as any)
             .select()
-            .single();
+            .maybeSingle();
 
           console.log(`🔍 Database upsert response (${label}):`, { data, error });
           if (error) {

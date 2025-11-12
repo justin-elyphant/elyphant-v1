@@ -537,7 +537,7 @@ const UnifiedOnboarding: React.FC = () => {
         .from('profiles')
         .select('dob, shipping_address, interests, onboarding_completed')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       console.log("🔍 Post-save verification result:", verifyProfile);
       

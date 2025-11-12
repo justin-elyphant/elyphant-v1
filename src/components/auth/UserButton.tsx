@@ -20,6 +20,7 @@ import { usePendingConnectionsCount } from "@/hooks/usePendingConnectionsCount";
 import { getNavigationConfig } from "@/components/navigation/config/navigationConfig";
 import { navigationStyles } from "@/components/navigation/shared/NavigationStyles";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 const UserButton = () => {
   const navigate = useNavigate();
@@ -142,11 +143,16 @@ const UserButton = () => {
           <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
             <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
               <AvatarImage 
-                src={
+                src={normalizeImageUrl(
                   profile?.profile_image || 
                   user?.user_metadata?.avatar_url || 
-                  user?.user_metadata?.picture
-                } 
+                  user?.user_metadata?.picture,
+                  { bucket: 'avatars' }
+                )}
+                onError={(e) => {
+                  console.warn('Failed to load user avatar');
+                  e.currentTarget.style.display = 'none';
+                }}
               />
               <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                 {userInitials}
@@ -199,11 +205,16 @@ const UserButton = () => {
         <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
           <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
             <AvatarImage 
-              src={
+              src={normalizeImageUrl(
                 profile?.profile_image || 
                 user?.user_metadata?.avatar_url || 
-                user?.user_metadata?.picture
-              } 
+                user?.user_metadata?.picture,
+                { bucket: 'avatars' }
+              )}
+              onError={(e) => {
+                console.warn('Failed to load user avatar');
+                e.currentTarget.style.display = 'none';
+              }}
             />
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {userInitials}

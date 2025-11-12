@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import WishlistItemsGrid from "./WishlistItemsGrid";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 interface SharedWishlistViewProps {
   wishlist: Wishlist;
@@ -50,7 +51,13 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center">
             <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={owner.image || undefined} />
+              <AvatarImage 
+                src={normalizeImageUrl(owner.image, { bucket: 'avatars' })}
+                onError={(e) => {
+                  console.warn('Failed to load owner avatar:', owner.image);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
               <AvatarFallback>{owner.name?.charAt(0) || "U"}</AvatarFallback>
             </Avatar>
             <div>

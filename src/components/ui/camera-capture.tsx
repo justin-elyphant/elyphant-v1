@@ -234,7 +234,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   }, []);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} modal={false} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <DialogContent aria-describedby="camera-desc" className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-center">Take Photo</DialogTitle>

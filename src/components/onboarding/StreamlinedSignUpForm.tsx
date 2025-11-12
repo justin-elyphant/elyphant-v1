@@ -109,7 +109,7 @@ const StreamlinedSignUpForm: React.FC<StreamlinedSignUpFormProps> = ({ onComplet
       // Store additional profile data temporarily
       localStorage.setItem('beta_signup_data', JSON.stringify({
         ...data,
-        birthday: data.birthday.toISOString()
+        birthday: data.birthday // Send Date object - useProfileUpdate will normalize to MM-DD
       }));
       
       toast.success("Profile collected! Creating your account...");

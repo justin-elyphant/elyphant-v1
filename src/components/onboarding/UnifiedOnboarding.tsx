@@ -457,9 +457,12 @@ const UnifiedOnboarding: React.FC = () => {
     try {
       const formData = form.getValues();
       
-      // Format date of birth for storage (ISO format for database)
+      // Format date of birth for storage (MM-DD format for database)
       const date = new Date(formData.date_of_birth);
       const birthYear = date.getFullYear();
+      const dobMonth = String(date.getMonth() + 1).padStart(2, '0');
+      const dobDay = String(date.getDate()).padStart(2, '0');
+      const dobFormatted = `${dobMonth}-${dobDay}`;
 
       // Use existing name from auth metadata with fallbacks
       const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || 'User';
@@ -477,7 +480,7 @@ const UnifiedOnboarding: React.FC = () => {
         email: user.email,
         username: username,
         profile_image: formData.profile_image,
-        dob: date.toISOString(),
+        dob: dobFormatted,
         birth_year: birthYear,
         shipping_address: {
           address_line1: formData.address.street,

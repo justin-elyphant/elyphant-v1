@@ -93,35 +93,46 @@ export const useProfileUpdate = () => {
       // Create a mutable copy to avoid mutation issues
       const mutableUpdateData = { ...updateData } as Record<string, any>;
       
-      // Normalize DOB before any payload building to prevent Postgres date errors
+      // Normalize DOB to MM-DD format (database expects this format)
       if (mutableUpdateData.dob) {
         try {
           const rawDob = mutableUpdateData.dob;
-          const by = mutableUpdateData.birth_year;
-          let normalizedDob: string | null = null;
+          let dateObj: Date | null = null;
 
+          // Convert input to Date object
           if (rawDob instanceof Date) {
-            normalizedDob = rawDob.toISOString();
+            dateObj = rawDob;
           } else if (typeof rawDob === 'string') {
-            // MM-DD pattern
-            const mmddMatch = /^\d{2}-\d{2}$/.test(rawDob);
-            const isoParsable = !isNaN(Date.parse(rawDob));
-            if (mmddMatch && by && typeof by === 'number') {
-              const [mm, dd] = rawDob.split('-').map((s) => parseInt(s, 10));
-              const d = new Date(by, (mm || 1) - 1, dd || 1);
-              normalizedDob = d.toISOString();
-            } else if (isoParsable) {
-              normalizedDob = new Date(rawDob).toISOString();
+            // If already MM-DD format, keep it
+            if (/^\d{2}-\d{2}$/.test(rawDob)) {
+              console.log('✅ DOB already in MM-DD format:', rawDob);
+              // Keep as-is, but ensure birth_year is set if available
+              if (!mutableUpdateData.birth_year && typeof mutableUpdateData.birth_year !== 'number') {
+                console.warn('⚠️ MM-DD dob without birth_year - keeping dob but may cause issues');
+              }
+              dateObj = null; // Skip conversion
+            } else if (!isNaN(Date.parse(rawDob))) {
+              // Parse ISO string or other valid date string
+              dateObj = new Date(rawDob);
             } else {
               console.warn('⚠️ Invalid dob format, removing from payload:', rawDob);
-              normalizedDob = null;
+              delete mutableUpdateData.dob;
+              dateObj = null;
             }
           }
 
-          if (normalizedDob) {
-            mutableUpdateData.dob = normalizedDob;
-          } else {
-            delete mutableUpdateData.dob;
+          // Convert Date object to MM-DD format
+          if (dateObj) {
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            mutableUpdateData.dob = `${month}-${day}`;
+            
+            // Set birth_year if not already set
+            if (!mutableUpdateData.birth_year) {
+              mutableUpdateData.birth_year = dateObj.getFullYear();
+            }
+            
+            console.log('✅ DOB normalized to MM-DD:', mutableUpdateData.dob, 'birth_year:', mutableUpdateData.birth_year);
           }
         } catch (e) {
           console.warn('⚠️ Failed to normalize dob, removing from payload:', mutableUpdateData.dob, e);
